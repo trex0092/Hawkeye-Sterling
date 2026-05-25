@@ -192,16 +192,27 @@ export async function getAccessToken(): Promise<string> {
     }
   }
 
-  // Password grant (first call or after refresh token expiry)
-  _tokenCache = await fetchToken({
-    grant_type: 'password',
-    username,
-    password,
-    scope:      'trapi',
-    client_id:  appKey,
-  });
-
-  return _tokenCache.accessToken;
+  // Password grant (first call or after refresh token expiry) — max 3 attempts with backoff.
+  const MAX_PASSWORD_ATTEMPTS = 3;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= MAX_PASSWORD_ATTEMPTS; attempt++) {
+    try {
+      _tokenCache = await fetchToken({
+        grant_type: 'password',
+        username,
+        password,
+        scope:      'trapi',
+        client_id:  appKey,
+      });
+      return _tokenCache.accessToken;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_PASSWORD_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, attempt * 1_000));
+      }
+    }
+  }
+  throw new Error(`[lseg] OAuth password grant exhausted after ${MAX_PASSWORD_ATTEMPTS} attempts — CFS poll paused: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`);
 }
 
 // ── Generic authenticated GET ─────────────────────────────────────────────────

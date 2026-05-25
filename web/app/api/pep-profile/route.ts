@@ -7,6 +7,37 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+
+// ── World-Check circuit breaker ───────────────────────────────────────────────
+// After 3 consecutive failures within 5 minutes, skip World-Check and go
+// directly to OpenSanctions. Resets automatically after 5 minutes.
+let _wcFailCount = 0;
+let _wcFirstFailAt = 0;
+const WC_FAIL_THRESHOLD = 3;
+const WC_CIRCUIT_RESET_MS = 5 * 60 * 1_000;
+
+function wcCircuitOpen(): boolean {
+  if (_wcFailCount < WC_FAIL_THRESHOLD) return false;
+  if (Date.now() - _wcFirstFailAt > WC_CIRCUIT_RESET_MS) {
+    _wcFailCount = 0;
+    _wcFirstFailAt = 0;
+    return false;
+  }
+  return true;
+}
+
+function recordWcFailure(): void {
+  if (_wcFailCount === 0) _wcFirstFailAt = Date.now();
+  _wcFailCount++;
+  if (_wcFailCount >= WC_FAIL_THRESHOLD) {
+    console.error(`[pep-profile] World-Check circuit OPEN after ${WC_FAIL_THRESHOLD} failures — using OpenSanctions fallback`);
+  }
+}
+
+function recordWcSuccess(): void {
+  _wcFailCount = 0;
+  _wcFirstFailAt = 0;
+}
 export interface PepProfileResult {
   ok: true;
   pepTier: "tier1" | "tier2" | "tier3" | "tier4" | "rca";
@@ -38,7 +69,7 @@ export interface PepProfileResult {
   summary: string;
 }
 
-const FALLBACK: PepProfileResult = {
+const _FALLBACK: PepProfileResult = {
   ok: true,
   pepTier: "tier1",
   riskScore: 82,
@@ -126,7 +157,7 @@ export async function POST(req: Request) {
   const wcAuth = wcKey
     ? (wcSecret ? `Basic ${Buffer.from(`${wcKey}:${wcSecret}`).toString("base64")}` : `Bearer ${wcKey}`)
     : null;
-  if (wcAuth && body.name?.trim()) {
+  if (wcAuth && body.name?.trim() && !wcCircuitOpen()) {
     try {
       const wcRes = await fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
         method: "POST",
@@ -152,6 +183,7 @@ export async function POST(req: Request) {
             dateOfBirth?: string;
           }>;
         };
+        recordWcSuccess();
         const hits = wcData.results ?? [];
         if (hits.length > 0) {
           pepDataContext = `World-Check Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
@@ -164,9 +196,11 @@ export async function POST(req: Request) {
           pepDataSource = "worldcheck";
         }
       } else {
+        recordWcFailure();
         pepDataContext = `World-Check Database: query failed (HTTP ${wcRes.status})`;
       }
     } catch (err) {
+      recordWcFailure();
       console.warn("[pep-profile] world-check lookup failed:", err instanceof Error ? err.message : err);
       pepDataContext = "World-Check Database: temporarily unavailable";
     }
@@ -241,10 +275,13 @@ export async function POST(req: Request) {
 
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({
-    ...FALLBACK,
-    simulationWarning: "ANTHROPIC_API_KEY not configured — this is a simulated template, NOT a real PEP assessment. All names, positions, figures, and flags are illustrative examples only. Obtain a real AI-generated assessment before making any compliance decisions.",
-  }, { status: 200, headers: gate.headers });
+  if (!apiKey) {
+    console.error("[pep-profile] CRITICAL: ANTHROPIC_API_KEY not set — refusing to serve fixture data as a real assessment");
+    return NextResponse.json(
+      { ok: false, error: "AI model not configured — PEP assessment unavailable. Configure ANTHROPIC_API_KEY to enable.", degraded: true },
+      { status: 503, headers: gate.headers },
+    );
+  }
 
   try {
     const client = getAnthropicClient(apiKey, 4_500);

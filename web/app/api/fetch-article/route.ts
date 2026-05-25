@@ -9,11 +9,27 @@ const ALLOWED_PROTOCOLS = ["https:", "http:"];
 // Block private/loopback IP ranges to prevent SSRF attacks.
 // Mirrors the blocklist in lib/server/webhook.ts.
 const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
-const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+// Covers IPv4 private ranges, IPv6 loopback, and IPv6-mapped IPv4 (::ffff:127.x.x.x).
+const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0|::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.))/i;
 
 function assertSafeArticleUrl(parsed: URL): void {
   if (BLOCKED_HOSTS.test(parsed.hostname) || PRIVATE_IP.test(parsed.hostname)) {
     throw new Error("URL hostname is in a blocked range");
+  }
+}
+
+async function assertSafeResolvedIp(hostname: string): Promise<void> {
+  try {
+    const { lookup } = await import("node:dns/promises");
+    const addrs = await lookup(hostname, { all: true });
+    for (const { address } of addrs) {
+      if (PRIVATE_IP.test(address)) {
+        throw new Error(`Resolved IP ${address} is in a blocked private range`);
+      }
+    }
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOTFOUND") return; // DNS failure is handled by fetch
+    throw err;
   }
 }
 
@@ -80,6 +96,7 @@ export async function POST(req: Request) {
 
   try {
     assertSafeArticleUrl(parsed);
+    await assertSafeResolvedIp(parsed.hostname);
   } catch {
     return NextResponse.json({ ok: false, error: "URL hostname is not allowed" }, { status: 400, headers: gate.headers });
   }

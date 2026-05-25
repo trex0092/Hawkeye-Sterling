@@ -143,6 +143,21 @@ export async function consumeRateLimit(
   // Prefer Redis atomic enforcement when configured.
   const redisResult = await consumeRedis(keyId, tier, effectiveCost);
   if (redisResult !== null) return redisResult;
+
+  // When RATE_LIMIT_STRICT=true and Redis is unavailable, refuse the request
+  // rather than falling back to blob-based soft enforcement (which is vulnerable
+  // to read-modify-write races under concurrent Lambda invocations).
+  if (process.env["RATE_LIMIT_STRICT"] === "true") {
+    console.error("[rate-limit] RATE_LIMIT_STRICT=true but Redis unavailable — returning 503 to prevent soft-limit bypass");
+    return {
+      allowed: false,
+      retryAfterSec: 5,
+      remainingSecond: 0,
+      remainingMinute: 0,
+      tier,
+    };
+  }
+
   const now = Date.now();
   const storageKey = `${PREFIX}${keyId}`;
   const prior = (await getJson<LimitState>(storageKey)) ?? {

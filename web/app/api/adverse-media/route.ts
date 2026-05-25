@@ -169,6 +169,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[adverse-media] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 
+  const llmDisabled = process.env["LLM_ADVERSE_MEDIA_DISABLED"];
+  const llmScreeningDisabled = llmDisabled === "1" || llmDisabled?.toLowerCase() === "true";
+
   return NextResponse.json(
     {
       ok: true,
@@ -181,6 +184,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Compliance disclosure: AI-generated content (FDL 10/2025 Art.22)
       aiGenerated: true,
       aiModel: "keyword-classifier+mlro-analyser",
+      // Degraded flag when LLM screening is intentionally disabled — callers
+      // must distinguish this from a genuine clean-screen result.
+      ...(llmScreeningDisabled ? {
+        degraded: true,
+        degradedReason: "adverse_media_llm_disabled",
+        degradedNote: "LLM_ADVERSE_MEDIA_DISABLED=true — adverse media LLM enrichment is not running. Results may be incomplete.",
+      } : {}),
     },
     { status: 200, headers: { ...CORS, ...gateHeaders } },
   );

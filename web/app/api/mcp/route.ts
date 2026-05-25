@@ -1556,7 +1556,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!gate.ok) return gate.response;
 
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
-  // disable all 28 tools. All tool calls return 503 until re-enabled.
+  // disable all 24 tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {
     return json(
       err(null, -32001, "Hawkeye Sterling MCP is offline. Contact your MLRO to re-enable."),

@@ -160,6 +160,10 @@ export interface DashboardMetrics {
   storageMode: "netlify_blobs" | "in_memory";
   /** True if any sub-query fell back to mock data due to a storage error. */
   partialData: boolean;
+  /** Overall data quality: live = all from real data; partial = some mock fallbacks; simulated = all mock */
+  dataQuality: "live" | "partial" | "simulated";
+  /** Names of KPI categories that are using mock/simulated data (empty when dataQuality is "live") */
+  simulatedFields: string[];
   screeningThroughput: ScreeningThroughput;
   sanctionsHitRate: SanctionsHitRate;
   pepDetectionRate: PepDetectionRate;
@@ -717,6 +721,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const tenant = tenantIdFromGate(gate);
 
   let partialData = false;
+  const simulatedFields: string[] = [];
 
   // Run all live-data derivations in parallel.
   const [screeningResult, sarResult, caseResult, fpResult, coverageResult] =
@@ -730,7 +735,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   // Screening throughput — use live data or mock.
   const liveScreening = screeningResult.value;
-  if (!liveScreening) partialData = true;
+  if (!liveScreening) { partialData = true; simulatedFields.push("screeningThroughput", "sanctionsHitRate", "pepDetectionRate", "adverseMediaHitRate"); }
 
   const screeningThroughput: ScreeningThroughput =
     liveScreening?.throughput ?? mockScreeningThroughput();
@@ -748,6 +753,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     const live = liveScreening?.geoExposure;
     if (live && live.topNationalities.length > 0) return live;
     partialData = true;
+    simulatedFields.push("geographicExposure");
     return mockGeographicExposure();
   })();
 
@@ -755,20 +761,21 @@ export async function GET(req: Request): Promise<NextResponse> {
     const live = liveScreening?.riskDist;
     if (live && live.total > 0) return live;
     partialData = true;
+    simulatedFields.push("riskDistribution");
     return mockRiskDistribution();
   })();
 
   const sarFilingMetrics: SarFilingMetrics =
-    sarResult.value ?? ((() => { partialData = true; return mockSarFilingMetrics(); })());
+    sarResult.value ?? ((() => { partialData = true; simulatedFields.push("sarFilingMetrics"); return mockSarFilingMetrics(); })());
 
   const caseManagementKpis: CaseManagementKpis =
-    caseResult.value ?? ((() => { partialData = true; return mockCaseManagementKpis(); })());
+    caseResult.value ?? ((() => { partialData = true; simulatedFields.push("caseManagementKpis"); return mockCaseManagementKpis(); })());
 
   const falsePositiveRate: FalsePositiveRate =
-    fpResult.value ?? ((() => { partialData = true; return mockFalsePositiveRate(); })());
+    fpResult.value ?? ((() => { partialData = true; simulatedFields.push("falsePositiveRate"); return mockFalsePositiveRate(); })());
 
   const coverageMetrics: CoverageMetrics =
-    coverageResult.value ?? ((() => { partialData = true; return mockCoverageMetrics(); })());
+    coverageResult.value ?? ((() => { partialData = true; simulatedFields.push("coverageMetrics"); return mockCoverageMetrics(); })());
 
   // Merge live false-positive data into sanctions hit rate breakdown.
   if (fpResult.value && sanctionsHitRate.totalHitsReviewed > 0) {
@@ -779,11 +786,19 @@ export async function GET(req: Request): Promise<NextResponse> {
     sanctionsHitRate.totalHitsReviewed = fpResult.value.totalSanctionsHits;
   }
 
+  const uniqueSimulatedFields = [...new Set(simulatedFields)];
+  const dataQuality: DashboardMetrics["dataQuality"] =
+    uniqueSimulatedFields.length === 0 ? "live"
+    : uniqueSimulatedFields.length >= 8 ? "simulated"
+    : "partial";
+
   const payload: DashboardMetrics = {
     ok: true,
     generatedAt: new Date().toISOString(),
     storageMode: isInMemoryFallback() ? "in_memory" : "netlify_blobs",
     partialData,
+    dataQuality,
+    simulatedFields: uniqueSimulatedFields,
     screeningThroughput,
     sanctionsHitRate,
     pepDetectionRate,

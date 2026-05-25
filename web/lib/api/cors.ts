@@ -32,6 +32,12 @@ const BASE_ALLOWED_ORIGINS = [
 
 const ALL_ALLOWED_ORIGINS = [...new Set([...BASE_ALLOWED_ORIGINS, ...ENV_ALLOWED_ORIGINS])];
 
+// Optional regex pattern for dynamic origins (e.g. Netlify preview deploys).
+// Set CORS_ALLOWED_PATTERN="^https://pr-\d+--hawkeye-sterling\.netlify\.app$"
+const _corsPattern = process.env["CORS_ALLOWED_PATTERN"]
+  ? (() => { try { return new RegExp(process.env["CORS_ALLOWED_PATTERN"]!); } catch { return null; } })()
+  : null;
+
 /**
  * Returns CORS headers for a given request origin.
  *
@@ -50,7 +56,7 @@ export function corsHeaders(
   } = {},
 ): Record<string, string> {
   const allowed =
-    origin !== null && ALL_ALLOWED_ORIGINS.includes(origin)
+    origin !== null && (ALL_ALLOWED_ORIGINS.includes(origin) || (_corsPattern !== null && _corsPattern.test(origin)))
       ? origin
       : (ALL_ALLOWED_ORIGINS[0] ?? "https://hawkeye-sterling.netlify.app");
 

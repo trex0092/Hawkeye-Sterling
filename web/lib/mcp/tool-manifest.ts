@@ -1,5 +1,5 @@
 // MCP Tool Risk Manifest
-// Classifies all 28 Hawkeye Sterling MCP tools by consequence level for audit
+// Classifies all 24 Hawkeye Sterling MCP tools by consequence level for audit
 // and governance purposes (ISO/IEC 42001, UAE FDL No.10/2025).
 //
 // Consequence levels:

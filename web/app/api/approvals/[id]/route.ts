@@ -24,7 +24,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
@@ -74,7 +74,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   const { id } = await params;

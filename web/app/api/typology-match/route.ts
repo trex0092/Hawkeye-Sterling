@@ -127,7 +127,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     gateHeaders = gate.headers;
     const apiKey = process.env["ANTHROPIC_API_KEY"];
     if (!apiKey) {
-      return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
+      return NextResponse.json(
+        { ok: true, degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — static fallback served", ...FALLBACK },
+        { status: 206, headers: { ...gateHeaders, Warning: '299 - "AI model unconfigured — static FATF fallback served"' } },
+      );
     }
     const client = getAnthropicClient(apiKey, 4_500);
 

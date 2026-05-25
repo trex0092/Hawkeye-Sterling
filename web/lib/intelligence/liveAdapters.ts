@@ -112,7 +112,12 @@ export const LIVE_OPENSANCTIONS_ADAPTER: CorporateRegistryAdapter = {
       const json = (await res.json()) as {
         responses?: { q1?: { results?: Array<Record<string, unknown>> } };
       };
-      const results = json.responses?.q1?.results ?? [];
+      const rawResults = json.responses?.q1?.results;
+      if (!Array.isArray(rawResults)) {
+        console.error("[opensanctions] Unexpected response shape — schema drift detected:", JSON.stringify(json).slice(0, 200));
+        return [];
+      }
+      const results = rawResults;
       return results
         .map((r) => {
           const props = (r["properties"] ?? {}) as Record<string, string[]>;

@@ -22,6 +22,7 @@ import {
   refreshOpenSanctionsBlob,
   resolveDatasetList,
 } from "@/lib/intelligence/opensanctions-datasets";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const result = await refreshOpenSanctionsBlob();
+    void writeAuditChainEntry(
+      { event: "admin.opensanctions_refresh", actor: "system", ok: result.ok, at: new Date().toISOString() },
+      "admin",
+    ).catch(() => {});
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (err) {
     console.error("[admin/opensanctions-refresh] refresh threw:", err instanceof Error ? err.message : String(err));

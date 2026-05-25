@@ -56,7 +56,8 @@ function caseToReportPayload(c: CaseRecord): unknown {
       entityType: "other" as const,
     },
     result: {
-      topScore: c.status === "reported" ? 85 : c.status === "review" ? 65 : 40,
+      topScore: null,
+      riskScoreSource: "snapshot-unavailable" as const,
       severity:
         c.status === "reported"
           ? ("critical" as const)

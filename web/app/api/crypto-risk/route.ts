@@ -24,10 +24,44 @@ const CORS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// OFAC / SDN sanctioned crypto wallet addresses (public OFAC SDN list)
+// Live OFAC crypto addresses from blob store (refreshed daily by ofac-crypto-refresh.mts).
+// Falls back to the static set below if the blob is unavailable.
+// ---------------------------------------------------------------------------
+let _liveSanctionedWallets: Set<string> | null = null;
+let _liveWalletsLoadedAt = 0;
+const LIVE_WALLETS_TTL_MS = 6 * 60 * 60 * 1_000; // 6h module-level cache
+
+async function getLiveSanctionedWallets(): Promise<Set<string>> {
+  const now = Date.now();
+  if (_liveSanctionedWallets && now - _liveWalletsLoadedAt < LIVE_WALLETS_TTL_MS) {
+    return _liveSanctionedWallets;
+  }
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const store = getStore("hawkeye-lists");
+    const raw = await store.get("ofac_crypto/latest.json", { type: "text" });
+    if (raw) {
+      const blob = JSON.parse(raw) as { addresses?: Array<{ address: string }> };
+      if (Array.isArray(blob.addresses)) {
+        const live = new Set<string>(blob.addresses.map((a) => a.address.toLowerCase()));
+        // Merge with static set for belt-and-suspenders
+        for (const addr of SANCTIONED_WALLETS_STATIC) live.add(addr);
+        _liveSanctionedWallets = live;
+        _liveWalletsLoadedAt = now;
+        return live;
+      }
+    }
+  } catch {
+    // Blob unavailable — fall back to static set silently
+  }
+  return SANCTIONED_WALLETS_STATIC;
+}
+
+// ---------------------------------------------------------------------------
+// OFAC / SDN sanctioned crypto wallet addresses (static baseline — updated by ofac-crypto-refresh)
 // Sources: OFAC SDN list, Chainalysis public reports, US Treasury press releases
 // ---------------------------------------------------------------------------
-const SANCTIONED_WALLETS = new Set<string>([
+const SANCTIONED_WALLETS_STATIC = new Set<string>([
   // Lazarus Group (North Korea) — OFAC 2018 & 2022
   "0x098b716b8aaf21512996dc57eb0615e2383e2f96", // Harmony Horizon bridge heist
   "0xa0e1c89ef1a489c9c7de96311ed5ce5d32c20e4b", // Lazarus Group ETH
@@ -299,7 +333,7 @@ function buildLocalEnrichment(
   const flags: string[] = [];
 
   // -- 1. Sanctioned wallet check ------------------------------------------
-  const sanctionedWallet = SANCTIONED_WALLETS.has(addrLower);
+  const sanctionedWallet = (SANCTIONED_WALLETS_STATIC.has(addrLower) || (_liveSanctionedWallets?.has(addrLower) ?? false));
   if (sanctionedWallet) flags.push("OFAC_SANCTIONED_WALLET");
 
   // -- 2. Ransomware wallet check -------------------------------------------
@@ -464,7 +498,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const subjectName = body.subjectName?.trim();
 
   // ── Fast-path: OFAC sanctioned wallet — no provider call needed ───────────
-  if (SANCTIONED_WALLETS.has(address.toLowerCase())) {
+  const liveSanctioned = await getLiveSanctionedWallets();
+  if (liveSanctioned.has(address.toLowerCase())) {
     const enrichment = buildLocalEnrichment(address, [], 0, body.chain ?? "unknown", body.vasp, subjectName);
     const sanctionedResponse = {
       ok: true,

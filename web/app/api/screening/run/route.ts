@@ -25,7 +25,6 @@ import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
-import { quickScreen as brainQuickScreen } from "../../../../../src/brain/quick-screen.js";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 // Bare writer used for one-off adversarial-input audit events that fire
 // BEFORE the per-request ScreeningAuditWriter is constructed. These events
@@ -45,6 +44,25 @@ import type {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+// ── Brain loader — dynamic so a missing dist/ doesn't crash the module ────────
+type BrainScreenFn = (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult;
+let _brainFn: BrainScreenFn | null = null;
+let _brainLoadError: string | null = null;
+
+async function loadBrain(): Promise<BrainScreenFn | null> {
+  if (_brainFn) return _brainFn;
+  if (_brainLoadError) return null;
+  try {
+    const mod = (await import("../../../../../src/brain/quick-screen.js")) as { quickScreen: BrainScreenFn };
+    _brainFn = mod.quickScreen;
+    return _brainFn;
+  } catch (err) {
+    _brainLoadError = err instanceof Error ? err.message : String(err);
+    console.error("[screening/run] Brain module unavailable — rule-based fallback active:", _brainLoadError);
+    return null;
+  }
+}
 
 const SCHEMA_VERSION = "1.0";
 const MAX_CANDIDATES = 5_000;
@@ -279,19 +297,41 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, tenant).catch(() => undefined);
   }
 
+  const brainFn = await loadBrain();
+
   let result: QuickScreenResult;
-  try {
-    result = (brainQuickScreen as (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult)(
+  if (!brainFn) {
+    // Rule-based fallback: exact/near-exact name matching against candidates.
+    const lowerName = subject.name.toLowerCase();
+    const hits = candidates.filter((c) => {
+      const cn = (c.name ?? "").toLowerCase();
+      return cn === lowerName || cn.includes(lowerName) || lowerName.includes(cn);
+    });
+    result = {
       subject,
-      candidates,
-      options,
-    );
-  } catch (err) {
-    console.error("[screening/run] quickScreen threw", { reqId, resultId, detail: err instanceof Error ? err.message : String(err) });
-    return NextResponse.json(
-      { ok: false, error: "screening_failed", message: "Screening engine error", requestId: reqId, resultId, latencyMs: Date.now() - t0 },
-      { status: 500, headers: responseHeaders },
-    );
+      hits: hits.map((c) => ({ ...c, score: 0.95, matchRationale: "Exact name match (rule-based fallback — AI engine unavailable)" })),
+      topScore: hits.length > 0 ? 0.95 : 0,
+      severity: (hits.length > 0 ? "critical" : "clear") as "critical" | "clear",
+      screenedAt: new Date().toISOString(),
+      listsChecked: listsLoaded,
+      listIds: candidates.map((c) => (c as unknown as Record<string, unknown>)["listId"] as string ?? "").filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).sort(),
+      candidatesChecked: candidates.length,
+      durationMs: Date.now() - t0,
+      generatedAt: new Date().toISOString(),
+      degraded: true,
+      screeningMode: "rule-based-fallback" as const,
+      brainUnavailable: _brainLoadError ?? "unknown",
+    } as unknown as QuickScreenResult;
+  } else {
+    try {
+      result = brainFn(subject, candidates, options);
+    } catch (err) {
+      console.error("[screening/run] quickScreen threw", { reqId, resultId, detail: err instanceof Error ? err.message : String(err) });
+      return NextResponse.json(
+        { ok: false, error: "screening_failed", message: "Screening engine error", requestId: reqId, resultId, latencyMs: Date.now() - t0 },
+        { status: 500, headers: responseHeaders },
+      );
+    }
   }
 
   // FDL 10/2025 Art.15 — every screening invocation must be permanently logged.

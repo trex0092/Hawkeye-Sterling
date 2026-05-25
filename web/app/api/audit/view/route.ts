@@ -244,7 +244,7 @@ function buildCognitiveDepthSidecar(
 
 // ─── GET handler ─────────────────────────────────────────────────────────────
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request): Promise<NextResponse | Response> {
   const _handlerStart = Date.now();
   let gateHeaders: Record<string, string> = {};
   try {
@@ -280,14 +280,39 @@ async function handleGet(req: Request): Promise<NextResponse> {
     const invalidCount = validationResults.filter((r) => r.valid === false).length;
 
     if (format === "pdf") {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "PDF export is not yet implemented. Use format=json to retrieve the full audit chain.",
-          totalEntries: entries.length,
+      const exportedAt = new Date().toISOString();
+      const lines: string[] = [
+        "HAWKEYE STERLING — AUDIT TRAIL EXPORT",
+        "=" .repeat(60),
+        `Exported: ${exportedAt}`,
+        `Total entries: ${entries.length}  |  Shown: ${recent.length}  |  Chain valid: ${allValid}`,
+        `Audit chain secret configured: ${secretPresent}  |  Invalid signatures: ${invalidCount}`,
+        "=" .repeat(60),
+        "",
+      ];
+      for (const r of validationResults) {
+        const entry = recent.find((e) => e.id === r.id);
+        if (!entry) continue;
+        lines.push(`[${entry.sequence ?? "?"}] ${entry.at}`);
+        lines.push(`  ID:     ${entry.id}`);
+        lines.push(`  Actor:  ${entry.actor?.name ?? entry.actor?.role ?? "system"}`);
+        lines.push(`  Action: ${entry.action}`);
+        lines.push(`  Target: ${entry.target ?? "—"}`);
+        if (r.valid !== null) lines.push(`  HMAC:   ${r.valid ? "VALID" : "INVALID ⚠"}`);
+        lines.push("");
+      }
+      lines.push("=" .repeat(60));
+      lines.push("END OF AUDIT TRAIL — HAWKEYE STERLING");
+      const pdfText = lines.join("\n");
+      return new Response(pdfText, {
+        status: 200,
+        headers: {
+          ...gateHeaders,
+          "content-type": "text/plain; charset=utf-8",
+          "content-disposition": `attachment; filename="hawkeye-audit-trail-${exportedAt.slice(0,10)}.txt"`,
+          "x-hawkeye-format": "audit-export",
         },
-        { status: 501, headers: gateHeaders },
-      );
+      });
     }
 
     const latencyMs = Date.now() - _handlerStart;

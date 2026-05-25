@@ -33,7 +33,7 @@ async function saveRecords(records: ApprovalRecord[]): Promise<void> {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   const records = await loadRecords();
@@ -41,7 +41,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;

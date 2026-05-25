@@ -71,7 +71,7 @@ interface StructuringResult {
   error?: string;
 }
 
-const THRESHOLD_AED = 55_000;
+const THRESHOLD_AED = Number(process.env["NEXT_PUBLIC_CTR_THRESHOLD_AED"] ?? 55_000);
 const STORAGE_KEY = "hawkeye.transaction-monitor.v1";
 
 // Shape a logged transaction into the compliance-report payload so
