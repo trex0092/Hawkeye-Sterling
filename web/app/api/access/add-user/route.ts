@@ -115,5 +115,5 @@ export async function POST(req: Request) {
 
   // Return user without exposing hash/salt to the client
   const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;
-  return NextResponse.json({ ok: true, user: safeUser, logEntry, initialPassword }, { status: 201 });
+  return NextResponse.json({ ok: true, user: safeUser, logEntry, passwordGenerated: !password }, { status: 201 });
 }

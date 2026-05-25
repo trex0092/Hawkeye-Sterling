@@ -59,7 +59,16 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
   // Actor identity comes from the authenticated API key, not the request body,
   // to prevent impersonation and ensure the self-approval / duplicate-approver
   // guards operate on a trusted identity.
-  const actor = (ctx.apiKey.email || ctx.apiKey.name || ctx.apiKey.id).toLowerCase().trim();
+  // Reject anonymous keys (no email, no name) — the self-approval guard requires
+  // a stable human-readable identity; raw key IDs are opaque and easily duplicated.
+  const actor = (ctx.apiKey.email || ctx.apiKey.name || "").toLowerCase().trim();
+  if (!actor) {
+    logRequest("/api/four-eyes/approve", "anonymous", 403, Date.now() - t0, { error: "anonymous_key" });
+    return NextResponse.json(
+      { ok: false, error: "Approval requires a key with a registered identity (email or name) for audit-trail and self-approval enforcement" },
+      { status: 403 },
+    );
+  }
 
   let raw: unknown;
   try {

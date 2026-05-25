@@ -49,7 +49,7 @@ export interface KriDashboardResponse {
 
 function classify(value: number | null, band: KriBand, _direction: "lower_better" | "higher_better"): KriStatus {
   if (value === null) return "no_data";
-  const inBand = (v: number, b: [number, number]) => v >= b[0] && v < b[1];
+  const inBand = (v: number, b: [number, number]) => v >= b[0] && (b[1] === Infinity ? true : v <= b[1]);
   if (inBand(value, band.green)) return "green";
   if (inBand(value, band.amber)) return "amber";
   return "red";

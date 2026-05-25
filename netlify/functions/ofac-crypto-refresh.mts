@@ -100,15 +100,14 @@ function parseCryptoAddressesFromXml(xml: string): CryptoEntry[] {
 }
 
 export default async function handler(req: Request): Promise<Response> {
-  // Protect HTTP-triggered invocations with bearer token
+  // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
   const cronToken = process.env["HAWKEYE_CRON_TOKEN"];
-  if (cronToken) {
+  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
+  if (!isScheduledEvent) {
     const auth = req.headers.get("authorization");
-    if (auth !== null) {
-      const supplied = auth.replace(/^Bearer\s+/i, "").trim();
-      if (supplied !== cronToken) {
-        return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
-      }
+    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    if (!cronToken || supplied !== cronToken) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
     }
   }
 

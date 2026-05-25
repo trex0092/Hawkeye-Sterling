@@ -31,13 +31,15 @@ const LABEL = "opensanctions-refresh";
 const LOCK_TTL_MS = 10 * 60 * 1000;
 
 export default async (req: Request): Promise<Response> => {
-  const auth = req.headers.get("authorization");
-  if (auth !== null) {
+  // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
+  if (!isScheduledEvent) {
     const expected = process.env["HAWKEYE_CRON_TOKEN"];
     if (!expected) {
       return json({ ok: false, error: "HAWKEYE_CRON_TOKEN not configured — refused" }, 503);
     }
-    const supplied = auth.replace(/^Bearer\s+/i, "").trim();
+    const auth = req.headers.get("authorization");
+    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
     if (supplied !== expected) {
       return json({ ok: false, error: "forbidden" }, 403);
     }

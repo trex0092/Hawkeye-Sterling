@@ -58,6 +58,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (Date.now() > stored.expiresAt) {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_expired`);
     }
+    // Consume the nonce immediately after validation so it cannot be replayed.
+    await del(OAUTH_STATE_KEY).catch(() => undefined);
   } catch {
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_check_failed`);
   }

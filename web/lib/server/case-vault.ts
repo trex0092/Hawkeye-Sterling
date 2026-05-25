@@ -181,38 +181,55 @@ export async function mergeCases(
   incoming: CaseRecord[],
 ): Promise<CaseRecord[]> {
   await maybeMigrateLegacy();
-  const idx = await readIndex(tenant);
-  const indexById = new Map(idx.entries.map((e) => [e.id, e]));
-  const incomingById = new Map(incoming.map((c) => [c.id, c]));
 
-  const writes: Promise<unknown>[] = [];
-  // Merge: for every incoming record, decide if it's newer than the
-  // existing index entry, and only write when it is.
-  for (const c of incoming) {
-    const prior = indexById.get(c.id);
-    if (!prior || c.lastActivity >= prior.lastActivity) {
-      writes.push(setJson(caseKey(tenant, c.id), c));
-      indexById.set(c.id, entryFromCase(c));
-    }
+  // Acquire index lock before read-modify-write to prevent concurrent sync
+  // operations from dropping index entries (same pattern as insertCaseRecord).
+  let lockAcquired = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    lockAcquired = await acquireIndexLock(tenant);
+    if (lockAcquired) break;
+    await new Promise((r) => setTimeout(r, 500 + attempt * 500));
+  }
+  if (!lockAcquired) {
+    console.warn("[case-vault] mergeCases index lock contention for tenant:", tenant);
   }
 
-  await Promise.all(writes);
+  try {
+    const idx = await readIndex(tenant);
+    const indexById = new Map(idx.entries.map((e) => [e.id, e]));
+    const incomingById = new Map(incoming.map((c) => [c.id, c]));
 
-  // Resolve full records for the response: refetch any case the
-  // client didn't send so the merged set is complete.
-  const merged: CaseRecord[] = [];
-  for (const e of indexById.values()) {
-    const incomingRec = incomingById.get(e.id);
-    if (incomingRec && incomingRec.lastActivity >= e.lastActivity) {
-      merged.push(incomingRec);
-    } else {
-      const existing = await getJson<CaseRecord>(caseKey(tenant, e.id));
-      if (existing) merged.push(existing);
+    const writes: Promise<unknown>[] = [];
+    // Merge: for every incoming record, decide if it's newer than the
+    // existing index entry, and only write when it is.
+    for (const c of incoming) {
+      const prior = indexById.get(c.id);
+      if (!prior || c.lastActivity >= prior.lastActivity) {
+        writes.push(setJson(caseKey(tenant, c.id), c));
+        indexById.set(c.id, entryFromCase(c));
+      }
     }
+
+    await Promise.all(writes);
+
+    // Resolve full records for the response: refetch any case the
+    // client didn't send so the merged set is complete.
+    const merged: CaseRecord[] = [];
+    for (const e of indexById.values()) {
+      const incomingRec = incomingById.get(e.id);
+      if (incomingRec && incomingRec.lastActivity >= e.lastActivity) {
+        merged.push(incomingRec);
+      } else {
+        const existing = await getJson<CaseRecord>(caseKey(tenant, e.id));
+        if (existing) merged.push(existing);
+      }
+    }
+    await writeIndex(tenant, Array.from(indexById.values()));
+    await bumpMeta(tenant, "merge");
+    return merged.sort((a, b) => (a.lastActivity < b.lastActivity ? 1 : -1));
+  } finally {
+    if (lockAcquired) await releaseIndexLock(tenant);
   }
-  await writeIndex(tenant, Array.from(indexById.values()));
-  await bumpMeta(tenant, "merge");
-  return merged.sort((a, b) => (a.lastActivity < b.lastActivity ? 1 : -1));
 }
 
 export async function saveAllCases(
@@ -244,8 +261,13 @@ async function acquireIndexLock(tenant: string): Promise<boolean> {
     const age = Date.now() - new Date(existing.lockedAt).getTime();
     if (age < INDEX_LOCK_TTL_MS) return false; // lock held by another write
   }
-  await setJson(lockKey, { lockedAt: new Date().toISOString() });
-  return true;
+  const claimedAt = new Date().toISOString();
+  await setJson(lockKey, { lockedAt: claimedAt });
+  // Read-back verification: confirm our write won the race.
+  // Add a small jitter before the read to reduce collision probability.
+  await new Promise((r) => setTimeout(r, 10 + Math.random() * 20));
+  const readBack = await getJson<{ lockedAt: string }>(lockKey).catch(() => null);
+  return readBack?.lockedAt === claimedAt;
 }
 
 async function releaseIndexLock(tenant: string): Promise<void> {

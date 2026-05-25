@@ -72,7 +72,7 @@ async function loadEventsForWindow(
   const events: AnalystEvent[] = [];
   const now = new Date();
 
-  const fetches = Array.from({ length: Math.min(windowDays, MAX_WINDOW_DAYS) }, (_, i) => {
+  const fetches = Array.from({ length: Math.min(windowDays + 1, MAX_WINDOW_DAYS) }, (_, i) => {
     const date = new Date(now.getTime() - i * 86_400_000);
     const key = dayKey(tenantId, date);
     return store.get(key, { type: "text" }).then((raw) => {
