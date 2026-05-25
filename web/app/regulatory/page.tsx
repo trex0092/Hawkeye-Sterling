@@ -897,7 +897,7 @@ export default function RegulatoryPage() {
         })),
       }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: { ok: boolean; classified?: Array<{ urgency: FeedUrgency; reason: string }> }) => {
         if (data.ok && data.classified) {
           setFeedItems((prev) =>

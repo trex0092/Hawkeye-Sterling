@@ -38,7 +38,7 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d: { ok: boolean; user?: UserProfile; error?: string }) => {
         if (cancelled) return;
         if (d.ok && d.user) setProfile(d.user);

@@ -86,12 +86,12 @@ export default function OsintPage() {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ tool: "sherlock", username: t }),
-          }).then((r) => r.json() as Promise<SherlockResult>),
+          }).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<SherlockResult>; }),
           fetch("/api/osint-bridge", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ tool: "social-analyzer", person: t }),
-          }).then((r) => r.json() as Promise<SocialResult>),
+          }).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<SocialResult>; }),
         ]);
         if (!mountedRef.current) return;
         if (sh.status === "fulfilled") setSherlockResult(sh.value);

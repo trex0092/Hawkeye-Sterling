@@ -131,7 +131,7 @@ export default function BrainCataloguePage() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/status")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d: StatusSnapshot) => { if (!cancelled) setSnapshot(d); })
       .catch((e: Error) => { if (!cancelled) setLoadError(e.message); });
     return () => { cancelled = true; };
