@@ -85,12 +85,12 @@ function ProfileCard({ profile, alertCount }: { profile: AnalystProfile; alertCo
         <div className="text-ink-0 font-mono tabular-nums">{profile.exportRecordCount} records</div>
 
         <div className="text-ink-3">Overrides</div>
-        <div className={`font-mono tabular-nums ${profile.overrideCount >= 5 ? "text-amber-600" : "text-ink-0"}`}>
+        <div className={`font-mono tabular-nums ${profile.overrideCount >= 5 ? "text-amber-400" : "text-ink-0"}`}>
           {profile.overrideCount} ({fmt(profile.overrideClearRate)}% clear)
         </div>
 
         <div className="text-ink-3">Off-hours</div>
-        <div className={`font-mono tabular-nums ${profile.offHoursRate > 30 ? "text-amber-600" : "text-ink-0"}`}>
+        <div className={`font-mono tabular-nums ${profile.offHoursRate > 30 ? "text-amber-400" : "text-ink-0"}`}>
           {fmt(profile.offHoursRate)}%
         </div>
 

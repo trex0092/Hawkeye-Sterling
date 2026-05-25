@@ -11,6 +11,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   createPnmrRecord,
   loadAllPnmrRecords,
@@ -105,6 +106,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     initiatedBy: actor,
   });
 
+  void writeAuditChainEntry(
+    { event: "pnmr.record.created", actor: gate.keyId, meta: { id: record.id, subjectName: body.subjectName.trim(), listId: body.listId.trim() } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, record },
     { status: 201, headers: gate.headers },

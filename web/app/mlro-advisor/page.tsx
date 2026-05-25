@@ -7076,7 +7076,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {prolifResult && (() => {
                   const pf = prolifResult as ProlifFinanceResult;
-                  const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-amber-dim text-amber" : pf.pfRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  const riskCls = pf.pfRisk === "critical" ? "bg-red text-white" : pf.pfRisk === "high" ? "bg-amber-dim text-amber" : pf.pfRisk === "medium" ? "bg-yellow-dim text-yellow-400" : "bg-green-dim text-green";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -7169,7 +7169,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {docFraudResult && (() => {
                   const df = docFraudResult;
-                  const riskCls = df.fraudRisk === "critical" ? "bg-red text-white" : df.fraudRisk === "high" ? "bg-amber-dim text-amber" : df.fraudRisk === "medium" ? "bg-yellow-dim text-yellow-600" : df.fraudRisk === "clear" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
+                  const riskCls = df.fraudRisk === "critical" ? "bg-red text-white" : df.fraudRisk === "high" ? "bg-amber-dim text-amber" : df.fraudRisk === "medium" ? "bg-yellow-dim text-yellow-400" : df.fraudRisk === "clear" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -7210,7 +7210,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {ctrResult && (() => {
                   const ct = ctrResult;
-                  const riskCls = ct.structuringRisk === "critical" ? "bg-red text-white" : ct.structuringRisk === "high" ? "bg-amber-dim text-amber" : ct.structuringRisk === "medium" ? "bg-yellow-dim text-yellow-600" : ct.structuringRisk === "low" ? "bg-bg-2 text-ink-2" : "bg-green-dim text-green";
+                  const riskCls = ct.structuringRisk === "critical" ? "bg-red text-white" : ct.structuringRisk === "high" ? "bg-amber-dim text-amber" : ct.structuringRisk === "medium" ? "bg-yellow-dim text-yellow-400" : ct.structuringRisk === "low" ? "bg-bg-2 text-ink-2" : "bg-green-dim text-green";
                   const actionCls = ct.recommendedAction === "file_ctr_and_str" || ct.recommendedAction === "file_str" ? "bg-red text-white" : ct.recommendedAction === "file_ctr" ? "bg-amber-dim text-amber" : "bg-bg-2 text-ink-2";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
@@ -7302,7 +7302,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {cddRefreshResult && (() => {
                   const cr = cddRefreshResult;
-                  const urgCls = cr.urgency === "immediate" ? "bg-red text-white" : cr.urgency === "within_30_days" ? "bg-amber-dim text-amber" : cr.urgency === "within_90_days" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  const urgCls = cr.urgency === "immediate" ? "bg-red text-white" : cr.urgency === "within_30_days" ? "bg-amber-dim text-amber" : cr.urgency === "within_90_days" ? "bg-yellow-dim text-yellow-400" : "bg-green-dim text-green";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -7348,7 +7348,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {vaspResult && (() => {
                   const vr = vaspResult;
-                  const riskCls = vr.overallRisk === "critical" ? "bg-red text-white" : vr.overallRisk === "high" ? "bg-amber-dim text-amber" : vr.overallRisk === "medium" ? "bg-yellow-dim text-yellow-600" : "bg-green-dim text-green";
+                  const riskCls = vr.overallRisk === "critical" ? "bg-red text-white" : vr.overallRisk === "high" ? "bg-amber-dim text-amber" : vr.overallRisk === "medium" ? "bg-yellow-dim text-yellow-400" : "bg-green-dim text-green";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -7440,7 +7440,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {pepEddResult && (() => {
                   const pe = pepEddResult;
-                  const riskCls = pe.riskRating === "very_high" ? "bg-red text-white" : pe.riskRating === "high" ? "bg-amber-dim text-amber" : "bg-yellow-dim text-yellow-600";
+                  const riskCls = pe.riskRating === "very_high" ? "bg-red text-white" : pe.riskRating === "high" ? "bg-amber-dim text-amber" : "bg-yellow-dim text-yellow-400";
                   const actionCls = pe.recommendedAction === "decline" || pe.recommendedAction === "exit_relationship" ? "bg-red text-white" : pe.recommendedAction === "refer_senior_management" ? "bg-amber-dim text-amber" : "bg-green-dim text-green";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
@@ -7491,7 +7491,7 @@ export default function MlroAdvisorPage() {
                 )}
                 {sanctionsMapResult && (() => {
                   const sm = sanctionsMapResult;
-                  const expCls = sm.overallExposure === "confirmed_hit" ? "bg-red text-white" : sm.overallExposure === "high" ? "bg-amber-dim text-amber" : sm.overallExposure === "medium" ? "bg-yellow-dim text-yellow-600" : sm.overallExposure === "none" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
+                  const expCls = sm.overallExposure === "confirmed_hit" ? "bg-red text-white" : sm.overallExposure === "high" ? "bg-amber-dim text-amber" : sm.overallExposure === "medium" ? "bg-yellow-dim text-yellow-400" : sm.overallExposure === "none" ? "bg-green-dim text-green" : "bg-bg-2 text-ink-2";
                   return (
                     <div className="mt-3 border border-hair-2 rounded-lg p-4 space-y-3 bg-bg-1">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -9789,7 +9789,7 @@ export default function MlroAdvisorPage() {
                   const score = Number(r["overallRiskScore"] ?? r["riskScore"] ?? 0);
                   const tier = String(r["riskTier"] ?? "medium");
                   const tierCls = tier === "severe" ? "bg-red text-white" : tier === "critical" ? "bg-red-dim text-red border border-red/40" : tier === "high" ? "bg-amber-dim text-amber border border-amber/40" : tier === "medium" ? "bg-amber-950/30 text-amber-300 border border-amber-500/40" : "bg-green-dim text-green border border-green/40";
-                  const scoreCls = score >= 81 ? "text-red" : score >= 61 ? "text-red" : score >= 41 ? "text-amber" : score >= 21 ? "text-yellow-600" : "text-green";
+                  const scoreCls = score >= 81 ? "text-red" : score >= 61 ? "text-red" : score >= 41 ? "text-amber" : score >= 21 ? "text-yellow-400" : "text-green";
                   const ba = r["blockchainAnalysis"] as Record<string, unknown> | undefined;
                   const mx = r["mixerExposure"] as Record<string, unknown> | undefined;
                   const dn = r["darknetExposure"] as Record<string, unknown> | undefined;
