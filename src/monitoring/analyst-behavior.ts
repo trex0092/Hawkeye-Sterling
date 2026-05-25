@@ -287,7 +287,7 @@ export function buildUEBAReport(events: AnalystEvent[], windowDays = 30): UEBARe
   const alertsByActor: Record<string, UEBAAlert[]> = {};
   for (const alert of allAlerts) {
     if (!alertsByActor[alert.actor]) alertsByActor[alert.actor] = [];
-    alertsByActor[alert.actor].push(alert);
+    alertsByActor[alert.actor]!.push(alert);
   }
 
   return { windowStart, windowEnd, actors, profiles, alerts: allAlerts, alertsByActor };

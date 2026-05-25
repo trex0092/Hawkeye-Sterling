@@ -47,7 +47,7 @@ export interface KriDashboardResponse {
   tenantId: string;
 }
 
-function classify(value: number | null, band: KriBand, direction: "lower_better" | "higher_better"): KriStatus {
+function classify(value: number | null, band: KriBand, _direction: "lower_better" | "higher_better"): KriStatus {
   if (value === null) return "no_data";
   const inBand = (v: number, b: [number, number]) => v >= b[0] && v < b[1];
   if (inBand(value, band.green)) return "green";
@@ -55,10 +55,6 @@ function classify(value: number | null, band: KriBand, direction: "lower_better"
   return "red";
 }
 
-// CaseRecord uses `opened` (ISO string) as the creation timestamp.
-function ageHours(openedDate: string): number {
-  return (Date.now() - new Date(openedDate).getTime()) / 3_600_000;
-}
 
 // Severity from the optional screeningSnapshot; falls back to badgeTone heuristic.
 function caseSeverity(c: CaseRecord): "critical" | "high" | "medium" | "low" | "unknown" {
