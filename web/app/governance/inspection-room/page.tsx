@@ -168,7 +168,7 @@ function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => voi
   const baseBtn =
     "inline-flex items-center justify-center w-7 h-7 rounded border font-mono text-12 leading-none transition";
   const addEditCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-brand hover:border-brand bg-bg-1`;
-  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-700 hover:border-red-300 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
+  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-400 hover:border-red-500/60 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
   const handleClear = () => {
     if (panel.appendOnly) return;
     if (panel.storageKeys.length === 0) return;

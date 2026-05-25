@@ -204,7 +204,7 @@ export default function RedTeamPage() {
         <button
           type="button"
           onClick={reset}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-700 hover:border-red-300"
+          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-400 hover:border-red-500/60"
         >
           Reset
         </button>

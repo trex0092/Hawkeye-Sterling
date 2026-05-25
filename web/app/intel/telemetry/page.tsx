@@ -158,7 +158,7 @@ export default function ModeTelemetryPage() {
         <button
           type="button"
           onClick={reset}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-700 hover:border-red-300 ml-auto"
+          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-400 hover:border-red-500/60 ml-auto"
         >
           Reset telemetry
         </button>
@@ -204,7 +204,7 @@ export default function ModeTelemetryPage() {
                     {r.lastAt === 0 ? (
                       <span className="text-ink-3">never</span>
                     ) : driftFlag ? (
-                      <span className="text-amber-700">{relativeAt(r.lastAt)} · drift</span>
+                      <span className="text-amber-400">{relativeAt(r.lastAt)} · drift</span>
                     ) : (
                       relativeAt(r.lastAt)
                     )}

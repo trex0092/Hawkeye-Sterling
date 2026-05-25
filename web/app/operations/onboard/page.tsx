@@ -1261,7 +1261,7 @@ function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectPro
                         removeChip(id, e as unknown as React.MouseEvent);
                       }
                     }}
-                    className="text-brand-deep hover:text-red-700 cursor-pointer leading-none"
+                    className="text-brand-deep hover:text-red-400 cursor-pointer leading-none"
                   >
                     ×
                   </span>

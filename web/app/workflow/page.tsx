@@ -245,7 +245,7 @@ function ActionEditor({
       <button
         type="button"
         onClick={onRemove}
-        className="text-red-500 hover:text-red-700 text-xs px-1"
+        className="text-red-500 hover:text-red-400 text-xs px-1"
       >
         Remove
       </button>
@@ -317,7 +317,7 @@ function ConditionEditor({
       <button
         type="button"
         onClick={onRemove}
-        className="text-red-500 hover:text-red-700 text-xs px-1"
+        className="text-red-500 hover:text-red-400 text-xs px-1"
       >
         Remove
       </button>
