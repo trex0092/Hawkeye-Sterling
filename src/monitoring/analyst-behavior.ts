@@ -236,7 +236,7 @@ const RULES: Rule[] = [
     severity: "low",
     title: "Admin action outside business hours",
     test: (p) => {
-      const fired = (p.adminActionOffHoursCount ?? 0) > 0;
+      const fired = p.adminActionOffHoursCount > 0;
       return {
         fired,
         detail: `${p.adminActionOffHoursCount} admin action(s) performed outside 07:00–20:00 UTC.`,

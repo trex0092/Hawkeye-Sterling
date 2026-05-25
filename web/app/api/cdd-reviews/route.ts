@@ -115,6 +115,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  const SAFE_ID_RE = /^[a-zA-Z0-9_\-.]+$/;
+  if (body.id && (body.id.length > 128 || !SAFE_ID_RE.test(body.id))) {
+    return NextResponse.json({ ok: false, error: "id must be alphanumeric/._- and ≤128 chars" }, { status: 400, headers: gate.headers });
+  }
+
   const nextReviewDate = computeNextReviewDate(body.tier, body.reviewDate);
   const daysOverdue = computeDaysOverdue(nextReviewDate);
   const existing = body.id ? await getCddReview(tenant, body.id) : null;

@@ -46,6 +46,10 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   if (!body.name) return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
   if (body.name.length > 500) return NextResponse.json({ ok: false, error: "name exceeds 500-character limit" }, { status: 400 });
 
+  const SAFE_ID_RE = /^[a-zA-Z0-9_\-.]+$/;
+  if (body.id && (body.id.length > 128 || !SAFE_ID_RE.test(body.id))) {
+    return NextResponse.json({ ok: false, error: "id must be alphanumeric/._- and ≤128 chars" }, { status: 400 });
+  }
   const id = body.id ?? `pkyc-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const now = new Date().toISOString();
   const cadence: PKycCadence = (body.cadence ?? "monthly") as PKycCadence;
