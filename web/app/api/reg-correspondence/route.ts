@@ -14,6 +14,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -211,6 +213,12 @@ Draft a formal, professional regulatory letter.`,
     const letter = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as Record<string, unknown>;
     if (!Array.isArray(letter["bodyParagraphs"])) letter["bodyParagraphs"] = [];
     if (!Array.isArray(letter["attachmentsList"])) letter["attachmentsList"] = [];
+
+    void writeAuditChainEntry(
+      { event: "reg_correspondence.saved", actor: gate.keyId, meta: { correspondenceType: body.correspondenceType, recipientAuthority: body.recipientAuthority, referenceNumber: body.referenceNumber } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({
       ok: true,
       correspondenceType: body.correspondenceType,

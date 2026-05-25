@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { loadAllCases } from "@/lib/server/case-vault";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -145,6 +146,11 @@ Triage and recommend actions.`,
       triage = Array.isArray(parsed.triage) ? parsed.triage : [];
     } catch { /* triage is non-blocking */ }
   }
+
+  void writeAuditChainEntry(
+    { event: "live_sanctions_sweep.run", actor: gate.keyId, meta: { designationsScreened: body.designations.length, casesInBase: allCases.length, matchesFound: filteredMatches.length, sweepReason: body.sweepReason ?? "delta_sweep" } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({
     ok: true,

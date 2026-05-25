@@ -55,7 +55,7 @@ const ACTION_STYLES: Record<CrossRegimeConflictReport["recommendedAction"], stri
   freeze: "bg-red-600 text-white",
   block: "bg-red-500 text-white",
   escalate: "bg-orange-500 text-white",
-  review: "bg-amber-400 text-zinc-900",
+  review: "bg-amber-500/30 text-amber-300",
   proceed_with_scope_declaration: "bg-emerald-500 text-white",
 };
 
