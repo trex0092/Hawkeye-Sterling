@@ -133,16 +133,34 @@ async function maybeMigrateLegacy(): Promise<void> {
 
 export async function loadAllCases(tenant: string): Promise<CaseRecord[]> {
   await maybeMigrateLegacy();
-  const idx = await readIndex(tenant);
-  if (idx.entries.length === 0) return [];
-  // Fan-out reads: one blob per case. Capped at 200 cases per fetch to
-  // bound function runtime — beyond that the operator should paginate
-  // (or the index API should evolve to surface lazy fetches).
   const cap = 200;
-  const fetched = await Promise.all(
-    idx.entries.slice(0, cap).map((e) => getJson<CaseRecord>(caseKey(tenant, e.id))),
-  );
-  return fetched.filter((c): c is CaseRecord => c != null);
+
+  async function fetchFromTenant(t: string): Promise<CaseRecord[]> {
+    const idx = await readIndex(t);
+    if (idx.entries.length === 0) return [];
+    const fetched = await Promise.all(
+      idx.entries.slice(0, cap).map((e) => getJson<CaseRecord>(caseKey(t, e.id))),
+    );
+    return fetched.filter((c): c is CaseRecord => c != null);
+  }
+
+  // Fan-out reads: one blob per case. Capped at 200 cases per fetch to
+  // bound function runtime — beyond that the operator should paginate.
+  const primary = await fetchFromTenant(tenant);
+  if (primary.length > 0) return primary;
+
+  // Fallback: try well-known alternative tenant slugs when the primary returns
+  // empty. Covers the common case where cases were stored under the legacy
+  // migration target ("portal") but are being read by an API-key tenant.
+  const fallbacks = ["portal", "default", "hawkeye"].filter((t) => t !== tenant);
+  for (const fallback of fallbacks) {
+    const cases = await fetchFromTenant(fallback);
+    if (cases.length > 0) {
+      console.info(`[case-vault] tenant "${tenant}" empty — serving ${cases.length} case(s) from fallback tenant "${fallback}"`);
+      return cases;
+    }
+  }
+  return [];
 }
 
 export async function loadCase(

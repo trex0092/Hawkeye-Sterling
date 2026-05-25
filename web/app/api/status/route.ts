@@ -473,6 +473,7 @@ function computeCognitiveGrade(
   internal: Check[],
   external: Check[],
   soul: BrainSoul,
+  sanctionsStatus?: Check["status"],
 ): CognitiveGrade {
   const all = [...internal, ...external];
   const _anyAnomaly = all.some((c) => c.anomalyHint);
@@ -507,7 +508,16 @@ function computeCognitiveGrade(
     },
   ];
 
-  const score = breakdown.reduce((s, b) => s + b.earned, 0);
+  const rawScore = breakdown.reduce((s, b) => s + b.earned, 0);
+
+  // Sanctions data is the foundation of all compliance decisions.
+  // Degrade the grade when list freshness is compromised — A+/A
+  // requires fully healthy sanctions data.
+  const sanctionsPenalty = sanctionsStatus === "down" ? 40
+    : sanctionsStatus === "degraded" ? 20
+    : 0;
+  const score = Math.max(0, rawScore - sanctionsPenalty);
+
   const grade: CognitiveGrade["grade"] =
     score >= 98 ? "A+" : score >= 85 ? "A" : score >= 70 ? "B" : score >= 50 ? "C" : "F";
 
@@ -966,7 +976,7 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
 
   // Brain intelligence — grade, narrative, and threat surface are synchronous
   // derivations from the already-resolved checks and soul. No extra I/O.
-  const cognitiveGrade   = computeCognitiveGrade(internalChecks, externalChecks, brainSoul);
+  const cognitiveGrade   = computeCognitiveGrade(internalChecks, externalChecks, brainSoul, sanctions.status);
   const brainNarrative   = computeBrainNarrative(internalChecks, externalChecks, brainSoul, cognitiveGrade);
   const threatSurface    = computeThreatSurface(internalChecks, externalChecks);
 

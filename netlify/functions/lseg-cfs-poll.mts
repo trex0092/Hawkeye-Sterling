@@ -263,7 +263,10 @@ async function runHandler(req: Request): Promise<Response> {
   let importCfs: ImportResult | undefined;
   const anyNewFiles = outcomes.some((o) => o.filesDownloaded > 0);
   const adminToken = process.env['ADMIN_TOKEN'];
-  if (anyNewFiles && adminToken) {
+  // Trigger import-cfs when new files were downloaded OR when no new files
+  // were found (files may have been downloaded on a prior run when ADMIN_TOKEN
+  // was missing, leaving hawkeye-lists blobs absent even though CFS files exist).
+  if (adminToken) {
     const baseUrl =
       process.env['URL'] ??
       process.env['DEPLOY_PRIME_URL'] ??
@@ -305,7 +308,8 @@ async function runHandler(req: Request): Promise<Response> {
         error: err instanceof Error ? err.message : String(err),
       };
     }
-  } else if (anyNewFiles && !adminToken) {
+  } else if (!adminToken) {
+    console.error('[lseg-cfs-poll] ADMIN_TOKEN not set — auto-import skipped, run /api/admin/import-cfs manually. LSEG lists will remain missing from hawkeye-lists store until ADMIN_TOKEN is configured.');
     importCfs = { ok: false, error: 'ADMIN_TOKEN not set — auto-import skipped, run /api/admin/import-cfs manually' };
   }
 

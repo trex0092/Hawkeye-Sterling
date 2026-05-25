@@ -148,6 +148,45 @@ export default async (_req: Request) => {
     } catch (hbErr) {
       console.warn("[eocn-poll] heartbeat write failed (non-critical):", hbErr instanceof Error ? hbErr.message : String(hbErr));
     }
+
+    // Also trigger the EOCN + LTL entity list refresh so the canonical
+    // hawkeye-lists/uae_eocn/latest.json blob stays fresh. The announcement
+    // poll (above) and the entity list are independent data sources: eocn-poll
+    // fetches human-readable update announcements while the entity list comes
+    // from the XLSX file on uaeiec.gov.ae. Both need to be refreshed.
+    const adminToken = process.env["ADMIN_TOKEN"];
+    if (adminToken) {
+      try {
+        const refreshRes = await fetch(
+          `${base}/api/admin/trigger-list-refresh?list=uae_eocn,uae_ltl`,
+          {
+            method: "GET",
+            headers: { authorization: `Bearer ${adminToken}` },
+            signal: AbortSignal.timeout(55_000),
+          },
+        );
+        const refreshData = (await refreshRes.json().catch(() => null)) as {
+          ok?: boolean; eocn_rows?: number; ltl_rows?: number; status?: string; error?: string
+        } | null;
+        if (refreshData?.ok) {
+          console.info(
+            `[eocn-poll] entity refresh OK — uae_eocn: ${refreshData.eocn_rows ?? "?"} rows, uae_ltl: ${refreshData.ltl_rows ?? "?"} rows`,
+          );
+        } else {
+          console.error(
+            `[eocn-poll] entity refresh returned non-ok:`,
+            JSON.stringify(refreshData),
+          );
+        }
+      } catch (refreshErr) {
+        console.error(
+          "[eocn-poll] entity refresh call failed:",
+          refreshErr instanceof Error ? refreshErr.message : String(refreshErr),
+        );
+      }
+    } else {
+      console.warn("[eocn-poll] ADMIN_TOKEN not set — skipping entity list refresh trigger");
+    }
   }
 
   // Extract listUpdateCount from the API response.
