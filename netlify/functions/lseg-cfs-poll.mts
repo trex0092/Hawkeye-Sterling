@@ -258,13 +258,11 @@ async function runHandler(req: Request): Promise<Response> {
   //    is removed here: the cron POSTs to the indexer using the ADMIN_TOKEN
   //    from env and folds the result into the summary.
   //
-  //    Skipped when ADMIN_TOKEN is missing (would 503 anyway) or when no new
-  //    files were downloaded (re-indexing the same corpus is wasted work).
+  //    Skipped when ADMIN_TOKEN is missing (would 503 anyway). Always triggered
+  //    regardless of whether new files were downloaded so that files from prior
+  //    runs (when the token was absent) get indexed into hawkeye-lists.
   let importCfs: ImportResult | undefined;
   const adminToken = process.env['ADMIN_TOKEN'];
-  // Always trigger import-cfs when ADMIN_TOKEN is available so freshly
-  // downloaded files AND files from prior runs (when the token was absent)
-  // both get indexed into hawkeye-lists without manual intervention.
   if (adminToken) {
     const baseUrl =
       process.env['URL'] ??
