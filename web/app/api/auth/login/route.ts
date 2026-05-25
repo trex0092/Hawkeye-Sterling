@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual } from "node:crypto";
-import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { createHash, timingSafeEqual, randomBytes } from "node:crypto";
+import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, del } from "@/lib/server/store";
@@ -287,6 +287,22 @@ export async function POST(req: Request) {
     );
   }).catch((err) =>
     console.warn("[auth/login] lastLogin persist failed:", err instanceof Error ? err.message : String(err)),
+  );
+
+  // Record session for the Session Monitor (fire-and-forget; must not block login response).
+  const now = new Date().toISOString();
+  void appendSession({
+    id: `sess_${randomBytes(6).toString("hex")}`,
+    userId: user.id,
+    userName: user.name ?? user.username ?? user.id,
+    role: user.role,
+    ipDisplay: maskIp(ip),
+    userAgent: (req.headers.get("user-agent") ?? "").slice(0, 120),
+    started: now,
+    lastActive: now,
+    active: true,
+  }).catch((err) =>
+    console.warn("[auth/login] session record failed:", err instanceof Error ? err.message : String(err)),
   );
 
   return res;

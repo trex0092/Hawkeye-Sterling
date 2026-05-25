@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { verifySession, computeRequestFingerprint, SESSION_COOKIE } from "@/lib/server/auth";
-import { loadUsers, ROLE_LABEL } from "../../access/_store";
+import { loadUsers, ROLE_LABEL, updateSessionActivity } from "../../access/_store";
 import { cookies, headers } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -68,6 +68,8 @@ export async function GET(): Promise<NextResponse> {
   }
 
   const { passwordHash: _h, passwordSalt: _s, pwVersion: _v, lastIpHash: _ip, ...safe } = user;
+  // Bump session lastActive — best-effort, must not block the response.
+  void updateSessionActivity(session.userId).catch(() => {});
   return NextResponse.json({
     ok: true,
     user: {

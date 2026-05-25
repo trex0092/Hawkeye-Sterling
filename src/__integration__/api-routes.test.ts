@@ -59,6 +59,10 @@ vi.mock('@/app/api/access/_store', async () => {
     loadUsers: vi.fn(async () => users),
     saveUsers: vi.fn(async (updated: typeof users) => { users = updated; }),
     withUsersLock: vi.fn(async (fn: () => Promise<unknown>) => fn()),
+    appendSession: vi.fn(async () => {}),
+    updateSessionActivity: vi.fn(async () => {}),
+    appendPermissionLog: vi.fn(async () => {}),
+    maskIp: vi.fn((raw: string) => raw),
     ROLE_LABEL: {},
     ROLE_MODULES: { mlro: [] },
   };

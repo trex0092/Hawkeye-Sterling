@@ -99,6 +99,7 @@ export default function AuditFindingsPage() {
       const res = await fetch("/api/audit-findings", {
         headers: authHeaders(),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: AuditFinding[]; error?: string };
       if (data.ok) {
         setFindings(data.records ?? []);
@@ -136,6 +137,7 @@ export default function AuditFindingsPage() {
           ...(form.remediationPlan.trim() ? { remediationPlan: form.remediationPlan.trim() } : {}),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -160,6 +162,7 @@ export default function AuditFindingsPage() {
         headers: authHeaders(),
         body: JSON.stringify({ mlroSignOff: true, mlroSignOffDate: today }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         void fetchFindings();

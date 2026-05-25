@@ -138,28 +138,148 @@ const MATRIX: Record<UserRole, Record<string, AccessLevel>> = {
   },
 };
 
-// Demo sessions
-interface Session {
+interface AccessSession {
   id: string;
   userId: string;
   userName: string;
-  ip: string;
+  role: string;
+  ipDisplay: string;
+  userAgent: string;
   started: string;
   lastActive: string;
   active: boolean;
 }
 
-const _DEMO_SESSIONS: Session[] = [
-  {
-    id: "sess-001",
-    userId: "usr-001",
-    userName: "Luisa Fernanda",
-    ip: "10.0.1.42",
-    started: "2025-04-30T07:50:00Z",
-    lastActive: "2025-04-30T09:15:22Z",
-    active: true,
-  },
-];
+function SessionMonitorTab() {
+  const [sessions, setSessions] = useState<AccessSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  const fetchSessions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/access/sessions");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { ok: boolean; sessions?: AccessSession[]; error?: string };
+      if (!data.ok) throw new Error(data.error ?? "Failed to load sessions");
+      setSessions(data.sessions ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void fetchSessions(); }, [fetchSessions]);
+
+  const revokeSession = async (id: string, userName: string) => {
+    if (!confirm(`Revoke all sessions for ${userName}? This will immediately sign them out.`)) return;
+    setRevoking(id);
+    try {
+      const res = await fetch(`/api/access/sessions?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      void fetchSessions();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Revoke failed");
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const active = sessions.filter((s) => s.active);
+  const inactive = sessions.filter((s) => !s.active);
+
+  if (loading) return <p className="text-12 text-ink-3 py-6 text-center">Loading sessions…</p>;
+  if (error) return <p className="text-12 text-red py-4">{error}</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-14 font-semibold text-ink-0">
+          {active.length} active session{active.length !== 1 ? "s" : ""}
+          {inactive.length > 0 && (
+            <span className="ml-2 text-11 text-ink-3 font-normal">· {inactive.length} inactive</span>
+          )}
+        </h2>
+        <button
+          onClick={() => void fetchSessions()}
+          disabled={loading}
+          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
+        >
+          ↻
+        </button>
+      </div>
+
+      {sessions.length === 0 ? (
+        <div className="rounded-lg border border-hair-2 bg-bg-2 px-5 py-8 text-center">
+          <p className="text-12 text-ink-3">No sessions recorded yet.</p>
+          <p className="text-11 text-ink-4 mt-1">Sessions are created on login and tracked here automatically.</p>
+        </div>
+      ) : (
+        <div className="border border-hair-2 rounded-md overflow-hidden">
+          <table className="w-full text-12">
+            <thead>
+              <tr className="border-b border-hair bg-bg-2">
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">User</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Role</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">IP</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Started</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Last Active</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Status</th>
+                <th className="px-4 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s, i) => (
+                <tr key={s.id} className={`border-b border-hair last:border-0 ${i % 2 === 0 ? "" : "bg-bg-2/30"}`}>
+                  <td className="px-4 py-2.5">
+                    <div className="font-semibold text-ink-0">{s.userName}</div>
+                    <div className="text-10 font-mono text-ink-4 truncate max-w-[180px]" title={s.id}>{s.id}</div>
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-ink-2 text-11">{s.role}</td>
+                  <td className="px-4 py-2.5 font-mono text-ink-2">{s.ipDisplay}</td>
+                  <td className="px-4 py-2.5 text-ink-2">{fmtDate(s.started)}</td>
+                  <td className="px-4 py-2.5 text-ink-2">{fmtDate(s.lastActive)}</td>
+                  <td className="px-4 py-2.5">
+                    {s.active ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-9 font-bold uppercase bg-green-dim text-green border border-green/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                        active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-9 font-bold uppercase bg-bg-2 text-ink-3 border border-hair">
+                        inactive
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    {s.active && (
+                      <button
+                        onClick={() => void revokeSession(s.id, s.userName)}
+                        disabled={revoking === s.id}
+                        className="px-2 py-1 text-10 font-mono border border-red/40 rounded text-red bg-red-dim hover:bg-red-dim/70 transition-colors disabled:opacity-50"
+                      >
+                        {revoking === s.id ? "…" : "Revoke"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {sessions.length > 0 && (
+        <p className="text-10 text-ink-4 mt-3">
+          IPs are partially masked for privacy. Revoking a session invalidates all active tokens for that user.
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -513,7 +633,7 @@ export default function AccessControlPage() {
   const [activeTab, setActiveTab] = useState<Tab>("👥 Users");
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [log, setLog] = useState<PermissionLogEntry[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [_sessions, _setSessions] = useState<AccessSession[]>([]);
   const [selectedUser, setSelectedUser] = useState<AccessUser | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -617,7 +737,7 @@ export default function AccessControlPage() {
     }
   };
 
-  const _handleRevokeSession = async (session: Session) => {
+  const _handleRevokeSession = async (session: AccessSession) => {
     setRevokeError(null);
     setRevokingId(session.id);
     try {
@@ -627,7 +747,7 @@ export default function AccessControlPage() {
         body: JSON.stringify({ userId: session.userId, reason: "Manual session revocation by administrator." }),
       });
       if (!mountedRef.current) return;
-      setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
+      _setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
       setUsers((prev) => prev.map((u) => (u.id === session.userId ? { ...u, active: false } : u)));
       void fetchLog();
     } catch (err) {
@@ -640,7 +760,7 @@ export default function AccessControlPage() {
 
   // KPIs
   const totalUsers = users.length;
-  const activeSessions = sessions.filter((s) => s.active).length;
+  const activeSessions = _sessions.filter((s) => s.active).length;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const roleChangesThisWeek = log.filter(
@@ -906,14 +1026,7 @@ export default function AccessControlPage() {
       )}
 
       {/* ── Tab 3: Session Monitor ───────────────────────────────────────────── */}
-      {activeTab === "👁️ Session Monitor" && (
-        <div>
-          <div className="mb-4">
-            <h2 className="text-14 font-semibold text-ink-0 mb-1">Active sessions</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">Live session tracking not yet implemented.</p>
-        </div>
-      )}
+      {activeTab === "👁️ Session Monitor" && <SessionMonitorTab />}
 
       {/* ── Tab 4: Audit Log ─────────────────────────────────────────────────── */}
       {activeTab === "📋 Audit Log" && (

@@ -66,7 +66,8 @@ export default function BraPage() {
     setError(null);
     try {
       const res = await fetch("/api/bra");
-      const data = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { ok: boolean; records?: typeof records; error?: string };
       if (data.ok) {
         setRecords(data.records ?? []);
       } else {
@@ -103,7 +104,8 @@ export default function BraPage() {
           aedThresholdApplies: form.aedThresholdApplies,
         }),
       });
-      const data = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
         void fetchRecords();
