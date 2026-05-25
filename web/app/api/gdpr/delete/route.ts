@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { del, getJson, listKeys } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   // our system" from "store empty / scan failed". Expose totalKeysScanned
   // and recordsReadable so an audit log of the deletion request answers
   // "did we look in the right place, and was anything there to look at?".
+  if (!body.dryRun) {
+    void writeAuditChainEntry(
+      { event: "gdpr.subject_erased", actor: "portal_admin", meta: { deletedCount: deleted.length, matchPredicate: subjectId !== undefined ? `subjectId=${subjectId}` : `email=${email}` } },
+      "admin",
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+  }
   return NextResponse.json({
     ok: true,
     regulation: "GDPR Art. 17",

@@ -6,6 +6,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { loadPermissionLog, appendPermissionLog, type PermissionLogEntry } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function GET(req: Request) {
   const deny = adminAuth(req);
@@ -51,5 +52,9 @@ export async function POST(req: Request) {
   };
 
   await appendPermissionLog(entry);
+  void writeAuditChainEntry(
+    { event: "access.permission_log.created", actor: "portal_admin", meta: { action: entry.action, targetUserId: entry.targetUserId } },
+    "admin",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, entry }, { status: 201 });
 }
