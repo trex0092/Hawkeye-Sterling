@@ -64,11 +64,13 @@ export default [
     },
   },
   {
-    // Brain mode files use non-null assertions (!) as intentional invariants —
-    // these are well-tested (2500+ tests) and the assertions encode algorithmic
-    // guarantees the type system can't express. Suppress the warning here so
-    // legitimate violations elsewhere stay visible.
-    files: ['src/brain/modes/**/*.ts'],
+    // Brain mode files and generated taxonomy files use non-null assertions (!)
+    // as intentional invariants — these are well-tested (2500+ tests) and the
+    // assertions encode algorithmic guarantees the type system can't express.
+    // Generated files use Map.get(knownKey)! where the key is guaranteed present
+    // by construction. Suppress the warning here so legitimate violations elsewhere
+    // stay visible.
+    files: ['src/brain/modes/**/*.ts', 'src/brain/*.generated.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
     },
