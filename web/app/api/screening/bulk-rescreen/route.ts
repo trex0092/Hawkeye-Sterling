@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+
+const BULK_RESCREEN_MODEL = "claude-haiku-4-5-20251001";
 export interface BulkRescreenSubject {
   id: string;
   name: string;
@@ -146,7 +148,7 @@ ${subjectLines}
 Simulate a full portfolio re-screen against the new list version. Generate realistic new hits and clearances. Return JSON only.`;
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: BULK_RESCREEN_MODEL,
       max_tokens: 700,
       system: [
         {
@@ -170,6 +172,7 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     ) as BulkRescreenResult;
     if (!Array.isArray(result.newHits)) result.newHits = [];
     if (!Array.isArray(result.cleared)) result.cleared = [];
+    if (typeof result.summary !== "string") result.summary = "";
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;
