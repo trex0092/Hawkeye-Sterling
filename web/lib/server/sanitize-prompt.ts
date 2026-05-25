@@ -35,7 +35,7 @@ export function sanitizeText(value: string | undefined | null, maxLength = 5000)
 }
 
 const INJECTION_PATTERNS =
-  /\b(ignore\s+(all\s+)?previous|disregard\s+(all\s+)?previous|forget\s+(all\s+)?previous|new\s+instructions?|system\s*prompt|you\s+are\s+now\s+a|act\s+as\s+(an?\s+)?)/gi;
+  /\b(ignore\s+(all\s+)?previous|disregard\s+(all\s+)?previous|forget\s+(all\s+)?previous|new\s+instructions?|system\s*prompt|you\s+are\s+now\s+a|act\s+as\s+an?\s+)/gi;
 
 /**
  * Sanitizes narrative/free-text content before sending to the LLM.

@@ -261,13 +261,14 @@ async function acquireIndexLock(tenant: string): Promise<boolean> {
     const age = Date.now() - new Date(existing.lockedAt).getTime();
     if (age < INDEX_LOCK_TTL_MS) return false; // lock held by another write
   }
-  const claimedAt = new Date().toISOString();
-  await setJson(lockKey, { lockedAt: claimedAt });
-  // Read-back verification: confirm our write won the race.
-  // Add a small jitter before the read to reduce collision probability.
+  // Use a random UUID as the claim token — unlike ISO timestamps, UUIDs are
+  // unique per call even when two callers run within the same millisecond.
+  const claimId = crypto.randomUUID();
+  await setJson(lockKey, { lockedAt: claimId });
+  // Read-back: confirm our write landed last (last-write-wins KV).
   await new Promise((r) => setTimeout(r, 10 + Math.random() * 20));
   const readBack = await getJson<{ lockedAt: string }>(lockKey).catch(() => null);
-  return readBack?.lockedAt === claimedAt;
+  return readBack?.lockedAt === claimId;
 }
 
 async function releaseIndexLock(tenant: string): Promise<void> {

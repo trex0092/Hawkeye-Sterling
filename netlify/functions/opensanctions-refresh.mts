@@ -32,14 +32,22 @@ const LOCK_TTL_MS = 10 * 60 * 1000;
 
 export default async (req: Request): Promise<Response> => {
   // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
+  // If a claimed scheduled event also carries an Authorization header, verify it —
+  // a genuine Netlify scheduler invocation never sends Authorization.
   const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
+  const authHeader = req.headers.get("authorization");
+  const expected = process.env["HAWKEYE_CRON_TOKEN"];
   if (!isScheduledEvent) {
-    const expected = process.env["HAWKEYE_CRON_TOKEN"];
     if (!expected) {
       return json({ ok: false, error: "HAWKEYE_CRON_TOKEN not configured — refused" }, 503);
     }
-    const auth = req.headers.get("authorization");
-    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    if (supplied !== expected) {
+      return json({ ok: false, error: "forbidden" }, 403);
+    }
+  } else if (authHeader !== null && expected) {
+    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
     if (supplied !== expected) {
       return json({ ok: false, error: "forbidden" }, 403);
     }

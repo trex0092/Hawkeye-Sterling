@@ -74,12 +74,20 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 export default async function handler(req: Request): Promise<Response> {
   // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
+  // If a claimed scheduled event also carries an Authorization header, verify it —
+  // a genuine Netlify scheduler invocation never sends Authorization.
   const cronToken = process.env["HAWKEYE_CRON_TOKEN"];
   const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
+  const authHeader = req.headers.get("authorization");
   if (!isScheduledEvent) {
-    const auth = req.headers.get("authorization");
-    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
     if (!cronToken || supplied !== cronToken) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
+    }
+  } else if (authHeader !== null && cronToken) {
+    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (supplied !== cronToken) {
       return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
     }
   }

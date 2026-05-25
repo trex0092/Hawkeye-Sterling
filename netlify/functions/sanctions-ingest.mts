@@ -496,20 +496,33 @@ export default async function handler(req: Request): Promise<Response> {
   // Netlify scheduler sets x-nf-event: schedule on cron-triggered calls.
   // HTTP-triggered calls (external operators) must supply the bearer token —
   // reject requests without a header rather than allowing unauthenticated access.
+  // Defense-in-depth: x-nf-event is technically forgeable; if a claimed scheduled
+  // event also carries an Authorization header, verify it (genuine scheduler invocations
+  // never send Authorization).
   const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
-  if (!isScheduledEvent) {
-    const auth = req.headers.get("authorization");
-    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  const authHeader = req.headers.get("authorization");
+
+  async function verifyCronToken(supplied: string): Promise<boolean> {
     const enc = new TextEncoder();
     const a = enc.encode(cronToken);
     const b = enc.encode(supplied);
     const padded = new Uint8Array(a.byteLength);
     padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
-    const match =
+    return (
       (await import("node:crypto").then(({ timingSafeEqual }) =>
         timingSafeEqual(new Uint8Array(a.buffer), padded),
-      ).catch(() => false)) && a.byteLength === b.byteLength;
-    if (!match) {
+      ).catch(() => false)) as boolean
+    ) && a.byteLength === b.byteLength;
+  }
+
+  if (!isScheduledEvent) {
+    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    if (!await verifyCronToken(supplied)) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
+    }
+  } else if (authHeader !== null) {
+    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!await verifyCronToken(supplied)) {
       return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
     }
   }

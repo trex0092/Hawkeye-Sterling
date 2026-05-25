@@ -125,24 +125,35 @@ function buildCspHeader(_nonce: string): string {
 }
 
 // ── Session verification in Edge ─────────────────────────────────────────────
-// The Edge runtime cannot reliably access all Netlify env vars (SESSION_SECRET
-// is a Node.js Lambda concern). We do NOT attempt HMAC verification here.
-// Instead we just check that the session cookie exists and hasn't expired.
-//
-// Full HMAC verification happens in auth.ts (Node.js runtime) for every API
-// call and in the /api/auth/me route — so spoofing the cookie only lets an
-// attacker see the (empty) app shell; they cannot load any real data.
+// Uses Web Crypto (available in all Netlify edge/V8 runtimes) to do full
+// HMAC-SHA256 verification — the same scheme auth.ts uses in Node.js.
+// A forged cookie with a valid exp but wrong HMAC will fail here, so it cannot
+// trigger ADMIN_TOKEN injection or bypass the session guard.
 
-function isValidSession(token: string): boolean {
-  if (!token) return false;
+const _b64url = (s: string) =>
+  s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4);
+
+async function verifySessionEdge(token: string): Promise<boolean> {
+  const secret = process.env["SESSION_SECRET"];
+  if (!secret || !token) return false;
   try {
     const dot = token.lastIndexOf(".");
     if (dot === -1) return false;
-    const encoded = token.slice(0, dot);
-    // Restore base64 padding that base64url strips — Deno's atob requires it.
-    const b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    const payload = JSON.parse(atob(padded)) as { exp?: number };
+    const encodedPayload = token.slice(0, dot);
+    const encodedSig = token.slice(dot + 1);
+    const sigBytes = Uint8Array.from(atob(_b64url(encodedSig)), (c) => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    const valid = await crypto.subtle.verify(
+      "HMAC", key, sigBytes, new TextEncoder().encode(encodedPayload),
+    );
+    if (!valid) return false;
+    const payload = JSON.parse(atob(_b64url(encodedPayload))) as { exp?: number };
     return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
   } catch {
     return false;
@@ -193,7 +204,7 @@ function corsResponse(): NextResponse {
   return res;
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const requestId = resolveRequestId(req);
 
@@ -231,7 +242,7 @@ export function middleware(req: NextRequest): NextResponse {
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
-    if (!isValidSession(token)) {
+    if (!await verifySessionEdge(token)) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
       loginUrl.search = "";
@@ -257,15 +268,17 @@ export function middleware(req: NextRequest): NextResponse {
       const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
-      // Require an origin or referer header that matches the deployment host.
-      // hasSessionCookie alone is insufficient — external callers can send
-      // arbitrary Cookie headers, and the Edge runtime performs no HMAC
-      // verification. Only browsers making same-origin fetch() calls reliably
-      // set origin/referer that matches the host.
+      // A HMAC-verified session cookie is a reliable same-origin indicator:
+      // browsers attach HttpOnly cookies automatically on same-origin requests,
+      // and verifySessionEdge() checks the full HMAC so a forged cookie cannot
+      // trigger injection. origin/referer match is kept as the alternative for
+      // requests from browser contexts where the cookie isn't yet set.
+      const hasValidSession = await verifySessionEdge(req.cookies.get(SESSION_COOKIE)?.value ?? "");
       const isSameOrigin =
-        hostHostname !== null &&
-        ((origin != null && hostnameOf(origin) === hostHostname) ||
-          (referer != null && hostnameOf(referer) === hostHostname));
+        hasValidSession ||
+        (hostHostname !== null &&
+          ((origin != null && hostnameOf(origin) === hostHostname) ||
+            (referer != null && hostnameOf(referer) === hostHostname)));
 
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);

@@ -176,25 +176,35 @@ async function runHandler(req: Request): Promise<Response> {
   }
 
   // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
+  // If a claimed scheduled event also carries an Authorization header, verify it —
+  // a genuine Netlify scheduler invocation never sends Authorization.
   const cronToken = process.env['HAWKEYE_CRON_TOKEN'];
   const isScheduledEvent = req.headers.get('x-nf-event') === 'schedule';
-  if (!isScheduledEvent) {
-    const auth = req.headers.get('authorization');
-    const supplied = auth?.replace(/^Bearer\s+/i, '').trim() ?? '';
+  const authHeader = req.headers.get('authorization');
+
+  async function verifyToken(supplied: string): Promise<boolean> {
+    if (!cronToken) return false;
     const enc = new TextEncoder();
-    const a = enc.encode(cronToken ?? '');
+    const a = enc.encode(cronToken);
     const b = enc.encode(supplied);
     const padded = new Uint8Array(a.byteLength);
     padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
-    const match =
-      !!cronToken &&
+    return (
       ((await import('node:crypto')
-        .then(({ timingSafeEqual }) =>
-          timingSafeEqual(new Uint8Array(a.buffer), padded),
-        )
-        .catch(() => false)) as boolean) &&
-      a.byteLength === b.byteLength;
-    if (!match) {
+        .then(({ timingSafeEqual }) => timingSafeEqual(new Uint8Array(a.buffer), padded))
+        .catch(() => false)) as boolean) && a.byteLength === b.byteLength
+    );
+  }
+
+  if (!isScheduledEvent) {
+    const supplied = authHeader?.replace(/^Bearer\s+/i, '').trim() ?? '';
+    if (!await verifyToken(supplied)) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
+    }
+  } else if (authHeader !== null && cronToken) {
+    const supplied = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!await verifyToken(supplied)) {
       return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
     }
   }
