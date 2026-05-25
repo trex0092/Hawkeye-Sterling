@@ -10,6 +10,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   loadEocnSlaRecord,
   updateEocnSlaRecord,
@@ -115,6 +116,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "eocn_sla.updated", actor: gate.keyId, meta: { id, status: body.status } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record: computeEocnSlaStatus(record) },

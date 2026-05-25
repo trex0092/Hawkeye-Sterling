@@ -9,6 +9,7 @@ import {
   saveRiskAppetite,
   type RiskAppetiteConfig,
 } from "@/lib/server/risk-appetite";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -153,6 +154,11 @@ export async function PUT(req: Request): Promise<NextResponse> {
     console.error("[risk-appetite] saveRiskAppetite failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "Failed to save risk appetite config" }, { status: 500, headers: gate.headers });
   }
+
+  void writeAuditChainEntry(
+    { event: "risk_appetite.updated", actor: gate.keyId, meta: { updatedBy: config.updatedBy } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, config }, { headers: gate.headers });
 }

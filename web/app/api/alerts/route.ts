@@ -4,6 +4,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   listAlerts,
   writeAlert,
@@ -106,6 +108,11 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       if (typeof body.dismissedBy === "string") dismissedBy = body.dismissedBy;
     } catch { /* body optional */ }
     const count = await dismissAllUnread(dismissedBy);
+    const tenantId = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "alerts.dismissed_all", actor: gate.keyId, meta: { count, dismissedBy } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, dismissed: count }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);

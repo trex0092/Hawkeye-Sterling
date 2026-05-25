@@ -15,6 +15,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface StrCase {
@@ -225,5 +226,10 @@ export async function PUT(req: Request): Promise<NextResponse> {
     await saveStrCase(tenant, record);
     saved.push(record);
   }
+  void writeAuditChainEntry(
+    { event: "str_cases.bulk_imported", actor: gate.keyId, meta: { count: saved.length } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, tenant, cases: saved }, { headers: gate.headers });
 }

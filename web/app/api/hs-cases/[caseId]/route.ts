@@ -14,6 +14,7 @@ import {
   type DispositionVerdict,
   type CaseRiskFactors,
 } from "@/lib/server/hs-case-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,6 +128,11 @@ export async function PATCH(
     const factors = riskFactors as CaseRiskFactors;
     updated = await updateCaseRiskScore(tenant, caseId, factors, gate.keyId) ?? updated;
   }
+
+  void writeAuditChainEntry(
+    { event: "hs_case.updated", actor: gate.keyId, caseId, meta: { status, dispositionVerdict } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
 }

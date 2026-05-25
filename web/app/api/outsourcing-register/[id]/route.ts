@@ -11,6 +11,7 @@ import {
   updateOutsourcingArrangement,
   type OutsourcingPatch,
 } from "@/lib/server/outsourcing-register";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "outsourcing_register.updated", actor: gate.keyId, meta: { id } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record },

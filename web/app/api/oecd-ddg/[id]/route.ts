@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadOecdDdgRecord, updateOecdDdgRecord, getStepCompletion, type OecdDdgRecord } from "@/lib/server/oecd-ddg";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,12 @@ export async function PATCH(
   try {
     const updated = await updateOecdDdgRecord(tenantId, id, body);
     const stepCompletion = getStepCompletion(updated);
+
+    void writeAuditChainEntry(
+      { event: "oecd_ddg.updated", actor: gate.keyId, meta: { id } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({ ok: true, record: updated, stepCompletion }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { getJson, setJson } from "@/lib/server/store";
 import type { TenantRecord, TenantPlan } from "../route";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,6 +110,11 @@ export async function PATCH(
     console.error("[admin/tenants/id] PATCH write failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "Failed to update tenant." }, { status: 500 });
   }
+
+  void writeAuditChainEntry(
+    { event: "tenant.updated", actor: "portal_admin", meta: { tenantId, changes: body } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, tenant: updated });
 }

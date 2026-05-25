@@ -41,6 +41,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, del } from "@/lib/server/store";
 import { assertSafeWebhookUrl } from "@/lib/server/webhook";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -161,6 +162,11 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   await del(webhookKey(tenant, id));
   const idx = (await getJson<string[]>(webhookIndexKey(tenant))) ?? [];
   await setJson(webhookIndexKey(tenant), idx.filter((i) => i !== id));
+
+  void writeAuditChainEntry(
+    { event: "webhook.deleted", actor: gate.keyId, meta: { id } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, id, deleted: true }, { headers: gate.headers });
 }

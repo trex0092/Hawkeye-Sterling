@@ -16,6 +16,7 @@ import {
   updatePnmrRecord,
   type PnmrRecord,
 } from "@/lib/server/pnmr";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 const VALID_STATUSES: PnmrRecord["status"][] = [
   "pending",
@@ -116,6 +117,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "pnmr.updated", actor: gate.keyId, caseId: id, meta: { status: body.status } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }

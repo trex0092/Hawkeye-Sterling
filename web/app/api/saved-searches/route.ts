@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import type { SavedSearch } from "@/lib/types";
 
@@ -73,13 +74,17 @@ async function handlePost(req: Request): Promise<NextResponse> {
   return NextResponse.json({ ok: true, search });
 }
 
-async function handleDelete(req: Request): Promise<NextResponse> {
+async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id")?.trim();
   if (!id || id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(id)) {
     return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
   }
   await del(`saved-searches/${id}`);
+  void writeAuditChainEntry(
+    { event: "saved_search.deleted", actor: ctx.apiKey.id, meta: { id } },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true });
 }
 

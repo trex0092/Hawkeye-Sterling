@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   loadVoluntaryDisclosure,
   updateVoluntaryDisclosure,
@@ -77,6 +78,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "voluntary_disclosure.updated", actor: gate.keyId, meta: { id } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record },

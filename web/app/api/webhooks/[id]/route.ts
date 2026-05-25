@@ -4,12 +4,14 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   loadRegistrations,
   saveRegistrations,
   isSafeWebhookUrl,
   type WebhookEvent,
 } from "@/lib/server/webhook-emitter";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +63,7 @@ export async function PATCH(
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const tenantId = tenantIdFromGate(gate);
 
   const { id } = await params;
 
@@ -139,6 +142,11 @@ export async function PATCH(
     registrations[idx] = webhook;
     await saveRegistrations(registrations);
 
+    void writeAuditChainEntry(
+      { event: "webhook.updated", actor: gate.keyId, meta: { id } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({ ok: true, webhook }, { headers: gate.headers });
   } catch (err) {
     console.error("[webhooks/[id] PATCH]", err instanceof Error ? err.message : err);
@@ -155,6 +163,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const tenantId = tenantIdFromGate(gate);
 
   const { id } = await params;
 
@@ -170,6 +179,11 @@ export async function DELETE(
 
     registrations.splice(idx, 1);
     await saveRegistrations(registrations);
+
+    void writeAuditChainEntry(
+      { event: "webhook.deleted", actor: gate.keyId, meta: { id } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json({ ok: true }, { headers: gate.headers });
   } catch (err) {

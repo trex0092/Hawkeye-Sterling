@@ -4,11 +4,13 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   loadWorkflowRules,
   saveWorkflowRules,
   validateRule,
 } from "@/lib/server/workflow-engine";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +40,7 @@ export async function PATCH(
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const tenantId = tenantIdFromGate(gate);
 
   const { id } = await params;
   const rules = await loadWorkflowRules();
@@ -78,6 +81,11 @@ export async function PATCH(
   rules[idx] = updated;
   await saveWorkflowRules(rules);
 
+  void writeAuditChainEntry(
+    { event: "workflow_rule.updated", actor: gate.keyId, meta: { id } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, rule: updated }, { headers: gate.headers });
 }
 
@@ -87,6 +95,7 @@ export async function DELETE(
 ): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
+  const tenantId = tenantIdFromGate(gate);
 
   const { id } = await params;
   const rules = await loadWorkflowRules();
@@ -100,6 +109,11 @@ export async function DELETE(
 
   const [deleted] = rules.splice(idx, 1);
   await saveWorkflowRules(rules);
+
+  void writeAuditChainEntry(
+    { event: "workflow_rule.deleted", actor: gate.keyId, meta: { id } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, deleted }, { headers: gate.headers });
 }

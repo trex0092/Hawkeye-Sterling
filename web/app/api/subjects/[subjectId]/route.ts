@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadSubject, patchSubject, reviewDueSoon } from "@/lib/server/subject-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,11 @@ export async function PATCH(
 
   const updated = await patchSubject(tenant, subjectId, body as Parameters<typeof patchSubject>[2], gate.keyId);
   if (!updated) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+
+  void writeAuditChainEntry(
+    { event: "subject.updated", actor: gate.keyId, meta: { subjectId } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, subject: updated }, { headers: gate.headers });
 }
