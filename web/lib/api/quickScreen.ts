@@ -126,7 +126,7 @@ export async function quickScreen(
     } catch (err) {
       if (externalSignal?.aborted) throw err;
       if (err instanceof QuickScreenError) {
-        if (!lastError) throw err;
+        throw err;
       } else if (err instanceof Error && err.name === "AbortError") {
         lastError = new QuickScreenError("Screening request timed out");
       } else {

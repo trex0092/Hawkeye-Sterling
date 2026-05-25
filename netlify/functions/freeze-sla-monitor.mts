@@ -78,18 +78,10 @@ export default async function handler(req: Request): Promise<Response> {
   // If a claimed scheduled event also carries an Authorization header, verify it —
   // a genuine Netlify scheduler invocation never sends Authorization.
   const cronToken = process.env["HAWKEYE_CRON_TOKEN"];
-  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
-  const authHeader = req.headers.get("authorization");
-  if (!isScheduledEvent) {
-    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
-    if (!cronToken || supplied !== cronToken) {
-      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
-    }
-  } else if (authHeader !== null && cronToken) {
-    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (supplied !== cronToken) {
-      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
-    }
+  const auth = req.headers.get("authorization");
+  const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  if (cronToken && supplied !== cronToken) {
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
   }
 
   const checkedAt = new Date().toISOString();

@@ -113,13 +113,31 @@ export function nysiis(s: string): string {
        .replace(/^PH/, "FF").replace(/^PF/, "FF").replace(/^SCH/, "SSS");
   u = u.replace(/EE$|IE$/, "Y").replace(/(DT|RT|RD|NT|ND)$/, "D");
   let res = u[0]!;
-  for (let i = 1; i < u.length; i += 1) {
-    let c = u[i]!;
-    c = c.replace(/EV/, "AF").replace(/[AEIOU]/, "A");
-    c = c.replace(/Q/, "G").replace(/Z/, "S").replace(/M/, "N");
-    c = c.replace(/KN/, "N").replace(/K/, "C").replace(/SCH/, "SSS");
-    c = c.replace(/PH/, "FF").replace(/H/, res.slice(-1) ?? "").replace(/W/, "");
-    if (c !== res.slice(-1)) res += c;
+  let i = 1;
+  while (i < u.length) {
+    // Multi-character patterns must be tested against the remaining substring.
+    const rest = u.slice(i);
+    let token: string;
+    let advance = 1;
+    if (rest.startsWith("EV")) { token = "AF"; advance = 2; }
+    else if (rest.startsWith("KN")) { token = "N"; advance = 2; }
+    else if (rest.startsWith("SCH")) { token = "SSS"; advance = 3; }
+    else if (rest.startsWith("PH")) { token = "FF"; advance = 2; }
+    else {
+      let c = u[i]!;
+      if (/[AEIOU]/.test(c)) c = "A";
+      else if (c === "Q") c = "G";
+      else if (c === "Z") c = "S";
+      else if (c === "M") c = "N";
+      else if (c === "K") c = "C";
+      else if (c === "H") c = res.slice(-1) ?? "";
+      else if (c === "W") c = "";
+      token = c;
+    }
+    for (const ch of token) {
+      if (ch && ch !== res.slice(-1)) res += ch;
+    }
+    i += advance;
   }
   return res.slice(0, 6);
 }

@@ -58,9 +58,9 @@ export async function deliverWebhookEvent(
     const signature = reg.secret
       ? createHmac("sha256", reg.secret).update(bodyStr).digest("hex")
       : null;
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 8_000);
     try {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 8_000);
       const res = await fetch(reg.url, {
         method: "POST",
         headers: {
@@ -77,6 +77,7 @@ export async function deliverWebhookEvent(
       reg.lastDeliveredAt = ts;
       reg.lastDeliveryStatus = res.ok ? "ok" : "failed";
     } catch {
+      clearTimeout(tid);
       reg.deliveryCount = (reg.deliveryCount ?? 0) + 1;
       reg.lastDeliveredAt = ts;
       reg.lastDeliveryStatus = "failed";

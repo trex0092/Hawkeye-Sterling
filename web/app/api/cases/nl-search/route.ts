@@ -209,6 +209,7 @@ function applyFilters(subjects: SubjectSlim[], filters: ParsedFilters): string[]
     if (filters.hasPep === true && !s.pep) return false;
     if (filters.hasPep === false && s.pep) return false;
 
+    if (filters.pepMinTier && !s.pep) return false;
     if (filters.pepMinTier && s.pep) {
       const tier = s.pep.tier.toLowerCase();
       const minTier = filters.pepMinTier.toLowerCase();

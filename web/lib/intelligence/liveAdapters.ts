@@ -249,7 +249,7 @@ function ellipticAdapter(): OnChainAdapter {
         const r = (await res.json()) as { risk_score?: number; cluster_name?: string };
         return {
           address,
-          riskScore: Math.round((r.risk_score ?? 0) * 10),
+          riskScore: Math.round((r.risk_score ?? 0) * 100),
           ...(r.cluster_name ? { cluster: r.cluster_name } : {}),
           exposureSummary: "Elliptic baseline analysis",
         };

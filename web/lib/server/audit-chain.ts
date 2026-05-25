@@ -273,6 +273,7 @@ async function loadAuditStore() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get: (_key: string, _opts?: any) => Promise<unknown>;
       setJSON: (_key: string, _value: unknown) => Promise<void>;
+      set: (_key: string, _data: string) => Promise<void>;
     };
   };
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
@@ -339,7 +340,7 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
         payload,
         at,
       });
-      await store.setJSON(chainFile, chain);
+      await store.set(chainFile, JSON.stringify(chain));
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

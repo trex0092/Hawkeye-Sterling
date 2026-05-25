@@ -2651,7 +2651,7 @@ function maplecroftAdapter(): NewsAdapter {
           source: "maplecroft", outlet: a.country ?? "maplecroft", title: a.headline!, url: a.url!,
           publishedAt: a.publishedAt ?? new Date().toISOString(),
           ...(a.summary ? { snippet: a.summary } : {}),
-          ...(typeof a.riskScore === "number" ? { sentiment: -a.riskScore / 10 } : {}),
+          ...(typeof a.riskScore === "number" ? { sentiment: -(a.riskScore / 100) } : {}),
         } as NewsArticle));
       } catch (err) { console.warn("[maplecroft] failed:", err instanceof Error ? err.message : err); return []; }
     },
@@ -3514,7 +3514,6 @@ export function activeNewsProviders(): string[] {
     ["COMPLIANCEWEEK_API_KEY", "complianceweek"],
     ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
     ["PEGASUS_API_KEY", "pegasus"],
-    ["FREE_RSS_ENABLED", "free-rss-aggregator"],
     // OSINT aggregation
     ["TARANIS_URL", "taranis"],
     // AI-native research adapters
@@ -3534,6 +3533,7 @@ export function activeNewsProviders(): string[] {
     "south-asian-rss-indian-express",
     "south-asian-rss-the-hindu",
     "south-asian-rss-bd-news-24",
+    "free-rss-aggregator",
   ];
   return [
     ...keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name),

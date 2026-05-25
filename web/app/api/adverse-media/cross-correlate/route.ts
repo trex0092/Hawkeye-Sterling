@@ -5,6 +5,9 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+
+const CROSS_CORRELATE_MODEL = "claude-haiku-4-5-20251001";
+const MAX_ARTICLES = 50;
 export type CrossCorrelateTheme =
   | "fraud"
   | "sanctions"
@@ -51,6 +54,12 @@ export async function POST(req: Request) {
   }
 
   const subjectName = sanitizeField(rawSubjectName, 300);
+  const sanitizedArticles = articles.slice(0, MAX_ARTICLES).map((a) => ({
+    source: sanitizeField(a.source, 200),
+    headline: sanitizeField(a.headline, 500),
+    date: sanitizeField(a.date, 50),
+    snippet: sanitizeField(a.snippet, 1000),
+  }));
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "adverse-media/cross-correlate temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
@@ -59,7 +68,7 @@ export async function POST(req: Request) {
     const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: CROSS_CORRELATE_MODEL,
       max_tokens: 800,
       system: [
         {
@@ -99,8 +108,8 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
           role: "user",
           content: `Subject name: ${subjectName}
 
-Articles to analyse (${articles.length} total):
-${JSON.stringify(articles, null, 2)}
+Articles to analyse (${sanitizedArticles.length} total):
+${JSON.stringify(sanitizedArticles, null, 2)}
 
 Perform entity disambiguation, theme grouping, trend analysis, score computation (0–100), and action recommendation. Return JSON only.`,
         },

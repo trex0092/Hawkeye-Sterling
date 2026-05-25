@@ -11,9 +11,9 @@
 // Controls: 3.01 (ongoing monitoring), 3.04 (periodic review trigger), 21.08
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import {
-  listSubjects, getSubject, saveSubject, saveDelta,
+  listSubjects, getSubject, saveSubject, saveDelta, nextRunAt,
   type PKycSubject, type PKycRiskBand, type PKycDelta, type BehavioralBaseline,
 } from "../_store";
 
@@ -103,7 +103,7 @@ interface RunSubjectResult {
   behavioralDrift?: string[];
 }
 
-async function runSubject(subject: PKycSubject, force = false): Promise<RunSubjectResult> {
+async function runSubject(subject: PKycSubject, force = false, tenantId = "default"): Promise<RunSubjectResult> {
   // PR-3: normalize lastHits for records created before this field existed
   subject.lastHits = subject.lastHits ?? 0;
   const now = new Date();
@@ -186,22 +186,15 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       }
     } catch (err) { console.warn("[pkyc/run] behavioral baseline comparison failed (non-blocking):", err instanceof Error ? err.message : String(err)); }
 
-    // Build cadence-specific next-run date
-    const cadenceMs: Record<string, number> = {
-      daily: 86_400_000,
-      weekly: 7 * 86_400_000,
-      monthly: 30 * 86_400_000,
-      quarterly: 91 * 86_400_000,
-      annual: 365 * 86_400_000,
-    };
-    const nextMs = cadenceMs[subject.cadence] ?? cadenceMs["monthly"]!;
-    const nextRunAt = new Date(now.getTime() + nextMs).toISOString();
+    // Use the calendar-aware helper so months/quarters/years land on the same
+    // day-of-month as enrollment (e.g. Jan 31 + 1 month → Feb 28, not Mar 2).
+    const nextRunAtStr = nextRunAt(subject.cadence, now);
 
     const hasBehavioralAlert = (behavioralDrift?.length ?? 0) > 0;
     const updatedSubject: PKycSubject = {
       ...subject,
       lastRunAt: now.toISOString(),
-      nextRunAt,
+      nextRunAt: nextRunAtStr,
       lastBand: band,
       lastComposite: composite,
       lastHits: hits,
@@ -211,7 +204,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
       ...(behavioralBaseline ? { behavioralBaseline } : {}),
       ...(behavioralDrift ? { behavioralDrift } : {}),
     };
-    await saveSubject(updatedSubject);
+    await saveSubject(updatedSubject, tenantId);
 
     if (changed) {
       const delta: PKycDelta = {
@@ -225,7 +218,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
         detail,
         acknowledged: false,
       };
-      await saveDelta(delta);
+      await saveDelta(delta, tenantId);
     }
 
     return { id: subject.id, name: subject.name, band, composite, hits, changed, behavioralDrift };
@@ -245,7 +238,7 @@ async function runSubject(subject: PKycSubject, force = false): Promise<RunSubje
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
   const force = url.searchParams.get("force") === "true";
@@ -254,7 +247,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     if (id.length > 256) {
       return NextResponse.json({ ok: false, error: "id query parameter exceeds 256-character limit" }, { status: 400 });
     }
-    const subject = await getSubject(id);
+    const subject = await getSubject(id, ctx.tenantId);
     if (!subject) return NextResponse.json({ ok: false, error: "Subject not found" }, { status: 404 });
     if (!subject.name || typeof subject.name !== "string" || subject.name.trim().length === 0) {
       return NextResponse.json({ ok: false, error: "Subject record has an invalid or missing name" }, { status: 422 });
@@ -262,11 +255,11 @@ async function handlePost(req: Request): Promise<NextResponse> {
     if (subject.name.length > 500) {
       return NextResponse.json({ ok: false, error: "Subject name exceeds 500-character limit" }, { status: 422 });
     }
-    const result = await runSubject(subject, true);
+    const result = await runSubject(subject, true, ctx.tenantId);
     return NextResponse.json({ ok: true, ran: 1, results: [result] });
   }
 
-  const subjects = await listSubjects();
+  const subjects = await listSubjects(ctx.tenantId);
   // Skip subjects with invalid names to prevent downstream API errors.
   const validSubjects = subjects.filter((s) => s.name && typeof s.name === "string" && s.name.trim().length > 0 && s.name.length <= 500);
   const due = force
@@ -277,7 +270,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ran: 0, skipped: subjects.length, results: [] });
   }
 
-  const results = await Promise.all(due.map((s) => runSubject(s, force)));
+  const results = await Promise.all(due.map((s) => runSubject(s, force, ctx.tenantId)));
   const changed = results.filter((r) => r.changed).length;
   const errors = results.filter((r) => r.error).length;
 

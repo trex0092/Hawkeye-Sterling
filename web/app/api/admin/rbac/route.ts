@@ -50,7 +50,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   // Gate: only role-manager roles may list user roles
   const callerRole = gate.record?.role ?? null;
-  if (callerRole && !ROLE_MANAGERS.includes(callerRole as UserRole)) {
+  if (!callerRole || !ROLE_MANAGERS.includes(callerRole as UserRole)) {
     return NextResponse.json(
       { ok: false, error: "Insufficient permissions — requires super_admin, mlro, or it_admin" },
       { status: 403, headers: gate.headers },
@@ -76,7 +76,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Gate: only role-manager roles may assign roles
   const callerRole = gate.record?.role ?? null;
-  if (callerRole && !ROLE_MANAGERS.includes(callerRole as UserRole)) {
+  if (!callerRole || !ROLE_MANAGERS.includes(callerRole as UserRole)) {
     return NextResponse.json(
       { ok: false, error: "Insufficient permissions — requires super_admin, mlro, or it_admin" },
       { status: 403, headers: gate.headers },

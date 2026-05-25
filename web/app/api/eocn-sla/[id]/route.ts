@@ -80,18 +80,23 @@ export async function PATCH(
   if (body.status) patch.status = body.status;
   if (body.notes !== undefined) patch.notes = body.notes;
 
-  // Auto-set completedAt when transitioning to "completed"
+  // Auto-set completedAt only when transitioning to "completed" — prevents
+  // backdating a live record without a matching status transition.
   if (body.status === "completed") {
-    patch.completedAt = body.completedAt ?? now;
-  } else if (body.completedAt !== undefined) {
-    patch.completedAt = body.completedAt;
+    const ts = body.completedAt ?? now;
+    if (body.completedAt && !Number.isFinite(Date.parse(body.completedAt))) {
+      return NextResponse.json({ ok: false, error: "completedAt must be a valid ISO-8601 date" }, { status: 400, headers: gate.headers });
+    }
+    patch.completedAt = ts;
   }
 
-  // Auto-set breachedAt when transitioning to "breached"
+  // Auto-set breachedAt only when transitioning to "breached".
   if (body.status === "breached") {
-    patch.breachedAt = body.breachedAt ?? now;
-  } else if (body.breachedAt !== undefined) {
-    patch.breachedAt = body.breachedAt;
+    const ts = body.breachedAt ?? now;
+    if (body.breachedAt && !Number.isFinite(Date.parse(body.breachedAt))) {
+      return NextResponse.json({ ok: false, error: "breachedAt must be a valid ISO-8601 date" }, { status: 400, headers: gate.headers });
+    }
+    patch.breachedAt = ts;
   }
 
   let record: import("@/lib/server/eocn-sla").EocnSlaRecord;

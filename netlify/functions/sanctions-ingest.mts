@@ -499,7 +499,6 @@ export default async function handler(req: Request): Promise<Response> {
   // Defense-in-depth: x-nf-event is technically forgeable; if a claimed scheduled
   // event also carries an Authorization header, verify it (genuine scheduler invocations
   // never send Authorization).
-  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
   const authHeader = req.headers.get("authorization");
 
   async function verifyCronToken(supplied: string): Promise<boolean> {
@@ -515,16 +514,9 @@ export default async function handler(req: Request): Promise<Response> {
     ) && a.byteLength === b.byteLength;
   }
 
-  if (!isScheduledEvent) {
-    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
-    if (!await verifyCronToken(supplied)) {
-      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
-    }
-  } else if (authHeader !== null) {
-    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (!await verifyCronToken(supplied)) {
-      return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
-    }
+  const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  if (!await verifyCronToken(supplied)) {
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: "Unauthorized" }, 401);
   }
 
   const startedAt = Date.now();

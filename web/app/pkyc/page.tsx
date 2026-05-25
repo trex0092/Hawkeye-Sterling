@@ -82,7 +82,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC load failed (HTTP ${res.status})`);
       let data: { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       try {
-        data = await res.json().catch(() => ({})) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+        data = await res.json() as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       } catch {
         throw new Error("pKYC returned a malformed response — please retry");
       }
@@ -101,7 +101,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC run failed (HTTP ${res.status}) — please retry`);
       let data: { ran?: number; changed?: number; errors?: number };
       try {
-        data = await res.json().catch(() => ({})) as { ran?: number; changed?: number; errors?: number };
+        data = await res.json() as { ran?: number; changed?: number; errors?: number };
       } catch {
         throw new Error("pKYC run returned a malformed response — please retry");
       }

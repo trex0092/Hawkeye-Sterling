@@ -107,6 +107,7 @@ export async function POST(req: Request) {
         // dashboard / vault / config to touch instead of seeing only
         // cryptic platform-side phrasing.
         console.error("[agent/data-analyst] session.error:", ev.error.message);
+        beta.sessions.archive(sessionId).catch(() => {});
         const { describeAgentError } = await import("@/lib/server/agent-error-hints");
         const translated = describeAgentError(ev.error.message);
         return NextResponse.json(
@@ -123,6 +124,7 @@ export async function POST(req: Request) {
       }
 
       if (ev.type === "session.deleted") {
+        beta.sessions.archive(sessionId).catch(() => {});
         return NextResponse.json(
           { ok: false, error: "Session was deleted unexpectedly" },
           { status: 502, headers: gate.headers },

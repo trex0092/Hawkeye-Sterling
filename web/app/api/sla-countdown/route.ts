@@ -130,7 +130,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // ── CNMR / STR records (5 business-day filing window) ────────────────────
   if (typeFilter === "all" || typeFilter === "cnmr") {
     try {
-      const caseKeys = await listKeys(`case/${tenant}/`).catch(() => [] as string[]);
+      const caseKeys = await listKeys(`hawkeye-cases/${tenant}/cases/`).catch(() => [] as string[]);
       const cases = await Promise.all(
         caseKeys.slice(0, 50).map((k) =>
           getJson<{
@@ -217,6 +217,6 @@ export async function GET(req: Request): Promise<NextResponse> {
         : `${filtered.length} open SLA clock(s) — all within window`,
       regulatoryNote: "SLA windows: FFR = 24h from freeze (Cabinet Resolution 74/2020 Art.4), STR/CNMR = 5 business days from suspicion (FDL No.10/2025 Art.22).",
     },
-    { status: breachedCount > 0 ? 207 : 200, headers: gate.headers },
+    { status: 200, headers: gate.headers },
   );
 }

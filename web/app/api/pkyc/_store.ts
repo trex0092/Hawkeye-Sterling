@@ -8,6 +8,27 @@
 import { del, getJson, setJson, listKeys } from "@/lib/server/store";
 
 export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
+
+export function nextRunAt(cadence: PKycCadence, from = new Date()): string {
+  const d = new Date(from);
+  switch (cadence) {
+    case "daily":   d.setUTCDate(d.getUTCDate() + 1); break;
+    case "weekly":  d.setUTCDate(d.getUTCDate() + 7); break;
+    case "monthly":
+    case "quarterly":
+    case "annual": {
+      const monthsToAdd = cadence === "monthly" ? 1 : cadence === "quarterly" ? 3 : 12;
+      const srcDay = from.getUTCDate();
+      const targetTotalMonths = d.getUTCFullYear() * 12 + d.getUTCMonth() + monthsToAdd;
+      const targetYear = Math.floor(targetTotalMonths / 12);
+      const targetMonth = targetTotalMonths % 12;
+      const lastDayOfTarget = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+      d.setUTCFullYear(targetYear, targetMonth, Math.min(srcDay, lastDayOfTarget));
+      break;
+    }
+  }
+  return d.toISOString();
+}
 export type PKycStatus = "active" | "pending_review" | "suspended" | "archived";
 export type PKycRiskBand = "clear" | "low" | "medium" | "high" | "critical";
 
@@ -58,9 +79,9 @@ export interface PKycDelta {
   acknowledged: boolean;
 }
 
-export async function listSubjects(): Promise<PKycSubject[]> {
+export async function listSubjects(tenantId: string): Promise<PKycSubject[]> {
   try {
-    const keys = await listKeys("pkyc/subject/");
+    const keys = await listKeys(`pkyc/${tenantId}/subject/`);
     const subjects = await Promise.all(keys.map((k) => getJson<PKycSubject>(k)));
     return subjects.filter((s): s is PKycSubject => s !== null);
   } catch (err) {
@@ -69,23 +90,23 @@ export async function listSubjects(): Promise<PKycSubject[]> {
   }
 }
 
-export async function getSubject(id: string): Promise<PKycSubject | null> {
-  return getJson<PKycSubject>(`pkyc/subject/${id}`).catch((err) => {
+export async function getSubject(id: string, tenantId: string): Promise<PKycSubject | null> {
+  return getJson<PKycSubject>(`pkyc/${tenantId}/subject/${id}`).catch((err) => {
     console.error("[pkyc] getSubject failed:", err instanceof Error ? err.message : err);
     return null;
   });
 }
 
-export async function saveSubject(subject: PKycSubject): Promise<void> {
-  await setJson(`pkyc/subject/${subject.id}`, subject);
+export async function saveSubject(subject: PKycSubject, tenantId: string): Promise<void> {
+  await setJson(`pkyc/${tenantId}/subject/${subject.id}`, subject);
 }
 
-export async function deleteSubject(id: string): Promise<void> {
-  await del(`pkyc/subject/${id}`);
+export async function deleteSubject(id: string, tenantId: string): Promise<void> {
+  await del(`pkyc/${tenantId}/subject/${id}`);
 }
 
-export async function saveDelta(delta: PKycDelta): Promise<void> {
-  await setJson(`pkyc/delta/${delta.id}`, delta).catch((err) =>
+export async function saveDelta(delta: PKycDelta, tenantId: string): Promise<void> {
+  await setJson(`pkyc/${tenantId}/delta/${delta.id}`, delta).catch((err) =>
     console.warn("[pkyc] saveDelta failed:", err instanceof Error ? err.message : err)
   );
 }

@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { loadPermissionLog, appendPermissionLog, type PermissionLogEntry } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
@@ -38,9 +39,9 @@ export async function POST(req: Request) {
   }
 
   const entry: PermissionLogEntry = {
-    id: `log-${String(Date.now()).slice(-6)}`,
+    id: `log-${randomBytes(4).toString("hex")}`,
     timestamp: new Date().toISOString(),
-    actor: body.actor,
+    actor: "admin",
     action: body.action as PermissionLogEntry["action"],
     targetUserId: body.targetUserId,
     targetUserName: body.targetUserName,

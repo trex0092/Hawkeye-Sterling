@@ -174,7 +174,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const schema: Schema = body.schema ?? "free";
+  const VALID_SCHEMAS = new Set<string>(["corporate_registry","court_filing","sanctions_screenshot","kyc_passport","kyc_proof_of_address","press_release","free"]);
+  if (body.schema !== undefined && !VALID_SCHEMAS.has(body.schema)) {
+    return NextResponse.json({ ok: false, error: `schema must be one of: ${[...VALID_SCHEMAS].join(", ")}` }, { status: 400, headers: gateHeaders });
+  }
+  const schema: Schema = (body.schema ?? "free") as Schema;
   const model = body.model ?? DEFAULT_MODEL;
   const mediaType = body.documentMediaType ?? "application/pdf";
 

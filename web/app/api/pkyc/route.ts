@@ -8,7 +8,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import {
-  listSubjects, getSubject, saveSubject, deleteSubject,
+  listSubjects, getSubject, saveSubject, deleteSubject, nextRunAt,
   type PKycSubject, type PKycCadence,
 } from "./_store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -17,41 +17,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
-function nextRunAt(cadence: PKycCadence, from = new Date()): string {
-  const d = new Date(from);
-  switch (cadence) {
-    case "daily":     d.setUTCDate(d.getUTCDate() + 1); break;
-    case "weekly":    d.setUTCDate(d.getUTCDate() + 7); break;
-    case "monthly":
-    case "quarterly":
-    case "annual": {
-      // setUTCMonth(m+N) overflows when the source day-of-month doesn't exist
-      // in the target month (e.g. Jan 31 + 1 month → Mar 2, skipping Feb).
-      // Clamp to the last day of the target month to stay in-month.
-      const monthsToAdd = cadence === "monthly" ? 1 : cadence === "quarterly" ? 3 : 12;
-      const srcDay = from.getUTCDate();
-      const targetTotalMonths = d.getUTCFullYear() * 12 + d.getUTCMonth() + monthsToAdd;
-      const targetYear = Math.floor(targetTotalMonths / 12);
-      const targetMonth = targetTotalMonths % 12;
-      const lastDayOfTarget = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
-      d.setUTCFullYear(targetYear, targetMonth, Math.min(srcDay, lastDayOfTarget));
-      break;
-    }
-  }
-  return d.toISOString();
-}
-
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
 
   if (id) {
-    const subject = await getSubject(id);
+    const subject = await getSubject(id, ctx.tenantId);
     if (!subject) return NextResponse.json({ ok: false, error: "Subject not found" }, { status: 404 });
     return NextResponse.json({ ok: true, subject });
   }
 
-  const subjects = await listSubjects();
+  const subjects = await listSubjects(ctx.tenantId);
   const stats = {
     total: subjects.length,
     active: subjects.filter((s) => s.status === "active").length,
@@ -97,7 +73,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     mlro: body.mlro,
   };
 
-  await saveSubject(subject);
+  await saveSubject(subject, ctx.tenantId);
 
   // FDL 10/2025 Art.24: pKYC enrollment triggers ongoing CDD monitoring — must be in the tamper-evident chain.
   void writeAuditChainEntry(
@@ -108,14 +84,14 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   return NextResponse.json({ ok: true, subject }, { status: 201 });
 }
 
-async function handleDelete(req: Request): Promise<NextResponse> {
+async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, error: "id query param required" }, { status: 400 });
 
-  const subject = await getSubject(id);
+  const subject = await getSubject(id, ctx.tenantId);
   if (!subject) return NextResponse.json({ ok: false, error: "Subject not found" }, { status: 404 });
 
-  await deleteSubject(id);
+  await deleteSubject(id, ctx.tenantId);
   return NextResponse.json({ ok: true, deleted: id });
 }
 

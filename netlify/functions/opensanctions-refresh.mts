@@ -35,22 +35,11 @@ export default async (req: Request): Promise<Response> => {
   // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
   // If a claimed scheduled event also carries an Authorization header, verify it —
   // a genuine Netlify scheduler invocation never sends Authorization.
-  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
-  const authHeader = req.headers.get("authorization");
   const expected = process.env["HAWKEYE_CRON_TOKEN"];
-  if (!isScheduledEvent) {
-    if (!expected) {
-      return json({ ok: false, error: "HAWKEYE_CRON_TOKEN not configured — refused" }, 503);
-    }
-    const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
-    if (supplied !== expected) {
-      return json({ ok: false, error: "forbidden" }, 403);
-    }
-  } else if (authHeader !== null && expected) {
-    const supplied = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (supplied !== expected) {
-      return json({ ok: false, error: "forbidden" }, 403);
-    }
+  const authHeader = req.headers.get("authorization");
+  const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  if (expected && supplied !== expected) {
+    return json({ ok: false, error: "forbidden" }, 403);
   }
 
   // Idempotency lock — prevents concurrent runs under Lambda warm-instance overlap.

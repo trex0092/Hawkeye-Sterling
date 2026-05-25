@@ -1048,9 +1048,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     // does not create duplicate monitoring subjects.
     if (["medium", "high", "critical"].includes(finalResult.severity)) {
       const pkycId = `pkyc-auto-${subject.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40)}`;
+      const pkycTenant = tenantIdFromGate(gate);
       void (async () => {
         try {
-          const existing = await getSubject(pkycId);
+          const existing = await getSubject(pkycId, pkycTenant);
           if (!existing) {
             const cadence = finalResult.severity === "critical" ? "weekly" : finalResult.severity === "high" ? "monthly" : "quarterly";
             const pkycNow = new Date().toISOString();
@@ -1077,7 +1078,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               runCount: 0,
               alertCount: 0,
               notes: `Auto-enrolled from screening: ${finalResult.severity} severity`,
-            });
+            }, pkycTenant);
           }
         } catch (err) {
           console.warn("[quick-screen] pkyc auto-enroll failed:", err instanceof Error ? err.message : String(err));
