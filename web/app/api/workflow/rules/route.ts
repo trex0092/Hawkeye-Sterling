@@ -4,6 +4,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { randomUUID } from "node:crypto";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   loadWorkflowRules,
   saveWorkflowRules,
@@ -57,6 +59,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   rules.push(newRule);
   await saveWorkflowRules(rules);
 
+  void writeAuditChainEntry(
+    { event: "workflow.rule.created", actor: gate.keyId, meta: { id: newRule.id, name: newRule.name } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, rule: newRule },
     { status: 201, headers: gate.headers },

@@ -4,6 +4,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   loadRegistrations,
   saveRegistrations,
@@ -126,6 +128,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     registrations.push(webhook);
     await saveRegistrations(registrations);
 
+    void writeAuditChainEntry(
+      { event: "webhook.registered", actor: gate.keyId, meta: { id: webhook.id, url: webhook.url } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       { ok: true, webhook },
       { status: 201, headers: gate.headers },

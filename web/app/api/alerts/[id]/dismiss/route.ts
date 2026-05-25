@@ -3,6 +3,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { dismissAlert } from "@/lib/server/alerts-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +27,10 @@ export async function POST(
     } catch { /* body is optional */ }
     const ok = await dismissAlert(id, dismissedBy);
     if (!ok) return NextResponse.json({ ok: false, error: "alert not found" }, { status: 404 , headers: gate.headers });
+    void writeAuditChainEntry(
+      { event: "alert.dismissed", actor: gate.keyId, meta: { alertId: id } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts/dismiss]", err instanceof Error ? err.message : err);

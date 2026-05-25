@@ -6,6 +6,8 @@ import {
   type Verdict,
 } from "@/lib/server/feedback";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,5 +110,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(reason && typeof reason === "string" ? { reason: reason.trim().slice(0, 2000) } : {}),
     analyst: clean.analyst,
   });
+  void writeAuditChainEntry(
+    { event: "screening.feedback.submitted", actor: gate.keyId, meta: { subjectId: clean.subjectId, verdict } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, record }, { headers: gate.headers });
 }

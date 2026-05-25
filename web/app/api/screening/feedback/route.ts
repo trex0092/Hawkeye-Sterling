@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { submitFeedback, listFeedback, stats, type Verdict } from "@/lib/server/feedback";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +64,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     reason,
     analyst,
   });
+  void writeAuditChainEntry(
+    { event: "screening.feedback.submitted", actor: gate.keyId, meta: { subjectId, verdict } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, record }, { status: 201, headers: gate.headers });
 }
 

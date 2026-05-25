@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   loadAllVoluntaryDisclosures,
   createVoluntaryDisclosure,
@@ -93,6 +94,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const record = await createVoluntaryDisclosure(tenantId, fields);
 
+  void writeAuditChainEntry(
+    { event: "voluntary_disclosure.created", actor: gate.keyId, meta: { id: record.id, disclosureType: fields.disclosureType } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, record },
     { status: 201, headers: gate.headers },

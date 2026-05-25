@@ -10,6 +10,8 @@ import { enforce } from "@/lib/server/enforce";
 import { listApiKeys, type ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson } from "@/lib/server/store";
 import { ROLE_MANAGERS, isValidRole, type UserRole } from "@/lib/server/rbac";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const ALL_ROLES = ["super_admin", "mlro", "senior_analyst", "junior_analyst", "auditor", "compliance_officer", "it_admin"] as const;
 
@@ -114,6 +116,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  void writeAuditChainEntry(
+    { event: "rbac.role_assigned", actor: gate.keyId, meta: { targetUserId: body.userId, role: body.role } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, userId: body.userId, role: body.role },
     { headers: gate.headers },

@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   getChangeDigest,
   recordChange,
@@ -140,6 +141,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const saved = await recordChange(change);
+    void writeAuditChainEntry(
+      { event: "regulatory_change.recorded", actor: gate.keyId, meta: { id: saved.id, source: change.source } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       { ok: true, change: saved },
       { status: 201, headers: gate.headers },

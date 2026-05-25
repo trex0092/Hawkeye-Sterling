@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { setJson } from "@/lib/server/store";
 import { randomBytes } from "node:crypto";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -211,6 +212,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     imported++;
   }
 
+  void writeAuditChainEntry(
+    { event: "subjects.bulk_imported", actor: gate.keyId, meta: { imported, skipped, errorCount: errors.length } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, imported, skipped, errors },
     { headers: gate.headers },

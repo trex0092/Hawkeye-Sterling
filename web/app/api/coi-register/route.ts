@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   loadAllCoiDeclarations,
   createCoiDeclaration,
@@ -84,6 +85,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const record = await createCoiDeclaration(tenantId, fields);
 
+  void writeAuditChainEntry(
+    { event: "coi.declaration.created", actor: gate.keyId, meta: { id: record.id } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json(
     { ok: true, record },
     { status: 201, headers: gate.headers },

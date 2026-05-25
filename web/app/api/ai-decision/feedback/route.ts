@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import type { AIDecision } from "../route";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const FEEDBACK_STORE_KEY = "ai-decision:feedback:v1";
 const MAX_RECORDS = 50;
@@ -74,6 +76,11 @@ export async function POST(req: Request) {
     // Keep only the most recent MAX_RECORDS
     const trimmed = deduped.slice(-MAX_RECORDS);
     await setJson(FEEDBACK_STORE_KEY, trimmed);
+
+    void writeAuditChainEntry(
+      { event: "ai_decision.feedback.submitted", actor: gate.keyId, meta: { decisionId: body.decisionId, outcome: body.outcome } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     const accepted = trimmed.filter((r) => r.outcome === "accepted").length;
     const overridden = trimmed.filter((r) => r.outcome === "overridden").length;
