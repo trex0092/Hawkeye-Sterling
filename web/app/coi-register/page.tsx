@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface CoiDeclaration {
   id: string;
@@ -21,17 +23,17 @@ interface CoiDeclaration {
 }
 
 const STATUS_COLOURS: Record<CoiDeclaration["status"], string> = {
-  pending_review: "bg-amber-100 text-amber-800",
-  approved: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-800",
-  managed: "bg-blue-100 text-blue-800",
+  pending_review: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  approved: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
+  rejected: "bg-red-950/30 text-red-300 border border-red-500/40",
+  managed: "bg-sky-950/30 text-sky-300 border border-sky-500/40",
 };
 
 const CONFLICT_COLOURS: Record<CoiDeclaration["conflictType"], string> = {
-  financial: "bg-purple-100 text-purple-800",
-  personal: "bg-pink-100 text-pink-800",
-  business: "bg-cyan-100 text-cyan-800",
-  other: "bg-gray-100 text-gray-700",
+  financial: "bg-indigo-950/30 text-indigo-300 border border-indigo-500/40",
+  personal: "bg-pink-950/30 text-pink-300 border border-pink-500/40",
+  business: "bg-sky-950/30 text-sky-300 border border-sky-500/40",
+  other: "bg-zinc-800/40 text-ink-2 border border-hair-2",
 };
 
 interface FormState {
@@ -81,9 +83,8 @@ export default function CoiRegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/coi-register", {
-        headers: authHeaders(),
-      });
+      const res = await fetch("/api/coi-register", { headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: CoiDeclaration[]; error?: string };
       if (data.ok) {
         setDeclarations(data.records ?? []);
@@ -97,9 +98,7 @@ export default function CoiRegisterPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchDeclarations();
-  }, [fetchDeclarations]);
+  useEffect(() => { void fetchDeclarations(); }, [fetchDeclarations]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -119,6 +118,7 @@ export default function CoiRegisterPage() {
           mitigationProposed: form.mitigationProposed.trim(),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -149,6 +149,7 @@ export default function CoiRegisterPage() {
           ...(decision.trim() ? { mlroDecision: decision.trim() } : {}),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setMlroDecisionDraft((prev) => { const n = { ...prev }; delete n[decl.id]; return n; });
@@ -168,294 +169,255 @@ export default function CoiRegisterPage() {
   const approvedManagedCount = declarations.filter((d) => d.status === "approved" || d.status === "managed").length;
   const rejectedCount = declarations.filter((d) => d.status === "rejected").length;
 
+  const inputCls = "w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2";
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Conflicts of Interest Register</h1>
-          <p className="text-sm text-gray-500 mt-1">FATF R.35 · CBUAE Governance Guidelines · FDL 10/2025 Art.19</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "New Declaration"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="Governance & Ethics"
+        modules={[
+          { label: "COI Register", href: "/coi-register", icon: "⚖️" },
+          { label: "Voluntary Disclosure", href: "/voluntary-disclosure", icon: "📣" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="⚖️ Governance — FATF R.35 · CBUAE Guidelines · FDL 10/2025 Art.19"
+        title="Conflicts of Interest"
+        titleEm="register."
+        intro="Staff declarations · MLRO sign-off · annual review · conflict management · CBUAE governance"
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Pending Review</p>
-          <p className={`text-2xl font-bold ${pendingCount > 0 ? "text-amber-600" : "text-gray-900"}`}>{pendingCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Approved / Managed</p>
-          <p className="text-2xl font-bold text-green-700">{approvedManagedCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Rejected</p>
-          <p className="text-2xl font-bold text-red-600">{rejectedCount}</p>
-        </div>
-      </div>
+      <div className="mx-auto max-w-6xl px-4 pb-16 space-y-5">
 
-      {/* Error */}
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">
-          {error}
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: "Total", value: totalCount, colour: "text-ink-0" },
+            { label: "Pending Review", value: pendingCount, colour: pendingCount > 0 ? "text-amber-300" : "text-ink-0" },
+            { label: "Approved / Managed", value: approvedManagedCount, colour: "text-emerald-400" },
+            { label: "Rejected", value: rejectedCount, colour: "text-red" },
+          ].map((s) => (
+            <div key={s.label} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+              <p className="text-xs text-ink-2">{s.label}</p>
+              <p className={`text-2xl font-bold mt-1 ${s.colour}`}>{s.value}</p>
+            </div>
+          ))}
         </div>
-      )}
 
-      {/* Inline create form */}
-      {showForm && (
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="mb-6 bg-white border border-gray-200 rounded-lg p-6"
-        >
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">New Conflict of Interest Declaration</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Staff Name</label>
-              <input
-                type="text"
-                value={form.staffName}
-                onChange={(e) => setForm({ ...form, staffName: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
+        {/* Action bar */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
+          >
+            {showForm ? "Cancel" : "New Declaration"}
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">New Conflict of Interest Declaration</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Staff Name</label>
+                <input type="text" value={form.staffName}
+                  onChange={(e) => setForm({ ...form, staffName: e.target.value })}
+                  className={inputCls} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Staff Role / Title</label>
+                <input type="text" value={form.staffRole}
+                  onChange={(e) => setForm({ ...form, staffRole: e.target.value })}
+                  className={inputCls} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Declaration Date</label>
+                <input type="date" value={form.declarationDate}
+                  onChange={(e) => setForm({ ...form, declarationDate: e.target.value })}
+                  className={inputCls} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Conflict Type</label>
+                <select value={form.conflictType}
+                  onChange={(e) => setForm({ ...form, conflictType: e.target.value as CoiDeclaration["conflictType"] })}
+                  className={inputCls} required>
+                  <option value="financial">Financial</option>
+                  <option value="personal">Personal</option>
+                  <option value="business">Business</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Description of Conflict</label>
+                <textarea value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className={inputCls} rows={3} required
+                  placeholder="Describe the nature of the conflict of interest..." />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Potential Impact</label>
+                <textarea value={form.potentialImpact}
+                  onChange={(e) => setForm({ ...form, potentialImpact: e.target.value })}
+                  className={inputCls} rows={2} required
+                  placeholder="Describe the potential impact on the organisation or customers..." />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Proposed Mitigation</label>
+                <textarea value={form.mitigationProposed}
+                  onChange={(e) => setForm({ ...form, mitigationProposed: e.target.value })}
+                  className={inputCls} rows={2} required
+                  placeholder="Steps proposed to manage or eliminate the conflict..." />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Staff Role / Title</label>
-              <input
-                type="text"
-                value={form.staffRole}
-                onChange={(e) => setForm({ ...form, staffRole: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
+                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">
+                Cancel
+              </button>
+              <button type="submit" disabled={submitting}
+                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                {submitting ? "Submitting..." : "Submit Declaration"}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Declaration Date</label>
-              <input
-                type="date"
-                value={form.declarationDate}
-                onChange={(e) => setForm({ ...form, declarationDate: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Conflict Type</label>
-              <select
-                value={form.conflictType}
-                onChange={(e) => setForm({ ...form, conflictType: e.target.value as CoiDeclaration["conflictType"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                <option value="financial">Financial</option>
-                <option value="personal">Personal</option>
-                <option value="business">Business</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description of Conflict</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                rows={3}
-                required
-                placeholder="Describe the nature of the conflict of interest..."
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Potential Impact</label>
-              <textarea
-                value={form.potentialImpact}
-                onChange={(e) => setForm({ ...form, potentialImpact: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                rows={2}
-                required
-                placeholder="Describe the potential impact on the organisation or customers..."
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proposed Mitigation</label>
-              <textarea
-                value={form.mitigationProposed}
-                onChange={(e) => setForm({ ...form, mitigationProposed: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                rows={2}
-                required
-                placeholder="Steps proposed to manage or eliminate the conflict..."
-              />
-            </div>
+          </form>
+        )}
+
+        {loading ? (
+          <div className="text-center text-ink-2 py-12">Loading COI declarations...</div>
+        ) : declarations.length === 0 ? (
+          <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg">
+            No COI declarations recorded yet.
           </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? "Submitting..." : "Submit Declaration"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Table */}
-      {loading ? (
-        <div className="text-center text-gray-500 py-12">Loading COI declarations...</div>
-      ) : declarations.length === 0 ? (
-        <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg">
-          No COI declarations recorded yet.
-        </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Staff Name</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Conflict Type</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Declaration Date</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">MLRO Review</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Next Review</th>
-              </tr>
-            </thead>
-            <tbody>
-              {declarations.map((decl) => (
-                <>
-                  <tr
-                    key={decl.id}
-                    onClick={() => setExpandedId(expandedId === decl.id ? null : decl.id)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{decl.staffName}</div>
-                      <div className="text-xs text-gray-400 font-mono">{decl.id}</div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{decl.staffRole}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${CONFLICT_COLOURS[decl.conflictType]}`}>
-                        {decl.conflictType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{decl.declarationDate}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[decl.status]}`}>
-                        {decl.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {decl.mlroReviewDate ? (
-                        <span className="text-xs text-gray-600">{decl.mlroReviewDate}</span>
-                      ) : (
-                        <span className="text-xs text-amber-600">Pending</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 text-xs">
-                      {decl.nextReviewDate ?? "—"}
-                    </td>
-                  </tr>
-                  {expandedId === decl.id && (
-                    <tr key={`${decl.id}-expanded`}>
-                      <td colSpan={7} className="bg-gray-50 px-6 py-5 border-b border-gray-200">
-                        <div className="grid grid-cols-2 gap-6">
-                          {/* Left: declaration details */}
-                          <div className="space-y-4">
-                            <div>
-                              <h3 className="text-sm font-semibold text-gray-700 mb-1">Description</h3>
-                              <p className="text-sm text-gray-600 whitespace-pre-wrap">{decl.description}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-semibold text-gray-700 mb-1">Potential Impact</h3>
-                              <p className="text-sm text-gray-600 whitespace-pre-wrap">{decl.potentialImpact}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-semibold text-gray-700 mb-1">Proposed Mitigation</h3>
-                              <p className="text-sm text-gray-600 whitespace-pre-wrap">{decl.mitigationProposed}</p>
-                            </div>
-                          </div>
-                          {/* Right: MLRO review */}
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">MLRO Review</h3>
-                            {decl.mlroSignOff ? (
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[decl.status]}`}>
-                                    {decl.status.replace("_", " ")}
-                                  </span>
-                                  <span className="text-xs text-gray-500">on {decl.mlroReviewDate}</span>
-                                </div>
-                                {decl.mlroDecision && (
-                                  <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">
-                                    <span className="font-medium">Decision notes:</span> {decl.mlroDecision}
-                                  </p>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="space-y-3">
-                                <textarea
-                                  value={mlroDecisionDraft[decl.id] ?? ""}
-                                  onChange={(e) =>
-                                    setMlroDecisionDraft((prev) => ({ ...prev, [decl.id]: e.target.value }))
-                                  }
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                                  rows={3}
-                                  placeholder="MLRO decision notes (optional)..."
-                                />
-                                <div className="flex gap-2 flex-wrap">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "approved"); }}
-                                    disabled={updatingId === decl.id}
-                                    className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                                  >
-                                    {updatingId === decl.id ? "Updating..." : "Approve"}
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "managed"); }}
-                                    disabled={updatingId === decl.id}
-                                    className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                                  >
-                                    {updatingId === decl.id ? "Updating..." : "Mark Managed"}
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "rejected"); }}
-                                    disabled={updatingId === decl.id}
-                                    className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                                  >
-                                    {updatingId === decl.id ? "Updating..." : "Reject"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+        ) : (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-bg-base border-b border-hair-2">
+                  {["Staff Name", "Role", "Conflict Type", "Declaration Date", "Status", "MLRO Review", "Next Review"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {declarations.map((decl) => (
+                  <>
+                    <tr
+                      key={decl.id}
+                      onClick={() => setExpandedId(expandedId === decl.id ? null : decl.id)}
+                      className="border-b border-hair-2 hover:bg-bg-base/40 cursor-pointer"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-ink-0">{decl.staffName}</div>
+                        <div className="text-xs text-ink-2 font-mono">{decl.id}</div>
+                      </td>
+                      <td className="px-4 py-3 text-ink-1">{decl.staffRole}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${CONFLICT_COLOURS[decl.conflictType]}`}>
+                          {decl.conflictType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-ink-1">{decl.declarationDate}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[decl.status]}`}>
+                          {decl.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {decl.mlroReviewDate ? (
+                          <span className="text-xs text-ink-2">{decl.mlroReviewDate}</span>
+                        ) : (
+                          <span className="text-xs text-amber-300">Pending</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-ink-2 text-xs">
+                        {decl.nextReviewDate ?? "—"}
                       </td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+                    {expandedId === decl.id && (
+                      <tr key={`${decl.id}-expanded`}>
+                        <td colSpan={7} className="bg-bg-base/30 px-6 py-5 border-b border-hair-2">
+                          <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                              <div>
+                                <h3 className="text-sm font-semibold text-ink-1 mb-1">Description</h3>
+                                <p className="text-sm text-ink-2 whitespace-pre-wrap">{decl.description}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-semibold text-ink-1 mb-1">Potential Impact</h3>
+                                <p className="text-sm text-ink-2 whitespace-pre-wrap">{decl.potentialImpact}</p>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-semibold text-ink-1 mb-1">Proposed Mitigation</h3>
+                                <p className="text-sm text-ink-2 whitespace-pre-wrap">{decl.mitigationProposed}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-ink-1 mb-2">MLRO Review</h3>
+                              {decl.mlroSignOff ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[decl.status]}`}>
+                                      {decl.status.replace("_", " ")}
+                                    </span>
+                                    <span className="text-xs text-ink-2">on {decl.mlroReviewDate}</span>
+                                  </div>
+                                  {decl.mlroDecision && (
+                                    <p className="text-sm text-ink-2 mt-2 whitespace-pre-wrap">
+                                      <span className="font-medium text-ink-1">Decision notes:</span> {decl.mlroDecision}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <textarea
+                                    value={mlroDecisionDraft[decl.id] ?? ""}
+                                    onChange={(e) => setMlroDecisionDraft((prev) => ({ ...prev, [decl.id]: e.target.value }))}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                                    rows={3}
+                                    placeholder="MLRO decision notes (optional)..."
+                                  />
+                                  <div className="flex gap-2 flex-wrap">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "approved"); }}
+                                      disabled={updatingId === decl.id}
+                                      className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded-md hover:bg-emerald-600 disabled:opacity-50"
+                                    >
+                                      {updatingId === decl.id ? "Updating..." : "Approve"}
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "managed"); }}
+                                      disabled={updatingId === decl.id}
+                                      className="px-3 py-1.5 text-xs bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                                    >
+                                      {updatingId === decl.id ? "Updating..." : "Mark Managed"}
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "rejected"); }}
+                                      disabled={updatingId === decl.id}
+                                      className="px-3 py-1.5 text-xs bg-red-700 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
+                                    >
+                                      {updatingId === decl.id ? "Updating..." : "Reject"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </ModuleLayout>
   );
 }
