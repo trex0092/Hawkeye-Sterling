@@ -175,26 +175,27 @@ async function runHandler(req: Request): Promise<Response> {
     });
   }
 
-  // Protect HTTP-triggered invocations with bearer token
+  // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
   const cronToken = process.env['HAWKEYE_CRON_TOKEN'];
-  if (cronToken) {
+  const isScheduledEvent = req.headers.get('x-nf-event') === 'schedule';
+  if (!isScheduledEvent) {
     const auth = req.headers.get('authorization');
-    if (auth !== null) {
-      const supplied = auth.replace(/^Bearer\s+/i, '').trim();
-      const enc = new TextEncoder();
-      const a = enc.encode(cronToken);
-      const b = enc.encode(supplied);
-      const padded = new Uint8Array(a.byteLength);
-      padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
-      const match =
-        (await import('node:crypto')
-          .then(({ timingSafeEqual }) =>
-            timingSafeEqual(new Uint8Array(a.buffer), padded),
-          )
-          .catch(() => false)) && a.byteLength === b.byteLength;
-      if (!match) {
-        return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
-      }
+    const supplied = auth?.replace(/^Bearer\s+/i, '').trim() ?? '';
+    const enc = new TextEncoder();
+    const a = enc.encode(cronToken ?? '');
+    const b = enc.encode(supplied);
+    const padded = new Uint8Array(a.byteLength);
+    padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
+    const match =
+      !!cronToken &&
+      ((await import('node:crypto')
+        .then(({ timingSafeEqual }) =>
+          timingSafeEqual(new Uint8Array(a.buffer), padded),
+        )
+        .catch(() => false)) as boolean) &&
+      a.byteLength === b.byteLength;
+    if (!match) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
     }
   }
 

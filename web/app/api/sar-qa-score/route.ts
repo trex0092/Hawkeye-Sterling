@@ -4,7 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,7 +128,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       return `Case ID: ${sanitizeField(c.id, 100)}
 Subject: ${sanitizeField(c.subject, 300)}
 Meta: ${sanitizeField(c.meta, 300)}
-Narrative: ${sanitizeText(c.narrative, 2000) || "(empty)"}
+Narrative: ${sanitizeLlmInput(c.narrative, 2000) || "(empty)"}
 Red Flags: ${redFlagsStr}${typologyLine}`;
     })
     .join("\n\n---\n\n");

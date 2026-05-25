@@ -56,6 +56,7 @@ export interface AnalystProfile {
   offHoursEventCount: number;  // events outside 07:00–20:00 UTC
   offHoursRate: number;        // offHoursEventCount / totalEvents
   peakHour: number;            // hour with most events (0–23)
+  adminActionOffHoursCount: number;  // admin_action events outside 07:00–20:00 UTC
   bulkScreenCount: number;
   averageBulkSize: number;
 }
@@ -130,6 +131,12 @@ export function computeAnalystProfile(
   const bulkScreens = actorEvents.filter((e) => e.kind === "bulk_screen");
   const totalBulkSize = bulkScreens.reduce((sum, e) => sum + (e.meta?.subjectCount ?? 0), 0);
 
+  const adminActionOffHoursCount = actorEvents.filter((e) => {
+    if (e.kind !== "admin_action") return false;
+    const h = e.meta?.hourOfDay ?? new Date(e.at).getUTCHours();
+    return h < 7 || h >= 20;
+  }).length;
+
   return {
     actor,
     windowStart,
@@ -142,6 +149,7 @@ export function computeAnalystProfile(
     offHoursEventCount: offHoursEvents.length,
     offHoursRate: actorEvents.length > 0 ? (offHoursEvents.length / actorEvents.length) * 100 : 0,
     peakHour: peakHour ? Number(peakHour[0]) : 9,
+    adminActionOffHoursCount,
     bulkScreenCount: bulkScreens.length,
     averageBulkSize: bulkScreens.length > 0 ? totalBulkSize / bulkScreens.length : 0,
   };
@@ -228,12 +236,11 @@ const RULES: Rule[] = [
     severity: "low",
     title: "Admin action outside business hours",
     test: (p) => {
-      const h = p.peakHour;
-      const fired = (p.byKind.admin_action ?? 0) > 0 && (h < 7 || h >= 20);
+      const fired = p.adminActionOffHoursCount > 0;
       return {
         fired,
-        detail: `Admin actions recorded during off-hours period (peak activity hour: ${h}:00 UTC).`,
-        evidence: [`admin_action_count=${p.byKind.admin_action ?? 0}`, `peak_hour=${h}`],
+        detail: `${p.adminActionOffHoursCount} admin action(s) performed outside 07:00–20:00 UTC.`,
+        evidence: [`admin_action_off_hours=${p.adminActionOffHoursCount}`, `admin_action_total=${p.byKind.admin_action ?? 0}`],
       };
     },
   },

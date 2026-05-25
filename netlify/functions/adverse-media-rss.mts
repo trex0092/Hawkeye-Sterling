@@ -53,11 +53,13 @@ function parseFeedListEnv(raw: string | undefined): FeedSpec[] {
   return out.length > 0 ? out : DEFAULT_FEEDS;
 }
 
-async function fetchWithTimeout(url: string, ms = FETCH_TIMEOUT_MS): Promise<Response> {
+async function fetchWithTimeout(url: string, ms = FETCH_TIMEOUT_MS): Promise<Response | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
     return await fetch(url, { headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" }, signal: ctrl.signal });
+  } catch {
+    return null;
   } finally {
     clearTimeout(t);
   }
@@ -137,7 +139,7 @@ export default async function handler(_req: Request): Promise<Response> {
   for (const spec of feeds) {
     try {
       const res = await fetchWithTimeout(spec.url);
-      if (!res.ok) continue;
+      if (!res || !res.ok) continue;
       const xml = await res.text();
       const items = parseRssMinimal(xml);
       successfulFeeds++;

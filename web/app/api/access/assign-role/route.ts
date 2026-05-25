@@ -52,10 +52,10 @@ export async function POST(req: Request) {
     | { kind: 'error'; status: number; message: string }
     | { kind: 'ok'; updatedUser: AccessUser; oldRole: UserRole; users: AccessUser[] };
 
-  // Privilege guard: callers acting via a browser session (middleware-injected
-  // ADMIN_TOKEN) may not assign a role with power >= their own session role.
-  // Direct server-to-server calls (pure ADMIN_TOKEN, no session cookie) are
-  // trusted as full-admin and bypass this check.
+  // Privilege guard: every caller must have a known role (from session or API
+  // key record) and may not assign a role with power >= their own.
+  // API-key-only callers without a recorded role are rejected — anonymous
+  // elevation is not permitted.
   const ROLE_POWER: Record<string, number> = {
     logistics: 1, trading: 1, accounts: 1,
     compliance: 2, management: 3, mlro: 3,
@@ -63,16 +63,20 @@ export async function POST(req: Request) {
   const jar = await cookies();
   const sessionToken = jar.get(SESSION_COOKIE)?.value ?? "";
   const session = verifySession(sessionToken);
-  if (session) {
-    // Session-based caller: enforce privilege ceiling.
-    const callerPower = ROLE_POWER[session.role] ?? 0;
-    const newRolePower = ROLE_POWER[newRole] ?? 0;
-    if (newRolePower >= callerPower) {
-      return NextResponse.json(
-        { ok: false, error: "Cannot assign a role with equal or higher privilege than your own" },
-        { status: 403, headers: gate.headers },
-      );
-    }
+  const callerRole = session?.role ?? gate.record?.role ?? null;
+  if (!callerRole) {
+    return NextResponse.json(
+      { ok: false, error: "Role assignment requires an authenticated identity with a known role" },
+      { status: 403, headers: gate.headers },
+    );
+  }
+  const callerPower = ROLE_POWER[callerRole] ?? 0;
+  const newRolePower = ROLE_POWER[newRole] ?? 0;
+  if (newRolePower >= callerPower) {
+    return NextResponse.json(
+      { ok: false, error: "Cannot assign a role with equal or higher privilege than your own" },
+      { status: 403, headers: gate.headers },
+    );
   }
 
   const lockResult = await withUsersLock<LockResult>(async () => {

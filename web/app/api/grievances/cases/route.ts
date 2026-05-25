@@ -83,17 +83,20 @@ export async function POST(req: Request) {
     const newNum = String(lastNum + 1).padStart(3, "0");
     const newId = `FG-WB-${year}-${newNum}`;
 
+    const PRIVILEGED_ROLES = new Set(["compliance", "management", "mlro"]);
+    const isPrivileged = PRIVILEGED_ROLES.has(gate.record?.role ?? "");
+
     const newCase: GrievanceCase = {
       id: newId,
       receivedAt: new Date().toISOString(),
       channel: body.channel,
       category: body.category,
       categoryVariant: body.categoryVariant ?? "ops",
-      stage: body.stage ?? "Investigation",
-      stageStatus: body.stageStatus ?? "open",
-      slaPct: body.slaPct ?? 0,
+      stage: isPrivileged ? (body.stage ?? "Investigation") : "Investigation",
+      stageStatus: isPrivileged ? (body.stageStatus ?? "open") : "open",
+      slaPct: isPrivileged ? (body.slaPct ?? 0) : 0,
       slaVariant: body.slaVariant ?? "ok",
-      owner: body.owner ?? "MLRO",
+      owner: isPrivileged ? (body.owner ?? "MLRO") : "MLRO",
     };
 
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));

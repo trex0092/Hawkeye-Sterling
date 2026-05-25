@@ -149,11 +149,13 @@ interface NormalisedListEntry {
   publishedAt?: string;
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: ctrl.signal });
+  } catch {
+    return null;
   } finally {
     clearTimeout(t);
   }
@@ -405,6 +407,9 @@ async function ingestOne(spec: FeedSpec, store: ReturnType<typeof getStore>): Pr
       }
     }
     const res = await fetchWithTimeout(spec.url, { headers });
+    if (!res) {
+      return { listId: spec.listId, ok: false, error: "network error (connection reset or timeout)", durationMs: Date.now() - startedAt };
+    }
     if (!res.ok) {
       return { listId: spec.listId, ok: false, error: `feed HTTP ${res.status}`, durationMs: Date.now() - startedAt };
     }
@@ -488,10 +493,13 @@ export default async function handler(req: Request): Promise<Response> {
   if (!cronToken) {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: "SANCTIONS_CRON_TOKEN not configured — ingest halted" }, 503);
   }
-  const auth = req.headers.get("authorization");
-  if (auth !== null) {
-    // When invoked via HTTP (not scheduled), verify the bearer token.
-    const supplied = auth.replace(/^Bearer\s+/i, "").trim();
+  // Netlify scheduler sets x-nf-event: schedule on cron-triggered calls.
+  // HTTP-triggered calls (external operators) must supply the bearer token —
+  // reject requests without a header rather than allowing unauthenticated access.
+  const isScheduledEvent = req.headers.get("x-nf-event") === "schedule";
+  if (!isScheduledEvent) {
+    const auth = req.headers.get("authorization");
+    const supplied = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
     const enc = new TextEncoder();
     const a = enc.encode(cronToken);
     const b = enc.encode(supplied);

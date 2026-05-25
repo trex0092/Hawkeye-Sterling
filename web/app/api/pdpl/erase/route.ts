@@ -207,19 +207,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
   }
 
+  // Strip internal blob key paths from the response — return only the count.
+  const { keysAffected: _keysAffected, ...publicLogEntry } = logEntry;
   return NextResponse.json({
     ok: true,
     regulation: "UAE PDPL Art.39 / FDL 10/2025 Art.24",
     erasureId,
     dryRun: Boolean(body.dryRun),
     keysAnonymised: keysAffected.length,
-    keysAffected,
     totalScanned,
     holdExpiresAt: logEntry.holdExpiresAt,
     holdDays: ERASURE_LEGAL_HOLD_DAYS,
     hint: body.dryRun
       ? "Dry run — no records modified. Re-run with dryRun: false to perform erasure."
       : `Records anonymised. Audit hash anchors retained for ${ERASURE_LEGAL_HOLD_DAYS} days for AML retention; purge cron then hard-deletes.`,
-    log: logEntry,
+    log: publicLogEntry,
   });
 }
