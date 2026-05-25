@@ -10,15 +10,15 @@ function StatusBadge({ status }: { status: TrainingRecord["status"] }) {
   const map: Record<TrainingRecord["status"], { label: string; cls: string }> = {
     current: {
       label: "Current",
-      cls: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+      cls: "bg-emerald-950/30 text-emerald-300",
     },
     expiring_soon: {
       label: "Expiring soon",
-      cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+      cls: "bg-amber-950/30 text-amber-300",
     },
     expired: {
       label: "Expired",
-      cls: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+      cls: "bg-red-950/30 text-red-300",
     },
   };
   const { label, cls } = map[status];
@@ -61,7 +61,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const inputCls =
-    "w-full border border-neutral-200 dark:border-neutral-700 rounded px-3 py-1.5 text-sm bg-white dark:bg-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40";
+    "w-full border border-hair-2 rounded px-3 py-1.5 text-sm bg-bg-panel text-ink-0 focus:outline-none focus:ring-2 focus:ring-brand/40";
 
   const handleAdd = async () => {
     setSaving(true);
@@ -96,13 +96,13 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
   };
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
-      <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4">
+    <div className="rounded-xl border border-hair-2 p-5">
+      <h2 className="text-sm font-semibold text-ink-1 uppercase tracking-wide mb-4">
         Add Training Record
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Staff ID *
           </label>
           <input
@@ -113,7 +113,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Staff Name *
           </label>
           <input
@@ -124,7 +124,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Course Code *
           </label>
           <input
@@ -135,7 +135,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Course Name *
           </label>
           <input
@@ -146,7 +146,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Completed At *
           </label>
           <input
@@ -157,7 +157,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Validity (months)
           </label>
           <input
@@ -169,7 +169,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+          <label className="block text-xs font-medium text-ink-3 mb-1">
             Certificate Ref (optional)
           </label>
           <input
@@ -182,7 +182,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
       </div>
 
       {error && (
-        <div className="mt-3 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+        <div className="mt-3 rounded bg-red-950/30 border border-red-500/40 px-3 py-2 text-sm text-red-300">
           {error}
         </div>
       )}
@@ -253,7 +253,7 @@ export default function TrainingTrackerPage() {
     `px-3 py-1 text-xs rounded-full border transition-colors ${
       statusFilter === f
         ? "bg-brand text-white border-brand"
-        : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        : "border-hair-2 text-ink-2 hover:bg-bg-1"
     }`;
 
   return (
@@ -261,8 +261,8 @@ export default function TrainingTrackerPage() {
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold dark:text-white">Compliance Training Tracker</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <h1 className="text-2xl font-bold text-ink-0">Compliance Training Tracker</h1>
+          <p className="text-sm text-ink-3 mt-1">
             Track staff AML / compliance training completions and renewal deadlines.
           </p>
         </div>
@@ -289,20 +289,20 @@ export default function TrainingTrackerPage() {
         </div>
 
         {loading && (
-          <div className="text-sm text-neutral-500 dark:text-neutral-400 py-12 text-center">
+          <div className="text-sm text-ink-3 py-12 text-center">
             Loading records…
           </div>
         )}
 
         {fetchError && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          <div className="rounded-lg bg-red-950/30 border border-red-500/40 px-4 py-3 text-sm text-red-300">
             {fetchError}
           </div>
         )}
 
         {!loading && !fetchError && filtered.length === 0 && (
-          <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 py-16 text-center">
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+          <div className="rounded-xl border border-dashed border-hair-2 py-16 text-center">
+            <p className="text-ink-3 text-sm">
               {records.length === 0
                 ? "No training records yet. Add the first record above."
                 : "No records match the selected filter."}
@@ -311,61 +311,61 @@ export default function TrainingTrackerPage() {
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <div className="rounded-xl border border-hair-2 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                <tr className="bg-bg-base border-b border-hair-2">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Staff
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Course
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Completed
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Expires
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Cert ref
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <tbody className="divide-y divide-hair-2">
                 {filtered.map((r) => (
                   <tr
                     key={r.id}
-                    className={`bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors ${
+                    className={`bg-bg-panel hover:bg-bg-base transition-colors ${
                       r.status === "expired"
                         ? "opacity-75"
                         : r.status === "expiring_soon"
-                          ? "bg-amber-50/30 dark:bg-amber-900/5"
+                          ? "bg-amber-950/10"
                           : ""
                     }`}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium dark:text-white">{r.staffName}</div>
+                      <div className="font-medium">{r.staffName}</div>
                       <div className="text-xs text-neutral-400 font-mono">{r.staffId}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="dark:text-white">{r.courseName}</div>
+                      <div className="">{r.courseName}</div>
                       <div className="text-xs text-neutral-400 font-mono">{r.courseCode}</div>
                     </td>
-                    <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400 text-xs">
+                    <td className="px-4 py-3 text-ink-2 text-xs">
                       {new Date(r.completedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       <span
                         className={
                           r.status === "expired"
-                            ? "text-red-600 dark:text-red-400 font-medium"
+                            ? "text-red-400 font-medium"
                             : r.status === "expiring_soon"
-                              ? "text-amber-600 dark:text-amber-400 font-medium"
-                              : "text-neutral-600 dark:text-neutral-400"
+                              ? "text-amber-400 font-medium"
+                              : "text-ink-2"
                         }
                       >
                         {new Date(r.expiresAt).toLocaleDateString()}

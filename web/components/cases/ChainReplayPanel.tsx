@@ -82,21 +82,21 @@ export function ChainReplayPanel(): JSX.Element {
 
   return (
     <div className="rounded-md border border-hair-2 bg-bg-panel p-3">
-      <div className="text-xs uppercase tracking-wide text-zinc-500">Reasoning-chain replay</div>
+      <div className="text-xs uppercase tracking-wide text-ink-3">Reasoning-chain replay</div>
       <div className="mt-2 flex gap-2">
         <input
           type="text"
           value={caseId}
           onChange={(e) => setCaseId(e.target.value)}
           placeholder="Case ID or runId"
-          className="flex-1 rounded border border-zinc-300 px-2 py-1 text-xs"
+          className="flex-1 rounded border border-hair-2 px-2 py-1 text-xs"
           onKeyDown={(e) => { if (e.key === "Enter") void load(); }}
         />
         <button
           type="button"
           onClick={() => void load()}
           disabled={busy || !caseId.trim()}
-          className="rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-800 disabled:opacity-50"
+          className="rounded bg-bg-2 px-3 py-1 text-xs text-white hover:bg-bg-3 disabled:opacity-50"
         >
           {busy ? "Loading…" : "Replay"}
         </button>
@@ -106,7 +106,7 @@ export function ChainReplayPanel(): JSX.Element {
 
       {data?.case && (
         <div className="mt-3">
-          <div className="rounded border border-zinc-200 bg-zinc-50 p-2 text-xs">
+          <div className="rounded border border-hair-2 bg-bg-base p-2 text-xs">
             <div><span className="opacity-60">subject </span><span className="font-medium">{data.case.subject?.name ?? "—"}</span></div>
             <div><span className="opacity-60">outcome </span><span className="font-mono">{data.case.outcome ?? "—"}</span></div>
             <div>
@@ -121,12 +121,12 @@ export function ChainReplayPanel(): JSX.Element {
             <ol className="mt-2 max-h-[460px] space-y-1 overflow-y-auto text-xs">
               {data.case.chain.map((node, i) => (
                 <li key={i} className="flex gap-2 rounded border border-hair-2 bg-bg-base px-2 py-1">
-                  <span className="w-6 text-right font-mono tabular-nums text-zinc-400">{node.step}</span>
-                  <span className={`rounded px-1 text-[10px] uppercase tracking-wide ${FACULTY_BADGE[node.faculty] ?? "bg-zinc-100"}`}>
+                  <span className="w-6 text-right font-mono tabular-nums text-ink-3">{node.step}</span>
+                  <span className={`rounded px-1 text-[10px] uppercase tracking-wide ${FACULTY_BADGE[node.faculty] ?? "bg-bg-1"}`}>
                     {node.faculty}
                   </span>
-                  <span className="font-mono text-zinc-700">{node.modeId}</span>
-                  <span className="flex-1 text-zinc-600">{node.summary}</span>
+                  <span className="font-mono text-ink-1">{node.modeId}</span>
+                  <span className="flex-1 text-ink-2">{node.summary}</span>
                 </li>
               ))}
             </ol>
@@ -134,8 +134,8 @@ export function ChainReplayPanel(): JSX.Element {
 
           {data.case.methodology && (
             <details className="mt-2 text-xs">
-              <summary className="cursor-pointer text-zinc-500">methodology</summary>
-              <pre className="mt-1 whitespace-pre-wrap rounded bg-zinc-50 p-2 text-[11px]">{data.case.methodology}</pre>
+              <summary className="cursor-pointer text-ink-3">methodology</summary>
+              <pre className="mt-1 whitespace-pre-wrap rounded bg-bg-base p-2 text-[11px]">{data.case.methodology}</pre>
             </details>
           )}
         </div>

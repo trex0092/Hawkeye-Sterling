@@ -41,7 +41,7 @@ interface Panel {
 
 const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
   ready:   { label: "✓ Ready",   cls: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" },
-  partial: { label: "⚠ Partial", cls: "bg-yellow-50 text-yellow-700 border-yellow-300" },
+  partial: { label: "⚠ Partial", cls: "bg-amber-950/30 text-amber-300 border-amber-500/40" },
   missing: { label: "✗ Missing", cls: "bg-red-950/30 text-red-300 border-red-500/40" },
 };
 

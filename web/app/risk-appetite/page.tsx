@@ -14,11 +14,11 @@ function Badge({
   tone?: "default" | "green" | "amber" | "red" | "blue";
 }) {
   const colors: Record<string, string> = {
-    default: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-    green: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    red: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    default: "bg-zinc-800/40 text-zinc-300",
+    green: "bg-emerald-950/30 text-emerald-300",
+    amber: "bg-amber-950/30 text-amber-300",
+    red: "bg-red-950/30 text-red-300",
+    blue: "bg-sky-950/30 text-sky-300",
   };
   return (
     <span
@@ -33,7 +33,7 @@ function Badge({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-3">
+    <h2 className="text-sm font-semibold text-ink-2 uppercase tracking-wide mb-3">
       {children}
     </h2>
   );
@@ -59,10 +59,10 @@ function NumInput({
   hint?: string;
 }) {
   const inputCls =
-    "border border-neutral-200 dark:border-neutral-700 rounded px-3 py-1.5 text-sm bg-white dark:bg-neutral-900 dark:text-white w-28 focus:outline-none focus:ring-2 focus:ring-brand/40";
+    "border border-hair-2 rounded px-3 py-1.5 text-sm bg-bg-panel text-ink-0 w-28 focus:outline-none focus:ring-2 focus:ring-brand/40";
   return (
     <div>
-      <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+      <label className="block text-xs font-medium text-ink-3 mb-1">
         {label}
       </label>
       <input
@@ -74,7 +74,7 @@ function NumInput({
         step={step ?? 1}
         onChange={(e) => onChange(parseFloat(e.target.value))}
       />
-      {hint && <p className="text-xs text-neutral-400 mt-0.5">{hint}</p>}
+      {hint && <p className="text-xs text-ink-3 mt-0.5">{hint}</p>}
     </div>
   );
 }
@@ -205,21 +205,21 @@ export default function RiskAppetitePage() {
       <div className="p-6 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold dark:text-white">Risk Appetite Matrix</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <h1 className="text-2xl font-bold ">Risk Appetite Matrix</h1>
+          <p className="text-sm text-ink-3 mt-1">
             Configure the scoring thresholds, customer-segment multipliers, and signal weights
             that drive automated compliance decisions.
           </p>
         </div>
 
         {loading && (
-          <div className="text-sm text-neutral-500 dark:text-neutral-400 py-12 text-center">
+          <div className="text-sm text-ink-3 py-12 text-center">
             Loading configuration…
           </div>
         )}
 
         {fetchError && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          <div className="rounded-lg bg-red-950/30 border border-red-500/40 px-4 py-3 text-sm text-red-300">
             {fetchError}
           </div>
         )}
@@ -227,9 +227,9 @@ export default function RiskAppetitePage() {
         {!loading && form && config && (
           <div className="space-y-8">
             {/* ── Decision Thresholds ────────────────────────────────────────── */}
-            <section className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
+            <section className="rounded-xl border border-hair-2 p-5">
               <SectionHeading>Decision Thresholds</SectionHeading>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+              <p className="text-xs text-ink-3 mb-4">
                 Scores are integers (0–100+). Must be strictly ascending:
                 auto-approve &lt; review-required &lt; auto-escalate.
               </p>
@@ -258,7 +258,7 @@ export default function RiskAppetitePage() {
               </div>
 
               {/* Effective thresholds visual */}
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-ink-3">
                 <span>Effective ranges:</span>
                 <Badge tone="green">0 – {form.autoApprove} → Auto-clear</Badge>
                 <Badge tone="amber">{form.autoApprove + 1} – {form.reviewRequired} → MLRO review</Badge>
@@ -267,9 +267,9 @@ export default function RiskAppetitePage() {
             </section>
 
             {/* ── Customer Segment Multipliers ───────────────────────────────── */}
-            <section className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
+            <section className="rounded-xl border border-hair-2 p-5">
               <SectionHeading>Customer Segment Multipliers</SectionHeading>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+              <p className="text-xs text-ink-3 mb-4">
                 Base score is multiplied by the segment factor before threshold
                 comparison. Values ≥ 0.
               </p>
@@ -306,9 +306,9 @@ export default function RiskAppetitePage() {
             </section>
 
             {/* ── Signal Weights ─────────────────────────────────────────────── */}
-            <section className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-5">
+            <section className="rounded-xl border border-hair-2 p-5">
               <SectionHeading>Signal Weights</SectionHeading>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
+              <p className="text-xs text-ink-3 mb-4">
                 Each weight is 0 – 1. Sum must be ≤ 1.0.
                 {" "}Current sum:{" "}
                 <span className={weightSum > 1.0 ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>
@@ -345,20 +345,20 @@ export default function RiskAppetitePage() {
 
             {/* ── Metadata ───────────────────────────────────────────────────── */}
             {config.updatedAt && config.updatedAt !== new Date(0).toISOString() && (
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-ink-3">
                 Last updated: {new Date(config.updatedAt).toLocaleString()} by{" "}
                 <span className="font-mono">{config.updatedBy}</span>
               </p>
             )}
 
             {saveError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+              <div className="rounded-lg bg-red-950/30 border border-red-500/40 px-4 py-3 text-sm text-red-300">
                 {saveError}
               </div>
             )}
 
             {saved && (
-              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-300">
+              <div className="rounded-lg bg-emerald-950/30 border border-emerald-500/40 px-4 py-3 text-sm text-emerald-300">
                 Configuration saved successfully.
               </div>
             )}

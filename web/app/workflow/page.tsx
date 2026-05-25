@@ -125,11 +125,11 @@ function Badge({
   tone?: "default" | "green" | "amber" | "red" | "blue";
 }) {
   const colors: Record<string, string> = {
-    default: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-    green: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    amber: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    red: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    default: "bg-zinc-800/40 text-zinc-300",
+    green: "bg-emerald-950/30 text-emerald-300",
+    amber: "bg-amber-950/30 text-amber-300",
+    red: "bg-red-950/30 text-red-300",
+    blue: "bg-sky-950/30 text-sky-300",
   };
   return (
     <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${colors[tone] ?? colors["default"]}`}>
@@ -150,7 +150,7 @@ function ActionEditor({
   onRemove: () => void;
 }) {
   const inputCls =
-    "border border-neutral-200 dark:border-neutral-700 rounded px-2 py-1 text-sm bg-white dark:bg-neutral-900 dark:text-white";
+    "border border-hair-2 rounded px-2 py-1 text-sm bg-bg-panel text-ink-0";
 
   const renderParams = () => {
     switch (action.type) {
@@ -231,7 +231,7 @@ function ActionEditor({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <select
-        className="border border-neutral-200 dark:border-neutral-700 rounded px-2 py-1 text-sm bg-white dark:bg-neutral-900 dark:text-white"
+        className="border border-hair-2 rounded px-2 py-1 text-sm bg-bg-panel text-ink-0"
         value={action.type}
         onChange={(e) => onChange(defaultActionForType(e.target.value as WorkflowAction["type"]))}
       >
@@ -265,7 +265,7 @@ function ConditionEditor({
   onRemove: () => void;
 }) {
   const inputCls =
-    "border border-neutral-200 dark:border-neutral-700 rounded px-2 py-1 text-sm bg-white dark:bg-neutral-900 dark:text-white";
+    "border border-hair-2 rounded px-2 py-1 text-sm bg-bg-panel text-ink-0";
 
   const handleValueChange = (raw: string) => {
     // For "in" operator parse comma-separated list; otherwise keep as string.
@@ -382,18 +382,18 @@ function RuleFormModal({
   };
 
   const inputCls =
-    "w-full border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-sm bg-white dark:bg-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40";
+    "w-full border border-hair-2 rounded px-3 py-2 text-sm bg-bg-panel text-ink-0 focus:outline-none focus:ring-2 focus:ring-brand/40";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-neutral-950 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold dark:text-white">
+      <div className="bg-bg-panel rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-hair-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-ink-0">
             {initial ? "Edit rule" : "New workflow rule"}
           </h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xl leading-none"
+            className="text-ink-3 hover:text-ink-1 text-xl leading-none"
           >
             ×
           </button>
@@ -402,7 +402,7 @@ function RuleFormModal({
         <div className="p-6 space-y-5">
           {/* Name */}
           <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+            <label className="block text-xs font-medium text-ink-3 mb-1">
               Rule name *
             </label>
             <input
@@ -415,7 +415,7 @@ function RuleFormModal({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+            <label className="block text-xs font-medium text-ink-3 mb-1">
               Description
             </label>
             <input
@@ -428,7 +428,7 @@ function RuleFormModal({
 
           {/* Trigger */}
           <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+            <label className="block text-xs font-medium text-ink-3 mb-1">
               Trigger *
             </label>
             <select
@@ -448,18 +448,18 @@ function RuleFormModal({
 
           {/* Active toggle */}
           <div className="flex items-center gap-3">
-            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <label className="text-xs font-medium text-ink-3">
               Active
             </label>
             <button
               type="button"
               onClick={() => setForm({ ...form, active: !form.active })}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                form.active ? "bg-brand" : "bg-neutral-300 dark:bg-neutral-700"
+                form.active ? "bg-brand" : "bg-zinc-700"
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 translate-x-1 transform rounded-full bg-bg-panel transition-transform ${
                   form.active ? "translate-x-6" : ""
                 }`}
               />
@@ -469,7 +469,7 @@ function RuleFormModal({
           {/* Conditions */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+              <label className="text-xs font-medium text-ink-3">
                 Conditions (ALL must match)
               </label>
               <button
@@ -512,7 +512,7 @@ function RuleFormModal({
           {/* Actions */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+              <label className="text-xs font-medium text-ink-3">
                 Actions (applied when all conditions match)
               </label>
               <button
@@ -554,16 +554,16 @@ function RuleFormModal({
           </div>
 
           {error && (
-            <div className="rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            <div className="rounded bg-red-950/30 border border-red-500/40 px-3 py-2 text-sm text-red-300">
               {error}
             </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-3">
+        <div className="p-6 border-t border-hair-2 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 dark:text-white"
+            className="px-4 py-2 text-sm rounded-lg border border-hair-2 hover:bg-bg-1"
           >
             Cancel
           </button>
@@ -620,14 +620,14 @@ function TestRuleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-neutral-950 rounded-xl shadow-2xl w-full max-w-lg mx-4">
-        <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold dark:text-white">
+      <div className="bg-bg-panel rounded-xl shadow-2xl w-full max-w-lg mx-4">
+        <div className="p-6 border-b border-hair-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-ink-0">
             Test: {rule.name}
           </h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xl leading-none"
+            className="text-ink-3 hover:text-ink-1 text-xl leading-none"
           >
             ×
           </button>
@@ -635,11 +635,11 @@ function TestRuleModal({
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">
+            <label className="block text-xs font-medium text-ink-3 mb-1">
               Subject ID
             </label>
             <input
-              className="w-full border border-neutral-200 dark:border-neutral-700 rounded px-3 py-2 text-sm bg-white dark:bg-neutral-900 dark:text-white"
+              className="w-full border border-hair-2 rounded px-3 py-2 text-sm bg-bg-panel text-ink-0"
               placeholder="subject-001"
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
@@ -648,7 +648,7 @@ function TestRuleModal({
           </div>
 
           {error && (
-            <div className="rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            <div className="rounded bg-red-950/30 border border-red-500/40 px-3 py-2 text-sm text-red-300">
               {error}
             </div>
           )}
@@ -656,19 +656,19 @@ function TestRuleModal({
           {result && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium dark:text-white">Result:</span>
+                <span className="text-sm font-medium">Result:</span>
                 <Badge tone={result.matched ? "green" : "red"}>
                   {result.matched ? "Matched" : "No match"}
                 </Badge>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs font-medium text-ink-3">
                   Per-condition results:
                 </p>
                 {result.conditionResults.map((cr, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300"
+                    className="flex items-center gap-2 text-xs text-ink-2"
                   >
                     <Badge tone={cr.result ? "green" : "red"}>
                       {cr.result ? "pass" : "fail"}
@@ -686,10 +686,10 @@ function TestRuleModal({
           )}
         </div>
 
-        <div className="p-6 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-3">
+        <div className="p-6 border-t border-hair-2 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 dark:text-white"
+            className="px-4 py-2 text-sm rounded-lg border border-hair-2 hover:bg-bg-1"
           >
             Close
           </button>
@@ -793,8 +793,8 @@ export default function WorkflowPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold dark:text-white">Workflow Rules</h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            <h1 className="text-2xl font-bold">Workflow Rules</h1>
+            <p className="text-sm text-ink-3 mt-1">
               Automate MLRO decisions: define conditions + actions that fire on screening events.
             </p>
           </div>
@@ -808,62 +808,62 @@ export default function WorkflowPage() {
 
         {/* Content */}
         {loading && (
-          <div className="text-sm text-neutral-500 dark:text-neutral-400 py-12 text-center">
+          <div className="text-sm text-ink-3 py-12 text-center">
             Loading rules…
           </div>
         )}
 
         {fetchError && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          <div className="rounded-lg bg-red-950/30 border border-red-500/40 px-4 py-3 text-sm text-red-300">
             {fetchError}
           </div>
         )}
 
         {!loading && !fetchError && rules.length === 0 && (
-          <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 py-16 text-center">
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+          <div className="rounded-xl border border-dashed border-hair-2 py-16 text-center">
+            <p className="text-ink-3 text-sm">
               No workflow rules yet. Click &quot;New rule&quot; to get started.
             </p>
           </div>
         )}
 
         {!loading && rules.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <div className="rounded-xl border border-hair-2 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                <tr className="bg-bg-base border-b border-hair-2">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Rule
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Trigger
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Conditions
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Actions
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Active
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Last run
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-ink-3 uppercase tracking-wide">
                     Runs
                   </th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <tbody className="divide-y divide-hair-2">
                 {rules.map((rule) => (
                   <tr
                     key={rule.id}
-                    className="bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+                    className="bg-bg-panel hover:bg-bg-base transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium dark:text-white">{rule.name}</div>
+                      <div className="font-medium">{rule.name}</div>
                       {rule.description && (
                         <div className="text-xs text-neutral-400 mt-0.5 truncate max-w-xs">
                           {rule.description}
@@ -884,42 +884,42 @@ export default function WorkflowPage() {
                         type="button"
                         onClick={() => void handleToggleActive(rule)}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          rule.active ? "bg-brand" : "bg-neutral-300 dark:bg-neutral-700"
+                          rule.active ? "bg-brand" : "bg-zinc-700"
                         }`}
                         aria-label={rule.active ? "Deactivate rule" : "Activate rule"}
                       >
                         <span
-                          className={`inline-block h-3 w-3 translate-x-1 transform rounded-full bg-white transition-transform ${
+                          className={`inline-block h-3 w-3 translate-x-1 transform rounded-full bg-bg-panel transition-transform ${
                             rule.active ? "translate-x-5" : ""
                           }`}
                         />
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-xs">
+                    <td className="px-4 py-3 text-ink-3 text-xs">
                       {rule.lastRunAt
                         ? new Date(rule.lastRunAt).toLocaleString()
                         : "Never"}
                     </td>
-                    <td className="px-4 py-3 text-center text-neutral-500 dark:text-neutral-400 text-xs">
+                    <td className="px-4 py-3 text-center text-ink-3 text-xs">
                       {rule.runCount ?? 0}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 justify-end">
                         <button
                           onClick={() => setTestingRule(rule)}
-                          className="text-xs px-2 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 dark:text-white"
+                          className="text-xs px-2 py-1 rounded border border-hair-2 hover:bg-bg-1"
                         >
                           Test
                         </button>
                         <button
                           onClick={() => setEditingRule(rule)}
-                          className="text-xs px-2 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 dark:text-white"
+                          className="text-xs px-2 py-1 rounded border border-hair-2 hover:bg-bg-1"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => void handleDelete(rule)}
-                          className="text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="text-xs px-2 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-950/20"
                         >
                           Delete
                         </button>
@@ -933,11 +933,11 @@ export default function WorkflowPage() {
         )}
 
         {/* Legend */}
-        <div className="mt-6 rounded-xl border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-4">
-          <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2">
+        <div className="mt-6 rounded-xl border border-hair-2 bg-bg-base p-4">
+          <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide mb-2">
             Available triggers
           </p>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-ink-2">
             {Object.entries(TRIGGER_LABELS).map(([key, label]) => (
               <div key={key}>
                 <span className="font-mono text-brand">{key}</span>
@@ -945,10 +945,10 @@ export default function WorkflowPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mt-3 mb-2">
+          <p className="text-xs font-semibold text-ink-3 uppercase tracking-wide mt-3 mb-2">
             Available action types
           </p>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs text-ink-2">
             {ACTION_TYPES.map((a) => (
               <div key={a.value}>
                 <span className="font-mono text-brand">{a.value}</span>

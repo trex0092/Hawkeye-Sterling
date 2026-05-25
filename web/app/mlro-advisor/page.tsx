@@ -6513,7 +6513,7 @@ export default function MlroAdvisorPage() {
                     <div className="mt-1 text-10 text-green">✓ {adverseFetchNote}</div>
                   )}
                   {paywallSuspected && (
-                    <div className="rounded border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                    <div className="rounded border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-sm text-amber-300">
                       Limited text extracted — this article may be paywalled. Verify the full article before making a compliance decision.
                     </div>
                   )}
@@ -9788,7 +9788,7 @@ export default function MlroAdvisorPage() {
                   const r = cryptoTracingResult as Record<string, unknown>;
                   const score = Number(r["overallRiskScore"] ?? r["riskScore"] ?? 0);
                   const tier = String(r["riskTier"] ?? "medium");
-                  const tierCls = tier === "severe" ? "bg-red text-white" : tier === "critical" ? "bg-red-dim text-red border border-red/40" : tier === "high" ? "bg-amber-dim text-amber border border-amber/40" : tier === "medium" ? "bg-yellow-100 text-yellow-800 border border-yellow-300" : "bg-green-dim text-green border border-green/40";
+                  const tierCls = tier === "severe" ? "bg-red text-white" : tier === "critical" ? "bg-red-dim text-red border border-red/40" : tier === "high" ? "bg-amber-dim text-amber border border-amber/40" : tier === "medium" ? "bg-amber-950/30 text-amber-300 border border-amber-500/40" : "bg-green-dim text-green border border-green/40";
                   const scoreCls = score >= 81 ? "text-red" : score >= 61 ? "text-red" : score >= 41 ? "text-amber" : score >= 21 ? "text-yellow-600" : "text-green";
                   const ba = r["blockchainAnalysis"] as Record<string, unknown> | undefined;
                   const mx = r["mixerExposure"] as Record<string, unknown> | undefined;
@@ -9805,7 +9805,7 @@ export default function MlroAdvisorPage() {
                   const nextSteps = (r["investigativeNextSteps"] as string[] | undefined) ?? [];
                   const tools = (r["blockchainForensicsTools"] as string[] | undefined) ?? [];
                   const recommendation = String(r["recommendation"] ?? "monitor");
-                  const recCls = recommendation === "report_to_law_enforcement" || recommendation === "freeze_assets" ? "bg-red-dim border border-red/40" : recommendation === "file_str" ? "bg-amber-dim border border-amber/40" : recommendation === "enhanced_monitoring" ? "bg-yellow-50 border border-yellow-300" : "bg-bg-panel border border-hair-2";
+                  const recCls = recommendation === "report_to_law_enforcement" || recommendation === "freeze_assets" ? "bg-red-dim border border-red/40" : recommendation === "file_str" ? "bg-amber-dim border border-amber/40" : recommendation === "enhanced_monitoring" ? "bg-amber-950/30 border border-amber-500/40" : "bg-bg-panel border border-hair-2";
                   const recLabel = recommendation === "clear" ? "✓ Clear — No Action Required" : recommendation === "monitor" ? "👁 Monitor — Standard Surveillance" : recommendation === "request_wallet_verification" ? "🔍 Request Wallet Verification" : recommendation === "enhanced_monitoring" ? "⚠️ Enhanced Monitoring" : recommendation === "file_str" ? "📋 File STR with FIU" : recommendation === "freeze_assets" ? "❄️ Freeze Assets" : "🚔 Report to Law Enforcement";
 
                   return (

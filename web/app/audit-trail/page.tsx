@@ -249,7 +249,7 @@ export default function AuditTrailPage() {
             <button
               type="button"
               onClick={handleClear}
-              className="text-11 font-semibold px-3 py-1.5 rounded border border-red-200 text-red hover:bg-red-50"
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-red-500/40 text-red hover:bg-red-950/20"
             >
               Clear
             </button>

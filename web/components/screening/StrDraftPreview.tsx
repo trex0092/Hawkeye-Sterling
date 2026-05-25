@@ -41,23 +41,23 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
 
   return (
     <div className="rounded-md border border-hair-2 bg-bg-panel text-ink-1">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
+      <div className="flex items-center justify-between border-b border-hair-2 px-3 py-2">
         <div>
-          <div className="text-xs uppercase tracking-wide text-zinc-600">STR draft preview</div>
-          <div className="text-sm font-medium text-zinc-900">goAML XML envelope (preview only — not filed)</div>
+          <div className="text-xs uppercase tracking-wide text-ink-2">STR draft preview</div>
+          <div className="text-sm font-medium text-ink-0">goAML XML envelope (preview only — not filed)</div>
         </div>
         <button
           type="button"
           onClick={() => setShowRaw((x) => !x)}
-          className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-800 hover:bg-zinc-100"
+          className="rounded border border-hair-2 px-2 py-1 text-xs text-ink-1 hover:bg-bg-1"
         >
           {showRaw ? "structured view" : "raw XML"}
         </button>
       </div>
 
-      <div className="p-3 text-xs text-zinc-900">
+      <div className="p-3 text-xs text-ink-0">
         {showRaw ? (
-          <pre className="overflow-x-auto rounded bg-zinc-100 p-2 text-[11px] leading-snug text-zinc-900">
+          <pre className="overflow-x-auto rounded bg-bg-base p-2 text-[11px] leading-snug text-ink-0">
             {draft.xml}
           </pre>
         ) : (
@@ -73,27 +73,27 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
             <Row label="Cross-regime" value={source.crossRegimeConflict?.recommendedAction ?? "n/a"} />
             <Row label="Redlines fired" value={(source.redlines?.fired ?? []).map((r) => r.id ?? r.label ?? "?").join(", ") || "none"} />
             <div>
-              <dt className="text-zinc-600 font-medium">Reason for suspicion (auto-drafted)</dt>
-              <dd className="mt-1 whitespace-pre-wrap rounded bg-zinc-100 p-2 text-[11px] text-zinc-900">{draft.reasonForSuspicion}</dd>
+              <dt className="text-ink-2 font-medium">Reason for suspicion (auto-drafted)</dt>
+              <dd className="mt-1 whitespace-pre-wrap rounded bg-bg-base p-2 text-[11px] text-ink-0">{draft.reasonForSuspicion}</dd>
             </div>
             <div>
-              <dt className="text-zinc-600 font-medium">Mode citations</dt>
+              <dt className="text-ink-2 font-medium">Mode citations</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {(source.findings ?? [])
                   .filter((f) => (f.score ?? 0) >= 0.5)
                   .slice(0, 12)
                   .map((f) => (
-                    <span key={f.modeId} className="rounded bg-zinc-200 px-1.5 py-0.5 font-mono text-[10px] text-zinc-900">
+                    <span key={f.modeId} className="rounded bg-bg-1 px-1.5 py-0.5 font-mono text-[10px] text-ink-0">
                       {f.modeId}
                     </span>
                   ))}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-600 font-medium">Regulatory anchors</dt>
+              <dt className="text-ink-2 font-medium">Regulatory anchors</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {draft.anchors.map((a) => (
-                  <span key={a} className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-[10px] font-mono text-zinc-900">
+                  <span key={a} className="rounded border border-hair-2 bg-bg-base px-1.5 py-0.5 text-[10px] font-mono text-ink-0">
                     {a}
                   </span>
                 ))}
@@ -115,8 +115,8 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }): JSX.Element {
   return (
     <div className="flex gap-3">
-      <dt className="w-32 shrink-0 text-zinc-600 font-medium">{label}</dt>
-      <dd className={mono ? "font-mono text-zinc-900" : "text-zinc-900"}>{value}</dd>
+      <dt className="w-32 shrink-0 text-ink-2 font-medium">{label}</dt>
+      <dd className={mono ? "font-mono text-ink-0" : "text-ink-0"}>{value}</dd>
     </div>
   );
 }
