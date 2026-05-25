@@ -71,6 +71,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  if (isNaN(Date.parse(body.auditDate as string))) {
+    return NextResponse.json(
+      { ok: false, error: "auditDate must be a valid date (YYYY-MM-DD)" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+  if (isNaN(Date.parse(body.dueDate as string))) {
+    return NextResponse.json(
+      { ok: false, error: "dueDate must be a valid date (YYYY-MM-DD)" },
+      { status: 400, headers: gate.headers },
+    );
+  }
+
   const tenantId = tenantIdFromGate(gate);
 
   const fields: AuditFindingCreateFields = {

@@ -122,7 +122,11 @@ function canAdvance(step: Step, f: FormState): boolean {
     const allAmountsValid = f.transactions.every(
       (t) => !t.amount.trim() || parseFloat(t.amount) > 0,
     );
-    return f.narrativeText.trim().length >= 100 && allAmountsValid;
+    return (
+      f.suspectedOffence.trim().length > 0 &&
+      f.narrativeText.trim().length >= 100 &&
+      allAmountsValid
+    );
   }
   return true;
 }
