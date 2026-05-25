@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@netlify/blobs";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
@@ -128,6 +129,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     await store.setJSON(rkey, { subject, archivedAt: new Date().toISOString(), verdict: body.verdict });
     index.unshift(rkey);
     await store.setJSON(ikey, index);
+
+    void writeAuditChainEntry(
+      { event: "adverse_media.archived", actor: gate.keyId, meta: { subjectId: slug, totalArchived: index.length } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json(
       { ok: true, subject, archivedAt: iso, totalArchived: index.length },

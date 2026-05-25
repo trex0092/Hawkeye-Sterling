@@ -14,6 +14,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   makeAnalystEvent,
@@ -168,6 +169,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       console.error("[analyst-behavior] failed to persist event:", err);
     }
   }
+
+  void writeAuditChainEntry(
+    { event: "analyst.behavior_recorded", actor: gate.keyId, meta: { behaviorType: body.kind } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, eventId: event.id }, { status: 201, headers: gate.headers });
 }
