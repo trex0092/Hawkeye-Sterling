@@ -87,6 +87,7 @@ export default function DormantAccountsPage() {
     setError(null);
     try {
       const res = await fetch("/api/dormant-accounts", { headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: DormantAccount[]; error?: string };
       if (data.ok) {
         setAccounts(data.records ?? []);
@@ -120,6 +121,7 @@ export default function DormantAccountsPage() {
           ...(form.notes ? { notes: form.notes } : {}),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -169,6 +171,7 @@ export default function DormantAccountsPage() {
           notes: upd.notes || undefined,
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setExpandedId(null);
@@ -192,6 +195,7 @@ export default function DormantAccountsPage() {
         headers: authHeaders(true),
         body: JSON.stringify({ mlroNotified: true, mlroNotifiedDate: today }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         void fetchAccounts();

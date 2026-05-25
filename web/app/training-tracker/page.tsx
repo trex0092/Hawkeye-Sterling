@@ -80,6 +80,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           ...(form.certificateRef.trim() ? { certificateRef: form.certificateRef.trim() } : {}),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) {
         setError(data.error ?? "Add failed");
@@ -214,6 +215,7 @@ export default function TrainingTrackerPage() {
     setFetchError(null);
     try {
       const res = await fetch("/api/training");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as {
         ok: boolean;
         records?: TrainingRecord[];

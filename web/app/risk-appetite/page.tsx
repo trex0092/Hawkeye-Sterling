@@ -145,6 +145,7 @@ export default function RiskAppetitePage() {
     setFetchError(null);
     try {
       const res = await fetch("/api/risk-appetite");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { ok: boolean; config?: RiskAppetiteConfig; error?: string };
       if (data.ok && data.config) {
         setConfig(data.config);
@@ -174,6 +175,7 @@ export default function RiskAppetitePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formToBody(form, config.tenantId)),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { ok: boolean; config?: RiskAppetiteConfig; error?: string };
       if (data.ok && data.config) {
         setConfig(data.config);
