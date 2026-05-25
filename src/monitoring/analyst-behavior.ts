@@ -3,6 +3,8 @@
 // Monitors analyst/operator activity patterns and surfaces insider-threat
 // signals. Complements the entity-facing AML engine with user-facing
 // behavioral detection.
+
+import { randomBytes } from 'node:crypto';
 //
 // Threat model: a compliance analyst who:
 //   - Bulk-exports sensitive records for exfiltration
@@ -83,7 +85,7 @@ export function makeAnalystEvent(
 ): AnalystEvent {
   const now = new Date();
   return {
-    id: `ueba_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    id: `ueba_${Date.now().toString(36)}_${randomBytes(3).toString('hex')}`,
     at: now.toISOString(),
     actor,
     kind,

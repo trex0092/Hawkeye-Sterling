@@ -153,6 +153,10 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, error: "id query parameter required" }, { status: 400, headers: gate.headers });
+  const SAFE_ID_RE = /^[a-zA-Z0-9_\-.]+$/;
+  if (id.length > 128 || !SAFE_ID_RE.test(id)) {
+    return NextResponse.json({ ok: false, error: "id must be alphanumeric/._- and ≤128 chars" }, { status: 400, headers: gate.headers });
+  }
 
   await del(webhookKey(tenant, id));
   const idx = (await getJson<string[]>(webhookIndexKey(tenant))) ?? [];

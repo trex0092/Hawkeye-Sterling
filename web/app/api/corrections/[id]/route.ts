@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getJson, setJson } from "@/lib/server/store";
 import type { CorrectionRequest, CorrectionStatus } from "../route";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,5 +117,11 @@ export async function PATCH(
   }
 
   await setJson(`${PREFIX}${id}`, record);
+
+  void writeAuditChainEntry(
+    { event: "corrections.status_updated", actor: gate.keyId, correctionId: id, newStatus: record.status },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] corrections write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, request: record }, { headers: gateHeaders });
 }

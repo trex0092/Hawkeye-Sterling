@@ -41,7 +41,7 @@ export async function GET(): Promise<NextResponse> {
       maxAge: 0,
       path: "/",
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: isSecure,
     });
     return res;

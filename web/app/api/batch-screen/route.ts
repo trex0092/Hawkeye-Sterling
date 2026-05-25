@@ -41,6 +41,7 @@ function scoreToBand(score: number): string {
 }
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { postWebhook } from "@/lib/server/webhook";
 import { getIdempotencyKey, getIdempotent, storeIdempotent } from "@/lib/server/idempotency";
 // Optional cross-validation services (all fail-soft — no env var = no-op).
@@ -438,7 +439,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     totalSubjects: body.rows.length,
     criticalHits: results.filter((r) => r.severity === "critical").length,
     requestedBy: gate.keyId,
-  }, "compliance").catch((e) =>
+  }, tenantIdFromGate(gate)).catch((e) =>
     console.warn("[audit] batch screen write failed:", e instanceof Error ? e.message : String(e))
   );
 

@@ -4,6 +4,8 @@
 import { NextResponse } from "next/server";
 import { getJson, setJson } from "@/lib/server/store";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { ApprovalRecord } from "../route";
 
 export const runtime = "nodejs";
@@ -67,6 +69,11 @@ export async function PATCH(
   records[idx] = updated;
   await saveRecords(records);
 
+  void writeAuditChainEntry(
+    { event: "approvals.record_updated", actor: gate.keyId, recordId: id, entityName: updated.entityName, riskScore: updated.riskScore },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] approvals write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, record: updated }, { headers: gate.headers });
 }
 
@@ -85,5 +92,11 @@ export async function DELETE(
   }
 
   await saveRecords(filtered);
+
+  void writeAuditChainEntry(
+    { event: "approvals.record_deleted", actor: gate.keyId, recordId: id },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] approvals write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true }, { headers: gate.headers });
 }

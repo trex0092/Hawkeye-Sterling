@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -378,7 +379,7 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
           rcaName: node.name,
           riskLevel: node.riskLevel,
         },
-        "compliance",
+        tenantIdFromGate(gate),
       ).catch((err: unknown) =>
         console.warn("[pep-profile] pep.rca_identified audit chain write failed:", err instanceof Error ? err.message : String(err)),
       );

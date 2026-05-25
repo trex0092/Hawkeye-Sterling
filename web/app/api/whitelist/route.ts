@@ -153,7 +153,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   // FDL 10/2025 Art.24: whitelist additions are AML decisions and must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "whitelist.entry_added", subjectId: entry.id, subjectName: entry.subjectName, reason: entry.reason, actor: entry.approvedBy },
-    "compliance",
+    ctx.tenantId,
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, entry });
@@ -182,7 +182,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
   // FDL 10/2025 Art.24: whitelist removals are AML decisions and must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "whitelist.entry_removed", subjectId: id, actor: ctx.tenantId },
-    "compliance",
+    ctx.tenantId,
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true });
