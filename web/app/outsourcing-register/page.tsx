@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface OutsourcingArrangement {
   id: string;
@@ -43,30 +45,22 @@ interface UpdateForm {
 }
 
 const STATUS_COLOURS: Record<string, string> = {
-  active: "bg-green-100 text-green-800",
-  under_review: "bg-amber-100 text-amber-800",
-  terminated: "bg-gray-100 text-gray-600",
-  pending_approval: "bg-blue-100 text-blue-800",
+  active: "bg-emerald-950/20 text-emerald-300",
+  under_review: "bg-amber-950/20 text-amber-300",
+  terminated: "bg-zinc-800/40 text-ink-2",
+  pending_approval: "bg-sky-950/20 text-sky-300",
 };
 
 const RISK_COLOURS: Record<string, string> = {
-  high: "bg-red-100 text-red-800",
-  medium: "bg-amber-100 text-amber-800",
-  low: "bg-green-100 text-green-800",
+  high: "bg-red-950/30 text-red-300 border border-red-500/40",
+  medium: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  low: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
 };
 
 const SERVICE_TYPE_OPTIONS = [
-  "KYC Screening",
-  "Transaction Monitoring",
-  "CDD Data",
-  "Sanctions Screening",
-  "AML Software",
-  "Fraud Detection",
-  "Identity Verification",
-  "Document Verification",
-  "Risk Scoring",
-  "Reporting & Analytics",
-  "Other",
+  "KYC Screening", "Transaction Monitoring", "CDD Data", "Sanctions Screening",
+  "AML Software", "Fraud Detection", "Identity Verification", "Document Verification",
+  "Risk Scoring", "Reporting & Analytics", "Other",
 ];
 
 function formatDate(iso: string | undefined): string {
@@ -92,15 +86,9 @@ export default function OutsourcingRegisterPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [form, setForm] = useState<NewArrangementForm>({
-    vendorName: "",
-    vendorCountry: "",
-    serviceType: "KYC Screening",
-    amlCftRelevant: true,
-    contractStartDate: "",
-    contractEndDate: "",
-    riskRating: "medium",
-    boardApproved: false,
-    notes: "",
+    vendorName: "", vendorCountry: "", serviceType: "KYC Screening",
+    amlCftRelevant: true, contractStartDate: "", contractEndDate: "",
+    riskRating: "medium", boardApproved: false, notes: "",
   });
 
   const fetchArrangements = useCallback(async () => {
@@ -108,12 +96,10 @@ export default function OutsourcingRegisterPage() {
     setError(null);
     try {
       const res = await fetch("/api/outsourcing-register", { headers: authHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: OutsourcingArrangement[]; error?: string };
-      if (data.ok) {
-        setArrangements(data.records ?? []);
-      } else {
-        setError(data.error ?? "Failed to load outsourcing arrangements");
-      }
+      if (data.ok) setArrangements(data.records ?? []);
+      else setError(data.error ?? "Failed to load outsourcing arrangements");
     } catch {
       setError("Network error loading outsourcing arrangements");
     } finally {
@@ -121,9 +107,7 @@ export default function OutsourcingRegisterPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchArrangements();
-  }, [fetchArrangements]);
+  useEffect(() => { void fetchArrangements(); }, [fetchArrangements]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -134,31 +118,19 @@ export default function OutsourcingRegisterPage() {
         method: "POST",
         headers: authHeaders(true),
         body: JSON.stringify({
-          vendorName: form.vendorName,
-          vendorCountry: form.vendorCountry,
-          serviceType: form.serviceType,
-          amlCftRelevant: form.amlCftRelevant,
+          vendorName: form.vendorName, vendorCountry: form.vendorCountry,
+          serviceType: form.serviceType, amlCftRelevant: form.amlCftRelevant,
           contractStartDate: form.contractStartDate,
           ...(form.contractEndDate ? { contractEndDate: form.contractEndDate } : {}),
-          riskRating: form.riskRating,
-          boardApproved: form.boardApproved,
+          riskRating: form.riskRating, boardApproved: form.boardApproved,
           ...(form.notes ? { notes: form.notes } : {}),
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
-        setForm({
-          vendorName: "",
-          vendorCountry: "",
-          serviceType: "KYC Screening",
-          amlCftRelevant: true,
-          contractStartDate: "",
-          contractEndDate: "",
-          riskRating: "medium",
-          boardApproved: false,
-          notes: "",
-        });
+        setForm({ vendorName: "", vendorCountry: "", serviceType: "KYC Screening", amlCftRelevant: true, contractStartDate: "", contractEndDate: "", riskRating: "medium", boardApproved: false, notes: "" });
         void fetchArrangements();
       } else {
         setError(data.error ?? "Failed to create arrangement");
@@ -171,10 +143,7 @@ export default function OutsourcingRegisterPage() {
   }
 
   function openExpand(arr: OutsourcingArrangement) {
-    if (expandedId === arr.id) {
-      setExpandedId(null);
-      return;
-    }
+    if (expandedId === arr.id) { setExpandedId(null); return; }
     setExpandedId(arr.id);
     setUpdateForms((prev) => ({
       ...prev,
@@ -198,19 +167,14 @@ export default function OutsourcingRegisterPage() {
         headers: authHeaders(true),
         body: JSON.stringify({
           ...(upd.lastAssessmentDate ? { lastAssessmentDate: upd.lastAssessmentDate } : {}),
-          boardApproved: upd.boardApproved,
-          agreementCurrent: upd.agreementCurrent,
-          mlroSignOff: upd.mlroSignOff,
-          notes: upd.notes,
+          boardApproved: upd.boardApproved, agreementCurrent: upd.agreementCurrent,
+          mlroSignOff: upd.mlroSignOff, notes: upd.notes,
         }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
-      if (data.ok) {
-        setExpandedId(null);
-        void fetchArrangements();
-      } else {
-        setError(data.error ?? "Failed to update arrangement");
-      }
+      if (data.ok) { setExpandedId(null); void fetchArrangements(); }
+      else setError(data.error ?? "Failed to update arrangement");
     } catch {
       setError("Network error updating arrangement");
     } finally {
@@ -219,380 +183,261 @@ export default function OutsourcingRegisterPage() {
   }
 
   const amlCftArrangements = arrangements.filter((a) => a.amlCftRelevant);
-  const dueForReview = arrangements.filter(
-    (a) => a.status === "under_review",
-  );
+  const dueForReview = arrangements.filter((a) => a.status === "under_review");
   const boardApproved = arrangements.filter((a) => a.boardApproved);
-
-  const hasWarning = amlCftArrangements.some(
-    (a) => a.status === "under_review" || !a.boardApproved,
-  );
+  const hasWarning = amlCftArrangements.some((a) => a.status === "under_review" || !a.boardApproved);
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Outsourcing Register</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            FDL 10/2025 Art.18 · CBUAE Outsourcing Guidance · FATF R.2
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "New Arrangement"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="Compliance Records"
+        modules={[
+          { label: "Audit Findings", href: "/audit-findings", icon: "📋" },
+          { label: "Business Risk (BRA)", href: "/bra", icon: "📊" },
+          { label: "Dormant Accounts", href: "/dormant-accounts", icon: "💤" },
+          { label: "Outsourcing Register", href: "/outsourcing-register", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="🏢 Governance — FDL 10/2025 Art.18 · FATF R.2"
+        title="Outsourcing"
+        titleEm="register."
+        intro="Third-party AML/CFT arrangements · Board approval · annual MLRO review · agreement currency"
+      />
 
-      {/* Warning Banner */}
-      {hasWarning && (
-        <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-900 rounded-md px-4 py-3 text-sm flex items-start gap-2">
-          <span className="font-bold shrink-0">Warning:</span>
-          <span>
-            One or more AML/CFT-relevant arrangements are due for review or missing Board approval.
-            Review required under FDL 10/2025 Art.18.
-          </span>
-        </div>
-      )}
+      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-      {/* Error Banner */}
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-gray-900">{arrangements.length}</div>
-          <div className="text-xs text-gray-500 mt-1">Total Arrangements</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-700">{amlCftArrangements.length}</div>
-          <div className="text-xs text-gray-500 mt-1">AML/CFT Relevant</div>
-        </div>
-        <div className={`border rounded-lg p-4 ${dueForReview.length > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-200"}`}>
-          <div className={`text-2xl font-bold ${dueForReview.length > 0 ? "text-amber-700" : "text-gray-900"}`}>
-            {dueForReview.length}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">Due for Review</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-700">{boardApproved.length}</div>
-          <div className="text-xs text-gray-500 mt-1">Board Approved</div>
-        </div>
-      </div>
-
-      {/* New Arrangement Form */}
-      {showForm && (
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="mb-8 bg-white border border-gray-200 rounded-lg p-6"
-        >
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">New Outsourcing Arrangement</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
-              <input
-                type="text"
-                value={form.vendorName}
-                onChange={(e) => setForm({ ...form, vendorName: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-                placeholder="e.g. Refinitiv World-Check"
-              />
+        {/* Stats + action bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-ink-1">{arrangements.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Country *</label>
-              <input
-                type="text"
-                value={form.vendorCountry}
-                onChange={(e) => setForm({ ...form, vendorCountry: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-                placeholder="e.g. United Kingdom"
-              />
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-sky-400">{amlCftArrangements.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">AML/CFT</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Service Type *</label>
-              <select
-                value={form.serviceType}
-                onChange={(e) => setForm({ ...form, serviceType: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                {SERVICE_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+            <div className={`border rounded-lg px-4 py-3 text-center min-w-[80px] ${dueForReview.length > 0 ? "bg-amber-950/20 border-amber-500/30" : "bg-bg-panel border-hair-2"}`}>
+              <div className={`text-2xl font-bold ${dueForReview.length > 0 ? "text-amber-400" : "text-ink-1"}`}>{dueForReview.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">For Review</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Risk Rating *</label>
-              <select
-                value={form.riskRating}
-                onChange={(e) => setForm({ ...form, riskRating: e.target.value as "high" | "medium" | "low" })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contract Start Date *</label>
-              <input
-                type="date"
-                value={form.contractStartDate}
-                onChange={(e) => setForm({ ...form, contractStartDate: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contract End Date</label>
-              <input
-                type="date"
-                value={form.contractEndDate}
-                onChange={(e) => setForm({ ...form, contractEndDate: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              />
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-emerald-400">{boardApproved.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Board OK</div>
             </div>
           </div>
-
-          <div className="mt-4 flex gap-6">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.amlCftRelevant}
-                onChange={(e) => setForm({ ...form, amlCftRelevant: e.target.checked })}
-                className="rounded"
-              />
-              AML/CFT Relevant
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.boardApproved}
-                onChange={(e) => setForm({ ...form, boardApproved: e.target.checked })}
-                className="rounded"
-              />
-              Board Approved
-            </label>
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={2}
-              placeholder="Optional notes..."
-            />
-          </div>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? "Creating..." : "Create Arrangement"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Table */}
-      {loading ? (
-        <div className="text-center text-gray-500 py-12">Loading arrangements...</div>
-      ) : arrangements.length === 0 ? (
-        <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg">
-          No outsourcing arrangements registered yet.
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
+          >
+            {showForm ? "Cancel" : "New Arrangement"}
+          </button>
         </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Vendor</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Country</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Service Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">AML/CFT</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Risk</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Contract End</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Next Assessment</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Board</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {arrangements.map((arr) => (
-                <>
-                  <tr
-                    key={arr.id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => openExpand(arr)}
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-900">{arr.vendorName}</td>
-                    <td className="px-4 py-3 text-gray-600">{arr.vendorCountry}</td>
-                    <td className="px-4 py-3 text-gray-600">{arr.serviceType}</td>
-                    <td className="px-4 py-3">
-                      {arr.amlCftRelevant ? (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Yes</span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">No</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${RISK_COLOURS[arr.riskRating]}`}>
-                        {arr.riskRating}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(arr.contractEndDate)}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(arr.nextAssessmentDate)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLOURS[arr.status]}`}>
-                        {arr.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {arr.boardApproved ? (
-                        <span className="text-green-600 font-bold">✓</span>
-                      ) : (
-                        <span className="text-red-500 font-bold">✗</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      {expandedId === arr.id ? "▲" : "▼"}
-                    </td>
-                  </tr>
 
-                  {expandedId === arr.id && updateForms[arr.id] && (
-                    <tr key={`${arr.id}-expand`}>
-                      <td colSpan={10} className="px-4 py-4 bg-gray-50 border-t border-gray-200">
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
-                            <div><span className="font-medium">ID:</span> {arr.id}</div>
-                            <div><span className="font-medium">Contract Start:</span> {formatDate(arr.contractStartDate)}</div>
-                            <div><span className="font-medium">Last Assessment:</span> {formatDate(arr.lastAssessmentDate)}</div>
-                            <div><span className="font-medium">Agreement Current:</span> {arr.agreementCurrent ? "Yes" : "No"}</div>
-                            <div><span className="font-medium">MLRO Sign-Off:</span> {arr.mlroSignOff ? "Yes" : "No"}</div>
-                            <div><span className="font-medium">Updated:</span> {formatDate(arr.updatedAt)}</div>
-                          </div>
+        {hasWarning && (
+          <div className="bg-amber-950/20 border border-amber-500/30 text-amber-300 rounded-md px-4 py-3 text-sm flex items-start gap-2">
+            <span className="font-bold shrink-0">Warning:</span>
+            <span>One or more AML/CFT-relevant arrangements are due for review or missing Board approval. Review required under FDL 10/2025 Art.18.</span>
+          </div>
+        )}
 
-                          <div className="border-t border-gray-200 pt-3">
-                            <p className="text-xs font-semibold text-gray-700 mb-2">Update Arrangement</p>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Last Assessment Date</label>
-                                <input
-                                  type="date"
-                                  value={updateForms[arr.id]!.lastAssessmentDate}
-                                  onChange={(e) =>
-                                    setUpdateForms((prev) => ({
-                                      ...prev,
-                                      [arr.id]: { ...prev[arr.id]!, lastAssessmentDate: e.target.value },
-                                    }))
-                                  }
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-                                <input
-                                  type="text"
-                                  value={updateForms[arr.id]!.notes}
-                                  onChange={(e) =>
-                                    setUpdateForms((prev) => ({
-                                      ...prev,
-                                      [arr.id]: { ...prev[arr.id]!, notes: e.target.value },
-                                    }))
-                                  }
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
-                                  placeholder="Notes..."
-                                />
-                              </div>
-                            </div>
-                            <div className="mt-2 flex gap-4">
-                              <label className="flex items-center gap-1.5 text-xs text-gray-600">
-                                <input
-                                  type="checkbox"
-                                  checked={updateForms[arr.id]!.boardApproved}
-                                  onChange={(e) =>
-                                    setUpdateForms((prev) => ({
-                                      ...prev,
-                                      [arr.id]: { ...prev[arr.id]!, boardApproved: e.target.checked },
-                                    }))
-                                  }
-                                />
-                                Board Approved
-                              </label>
-                              <label className="flex items-center gap-1.5 text-xs text-gray-600">
-                                <input
-                                  type="checkbox"
-                                  checked={updateForms[arr.id]!.agreementCurrent}
-                                  onChange={(e) =>
-                                    setUpdateForms((prev) => ({
-                                      ...prev,
-                                      [arr.id]: { ...prev[arr.id]!, agreementCurrent: e.target.checked },
-                                    }))
-                                  }
-                                />
-                                Agreement Current
-                              </label>
-                              <label className="flex items-center gap-1.5 text-xs text-gray-600">
-                                <input
-                                  type="checkbox"
-                                  checked={updateForms[arr.id]!.mlroSignOff}
-                                  onChange={(e) =>
-                                    setUpdateForms((prev) => ({
-                                      ...prev,
-                                      [arr.id]: { ...prev[arr.id]!, mlroSignOff: e.target.checked },
-                                    }))
-                                  }
-                                />
-                                MLRO Sign-Off
-                              </label>
-                            </div>
-                            <div className="mt-3 flex justify-end">
-                              <button
-                                onClick={() => void handleUpdate(arr.id)}
-                                disabled={updatingId === arr.id}
-                                className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                              >
-                                {updatingId === arr.id ? "Saving..." : "Save Changes"}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {/* New form */}
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">New Outsourcing Arrangement</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Vendor Name *</label>
+                <input type="text" value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  required placeholder="e.g. Refinitiv World-Check" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Vendor Country *</label>
+                <input type="text" value={form.vendorCountry} onChange={(e) => setForm({ ...form, vendorCountry: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  required placeholder="e.g. United Kingdom" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Service Type *</label>
+                <select value={form.serviceType} onChange={(e) => setForm({ ...form, serviceType: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required>
+                  {SERVICE_TYPE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Risk Rating *</label>
+                <select value={form.riskRating} onChange={(e) => setForm({ ...form, riskRating: e.target.value as "high" | "medium" | "low" })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Contract Start Date *</label>
+                <input type="date" value={form.contractStartDate} onChange={(e) => setForm({ ...form, contractStartDate: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Contract End Date</label>
+                <input type="date" value={form.contractEndDate} onChange={(e) => setForm({ ...form, contractEndDate: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-6">
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.amlCftRelevant} onChange={(e) => setForm({ ...form, amlCftRelevant: e.target.checked })} className="rounded" />
+                AML/CFT Relevant
+              </label>
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.boardApproved} onChange={(e) => setForm({ ...form, boardApproved: e.target.checked })} className="rounded" />
+                Board Approved
+              </label>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Notes</label>
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={2} placeholder="Optional notes..." />
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)}
+                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting}
+                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                {submitting ? "Creating..." : "Create Arrangement"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Table */}
+        {loading ? (
+          <div className="text-center text-ink-2 py-12">Loading arrangements...</div>
+        ) : arrangements.length === 0 ? (
+          <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg">
+            No outsourcing arrangements registered yet.
+          </div>
+        ) : (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-bg-base border-b border-hair-2">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Vendor</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Country</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Service</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">AML/CFT</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Risk</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Contract End</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Next Review</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-ink-2">Board</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-hair-2">
+                {arrangements.map((arr) => (
+                  <>
+                    <tr key={arr.id} className="hover:bg-bg-base cursor-pointer" onClick={() => openExpand(arr)}>
+                      <td className="px-4 py-3 font-medium text-ink-0">{arr.vendorName}</td>
+                      <td className="px-4 py-3 text-ink-1">{arr.vendorCountry}</td>
+                      <td className="px-4 py-3 text-ink-1">{arr.serviceType}</td>
+                      <td className="px-4 py-3">
+                        {arr.amlCftRelevant ? (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-950/20 text-sky-300">Yes</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/40 text-ink-2">No</span>
+                        )}
                       </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${RISK_COLOURS[arr.riskRating]}`}>
+                          {arr.riskRating}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-ink-1">{formatDate(arr.contractEndDate)}</td>
+                      <td className="px-4 py-3 text-ink-1">{formatDate(arr.nextAssessmentDate)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLOURS[arr.status]}`}>
+                          {arr.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {arr.boardApproved ? <span className="text-emerald-400 font-bold">✓</span> : <span className="text-red/60 font-bold">✗</span>}
+                      </td>
+                      <td className="px-4 py-3 text-ink-2 text-xs">{expandedId === arr.id ? "▲" : "▼"}</td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {/* Regulatory Note */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-md px-4 py-3 text-xs text-blue-800">
-        <span className="font-semibold">Regulatory Note:</span>{" "}
-        AML/CFT outsourcing arrangements require annual MLRO review and Board approval per FDL 10/2025 Art.18.
+                    {expandedId === arr.id && updateForms[arr.id] && (
+                      <tr key={`${arr.id}-expand`}>
+                        <td colSpan={10} className="px-4 py-4 bg-bg-base border-t border-hair-2">
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3 text-xs text-ink-2">
+                              <div><span className="font-medium text-ink-1">ID:</span> {arr.id}</div>
+                              <div><span className="font-medium text-ink-1">Contract Start:</span> {formatDate(arr.contractStartDate)}</div>
+                              <div><span className="font-medium text-ink-1">Last Assessment:</span> {formatDate(arr.lastAssessmentDate)}</div>
+                              <div><span className="font-medium text-ink-1">Agreement Current:</span> {arr.agreementCurrent ? "Yes" : "No"}</div>
+                              <div><span className="font-medium text-ink-1">MLRO Sign-Off:</span> {arr.mlroSignOff ? "Yes" : "No"}</div>
+                              <div><span className="font-medium text-ink-1">Updated:</span> {formatDate(arr.updatedAt)}</div>
+                            </div>
+                            <div className="border-t border-hair-2 pt-3">
+                              <p className="text-xs font-semibold text-ink-1 mb-2">Update Arrangement</p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-ink-2 mb-1">Last Assessment Date</label>
+                                  <input type="date" value={updateForms[arr.id]!.lastAssessmentDate}
+                                    onChange={(e) => setUpdateForms((prev) => ({ ...prev, [arr.id]: { ...prev[arr.id]!, lastAssessmentDate: e.target.value } }))}
+                                    className="w-full bg-bg-panel border border-hair-2 rounded px-2 py-1 text-xs text-ink-0" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-ink-2 mb-1">Notes</label>
+                                  <input type="text" value={updateForms[arr.id]!.notes}
+                                    onChange={(e) => setUpdateForms((prev) => ({ ...prev, [arr.id]: { ...prev[arr.id]!, notes: e.target.value } }))}
+                                    className="w-full bg-bg-panel border border-hair-2 rounded px-2 py-1 text-xs text-ink-0 placeholder:text-ink-2"
+                                    placeholder="Notes..." />
+                                </div>
+                              </div>
+                              <div className="mt-2 flex gap-4">
+                                {[
+                                  { key: "boardApproved", label: "Board Approved" },
+                                  { key: "agreementCurrent", label: "Agreement Current" },
+                                  { key: "mlroSignOff", label: "MLRO Sign-Off" },
+                                ].map(({ key, label }) => (
+                                  <label key={key} className="flex items-center gap-1.5 text-xs text-ink-1">
+                                    <input type="checkbox" checked={updateForms[arr.id]![key as keyof UpdateForm] as boolean}
+                                      onChange={(e) => setUpdateForms((prev) => ({ ...prev, [arr.id]: { ...prev[arr.id]!, [key]: e.target.checked } }))} />
+                                    {label}
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="mt-3 flex justify-end">
+                                <button onClick={() => void handleUpdate(arr.id)} disabled={updatingId === arr.id}
+                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90 disabled:opacity-50">
+                                  {updatingId === arr.id ? "Saving..." : "Save Changes"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="bg-sky-950/20 border border-sky-500/30 rounded-md px-4 py-3 text-xs text-sky-300">
+          <span className="font-semibold">Regulatory Note:</span>{" "}
+          AML/CFT outsourcing arrangements require annual MLRO review and Board approval per FDL 10/2025 Art.18.
+        </div>
       </div>
-    </div>
+    </ModuleLayout>
   );
 }

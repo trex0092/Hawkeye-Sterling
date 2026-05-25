@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface RmapSmelter {
   cid: string;
@@ -16,10 +18,10 @@ interface RmapSmelter {
 }
 
 const STATUS_COLOURS: Record<RmapSmelter["rmapStatus"], string> = {
-  conformant: "bg-green-100 text-green-800 border-green-200",
-  active_placement: "bg-blue-100 text-blue-800 border-blue-200",
-  not_assessed: "bg-gray-100 text-gray-700 border-gray-200",
-  suspended: "bg-red-100 text-red-800 border-red-200",
+  conformant: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
+  active_placement: "bg-sky-950/30 text-sky-300 border border-sky-500/40",
+  not_assessed: "bg-zinc-800/40 text-ink-2 border border-hair-2",
+  suspended: "bg-red-950/30 text-red-300 border border-red-500/40",
 };
 
 const STATUS_LABELS: Record<RmapSmelter["rmapStatus"], string> = {
@@ -41,6 +43,7 @@ export default function RmapPage() {
     try {
       const url = q ? `/api/rmap?q=${encodeURIComponent(q)}` : "/api/rmap";
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; smelters?: RmapSmelter[]; error?: string };
       if (data.ok) {
         setSmelters(data.smelters ?? []);
@@ -78,89 +81,113 @@ export default function RmapPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">RMAP Smelter Database</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            RMI Responsible Minerals Assurance Process — CMRT v6.01
-          </p>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="Supply Chain & Responsible Sourcing"
+        modules={[
+          { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
+          { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
+          { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
+          { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
+          { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
+          { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="⛏️ Responsible Minerals — RMI RMAP · CMRT v6.01"
+        title="RMAP Smelter"
+        titleEm="database."
+        intro="Conformant smelter lookup · CMRT v6.01 export · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 annual certification"
+      />
+
+      <div className="mx-auto max-w-6xl px-4 pb-16 space-y-5">
+
+        {/* Regulatory callout */}
+        <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30 text-xs text-amber-300 font-mono">
+          RMI RMAP · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 — Smelter/refiner certification must
+          be verified annually. Non-conformant or suspended smelters require enhanced due diligence.
         </div>
-        <button
-          onClick={() => void downloadCmrt()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-        >
-          Download CMRT CSV
-        </button>
-      </div>
 
-      <div className="mb-5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 font-mono">
-        RMI RMAP · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 — Smelter/refiner certification must
-        be verified annually. Non-conformant or suspended smelters require enhanced due diligence.
-      </div>
-
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, country, or CID…"
-          className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button type="submit" className="bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800">
-          Search
-        </button>
-        {query && (
-          <button type="button" onClick={() => { setQuery(""); void fetchSmelters(); }}
-            className="text-sm text-gray-500 hover:text-gray-700 px-2">
-            Clear
+        {/* Search + export bar */}
+        <div className="flex gap-2 items-center flex-wrap">
+          <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-0">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, country, or CID…"
+              className="flex-1 bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2 focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <button
+              type="submit"
+              className="bg-bg-base border border-hair-2 text-ink-1 px-4 py-2 rounded-md text-sm font-medium hover:bg-bg-panel"
+            >
+              Search
+            </button>
+            {query && (
+              <button
+                type="button"
+                onClick={() => { setQuery(""); void fetchSmelters(); }}
+                className="text-sm text-ink-2 hover:text-ink-1 px-2"
+              >
+                Clear
+              </button>
+            )}
+          </form>
+          <button
+            onClick={() => void downloadCmrt()}
+            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 shrink-0"
+          >
+            Download CMRT CSV
           </button>
-        )}
-      </form>
-
-      {error && (
-        <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
-      )}
-
-      {loading ? (
-        <div className="text-center py-12 text-gray-500 text-sm">Loading smelter database…</div>
-      ) : smelters.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 text-sm">No smelters found.</div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                {["CID", "Facility Name", "Country", "Products", "RMAP Status", "Last Audit"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {smelters.map((s) => (
-                <tr key={s.cid} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{s.cid}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">{s.facilityName}</td>
-                  <td className="px-4 py-3 text-gray-700">{s.country}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{s.products.join(", ")}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLOURS[s.rmapStatus] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                      {STATUS_LABELS[s.rmapStatus] ?? s.rmapStatus}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
-                    {s.lastAuditDate ? new Date(s.lastAuditDate).toLocaleDateString("en-GB") : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
-      )}
 
-      <p className="mt-4 text-xs text-gray-400 font-mono">
-        Source: RMI public conformant smelter list · {smelters.length} smelters loaded
-      </p>
-    </div>
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12 text-ink-2 text-sm">Loading smelter database…</div>
+        ) : smelters.length === 0 ? (
+          <div className="text-center py-12 text-ink-2 text-sm border border-dashed border-hair-2 rounded-lg">
+            No smelters found.
+          </div>
+        ) : (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-bg-base border-b border-hair-2">
+                  {["CID", "Facility Name", "Country", "Products", "RMAP Status", "Last Audit"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-ink-2 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-hair-2">
+                {smelters.map((s) => (
+                  <tr key={s.cid} className="hover:bg-bg-base/40">
+                    <td className="px-4 py-3 font-mono text-xs text-ink-2">{s.cid}</td>
+                    <td className="px-4 py-3 font-medium text-ink-0">{s.facilityName}</td>
+                    <td className="px-4 py-3 text-ink-1">{s.country}</td>
+                    <td className="px-4 py-3 text-ink-2 text-xs">{s.products.join(", ")}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLOURS[s.rmapStatus] ?? "bg-zinc-800/40 text-ink-2 border-hair-2"}`}>
+                        {STATUS_LABELS[s.rmapStatus] ?? s.rmapStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-ink-2">
+                      {s.lastAuditDate ? new Date(s.lastAuditDate).toLocaleDateString("en-GB") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="text-xs text-ink-2 font-mono">
+          Source: RMI public conformant smelter list · {smelters.length} smelters loaded
+        </p>
+      </div>
+    </ModuleLayout>
   );
 }

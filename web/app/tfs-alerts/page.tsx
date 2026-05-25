@@ -732,6 +732,7 @@ export default function TFSAlertsPage() {
       <ModuleFamilyBar suiteName="Sanctions Alerts & Name Match" modules={[
         { label: "TFS Alerts", href: "/tfs-alerts", icon: "🚨" },
         { label: "CNMR", href: "/cnmr", icon: "📝" },
+        { label: "PNMR Queue", href: "/pnmr", icon: "📋" },
       ]} />
 
       {/* ── Subscription status row ──────────────────────────────────────────── */}

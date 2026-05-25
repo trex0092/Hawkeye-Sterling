@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface AuditFinding {
   id: string;
@@ -24,17 +26,17 @@ interface AuditFinding {
 type TabKey = "all" | "open" | "in_progress" | "overdue" | "resolved";
 
 const SEVERITY_COLOURS: Record<AuditFinding["severity"], string> = {
-  critical: "bg-red-100 text-red-800",
-  high: "bg-orange-100 text-orange-800",
-  medium: "bg-amber-100 text-amber-800",
-  low: "bg-gray-100 text-gray-600",
+  critical: "bg-red-950/30 text-red-300 border border-red-500/40",
+  high: "bg-orange-950/30 text-orange-300 border border-orange-500/40",
+  medium: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  low: "bg-zinc-800/40 text-ink-2 border border-hair-2",
 };
 
 const STATUS_COLOURS: Record<AuditFinding["status"], string> = {
-  open: "bg-blue-100 text-blue-800",
-  in_progress: "bg-indigo-100 text-indigo-800",
-  overdue: "bg-red-100 text-red-800",
-  resolved: "bg-green-100 text-green-800",
+  open: "bg-sky-950/20 text-sky-300",
+  in_progress: "bg-indigo-950/20 text-indigo-300",
+  overdue: "bg-red-950/20 text-red-300",
+  resolved: "bg-emerald-950/20 text-emerald-300",
 };
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -100,17 +102,12 @@ export default function AuditFindingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/audit-findings", {
-        headers: authHeaders(),
-      });
+      const res = await fetch("/api/audit-findings", { headers: authHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: AuditFinding[]; error?: string };
       if (!mountedRef.current) return;
-      if (data.ok) {
-        setFindings(data.records ?? []);
-      } else {
-        setError(data.error ?? "Failed to load audit findings");
-      }
+      if (data.ok) setFindings(data.records ?? []);
+      else setError(data.error ?? "Failed to load audit findings");
     } catch {
       if (mountedRef.current) setError("Network error loading audit findings");
     } finally {
@@ -118,9 +115,7 @@ export default function AuditFindingsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchFindings();
-  }, [fetchFindings]);
+  useEffect(() => { void fetchFindings(); }, [fetchFindings]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -169,11 +164,8 @@ export default function AuditFindingsPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; error?: string };
-      if (data.ok) {
-        void fetchFindings();
-      } else {
-        setError(data.error ?? "Failed to record MLRO sign-off");
-      }
+      if (data.ok) void fetchFindings();
+      else setError(data.error ?? "Failed to record MLRO sign-off");
     } catch {
       setError("Network error recording MLRO sign-off");
     } finally {
@@ -182,315 +174,262 @@ export default function AuditFindingsPage() {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-
-  const filtered = findings.filter((f) => {
-    if (activeTab === "all") return true;
-    return f.status === activeTab;
-  });
-
+  const filtered = findings.filter((f) => activeTab === "all" || f.status === activeTab);
   const totalCount = findings.length;
   const openCount = findings.filter((f) => f.status === "open").length;
   const overdueCount = findings.filter((f) => f.status === "overdue").length;
   const resolvedCount = findings.filter((f) => f.status === "resolved").length;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Internal Audit Findings Register</h1>
-          <p className="text-sm text-gray-500 mt-1">CBUAE §9 · IIA Standards · Board Audit Committee</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "New Finding"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="Compliance Records"
+        modules={[
+          { label: "Audit Findings", href: "/audit-findings", icon: "📋" },
+          { label: "Business Risk (BRA)", href: "/bra", icon: "📊" },
+          { label: "Dormant Accounts", href: "/dormant-accounts", icon: "💤" },
+          { label: "Outsourcing Register", href: "/outsourcing-register", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="📋 Governance — CBUAE §9 · IIA Standards"
+        title="Audit Findings"
+        titleEm="register."
+        intro="Internal audit findings · remediation tracking · MLRO sign-off · Board Audit Committee"
+      />
 
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Open</p>
-          <p className="text-2xl font-bold text-blue-700">{openCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Overdue</p>
-          <p className={`text-2xl font-bold ${overdueCount > 0 ? "text-red-600" : "text-gray-900"}`}>{overdueCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500">Resolved</p>
-          <p className="text-2xl font-bold text-green-700">{resolvedCount}</p>
-        </div>
-      </div>
+      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-      {/* Error */}
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Inline create form */}
-      {showForm && (
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="mb-6 bg-white border border-gray-200 rounded-lg p-6"
-        >
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">New Audit Finding</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-                placeholder="e.g. CDD records incomplete for high-risk customers"
-              />
+        {/* Stats + action bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-ink-1">{totalCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Auditor Name</label>
-              <input
-                type="text"
-                value={form.auditorName}
-                onChange={(e) => setForm({ ...form, auditorName: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-sky-400">{openCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Open</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Audit Date</label>
-              <input
-                type="date"
-                value={form.auditDate}
-                onChange={(e) => setForm({ ...form, auditDate: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className={`text-2xl font-bold ${overdueCount > 0 ? "text-red" : "text-ink-2"}`}>{overdueCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Overdue</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-              <select
-                value={form.severity}
-                onChange={(e) => setForm({ ...form, severity: e.target.value as AuditFinding["severity"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Regulation</label>
-              <input
-                type="text"
-                value={form.regulation}
-                onChange={(e) => setForm({ ...form, regulation: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                placeholder="e.g. CBUAE §9.3, FATF R.10"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Owner (Responsible Staff)</label>
-              <input
-                type="text"
-                value={form.owner}
-                onChange={(e) => setForm({ ...form, owner: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-              <input
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Finding Description</label>
-              <textarea
-                value={form.finding}
-                onChange={(e) => setForm({ ...form, finding: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                rows={3}
-                required
-                placeholder="Describe the audit finding in detail..."
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Remediation Plan (optional)</label>
-              <textarea
-                value={form.remediationPlan}
-                onChange={(e) => setForm({ ...form, remediationPlan: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                rows={2}
-                placeholder="Initial proposed remediation steps..."
-              />
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-emerald-400">{resolvedCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Resolved</div>
             </div>
           </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? "Creating..." : "Create Finding"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Tab bar */}
-      <div className="flex border-b border-gray-200 mb-4">
-        {TABS.map((tab) => (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            onClick={() => setShowForm(!showForm)}
+            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
           >
-            {tab.label}
-            {tab.key !== "all" && (
-              <span className="ml-1 text-xs text-gray-400">
-                ({findings.filter((f) => f.status === tab.key).length})
-              </span>
-            )}
+            {showForm ? "Cancel" : "New Finding"}
           </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      {loading ? (
-        <div className="text-center text-gray-500 py-12">Loading audit findings...</div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg">
-          No findings in this category.
         </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Title</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Severity</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Auditor</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Due Date</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Owner</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">MLRO Sign-Off</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((finding) => (
-                <>
-                  <tr
-                    key={finding.id}
-                    onClick={() => setExpandedId(expandedId === finding.id ? null : finding.id)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{finding.title}</div>
-                      <div className="text-xs text-gray-400 font-mono">{finding.id}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${SEVERITY_COLOURS[finding.severity]}`}>
-                        {finding.severity}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{finding.auditorName}</td>
-                    <td className={`px-4 py-3 font-medium ${finding.dueDate < today && finding.status !== "resolved" ? "text-red-600" : "text-gray-700"}`}>
-                      {finding.dueDate}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{finding.owner}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[finding.status]}`}>
-                        {finding.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {finding.mlroSignOff ? (
-                        <span className="text-green-600 font-bold" title={finding.mlroSignOffDate}>✓</span>
-                      ) : (
-                        <span className="text-red-400">✗</span>
-                      )}
-                    </td>
-                  </tr>
-                  {expandedId === finding.id && (
-                    <tr key={`${finding.id}-expanded`}>
-                      <td colSpan={7} className="bg-gray-50 px-6 py-5 border-b border-gray-200">
-                        <div className="grid grid-cols-2 gap-6">
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Finding Detail</h3>
-                            <p className="text-sm text-gray-600 whitespace-pre-wrap">{finding.finding}</p>
-                            {finding.regulation && (
-                              <p className="mt-2 text-xs text-gray-500">
-                                <span className="font-medium">Regulation:</span> {finding.regulation}
-                              </p>
-                            )}
-                            <p className="mt-1 text-xs text-gray-500">
-                              <span className="font-medium">Audit Date:</span> {finding.auditDate}
-                            </p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Remediation Plan</h3>
-                            {finding.remediationPlan ? (
-                              <p className="text-sm text-gray-600 whitespace-pre-wrap">{finding.remediationPlan}</p>
-                            ) : (
-                              <p className="text-sm text-gray-400 italic">No remediation plan recorded.</p>
-                            )}
-                            <div className="mt-4">
-                              <h3 className="text-sm font-semibold text-gray-700 mb-2">MLRO Sign-Off</h3>
-                              {finding.mlroSignOff ? (
-                                <div className="text-sm text-green-700">
-                                  <span className="font-bold">✓ Signed off</span>
-                                  {finding.mlroSignOffDate && (
-                                    <span className="text-gray-500"> on {finding.mlroSignOffDate}</span>
-                                  )}
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); void handleMlroSignOff(finding); }}
-                                  disabled={signingOff === finding.id}
-                                  className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                  {signingOff === finding.id ? "Signing off..." : "MLRO Sign-Off"}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {/* Create form */}
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">New Audit Finding</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Title</label>
+                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2" required
+                  placeholder="e.g. CDD records incomplete for high-risk customers" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Auditor Name</label>
+                <input type="text" value={form.auditorName} onChange={(e) => setForm({ ...form, auditorName: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Audit Date</label>
+                <input type="date" value={form.auditDate} onChange={(e) => setForm({ ...form, auditDate: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Severity</label>
+                <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value as AuditFinding["severity"] })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Regulation</label>
+                <input type="text" value={form.regulation} onChange={(e) => setForm({ ...form, regulation: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  placeholder="e.g. CBUAE §9.3, FATF R.10" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Owner (Responsible Staff)</label>
+                <input type="text" value={form.owner} onChange={(e) => setForm({ ...form, owner: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Due Date</label>
+                <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Finding Description</label>
+                <textarea value={form.finding} onChange={(e) => setForm({ ...form, finding: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  rows={3} required placeholder="Describe the audit finding in detail..." />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-ink-1 mb-1">Remediation Plan (optional)</label>
+                <textarea value={form.remediationPlan} onChange={(e) => setForm({ ...form, remediationPlan: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  rows={2} placeholder="Initial proposed remediation steps..." />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
+                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting}
+                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                {submitting ? "Creating..." : "Create Finding"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Tab bar */}
+        <div className="flex border-b border-hair-2">
+          {TABS.map((tab) => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key ? "border-brand text-brand" : "border-transparent text-ink-2 hover:text-ink-1"
+              }`}>
+              {tab.label}
+              {tab.key !== "all" && (
+                <span className="ml-1 text-10 text-ink-2">
+                  ({findings.filter((f) => f.status === tab.key).length})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Table */}
+        {loading ? (
+          <div className="text-center text-ink-2 py-12">Loading audit findings...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg">
+            No findings in this category.
+          </div>
+        ) : (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-bg-base border-b border-hair-2">
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Title</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Severity</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Auditor</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Due Date</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Owner</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-ink-2">MLRO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((finding) => (
+                  <>
+                    <tr
+                      key={finding.id}
+                      onClick={() => setExpandedId(expandedId === finding.id ? null : finding.id)}
+                      className="border-b border-hair-2 hover:bg-bg-base cursor-pointer"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-ink-0">{finding.title}</div>
+                        <div className="text-10 text-ink-2 font-mono">{finding.id}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${SEVERITY_COLOURS[finding.severity]}`}>
+                          {finding.severity}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-ink-1">{finding.auditorName}</td>
+                      <td className={`px-4 py-3 font-medium ${finding.dueDate < today && finding.status !== "resolved" ? "text-red" : "text-ink-1"}`}>
+                        {finding.dueDate}
+                      </td>
+                      <td className="px-4 py-3 text-ink-1">{finding.owner}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[finding.status]}`}>
+                          {finding.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {finding.mlroSignOff ? (
+                          <span className="text-emerald-400 font-bold" title={finding.mlroSignOffDate}>✓</span>
+                        ) : (
+                          <span className="text-red/60">✗</span>
+                        )}
                       </td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+                    {expandedId === finding.id && (
+                      <tr key={`${finding.id}-expanded`}>
+                        <td colSpan={7} className="bg-bg-base px-6 py-5 border-b border-hair-2">
+                          <div className="grid grid-cols-2 gap-6">
+                            <div>
+                              <h3 className="text-sm font-semibold text-ink-1 mb-2">Finding Detail</h3>
+                              <p className="text-sm text-ink-1 whitespace-pre-wrap">{finding.finding}</p>
+                              {finding.regulation && (
+                                <p className="mt-2 text-xs text-ink-2">
+                                  <span className="font-medium">Regulation:</span> {finding.regulation}
+                                </p>
+                              )}
+                              <p className="mt-1 text-xs text-ink-2">
+                                <span className="font-medium">Audit Date:</span> {finding.auditDate}
+                              </p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-ink-1 mb-2">Remediation Plan</h3>
+                              {finding.remediationPlan ? (
+                                <p className="text-sm text-ink-1 whitespace-pre-wrap">{finding.remediationPlan}</p>
+                              ) : (
+                                <p className="text-sm text-ink-2 italic">No remediation plan recorded.</p>
+                              )}
+                              <div className="mt-4">
+                                <h3 className="text-sm font-semibold text-ink-1 mb-2">MLRO Sign-Off</h3>
+                                {finding.mlroSignOff ? (
+                                  <div className="text-sm text-emerald-400">
+                                    <span className="font-bold">✓ Signed off</span>
+                                    {finding.mlroSignOffDate && (
+                                      <span className="text-ink-2"> on {finding.mlroSignOffDate}</span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); void handleMlroSignOff(finding); }}
+                                    disabled={signingOff === finding.id}
+                                    className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                  >
+                                    {signingOff === finding.id ? "Signing off..." : "MLRO Sign-Off"}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </ModuleLayout>
   );
 }

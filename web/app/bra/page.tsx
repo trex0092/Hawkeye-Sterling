@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface BraRecord {
   id: string;
@@ -37,10 +39,10 @@ interface FormState {
 const RISK_OPTIONS = [1, 2, 3, 4, 5];
 
 const STATUS_COLOURS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  active: "bg-green-100 text-green-800",
-  overdue_review: "bg-red-100 text-red-800",
-  superseded: "bg-yellow-100 text-yellow-700",
+  draft: "bg-zinc-800/40 text-ink-2",
+  active: "bg-emerald-950/20 text-emerald-300",
+  overdue_review: "bg-red-950/20 text-red-300",
+  superseded: "bg-amber-950/20 text-amber-300",
 };
 
 export default function BraPage() {
@@ -68,11 +70,8 @@ export default function BraPage() {
       const res = await fetch("/api/bra");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: typeof records; error?: string };
-      if (data.ok) {
-        setRecords(data.records ?? []);
-      } else {
-        setError(data.error ?? "Failed to load BRA records");
-      }
+      if (data.ok) setRecords(data.records ?? []);
+      else setError(data.error ?? "Failed to load BRA records");
     } catch {
       setError("Network error loading BRA records");
     } finally {
@@ -80,9 +79,7 @@ export default function BraPage() {
     }
   }, []);
 
-  useEffect(() => {
-    void fetchRecords();
-  }, [fetchRecords]);
+  useEffect(() => { void fetchRecords(); }, [fetchRecords]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -120,148 +117,146 @@ export default function BraPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Business Risk Assessments</h1>
-          <p className="text-sm text-gray-500 mt-1">MOE Circular 6/2025 — 90-day review cycle</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-        >
-          {showForm ? "Cancel" : "Create New BRA"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="Compliance Records"
+        modules={[
+          { label: "Audit Findings", href: "/audit-findings", icon: "📋" },
+          { label: "Business Risk (BRA)", href: "/bra", icon: "📊" },
+          { label: "Dormant Accounts", href: "/dormant-accounts", icon: "💤" },
+          { label: "Outsourcing Register", href: "/outsourcing-register", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="📊 Governance — MOE Circular 6/2025"
+        title="Business Risk"
+        titleEm="assessments."
+        intro="DNFBP risk scoring · 90-day review cycle · inherent risk · controls effectiveness · residual risk"
+      />
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
+      <div className="mx-auto max-w-4xl px-4 pb-16 space-y-6">
 
-      {showForm && (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">New Business Risk Assessment</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {(["inherentRisk", "controlsEffectiveness", "customerRisk", "productRisk", "channelRisk", "geographyRisk"] as const).map((field) => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-                  {field.replace(/([A-Z])/g, " $1")}
-                </label>
-                <select
-                  value={form[field]}
-                  onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                  required
-                >
-                  {RISK_OPTIONS.map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
+        {/* Action bar */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
+          >
+            {showForm ? "Cancel" : "Create New BRA"}
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">New Business Risk Assessment</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {(["inherentRisk", "controlsEffectiveness", "customerRisk", "productRisk", "channelRisk", "geographyRisk"] as const).map((field) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-ink-1 mb-1 capitalize">
+                    {field.replace(/([A-Z])/g, " $1")}
+                  </label>
+                  <select
+                    value={form[field]}
+                    onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                    className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                    required
+                  >
+                    {RISK_OPTIONS.map((v) => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Activity Scope</label>
+              <textarea
+                value={form.activityScope}
+                onChange={(e) => setForm({ ...form, activityScope: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={3}
+                required
+                placeholder="Describe the DNFBP activities and business scope..."
+              />
+            </div>
+
+            <div className="mt-4 flex gap-6">
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.isDnfbp}
+                  onChange={(e) => setForm({ ...form, isDnfbp: e.target.checked })} className="rounded" />
+                DNFBP entity
+              </label>
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.aedThresholdApplies}
+                  onChange={(e) => setForm({ ...form, aedThresholdApplies: e.target.checked })} className="rounded" />
+                AED 55,000 threshold applies
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)}
+                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting}
+                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                {submitting ? "Creating..." : "Create BRA"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {loading ? (
+          <div className="text-center text-ink-2 py-12">Loading BRA records...</div>
+        ) : records.length === 0 ? (
+          <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg">
+            No BRA records yet. Create one to get started.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {records.map((record) => (
+              <div key={record.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-sm font-semibold text-ink-0">{record.id}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[record.status] ?? "bg-zinc-800/40 text-ink-2"}`}>
+                        {record.status.replace("_", " ")}
+                      </span>
+                      {record.isOverdueReview && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white">
+                          REVIEW OVERDUE
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-ink-2 mt-1 line-clamp-1">{record.activityScope}</p>
+                  </div>
+                  <div className="text-right ml-4 shrink-0">
+                    <div className="text-sm">
+                      <span className="text-ink-2">Residual Risk: </span>
+                      <span className={`font-semibold ${record.residualRisk >= 3 ? "text-red" : "text-emerald-400"}`}>
+                        {record.residualRisk.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-ink-2 mt-1">
+                      Next review: {new Date(record.nextReviewDate).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+
+                {record.aedThresholdApplies && (
+                  <div className="mt-3 bg-amber-950/20 border border-amber-500/30 rounded px-3 py-2 text-xs text-amber-300">
+                    DNFBP obligations apply — MOE registration required
+                  </div>
+                )}
               </div>
             ))}
           </div>
-
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Activity Scope</label>
-            <textarea
-              value={form.activityScope}
-              onChange={(e) => setForm({ ...form, activityScope: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={3}
-              required
-              placeholder="Describe the DNFBP activities and business scope..."
-            />
-          </div>
-
-          <div className="mt-4 flex gap-6">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.isDnfbp}
-                onChange={(e) => setForm({ ...form, isDnfbp: e.target.checked })}
-                className="rounded"
-              />
-              DNFBP entity
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.aedThresholdApplies}
-                onChange={(e) => setForm({ ...form, aedThresholdApplies: e.target.checked })}
-                className="rounded"
-              />
-              AED 55,000 threshold applies
-            </label>
-          </div>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? "Creating..." : "Create BRA"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {loading ? (
-        <div className="text-center text-gray-500 py-12">Loading BRA records...</div>
-      ) : records.length === 0 ? (
-        <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg">
-          No BRA records yet. Create one to get started.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {records.map((record) => (
-            <div key={record.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm font-semibold text-gray-800">{record.id}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOURS[record.status] ?? "bg-gray-100"}`}>
-                      {record.status.replace("_", " ")}
-                    </span>
-                    {record.isOverdueReview && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white">
-                        REVIEW OVERDUE
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">{record.activityScope}</p>
-                </div>
-                <div className="text-right ml-4 shrink-0">
-                  <div className="text-sm">
-                    <span className="text-gray-500">Residual Risk: </span>
-                    <span className={`font-semibold ${record.residualRisk >= 3 ? "text-red-600" : "text-green-700"}`}>
-                      {record.residualRisk.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Next review: {new Date(record.nextReviewDate).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              {record.aedThresholdApplies && (
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-xs text-amber-800">
-                  DNFBP obligations apply — MOE registration required
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ModuleLayout>
   );
 }

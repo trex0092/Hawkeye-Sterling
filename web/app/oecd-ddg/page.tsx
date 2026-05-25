@@ -202,6 +202,8 @@ export default function OecdDdgPage() {
         { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
         { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
         { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
+        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
+        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
       ]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

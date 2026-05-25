@@ -392,6 +392,9 @@ export default function RmiPage() {
         { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
         { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
         { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
+        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
+        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
+        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
       ]} />
 
       {/* OECD DDG 5-step alignment summary */}
