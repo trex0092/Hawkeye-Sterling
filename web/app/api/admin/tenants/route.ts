@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,5 +115,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Failed to create tenant." }, { status: 500 });
   }
 
+  void writeAuditChainEntry(
+    { event: "tenant.created", actor: "portal_admin", meta: { id: record.id, name: record.name, plan: record.plan } },
+    record.id,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, tenant: record }, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { lookupSmelter, addManualSmelter } from "@/lib/server/rmap";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       lastAuditDate: body["lastAuditDate"] as string | undefined,
       auditValidity: body["auditValidity"] as "1_year" | "3_year" | undefined,
     });
+    void writeAuditChainEntry(
+      { event: "rmap.smelter.added", actor: gate.keyId, meta: { cid: String(body["cid"]), facilityName: String(body["facilityName"]) } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, smelter }, { status: 201, headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

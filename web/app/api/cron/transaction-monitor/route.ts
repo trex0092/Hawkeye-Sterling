@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { TxnFlagRecord } from "@/app/api/transaction-anomaly/route";
 
 export const runtime = "nodejs";
@@ -162,5 +163,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  void writeAuditChainEntry(
+    { event: "txn_monitor.cron_run", actor: "cron", meta: { total: results.total, casesOpened: results.casesOpened, errors: results.errors } },
+    "system",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, ...results, at: new Date().toISOString() });
 }

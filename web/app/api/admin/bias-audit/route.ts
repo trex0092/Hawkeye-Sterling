@@ -6,6 +6,7 @@ import { enforce } from "@/lib/server/enforce";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getBiasReport, computeBiasReport } from "@/lib/server/bias-monitor";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,5 +36,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenant = tenantIdFromGate(gate);
 
   const report = await computeBiasReport(tenant);
+  void writeAuditChainEntry(
+    { event: "bias_audit.computed", actor: gate.keyId, meta: { tenant } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, report }, { headers: gate.headers });
 }

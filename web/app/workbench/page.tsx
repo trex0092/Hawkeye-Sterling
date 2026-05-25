@@ -501,7 +501,7 @@ export default function WorkbenchPage() {
 
                       {brainResult.redlines.fired.length > 0 && (
                         <div className="mb-2">
-                          <div className="text-11 font-semibold tracking-wide-4 uppercase text-red-600 mb-2">
+                          <div className="text-11 font-semibold tracking-wide-4 uppercase text-red-400 mb-2">
                             Redlines fired ({brainResult.redlines.fired.length})
                           </div>
                           <div className="flex flex-wrap gap-1.5">

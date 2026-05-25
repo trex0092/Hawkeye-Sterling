@@ -10,8 +10,8 @@ import type { BoardDashboardResponse, BoardPanel, BoardMetric } from "@/app/api/
 function metricStatusCls(s: BoardMetric["status"]): string {
   switch (s) {
     case "ok":       return "text-emerald-300";
-    case "warn":     return "text-amber-600";
-    case "critical": return "text-red-600 font-semibold";
+    case "warn":     return "text-amber-400";
+    case "critical": return "text-red-400 font-semibold";
     default:         return "text-ink-1";
   }
 }
