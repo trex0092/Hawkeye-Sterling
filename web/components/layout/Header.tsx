@@ -63,6 +63,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
       { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
+      { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection" },
+      { label: "👁️ Shadow AI Register", href: "/shadow-ai", hint: "Detect & manage unauthorized AI tool usage · CBUAE AI Governance 2025" },
+      { label: "🏢 Vendor AI Audit", href: "/vendor-ai-audit", hint: "AI vendor due diligence checklist · DPA · model card · FATF R.18 · ADGM 2021" },
     ],
   },
   {
