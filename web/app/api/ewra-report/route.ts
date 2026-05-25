@@ -113,7 +113,8 @@ export async function POST(req: Request) {
     timeoutMs: 55_000,
     templateFallback: buildTemplate,
     aiCall: async () => {
-      const apiKey = process.env["ANTHROPIC_API_KEY"]!;
+      const apiKey = process.env["ANTHROPIC_API_KEY"];
+      if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
       const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -167,7 +168,9 @@ Generate the board EWRA report.`,
     });
 
       const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-      const parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult;
+      let parsed: EwraBoardReportResult;
+      try { parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as EwraBoardReportResult; }
+      catch { throw new Error("AI returned invalid JSON"); }
       if (!Array.isArray(parsed.keyFindings)) parsed.keyFindings = [];
       if (!Array.isArray(parsed.dimensionNarratives)) parsed.dimensionNarratives = [];
       else for (const d of parsed.dimensionNarratives) { if (!Array.isArray(d.controlGaps)) d.controlGaps = []; if (!Array.isArray(d.recommendedActions)) d.recommendedActions = []; }

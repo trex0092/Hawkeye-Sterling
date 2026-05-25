@@ -127,7 +127,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     timeoutMs: 25_000,
     templateFallback: buildTemplate,
     aiCall: async () => {
-      const apiKey = process.env["ANTHROPIC_API_KEY"]!;
+      const apiKey = process.env["ANTHROPIC_API_KEY"];
+      if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
       const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -147,7 +148,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
       const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
       const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-      const parsed = JSON.parse(stripped) as EthicalImpactResponse;
+      let parsed: EthicalImpactResponse;
+      try { parsed = JSON.parse(stripped) as EthicalImpactResponse; }
+      catch { throw new Error("AI returned invalid JSON"); }
       if (!Array.isArray(parsed.rightsImpacted)) parsed.rightsImpacted = [];
       if (!Array.isArray(parsed.mitigationMeasures)) parsed.mitigationMeasures = [];
       if (!Array.isArray(parsed.subjectRights)) parsed.subjectRights = [];
