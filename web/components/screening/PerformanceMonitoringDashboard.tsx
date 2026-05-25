@@ -242,7 +242,7 @@ export function PerformanceMonitoringDashboard({
       />
 
       {error ? (
-        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md mb-3 mt-3">
+        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md mb-3 mt-3">
           {error}
         </div>
       ) : null}
