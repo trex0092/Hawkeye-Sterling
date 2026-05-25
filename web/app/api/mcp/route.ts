@@ -91,7 +91,11 @@ function wrapWithGovernance(
   // auth failures, 404s, and tool errors are not wrapped in misleading guidance.
   if (r["ok"] === false) return result;
 
-  let confidenceScore = 0.75;
+  // Base confidence derived from sanctions list coverage.
+  // 0 missing critical lists = 0.90; each missing critical list reduces by 0.10.
+  // This is then overridden by explicit confidence/riskScore fields from the tool result,
+  // and further adjusted by RGV defect haircut and sanctions cap below.
+  let confidenceScore = Math.max(0.30, 0.90 - missingLists.length * 0.10);
   if (typeof r["confidence"] === "number")   confidenceScore = r["confidence"];
   else if (typeof r["riskScore"] === "number") {
     const rs = r["riskScore"] as number;

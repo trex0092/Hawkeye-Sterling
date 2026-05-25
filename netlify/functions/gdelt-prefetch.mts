@@ -31,7 +31,11 @@ async function fetchActiveSubjects(): Promise<string[]> {
   const projectId = process.env["MOONDB_PROJECT_ID"];
   const adminKey  = process.env["MOONDB_ADMIN_KEY"];
   if (!projectId || !adminKey) {
-    console.warn("[gdelt-prefetch] MOONDB_PROJECT_ID or MOONDB_ADMIN_KEY not set — skipping DB lookup");
+    console.error(
+      "[gdelt-prefetch] MOONDB_PROJECT_ID or MOONDB_ADMIN_KEY not set — " +
+      "GDELT cache will remain empty, adverse-media calls will incur live GDELT latency. " +
+      "Set both env vars in Netlify to enable per-subject pre-warming.",
+    );
     return [];
   }
 

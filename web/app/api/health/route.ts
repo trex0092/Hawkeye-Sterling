@@ -260,7 +260,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   return NextResponse.json(
     {
-      ok: httpStatus < 500,
+      ok: httpStatus === 200,
       status: overallStatus,
       mandatoryListsHealthy,
       sanctionsDown,

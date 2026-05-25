@@ -1155,6 +1155,14 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     "acams.org", "acfcs.org", "finextra.com", "lexology.com",
     "globalinvestigationsreview.com", "sanctionsnews.com",
     "regulationtomorrow.com", "mondaq.com",
+    // Global financial & compliance news
+    "reuters.com", "bloomberg.com", "ft.com", "financialtimes.com",
+    "wsj.com",
+    // Regional business press
+    "khaleejitimes.com", "gulfnews.com", "thenational.ae",
+    "arabianbusiness.com", "zawya.com",
+    // Investigative / civil society
+    "occrp.org", "globalwitness.org", "icij.org",
   ]);
 
   function extractDomain(url: string): string {
@@ -1208,9 +1216,32 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     (s) => !seen.has(s.url) && !deduped.some((d) => d.title.toLowerCase() === s.title.toLowerCase()),
   );
 
+  // Merge digest items (FATF/OFAC/EU/EOCN parsed entries) into the live feed.
+  // Digest items are authoritative regulatory updates that should always appear
+  // in items[], not just in the separate digest field.
+  const digestAsItems: RegulatoryItem[] = (regulatoryDigest?.items ?? [])
+    .filter((d) => !seen.has(d.url))
+    .map((d) => ({
+      id: `digest-${d.source.toLowerCase()}-${encodeURIComponent(d.url).slice(-24)}`,
+      title: d.entityName
+        ? `${d.source}: ${d.entityName} — ${d.updateType.replace(/_/g, " ")}`
+        : `${d.source}: ${d.updateType.replace(/_/g, " ")}${d.jurisdiction ? ` (${d.jurisdiction})` : ""}`,
+      url: d.url,
+      pubDate: d.date,
+      publishedAt: d.date,
+      source: d.source,
+      category: "Sanctions",
+      tone: (["new_designation", "grey_list_add", "black_list_change"].includes(d.updateType) ? "red"
+        : ["delisting", "grey_list_remove"].includes(d.updateType) ? "amber"
+        : "green") as RegulatoryItem["tone"],
+      summary: d.summary,
+      snippet: d.summary,
+    }));
+
   const allItems: RegulatoryItem[] = [
     ...uaeStaticFiltered,
     ...deduped.slice(0, 80),
+    ...digestAsItems,
     ...staticFiltered,
   ];
 

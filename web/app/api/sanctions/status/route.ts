@@ -136,6 +136,7 @@ const HOUR_MS = 60 * 60 * 1_000;
 
 interface SnapshotShape {
   entities?: unknown[];
+  metadata?: { entityCount?: number; fetchedAt?: string };
   fetchedAt?: number | string;
   lastModified?: string;
   generatedAt?: string;
@@ -258,9 +259,19 @@ async function inspectList(
 
   const hasEntities =
     snapshot !== null &&
-    Array.isArray(snapshot.entities);
+    (Array.isArray(snapshot.entities) || typeof snapshot.metadata?.entityCount === "number");
   const present = hasEntities;
-  const entityCount = hasEntities ? (snapshot!.entities as unknown[]).length : null;
+  // Prefer metadata.entityCount (written atomically with the blob) over
+  // entities.length (requires loading the full array) so both this route and
+  // the health endpoint agree on the count even when the full entities array
+  // is not loaded or the blob was written without an inline entities field.
+  const entityCount = hasEntities
+    ? (typeof snapshot!.metadata?.entityCount === "number"
+        ? snapshot!.metadata.entityCount
+        : Array.isArray(snapshot!.entities)
+          ? (snapshot!.entities as unknown[]).length
+          : null)
+    : null;
   const fetchedTs = readFetchedAtMs(snapshot);
   const ageHours =
     fetchedTs !== null ? (Date.now() - fetchedTs) / HOUR_MS : null;
