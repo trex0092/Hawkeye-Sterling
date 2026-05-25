@@ -137,7 +137,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     actor: gate.keyId ?? "system",
     detail: `${record.severity.toUpperCase()} ${record.type}: ${record.title}`,
     incidentId: id,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, incident: record }, { headers: gate.headers });
 }
@@ -208,7 +208,7 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     event: "ai_incident.updated",
     actor: gate.keyId ?? "system",
     detail: `${body.id} → status:${body.status ?? "unchanged"}`,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, incident: updated }, { headers: gate.headers });
 }

@@ -213,7 +213,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     actor: gate.keyId ?? "system",
     detail: `${assessment.vendorName} — score ${score}% (${riskTier})`,
     assessmentId: id,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, assessment }, { headers: gate.headers });
 }
@@ -305,7 +305,7 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     event: "vendor_ai_audit.updated",
     actor: gate.keyId ?? "system",
     detail: `${body.id} — score ${newScore}% (${newRisk})`,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, assessment: updated }, { headers: gate.headers });
 }

@@ -151,7 +151,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     actor: gate.keyId ?? "system",
     detail: `${riskLevel.toUpperCase()} — ${entry.toolName} (${entry.toolType})`,
     entryId: id,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, entry }, { headers: gate.headers });
 }
@@ -214,7 +214,7 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     event: "shadow_ai.updated",
     actor: gate.keyId ?? "system",
     detail: `${body.id} → ${body.status ?? "updated"}`,
-  }).catch(() => {});
+  }, tenant).catch(() => {});
 
   return NextResponse.json({ ok: true, entry: updated }, { headers: gate.headers });
 }

@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadBraRecord, updateBraRecord, type BraPatch } from "@/lib/server/bra";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,6 +85,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "bra.record_updated", actor: gate.keyId, braId: id },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] bra write failed:", e instanceof Error ? e.message : String(e)));
 
   const isOverdueReview = new Date(record.nextReviewDate) < new Date();
 

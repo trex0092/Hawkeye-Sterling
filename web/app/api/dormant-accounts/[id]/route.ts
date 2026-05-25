@@ -11,6 +11,7 @@ import {
   updateDormantAccount,
   type DormantAccountPatch,
 } from "@/lib/server/dormant-accounts";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "dormant_account.updated", actor: gate.keyId, accountId: id },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] dormant write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record },

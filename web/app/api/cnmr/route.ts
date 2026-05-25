@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -149,6 +150,11 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   }
   cases[idx] = updated;
   await saveCases(tenant, cases);
+
+  void writeAuditChainEntry(
+    { event: "cnmr.case_updated", actor: gate.keyId ?? tenant, caseId: body.id, status: updated.status },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] cnmr write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
 }

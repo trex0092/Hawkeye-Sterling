@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAuditFinding, updateAuditFinding, type AuditFindingPatch } from "@/lib/server/audit-findings";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,6 +74,11 @@ export async function PATCH(
       { status: 500, headers: gate.headers },
     );
   }
+
+  void writeAuditChainEntry(
+    { event: "audit_finding.updated", actor: gate.keyId, findingId: id },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] finding write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, record },

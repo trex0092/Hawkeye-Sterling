@@ -7,6 +7,7 @@
 // Charter P2: items are emitted with their source URLs; the analyser
 // then classifies severity. Never synthesises news content.
 
+import { createHash } from 'node:crypto';
 import type { CorporateRegistryRecord } from '../brain/bo-graph-builder.js';
 
 export interface OsintQuery {
@@ -60,7 +61,7 @@ async function newsApi(q: OsintQuery): Promise<OsintOutcome> {
     if (!res.ok) return { ok: false, provider: 'newsapi', items: [], error: `HTTP ${res.status}` };
     const json = (await res.json()) as { articles?: Array<Record<string, unknown>> };
     const items = (json.articles ?? []).map((a, i): OsintItem => ({
-      id: `newsapi_${i}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `newsapi_${i}_${createHash('sha256').update(String(a['url'] ?? i)).digest('hex').slice(0, 8)}`,
       url: String(a['url'] ?? ''),
       title: String(a['title'] ?? ''),
       content: String(a['description'] ?? a['content'] ?? ''),
@@ -88,7 +89,7 @@ async function gdelt(q: OsintQuery): Promise<OsintOutcome> {
     if (!res.ok) return { ok: false, provider: 'gdelt', items: [], error: `HTTP ${res.status}` };
     const json = (await res.json()) as { articles?: Array<Record<string, unknown>> };
     const items = (json.articles ?? []).map((a, i): OsintItem => ({
-      id: `gdelt_${i}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `gdelt_${i}_${createHash('sha256').update(String(a['url'] ?? i)).digest('hex').slice(0, 8)}`,
       url: String(a['url'] ?? ''),
       title: String(a['title'] ?? ''),
       content: String(a['title'] ?? ''),
@@ -118,9 +119,10 @@ async function duckduckgo(q: OsintQuery): Promise<OsintOutcome> {
       const title = (m[2] ?? '').replace(/<[^>]+>/g, '').trim();
       if (url && title) {
         items.push({
-          id: `ddg_${i++}_${Math.random().toString(36).slice(2, 8)}`,
+          id: `ddg_${i}_${createHash('sha256').update(url).digest('hex').slice(0, 8)}`,
           url, title, content: title, source: 'duckduckgo',
         });
+        i++;
       }
     }
     return { ok: true, provider: 'duckduckgo', items };
