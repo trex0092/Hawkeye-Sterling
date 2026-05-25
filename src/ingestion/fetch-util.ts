@@ -23,9 +23,10 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
           ...(opts.accept ? { Accept: opts.accept } : {}),
         },
       });
+      if (!res.ok) { clearTimeout(timer); throw new Error(`${url} → HTTP ${res.status}`); }
+      const text = await res.text();
       clearTimeout(timer);
-      if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
-      return await res.text();
+      return text;
     } catch (err) {
       clearTimeout(timer);
       lastErr = err;

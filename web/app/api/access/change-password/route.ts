@@ -81,9 +81,9 @@ export async function POST(req: Request) {
     return { status: 'saved' };
   });
 
-  if (changeResult.status === 'not_found') return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
-  if (changeResult.status === 'no_password') return NextResponse.json({ ok: false, error: "Account has no password set — contact your MLRO" }, { status: 400 });
-  if (changeResult.status === 'wrong_password') return NextResponse.json({ ok: false, error: "Current password is incorrect" }, { status: 403 });
+  if (changeResult.status === 'not_found' || changeResult.status === 'no_password' || changeResult.status === 'wrong_password') {
+    return NextResponse.json({ ok: false, error: "Current password is incorrect or account not found" }, { status: 403 });
+  }
 
   // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
   void writeAuditChainEntry({
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     maxAge: 0,
     path: "/",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: isSecure,
   });
   return res;

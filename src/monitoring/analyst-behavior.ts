@@ -148,7 +148,7 @@ export function computeAnalystProfile(
     overrideClearRate: overrides.length > 0 ? (overrideClearCount / overrides.length) * 100 : 0,
     offHoursEventCount: offHoursEvents.length,
     offHoursRate: actorEvents.length > 0 ? (offHoursEvents.length / actorEvents.length) * 100 : 0,
-    peakHour: peakHour ? Number(peakHour[0]) : 9,
+    peakHour: peakHour !== undefined ? Number(peakHour[0]) : 9,
     adminActionOffHoursCount,
     bulkScreenCount: bulkScreens.length,
     averageBulkSize: bulkScreens.length > 0 ? totalBulkSize / bulkScreens.length : 0,
@@ -272,13 +272,13 @@ const RULES: Rule[] = [
   },
   {
     id: "UEBA-009",
-    severity: "high",
-    title: "Systematic verdict clearing",
+    severity: "critical",
+    title: "Extreme systematic verdict clearing",
     test: (p) => {
-      const fired = p.overrideCount >= 5 && p.overrideClearRate > 80;
+      const fired = p.overrideCount >= 10 && p.overrideClearRate > 90;
       return {
         fired,
-        detail: `${p.overrideCount} verdict overrides with ${p.overrideClearRate.toFixed(0)}% clearing rate — pattern consistent with systematic whitewashing.`,
+        detail: `${p.overrideCount} verdict overrides with ${p.overrideClearRate.toFixed(0)}% clearing rate — extreme whitewashing pattern requiring immediate review.`,
         evidence: [`override_count=${p.overrideCount}`, `override_clear_rate=${p.overrideClearRate.toFixed(1)}%`],
       };
     },

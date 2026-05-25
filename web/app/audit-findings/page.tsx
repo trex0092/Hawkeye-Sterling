@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 
 interface AuditFinding {
   id: string;
@@ -92,7 +92,11 @@ export default function AuditFindingsPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [signingOff, setSigningOff] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchFindings = useCallback(async () => {
+    if (!mountedRef.current) return;
     setLoading(true);
     setError(null);
     try {
@@ -101,15 +105,16 @@ export default function AuditFindingsPage() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { ok: boolean; records?: AuditFinding[]; error?: string };
+      if (!mountedRef.current) return;
       if (data.ok) {
         setFindings(data.records ?? []);
       } else {
         setError(data.error ?? "Failed to load audit findings");
       }
     } catch {
-      setError("Network error loading audit findings");
+      if (mountedRef.current) setError("Network error loading audit findings");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 

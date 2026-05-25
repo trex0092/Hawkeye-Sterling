@@ -268,7 +268,7 @@ export async function POST(req: Request) {
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge: SESSION_TTL_S,
     path: "/",
   });

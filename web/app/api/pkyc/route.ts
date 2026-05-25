@@ -52,6 +52,11 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   }
   const id = body.id ?? `pkyc-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const now = new Date().toISOString();
+
+  const VALID_CADENCES: PKycCadence[] = ["daily", "weekly", "monthly", "quarterly", "annual"];
+  if (body.cadence !== undefined && !VALID_CADENCES.includes(body.cadence as PKycCadence)) {
+    return NextResponse.json({ ok: false, error: "cadence must be daily | weekly | monthly | quarterly | annual" }, { status: 400 });
+  }
   const cadence: PKycCadence = (body.cadence ?? "monthly") as PKycCadence;
 
   const subject: PKycSubject = {
@@ -81,8 +86,8 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
 
   // FDL 10/2025 Art.24: pKYC enrollment triggers ongoing CDD monitoring — must be in the tamper-evident chain.
   void writeAuditChainEntry(
-    { event: "pkyc.run_triggered", subjectId: id, actor: ctx.tenantId },
-    "compliance",
+    { event: "pkyc.enrolled", subjectId: id, actor: ctx.tenantId },
+    ctx.tenantId,
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, subject }, { status: 201 });
@@ -96,6 +101,12 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
   if (!subject) return NextResponse.json({ ok: false, error: "Subject not found" }, { status: 404 });
 
   await deleteSubject(id, ctx.tenantId);
+
+  void writeAuditChainEntry(
+    { event: "pkyc.deregistered", subjectId: id, subjectName: subject.name, actor: ctx.tenantId },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, deleted: id });
 }
 

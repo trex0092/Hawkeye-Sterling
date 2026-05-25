@@ -12,7 +12,7 @@ export async function POST() {
     maxAge: 0,
     path: "/",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: isSecure,
   });
   return res;

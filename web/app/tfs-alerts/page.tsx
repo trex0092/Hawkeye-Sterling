@@ -597,12 +597,13 @@ export default function TFSAlertsPage() {
 
   const handleStatusChange = useCallback(
     (id: string, status: TFSAlertStatus, extra?: Partial<TFSAlert>) => {
-      const current = loadAlerts();
-      const idx = current.findIndex((a) => a.id === id);
-      if (idx < 0) return;
-      current[idx] = { ...current[idx]!, status, ...extra };
-      saveAlerts(current);
-      setAlerts([...current]);
+      setAlerts((prev) => {
+        const idx = prev.findIndex((a) => a.id === id);
+        if (idx < 0) return prev;
+        const updated = prev.map((a, i) => i === idx ? { ...a, status, ...extra } : a);
+        saveAlerts(updated);
+        return updated;
+      });
     },
     [],
   );

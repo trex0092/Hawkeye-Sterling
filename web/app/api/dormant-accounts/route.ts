@@ -64,6 +64,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
+  if (isNaN(Date.parse(body.lastActivityDate))) {
+    return NextResponse.json(
+      { ok: false, error: "lastActivityDate must be a valid date (e.g. 2025-05-01)" },
+      { status: 400, headers: gate.headers },
+    );
+  }
 
   if (!body.riskRating || !["high", "medium", "low"].includes(body.riskRating)) {
     return NextResponse.json(
