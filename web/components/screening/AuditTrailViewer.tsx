@@ -474,13 +474,13 @@ export function AuditTrailViewer({
 }
 
 const ACTION_TONES: Record<string, string> = {
-  str: "bg-rose-100 text-rose-900 border-rose-200",
-  freeze: "bg-rose-100 text-rose-900 border-rose-200",
-  dispose: "bg-amber-100 text-amber-900 border-amber-200",
-  escalate: "bg-amber-100 text-amber-900 border-amber-200",
-  goaml_submit: "bg-violet-100 text-violet-900 border-violet-200",
-  clear: "bg-emerald-100 text-emerald-900 border-emerald-200",
-  str_read: "bg-sky-100 text-sky-900 border-sky-200",
+  str: "bg-rose-950/30 text-rose-300 border-rose-500/40",
+  freeze: "bg-rose-950/30 text-rose-300 border-rose-500/40",
+  dispose: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  escalate: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  goaml_submit: "bg-violet-950/30 text-violet-300 border-violet-500/40",
+  clear: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
+  str_read: "bg-sky-950/30 text-sky-300 border-sky-500/40",
 };
 
 function ActionBadge({ action }: { action: string }): JSX.Element {

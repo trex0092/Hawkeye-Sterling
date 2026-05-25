@@ -103,14 +103,14 @@ function formatNum(v: number, digits = 3): string {
 }
 
 function severityTone(sev: DriftAlert["severity"]): string {
-  if (sev === "critical") return "bg-rose-100 text-rose-900 border-rose-200";
-  if (sev === "warn") return "bg-amber-100 text-amber-900 border-amber-200";
-  return "bg-sky-100 text-sky-900 border-sky-200";
+  if (sev === "critical") return "bg-rose-950/30 text-rose-300 border-rose-500/40";
+  if (sev === "warn") return "bg-amber-950/30 text-amber-300 border-amber-500/40";
+  return "bg-sky-950/30 text-sky-300 border-sky-500/40";
 }
 
 function driftTone(d: BrierMode["drift"]): string {
-  if (d === "stable") return "bg-emerald-100 text-emerald-900 border-emerald-200";
-  if (d === "drifting") return "bg-rose-100 text-rose-900 border-rose-200";
+  if (d === "stable") return "bg-emerald-950/30 text-emerald-300 border-emerald-500/40";
+  if (d === "drifting") return "bg-rose-950/30 text-rose-300 border-rose-500/40";
   return "bg-bg-2 text-ink-1 border-hair-2";
 }
 
@@ -174,9 +174,9 @@ export function PerformanceMonitoringDashboard({
 
   const overallStatus = useMemo(() => {
     if (overallEce === null) return { label: "No data", tone: "bg-bg-2 text-ink-1" };
-    if (overallEce <= ECE_TARGET) return { label: "Within tolerance", tone: "bg-emerald-100 text-emerald-900" };
-    if (overallEce <= ECE_TARGET * 1.5) return { label: "Watch", tone: "bg-amber-100 text-amber-900" };
-    return { label: "Drift — pause threshold", tone: "bg-rose-100 text-rose-900" };
+    if (overallEce <= ECE_TARGET) return { label: "Within tolerance", tone: "bg-emerald-950/30 text-emerald-300" };
+    if (overallEce <= ECE_TARGET * 1.5) return { label: "Watch", tone: "bg-amber-950/30 text-amber-300" };
+    return { label: "Drift — pause threshold", tone: "bg-rose-950/30 text-rose-300" };
   }, [overallEce]);
 
   const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>): void => {
@@ -271,7 +271,7 @@ export function PerformanceMonitoringDashboard({
             >
               {t.label}
               {t.id === "alerts" && drift?.alerts.length ? (
-                <span className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-rose-100 text-rose-900 text-9 font-mono">
+                <span className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-rose-950/30 text-rose-300 text-9 font-mono">
                   {drift.alerts.length}
                 </span>
               ) : null}
@@ -326,10 +326,10 @@ function SummaryStrip({
         value={alerts.length === 0 ? "0 — clear" : `${critical} critical · ${warn} warn`}
         tone={
           critical > 0
-            ? "bg-rose-100 text-rose-900"
+            ? "bg-rose-950/30 text-rose-300"
             : warn > 0
-              ? "bg-amber-100 text-amber-900"
-              : "bg-emerald-100 text-emerald-900"
+              ? "bg-amber-950/30 text-amber-300"
+              : "bg-emerald-950/30 text-emerald-300"
         }
       />
     </div>

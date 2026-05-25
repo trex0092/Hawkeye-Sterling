@@ -1579,7 +1579,7 @@ function AdverseMediaEvidenceSection({
                 <div className="text-10 text-ink-3 font-mono">
                   {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
                   {a.sourceTier === "tier1" && (
-                    <span className="ml-1 rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
+                    <span className="ml-1 rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
                   )}
                 </div>
               </li>
@@ -2840,7 +2840,7 @@ function LiveReasoningTab({
                 <div className="text-10 text-ink-3 font-mono">
                   {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
                   {a.sourceTier === "tier1" && (
-                    <span className="ml-1 rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
+                    <span className="ml-1 rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
                   )}
                 </div>
               </li>
@@ -3475,10 +3475,10 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2 items-center">
               <span>{a.source || "—"}</span>
               {a.sourceTier === "tier1" && (
-                <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold text-emerald-700">T1</span>
+                <span className="rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
               )}
               {a.lang && !a.lang.startsWith("en") && (
-                <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700" title="Non-English article — may require translation">
+                <span className="ml-1 rounded bg-amber-950/30 px-1 py-0.5 text-[9px] font-medium text-amber-300" title="Non-English article — may require translation">
                   {a.lang.toUpperCase()}
                 </span>
               )}
@@ -3524,7 +3524,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
                 key={continent}
                 className={`rounded px-1.5 py-0.5 text-9 font-medium ${
                   covered
-                    ? "bg-emerald-100 text-emerald-700"
+                    ? "bg-emerald-950/30 text-emerald-300"
                     : "bg-slate-100 text-slate-400"
                 }`}
               >
