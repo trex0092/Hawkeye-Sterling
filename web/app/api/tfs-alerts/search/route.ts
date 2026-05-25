@@ -11,6 +11,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getGmailAccessToken } from "@/lib/server/gmail-token";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const GMAIL_BASE = "https://www.googleapis.com/gmail/v1/users/me";
 
@@ -209,6 +211,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
 
+    void writeAuditChainEntry(
+      { event: "tfs_alerts.gmail_scanned", actor: gate.keyId, meta: { found: candidates.length, knownCount: knownIds.size } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, candidates }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -491,7 +491,7 @@ export default function TmRulesPage() {
                               {record.status === "proposed" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "testing" })}
-                                  className="px-3 py-1.5 text-xs bg-sky-700 text-white rounded hover:bg-sky-600"
+                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90"
                                 >
                                   Start Testing
                                 </button>

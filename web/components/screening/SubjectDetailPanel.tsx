@@ -3525,7 +3525,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
                 className={`rounded px-1.5 py-0.5 text-9 font-medium ${
                   covered
                     ? "bg-emerald-950/30 text-emerald-300"
-                    : "bg-slate-100 text-slate-400"
+                    : "bg-zinc-800/40 text-zinc-400"
                 }`}
               >
                 {continent.split(" ").map(w => w[0]).join("")}

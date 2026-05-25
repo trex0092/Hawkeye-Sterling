@@ -349,11 +349,11 @@ export default function TrainingTrackerPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="font-medium">{r.staffName}</div>
-                      <div className="text-xs text-neutral-400 font-mono">{r.staffId}</div>
+                      <div className="text-xs text-ink-3 font-mono">{r.staffId}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="">{r.courseName}</div>
-                      <div className="text-xs text-neutral-400 font-mono">{r.courseCode}</div>
+                      <div className="text-xs text-ink-3 font-mono">{r.courseCode}</div>
                     </td>
                     <td className="px-4 py-3 text-ink-2 text-xs">
                       {new Date(r.completedAt).toLocaleDateString()}
@@ -374,7 +374,7 @@ export default function TrainingTrackerPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={r.status} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-neutral-400 font-mono">
+                    <td className="px-4 py-3 text-xs text-ink-3 font-mono">
                       {r.certificateRef ?? "—"}
                     </td>
                   </tr>

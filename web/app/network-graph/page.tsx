@@ -245,8 +245,8 @@ function EdgeLine({
 
 function Legend() {
   return (
-    <div className="absolute bottom-4 left-4 bg-slate-900/90 border border-slate-700 rounded-lg p-3 text-xs text-slate-300 space-y-1.5">
-      <div className="text-10 font-semibold uppercase tracking-wider text-slate-400 mb-2">
+    <div className="absolute bottom-4 left-4 bg-bg-panel/90 border border-hair-2 rounded-lg p-3 text-xs text-ink-1 space-y-1.5">
+      <div className="text-10 font-semibold uppercase tracking-wider text-ink-3 mb-2">
         Legend
       </div>
       {(Object.entries(NODE_COLORS) as [GraphNode["type"], string][]).map(
@@ -260,7 +260,7 @@ function Legend() {
           </div>
         ),
       )}
-      <div className="border-t border-slate-700 mt-2 pt-2 space-y-1">
+      <div className="border-t border-hair-2 mt-2 pt-2 space-y-1">
         <div className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 rounded-full border-2 border-red-500 border-dashed flex-shrink-0" />
           <span>Flagged / sanctioned</span>
@@ -287,23 +287,23 @@ function InfoPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute top-4 right-4 w-64 bg-slate-900 border border-slate-700 rounded-lg p-4 shadow-xl text-sm text-slate-200">
+    <div className="absolute top-4 right-4 w-64 bg-bg-panel border border-hair-2 rounded-lg p-4 shadow-xl text-sm text-ink-0">
       <div className="flex items-start justify-between mb-3">
         <div>
           <div
             className="w-4 h-4 rounded-full mb-2"
             style={{ backgroundColor: NODE_COLORS[node.type] ?? "#6b7280" }}
           />
-          <div className="font-semibold text-white text-base leading-tight">
+          <div className="font-semibold text-ink-0 text-base leading-tight">
             {node.label}
           </div>
-          <div className="text-slate-400 text-xs capitalize mt-0.5">
+          <div className="text-ink-3 text-xs capitalize mt-0.5">
             {node.type}
           </div>
         </div>
         <button
           onClick={onClose}
-          className="text-slate-500 hover:text-slate-200 ml-2 flex-shrink-0 text-lg leading-none"
+          className="text-ink-3 hover:text-ink-0 ml-2 flex-shrink-0 text-lg leading-none"
           aria-label="Close info panel"
         >
           &times;
@@ -313,7 +313,7 @@ function InfoPanel({
       <dl className="space-y-2 text-xs">
         {node.riskScore !== undefined && (
           <div className="flex justify-between">
-            <dt className="text-slate-400">Risk score</dt>
+            <dt className="text-ink-3">Risk score</dt>
             <dd
               className={`font-mono font-semibold ${
                 node.riskScore >= 75
@@ -330,21 +330,21 @@ function InfoPanel({
 
         {node.jurisdiction && (
           <div className="flex justify-between">
-            <dt className="text-slate-400">Jurisdiction</dt>
-            <dd className="text-slate-200">{node.jurisdiction}</dd>
+            <dt className="text-ink-3">Jurisdiction</dt>
+            <dd className="text-ink-0">{node.jurisdiction}</dd>
           </div>
         )}
 
         {node.pepTier && (
           <div className="flex justify-between">
-            <dt className="text-slate-400">PEP tier</dt>
+            <dt className="text-ink-3">PEP tier</dt>
             <dd className="text-amber-300 font-semibold">Tier {node.pepTier}</dd>
           </div>
         )}
 
         {node.flagged !== undefined && (
           <div className="flex justify-between">
-            <dt className="text-slate-400">Sanctions status</dt>
+            <dt className="text-ink-3">Sanctions status</dt>
             <dd
               className={
                 node.flagged ? "text-red-400 font-semibold" : "text-green-400"
@@ -356,8 +356,8 @@ function InfoPanel({
         )}
 
         <div className="flex justify-between">
-          <dt className="text-slate-400">Node type</dt>
-          <dd className="text-slate-300 capitalize">{node.type}</dd>
+          <dt className="text-ink-3">Node type</dt>
+          <dd className="text-ink-1 capitalize">{node.type}</dd>
         </div>
       </dl>
     </div>
@@ -488,21 +488,21 @@ function SubjectSearch({
             setQuery(e.target.value);
             setSelected(null);
           }}
-          className="w-full px-3 py-2 border border-slate-600 rounded bg-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2 border border-hair-2 rounded bg-bg-panel text-sm text-ink-0 placeholder-ink-3 focus:outline-none focus:border-brand"
         />
         {query && filtered.length > 0 && !selected && (
-          <ul className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-600 rounded shadow-xl max-h-48 overflow-y-auto">
+          <ul className="absolute z-10 w-full mt-1 bg-bg-panel border border-hair-2 rounded shadow-xl max-h-48 overflow-y-auto">
             {filtered.map((s) => (
               <li key={s.id}>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 text-slate-200 flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-bg-1 text-ink-0 flex items-center justify-between"
                   onClick={() => {
                     setSelected(s);
                     setQuery(s.name);
                   }}
                 >
                   <span>{s.name}</span>
-                  <span className="text-xs text-slate-500 ml-2">{s.type}</span>
+                  <span className="text-xs text-ink-3 ml-2">{s.type}</span>
                 </button>
               </li>
             ))}
@@ -519,15 +519,15 @@ function SubjectSearch({
       <button
         onClick={handleLoad}
         disabled={!selected || loading}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded transition-colors"
+        className="px-4 py-2 bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded transition-colors"
       >
         {loading ? "Loading graph…" : "Load Graph"}
       </button>
 
       {selected && (
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-ink-3">
           Selected:{" "}
-          <span className="text-slate-200 font-semibold">{selected.name}</span>{" "}
+          <span className="text-ink-0 font-semibold">{selected.name}</span>{" "}
           ({selected.id})
         </div>
       )}
@@ -596,18 +596,18 @@ export default function NetworkGraphPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="min-h-screen bg-bg-0 text-ink-0">
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Page header */}
           <div className="mb-6">
-            <div className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-1">
+            <div className="text-xs font-semibold uppercase tracking-widest text-brand mb-1">
               Module · Intelligence
             </div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-ink-0">
               Network Relationship{" "}
-              <span className="text-blue-400">Graph.</span>
+              <span className="text-brand">Graph.</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-ink-3 text-sm mt-1">
               Visualise UBO chains, corporate structures, known associates, and
               shared addresses for any screening subject.
             </p>
@@ -616,8 +616,8 @@ export default function NetworkGraphPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
             {/* Left panel — search + legend */}
             <div className="space-y-6">
-              <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+              <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-3">
                   Subject search
                 </div>
                 <SubjectSearch onLoad={handleLoad} loading={loading} />
@@ -625,38 +625,38 @@ export default function NetworkGraphPage() {
 
               {/* Graph stats */}
               {graph && (
-                <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-3">
                     Graph summary
                   </div>
                   <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Nodes</dt>
-                      <dd className="text-white font-semibold">
+                      <dt className="text-ink-3">Nodes</dt>
+                      <dd className="text-ink-0 font-semibold">
                         {graph.nodes.length}
                       </dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Edges</dt>
-                      <dd className="text-white font-semibold">
+                      <dt className="text-ink-3">Edges</dt>
+                      <dd className="text-ink-0 font-semibold">
                         {graph.edges.length}
                       </dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Flagged</dt>
+                      <dt className="text-ink-3">Flagged</dt>
                       <dd
                         className={
                           graph.nodes.some((n) => n.flagged)
                             ? "text-red-400 font-semibold"
-                            : "text-green-400"
+                            : "text-emerald-400"
                         }
                       >
                         {graph.nodes.filter((n) => n.flagged).length}
                       </dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Generated</dt>
-                      <dd className="text-slate-300 text-xs font-mono">
+                      <dt className="text-ink-3">Generated</dt>
+                      <dd className="text-ink-1 text-xs font-mono">
                         {new Date(graph.generatedAt).toLocaleTimeString()}
                       </dd>
                     </div>
@@ -676,7 +676,7 @@ export default function NetworkGraphPage() {
 
               {/* Empty state */}
               {!graph && !loading && !error && (
-                <div className="flex items-center justify-center h-[500px] bg-slate-900 border border-slate-700 rounded-xl text-slate-500 text-sm">
+                <div className="flex items-center justify-center h-[500px] bg-bg-panel border border-hair-2 rounded-xl text-ink-3 text-sm">
                   Search for a subject and click &quot;Load Graph&quot; to visualise
                   relationships.
                 </div>
@@ -684,9 +684,9 @@ export default function NetworkGraphPage() {
 
               {/* Loading */}
               {loading && (
-                <div className="flex items-center justify-center h-[500px] bg-slate-900 border border-slate-700 rounded-xl text-slate-400 text-sm">
+                <div className="flex items-center justify-center h-[500px] bg-bg-panel border border-hair-2 rounded-xl text-ink-3 text-sm">
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-400"
+                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-brand"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -710,7 +710,7 @@ export default function NetworkGraphPage() {
 
               {/* Graph */}
               {graph && !loading && (
-                <div className="relative rounded-xl overflow-hidden border border-slate-700">
+                <div className="relative rounded-xl overflow-hidden border border-hair-2">
                   <GraphCanvas
                     graph={graph}
                     selectedNodeId={selectedNodeId}
@@ -728,16 +728,16 @@ export default function NetworkGraphPage() {
 
               {/* Node list */}
               {graph && graph.nodes.length > 0 && (
-                <div className="mt-4 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-700 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <div className="mt-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-hair-2 text-xs font-semibold uppercase tracking-wider text-ink-3">
                     All nodes
                   </div>
-                  <div className="divide-y divide-slate-800">
+                  <div className="divide-y divide-hair-2">
                     {graph.nodes.map((node) => (
                       <button
                         key={node.id}
-                        className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-800 transition-colors ${
-                          selectedNodeId === node.id ? "bg-slate-800" : ""
+                        className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-bg-1 transition-colors ${
+                          selectedNodeId === node.id ? "bg-bg-1" : ""
                         }`}
                         onClick={() =>
                           setSelectedNodeId(
@@ -751,10 +751,10 @@ export default function NetworkGraphPage() {
                             backgroundColor: NODE_COLORS[node.type] ?? "#6b7280",
                           }}
                         />
-                        <span className="text-sm text-slate-200 flex-1 truncate">
+                        <span className="text-sm text-ink-0 flex-1 truncate">
                           {node.label}
                         </span>
-                        <span className="text-xs text-slate-500 capitalize">
+                        <span className="text-xs text-ink-3 capitalize">
                           {node.type}
                         </span>
                         {node.flagged && (

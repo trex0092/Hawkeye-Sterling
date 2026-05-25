@@ -122,7 +122,7 @@ export function DispositionButton({
         type="button"
         disabled
         title="MLRO sign-off required — only users with the MLRO role may record dispositions"
-        className="rounded-md border border-zinc-300 bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-400 cursor-not-allowed"
+        className="rounded-md border border-hair-2 bg-bg-panel px-3 py-1.5 text-xs font-medium text-ink-3 cursor-not-allowed"
       >
         MLRO sign-off required
       </button>
@@ -148,21 +148,21 @@ export function DispositionButton({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-800"
+          className="text-xs text-ink-3 hover:text-ink-0"
           disabled={busy}
         >
           ✕
         </button>
       </div>
 
-      <div className="mt-2 text-[11px] text-zinc-500">
+      <div className="mt-2 text-[11px] text-ink-3">
         Auto-proposed:{" "}
         <span className="font-mono">{autoProposed}</span> · confidence{" "}
         <span className="tabular-nums">{(autoConfidence * 100).toFixed(0)}%</span>
       </div>
 
       <label className="mt-2 block text-xs">
-        <span className="text-zinc-700">MLRO decision</span>
+        <span className="text-ink-2">MLRO decision</span>
         <select
           value={chosen}
           onChange={(e) => setChosen(e.target.value as DispositionCode)}
@@ -179,7 +179,7 @@ export function DispositionButton({
 
       {overridden && (
         <label className="mt-2 block text-xs">
-          <span className="text-zinc-700">Override reason</span>
+          <span className="text-ink-2">Override reason</span>
           <textarea
             value={overrideReason}
             onChange={(e) => setOverrideReason(e.target.value)}

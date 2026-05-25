@@ -311,7 +311,7 @@ export default function RiskAppetitePage() {
               <p className="text-xs text-ink-3 mb-4">
                 Each weight is 0 – 1. Sum must be ≤ 1.0.
                 {" "}Current sum:{" "}
-                <span className={weightSum > 1.0 ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>
+                <span className={weightSum > 1.0 ? "text-red-400 font-semibold" : "text-emerald-400 font-semibold"}>
                   {weightSum.toFixed(2)}
                 </span>
               </p>

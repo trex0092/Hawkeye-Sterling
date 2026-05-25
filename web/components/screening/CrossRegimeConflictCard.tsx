@@ -120,7 +120,7 @@ export function CrossRegimeConflictCard({ data }: Props): JSX.Element | null {
       )}
 
       {data.rationale.length > 0 && (
-        <ul className="mt-2 list-disc pl-4 text-xs text-zinc-700">
+        <ul className="mt-2 list-disc pl-4 text-xs text-ink-2">
           {data.rationale.map((r, i) => (
             <li key={i}>{r}</li>
           ))}
