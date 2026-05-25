@@ -62,6 +62,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
+      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
     ],
   },
   {
