@@ -1673,3 +1673,327 @@ describe('GET /api/health — anonymous deployment-info leak guard', () => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// /api/ai-incident-playbook — UAE AI incident register (FDL 10/2025 Art.24)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/ai-incident-playbook', () => {
+  let GET: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/ai-incident-playbook/route');
+    GET = mod.GET as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns ok:true with an incidents array', async () => {
+    const req = makeRequest('http://localhost/api/ai-incident-playbook');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; incidents: unknown[] };
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.incidents)).toBe(true);
+  });
+});
+
+describe('POST /api/ai-incident-playbook', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/ai-incident-playbook/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('rejects missing required fields with 400', async () => {
+    const req = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'POST',
+      body: { type: 'hallucination' }, // missing title, description, severity, affectedModel
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+    expect(typeof body.error).toBe('string');
+  });
+
+  it('rejects invalid incident type with 400', async () => {
+    const req = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'POST',
+      body: {
+        type: 'not_a_real_type',
+        severity: 'high',
+        title: 'Test incident',
+        description: 'Test description',
+        affectedModel: 'claude-sonnet-4-6',
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+  });
+
+  it('creates incident and returns it with ok:true', async () => {
+    const req = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'POST',
+      body: {
+        type: 'hallucination',
+        severity: 'high',
+        title: 'SAR narrative contained fabricated customer name',
+        description: 'AI output included a name not present in the source data.',
+        affectedModel: 'claude-sonnet-4-6',
+        regulatoryNotificationRequired: true,
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; incident: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect(body.incident.type).toBe('hallucination');
+    expect(body.incident.severity).toBe('high');
+    expect(body.incident.status).toBe('open');
+    expect(body.incident.regulatoryNotificationRequired).toBe(true);
+    expect(typeof body.incident.id).toBe('string');
+  });
+});
+
+describe('PATCH /api/ai-incident-playbook', () => {
+  let POST: (req: Request) => Promise<Response>;
+  let PATCH: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/ai-incident-playbook/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+    PATCH = mod.PATCH as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns 404 for unknown incident id', async () => {
+    const req = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'PATCH',
+      body: { id: 'AI-INC-DOES-NOT-EXIST', status: 'investigating' },
+    });
+    const res = await PATCH(req);
+    expect(res.status).toBe(404);
+  });
+
+  it('updates status on an existing incident', async () => {
+    // First create an incident
+    const createReq = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'POST',
+      body: {
+        type: 'bias_spike',
+        severity: 'medium',
+        title: 'Bias detected in name-matching scores',
+        description: 'Arabic script names scored 20% lower than Latin script names.',
+        affectedModel: 'sentence-bert-v2',
+      },
+    });
+    const createRes = await POST(createReq);
+    const created = await jsonBody(createRes) as { incident: { id: string } };
+    const id = created.incident.id;
+
+    // Now patch it
+    const patchReq = makeRequest('http://localhost/api/ai-incident-playbook', {
+      method: 'PATCH',
+      body: { id, status: 'investigating', rootCause: 'Training data imbalance' },
+    });
+    const patchRes = await PATCH(patchReq);
+    expect(patchRes.status).toBe(200);
+    const body = await jsonBody(patchRes) as { ok: boolean; incident: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect(body.incident.status).toBe('investigating');
+    expect(body.incident.rootCause).toBe('Training data imbalance');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// /api/shadow-ai — Shadow AI detection register (CBUAE AI Governance 2025)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/shadow-ai', () => {
+  let GET: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/shadow-ai/route');
+    GET = mod.GET as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns ok:true with entries array and stats object', async () => {
+    const req = makeRequest('http://localhost/api/shadow-ai');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; entries: unknown[]; stats: Record<string, number> };
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.entries)).toBe(true);
+    expect(typeof body.stats.total).toBe('number');
+    expect(typeof body.stats.critical).toBe('number');
+    expect(typeof body.stats.open).toBe('number');
+  });
+});
+
+describe('POST /api/shadow-ai', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/shadow-ai/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('rejects missing toolName with 400', async () => {
+    const req = makeRequest('http://localhost/api/shadow-ai', {
+      method: 'POST',
+      body: { toolType: 'llm', detectionMethod: 'user_report', dataClassification: 'internal' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('creates entry and auto-computes risk level', async () => {
+    const req = makeRequest('http://localhost/api/shadow-ai', {
+      method: 'POST',
+      body: {
+        toolName: 'ChatGPT',
+        toolType: 'llm',
+        detectionMethod: 'user_report',
+        dataClassification: 'restricted',
+        vendorDpaExists: false,
+        approvedInRegistry: false,
+        department: 'Compliance',
+        useCase: 'SAR drafting',
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; entry: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect(body.entry.toolName).toBe('ChatGPT');
+    // restricted data + not approved → critical risk
+    expect(body.entry.riskLevel).toBe('critical');
+    expect(body.entry.status).toBe('detected');
+  });
+
+  it('assigns low risk for approved public tool', async () => {
+    const req = makeRequest('http://localhost/api/shadow-ai', {
+      method: 'POST',
+      body: {
+        toolName: 'GrammarlyGo',
+        toolType: 'automation',
+        detectionMethod: 'audit_log',
+        dataClassification: 'public',
+        vendorDpaExists: true,
+        approvedInRegistry: true,
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; entry: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect(body.entry.riskLevel).toBe('low');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// /api/vendor-ai-audit — Vendor AI due-diligence (FATF R.18 / ADGM DPR 2021)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GET /api/vendor-ai-audit', () => {
+  let GET: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/vendor-ai-audit/route');
+    GET = mod.GET as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('returns ok:true with assessments array (seeds Anthropic if empty)', async () => {
+    const req = makeRequest('http://localhost/api/vendor-ai-audit');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; assessments: Array<Record<string, unknown>> };
+    expect(body.ok).toBe(true);
+    expect(Array.isArray(body.assessments)).toBe(true);
+    // Should seed Anthropic on first call
+    expect(body.assessments.length).toBeGreaterThan(0);
+    expect(body.assessments[0]).toHaveProperty('vendorName');
+    expect(body.assessments[0]).toHaveProperty('checklistScore');
+    expect(body.assessments[0]).toHaveProperty('riskTier');
+  });
+});
+
+describe('POST /api/vendor-ai-audit', () => {
+  let POST: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    const mod = await import('@/app/api/vendor-ai-audit/route');
+    POST = mod.POST as unknown as (req: Request) => Promise<Response>;
+  });
+
+  it('rejects missing vendorName with 400', async () => {
+    const req = makeRequest('http://localhost/api/vendor-ai-audit', {
+      method: 'POST',
+      body: {
+        checklist: { dpaInPlace: true },
+        overallFindings: 'Good vendor',
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await jsonBody(res) as { ok: boolean };
+    expect(body.ok).toBe(false);
+  });
+
+  it('creates assessment with correct score and risk tier', async () => {
+    const allTrue = {
+      dpaInPlace: true, dataResidencyConfirmed: true, subprocessorListObtained: true,
+      penetrationTestReport: true, iso27001OrSoc2: true, modelCardProvided: true,
+      biasAuditCompleted: true, hallucIndicationLogEnabled: true,
+      incidentNotificationSla: true, rightToAuditClause: true,
+      dataRetentionTermsAgreed: true, gdprOrAdgmDpaClause: true,
+    };
+    const req = makeRequest('http://localhost/api/vendor-ai-audit', {
+      method: 'POST',
+      body: {
+        vendorName: 'TrustwortyAI Inc.',
+        vendorType: 'llm_provider',
+        checklist: allTrue,
+        overallFindings: 'All controls in place.',
+        criticalGaps: [],
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as { ok: boolean; assessment: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect(body.assessment.checklistScore).toBe(100);
+    expect(body.assessment.riskTier).toBe('low');
+    expect(body.assessment.status).toBe('approved');
+    expect(body.assessment.vendorName).toBe('TrustwortyAI Inc.');
+    expect(Array.isArray(body.assessment.regulatoryBasis)).toBe(true);
+  });
+
+  it('marks failed status when score is below 40%', async () => {
+    const mostlyFalse = {
+      dpaInPlace: false, dataResidencyConfirmed: false, subprocessorListObtained: false,
+      penetrationTestReport: false, iso27001OrSoc2: false, modelCardProvided: false,
+      biasAuditCompleted: false, hallucIndicationLogEnabled: false,
+      incidentNotificationSla: false, rightToAuditClause: false,
+      dataRetentionTermsAgreed: false, gdprOrAdgmDpaClause: true,
+    };
+    const req = makeRequest('http://localhost/api/vendor-ai-audit', {
+      method: 'POST',
+      body: {
+        vendorName: 'RiskyAI Ltd.',
+        vendorType: 'other',
+        checklist: mostlyFalse,
+        overallFindings: 'Significant gaps identified.',
+      },
+    });
+    const res = await POST(req);
+    const body = await jsonBody(res) as { ok: boolean; assessment: Record<string, unknown> };
+    expect(body.ok).toBe(true);
+    expect((body.assessment.checklistScore as number)).toBeLessThan(40);
+    expect(body.assessment.status).toBe('failed');
+    expect(body.assessment.riskTier).toBe('critical');
+  });
+});
+
