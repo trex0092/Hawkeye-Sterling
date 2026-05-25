@@ -231,6 +231,12 @@ export const FACULTIES: Faculty[] = [
       'gr.geopolitical_recalibration_trigger',
       'si.adversarial_simulation',
       'si.counterfactual_reasoning',
+      'an.regulatory_change_impact_assessment',
+      'an.network_restructuring_prediction',
+      'an.pre_sanction_positioning_detection',
+      'an.seasonal_ml_pattern_forecasting',
+      'an.typology_evolution_tracker',
+      'qi.markov_chain_risk_projection',
     ],
   },
   {
@@ -247,6 +253,11 @@ export const FACULTIES: Faculty[] = [
       'gr.state_sponsored_ml_detection',
       'gr.geopolitical_recalibration_trigger',
       'gr.conflict_zone_nexus_mapping',
+      'ga.dual_use_goods_proliferation_financing',
+      'ga.de_dollarization_cbdc_risk',
+      'ga.bri_project_nexus_assessment',
+      'ga.crypto_state_actor_evasion',
+      'an.pre_sanction_positioning_detection',
     ],
   },
   {
@@ -260,6 +271,12 @@ export const FACULTIES: Faculty[] = [
     ],
     modes: [
       'qa.benford_law_analysis',
+      'fa.journal_entry_timing_analysis',
+      'fa.round_dollar_clustering',
+      'fa.duplicate_transaction_detection',
+      'fa.shell_company_financial_signature',
+      'fa.transfer_pricing_manipulation',
+      'fa.revenue_recognition_anomaly',
     ],
   },
   {
@@ -273,6 +290,10 @@ export const FACULTIES: Faculty[] = [
     ],
     modes: [
       'si.belief_propagation',
+      'qi.bayesian_network_fusion',
+      'qi.ensemble_uncertainty_quantification',
+      'qi.markov_chain_risk_projection',
+      'qi.entropy_anomaly_detection',
     ],
   },
 ];

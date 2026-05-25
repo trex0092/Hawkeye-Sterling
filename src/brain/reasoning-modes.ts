@@ -19,6 +19,7 @@ import { WAVE5_MODES, WAVE5_OVERRIDES } from './reasoning-modes-wave5.js';
 import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
 import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
 import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
+import { WAVE13_MODES, WAVE13_OVERRIDES } from './reasoning-modes-wave13.js';
 
 const m = (
   id: string,
@@ -367,6 +368,18 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   if (w12override) REASONING_MODES[i] = w12override;
 }
 
+// Merge Wave 13: 19 new modes expanding forensic_accounting (6), quantum_intelligence (4),
+// anticipation (5), and geopolitical_awareness (4) — the four sparsest faculties.
+const existingIdsW13 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE13_MODES) {
+  if (!existingIdsW13.has(m.id)) REASONING_MODES.push(m);
+}
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]; if (!r) continue;
+  const w13override = WAVE13_OVERRIDES.find((o) => o.id === r.id);
+  if (w13override) REASONING_MODES[i] = w13override;
+}
+
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),
 );
@@ -512,6 +525,26 @@ const _MODE_VERSION_ENTRIES: ModeVersionMetadata[] = [
   { modeId: 'audit_trail_integrity_assessment',  version: '1.0.0', deployedDate: '2026-05-08', contentHash: 'sha256:w12-at-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Audit trail completeness/immutability — wave 12 phase 12' },
   { modeId: 'compliance_maturity_reasoning',     version: '1.0.0', deployedDate: '2026-05-08', contentHash: 'sha256:w12-cm-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'FATF IO / Wolfsberg maturity mapping — wave 12 phase 12' },
   { modeId: 'examination_preparation_logic',     version: '1.0.0', deployedDate: '2026-05-08', contentHash: 'sha256:w12-ep-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Regulator examination pre-mortem — wave 12 phase 12' },
+  // Wave 13 — forensic accounting (6), quantum intelligence (4), anticipation (5), geopolitical awareness (4)
+  { modeId: 'fa.journal_entry_timing_analysis',  version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Off-hours journal entry timing analysis — wave 13' },
+  { modeId: 'fa.round_dollar_clustering',        version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-002', author: 'data-science', approvedBy: 'mlro', changeLog: 'Round-dollar transaction clustering detection — wave 13' },
+  { modeId: 'fa.duplicate_transaction_detection',version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-003', author: 'data-science', approvedBy: 'mlro', changeLog: 'Same-amount/counterparty/date duplicate detection — wave 13' },
+  { modeId: 'fa.shell_company_financial_signature', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-004', author: 'data-science', approvedBy: 'mlro', changeLog: 'Shell company financial fingerprint scorer — wave 13' },
+  { modeId: 'fa.transfer_pricing_manipulation',  version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-005', author: 'data-science', approvedBy: 'mlro', changeLog: 'Intercompany arm\'s-length pricing deviation — wave 13' },
+  { modeId: 'fa.revenue_recognition_anomaly',    version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-fa-006', author: 'data-science', approvedBy: 'mlro', changeLog: 'Channel-stuffing / bill-and-hold detection — wave 13' },
+  { modeId: 'qi.bayesian_network_fusion',        version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-qi-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Bayesian network multi-factor posterior fusion — wave 13' },
+  { modeId: 'qi.ensemble_uncertainty_quantification', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-qi-002', author: 'data-science', approvedBy: 'mlro', changeLog: 'Epistemic/aleatoric uncertainty decomposition — wave 13' },
+  { modeId: 'qi.markov_chain_risk_projection',   version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-qi-003', author: 'data-science', approvedBy: 'mlro', changeLog: 'n-step Markov risk state projection — wave 13' },
+  { modeId: 'qi.entropy_anomaly_detection',      version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-qi-004', author: 'data-science', approvedBy: 'mlro', changeLog: 'Shannon entropy behavioural anomaly detection — wave 13' },
+  { modeId: 'an.regulatory_change_impact_assessment', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-an-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Pre-emptive regulatory change portfolio impact — wave 13' },
+  { modeId: 'an.network_restructuring_prediction', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-an-002', author: 'data-science', approvedBy: 'mlro', changeLog: 'Post-designation network restructuring predictor — wave 13' },
+  { modeId: 'an.pre_sanction_positioning_detection', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-an-003', author: 'data-science', approvedBy: 'mlro', changeLog: 'Pre-sanction asset positioning detection — wave 13' },
+  { modeId: 'an.seasonal_ml_pattern_forecasting', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-an-004', author: 'data-science', approvedBy: 'mlro', changeLog: 'Seasonal ML risk spike forecasting — wave 13' },
+  { modeId: 'an.typology_evolution_tracker',     version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-an-005', author: 'data-science', approvedBy: 'mlro', changeLog: 'Typology mutation / successor prediction — wave 13' },
+  { modeId: 'ga.dual_use_goods_proliferation_financing', version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-ga-001', author: 'data-science', approvedBy: 'mlro', changeLog: 'Dual-use goods proliferation financing — wave 13' },
+  { modeId: 'ga.de_dollarization_cbdc_risk',     version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-ga-002', author: 'data-science', approvedBy: 'mlro', changeLog: 'CBDC/alt-payment sanctions evasion risk — wave 13' },
+  { modeId: 'ga.bri_project_nexus_assessment',   version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-ga-003', author: 'data-science', approvedBy: 'mlro', changeLog: 'Belt and Road Initiative nexus assessment — wave 13' },
+  { modeId: 'ga.crypto_state_actor_evasion',     version: '1.0.0', deployedDate: '2026-05-25', contentHash: 'sha256:w13-ga-004', author: 'data-science', approvedBy: 'mlro', changeLog: 'State-actor (DPRK/Iran/Russia) crypto evasion — wave 13' },
 ];
 
 // All modes not in _MODE_VERSION_ENTRIES default to a "pending-audit" entry.

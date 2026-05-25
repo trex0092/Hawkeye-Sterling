@@ -146,7 +146,7 @@ export interface ReasoningMode {
   name: string;
   category: ReasoningCategory;
   faculties: FacultyId[];
-  wave: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  wave: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
   description: string;
   apply: (ctx: BrainContext) => Promise<Finding>;
   // Governance metadata (HS-GOV-001 §5) — required on new/modified modes;
