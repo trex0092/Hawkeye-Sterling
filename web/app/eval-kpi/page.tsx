@@ -55,8 +55,8 @@ function fmtPct(v: number): string {
 
 function tierClassFor(passed: boolean): string {
   return passed
-    ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-    : "bg-amber-50 text-amber-700 border-amber-300";
+    ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40"
+    : "bg-amber-950/30 text-amber-300 border-amber-500/40";
 }
 
 interface KpiCardProps {
@@ -73,7 +73,7 @@ function KpiCard({ label, value, acceptable, band, detail }: KpiCardProps) {
       className={`rounded-lg border p-4 ${
         acceptable
           ? "bg-bg-1 border-hair-2"
-          : "bg-amber-50/30 border-amber-300"
+          : "bg-amber-950/20 border-amber-500/40"
       }`}
     >
       <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">
@@ -154,7 +154,7 @@ export default function EvalKpiPage() {
           Loading the latest KPI snapshot…
         </div>
       ) : error ? (
-        <div className="bg-amber-50/30 border border-amber-300 rounded-lg p-4 text-13 text-amber-700">
+        <div className="bg-amber-950/20 border border-amber-500/40 rounded-lg p-4 text-13 text-amber-300">
           Could not reach <code className="font-mono">/api/eval-kpi</code>: {error}
         </div>
       ) : !data?.snapshot ? (
@@ -191,11 +191,11 @@ function KpiDashboard({ snapshot }: { snapshot: KpiSnapshot }) {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {snapshot.breaches.length === 0 ? (
-            <span className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-emerald-50 text-emerald-700 border-emerald-300">
+            <span className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-emerald-950/30 text-emerald-300 border-emerald-500/40">
               ✓ all KPIs in band
             </span>
           ) : (
-            <span className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-50 text-amber-700 border-amber-300">
+            <span className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-950/30 text-amber-300 border-amber-500/40">
               ⚠ {snapshot.breaches.length} breach{snapshot.breaches.length === 1 ? "" : "es"}
             </span>
           )}
@@ -252,8 +252,8 @@ function KpiDashboard({ snapshot }: { snapshot: KpiSnapshot }) {
       </div>
 
       {snapshot.breaches.length > 0 ? (
-        <div className="bg-amber-50/30 border border-amber-300 rounded-lg p-3">
-          <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-700 mb-2">
+        <div className="bg-amber-950/20 border border-amber-500/40 rounded-lg p-3">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-300 mb-2">
             Breaches ({snapshot.breaches.length})
           </div>
           <ul className="space-y-1 text-12 text-ink-1">

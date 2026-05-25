@@ -13,7 +13,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="rounded border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+        <div className="rounded border border-red-500/40 bg-red-950/30 p-4 text-sm text-red-300">
           This panel encountered an error. Please refresh the page or contact support.
         </div>
       );

@@ -37,10 +37,10 @@ function fmt(n: number | undefined, digits = 3): string {
 
 function cls(weight: number | undefined): string {
   if (weight === undefined) return "";
-  if (weight >= 0.85) return "bg-emerald-50";
-  if (weight >= 0.5) return "bg-amber-50";
-  if (weight >= 0.2) return "bg-orange-50";
-  return "bg-red-50";
+  if (weight >= 0.85) return "bg-emerald-950/20";
+  if (weight >= 0.5) return "bg-amber-950/20";
+  if (weight >= 0.2) return "bg-orange-950/20";
+  return "bg-red-950/20";
 }
 
 export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
@@ -48,7 +48,7 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
   if (!trace || trace.steps.length === 0) return null;
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+    <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-500">Bayesian trace</div>

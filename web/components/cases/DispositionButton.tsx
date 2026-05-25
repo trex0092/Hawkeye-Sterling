@@ -142,7 +142,7 @@ export function DispositionButton({
   }
 
   return (
-    <div className="rounded-md border border-zinc-300 bg-white p-3 shadow-sm">
+    <div className="rounded-md border border-hair-2 bg-bg-panel p-3 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">MLRO disposition</div>
         <button
@@ -166,7 +166,7 @@ export function DispositionButton({
         <select
           value={chosen}
           onChange={(e) => setChosen(e.target.value as DispositionCode)}
-          className="mt-1 w-full rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
+          className="mt-1 w-full rounded border border-hair-2 bg-bg-base px-2 py-1 text-xs text-ink-0"
           disabled={busy}
         >
           {DISPOSITION_CODES.map((d) => (
@@ -185,7 +185,7 @@ export function DispositionButton({
             onChange={(e) => setOverrideReason(e.target.value)}
             placeholder="One-line rationale (charter P9 — explicit calibration trail)"
             rows={2}
-            className="mt-1 w-full rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
+            className="mt-1 w-full rounded border border-hair-2 bg-bg-base px-2 py-1 text-xs text-ink-0"
             disabled={busy}
           />
         </label>

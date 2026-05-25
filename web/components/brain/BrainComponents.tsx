@@ -295,7 +295,7 @@ export function AuditStrip() {
       <div className="flex flex-wrap items-center gap-4">
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-11 font-mono uppercase tracking-wide-3 ${
-            ok ? "bg-green-100 text-green-800" : "bg-red text-bg-0"
+            ok ? "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40" : "bg-red text-bg-0"
           }`}
         >
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
@@ -693,10 +693,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const KIND_TONE: Record<string, string> = {
   redline: "bg-red text-bg-0",
-  regime: "bg-amber-100 text-amber-900",
+  regime: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
   doctrine: "bg-violet-dim text-violet",
   typology: "bg-red-dim text-red",
-  "meta-cognition": "bg-blue-100 text-blue-900",
+  "meta-cognition": "bg-sky-950/30 text-sky-300 border border-sky-500/40",
   jurisdiction: "bg-bg-2 text-ink-1",
 };
 
@@ -708,12 +708,12 @@ function BrainResult({ r }: { r: ReasonResponse }) {
     severity === "critical"
       ? "bg-red text-bg-0"
       : severity === "high"
-        ? "bg-amber-200 text-amber-900"
+        ? "bg-amber-950/30 text-amber-300 border border-amber-500/40"
         : severity === "medium"
-          ? "bg-amber-100 text-amber-800"
+          ? "bg-amber-950/30 text-amber-300 border border-amber-500/40"
           : severity === "low"
             ? "bg-bg-2 text-ink-1"
-            : "bg-green-100 text-green-800";
+            : "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40";
 
   return (
     <div className="space-y-4">

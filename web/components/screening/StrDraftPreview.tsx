@@ -40,7 +40,7 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
   const draft = buildDraft(source, reporterEntity);
 
   return (
-    <div className="rounded-md border border-zinc-300 bg-white text-zinc-900">
+    <div className="rounded-md border border-hair-2 bg-bg-panel text-ink-1">
       <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
         <div>
           <div className="text-xs uppercase tracking-wide text-zinc-600">STR draft preview</div>
@@ -99,7 +99,7 @@ export function StrDraftPreview({ source, reporterEntity }: Props): JSX.Element 
                 ))}
               </dd>
             </div>
-            <div className="rounded border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
+            <div className="rounded border border-amber-500/40 bg-amber-950/30 p-2 text-[11px] text-amber-300">
               Charter P2 + P5: every claim above traces back to a brain
               finding or redline. No statement of guilt — observable
               facts + indicators only. Final legal characterisation is

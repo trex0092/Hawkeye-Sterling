@@ -2625,13 +2625,13 @@ function CddTab({
       )}
       {pepList.length > 0 && <PepClassificationsList data={pepList} />}
       {r?.pepAssessment?.isLikelyPEP && (
-        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs">
-          <div className="text-zinc-500 uppercase tracking-wide mb-1">PEP assessment</div>
+        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2 text-xs">
+          <div className="text-ink-3 uppercase tracking-wide mb-1">PEP assessment</div>
           <div className="flex flex-wrap gap-1">
             {r.pepAssessment.matchedRoles.map((m, i) => (
               <span
                 key={`${m.label}-${i}`}
-                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-100 text-violet-800 border border-violet-200"
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-950/30 text-violet-300 border border-violet-500/40"
               >
                 {m.label} · {m.tier}
               </span>
@@ -2640,8 +2640,8 @@ function CddTab({
         </div>
       )}
       {r && (
-        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
-          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2">MLRO disposition</div>
+        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
+          <div className="text-xs uppercase tracking-wide text-ink-3 mb-2">MLRO disposition</div>
           <DispositionButton
             caseId={subject.id}
             runId={runId}
@@ -3382,11 +3382,11 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           </span>
         )}
         <span className={`rounded-full px-2 py-0.5 font-semibold ${
-          state.result?.topSeverity === "critical" ? "bg-red-100 text-red-700" :
-          state.result?.topSeverity === "high" ? "bg-orange-100 text-orange-700" :
-          state.result?.topSeverity === "medium" ? "bg-yellow-100 text-yellow-700" :
-          state.result?.topSeverity === "low" ? "bg-blue-100 text-blue-700" :
-          "bg-green-100 text-green-700"
+          state.result?.topSeverity === "critical" ? "bg-red-950/30 text-red-300" :
+          state.result?.topSeverity === "high" ? "bg-orange-950/30 text-orange-300" :
+          state.result?.topSeverity === "medium" ? "bg-amber-950/30 text-amber-300" :
+          state.result?.topSeverity === "low" ? "bg-sky-950/30 text-sky-300" :
+          "bg-emerald-950/30 text-emerald-300"
         }`}>
           {(state.result?.topSeverity ?? "clear").toUpperCase()}
         </span>

@@ -29,10 +29,10 @@ const TIER_LABEL: Record<NonNullable<PepClassification["tier"]>, string> = {
 };
 
 function salienceBand(s: number): string {
-  if (s >= 0.85) return "bg-red-100 text-red-800 border-red-300";
-  if (s >= 0.6) return "bg-orange-100 text-orange-800 border-orange-300";
-  if (s >= 0.3) return "bg-amber-100 text-amber-800 border-amber-300";
-  return "bg-zinc-100 text-zinc-700 border-zinc-300";
+  if (s >= 0.85) return "bg-red-950/30 text-red-300 border-red-500/40";
+  if (s >= 0.6) return "bg-orange-950/30 text-orange-300 border-orange-500/40";
+  if (s >= 0.3) return "bg-amber-950/30 text-amber-300 border-amber-500/40";
+  return "bg-zinc-800/40 text-zinc-300 border-zinc-600/40";
 }
 
 function isRca(type: string): boolean {
@@ -43,7 +43,7 @@ export function PepClassificationsList({ data }: Props): JSX.Element | null {
   if (!data || data.length === 0) return null;
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+    <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
       <div className="text-xs uppercase tracking-wide text-zinc-500">PEP classifications</div>
       <ul className="mt-2 space-y-1.5">
         {data.map((p, i) => (

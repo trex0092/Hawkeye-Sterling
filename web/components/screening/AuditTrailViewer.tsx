@@ -224,14 +224,14 @@ export function AuditTrailViewer({
     if (!verifyResult) return null;
     if (verifyResult.error) {
       return (
-        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md">
+        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
           Verification failed: {verifyResult.error}
         </div>
       );
     }
     if (verifyResult.ok) {
       return (
-        <div role="status" className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-12 px-3 py-2 rounded-md">
+        <div role="status" className="bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-12 px-3 py-2 rounded-md">
           Chain verified · {verifyResult.totalVerified}/{verifyResult.totalScanned} entries pass HMAC + link checks · head sequence {verifyResult.head.sequence}.
         </div>
       );
@@ -244,7 +244,7 @@ export function AuditTrailViewer({
       !verifyResult.headConsistent && "head pointer inconsistent",
     ].filter(Boolean);
     return (
-      <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md">
+      <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
         Chain integrity FAILED · {issues.join(" · ")}. Escalate to Engineering Lead per HS-OPS-001 §3.4 (CRITICAL).
       </div>
     );
@@ -361,7 +361,7 @@ export function AuditTrailViewer({
       </div>
 
       {error ? (
-        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md mb-3">
+        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md mb-3">
           {error}
         </div>
       ) : null}

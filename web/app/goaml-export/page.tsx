@@ -248,7 +248,7 @@ export default function GoAmlExportPage() {
               <div className="text-10 text-ink-3">{s.sub}</div>
             </button>
             {i < STEPS.length - 1 && (
-              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-300" : "bg-hair-2"}`} />
+              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-500/40" : "bg-hair-2"}`} />
             )}
           </div>
         ))}
@@ -456,7 +456,7 @@ export default function GoAmlExportPage() {
                   )}
                 </div>
                 {submission.status === "error" && (
-                  <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-12">
+                  <div className="bg-red-950/30 border border-red-500/40 rounded p-3 text-red-300 text-12">
                     {submission.error}
                   </div>
                 )}
@@ -564,8 +564,8 @@ function FieldNumber({ label, value, onChange }: { label: string; value: number 
 
 function IssueRow({ issue }: { issue: ValidationIssue }) {
   const tone = issue.level === "error"
-    ? "border-red-200 bg-red-50 text-red-700"
-    : "border-amber-200 bg-amber-50 text-amber-700";
+    ? "border-red-500/40 bg-red-950/30 text-red-300"
+    : "border-amber-500/40 bg-amber-950/30 text-amber-300";
   return (
     <div className={`text-12 border rounded px-3 py-1.5 ${tone}`}>
       <span className="font-mono text-10 uppercase tracking-wide-3 mr-2">{issue.level}</span>

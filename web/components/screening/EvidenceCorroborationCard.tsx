@@ -31,10 +31,10 @@ interface Props {
 }
 
 function band(score: number): { label: string; cls: string } {
-  if (score >= 0.8) return { label: "Strong", cls: "text-emerald-600 bg-emerald-50 border-emerald-200" };
-  if (score >= 0.55) return { label: "Adequate", cls: "text-amber-600 bg-amber-50 border-amber-200" };
-  if (score >= 0.3) return { label: "Weak", cls: "text-orange-600 bg-orange-50 border-orange-200" };
-  return { label: "Insufficient", cls: "text-red-600 bg-red-50 border-red-200" };
+  if (score >= 0.8) return { label: "Strong", cls: "text-emerald-300 bg-emerald-950/30 border-emerald-500/40" };
+  if (score >= 0.55) return { label: "Adequate", cls: "text-amber-300 bg-amber-950/30 border-amber-500/40" };
+  if (score >= 0.3) return { label: "Weak", cls: "text-orange-300 bg-orange-950/30 border-orange-500/40" };
+  return { label: "Insufficient", cls: "text-red-300 bg-red-950/30 border-red-500/40" };
 }
 
 export function EvidenceCorroborationCard({ data }: Props): JSX.Element | null {
@@ -75,12 +75,12 @@ export function EvidenceCorroborationCard({ data }: Props): JSX.Element | null {
       {(data.stalePenalty > 0 || data.trainingDataPenalty > 0) && (
         <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
           {data.stalePenalty > 0 && (
-            <span className="rounded border border-orange-300 bg-orange-100 px-1.5 py-0.5 text-orange-700">
+            <span className="rounded border border-orange-500/40 bg-orange-950/30 px-1.5 py-0.5 text-orange-300">
               {Math.round(data.stalePenalty * 100)}% stale
             </span>
           )}
           {data.trainingDataPenalty > 0 && (
-            <span className="rounded border border-red-300 bg-red-100 px-1.5 py-0.5 text-red-700">
+            <span className="rounded border border-red-500/40 bg-red-950/30 px-1.5 py-0.5 text-red-300">
               ⚠ training-data evidence (Charter P8)
             </span>
           )}
