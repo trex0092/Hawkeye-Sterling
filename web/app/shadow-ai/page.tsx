@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { ShadowAIEntry, ShadowAIStatus } from "@/app/api/shadow-ai/route";
 
 // Shadow AI Detection Register — UAE CBUAE AI Governance Guidelines 2025
@@ -25,18 +27,18 @@ const DETECTION_LABELS: Record<ShadowAIEntry["detectionMethod"], string> = {
 };
 
 const RISK_COLOURS: Record<ShadowAIEntry["riskLevel"], string> = {
-  critical: "bg-red-100 text-red-800 border border-red-300",
-  high: "bg-orange-100 text-orange-800 border border-orange-300",
-  medium: "bg-yellow-100 text-yellow-800 border border-yellow-300",
-  low: "bg-green-100 text-green-800 border border-green-300",
+  critical: "bg-red-950/30 text-red-300 border border-red-500/40",
+  high: "bg-orange-950/30 text-orange-300 border border-orange-500/40",
+  medium: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  low: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
 };
 
 const STATUS_COLOURS: Record<ShadowAIStatus, string> = {
-  detected: "bg-red-50 text-red-700",
-  under_review: "bg-blue-50 text-blue-700",
-  approved: "bg-green-50 text-green-700",
-  blocked: "bg-gray-100 text-gray-700",
-  remediated: "bg-purple-50 text-purple-700",
+  detected: "bg-red-950/20 text-red-300",
+  under_review: "bg-sky-950/20 text-sky-300",
+  approved: "bg-emerald-950/20 text-emerald-300",
+  blocked: "bg-zinc-800/40 text-ink-2",
+  remediated: "bg-violet-950/20 text-violet-300",
 };
 
 interface FormState {
@@ -143,235 +145,245 @@ export default function ShadowAIPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Shadow AI Detection Register</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            CBUAE AI Governance Guidelines 2025 · Unauthorized AI tool detection & remediation
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
-        >
-          {showForm ? "Cancel" : "Report Shadow AI"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="AI Governance"
+        modules={[
+          { label: "AI Incident Playbook", href: "/ai-incident-playbook", icon: "🤖" },
+          { label: "Shadow AI Register", href: "/shadow-ai", icon: "👁️" },
+          { label: "Vendor AI Audit", href: "/vendor-ai-audit", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="👁️ UAE AI Governance — CBUAE Guidelines 2025"
+        title="Shadow AI Detection"
+        titleEm="register."
+        intro="Unauthorized AI tool detection & remediation · Unregistered LLMs · No-DPA vendors · Data classification risk"
+      />
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-gray-700">{stats.total}</div>
-          <div className="text-xs text-gray-500 mt-1">Total Detected</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
-          <div className={`text-2xl font-bold ${stats.critical > 0 ? "text-red-600" : "text-gray-400"}`}>{stats.critical}</div>
-          <div className="text-xs text-gray-500 mt-1">Critical Risk</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
-          <div className={`text-2xl font-bold ${stats.open > 0 ? "text-orange-600" : "text-green-600"}`}>{stats.open}</div>
-          <div className="text-xs text-gray-500 mt-1">Open / Reviewing</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-gray-700">{stats.blocked}</div>
-          <div className="text-xs text-gray-500 mt-1">Blocked</div>
-        </div>
-      </div>
+      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-      {/* Policy notice */}
-      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-        <strong>Policy:</strong> Any AI tool used in compliance workflows must be registered in the Model Registry and have a signed DPA. Unauthorized usage of AI tools with <em>confidential</em> or <em>restricted</em> data constitutes a critical risk requiring immediate containment. Per CBUAE AI Governance Guidelines 2025.
-      </div>
+        {/* Stats + action bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className="text-2xl font-bold text-ink-1">{stats.total}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className={`text-2xl font-bold ${stats.critical > 0 ? "text-red" : "text-ink-2"}`}>{stats.critical}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Critical</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className={`text-2xl font-bold ${stats.open > 0 ? "text-amber-400" : "text-emerald-400"}`}>{stats.open}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Open</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className="text-2xl font-bold text-ink-1">{stats.blocked}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Blocked</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+          >
+            {showForm ? "Cancel" : "Report Shadow AI"}
+          </button>
+        </div>
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">{error}</div>
-      )}
+        {/* Policy notice */}
+        <div className="bg-sky-950/20 border border-sky-500/30 rounded-lg p-4 text-sm text-sky-300">
+          <strong>Policy:</strong> Any AI tool used in compliance workflows must be registered in the Model Registry and have a signed DPA. Unauthorized usage of AI tools with <em>confidential</em> or <em>restricted</em> data constitutes a critical risk requiring immediate containment. Per CBUAE AI Governance Guidelines 2025.
+        </div>
 
-      {/* Log form */}
-      {showForm && (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Report Shadow AI Tool</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tool / Service Name</label>
-              <input
-                type="text"
-                value={form.toolName}
-                onChange={(e) => setForm({ ...form, toolName: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                placeholder="e.g. ChatGPT, Gemini, Perplexity, Midjourney..."
-                maxLength={100}
-                required
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {/* Log form */}
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">Report Shadow AI Tool</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Tool / Service Name</label>
+                <input
+                  type="text"
+                  value={form.toolName}
+                  onChange={(e) => setForm({ ...form, toolName: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  placeholder="e.g. ChatGPT, Gemini, Perplexity, Midjourney..."
+                  maxLength={100}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Tool Type</label>
+                <select
+                  value={form.toolType}
+                  onChange={(e) => setForm({ ...form, toolType: e.target.value as ShadowAIEntry["toolType"] })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                >
+                  {Object.entries(TOOL_TYPE_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">How Detected</label>
+                <select
+                  value={form.detectionMethod}
+                  onChange={(e) => setForm({ ...form, detectionMethod: e.target.value as ShadowAIEntry["detectionMethod"] })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                >
+                  {Object.entries(DETECTION_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Data Classification Used With</label>
+                <select
+                  value={form.dataClassification}
+                  onChange={(e) => setForm({ ...form, dataClassification: e.target.value as ShadowAIEntry["dataClassification"] })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                >
+                  <option value="public">Public</option>
+                  <option value="internal">Internal</option>
+                  <option value="confidential">Confidential</option>
+                  <option value="restricted">Restricted (PII / AML data)</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Department (optional)</label>
+                <input
+                  type="text"
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  placeholder="e.g. Compliance, Operations, Finance"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Use Case (optional)</label>
+                <input
+                  type="text"
+                  value={form.useCase}
+                  onChange={(e) => setForm({ ...form, useCase: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  placeholder="How was the tool being used?"
+                  maxLength={500}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-6">
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.vendorDpaExists} onChange={(e) => setForm({ ...form, vendorDpaExists: e.target.checked })} className="rounded" />
+                Vendor DPA exists
+              </label>
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input type="checkbox" checked={form.approvedInRegistry} onChange={(e) => setForm({ ...form, approvedInRegistry: e.target.checked })} className="rounded" />
+                Already in approved AI registry
+              </label>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Notes (optional)</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={2}
+                maxLength={1000}
+                placeholder="Any additional context or evidence..."
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tool Type</label>
-              <select
-                value={form.toolType}
-                onChange={(e) => setForm({ ...form, toolType: e.target.value as ShadowAIEntry["toolType"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                {Object.entries(TOOL_TYPE_LABELS).map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
-                ))}
-              </select>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
+                {submitting ? "Logging..." : "Log Detection"}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">How Detected</label>
-              <select
-                value={form.detectionMethod}
-                onChange={(e) => setForm({ ...form, detectionMethod: e.target.value as ShadowAIEntry["detectionMethod"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                {Object.entries(DETECTION_LABELS).map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data Classification Used With</label>
-              <select
-                value={form.dataClassification}
-                onChange={(e) => setForm({ ...form, dataClassification: e.target.value as ShadowAIEntry["dataClassification"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="public">Public</option>
-                <option value="internal">Internal</option>
-                <option value="confidential">Confidential</option>
-                <option value="restricted">Restricted (PII / AML data)</option>
-              </select>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department (optional)</label>
-              <input
-                type="text"
-                value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                placeholder="e.g. Compliance, Operations, Finance"
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Use Case (optional)</label>
-              <input
-                type="text"
-                value={form.useCase}
-                onChange={(e) => setForm({ ...form, useCase: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                placeholder="How was the tool being used?"
-                maxLength={500}
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex gap-6">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={form.vendorDpaExists} onChange={(e) => setForm({ ...form, vendorDpaExists: e.target.checked })} className="rounded" />
-              Vendor DPA exists
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={form.approvedInRegistry} onChange={(e) => setForm({ ...form, approvedInRegistry: e.target.checked })} className="rounded" />
-              Already in approved AI registry
-            </label>
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={2}
-              maxLength={1000}
-              placeholder="Any additional context or evidence..."
-            />
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
-              {submitting ? "Logging..." : "Log Detection"}
-            </button>
-          </div>
-        </form>
-      )}
+          </form>
+        )}
 
-      {/* Register */}
-      {loading ? (
-        <div className="text-center text-gray-400 py-12">Loading...</div>
-      ) : entries.length === 0 ? (
-        <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg text-sm">
-          No shadow AI detections recorded. Use the &ldquo;Report Shadow AI&rdquo; button to log a detection.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {entries.map((entry) => (
-            <div key={entry.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs text-gray-500">{entry.id}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RISK_COLOURS[entry.riskLevel]}`}>
-                      {entry.riskLevel} risk
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[entry.status]}`}>
-                      {entry.status.replace("_", " ")}
-                    </span>
-                    {!entry.approvedInRegistry && (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-700 border border-red-200">unregistered</span>
+        {/* Register */}
+        {loading ? (
+          <div className="text-center text-ink-2 py-12">Loading...</div>
+        ) : entries.length === 0 ? (
+          <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg text-sm">
+            No shadow AI detections recorded. Use the &ldquo;Report Shadow AI&rdquo; button to log a detection.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {entries.map((entry) => (
+              <div key={entry.id} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-10 text-ink-2">{entry.id}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RISK_COLOURS[entry.riskLevel]}`}>
+                        {entry.riskLevel} risk
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[entry.status]}`}>
+                        {entry.status.replace("_", " ")}
+                      </span>
+                      {!entry.approvedInRegistry && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-red-950/20 text-red-300 border border-red-500/30">unregistered</span>
+                      )}
+                      {!entry.vendorDpaExists && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-orange-950/20 text-orange-300 border border-orange-500/30">no DPA</span>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-ink-0 mt-1">{entry.toolName}</p>
+                    <p className="text-xs text-ink-2 mt-0.5">
+                      {TOOL_TYPE_LABELS[entry.toolType]} · detected via {DETECTION_LABELS[entry.detectionMethod]}
+                      {entry.department && ` · ${entry.department}`}
+                      {entry.dataClassification !== "public" && (
+                        <span className={`ml-1 font-medium ${entry.dataClassification === "restricted" ? "text-red-400" : entry.dataClassification === "confidential" ? "text-orange-400" : ""}`}>
+                          · {entry.dataClassification} data
+                        </span>
+                      )}
+                    </p>
+                    {entry.useCase && <p className="text-xs text-ink-2 mt-0.5 italic">{entry.useCase}</p>}
+                  </div>
+                  <div className="text-xs text-ink-2 shrink-0 text-right">
+                    {new Date(entry.detectedAt).toLocaleDateString()}
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                {entry.status !== "blocked" && entry.status !== "remediated" && (
+                  <div className="mt-3 flex gap-2">
+                    {entry.status === "detected" && (
+                      <button onClick={() => void handleStatusUpdate(entry.id, "under_review")} className="text-xs px-2 py-1 bg-sky-950/20 text-sky-300 rounded border border-sky-500/30 hover:bg-sky-950/40">
+                        → Review
+                      </button>
                     )}
-                    {!entry.vendorDpaExists && (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-orange-50 text-orange-700 border border-orange-200">no DPA</span>
+                    {(entry.status === "detected" || entry.status === "under_review") && (
+                      <>
+                        <button onClick={() => void handleStatusUpdate(entry.id, "approved")} className="text-xs px-2 py-1 bg-emerald-950/20 text-emerald-300 rounded border border-emerald-500/30 hover:bg-emerald-950/40">
+                          Approve
+                        </button>
+                        <button onClick={() => void handleStatusUpdate(entry.id, "blocked")} className="text-xs px-2 py-1 bg-red-950/20 text-red-300 rounded border border-red-500/30 hover:bg-red-950/40">
+                          Block
+                        </button>
+                      </>
+                    )}
+                    {entry.status === "approved" && (
+                      <button onClick={() => void handleStatusUpdate(entry.id, "remediated")} className="text-xs px-2 py-1 bg-violet-950/20 text-violet-300 rounded border border-violet-500/30 hover:bg-violet-950/40">
+                        Mark Remediated
+                      </button>
                     )}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">{entry.toolName}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {TOOL_TYPE_LABELS[entry.toolType]} · detected via {DETECTION_LABELS[entry.detectionMethod]}
-                    {entry.department && ` · ${entry.department}`}
-                    {entry.dataClassification !== "public" && (
-                      <span className={`ml-1 font-medium ${entry.dataClassification === "restricted" ? "text-red-600" : entry.dataClassification === "confidential" ? "text-orange-600" : ""}`}>
-                        · {entry.dataClassification} data
-                      </span>
-                    )}
-                  </p>
-                  {entry.useCase && <p className="text-xs text-gray-500 mt-0.5 italic">{entry.useCase}</p>}
-                </div>
-                <div className="text-xs text-gray-400 shrink-0 text-right">
-                  {new Date(entry.detectedAt).toLocaleDateString()}
-                </div>
+                )}
               </div>
-
-              {/* Action buttons */}
-              {entry.status !== "blocked" && entry.status !== "remediated" && (
-                <div className="mt-3 flex gap-2">
-                  {entry.status === "detected" && (
-                    <button onClick={() => void handleStatusUpdate(entry.id, "under_review")} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100">
-                      → Review
-                    </button>
-                  )}
-                  {(entry.status === "detected" || entry.status === "under_review") && (
-                    <>
-                      <button onClick={() => void handleStatusUpdate(entry.id, "approved")} className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded border border-green-200 hover:bg-green-100">
-                        Approve
-                      </button>
-                      <button onClick={() => void handleStatusUpdate(entry.id, "blocked")} className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded border border-red-200 hover:bg-red-100">
-                        Block
-                      </button>
-                    </>
-                  )}
-                  {entry.status === "approved" && (
-                    <button onClick={() => void handleStatusUpdate(entry.id, "remediated")} className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded border border-purple-200 hover:bg-purple-100">
-                      Mark Remediated
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </ModuleLayout>
   );
 }

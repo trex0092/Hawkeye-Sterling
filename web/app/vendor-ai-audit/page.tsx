@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { VendorAIAssessment, VendorAIChecklist, VendorAuditStatus } from "@/app/api/vendor-ai-audit/route";
 
 // Vendor AI Audit Framework — UAE CBUAE AI Governance Guidelines 2025
@@ -22,18 +24,18 @@ const CHECKLIST_LABELS: Record<keyof VendorAIChecklist, string> = {
 };
 
 const RISK_COLOURS: Record<VendorAIAssessment["riskTier"], string> = {
-  critical: "bg-red-100 text-red-800 border border-red-300",
-  high: "bg-orange-100 text-orange-800 border border-orange-300",
-  medium: "bg-yellow-100 text-yellow-800 border border-yellow-300",
-  low: "bg-green-100 text-green-800 border border-green-300",
+  critical: "bg-red-950/30 text-red-300 border border-red-500/40",
+  high: "bg-orange-950/30 text-orange-300 border border-orange-500/40",
+  medium: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  low: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
 };
 
 const STATUS_COLOURS: Record<VendorAuditStatus, string> = {
-  draft: "bg-gray-100 text-gray-600",
-  in_review: "bg-blue-50 text-blue-700",
-  approved: "bg-green-50 text-green-700",
-  failed: "bg-red-50 text-red-700",
-  expired: "bg-yellow-50 text-yellow-700",
+  draft: "bg-zinc-800/40 text-ink-2",
+  in_review: "bg-sky-950/20 text-sky-300",
+  approved: "bg-emerald-950/20 text-emerald-300",
+  failed: "bg-red-950/20 text-red-300",
+  expired: "bg-amber-950/20 text-amber-300",
 };
 
 function emptyChecklist(): VendorAIChecklist {
@@ -140,247 +142,259 @@ export default function VendorAIAuditPage() {
   };
 
   const scoreColor = (score: number) =>
-    score >= 80 ? "text-green-600" : score >= 60 ? "text-yellow-600" : "text-red-600";
+    score >= 80 ? "text-emerald-400" : score >= 60 ? "text-amber-400" : "text-red-400";
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendor AI Audit Framework</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            CBUAE AI Governance 2025 · FATF R.18 · ADGM DPR 2021 · DIFC DP Law 2020
-          </p>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="AI Governance"
+        modules={[
+          { label: "AI Incident Playbook", href: "/ai-incident-playbook", icon: "🤖" },
+          { label: "Shadow AI Register", href: "/shadow-ai", icon: "👁️" },
+          { label: "Vendor AI Audit", href: "/vendor-ai-audit", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="🏢 UAE AI Governance — FATF R.18 · ADGM DPR 2021"
+        title="Vendor AI Audit"
+        titleEm="framework."
+        intro="AI vendor due diligence · DPA · model card · penetration testing · bias audit · right-to-audit clause"
+      />
+
+      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+
+        {/* Action bar */}
+        <div className="flex items-center justify-end">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+          >
+            {showForm ? "Cancel" : "Assess New Vendor"}
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-        >
-          {showForm ? "Cancel" : "Assess New Vendor"}
-        </button>
-      </div>
 
-      {/* Regulatory notice */}
-      <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-sm text-indigo-800">
-        <strong>Regulatory Requirement:</strong> All AI vendors must be assessed before use and re-assessed on the schedule below (Critical/High: 3–6 months; Low: 12 months). The vendor DPA and model card must be retained for 10 years per FDL 10/2025 Art.18.
-      </div>
+        {/* Regulatory notice */}
+        <div className="bg-indigo-950/20 border border-indigo-500/30 rounded-lg p-4 text-sm text-indigo-300">
+          <strong>Regulatory Requirement:</strong> All AI vendors must be assessed before use and re-assessed on the schedule below (Critical/High: 3–6 months; Low: 12 months). The vendor DPA and model card must be retained for 10 years per FDL 10/2025 Art.18.
+        </div>
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">{error}</div>
-      )}
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
 
-      {/* New assessment form */}
-      {showForm && (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">New Vendor AI Assessment</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
+        {/* New assessment form */}
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">New Vendor AI Assessment</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Vendor Name</label>
+                <input
+                  type="text"
+                  value={form.vendorName}
+                  onChange={(e) => setForm({ ...form, vendorName: e.target.value })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                  placeholder="e.g. Anthropic, OpenAI, Google, AWS"
+                  maxLength={100}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Vendor Type</label>
+                <select
+                  value={form.vendorType}
+                  onChange={(e) => setForm({ ...form, vendorType: e.target.value as VendorAIAssessment["vendorType"] })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                >
+                  <option value="llm_provider">LLM Provider</option>
+                  <option value="ml_platform">ML Platform</option>
+                  <option value="data_broker">Data Broker</option>
+                  <option value="analytics">Analytics</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Contract Reference (optional)</label>
               <input
                 type="text"
-                value={form.vendorName}
-                onChange={(e) => setForm({ ...form, vendorName: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                placeholder="e.g. Anthropic, OpenAI, Google, AWS"
-                maxLength={100}
-                required
+                value={form.contractReference}
+                onChange={(e) => setForm({ ...form, contractReference: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                placeholder="e.g. Contract ID, ToS version, DPA reference..."
+                maxLength={200}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Type</label>
-              <select
-                value={form.vendorType}
-                onChange={(e) => setForm({ ...form, vendorType: e.target.value as VendorAIAssessment["vendorType"] })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="llm_provider">LLM Provider</option>
-                <option value="ml_platform">ML Platform</option>
-                <option value="data_broker">Data Broker</option>
-                <option value="analytics">Analytics</option>
-                <option value="other">Other</option>
-              </select>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-ink-0">Due Diligence Checklist</h3>
+                <span className={`text-sm font-bold ${scoreColor(checklistScore(form.checklist))}`}>
+                  Score: {checklistScore(form.checklist)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {(Object.keys(CHECKLIST_LABELS) as (keyof VendorAIChecklist)[]).map((key) => (
+                  <label key={key} className="flex items-center gap-3 text-sm text-ink-1 cursor-pointer hover:bg-bg-base rounded px-2 py-1.5">
+                    <input
+                      type="checkbox"
+                      checked={form.checklist[key]}
+                      onChange={(e) => setChecklistItem(key, e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className={form.checklist[key] ? "text-emerald-400" : "text-ink-1"}>{CHECKLIST_LABELS[key]}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contract Reference (optional)</label>
-            <input
-              type="text"
-              value={form.contractReference}
-              onChange={(e) => setForm({ ...form, contractReference: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              placeholder="e.g. Contract ID, ToS version, DPA reference..."
-              maxLength={200}
-            />
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Overall Findings</label>
+              <textarea
+                value={form.overallFindings}
+                onChange={(e) => setForm({ ...form, overallFindings: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={3}
+                maxLength={2000}
+                required
+                placeholder="Summary of vendor AI governance posture, key strengths, and concerns..."
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Critical Gaps (one per line)</label>
+              <textarea
+                value={form.criticalGaps}
+                onChange={(e) => setForm({ ...form, criticalGaps: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={2}
+                placeholder="e.g. biasAuditCompleted&#10;rightToAuditClause"
+              />
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
+                {submitting ? "Saving..." : "Save Assessment"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Assessments list + detail */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-sm font-semibold text-ink-1 mb-3">Vendor Assessments</h2>
+            {loading ? (
+              <div className="text-center text-ink-2 py-12">Loading...</div>
+            ) : assessments.length === 0 ? (
+              <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg text-sm">
+                No vendor assessments yet.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {assessments.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setSelected(selected?.id === a.id ? null : a)}
+                    className={`w-full text-left bg-bg-panel border rounded-lg p-4 hover:border-indigo-500/40 transition-colors ${selected?.id === a.id ? "border-indigo-500/60 ring-1 ring-indigo-500/20" : "border-hair-2"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-ink-0">{a.vendorName}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RISK_COLOURS[a.riskTier]}`}>
+                            {a.riskTier}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[a.status]}`}>
+                            {a.status.replace("_", " ")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-ink-2 mt-1">
+                          Score: <span className={`font-bold ${scoreColor(a.checklistScore)}`}>{a.checklistScore}%</span>
+                          {" · "}Next review: {a.nextReviewDate}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-800">Due Diligence Checklist</h3>
-              <span className={`text-sm font-bold ${scoreColor(checklistScore(form.checklist))}`}>
-                Score: {checklistScore(form.checklist)}%
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {(Object.keys(CHECKLIST_LABELS) as (keyof VendorAIChecklist)[]).map((key) => (
-                <label key={key} className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 rounded px-2 py-1.5">
-                  <input
-                    type="checkbox"
-                    checked={form.checklist[key]}
-                    onChange={(e) => setChecklistItem(key, e.target.checked)}
-                    className="rounded"
-                  />
-                  <span className={form.checklist[key] ? "text-green-700" : "text-gray-700"}>{CHECKLIST_LABELS[key]}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          {/* Detail panel */}
+          <div>
+            <h2 className="text-sm font-semibold text-ink-1 mb-3">
+              {selected ? `Assessment: ${selected.vendorName}` : "Vendor Detail"}
+            </h2>
+            {!selected ? (
+              <div className="bg-bg-base border border-dashed border-hair-2 rounded-lg p-6 text-center text-sm text-ink-2">
+                Select a vendor to see full checklist and findings
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Score */}
+                <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 flex items-center gap-4">
+                  <div className={`text-4xl font-bold ${scoreColor(selected.checklistScore)}`}>
+                    {selected.checklistScore}%
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-ink-0">Due Diligence Score</div>
+                    <div className="text-xs text-ink-2">Risk tier: <span className="font-medium text-ink-1">{selected.riskTier}</span> · {selected.status.replace("_", " ")}</div>
+                    {selected.contractReference && (
+                      <div className="text-xs text-ink-2 mt-0.5">{selected.contractReference}</div>
+                    )}
+                  </div>
+                </div>
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Overall Findings</label>
-            <textarea
-              value={form.overallFindings}
-              onChange={(e) => setForm({ ...form, overallFindings: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={3}
-              maxLength={2000}
-              required
-              placeholder="Summary of vendor AI governance posture, key strengths, and concerns..."
-            />
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Critical Gaps (one per line)</label>
-            <textarea
-              value={form.criticalGaps}
-              onChange={(e) => setForm({ ...form, criticalGaps: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={2}
-              placeholder="e.g. biasAuditCompleted&#10;rightToAuditClause"
-            />
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
-              {submitting ? "Saving..." : "Save Assessment"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Assessments list + detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-base font-semibold text-gray-800 mb-3">Vendor Assessments</h2>
-          {loading ? (
-            <div className="text-center text-gray-400 py-12">Loading...</div>
-          ) : assessments.length === 0 ? (
-            <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg text-sm">
-              No vendor assessments yet.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {assessments.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setSelected(selected?.id === a.id ? null : a)}
-                  className={`w-full text-left bg-white border rounded-lg p-4 hover:border-indigo-300 transition-colors ${selected?.id === a.id ? "border-indigo-400 ring-1 ring-indigo-200" : "border-gray-200"}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-900">{a.vendorName}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${RISK_COLOURS[a.riskTier]}`}>
-                          {a.riskTier}
+                {/* Checklist */}
+                <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-ink-0 mb-3">Checklist</h3>
+                  <div className="space-y-1.5">
+                    {(Object.keys(CHECKLIST_LABELS) as (keyof VendorAIChecklist)[]).map((key) => (
+                      <div key={key} className="flex items-center gap-2 text-xs">
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${selected.checklist[key] ? "bg-emerald-600" : "bg-red-700/60"}`}>
+                          <span className="text-white text-xs">{selected.checklist[key] ? "✓" : "✗"}</span>
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[a.status]}`}>
-                          {a.status.replace("_", " ")}
+                        <span className={selected.checklist[key] ? "text-ink-1" : "text-red-400 font-medium"}>
+                          {CHECKLIST_LABELS[key]}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Score: <span className={`font-bold ${scoreColor(a.checklistScore)}`}>{a.checklistScore}%</span>
-                        {" · "}Next review: {a.nextReviewDate}
-                      </p>
-                    </div>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Detail panel */}
-        <div>
-          <h2 className="text-base font-semibold text-gray-800 mb-3">
-            {selected ? `Assessment: ${selected.vendorName}` : "Vendor Detail"}
-          </h2>
-          {!selected ? (
-            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-sm text-gray-500">
-              Select a vendor to see full checklist and findings
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Score ring */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center gap-4">
-                <div className={`text-4xl font-bold ${scoreColor(selected.checklistScore)}`}>
-                  {selected.checklistScore}%
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-800">Due Diligence Score</div>
-                  <div className="text-xs text-gray-500">Risk tier: <span className="font-medium">{selected.riskTier}</span> · {selected.status.replace("_", " ")}</div>
-                  {selected.contractReference && (
-                    <div className="text-xs text-gray-400 mt-0.5">{selected.contractReference}</div>
-                  )}
-                </div>
-              </div>
 
-              {/* Checklist */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-800 mb-3">Checklist</h3>
-                <div className="space-y-1.5">
-                  {(Object.keys(CHECKLIST_LABELS) as (keyof VendorAIChecklist)[]).map((key) => (
-                    <div key={key} className="flex items-center gap-2 text-xs">
-                      <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${selected.checklist[key] ? "bg-green-500" : "bg-red-400"}`}>
-                        <span className="text-white text-xs">{selected.checklist[key] ? "✓" : "✗"}</span>
-                      </span>
-                      <span className={selected.checklist[key] ? "text-gray-700" : "text-red-700 font-medium"}>
-                        {CHECKLIST_LABELS[key]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                {/* Critical gaps */}
+                {selected.criticalGaps.length > 0 && (
+                  <div className="bg-red-950/20 border border-red-500/30 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-red-300 mb-2">Critical Gaps ({selected.criticalGaps.length})</h3>
+                    <ul className="space-y-1">
+                      {selected.criticalGaps.map((g, i) => (
+                        <li key={i} className="text-xs text-red-400">• {g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {/* Critical gaps */}
-              {selected.criticalGaps.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-red-800 mb-2">Critical Gaps ({selected.criticalGaps.length})</h3>
-                  <ul className="space-y-1">
-                    {selected.criticalGaps.map((g, i) => (
-                      <li key={i} className="text-xs text-red-700">• {g}</li>
+                {/* Findings */}
+                <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-ink-0 mb-2">Overall Findings</h3>
+                  <p className="text-xs text-ink-1 leading-relaxed">{selected.overallFindings}</p>
+                </div>
+
+                {/* Regulatory basis */}
+                <div className="bg-bg-base border border-hair-2 rounded-lg p-3">
+                  <h3 className="text-xs font-semibold text-ink-1 mb-1.5">Regulatory Basis</h3>
+                  <ul className="space-y-0.5">
+                    {selected.regulatoryBasis.map((r, i) => (
+                      <li key={i} className="text-xs text-ink-2">• {r}</li>
                     ))}
                   </ul>
                 </div>
-              )}
-
-              {/* Findings */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-800 mb-2">Overall Findings</h3>
-                <p className="text-xs text-gray-600 leading-relaxed">{selected.overallFindings}</p>
               </div>
-
-              {/* Regulatory basis */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                <h3 className="text-xs font-semibold text-gray-700 mb-1.5">Regulatory Basis</h3>
-                <ul className="space-y-0.5">
-                  {selected.regulatoryBasis.map((r, i) => (
-                    <li key={i} className="text-xs text-gray-500">• {r}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </ModuleLayout>
   );
 }

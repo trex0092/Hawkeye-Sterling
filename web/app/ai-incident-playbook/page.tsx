@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { AIIncidentRecord, IncidentType, IncidentSeverity, IncidentStatus } from "@/app/api/ai-incident-playbook/route";
 
 // UAE AI Incident Response — FDL 10/2025 Art.24 + CBUAE AI Governance Guidelines 2025
@@ -20,17 +22,17 @@ const INCIDENT_TYPE_LABELS: Record<IncidentType, string> = {
 };
 
 const SEVERITY_COLOURS: Record<IncidentSeverity, string> = {
-  critical: "bg-red-100 text-red-800 border border-red-300",
-  high: "bg-orange-100 text-orange-800 border border-orange-300",
-  medium: "bg-yellow-100 text-yellow-800 border border-yellow-300",
-  low: "bg-green-100 text-green-800 border border-green-300",
+  critical: "bg-red-950/30 text-red-300 border border-red-500/40",
+  high: "bg-orange-950/30 text-orange-300 border border-orange-500/40",
+  medium: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  low: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
 };
 
 const STATUS_COLOURS: Record<IncidentStatus, string> = {
-  open: "bg-red-50 text-red-700",
-  investigating: "bg-blue-50 text-blue-700",
-  mitigated: "bg-yellow-50 text-yellow-700",
-  closed: "bg-gray-100 text-gray-600",
+  open: "bg-red-950/20 text-red-300",
+  investigating: "bg-sky-950/20 text-sky-300",
+  mitigated: "bg-amber-950/20 text-amber-300",
+  closed: "bg-zinc-800/40 text-ink-2",
 };
 
 // PLAYBOOK: step-by-step response per incident type (UAE best practice)
@@ -164,236 +166,246 @@ export default function AIIncidentPlaybookPage() {
   const playbook = selected ? (RESPONSE_PLAYBOOKS[selected.type] ?? DEFAULT_PLAYBOOK) : null;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Incident Response Playbook</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            UAE FDL 10/2025 Art.24 · CBUAE AI Governance Guidelines 2025 · Step-by-step AI failure response
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
-        >
-          {showForm ? "Cancel" : "Log AI Incident"}
-        </button>
-      </div>
+    <ModuleLayout>
+      <ModuleFamilyBar
+        suiteName="AI Governance"
+        modules={[
+          { label: "AI Incident Playbook", href: "/ai-incident-playbook", icon: "🤖" },
+          { label: "Shadow AI Register", href: "/shadow-ai", icon: "👁️" },
+          { label: "Vendor AI Audit", href: "/vendor-ai-audit", icon: "🏢" },
+        ]}
+      />
+      <ModuleHero
+        eyebrow="🤖 UAE AI Governance — FDL 10/2025 Art.24"
+        title="AI Incident Response"
+        titleEm="playbook."
+        intro="Step-by-step AI failure response · Hallucination · Bias · Prompt injection · Data leakage · CBUAE reporting"
+      />
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <div className={`text-3xl font-bold ${openCount > 0 ? "text-red-600" : "text-green-600"}`}>{openCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Open Incidents</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <div className={`text-3xl font-bold ${criticalCount > 0 ? "text-red-600" : "text-gray-400"}`}>{criticalCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Critical Severity</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-gray-700">{incidents.length}</div>
-          <div className="text-xs text-gray-500 mt-1">Total Logged</div>
-        </div>
-      </div>
+      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-      {/* Regulatory notice */}
-      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-        <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under FDL 10/2025 Art.24. Document all containment steps and root cause analysis.
-      </div>
-
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-md px-4 py-3 text-sm">{error}</div>
-      )}
-
-      {/* Log incident form */}
-      {showForm && (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Log New AI Incident</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Incident Type</label>
-              <select
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value as IncidentType })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                {Object.entries(INCIDENT_TYPE_LABELS).map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
-                ))}
-              </select>
+        {/* Action bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-4">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className={`text-2xl font-bold ${openCount > 0 ? "text-red" : "text-emerald-400"}`}>{openCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Open</div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-              <select
-                value={form.severity}
-                onChange={(e) => setForm({ ...form, severity: e.target.value as IncidentSeverity })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                required
-              >
-                {(["critical", "high", "medium", "low"] as IncidentSeverity[]).map((s) => (
-                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                ))}
-              </select>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className={`text-2xl font-bold ${criticalCount > 0 ? "text-red" : "text-ink-2"}`}>{criticalCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Critical</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className="text-2xl font-bold text-ink-1">{incidents.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
             </div>
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Incident Title</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              placeholder="e.g. Hallucination in SAR narrative — customer name fabricated"
-              maxLength={200}
-              required
-            />
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              rows={3}
-              maxLength={2000}
-              required
-              placeholder="Describe what happened, when it was detected, and initial impact assessment..."
-            />
-          </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Affected AI Model</label>
-            <input
-              type="text"
-              value={form.affectedModel}
-              onChange={(e) => setForm({ ...form, affectedModel: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              placeholder="e.g. claude-sonnet-4-6, GPT-4o, Sentence-BERT"
-              maxLength={100}
-              required
-            />
-          </div>
-          <div className="mt-4">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.regulatoryNotificationRequired}
-                onChange={(e) => setForm({ ...form, regulatoryNotificationRequired: e.target.checked })}
-                className="rounded"
-              />
-              Regulatory notification required (CBUAE/FSRA — 72h clock starts now)
-            </label>
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
-              {submitting ? "Logging..." : "Log Incident"}
-            </button>
-          </div>
-        </form>
-      )}
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
+          >
+            {showForm ? "Cancel" : "Log AI Incident"}
+          </button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Incident list */}
-        <div>
-          <h2 className="text-base font-semibold text-gray-800 mb-3">Incident Register</h2>
-          {loading ? (
-            <div className="text-center text-gray-400 py-12">Loading...</div>
-          ) : incidents.length === 0 ? (
-            <div className="text-center text-gray-400 py-12 border border-dashed border-gray-300 rounded-lg text-sm">
-              No incidents logged. Click &ldquo;Log AI Incident&rdquo; to record the first entry.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {incidents.map((inc) => (
-                <button
-                  key={inc.id}
-                  type="button"
-                  onClick={() => setSelected(selected?.id === inc.id ? null : inc)}
-                  className={`w-full text-left bg-white border rounded-lg p-4 hover:border-blue-300 transition-colors ${selected?.id === inc.id ? "border-blue-400 ring-1 ring-blue-200" : "border-gray-200"}`}
+        {/* Regulatory notice */}
+        <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 text-sm text-amber-300">
+          <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under FDL 10/2025 Art.24. Document all containment steps and root cause analysis.
+        </div>
+
+        {error && (
+          <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
+        )}
+
+        {/* Log incident form */}
+        {showForm && (
+          <form onSubmit={(e) => void handleSubmit(e)} className="bg-bg-panel border border-hair-2 rounded-lg p-6">
+            <h2 className="text-base font-semibold text-ink-0 mb-4">Log New AI Incident</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Incident Type</label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as IncidentType })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                  required
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs text-gray-500">{inc.id}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SEVERITY_COLOURS[inc.severity]}`}>
-                          {inc.severity}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[inc.status]}`}>
-                          {inc.status.replace("_", " ")}
-                        </span>
-                        {inc.regulatoryNotificationRequired && (
-                          <span className="px-2 py-0.5 rounded-full text-xs bg-red-600 text-white font-bold">72h NOTIF</span>
+                  {Object.entries(INCIDENT_TYPE_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-1 mb-1">Severity</label>
+                <select
+                  value={form.severity}
+                  onChange={(e) => setForm({ ...form, severity: e.target.value as IncidentSeverity })}
+                  className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0"
+                  required
+                >
+                  {(["critical", "high", "medium", "low"] as IncidentSeverity[]).map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Incident Title</label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                placeholder="e.g. Hallucination in SAR narrative — customer name fabricated"
+                maxLength={200}
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                rows={3}
+                maxLength={2000}
+                required
+                placeholder="Describe what happened, when it was detected, and initial impact assessment..."
+              />
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-ink-1 mb-1">Affected AI Model</label>
+              <input
+                type="text"
+                value={form.affectedModel}
+                onChange={(e) => setForm({ ...form, affectedModel: e.target.value })}
+                className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2"
+                placeholder="e.g. claude-sonnet-4-6, GPT-4o, Sentence-BERT"
+                maxLength={100}
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label className="flex items-center gap-2 text-sm text-ink-1">
+                <input
+                  type="checkbox"
+                  checked={form.regulatoryNotificationRequired}
+                  onChange={(e) => setForm({ ...form, regulatoryNotificationRequired: e.target.checked })}
+                  className="rounded"
+                />
+                Regulatory notification required (CBUAE/FSRA — 72h clock starts now)
+              </label>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
+                {submitting ? "Logging..." : "Log Incident"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Incident list */}
+          <div>
+            <h2 className="text-sm font-semibold text-ink-1 mb-3">Incident Register</h2>
+            {loading ? (
+              <div className="text-center text-ink-2 py-12">Loading...</div>
+            ) : incidents.length === 0 ? (
+              <div className="text-center text-ink-2 py-12 border border-dashed border-hair-2 rounded-lg text-sm">
+                No incidents logged. Click &ldquo;Log AI Incident&rdquo; to record the first entry.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {incidents.map((inc) => (
+                  <button
+                    key={inc.id}
+                    type="button"
+                    onClick={() => setSelected(selected?.id === inc.id ? null : inc)}
+                    className={`w-full text-left bg-bg-panel border rounded-lg p-4 hover:border-brand/50 transition-colors ${selected?.id === inc.id ? "border-brand/60 ring-1 ring-brand/20" : "border-hair-2"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-10 text-ink-2">{inc.id}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${SEVERITY_COLOURS[inc.severity]}`}>
+                            {inc.severity}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${STATUS_COLOURS[inc.status]}`}>
+                            {inc.status.replace("_", " ")}
+                          </span>
+                          {inc.regulatoryNotificationRequired && (
+                            <span className="px-2 py-0.5 rounded-full text-xs bg-red-600 text-white font-bold">72h NOTIF</span>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-ink-0 mt-1 truncate">{inc.title}</p>
+                        <p className="text-xs text-ink-2 mt-0.5">{INCIDENT_TYPE_LABELS[inc.type]} · {inc.affectedModel}</p>
+                      </div>
+                      <div className="text-xs text-ink-2 shrink-0 text-right">
+                        {new Date(inc.detectedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    {inc.status !== "closed" && (
+                      <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        {inc.status === "open" && (
+                          <button onClick={() => void handleStatusUpdate(inc.id, "investigating")} className="text-xs px-2 py-1 bg-sky-950/20 text-sky-300 rounded border border-sky-500/30 hover:bg-sky-950/40">
+                            → Investigating
+                          </button>
+                        )}
+                        {inc.status === "investigating" && (
+                          <button onClick={() => void handleStatusUpdate(inc.id, "mitigated")} className="text-xs px-2 py-1 bg-amber-950/20 text-amber-300 rounded border border-amber-500/30 hover:bg-amber-950/40">
+                            → Mitigated
+                          </button>
+                        )}
+                        {inc.status === "mitigated" && (
+                          <button onClick={() => void handleStatusUpdate(inc.id, "closed")} className="text-xs px-2 py-1 bg-emerald-950/20 text-emerald-300 rounded border border-emerald-500/30 hover:bg-emerald-950/40">
+                            → Close
+                          </button>
                         )}
                       </div>
-                      <p className="text-sm font-medium text-gray-800 mt-1 truncate">{inc.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{INCIDENT_TYPE_LABELS[inc.type]} · {inc.affectedModel}</p>
-                    </div>
-                    <div className="text-xs text-gray-400 shrink-0 text-right">
-                      {new Date(inc.detectedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  {inc.status !== "closed" && (
-                    <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      {inc.status === "open" && (
-                        <button onClick={() => void handleStatusUpdate(inc.id, "investigating")} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100">
-                          → Investigating
-                        </button>
-                      )}
-                      {inc.status === "investigating" && (
-                        <button onClick={() => void handleStatusUpdate(inc.id, "mitigated")} className="text-xs px-2 py-1 bg-yellow-50 text-yellow-700 rounded border border-yellow-200 hover:bg-yellow-100">
-                          → Mitigated
-                        </button>
-                      )}
-                      {inc.status === "mitigated" && (
-                        <button onClick={() => void handleStatusUpdate(inc.id, "closed")} className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded border border-green-200 hover:bg-green-100">
-                          → Close
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Playbook panel */}
-        <div>
-          <h2 className="text-base font-semibold text-gray-800 mb-3">
-            {selected ? `Response Playbook — ${INCIDENT_TYPE_LABELS[selected.type]}` : "Response Playbooks"}
-          </h2>
-          {!selected ? (
-            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-sm text-gray-500">
-              Select an incident to see its step-by-step response playbook
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {(playbook ?? []).map((step) => (
-                <div key={step.phase} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-2">{step.phase}</h3>
-                  <ul className="space-y-1.5">
-                    {step.actions.map((action, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                        <span className="mt-1 w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 flex items-center justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                        </span>
-                        {action}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              {selected.regulatoryNotificationRequired && !selected.regulatoryNotificationSent && (
-                <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-sm text-red-800">
-                  <strong>72h Regulatory Notification Outstanding</strong> — Contact CBUAE/FSRA Supervision Unit via official portal. Document notification reference number in this record.
-                </div>
-              )}
-            </div>
-          )}
+          {/* Playbook panel */}
+          <div>
+            <h2 className="text-sm font-semibold text-ink-1 mb-3">
+              {selected ? `Response Playbook — ${INCIDENT_TYPE_LABELS[selected.type]}` : "Response Playbooks"}
+            </h2>
+            {!selected ? (
+              <div className="bg-bg-base border border-dashed border-hair-2 rounded-lg p-6 text-center text-sm text-ink-2">
+                Select an incident to see its step-by-step response playbook
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(playbook ?? []).map((step) => (
+                  <div key={step.phase} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-ink-0 mb-2">{step.phase}</h3>
+                    <ul className="space-y-1.5">
+                      {step.actions.map((action, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-ink-1">
+                          <span className="mt-1 w-4 h-4 rounded-full border-2 border-hair-2 shrink-0 flex items-center justify-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-ink-2" />
+                          </span>
+                          {action}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                {selected.regulatoryNotificationRequired && !selected.regulatoryNotificationSent && (
+                  <div className="bg-red-950/20 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
+                    <strong>72h Regulatory Notification Outstanding</strong> — Contact CBUAE/FSRA Supervision Unit via official portal. Document notification reference number in this record.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </ModuleLayout>
   );
 }
