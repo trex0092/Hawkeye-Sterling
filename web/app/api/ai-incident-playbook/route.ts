@@ -167,6 +167,22 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   if (!body.id?.trim()) {
     return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
   }
+  const VALID_STATUSES: IncidentStatus[] = ["open", "investigating", "mitigated", "closed"];
+  if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) {
+    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400 });
+  }
+  if (body.rootCause !== undefined && body.rootCause.length > 2000) {
+    return NextResponse.json({ ok: false, error: "rootCause ≤2000 chars" }, { status: 400 });
+  }
+  if (body.lessonsLearned !== undefined && body.lessonsLearned.length > 2000) {
+    return NextResponse.json({ ok: false, error: "lessonsLearned ≤2000 chars" }, { status: 400 });
+  }
+  if (body.containmentSteps !== undefined) {
+    if (!Array.isArray(body.containmentSteps) || body.containmentSteps.some((s) => typeof s !== "string" || s.length > 500)) {
+      return NextResponse.json({ ok: false, error: "containmentSteps must be array of strings ≤500 chars each" }, { status: 400 });
+    }
+    body.containmentSteps = body.containmentSteps.slice(0, 20);
+  }
 
   const incidents = await loadIncidents(tenant);
   const idx = incidents.findIndex((i) => i.id === body.id);

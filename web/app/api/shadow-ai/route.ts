@@ -180,6 +180,16 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   if (!body.id?.trim()) {
     return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
   }
+  const VALID_STATUSES: ShadowAIStatus[] = ["detected", "under_review", "approved", "blocked", "remediated"];
+  if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) {
+    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400 });
+  }
+  if (body.remediationAction !== undefined && body.remediationAction.length > 1000) {
+    return NextResponse.json({ ok: false, error: "remediationAction ≤1000 chars" }, { status: 400 });
+  }
+  if (body.notes !== undefined && body.notes.length > 1000) {
+    return NextResponse.json({ ok: false, error: "notes ≤1000 chars" }, { status: 400 });
+  }
 
   const entries = await loadEntries(tenant);
   const idx = entries.findIndex((e) => e.id === body.id);

@@ -163,11 +163,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!body.vendorName?.trim() || body.vendorName.length > 100) {
     return NextResponse.json({ ok: false, error: "vendorName required (≤100 chars)" }, { status: 400 });
   }
+  const VALID_VENDOR_TYPES: VendorAIAssessment["vendorType"][] = ["llm_provider", "ml_platform", "data_broker", "analytics", "other"];
+  if (!body.vendorType || !VALID_VENDOR_TYPES.includes(body.vendorType)) {
+    return NextResponse.json({ ok: false, error: "Invalid vendorType" }, { status: 400 });
+  }
   if (!body.checklist || typeof body.checklist !== "object") {
     return NextResponse.json({ ok: false, error: "checklist required" }, { status: 400 });
   }
   if (!body.overallFindings?.trim() || body.overallFindings.length > 2000) {
     return NextResponse.json({ ok: false, error: "overallFindings required (≤2000 chars)" }, { status: 400 });
+  }
+  if (body.criticalGaps !== undefined) {
+    if (!Array.isArray(body.criticalGaps) || body.criticalGaps.some((g) => typeof g !== "string" || g.length > 500)) {
+      return NextResponse.json({ ok: false, error: "criticalGaps must be array of strings ≤500 chars each" }, { status: 400 });
+    }
   }
 
   const score = scoreChecklist(body.checklist);
@@ -232,6 +241,33 @@ export async function PATCH(req: Request): Promise<NextResponse> {
 
   if (!body.id?.trim()) {
     return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  }
+  const VALID_STATUSES: VendorAuditStatus[] = ["draft", "in_review", "approved", "failed", "expired"];
+  if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) {
+    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400 });
+  }
+  if (body.overallFindings !== undefined && body.overallFindings.length > 2000) {
+    return NextResponse.json({ ok: false, error: "overallFindings ≤2000 chars" }, { status: 400 });
+  }
+  if (body.contractReference !== undefined && body.contractReference.length > 200) {
+    return NextResponse.json({ ok: false, error: "contractReference ≤200 chars" }, { status: 400 });
+  }
+  if (body.criticalGaps !== undefined) {
+    if (!Array.isArray(body.criticalGaps) || body.criticalGaps.some((g) => typeof g !== "string" || g.length > 500)) {
+      return NextResponse.json({ ok: false, error: "criticalGaps must be array of strings ≤500 chars each" }, { status: 400 });
+    }
+    body.criticalGaps = body.criticalGaps.slice(0, 20);
+  }
+  const VALID_CHECKLIST_KEYS = new Set(["dpaInPlace", "dataResidencyConfirmed", "subprocessorListObtained", "penetrationTestReport", "iso27001OrSoc2", "modelCardProvided", "biasAuditCompleted", "hallucIndicationLogEnabled", "incidentNotificationSla", "rightToAuditClause", "dataRetentionTermsAgreed", "gdprOrAdgmDpaClause"]);
+  if (body.checklist !== undefined) {
+    if (typeof body.checklist !== "object" || body.checklist === null) {
+      return NextResponse.json({ ok: false, error: "checklist must be an object" }, { status: 400 });
+    }
+    for (const key of Object.keys(body.checklist)) {
+      if (!VALID_CHECKLIST_KEYS.has(key) || typeof (body.checklist as Record<string, unknown>)[key] !== "boolean") {
+        return NextResponse.json({ ok: false, error: `Invalid checklist field: ${key}` }, { status: 400 });
+      }
+    }
   }
 
   const assessments = await loadAssessments(tenant);
