@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -232,6 +234,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }));
     obligations.unshift(...newObs);
     await saveObligations(tenant, obligations);
+    void writeAuditChainEntry(
+      { event: "dpms.registration_triggered", actor: gate.keyId, meta: { entityName: newObs[0]?.customerName, triggerType: newObs[0]?.triggerType, obligationsCreated: newObs.length } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, obligationsCreated: newObs.length, obligations: newObs }, { headers: gate.headers });
   }
 

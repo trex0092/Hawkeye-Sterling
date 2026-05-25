@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface EddQuestion {
   id: string;
@@ -132,6 +134,10 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     const fallback = { ...FALLBACK, ...(sbContext ? { eddLevel: sbContext.eddLevel, eddBasis: `${sbContext.eddLevel.toUpperCase()} EDD — screening signals: ${sbContext.riskSignals.join("; ") || "none"}` } : {}) };
+    void writeAuditChainEntry(
+      { event: "edd_questionnaire.submitted", actor: gate.keyId, meta: { subjectId: sanitizeField(customerType, 100), eddLevel: fallback.eddLevel, degraded: true } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, degraded: true, ...fallback }, { headers: gate.headers });
   }
 
@@ -190,6 +196,10 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     const result = JSON.parse(cleaned) as EddQuestionnaire;
     if (!Array.isArray(result.categories)) result.categories = [];
     if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
+    void writeAuditChainEntry(
+      { event: "edd_questionnaire.submitted", actor: gate.keyId, meta: { subjectId: sanitizeField(customerType, 100), eddLevel: result.eddLevel } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

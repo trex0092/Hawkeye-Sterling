@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface SarTriageResult {
   decision: "file_str" | "no_file" | "more_info" | "escalate_mlro";
@@ -111,6 +113,10 @@ Make an STR triage decision.`,
     if (!Array.isArray(result.requiredFields)) result.requiredFields = [];
     if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
     if (!Array.isArray(result.narrativeSuggestions)) result.narrativeSuggestions = [];
+    void writeAuditChainEntry(
+      { event: "sar.triage_decision", actor: gate.keyId, meta: { caseId: sanitizeField(body.accountRef ?? "", 100) || undefined, decision: result.decision } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
