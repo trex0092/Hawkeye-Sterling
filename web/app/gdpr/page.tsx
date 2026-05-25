@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,8 @@ interface SweepResult {
   retentionYears: number;
   at: string;
 }
+
+const inputCls = "w-full bg-bg-panel border border-hair-2 rounded px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2 focus:outline-none focus:border-brand/40";
 
 // ─── Panel: Data Erasure ─────────────────────────────────────────────────────
 
@@ -59,13 +62,13 @@ function ErasurePanel() {
   };
 
   return (
-    <section className="border border-border rounded-lg p-6 bg-background flex flex-col gap-4">
+    <section className="border border-hair-2 rounded-lg p-6 bg-bg-panel flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-mono uppercase tracking-widest text-foreground/50 mb-1">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
           Article 17
         </h2>
-        <h3 className="text-lg font-semibold text-foreground">Data Erasure</h3>
-        <p className="text-sm text-foreground/60 mt-1">
+        <h3 className="text-lg font-semibold text-ink-0">Data Erasure</h3>
+        <p className="text-sm text-ink-2 mt-1">
           Pseudonymises a subject&apos;s PII. Requires all linked cases to be closed.
           The compliance skeleton is retained for AML obligations (Art.&nbsp;17(3)(b)).
         </p>
@@ -73,7 +76,7 @@ function ErasurePanel() {
 
       <form onSubmit={(e) => { void handleSubmit(e); }} className="flex flex-col gap-3">
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-foreground/50 mb-1">
+          <label className="block text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
             Subject ID
           </label>
           <input
@@ -82,11 +85,11 @@ function ErasurePanel() {
             onChange={(e) => setSubjectId(e.target.value)}
             placeholder="e.g. sub_01J..."
             required
-            className="w-full bg-background border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-foreground/40"
+            className={inputCls}
           />
         </div>
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-foreground/50 mb-1">
+          <label className="block text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
             Reason
           </label>
           <textarea
@@ -95,37 +98,37 @@ function ErasurePanel() {
             placeholder="Legal basis for erasure request…"
             rows={3}
             required
-            className="w-full bg-background border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-foreground/40 resize-none"
+            className={`${inputCls} resize-none`}
           />
         </div>
         <button
           type="submit"
           disabled={loading || !subjectId.trim() || !reason.trim()}
-          className="self-start px-5 py-2 rounded bg-foreground text-background text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Processing…" : "Execute Erasure"}
         </button>
       </form>
 
       {error && (
-        <div className="text-sm px-3 py-2 rounded border border-red-500/30 bg-red-500/10 text-red-400">
+        <div className="text-sm px-3 py-2 rounded border border-red-500/40 bg-red-950/30 text-red-300">
           {error}
         </div>
       )}
 
       {result && (
-        <div className="text-sm px-4 py-3 rounded border border-green-500/30 bg-green-500/10 text-green-400 flex flex-col gap-1 font-mono">
-          <span className="font-semibold text-green-400">Erasure complete</span>
-          <span className="text-foreground/60">
+        <div className="text-sm px-4 py-3 rounded border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 flex flex-col gap-1 font-mono">
+          <span className="font-semibold">Erasure complete</span>
+          <span className="text-ink-2">
             Pseudonymised name:{" "}
-            <span className="text-foreground">{result.pseudonymizedName}</span>
+            <span className="text-ink-0">{result.pseudonymizedName}</span>
           </span>
-          <span className="text-foreground/60">
+          <span className="text-ink-2">
             Subject ID:{" "}
-            <span className="text-foreground">{result.subjectId}</span>
+            <span className="text-ink-0">{result.subjectId}</span>
           </span>
-          <span className="text-foreground/60">
-            At: <span className="text-foreground">{new Date(result.at).toLocaleString()}</span>
+          <span className="text-ink-2">
+            At: <span className="text-ink-0">{new Date(result.at).toLocaleString()}</span>
           </span>
         </div>
       )}
@@ -174,13 +177,13 @@ function ExportPanel() {
   };
 
   return (
-    <section className="border border-border rounded-lg p-6 bg-background flex flex-col gap-4">
+    <section className="border border-hair-2 rounded-lg p-6 bg-bg-panel flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-mono uppercase tracking-widest text-foreground/50 mb-1">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
           Article 20
         </h2>
-        <h3 className="text-lg font-semibold text-foreground">Data Export</h3>
-        <p className="text-sm text-foreground/60 mt-1">
+        <h3 className="text-lg font-semibold text-ink-0">Data Export</h3>
+        <p className="text-sm text-ink-2 mt-1">
           Download a structured JSON portability package containing the subject
           record, all associated cases, and screening history.
         </p>
@@ -188,7 +191,7 @@ function ExportPanel() {
 
       <form onSubmit={(e) => { void handleExport(e); }} className="flex flex-col gap-3">
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-foreground/50 mb-1">
+          <label className="block text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
             Subject ID
           </label>
           <input
@@ -197,20 +200,20 @@ function ExportPanel() {
             onChange={(e) => setSubjectId(e.target.value)}
             placeholder="e.g. sub_01J..."
             required
-            className="w-full bg-background border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-foreground/40"
+            className={inputCls}
           />
         </div>
         <button
           type="submit"
           disabled={loading || !subjectId.trim()}
-          className="self-start px-5 py-2 rounded bg-foreground text-background text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Generating…" : "Download Export"}
         </button>
       </form>
 
       {error && (
-        <div className="text-sm px-3 py-2 rounded border border-red-500/30 bg-red-500/10 text-red-400">
+        <div className="text-sm px-3 py-2 rounded border border-red-500/40 bg-red-950/30 text-red-300">
           {error}
         </div>
       )}
@@ -253,13 +256,13 @@ function RetentionPanel() {
   };
 
   return (
-    <section className="border border-border rounded-lg p-6 bg-background flex flex-col gap-4">
+    <section className="border border-hair-2 rounded-lg p-6 bg-bg-panel flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-mono uppercase tracking-widest text-foreground/50 mb-1">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
           Article 5(1)(e)
         </h2>
-        <h3 className="text-lg font-semibold text-foreground">Retention Policy</h3>
-        <p className="text-sm text-foreground/60 mt-1">
+        <h3 className="text-lg font-semibold text-ink-0">Retention Policy</h3>
+        <p className="text-sm text-ink-2 mt-1">
           Marks cleared subjects older than the configured retention period as
           pending deletion. A grace-period review is recommended before hard
           deletion. AML retention obligations (FDL 10/2025 Art.20) take precedence.
@@ -268,7 +271,7 @@ function RetentionPanel() {
 
       <div className="flex flex-col gap-3">
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-foreground/50 mb-1">
+          <label className="block text-xs font-mono uppercase tracking-widest text-ink-2 mb-1">
             Retention period (years)
           </label>
           <input
@@ -277,9 +280,9 @@ function RetentionPanel() {
             max={20}
             value={retentionYears}
             onChange={(e) => setRetentionYears(Number(e.target.value))}
-            className="w-32 bg-background border border-border rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:border-foreground/40"
+            className="w-32 bg-bg-panel border border-hair-2 rounded px-3 py-2 text-sm text-ink-0 focus:outline-none focus:border-brand/40"
           />
-          <p className="text-xs text-foreground/40 mt-1">
+          <p className="text-xs text-ink-2 mt-1">
             Default: 7 years (FATF Recommendation 11 minimum)
           </p>
         </div>
@@ -288,32 +291,32 @@ function RetentionPanel() {
           type="button"
           onClick={() => { void handleSweep(); }}
           disabled={loading}
-          className="self-start px-5 py-2 rounded bg-foreground text-background text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Running sweep…" : "Run Retention Sweep"}
         </button>
       </div>
 
       {error && (
-        <div className="text-sm px-3 py-2 rounded border border-red-500/30 bg-red-500/10 text-red-400">
+        <div className="text-sm px-3 py-2 rounded border border-red-500/40 bg-red-950/30 text-red-300">
           {error}
         </div>
       )}
 
       {result && (
-        <div className="text-sm px-4 py-3 rounded border border-border bg-background/50 flex flex-col gap-1 font-mono">
-          <span className="font-semibold text-foreground">Sweep complete</span>
-          <span className="text-foreground/60">
+        <div className="text-sm px-4 py-3 rounded border border-hair-2 bg-bg-base flex flex-col gap-1 font-mono">
+          <span className="font-semibold text-ink-0">Sweep complete</span>
+          <span className="text-ink-2">
             Subjects marked for deletion:{" "}
-            <span className="text-foreground font-semibold">{result.sweptCount}</span>
+            <span className="text-ink-0 font-semibold">{result.sweptCount}</span>
           </span>
-          <span className="text-foreground/60">
+          <span className="text-ink-2">
             Retention period:{" "}
-            <span className="text-foreground">{result.retentionYears} years</span>
+            <span className="text-ink-0">{result.retentionYears} years</span>
           </span>
-          <span className="text-foreground/60">
+          <span className="text-ink-2">
             Completed at:{" "}
-            <span className="text-foreground">{new Date(result.at).toLocaleString()}</span>
+            <span className="text-ink-0">{new Date(result.at).toLocaleString()}</span>
           </span>
         </div>
       )}
@@ -325,31 +328,20 @@ function RetentionPanel() {
 
 export default function GdprPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-10">
-          <p className="text-xs font-mono uppercase tracking-widest text-foreground/40 mb-2">
-            Data Protection
-          </p>
-          <h1 className="text-3xl font-bold text-foreground mb-3">
-            GDPR Data Subject Rights
-          </h1>
-          <p className="text-sm text-foreground/60 max-w-2xl">
-            Manage data subject rights under the General Data Protection Regulation.
-            All operations are logged in the immutable audit chain. Erasure requests
-            that conflict with AML record-retention obligations are blocked per
-            Art.&nbsp;17(3)(b) and UAE FDL&nbsp;10/2025&nbsp;Art.&nbsp;20.
-          </p>
-        </div>
-
-        {/* Three panels */}
+    <ModuleLayout>
+      <ModuleHero
+        eyebrow="🔒 Data Protection — GDPR Art.17/20 · UAE PDPL · FDL 10/2025 Art.20"
+        title="GDPR Data Subject"
+        titleEm="rights."
+        intro="Manage data subject erasure, export, and retention. All operations are logged in the tamper-evident audit chain."
+      />
+      <div className="px-6 pb-10 max-w-3xl">
         <div className="flex flex-col gap-6">
           <ErasurePanel />
           <ExportPanel />
           <RetentionPanel />
         </div>
       </div>
-    </div>
+    </ModuleLayout>
   );
 }
