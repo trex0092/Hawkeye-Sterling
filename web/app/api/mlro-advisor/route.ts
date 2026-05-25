@@ -11,6 +11,7 @@ import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../src/integrations/qualityGates.js";
 import { verifyCitations } from "@/lib/server/citation-verifier";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   retrieveForQuestion,
   runPreGenerationRouter,
@@ -861,6 +862,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(postGen?.validation ? { validation: postGen.validation } : {}),
     }).catch(() => ({ seq: 0, entryHash: "" }));
 
+    void writeAuditChainEntry(
+      { event: "mlro.advisor_call", actor: gate.keyId, meta: { seq: audit.seq, tenant: tenant ?? "anonymous" } },
+      tenant ?? "anonymous",
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       {
         ...result,

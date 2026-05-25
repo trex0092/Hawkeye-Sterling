@@ -64,6 +64,8 @@ let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true
 })();
 import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 import {
   appendProbeInstructions,
@@ -600,6 +602,11 @@ export async function POST(req: Request): Promise<Response> {
       finalAnswer: null,
       validation: postGen.validation,
     }).catch(() => ({ seq: 0, entryHash: "" }));
+
+    void writeAuditChainEntry(
+      { event: "mlro.advisor_quick_call", actor: gate.keyId, meta: { seq: audit.seq } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[mlro_advisor_quick] latencyMs=${latencyMs} exceeds 5000ms`);
