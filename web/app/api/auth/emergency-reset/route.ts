@@ -5,6 +5,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 /**
  * Emergency password reset for the luisa MLRO account.
@@ -65,6 +66,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!updated) {
     return NextResponse.json({ ok: false, error: "luisa account not found in store." }, { status: 404 });
   }
+
+  void writeAuditChainEntry(
+    { event: "auth.emergency_password_reset", actor: "emergency_reset", meta: { username } },
+    "admin",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({
     ok: true,

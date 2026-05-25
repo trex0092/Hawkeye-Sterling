@@ -24,6 +24,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
 import { buildAuditCertificate, type AuditSnapshotInput } from "@/lib/server/audit-certificate";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,6 +123,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(body.subjectId ? { subjectId: body.subjectId } : {}),
     ...(body.filingEntity ? { filingEntity: body.filingEntity } : {}),
   });
+
+  void writeAuditChainEntry(
+    { event: "audit.certificate_issued", actor: gate.keyId, meta: { caseId, trigger: certificate.trigger, serialNumber: certificate.serialNumber } },
+    tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   // ── Audit chain entry: record that a certificate was issued ───────────────
   // FDL 10/2025 Art.24 — the act of generating a compliance certificate is

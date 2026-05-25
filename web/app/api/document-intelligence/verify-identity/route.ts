@@ -14,6 +14,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { patchSubject } from "@/lib/server/subject-store";
 import { getActiveKycProvider } from "@/lib/server/document-intelligence";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true, cost: 2 });
@@ -77,6 +78,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       } as Parameters<typeof patchSubject>[2],
       gate.keyId,
     );
+
+    void writeAuditChainEntry(
+      { event: "kyc_verification_completed", actor: gate.keyId, meta: { subjectId: (body.subjectId as string).trim(), provider, verified: result.verified } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json(
       {
