@@ -261,11 +261,10 @@ async function runHandler(req: Request): Promise<Response> {
   //    Skipped when ADMIN_TOKEN is missing (would 503 anyway) or when no new
   //    files were downloaded (re-indexing the same corpus is wasted work).
   let importCfs: ImportResult | undefined;
-  const anyNewFiles = outcomes.some((o) => o.filesDownloaded > 0);
   const adminToken = process.env['ADMIN_TOKEN'];
-  // Trigger import-cfs when new files were downloaded OR when no new files
-  // were found (files may have been downloaded on a prior run when ADMIN_TOKEN
-  // was missing, leaving hawkeye-lists blobs absent even though CFS files exist).
+  // Always trigger import-cfs when ADMIN_TOKEN is available so freshly
+  // downloaded files AND files from prior runs (when the token was absent)
+  // both get indexed into hawkeye-lists without manual intervention.
   if (adminToken) {
     const baseUrl =
       process.env['URL'] ??
