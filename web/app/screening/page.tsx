@@ -1424,7 +1424,7 @@ export default function ScreeningPage() {
               <div
                 role="alert"
                 aria-live="assertive"
-                className={`mt-2 text-sm p-2 rounded ${refreshMsg.type === "ok" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                className={`mt-2 text-sm p-2 rounded border ${refreshMsg.type === "ok" ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" : "bg-red-950/30 text-red-300 border-red-500/40"}`}
               >
                 {refreshMsg.text}
                 <button

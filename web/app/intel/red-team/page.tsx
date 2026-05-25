@@ -252,11 +252,11 @@ export default function RedTeamPage() {
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${
                       verdict === "pass"
-                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40"
                         : verdict === "fail"
-                          ? "bg-red-100 text-red-800 border-red-300"
+                          ? "bg-red-950/30 text-red-300 border-red-500/40"
                           : verdict === "error"
-                            ? "bg-amber-100 text-amber-800 border-amber-300"
+                            ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
                             : "bg-bg-1 text-ink-3 border-hair-2"
                     }`}
                   >

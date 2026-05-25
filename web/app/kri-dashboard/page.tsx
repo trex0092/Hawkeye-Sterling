@@ -71,13 +71,13 @@ function KriCard({ kri }: { kri: KriResult }) {
 
       <div className="flex flex-col gap-0.5 mt-auto">
         <div className="flex gap-1 text-9 font-mono">
-          <span className={`px-1 rounded ${kri.status === "green" ? "bg-emerald-100 text-emerald-700" : "bg-bg-1 text-ink-3"}`}>
+          <span className={`px-1 rounded ${kri.status === "green" ? "bg-emerald-950/30 text-emerald-300" : "bg-bg-1 text-ink-3"}`}>
             G {fmtBand(kri.band.green, kri.unit)}
           </span>
-          <span className={`px-1 rounded ${kri.status === "amber" ? "bg-amber-100 text-amber-700" : "bg-bg-1 text-ink-3"}`}>
+          <span className={`px-1 rounded ${kri.status === "amber" ? "bg-amber-950/30 text-amber-300" : "bg-bg-1 text-ink-3"}`}>
             A {fmtBand(kri.band.amber, kri.unit)}
           </span>
-          <span className={`px-1 rounded ${kri.status === "red" ? "bg-red-100 text-red-700" : "bg-bg-1 text-ink-3"}`}>
+          <span className={`px-1 rounded ${kri.status === "red" ? "bg-red-950/30 text-red-300" : "bg-bg-1 text-ink-3"}`}>
             R {fmtBand(kri.band.red, kri.unit)}
           </span>
         </div>

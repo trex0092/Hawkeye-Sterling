@@ -3958,7 +3958,7 @@ export default function MlroAdvisorPage() {
                               {entry.result.reasoningTrail.map((step) => (
                                 <div key={step.stepNo} className="border border-hair rounded-lg bg-bg-1 p-2.5">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-10 font-mono font-bold px-1.5 py-0.5 rounded uppercase ${step.actor === "executor" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                                    <span className={`text-10 font-mono font-bold px-1.5 py-0.5 rounded uppercase ${step.actor === "executor" ? "bg-sky-950/30 text-sky-300 border border-sky-500/40" : "bg-violet-950/30 text-violet-300 border border-violet-500/40"}`}>
                                       {step.actor}
                                     </span>
                                     <span className="text-10 font-mono text-ink-3">{step.modelId}</span>
@@ -4139,7 +4139,7 @@ export default function MlroAdvisorPage() {
                       <span className="text-11 font-mono text-ink-3 flex-shrink-0 mt-0.5">{entry.askedAt}</span>
                       <p className="text-13 text-ink-0 font-medium flex-1">{entry.question}</p>
                       {entry.result.source === "mlro-advisor-fallback" && (
-                        <span className="text-10 bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded flex-shrink-0">
+                        <span className="text-10 bg-amber-950/30 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded flex-shrink-0">
                           Advisor fallback
                         </span>
                       )}
@@ -12988,8 +12988,8 @@ function ConflictsPanel({
 
 function ConflictCard({ conflict }: { conflict: JurisdictionalConflict }) {
   const sevCls =
-    conflict.severity === "high" ? "bg-red-100 text-red-700 border-red-300"
-      : conflict.severity === "medium" ? "bg-amber-50 text-amber-700 border-amber-300"
+    conflict.severity === "high" ? "bg-red-950/30 text-red-300 border-red-500/40"
+      : conflict.severity === "medium" ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
       : "bg-bg-2 text-ink-2 border-hair-2";
   return (
     <div className="border-l-2 border-violet pl-3">

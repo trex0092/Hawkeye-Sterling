@@ -912,9 +912,9 @@ export default function OnboardingWizardPage() {
                             key={h.list}
                             className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${
                               h.classification === "black"
-                                ? "bg-red-100 text-red-700 border-red-300"
+                                ? "bg-red-950/30 text-red-300 border-red-500/40"
                                 : h.classification === "grey"
-                                  ? "bg-amber-50 text-amber-700 border-amber-300"
+                                  ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
                                   : "bg-bg-2 text-ink-1 border-hair-2"
                             }`}
                             title={`${h.label}${h.stale ? " — list snapshot is stale; refresh feed" : ""}`}

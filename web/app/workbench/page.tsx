@@ -57,11 +57,11 @@ interface BrainResult {
 }
 
 const SEVERITY_COLOUR: Record<string, string> = {
-  critical: "bg-red-100 text-red-800 border-red-300",
-  high:     "bg-orange-100 text-orange-700 border-orange-300",
-  medium:   "bg-yellow-100 text-yellow-700 border-yellow-300",
-  low:      "bg-green-100 text-green-700 border-green-300",
-  clear:    "bg-emerald-50 text-emerald-700 border-emerald-300",
+  critical: "bg-red-950/30 text-red-300 border-red-500/40",
+  high:     "bg-orange-950/30 text-orange-300 border-orange-500/40",
+  medium:   "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  low:      "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
+  clear:    "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
 };
 
 type TabKey = "screening" | "manifest";
