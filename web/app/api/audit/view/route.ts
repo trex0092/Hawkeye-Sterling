@@ -281,36 +281,34 @@ async function handleGet(req: Request): Promise<NextResponse | Response> {
 
     if (format === "pdf") {
       const exportedAt = new Date().toISOString();
-      const lines: string[] = [
-        "HAWKEYE STERLING — AUDIT TRAIL EXPORT",
-        "=" .repeat(60),
-        `Exported: ${exportedAt}`,
-        `Total entries: ${entries.length}  |  Shown: ${recent.length}  |  Chain valid: ${allValid}`,
-        `Audit chain secret configured: ${secretPresent}  |  Invalid signatures: ${invalidCount}`,
-        "=" .repeat(60),
-        "",
-      ];
-      for (const r of validationResults) {
+      const { generateAuditPdf } = await import("@/lib/server/audit-pdf");
+      const pdfEntries = validationResults.map((r) => {
         const entry = recent.find((e) => e.id === r.id);
-        if (!entry) continue;
-        lines.push(`[${entry.sequence ?? "?"}] ${entry.at}`);
-        lines.push(`  ID:     ${entry.id}`);
-        lines.push(`  Actor:  ${entry.actor?.name ?? entry.actor?.role ?? "system"}`);
-        lines.push(`  Action: ${entry.action}`);
-        lines.push(`  Target: ${entry.target ?? "—"}`);
-        if (r.valid !== null) lines.push(`  HMAC:   ${r.valid ? "VALID" : "INVALID ⚠"}`);
-        lines.push("");
-      }
-      lines.push("=" .repeat(60));
-      lines.push("END OF AUDIT TRAIL — HAWKEYE STERLING");
-      const pdfText = lines.join("\n");
-      return new Response(pdfText, {
+        return {
+          sequence: entry?.sequence,
+          id: r.id,
+          at: entry?.at ?? "",
+          actor: entry?.actor,
+          action: entry?.action,
+          target: entry?.target,
+          valid: r.valid,
+        };
+      });
+      const pdfBytes = await generateAuditPdf({
+        entries: pdfEntries,
+        exportedAt,
+        totalEntries: entries.length,
+        chainValid: allValid,
+        secretConfigured: secretPresent,
+        invalidCount,
+      });
+      return new Response(pdfBytes, {
         status: 200,
         headers: {
           ...gateHeaders,
-          "content-type": "text/plain; charset=utf-8",
-          "content-disposition": `attachment; filename="hawkeye-audit-trail-${exportedAt.slice(0,10)}.txt"`,
-          "x-hawkeye-format": "audit-export",
+          "content-type": "application/pdf",
+          "content-disposition": `attachment; filename="hawkeye-audit-trail-${exportedAt.slice(0,10)}.pdf"`,
+          "x-hawkeye-format": "audit-export-pdf",
         },
       });
     }

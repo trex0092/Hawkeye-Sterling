@@ -244,6 +244,60 @@ const RULES: Rule[] = [
       };
     },
   },
+  {
+    id: "UEBA-007",
+    severity: "high",
+    title: "Mass record export",
+    test: (p) => {
+      const fired = p.exportRecordCount > 500;
+      return {
+        fired,
+        detail: `${p.exportRecordCount} records exported in window — potential bulk data exfiltration.`,
+        evidence: [`export_record_count=${p.exportRecordCount}`, `export_ops=${p.byKind.export ?? 0}`],
+      };
+    },
+  },
+  {
+    id: "UEBA-008",
+    severity: "medium",
+    title: "Repeated bulk screening sessions",
+    test: (p) => {
+      const fired = p.bulkScreenCount > 10;
+      return {
+        fired,
+        detail: `${p.bulkScreenCount} bulk screening sessions in window (avg ${p.averageBulkSize.toFixed(0)} subjects/batch) — unusually high for a single analyst.`,
+        evidence: [`bulk_screen_count=${p.bulkScreenCount}`, `avg_bulk_size=${p.averageBulkSize.toFixed(1)}`],
+      };
+    },
+  },
+  {
+    id: "UEBA-009",
+    severity: "high",
+    title: "Systematic verdict clearing",
+    test: (p) => {
+      const fired = p.overrideCount >= 5 && p.overrideClearRate > 80;
+      return {
+        fired,
+        detail: `${p.overrideCount} verdict overrides with ${p.overrideClearRate.toFixed(0)}% clearing rate — pattern consistent with systematic whitewashing.`,
+        evidence: [`override_count=${p.overrideCount}`, `override_clear_rate=${p.overrideClearRate.toFixed(1)}%`],
+      };
+    },
+  },
+  {
+    id: "UEBA-010",
+    severity: "medium",
+    title: "Off-hours report generation",
+    test: (p) => {
+      const reportCount = p.byKind.report_generate ?? 0;
+      const offHoursReports = Math.round(reportCount * (p.offHoursRate / 100));
+      const fired = reportCount > 0 && p.offHoursRate > 50 && reportCount >= 3;
+      return {
+        fired,
+        detail: `${reportCount} report(s) generated with ${p.offHoursRate.toFixed(0)}% off-hours activity — regulatory filings generated outside business hours warrant review.`,
+        evidence: [`report_count=${reportCount}`, `off_hours_rate=${p.offHoursRate.toFixed(1)}%`, `est_off_hours_reports=${offHoursReports}`],
+      };
+    },
+  },
 ];
 
 export function detectAnomalies(profile: AnalystProfile): UEBAAlert[] {

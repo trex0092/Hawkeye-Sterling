@@ -1,22 +1,13 @@
 // Hawkeye Sterling — name matchers (Layers 96-105).
+import { distance as _flDistance } from "fastest-levenshtein";
 
-// 96. Levenshtein (normalised 0..1)
+// 96. Levenshtein (normalised 0..1) — backed by fastest-levenshtein (WASM, ~10× faster)
 export function levenshtein(a: string, b: string): number {
   const A = a.toLowerCase(), B = b.toLowerCase();
   if (A === B) return 1;
   if (!A.length || !B.length) return 0;
-  const m = A.length, n = B.length;
-  const d: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i += 1) d[i]![0] = i;
-  for (let j = 0; j <= n; j += 1) d[0]![j] = j;
-  for (let i = 1; i <= m; i += 1) {
-    for (let j = 1; j <= n; j += 1) {
-      const cost = A[i - 1] === B[j - 1] ? 0 : 1;
-      d[i]![j] = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
-    }
-  }
-  const dist = d[m]![n]!;
-  return 1 - dist / Math.max(m, n);
+  const dist = _flDistance(A, B);
+  return 1 - dist / Math.max(A.length, B.length);
 }
 
 // 97. Damerau-Levenshtein (transposition-aware)
