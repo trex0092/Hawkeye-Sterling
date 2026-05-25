@@ -20,6 +20,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   StreamingAnomalyGate,
   extractFeatures,
@@ -896,6 +897,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[transaction-anomaly] slow response latencyMs=${latencyMs}`);
+
+  void writeAuditChainEntry(
+    { event: "transaction_anomaly.updated", actor: gate.keyId, meta: { sessionId } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json(
     {
       ok: true,

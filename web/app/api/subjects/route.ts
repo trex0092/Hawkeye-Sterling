@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listSubjects, upsertSubject, reviewDueSoon, type SubjectProfile } from "@/lib/server/subject-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +63,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     hasStrSarOnRecord: Boolean(hasStrSarOnRecord),
     notes: typeof notes === "string" ? notes : undefined,
   });
+
+  void writeAuditChainEntry(
+    { event: "subjects.upserted", actor: gate.keyId, meta: { id: profile.subjectId, name: profile.subjectName } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, subject: profile }, { status: 201, headers: gate.headers });
 }

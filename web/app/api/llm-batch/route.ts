@@ -10,6 +10,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { rehydrate, type RedactionMap } from "@/lib/server/redact";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,6 +117,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
     index.unshift(job);
     await setJson(batchIndexKey(ownerId), index.slice(0, 200));
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "llm_batch.submitted", actor: gate.keyId, meta: { batchId } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json({ ok: true, batchId, anthropicBatchId: anthropicBatch.id, requestCount: body.requests.length }, { status: 202, headers: gate.headers });
   } catch (err) {

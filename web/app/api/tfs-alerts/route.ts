@@ -9,6 +9,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import type { TFSAlert } from "@/lib/data/tfs-alert-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const STORE_KEY = "hawkeye-tfs-alerts/v1.json";
 
@@ -59,6 +61,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     const serverAlerts = await loadServerAlerts();
     const merged = mergeAlerts(serverAlerts, clientAlerts);
     await setJson(STORE_KEY, { alerts: merged });
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "tfs_alerts.merged", actor: gate.keyId, meta: { count: merged.length } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({ ok: true, alerts: merged }, { headers: gate.headers });
   } catch (err) {
     console.error("[tfs-alerts] POST failed:", err);

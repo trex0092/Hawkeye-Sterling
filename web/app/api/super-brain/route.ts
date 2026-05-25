@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -771,6 +773,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       ttlMs: SUPER_BRAIN_CACHE_TTL_MS,
       result: responseBody as unknown as Record<string, unknown>,
     }).catch(() => { /* cache write failures are silent */ });
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "super_brain.cached", actor: gate.keyId, meta: { subjectId: body.subject.name, cacheKey } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json(responseBody, { headers: gateHeaders });
   } catch (err) {

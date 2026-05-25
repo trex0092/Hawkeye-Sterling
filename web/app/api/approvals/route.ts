@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getJson, setJson } from "@/lib/server/store";
 import { enforce } from "@/lib/server/enforce";
 import { randomUUID } from "crypto";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +88,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   const records = await loadRecords();
   records.unshift(record);
   await saveRecords(records);
+
+  const tenant = tenantIdFromGate(gate);
+  void writeAuditChainEntry(
+    { event: "approvals.created", actor: gate.keyId, meta: { id: record.id, entityName: record.entityName, riskScore: record.riskScore } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, record }, { status: 201, headers: gate.headers });
 }
