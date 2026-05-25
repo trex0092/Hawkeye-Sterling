@@ -366,7 +366,7 @@ export default function WorkbenchPage() {
               {(brainResult || brainError || runResult) && (
                 <div id="pipeline-run-result" className="my-6 space-y-4">
                   {brainError && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-13 text-red-700">
+                    <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-5 text-13 text-red-300">
                       <span className="font-semibold">Super-brain error:</span> {brainError}
                     </div>
                   )}
@@ -440,7 +440,7 @@ export default function WorkbenchPage() {
                       {brainResult.pep && brainResult.pep.salience > 0 && (
                         <div className="mb-4">
                           <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2">PEP</div>
-                          <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 text-12 text-amber-800">
+                          <div className="bg-amber-950/30 border border-amber-500/40 rounded px-3 py-2 text-12 text-amber-300">
                             {brainResult.pep.type.replace(/_/g, " ")} · Tier {brainResult.pep.tier} · Salience{" "}
                             {Math.round(brainResult.pep.salience * 100)}%
                           </div>
@@ -450,7 +450,7 @@ export default function WorkbenchPage() {
                       {brainResult.jurisdiction && (
                         <div className="mb-4">
                           <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2">Jurisdiction</div>
-                          <div className={`rounded px-3 py-2 text-12 border ${brainResult.jurisdiction.cahra ? "bg-red-50 border-red-200 text-red-800" : "bg-bg-1 border-hair-1 text-ink-0"}`}>
+                          <div className={`rounded px-3 py-2 text-12 border ${brainResult.jurisdiction.cahra ? "bg-red-950/30 border-red-500/40 text-red-300" : "bg-bg-1 border-hair-1 text-ink-0"}`}>
                             {brainResult.jurisdiction.name} ({brainResult.jurisdiction.iso2})
                             {brainResult.jurisdiction.cahra && " · CAHRA"}
                             {brainResult.jurisdiction.regimes.length > 0 && (
@@ -472,7 +472,7 @@ export default function WorkbenchPage() {
                             {brainResult.adverseKeywordGroups.map((g) => (
                               <span
                                 key={g.group}
-                                className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-700 rounded px-2 py-0.5 text-11 font-medium"
+                                className="inline-flex items-center gap-1 bg-red-950/30 border border-red-500/40 text-red-300 rounded px-2 py-0.5 text-11 font-medium"
                               >
                                 {g.label}
                                 <span className="font-bold">{g.count}</span>

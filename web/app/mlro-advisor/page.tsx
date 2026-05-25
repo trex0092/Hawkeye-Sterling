@@ -3627,7 +3627,7 @@ export default function MlroAdvisorPage() {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-13 text-red-700 mb-4">
+              <div className="bg-red-950/30 border border-red-500/40 rounded-lg p-4 text-13 text-red-300 mb-4">
                 <span className="font-semibold">Advisor error:</span> {error}
               </div>
             )}
@@ -3693,11 +3693,11 @@ export default function MlroAdvisorPage() {
                     {entry.expanded && (
                       <div className="border-t border-hair-2 px-4 pb-4 pt-3 space-y-3">
                         {entry.result.complianceReview.issues.length > 0 && (
-                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-700 mb-1">Charter issues</div>
+                          <div className="bg-amber-950/30 border border-amber-500/40 rounded-lg p-3">
+                            <div className="text-11 font-semibold uppercase tracking-wide-3 text-amber-300 mb-1">Charter issues</div>
                             <ul className="list-disc list-inside space-y-0.5">
                               {entry.result.complianceReview.issues.map((issue) => (
-                                <li key={issue} className="text-12 text-amber-800">{issue}</li>
+                                <li key={issue} className="text-12 text-amber-300">{issue}</li>
                               ))}
                             </ul>
                           </div>
@@ -3716,7 +3716,7 @@ export default function MlroAdvisorPage() {
                           <StructuredAdvisorView response={entry.result.structured} />
                         ) : null}
                         {entry.result.structuredFallback ? (
-                          <div className="bg-amber-50/30 border border-amber-300 rounded-lg p-3 text-12 text-amber-700">
+                          <div className="bg-amber-950/30 border border-amber-500/40 rounded-lg p-3 text-12 text-amber-300">
                             <strong>Structured-output fallback fired.</strong>{" "}
                             {entry.result.structuredFallback.reason === "parse_failed"
                               ? "The model emitted text instead of JSON; the legacy narrative below is what's shown."

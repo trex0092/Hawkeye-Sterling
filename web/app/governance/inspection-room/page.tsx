@@ -40,9 +40,9 @@ interface Panel {
 }
 
 const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
-  ready:   { label: "✓ Ready",   cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
+  ready:   { label: "✓ Ready",   cls: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" },
   partial: { label: "⚠ Partial", cls: "bg-yellow-50 text-yellow-700 border-yellow-300" },
-  missing: { label: "✗ Missing", cls: "bg-red-50 text-red-700 border-red-300" },
+  missing: { label: "✗ Missing", cls: "bg-red-950/30 text-red-300 border-red-500/40" },
 };
 
 function safeParse<T>(key: string): T | null {

@@ -1115,7 +1115,7 @@ export default function StrCasesPage() {
                     <>
                     <tr
                       key={c.id}
-                      className={`border-b ${c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-50" : "border-hair last:border-0"} hover:bg-bg-1`}
+                      className={`border-b ${c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-950/20" : "border-hair last:border-0"} hover:bg-bg-1`}
                     >
                       <td className="px-3 py-2 text-ink-0">
                         <div className="flex items-center gap-1.5">
@@ -1177,7 +1177,7 @@ export default function StrCasesPage() {
                       </td>
                     </tr>
                     {c.fiuDeadline35Day && (
-                      <tr key={`${c.id}-fiu`} className={`${(calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-50" : ""} border-b border-hair last:border-0`}>
+                      <tr key={`${c.id}-fiu`} className={`${(calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-950/20" : ""} border-b border-hair last:border-0`}>
                         <td colSpan={7} className="p-0">
                           <FiuCountdownBar fiuDeadline35Day={c.fiuDeadline35Day} fiuDeadlineDay20Alert={c.fiuDeadlineDay20Alert} />
                         </td>

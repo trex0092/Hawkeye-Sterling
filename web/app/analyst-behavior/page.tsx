@@ -9,10 +9,10 @@ import type { UEBAReport, UEBAAlert, AnalystProfile, UEBASeverity } from "../../
 
 function severityBadge(s: UEBASeverity): string {
   switch (s) {
-    case "critical": return "bg-red-50 text-red-700 border-red-300";
-    case "high":     return "bg-orange-50 text-orange-700 border-orange-300";
-    case "medium":   return "bg-amber-50 text-amber-700 border-amber-300";
-    default:         return "bg-blue-50 text-blue-700 border-blue-300";
+    case "critical": return "bg-red-950/30 text-red-300 border-red-500/40";
+    case "high":     return "bg-orange-950/30 text-orange-300 border border-orange-500/40";
+    case "medium":   return "bg-amber-950/30 text-amber-300 border-amber-500/40";
+    default:         return "bg-sky-950/30 text-sky-300 border-sky-500/40";
   }
 }
 
@@ -63,10 +63,10 @@ function AlertRow({ alert }: { alert: UEBAAlert }) {
 function ProfileCard({ profile, alertCount }: { profile: AnalystProfile; alertCount: number }) {
   const riskLevel = alertCount === 0 ? "clear" : alertCount === 1 ? "low" : alertCount <= 3 ? "medium" : "high";
   const riskCls =
-    riskLevel === "clear"  ? "bg-emerald-50 text-emerald-700 border-emerald-300" :
-    riskLevel === "low"    ? "bg-blue-50 text-blue-700 border-blue-300" :
-    riskLevel === "medium" ? "bg-amber-50 text-amber-700 border-amber-300" :
-                             "bg-red-50 text-red-700 border-red-300";
+    riskLevel === "clear"  ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" :
+    riskLevel === "low"    ? "bg-sky-950/30 text-sky-300 border-sky-500/40" :
+    riskLevel === "medium" ? "bg-amber-950/30 text-amber-300 border-amber-500/40" :
+                             "bg-red-950/30 text-red-300 border-red-500/40";
 
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3">
@@ -197,7 +197,7 @@ export default function AnalystBehaviorPage() {
           Analysing analyst activity…
         </div>
       ) : error ? (
-        <div className="bg-red-50/30 border border-red-300 rounded-lg p-4 text-13 text-red-700">
+        <div className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
           UEBA engine error: {error}
         </div>
       ) : !report ? (
@@ -217,17 +217,17 @@ export default function AnalystBehaviorPage() {
             </div>
             <div className="flex gap-2 flex-wrap">
               {totalAlerts === 0 ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-emerald-50 text-emerald-700 border-emerald-300">
+                <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-emerald-950/30 text-emerald-300 border-emerald-500/40">
                   ✓ No anomalies
                 </span>
               ) : (
                 <>
                   {criticalAlerts > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-red-50 text-red-700 border-red-300">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-red-950/30 text-red-300 border-red-500/40">
                       ⚠ {criticalAlerts} critical
                     </span>
                   )}
-                  <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-amber-50 text-amber-700 border-amber-300">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded border font-mono text-10 font-semibold uppercase tracking-wide-2 bg-amber-950/30 text-amber-300 border-amber-500/40">
                     {totalAlerts} alert{totalAlerts !== 1 ? "s" : ""}
                   </span>
                 </>

@@ -220,11 +220,11 @@ export default function RedTeamPage() {
           const isRunning = running === p.id;
           const cls =
             verdict === "pass"
-              ? "bg-emerald-50 border-emerald-300"
+              ? "bg-emerald-950/30 border-emerald-500/40"
               : verdict === "fail"
-                ? "bg-red-50 border-red-300"
+                ? "bg-red-950/30 border-red-500/40"
                 : verdict === "error"
-                  ? "bg-amber-50 border-amber-300"
+                  ? "bg-amber-950/30 border-amber-500/40"
                   : "bg-bg-panel border-hair-2";
           return (
             <div key={p.id} className={`rounded-lg p-4 border ${cls}`}>

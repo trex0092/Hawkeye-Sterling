@@ -9,9 +9,9 @@ import type { KriDashboardResponse, KriResult, KriStatus } from "@/app/api/kri-d
 
 function statusColor(s: KriStatus): string {
   switch (s) {
-    case "green":   return "text-emerald-700 bg-emerald-50 border-emerald-300";
-    case "amber":   return "text-amber-700 bg-amber-50 border-amber-300";
-    case "red":     return "text-red-700 bg-red-50 border-red-300";
+    case "green":   return "text-emerald-300 bg-emerald-950/30 border-emerald-500/40";
+    case "amber":   return "text-amber-300 bg-amber-950/30 border-amber-500/40";
+    case "red":     return "text-red-300 bg-red-950/30 border-red-500/40";
     default:        return "text-ink-3 bg-bg-1 border-hair-2";
   }
 }
@@ -101,9 +101,9 @@ function SummaryBar({ summary }: { summary: KriDashboardResponse["summary"] }) {
       <div className="flex gap-2 flex-wrap">
         {(
           [
-            { key: "green", label: "Green", cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
-            { key: "amber", label: "Amber", cls: "bg-amber-50 text-amber-700 border-amber-300" },
-            { key: "red", label: "Red", cls: "bg-red-50 text-red-700 border-red-300" },
+            { key: "green", label: "Green", cls: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" },
+            { key: "amber", label: "Amber", cls: "bg-amber-950/30 text-amber-300 border-amber-500/40" },
+            { key: "red", label: "Red", cls: "bg-red-950/30 text-red-300 border-red-500/40" },
             { key: "no_data", label: "No data", cls: "bg-bg-1 text-ink-3 border-hair-2" },
           ] as const
         ).map(({ key, label, cls }) => (
@@ -189,7 +189,7 @@ export default function KriDashboardPage() {
           Loading KRI values…
         </div>
       ) : error ? (
-        <div className="bg-red-50/30 border border-red-300 rounded-lg p-4 text-13 text-red-700">
+        <div className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
           Could not load KRI dashboard: {error}
         </div>
       ) : data ? (
@@ -197,7 +197,7 @@ export default function KriDashboardPage() {
           <SummaryBar summary={data.summary} />
 
           {(data.summary.red > 0) && (
-            <div className="bg-red-50/30 border border-red-300 rounded-lg px-4 py-2 flex items-center gap-2 text-12 text-red-700 font-medium">
+            <div className="bg-red-950/20 border border-red-500/40 rounded-lg px-4 py-2 flex items-center gap-2 text-12 text-red-300 font-medium">
               <span>⚠</span>
               <span>{data.summary.red} KRI{data.summary.red > 1 ? "s" : ""} in the RED band — immediate MLRO review required.</span>
             </div>

@@ -9,7 +9,7 @@ import type { BoardDashboardResponse, BoardPanel, BoardMetric } from "@/app/api/
 
 function metricStatusCls(s: BoardMetric["status"]): string {
   switch (s) {
-    case "ok":       return "text-emerald-700";
+    case "ok":       return "text-emerald-300";
     case "warn":     return "text-amber-600";
     case "critical": return "text-red-600 font-semibold";
     default:         return "text-ink-1";
@@ -23,11 +23,11 @@ function postureBadge(p: BoardDashboardResponse["overallPosture"]): {
 } {
   switch (p) {
     case "healthy":
-      return { label: "HEALTHY", cls: "bg-emerald-50 text-emerald-700 border-emerald-300", dot: "bg-emerald-500" };
+      return { label: "HEALTHY", cls: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40", dot: "bg-emerald-500" };
     case "attention":
-      return { label: "ATTENTION", cls: "bg-amber-50 text-amber-700 border-amber-300", dot: "bg-amber-400" };
+      return { label: "ATTENTION", cls: "bg-amber-950/30 text-amber-300 border-amber-500/40", dot: "bg-amber-400" };
     case "critical":
-      return { label: "CRITICAL", cls: "bg-red-50 text-red-700 border-red-300", dot: "bg-red-500 animate-pulse" };
+      return { label: "CRITICAL", cls: "bg-red-950/30 text-red-300 border-red-500/40", dot: "bg-red-500 animate-pulse" };
   }
 }
 
@@ -37,9 +37,9 @@ function PanelCard({ panel }: { panel: BoardPanel }) {
   const hasCritical = panel.metrics.some((m) => m.status === "critical");
   const hasWarn = panel.metrics.some((m) => m.status === "warn");
   const borderCls = hasCritical
-    ? "border-red-300 bg-red-50/10"
+    ? "border-red-500/40 bg-red-950/10"
     : hasWarn
-    ? "border-amber-300 bg-amber-50/10"
+    ? "border-amber-500/40 bg-amber-950/10"
     : "border-hair-2 bg-bg-panel";
 
   return (
@@ -48,12 +48,12 @@ function PanelCard({ panel }: { panel: BoardPanel }) {
         <span className="text-16">{panel.icon}</span>
         <div className="text-12 font-semibold text-ink-0">{panel.title}</div>
         {hasCritical && (
-          <span className="ml-auto inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-red-50 text-red-700 border-red-300">
+          <span className="ml-auto inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-red-950/30 text-red-300 border-red-500/40">
             critical
           </span>
         )}
         {!hasCritical && hasWarn && (
-          <span className="ml-auto inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-50 text-amber-700 border-amber-300">
+          <span className="ml-auto inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-950/30 text-amber-300 border-amber-500/40">
             attention
           </span>
         )}
@@ -168,7 +168,7 @@ export default function BoardDashboardPage() {
           Loading board dashboard…
         </div>
       ) : error ? (
-        <div className="bg-red-50/30 border border-red-300 rounded-lg p-4 text-13 text-red-700">
+        <div className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
           Could not load board dashboard: {error}
         </div>
       ) : data ? (

@@ -239,7 +239,7 @@ export default function GoAmlExportPage() {
                 step === s.id
                   ? "border-brand bg-brand-dim text-brand-deep"
                   : s.id < step
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
                     : "border-hair-2 bg-bg-panel text-ink-2"
               }`}
             >
@@ -406,7 +406,7 @@ export default function GoAmlExportPage() {
               proceed.
             </p>
             {issues.length === 0 ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded p-4 text-emerald-700 text-12">
+              <div className="bg-emerald-950/30 border border-emerald-500/40 rounded p-4 text-emerald-300 text-12">
                 ✓ All checks pass. Ready to generate XML.
               </div>
             ) : (
@@ -426,7 +426,7 @@ export default function GoAmlExportPage() {
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Export</h2>
             {hasErrors(issues) ? (
-              <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700 text-12">
+              <div className="bg-red-950/30 border border-red-500/40 rounded p-4 text-red-300 text-12">
                 Validation has unresolved errors — return to step 4.
               </div>
             ) : (
@@ -449,7 +449,7 @@ export default function GoAmlExportPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded font-semibold"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 rounded font-semibold"
                     >
                       Download {submission.filename}
                     </button>

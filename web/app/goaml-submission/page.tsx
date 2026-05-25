@@ -352,7 +352,7 @@ export default function GoAmlSubmissionPage() {
                 step === s.id
                   ? "border-brand bg-brand-dim text-brand-deep"
                   : s.id < step
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
                     : "border-hair-2 bg-bg-panel text-ink-3 cursor-default"
               }`}
             >
@@ -764,7 +764,7 @@ export default function GoAmlSubmissionPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded font-semibold transition"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40 rounded font-semibold transition"
                     >
                       Download XML
                     </button>
@@ -874,7 +874,7 @@ export default function GoAmlSubmissionPage() {
                 </div>
                 {Object.values(checklist).filter(Boolean).length ===
                   gen.result.submissionChecklist.length && (
-                  <div className="mt-3 text-12 font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
+                  <div className="mt-3 text-12 font-semibold text-emerald-300 bg-emerald-950/30 border border-emerald-500/40 rounded px-3 py-2">
                     All checklist items confirmed — ready to file via goAML portal.
                   </div>
                 )}
