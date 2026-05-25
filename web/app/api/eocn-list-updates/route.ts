@@ -7,6 +7,7 @@ import {
   type ListUpdate,
 } from "@/lib/data/eocn-fixture";
 import { deliverWebhookEvent } from "@/lib/server/webhook-delivery";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -409,6 +410,11 @@ async function handlePost(req: Request): Promise<NextResponse> {
       }
     } catch { /* non-fatal */ }
   }
+
+  void writeAuditChainEntry(
+    { event: "eocn_list.refreshed", actor: cronMatch ? "system:eocn-cron" : "operator", meta: { ok: upstream.ok, listCount: payload.listUpdates.length } },
+    process.env["DEFAULT_TENANT"] ?? "default",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   // Return 200 even when upstream was unavailable — the fixture data was
   // written successfully and the eocn-poll cron marks success/failure based

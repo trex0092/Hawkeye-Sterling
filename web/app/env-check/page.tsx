@@ -65,14 +65,14 @@ export default function EnvCheckPage() {
       />
       <div className="p-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-2">Environment Variable Status</h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-ink-2 mb-6">
           Shows which environment variables are configured. No actual values are shown.
           Set variables in Netlify: <strong>Site settings → Environment variables</strong>.
         </p>
 
-        {loading && <p className="text-gray-400">Loading…</p>}
+        {loading && <p className="text-ink-2">Loading…</p>}
         {error && (
-          <div className="bg-red-50 border border-red-300 text-red-800 rounded p-4 mb-4">
+          <div className="bg-red-950/30 border border-red-500/40 text-red-300 rounded p-4 mb-4">
             <strong>Error loading env check:</strong> {error}
           </div>
         )}
@@ -80,10 +80,10 @@ export default function EnvCheckPage() {
         {data && (
           <>
             {/* Summary bar */}
-            <div className={`rounded-lg p-4 mb-6 border ${data.ok ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"}`}>
+            <div className={`rounded-lg p-4 mb-6 border ${data.ok ? "bg-emerald-950/30 border-emerald-500/40" : "bg-red-950/30 border-red-500/40"}`}>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-xl">{data.ok ? "✅" : "❌"}</span>
-                <strong className={data.ok ? "text-green-800" : "text-red-800"}>
+                <strong className={data.ok ? "text-emerald-300" : "text-red-300"}>
                   {data.ok ? "All required variables configured" : `${data.summary.requiredMissing} required variable(s) missing`}
                 </strong>
               </div>
@@ -102,9 +102,9 @@ export default function EnvCheckPage() {
               return (
                 <div key={group} className="mb-8">
                   <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-lg font-semibold">{group}</h2>
+                    <h2 className="text-lg font-semibold text-ink-0">{group}</h2>
                     {missingRequired > 0 && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-red-950/30 text-red-300 border border-red-500/40 px-2 py-0.5 rounded-full">
                         {missingRequired} missing
                       </span>
                     )}
@@ -112,11 +112,11 @@ export default function EnvCheckPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="bg-gray-50">
-                          <th className="text-left p-2 border">Variable</th>
-                          <th className="text-left p-2 border">Required</th>
-                          <th className="text-left p-2 border">Status</th>
-                          <th className="text-left p-2 border">Hint</th>
+                        <tr className="bg-bg-base border-b border-hair-2">
+                          <th className="text-left p-2 border border-hair-2 text-ink-1">Variable</th>
+                          <th className="text-left p-2 border border-hair-2 text-ink-1">Required</th>
+                          <th className="text-left p-2 border border-hair-2 text-ink-1">Status</th>
+                          <th className="text-left p-2 border border-hair-2 text-ink-1">Hint</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -125,30 +125,30 @@ export default function EnvCheckPage() {
                             key={check.id}
                             className={
                               check.required && !check.present
-                                ? "bg-red-50"
+                                ? "bg-red-950/20"
                                 : check.present
-                                  ? "bg-white"
-                                  : "bg-gray-50"
+                                  ? "bg-bg-panel"
+                                  : "bg-bg-base"
                             }
                           >
-                            <td className="p-2 border font-mono text-xs">{check.label}</td>
-                            <td className="p-2 border text-center">
+                            <td className="p-2 border border-hair-2 font-mono text-xs text-ink-0">{check.label}</td>
+                            <td className="p-2 border border-hair-2 text-center">
                               {check.required ? (
-                                <span className="text-red-600 font-semibold">Required</span>
+                                <span className="text-red-400 font-semibold">Required</span>
                               ) : (
-                                <span className="text-gray-400">Optional</span>
+                                <span className="text-ink-2">Optional</span>
                               )}
                             </td>
-                            <td className="p-2 border text-center">
+                            <td className="p-2 border border-hair-2 text-center">
                               {check.present ? (
-                                <span className="text-green-600 font-semibold">✓ Set</span>
+                                <span className="text-emerald-400 font-semibold">✓ Set</span>
                               ) : (
-                                <span className={check.required ? "text-red-600 font-semibold" : "text-gray-400"}>
+                                <span className={check.required ? "text-red-400 font-semibold" : "text-ink-2"}>
                                   {check.required ? "✗ Missing" : "— Not set"}
                                 </span>
                               )}
                             </td>
-                            <td className="p-2 border text-xs text-gray-600">{check.hint}</td>
+                            <td className="p-2 border border-hair-2 text-xs text-ink-2">{check.hint}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -158,7 +158,7 @@ export default function EnvCheckPage() {
               );
             })}
 
-            <p className="text-xs text-gray-400 mt-4">Last checked: {data.ts}</p>
+            <p className="text-xs text-ink-2 mt-4">Last checked: {data.ts}</p>
           </>
         )}
       </div>
@@ -168,10 +168,10 @@ export default function EnvCheckPage() {
 
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
   const colorMap: Record<string, string> = {
-    green: "text-green-700 bg-green-50",
-    red: "text-red-700 bg-red-50",
-    blue: "text-blue-700 bg-blue-50",
-    gray: "text-gray-500 bg-gray-100",
+    green: "text-emerald-300 bg-emerald-950/30 border border-emerald-500/40",
+    red: "text-red-300 bg-red-950/30 border border-red-500/40",
+    blue: "text-sky-300 bg-sky-950/30 border border-sky-500/40",
+    gray: "text-ink-2 bg-bg-base border border-hair-2",
   };
   return (
     <div className={`rounded p-2 text-center ${colorMap[color] ?? colorMap["gray"]}`}>

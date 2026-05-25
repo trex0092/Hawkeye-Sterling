@@ -10,14 +10,15 @@
 // the cron functions use — and returns the per-adapter summary.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
+async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
   let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
@@ -50,6 +51,11 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
     // Drop the in-process candidate cache so the next screening request
     // reloads fresh entities from the blobs we just wrote.
     invalidateCandidateCache();
+
+    void writeAuditChainEntry(
+      { event: "sanctions.ingestion_triggered", actor: ctx.apiKey.id, meta: { ok_count: (result as { ok_count?: number }).ok_count, failed_count: (result as { failed_count?: number }).failed_count } },
+      ctx.tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json(
       {

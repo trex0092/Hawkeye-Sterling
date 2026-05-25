@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getEntity } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 // Pull the compiled brain + integrations from dist — the other screening
@@ -336,6 +337,11 @@ async function handleGoaml(req: Request): Promise<Response> {
     retryCount: 0,
     caseId: body.subject.caseId,
   }).catch((err) => console.error("[goaml] draft record save failed:", err));
+
+  void writeAuditChainEntry(
+    { event: "goaml.submission_generated", actor: gate.keyId, meta: { reportRef, reportCode: body.reportCode } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
   const narrativeTruncated = body.narrative.length > 4000;

@@ -12,6 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   listSubjects, getSubject, saveSubject, saveDelta, nextRunAt,
   type PKycSubject, type PKycRiskBand, type PKycDelta, type BehavioralBaseline,
@@ -273,6 +274,11 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   const results = await Promise.all(due.map((s) => runSubject(s, force, ctx.tenantId)));
   const changed = results.filter((r) => r.changed).length;
   const errors = results.filter((r) => r.error).length;
+
+  void writeAuditChainEntry(
+    { event: "pkyc.run_completed", actor: ctx.apiKey.id, meta: { ran: results.length, changed, errors } },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({
     ok: true,

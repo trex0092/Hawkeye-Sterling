@@ -180,6 +180,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
     c.id && CASE_ID_RE.test(c.id) ? c : { ...c, id: generateCaseId() },
   );
   const merged = await mergeCases(tenant, stamped);
+
+  void writeAuditChainEntry(
+    { event: "cases.bulk_saved", actor: gate.keyId, meta: { count: merged.length } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json(
     { ok: true, tenant, cases: merged },
     { headers: gate.headers },

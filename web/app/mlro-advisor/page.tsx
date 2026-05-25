@@ -1261,10 +1261,10 @@ const _superTabCls = (active: boolean) =>
   }`;
 
 const verdictCls = (v: string) => {
-  if (v === "approved") return "bg-emerald-50 text-emerald-700 border-emerald-300";
-  if (v === "blocked") return "bg-red-100 text-red-700 border-red-300";
-  if (v === "returned_for_revision") return "bg-amber-50 text-amber-700 border-amber-300";
-  return "bg-gray-100 text-gray-600 border-gray-300";
+  if (v === "approved") return "bg-emerald-950/30 text-emerald-300 border-emerald-500/40";
+  if (v === "blocked") return "bg-red-950/30 text-red-300 border-red-500/40";
+  if (v === "returned_for_revision") return "bg-amber-950/30 text-amber-300 border-amber-500/40";
+  return "bg-zinc-800/40 text-zinc-300 border-zinc-600/40";
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1312,15 +1312,15 @@ function exportAdvisorSession(history: AdvisorHistoryEntry[]) {
 // ── Layer 3: 8-section structured-response renderer ──────────────────────────
 
 const VERDICT_TONE: Record<string, string> = {
-  proceed: "bg-emerald-50 text-emerald-700 border-emerald-300",
-  decline: "bg-red-100 text-red-700 border-red-300",
-  escalate: "bg-amber-50 text-amber-700 border-amber-300",
-  file_str: "bg-violet-50 text-violet-700 border-violet-300",
-  freeze: "bg-red-100 text-red-700 border-red-300",
+  proceed: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
+  decline: "bg-red-950/30 text-red-300 border-red-500/40",
+  escalate: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  file_str: "bg-violet-950/30 text-violet-300 border-violet-500/40",
+  freeze: "bg-red-950/30 text-red-300 border-red-500/40",
 };
 
 function StructuredAdvisorView({ response }: { response: AdvisorResponseV1 }) {
-  const tone = VERDICT_TONE[response.decision.verdict] ?? "bg-gray-100 text-gray-700 border-gray-300";
+  const tone = VERDICT_TONE[response.decision.verdict] ?? "bg-zinc-800/40 text-zinc-300 border-zinc-600/40";
   const citationGroups = (Object.entries(response.frameworkCitations.byClass) as [string, string[] | undefined][]).filter(([, list]) => (list?.length ?? 0) > 0);
   return (
     <div className="bg-bg-panel border border-brand/40 rounded-lg p-4 space-y-4">
@@ -13040,10 +13040,10 @@ function compactClassifierContext(a: QuestionAnalysis): string {
 
 function ChallengePanel({ challenge }: { challenge: ChallengeResult }) {
   const outcomeCls =
-    challenge.outcome === "UPHELD" ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-      : challenge.outcome === "PARTIALLY_UPHELD" ? "bg-amber-50 text-amber-700 border-amber-300"
-      : challenge.outcome === "OVERTURNED" ? "bg-red-100 text-red-700 border-red-300"
-      : "bg-gray-100 text-gray-600 border-gray-300";
+    challenge.outcome === "UPHELD" ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40"
+      : challenge.outcome === "PARTIALLY_UPHELD" ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
+      : challenge.outcome === "OVERTURNED" ? "bg-red-950/30 text-red-300 border-red-500/40"
+      : "bg-zinc-800/40 text-zinc-300 border-zinc-600/40";
   return (
     <div className="bg-bg-panel border border-amber/30 rounded-lg p-3 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
