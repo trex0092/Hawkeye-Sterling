@@ -31,7 +31,7 @@ const OCCUPATION_IDF: Record<string, number> = {
   finance: 1.4, banking: 1.3, investment: 1.3, real: 1.0, estate: 1.0,
   construction: 1.1, engineering: 1.2, technology: 1.0, software: 1.0,
   politician: 2.5, minister: 2.6, official: 2.0, government: 2.2, senator: 2.8,
-  judge: 2.4, prosecutor: 2.5, police: 2.1, military: 2.8, army: 2.7,
+  judge: 2.4, prosecutor: 2.5, police: 2.1, defense: 2.7, army: 2.7,
 };
 
 const FATF_SECTORS = [

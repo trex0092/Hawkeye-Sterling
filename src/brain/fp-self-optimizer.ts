@@ -45,7 +45,7 @@ export function computeModeFpStats(
   currentWeights: Record<string, number> = {},
 ): ModeFpStats[] {
   const windowMs = WINDOW_DAYS * 86_400_000;
-  const recentRecords = records.filter((r) => msSince(r.decidedAt ?? r.runId) < windowMs);
+  const recentRecords = records.filter((r) => msSince(r.at) < windowMs);
   const stats = new Map<string, { tp: number; fp: number }>();
 
   for (const r of recentRecords) {

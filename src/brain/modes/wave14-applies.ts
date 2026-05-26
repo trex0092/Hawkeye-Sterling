@@ -6,13 +6,11 @@ import { forecastThreatMaturity } from '../temporal-forecast-engine.js';
 import { explainDecision } from '../counterfactual-explainer.js';
 import { decomposeScore } from '../shap-decomposer.js';
 import { semanticDisambiguate } from '../semantic-disambiguator.js';
-import { detectAlertFatigue } from '../cognitive-load-monitor.js';
-import { computeModeFpStats } from '../fp-self-optimizer.js';
 import { resolveStrObligations } from '../str-obligation-resolver.js';
 
 type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
-function base(modeId: string, ctx: BrainContext): Omit<Finding, 'score' | 'confidence' | 'verdict' | 'rationale' | 'evidence'> {
+function base(modeId: string, _ctx: BrainContext): Omit<Finding, 'score' | 'confidence' | 'verdict' | 'rationale' | 'evidence'> {
   return {
     modeId,
     category: 'compliance_framework' as const,
@@ -22,10 +20,13 @@ function base(modeId: string, ctx: BrainContext): Omit<Finding, 'score' | 'confi
 }
 
 const temporalThreatForecastApply: ModeApply = async (ctx) => {
-  const subjectJurisdiction = ctx.subject.jurisdiction ?? ctx.subject.nationality;
+  const jur = ctx.subject.jurisdiction ?? ctx.subject.nationality;
+  const subject = jur !== undefined
+    ? { name: ctx.subject.name, jurisdiction: jur }
+    : { name: ctx.subject.name };
   const result = forecastThreatMaturity(
-    ctx.runId ?? 'unknown',
-    { name: ctx.subject.name, jurisdiction: subjectJurisdiction },
+    ctx.run.id,
+    subject,
     {
       sanctionsNearMiss: Array.isArray(ctx.evidence.sanctionsHits) && ctx.evidence.sanctionsHits.length > 0,
     },
@@ -46,7 +47,7 @@ const temporalThreatForecastApply: ModeApply = async (ctx) => {
 const cahraRouteReactivationApply: ModeApply = async (ctx) => {
   const jurisdiction = (ctx.subject.jurisdiction ?? ctx.subject.nationality ?? '').toUpperCase();
   const result = forecastThreatMaturity(
-    ctx.runId ?? 'unknown',
+    ctx.run.id,
     { name: ctx.subject.name, jurisdiction },
     { cahraLastSeenDaysAgo: 95 },
     [],
@@ -74,12 +75,11 @@ const pepRoleTransitionApply: ModeApply = async (ctx) => {
       evidence: [],
     };
   }
-  const result = forecastThreatMaturity(
-    ctx.runId ?? 'unknown',
-    { name: ctx.subject.name, jurisdiction: ctx.subject.jurisdiction, pepMandateExpiryDays: 90 },
-    {},
-    [],
-  );
+  const jur = ctx.subject.jurisdiction;
+  const subject = jur !== undefined
+    ? { name: ctx.subject.name, jurisdiction: jur, pepMandateExpiryDays: 90 }
+    : { name: ctx.subject.name, pepMandateExpiryDays: 90 };
+  const result = forecastThreatMaturity(ctx.run.id, subject, {}, [], undefined);
   const pepFactor = result.factors.find((f) => f.kind === 'pep_transition');
   const score = pepFactor?.forecastRisk ?? 0.4;
   return {
@@ -93,8 +93,6 @@ const pepRoleTransitionApply: ModeApply = async (ctx) => {
 };
 
 const mlroCognitiveLoadApply: ModeApply = async (ctx) => {
-  // In the pipeline context, no live analyst events are available
-  // This mode is most useful when invoked via the cognitive-load API route
   return {
     ...base('intr.mlro_cognitive_load_monitor', ctx),
     score: 0,
@@ -102,7 +100,6 @@ const mlroCognitiveLoadApply: ModeApply = async (ctx) => {
     verdict: 'clear',
     rationale: 'MLRO cognitive load monitor: run via /api/cognitive-load for real-time analyst data.',
     evidence: [],
-    tags: ['meta'],
   };
 };
 
@@ -117,7 +114,6 @@ const fpDriftDetectorApply: ModeApply = async (ctx) => {
     verdict: score >= 0.3 ? 'flag' : 'clear',
     rationale: `FP drift indicator: ${inconsistencies} inconclusive findings in prior set. See /api/fp-optimizer for threshold proposals.`,
     evidence: [`inconclusive_count=${inconsistencies}`],
-    tags: ['meta'],
   };
 };
 
@@ -142,10 +138,11 @@ const counterfactualExplainerApply: ModeApply = async (ctx) => {
 };
 
 const strConflictResolverApply: ModeApply = async (ctx) => {
-  const result = resolveStrObligations({
-    subjectJurisdiction: ctx.subject.jurisdiction,
-    reportType: 'STR',
-  });
+  const subjectJurisdiction = ctx.subject.jurisdiction;
+  const req = subjectJurisdiction !== undefined
+    ? { subjectJurisdiction, reportType: 'STR' as const }
+    : { reportType: 'STR' as const };
+  const result = resolveStrObligations(req);
   const mandatoryCount = result.obligations.filter((o) => o.obligationType === 'mandatory').length;
   const conflictCount = result.conflicts.length;
   return {
@@ -171,7 +168,6 @@ const crossCaseTypologyMinerApply: ModeApply = async (ctx) => {
     verdict: 'clear',
     rationale: 'Cross-case typology mining runs asynchronously. See /api/emerging-typologies for current proposals.',
     evidence: [],
-    tags: ['meta'],
   };
 };
 
@@ -185,11 +181,10 @@ const semanticDisambiguationApply: ModeApply = async (ctx) => {
       evidence: [],
     };
   }
-  const subjectProfile = {
-    name: ctx.subject.name,
-    jurisdiction: ctx.subject.jurisdiction,
-    nationality: ctx.subject.nationality,
-  };
+  const jur = ctx.subject.jurisdiction;
+  const subjectProfile = jur !== undefined
+    ? { name: ctx.subject.name, jurisdiction: jur, nationality: ctx.subject.nationality }
+    : { name: ctx.subject.name, nationality: ctx.subject.nationality };
   const hits = semanticDisambiguate(
     subjectProfile,
     sanctionsHits.map((h) => ({ name: String((h as Record<string, unknown>)['name'] ?? '') })),
@@ -222,7 +217,6 @@ const shapExplainerApply: ModeApply = async (ctx) => {
     rationale: `SHAP decomposition: dominant feature "${decomposition.dominantFeature}" (${decomposition.contributions[0]?.shapPercent?.toFixed(0) ?? 0}% of score). ` +
       `Top contribution: ${decomposition.contributions[0]?.explanation ?? 'none'}.`,
     evidence: [`dominant_feature=${decomposition.dominantFeature}`, `total_score=${decomposition.totalScore}`],
-    tags: ['meta'],
   };
 };
 
@@ -234,7 +228,6 @@ const dynamicRbaApply: ModeApply = async (ctx) => {
     verdict: 'clear',
     rationale: 'Dynamic RBA recalculation is event-driven. Trigger via /api/rba-recalculate on sanctions delta or adverse media alert.',
     evidence: [],
-    tags: ['meta'],
   };
 };
 
@@ -246,7 +239,6 @@ const syntheticRedteamApply: ModeApply = async (ctx) => {
     verdict: 'clear',
     rationale: 'Synthetic scenario generation runs offline. Use /api/eval-scenario-gen to generate new regression scenarios.',
     evidence: [],
-    tags: ['meta'],
   };
 };
 

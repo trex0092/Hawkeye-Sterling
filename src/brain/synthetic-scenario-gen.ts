@@ -3,7 +3,6 @@
 // Content-frozen system prompt per UAE FDL 10/2025 Art.18 (prompt-hash-manifest).
 
 import type { RegressionScenario } from './registry/eval-harness.js';
-import Anthropic from '@anthropic-ai/sdk';
 
 export interface ScenarioGenParams {
   typology: string;
@@ -82,7 +81,15 @@ export async function generateScenarios(
   params: ScenarioGenParams,
   apiKey?: string,
 ): Promise<ScenarioGenResult> {
-  const client = new Anthropic({ apiKey: apiKey ?? process.env['ANTHROPIC_API_KEY'] });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { default: AnthropicCtor } = await import('@anthropic-ai/sdk' as string).catch(() => {
+    throw new Error('ANTHROPIC_SDK_UNAVAILABLE: @anthropic-ai/sdk not found in this execution context');
+  }) as { default: new(opts: Record<string, string>) => Record<string, unknown> };
+
+  const effectiveKey = apiKey ?? process.env['ANTHROPIC_API_KEY'];
+  const clientOpts: Record<string, string> = {};
+  if (effectiveKey !== undefined) clientOpts['apiKey'] = effectiveKey;
+  const client = new AnthropicCtor(clientOpts) as { messages: { create(opts: unknown): Promise<{ content: Array<{ type: string; text?: string }> }> } };
   const existingIdSet = new Set(params.existingIds ?? []);
 
   const userPrompt =
@@ -102,8 +109,8 @@ export async function generateScenarios(
   });
 
   const rawText = message.content
-    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-    .map((b) => b.text)
+    .filter((b) => b.type === 'text')
+    .map((b) => b.text ?? '')
     .join('');
 
   let rawScenarios: unknown[] = [];
