@@ -7,15 +7,11 @@
 ## CG-1 — Anonymous screening permitted on /api/quick-screen
 
 **Risk:** CRITICAL (regulatory)  
-**Description:** The `/api/quick-screen` endpoint allows anonymous (unauthenticated) callers on the `free` tier. The `enforce()` middleware does not require an API key unless `requireAuth: true` is passed. Any internet-accessible caller can screen subjects without any audit trail linking the request to a natural person.
+**Status:** CLOSED (2026-05-26)
 
-Under UAE Federal Decree-Law No. 20 of 2018 Art. 20, every screening action must be traceable to the person who performed it. An anonymous result has no operator identity, no session, and no accountability chain.
+**Description:** The `/api/quick-screen` endpoint previously allowed anonymous callers. This has been resolved — the route now calls `enforce(req, { requireAuth: true, cost: 2 })`, requiring a valid API key on every request. All screening actions are traceable to an authenticated operator identity in the audit trail.
 
-**Decision required:** MLRO to confirm whether:
-  1. The `/api/quick-screen` endpoint should require authentication (`enforce(req, { requireAuth: true })`), or
-  2. Anonymous screening is intentionally available as a public demo/sandbox, in which case the MLRO confirms it is not used for any compliance decision and is segregated from the audit trail.
-
-**Code location:** `web/app/api/quick-screen/route.ts:74`, `web/lib/server/enforce.ts:64`
+**Resolution:** `web/app/api/quick-screen/route.ts` — `enforce(req, { requireAuth: true })` confirmed present at line 252. The auth coverage gate in `.github/workflows/ci.yml` monitors for any future regression.
 
 ---
 
@@ -113,7 +109,7 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 
 | ID | Owner | Target Date | Status |
 |----|-------|-------------|--------|
-| CG-1 | MLRO | — | Open |
+| CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | — | Open |
 | CG-3 | MLRO | — | Open |
 | CG-4 | Operator | — | Open |

@@ -10,6 +10,7 @@
 
 import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
+import { incrementCounter } from "./metrics-store";
 
 export interface DriftEntry {
   ts:         number;    // epoch ms
@@ -186,6 +187,7 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
   await setJson(reportKey(tenant), report).catch(() => undefined);
 
   if (driftDetected) {
+    incrementCounter("hawkeye_drift_alert_total", 1, { tenant });
     void writeAuditChainEntry({
       event: "ai.model_drift_detected",
       actor: "system",

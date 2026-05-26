@@ -14,6 +14,7 @@
 
 import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
+import { incrementCounter } from "./metrics-store";
 
 export type NameScript =
   | "arabic" | "cjk" | "cyrillic" | "devanagari" | "greek"
@@ -304,11 +305,15 @@ export async function computeBiasReport(tenant: string, entries?: BiasEntry[]): 
   await setJson(reportKey(tenant), report).catch(() => undefined);
 
   if (biasDetected) {
+    const flaggedScripts = groups.filter((g) => g.flagged && g.count >= 10).map((g) => g.script);
+    flaggedScripts.forEach((script) =>
+      incrementCounter("hawkeye_bias_alert_total", 1, { tenant, script }),
+    );
     void writeAuditChainEntry({
       event: "ai.bias_detected",
       actor: "system",
       biasDetected: true,
-      flaggedGroups: groups.filter((g) => g.flagged && g.count >= 10).map((g) => g.script),
+      flaggedGroups: flaggedScripts,
       sampleSize: recent.length,
     }, tenant).catch(() => undefined);
   }

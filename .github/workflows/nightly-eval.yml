@@ -1,0 +1,59 @@
+name: Nightly Eval
+
+# Weekly adversarial red-team + eval harness run.
+# Exercises all 12 adversarial probes and the eval harness KPI battery against
+# the live Anthropic API. Results are uploaded as CI artifacts for MLRO review.
+# Skipped on PRs and forks — ANTHROPIC_API_KEY is only available in the main repo.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # Monday 03:00 UTC — outside business hours
+  workflow_dispatch:        # manual trigger for ad-hoc runs
+
+jobs:
+  nightly-eval:
+    runs-on: ubuntu-latest
+    if: github.repository == 'trex0092/Hawkeye-Sterling'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
+
+      - name: Compile TypeScript (produces dist/ for @brain imports)
+        run: npm run build
+
+      - name: Run adversarial probe suite (deterministic passConditions)
+        run: npx vitest run web/lib/server/__tests__/adversarial-probes.test.ts --reporter=verbose
+
+      - name: Run eval harness KPI battery (requires ANTHROPIC_API_KEY)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: npm run brain:nightly-eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: false
+
+      - name: Collect eval results
+        if: always()
+        run: |
+          mkdir -p /tmp/eval-results
+          # Collect any JSON output from nightly-eval
+          find . -name "eval-results*.json" -o -name "kpi-snapshot*.json" 2>/dev/null \
+            | xargs -I{} cp {} /tmp/eval-results/ 2>/dev/null || true
+          echo "{ \"runAt\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"commit\": \"$GITHUB_SHA\", \"status\": \"complete\" }" \
+            > /tmp/eval-results/run-meta.json
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-eval-${{ github.sha }}
+          path: /tmp/eval-results/
+          retention-days: 90

@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { isRedisConfigured } from "@/lib/cache/redis";
 import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
+import { getCounters, getGauges } from "@/lib/server/metrics-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,27 +26,47 @@ function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string
   const ts = Date.now();
   const lines: string[] = [];
 
-  function gauge(name: string, help: string, value: number, labels?: Record<string, string>): void {
-    const labelStr = labels
-      ? `{${Object.entries(labels).map(([k, v]) => `${k}="${v.replace(/"/g, '\\"')}"`).join(",")}}`
-      : "";
+  function metric(
+    type: "gauge" | "counter",
+    name: string,
+    help: string,
+    value: number,
+    labelStr = "",
+  ): void {
     lines.push(`# HELP ${name} ${help}`);
-    lines.push(`# TYPE ${name} gauge`);
+    lines.push(`# TYPE ${name} ${type}`);
     lines.push(`${name}${labelStr} ${value} ${ts}`);
   }
 
-  gauge("hawkeye_uptime_seconds", "Server uptime in seconds since last cold start", uptimeMs / 1000);
-  gauge("hawkeye_redis_configured", "1 if Upstash Redis is configured, 0 otherwise", redisConfigured ? 1 : 0);
-  gauge(
+  metric("gauge", "hawkeye_uptime_seconds", "Server uptime in seconds since last cold start", uptimeMs / 1000);
+  metric("gauge", "hawkeye_redis_configured", "1 if Upstash Redis is configured, 0 otherwise", redisConfigured ? 1 : 0);
+  metric(
+    "gauge",
     "hawkeye_build_info",
     "Build metadata — always 1, use labels to read values",
     1,
-    {
-      service: "hawkeye-sterling",
-      version: "3.0.0",
-      env: process.env.NODE_ENV ?? "development",
-    },
+    `{service="hawkeye-sterling",version="3.0.0",env="${(process.env.NODE_ENV ?? "development").replace(/"/g, '\\"')}"}`,
   );
+
+  // Compliance counters from metrics-store (drift, bias, hallucination alerts, etc.)
+  for (const { key, value } of getCounters()) {
+    const braceIdx = key.indexOf("{");
+    const name = braceIdx === -1 ? key : key.slice(0, braceIdx);
+    const labels = braceIdx === -1 ? "" : key.slice(braceIdx);
+    lines.push(`# HELP ${name} Hawkeye compliance event counter`);
+    lines.push(`# TYPE ${name} counter`);
+    lines.push(`${name}${labels} ${value} ${ts}`);
+  }
+
+  // Compliance gauges (circuit breaker states, etc.)
+  for (const { key, value } of getGauges()) {
+    const braceIdx = key.indexOf("{");
+    const name = braceIdx === -1 ? key : key.slice(0, braceIdx);
+    const labels = braceIdx === -1 ? "" : key.slice(braceIdx);
+    lines.push(`# HELP ${name} Hawkeye compliance gauge`);
+    lines.push(`# TYPE ${name} gauge`);
+    lines.push(`${name}${labels} ${value} ${ts}`);
+  }
 
   return lines.join("\n") + "\n";
 }
@@ -69,12 +90,15 @@ export async function GET(req: Request): Promise<NextResponse> {
       status: 200,
       headers: {
         "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
-        ...Object.fromEntries(gate.headers.entries()),
+        ...gate.headers,
       },
     });
   }
 
   const cache = gdeltCacheStats();
+
+  const counters = Object.fromEntries(getCounters().map(({ key, value }) => [key, value]));
+  const gauges = Object.fromEntries(getGauges().map(({ key, value }) => [key, value]));
 
   return NextResponse.json({
     ok: true,
@@ -92,6 +116,11 @@ export async function GET(req: Request): Promise<NextResponse> {
       redisNote: redisConfigured
         ? "Upstash Redis connected — GDELT cache persists across Lambda cold starts."
         : "Redis not configured — GDELT cache is in-memory only (resets on cold start).",
+    },
+    complianceMetrics: {
+      note: "In-process counters — reset on Lambda cold start. Use Prometheus scrape for time-series.",
+      counters,
+      gauges,
     },
   }, { headers: gate.headers });
 }

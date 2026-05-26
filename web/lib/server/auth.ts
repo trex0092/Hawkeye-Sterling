@@ -44,6 +44,11 @@ interface SessionPayload {
   /** 16-char SHA-256 prefix of login IP + User-Agent — used to detect
    *  mid-session IP changes that may indicate session token theft. */
   fpHash?: string;
+  /** Tenant identifier for multi-tenant deployments. Absent on sessions
+   *  issued before this field was added; treat as "default" for single-tenant
+   *  compatibility. Enables audit-chain and blob-key isolation per tenant
+   *  without an extra API-key record lookup on each request. */
+  tenantId?: string;
 }
 
 function getSecret(): string {
@@ -66,11 +71,19 @@ function getSecret(): string {
   );
 }
 
-export function issueSession(userId: string, username: string, role: string, pwVersion = 0, fpHash = ""): string {
+export function issueSession(
+  userId: string,
+  username: string,
+  role: string,
+  pwVersion = 0,
+  fpHash = "",
+  tenantId?: string,
+): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: SessionPayload = {
     userId, username, role, iat: now, exp: now + SESSION_TTL_S, pwv: pwVersion,
     ...(fpHash ? { fpHash } : {}),
+    ...(tenantId && tenantId !== "default" ? { tenantId } : {}),
   };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
@@ -111,6 +124,11 @@ export function verifySession(token: string): SessionPayload | null {
   } catch {
     return null;
   }
+}
+
+/** Extract tenantId from a verified session payload; returns "default" when absent. */
+export function tenantIdFromSession(payload: ReturnType<typeof verifySession>): string {
+  return (payload as SessionPayload | null)?.tenantId ?? "default";
 }
 
 export { SESSION_COOKIE, SESSION_TTL_S };
