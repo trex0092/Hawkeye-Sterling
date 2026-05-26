@@ -45,6 +45,9 @@ export interface ModelRegistryEntry {
   approval:        ModelApprovalRecord;
   /** ISO date of last adversarial red-team run against this model deployment */
   redTeamLastRunAt?: string;
+  /** Path to the model card document relative to repo root.
+   *  Required for attestation — panel must review card before signing off. */
+  cardRef?: string;
 }
 
 export interface GovernancePolicy {
@@ -80,6 +83,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
+    cardRef:     "docs/model-cards/hs-001-screening.md",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -104,6 +108,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
+    cardRef:     "docs/model-cards/hs-002-reasoning.md",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -127,6 +132,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
+    cardRef:     "docs/model-cards/hs-004-mlro-dispositioner.md",
   },
   {
     modelId:     "claude-sonnet-4-6",
@@ -150,6 +156,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
+    cardRef:     "docs/model-cards/hs-002-reasoning.md",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -173,6 +180,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
+    cardRef:     "docs/model-cards/hs-003-adverse-media.md",
   },
 ];
 

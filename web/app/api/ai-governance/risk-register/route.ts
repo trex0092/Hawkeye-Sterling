@@ -42,6 +42,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     fdlReference:       m.fdlReference,
     registeredAt:       m.registeredAt,
     redTeamLastRunAt:   m.redTeamLastRunAt ?? null,
+    cardRef:            m.cardRef ?? null,
     approval: {
       ...m.approval,
       // Recompute status at request time so it reflects today's date

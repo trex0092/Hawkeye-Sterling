@@ -150,6 +150,7 @@ export async function consumeRateLimit(
   // to read-modify-write races under concurrent Lambda invocations).
   if (process.env["RATE_LIMIT_STRICT"] === "true") {
     console.error("[rate-limit] RATE_LIMIT_STRICT=true but Redis unavailable — returning 503 to prevent soft-limit bypass");
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'strict_redis_unavailable' });
     return {
       allowed: false,
       retryAfterSec: 5,

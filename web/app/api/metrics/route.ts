@@ -49,23 +49,39 @@ function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string
   );
 
   // Compliance counters from metrics-store (drift, bias, hallucination alerts, etc.)
+  // Prometheus spec requires exactly one # HELP and # TYPE per metric family
+  // (name without labels). Group by family name to avoid duplicate declarations.
+  const counterFamilies = new Map<string, { labels: string; value: number }[]>();
   for (const { key, value } of getCounters()) {
     const braceIdx = key.indexOf("{");
     const name = braceIdx === -1 ? key : key.slice(0, braceIdx);
     const labels = braceIdx === -1 ? "" : key.slice(braceIdx);
+    if (!counterFamilies.has(name)) counterFamilies.set(name, []);
+    counterFamilies.get(name)!.push({ labels, value });
+  }
+  for (const [name, samples] of counterFamilies) {
     lines.push(`# HELP ${name} Hawkeye compliance event counter`);
     lines.push(`# TYPE ${name} counter`);
-    lines.push(`${name}${labels} ${value} ${ts}`);
+    for (const { labels, value } of samples) {
+      lines.push(`${name}${labels} ${value} ${ts}`);
+    }
   }
 
   // Compliance gauges (circuit breaker states, etc.)
+  const gaugeFamilies = new Map<string, { labels: string; value: number }[]>();
   for (const { key, value } of getGauges()) {
     const braceIdx = key.indexOf("{");
     const name = braceIdx === -1 ? key : key.slice(0, braceIdx);
     const labels = braceIdx === -1 ? "" : key.slice(braceIdx);
+    if (!gaugeFamilies.has(name)) gaugeFamilies.set(name, []);
+    gaugeFamilies.get(name)!.push({ labels, value });
+  }
+  for (const [name, samples] of gaugeFamilies) {
     lines.push(`# HELP ${name} Hawkeye compliance gauge`);
     lines.push(`# TYPE ${name} gauge`);
-    lines.push(`${name}${labels} ${value} ${ts}`);
+    for (const { labels, value } of samples) {
+      lines.push(`${name}${labels} ${value} ${ts}`);
+    }
   }
 
   return lines.join("\n") + "\n";
