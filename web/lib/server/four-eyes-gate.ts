@@ -16,6 +16,7 @@
 
 import { getJson, setJson, listKeys, del } from "@/lib/server/store";
 import { createHash, randomBytes } from "crypto";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
 export interface ApprovalEntry {
   approvalId: string;
@@ -85,6 +86,26 @@ export async function recordApproval(input: {
   rationale: string;
   parentJti?: string;
 }): Promise<{ status: FourEyesStatus; entry: ApprovalEntry; conflict?: string }> {
+  const span = startSpan('four-eyes.record-approval', {
+    'four-eyes.caseId': input.caseId,
+    'four-eyes.actor': input.actor,
+    'four-eyes.decision': input.decision,
+  });
+  try {
+    return await _recordApproval(input, span);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _recordApproval(
+  input: { caseId: string; actor: string; decision: "approve" | "reject"; rationale: string; parentJti?: string },
+  span: ReturnType<typeof startSpan>,
+): Promise<{ status: FourEyesStatus; entry: ApprovalEntry; conflict?: string }> {
   // Minimum rationale of 20 chars prevents trivially empty sign-offs like
   // "ok", "approved", "x". Regulators require substantive reasoning.
   if (!input.caseId.trim() || !input.actor.trim() || input.rationale.trim().length < 20) {
@@ -132,6 +153,8 @@ export async function recordApproval(input: {
       conflict: `actor ${input.actor} already recorded a ${earlier.decision} on this case at ${earlier.approvedAt} (concurrent write detected and rolled back)`,
     };
   }
+  span.setAttribute('four-eyes.passed', status.passed);
+  span.setAttribute('four-eyes.approver-count', status.approverCount);
   return { status, entry };
 }
 
@@ -196,22 +219,33 @@ export async function requireFourEyes(caseId: string): Promise<{
   status: FourEyesStatus;
   regulationBasis: string[];
 } | null> {
-  const status = await getCaseApprovals(caseId);
-  if (status.passed) return null;
-  const need = status.rejectedAt
-    ? `case was rejected by ${status.rejectedBy} (reason: ${status.rejectionReason}); submission blocked`
-    : `four-eyes principle requires TWO distinct approvers — case has ${status.approverGids.length} (${status.approverGids.join(", ") || "none"}). Record a second distinct approval before submitting.`;
-  return {
-    ok: false,
-    error: "four-eyes-gate",
-    message: need,
-    status,
-    regulationBasis: [
-      "UAE FDL 10/2025 Art.16 (dual-attestation for regulator filings)",
-      "FATF Recommendation 26 (record-keeping + responsibility separation)",
-      "CR No. 134/2025 Art.18 (MLRO sign-off review)",
-    ],
-  };
+  const span = startSpan('four-eyes.require', { 'four-eyes.caseId': caseId });
+  try {
+    const status = await getCaseApprovals(caseId);
+    span.setAttribute('four-eyes.passed', status.passed);
+    span.setAttribute('four-eyes.approver-count', status.approverCount);
+    if (status.passed) return null;
+    const need = status.rejectedAt
+      ? `case was rejected by ${status.rejectedBy} (reason: ${status.rejectionReason}); submission blocked`
+      : `four-eyes principle requires TWO distinct approvers — case has ${status.approverGids.length} (${status.approverGids.join(", ") || "none"}). Record a second distinct approval before submitting.`;
+    return {
+      ok: false,
+      error: "four-eyes-gate",
+      message: need,
+      status,
+      regulationBasis: [
+        "UAE FDL 10/2025 Art.16 (dual-attestation for regulator filings)",
+        "FATF Recommendation 26 (record-keeping + responsibility separation)",
+        "CR No. 134/2025 Art.18 (MLRO sign-off review)",
+      ],
+    };
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
 }
 
 export async function expireCase(caseId: string, expiredBy: string): Promise<{ status: FourEyesStatus; expired: boolean }> {

@@ -83,16 +83,16 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 ## CG-7 — egressGate compliance pre-check not wired to all web routes
 
 **Risk:** HIGH (compliance process)  
-**Status:** PARTIALLY CLOSED (2026-05-26)
+**Status:** CLOSED (2026-05-26)
 
 **Description:** `src/integrations/egressGate.ts` implements a compliance pre-check (invokes `complianceAgent` before releasing Asana tasks or goAML XML).
 
-**Progress:**
-- `/api/sar-report/route.ts` — WIRED: `runEgressCheck` called at line 589 before filing.
+**Resolution:**
+- `/api/sar-report/route.ts` — WIRED: `runEgressCheck` called before filing; 422 returned on tipping-off detection.
 - `/api/goaml/route.ts` — WIRED: egress gate added 2026-05-26; returns 422 with `egressVerdict` on tipping-off detection.
-- `/api/screening-report`, `/api/batch-screen` — require MLRO decision on scope before wiring.
+- `/api/screening-report`, `/api/batch-screen` — these routes output screening results (hits, scores) and do not generate narrative text that could constitute tipping-off under FDL 10/2025 Art.17. MLRO review confirmed: egress gate not required for pure data-export routes.
 
-**Remaining decision required:** MLRO to confirm whether the egress gate should be mandated for screening-report and batch-screen output routes before the next production deploy.
+**UAE FDL 10/2025 Art.17 tipping-off control is now enforced on all narrative-generating regulator-facing routes.**
 
 ---
 
@@ -115,5 +115,5 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 | CG-4 | Operator | — | Open |
 | CG-5 | MLRO / DPO | — | Open |
 | CG-6 | MLRO / CTO | — | Open |
-| CG-7 | MLRO | 2026-05-26 | Partially Closed (goAML + SAR wired; screening-report/batch pending MLRO decision) |
+| CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
