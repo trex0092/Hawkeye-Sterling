@@ -1,12 +1,13 @@
 // Hawkeye Sterling — reasoning-mode registry.
-// 444 mode definitions across all wave files (213 base + 73 wave3 + 29 wave4 +
-//   37 wave5 + 35 wave6 + 40 wave11 + 17 wave12); 412 unique IDs after merge
-//   dedup (32 wave-3/4/5/6 entries reuse existing base IDs to upgrade stub
-//   implementations to real apply() functions via the OVERRIDES path).
-// Categories: 50. Wave 1 + 2 + 3 + 4 + 5 + 6 + 11 + 12.
+// 456 mode definitions across all wave files (213 base + 73 wave3 + 29 wave4 +
+//   37 wave5 + 35 wave6 + 40 wave11 + 17 wave12 + 19 wave13 + 12 wave14);
+//   412 unique IDs after merge dedup (32 wave-3/4/5/6 entries reuse existing
+//   base IDs to upgrade stub implementations to real apply() functions via
+//   the OVERRIDES path).
+// Categories: 50. Wave 1 + 2 + 3 + 4 + 5 + 6 + 11 + 12 + 13 + 14.
 // Each entry is registered metadata + either a real apply() (if src/brain/modes/registry.ts
 // or reasoning-modes-wave3.ts supplies an override) or a stub apply() that returns an
-// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11.
+// inconclusive placeholder Finding.  Real algorithms land mode-by-mode in Phase 7/8/11/14.
 
 import type {
   FacultyId, ReasoningCategory, ReasoningMode,
@@ -20,6 +21,7 @@ import { WAVE6_MODES, WAVE6_OVERRIDES } from './reasoning-modes-wave6.js';
 import { WAVE11_MODES, WAVE11_OVERRIDES } from './reasoning-modes-wave11.js';
 import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
 import { WAVE13_MODES, WAVE13_OVERRIDES } from './reasoning-modes-wave13.js';
+import { WAVE14_MODES, WAVE14_OVERRIDES } from './reasoning-modes-wave14.js';
 
 const m = (
   id: string,
@@ -378,6 +380,19 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]; if (!r) continue;
   const w13override = WAVE13_OVERRIDES.find((o) => o.id === r.id);
   if (w13override) REASONING_MODES[i] = w13override;
+}
+
+// Merge Wave 14: 12 new modes — temporal forecasting (3), cognitive load monitoring (2),
+// adversarial explainability (2), cross-case intelligence (3), dynamic RBA (2).
+// All 12 have real apply() implementations in modes/wave14-applies.ts.
+const existingIdsW14 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE14_MODES) {
+  if (!existingIdsW14.has(m.id)) REASONING_MODES.push(m);
+}
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]; if (!r) continue;
+  const w14override = WAVE14_OVERRIDES.find((o) => o.id === r.id);
+  if (w14override) REASONING_MODES[i] = w14override;
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
