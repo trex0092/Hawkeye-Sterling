@@ -12,6 +12,7 @@ import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 import { incrementCounter } from "./metrics-store";
 import { startSpan, SpanStatus } from "./tracer";
+import { emitAndLog } from "../../src/integrations/webhook-emitter";
 
 export interface DriftEntry {
   ts:         number;    // epoch ms
@@ -210,6 +211,15 @@ async function _computeDriftReport(tenant: string, entries?: DriftEntry[]): Prom
       scoreDrift,
       scoreDriftAlert,
     }, tenant).catch(() => undefined);
+    void emitAndLog('audit_drift', {
+      event: 'drift_alert',
+      tenant,
+      driftReason,
+      scoreDrift: scoreDrift ?? null,
+      thisWeekApproveRate: tw?.approveRate ?? null,
+      lastWeekApproveRate: lw?.approveRate ?? null,
+      detectedAt: new Date().toISOString(),
+    }).catch(() => undefined);
   }
 
   return report;

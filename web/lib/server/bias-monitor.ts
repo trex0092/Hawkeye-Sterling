@@ -16,6 +16,7 @@ import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 import { incrementCounter } from "./metrics-store";
 import { startSpan, SpanStatus } from "./tracer";
+import { emitAndLog } from "../../src/integrations/webhook-emitter";
 
 export type NameScript =
   | "arabic" | "cjk" | "cyrillic" | "devanagari" | "greek"
@@ -329,6 +330,14 @@ async function _computeBiasReport(tenant: string, entries?: BiasEntry[]): Promis
       flaggedGroups: flaggedScripts,
       sampleSize: recent.length,
     }, tenant).catch(() => undefined);
+    void emitAndLog('alert_bias', {
+      event: 'bias_alert',
+      tenant,
+      flaggedGroups: flaggedScripts,
+      sampleSize: recent.length,
+      fatfR10: true,
+      detectedAt: new Date().toISOString(),
+    }).catch(() => undefined);
   }
 
   if (nationalityBiasDetected) {
@@ -339,6 +348,14 @@ async function _computeBiasReport(tenant: string, entries?: BiasEntry[]): Promis
       flaggedNationalities: nationalityGroups.filter((g) => g.flagged).map((g) => g.nationality),
       pepSampleSize: recentPep.length,
     }, tenant).catch(() => undefined);
+    void emitAndLog('alert_bias', {
+      event: 'nationality_bias_alert',
+      tenant,
+      nationalityBiasScore,
+      flaggedNationalities: nationalityGroups.filter((g) => g.flagged).map((g) => g.nationality),
+      pepSampleSize: recentPep.length,
+      detectedAt: new Date().toISOString(),
+    }).catch(() => undefined);
   }
 
   return report;

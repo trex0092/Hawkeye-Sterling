@@ -30,14 +30,18 @@ export type WebhookChannel =
   | 'verdict_redline'
   | 'sanctions_delta'
   | 'mlro_override'
-  | 'audit_drift';
+  | 'audit_drift'
+  | 'alert_bias'
+  | 'alert_hallucination';
 
 const ENV_KEY: Record<WebhookChannel, string> = {
-  verdict_escalate: 'WEBHOOK_VERDICT_ESCALATE',
-  verdict_redline: 'WEBHOOK_VERDICT_REDLINE',
-  sanctions_delta: 'WEBHOOK_SANCTIONS_DELTA',
-  mlro_override: 'WEBHOOK_MLRO_OVERRIDE',
-  audit_drift: 'WEBHOOK_AUDIT_DRIFT',
+  verdict_escalate:    'WEBHOOK_VERDICT_ESCALATE',
+  verdict_redline:     'WEBHOOK_VERDICT_REDLINE',
+  sanctions_delta:     'WEBHOOK_SANCTIONS_DELTA',
+  mlro_override:       'WEBHOOK_MLRO_OVERRIDE',
+  audit_drift:         'WEBHOOK_AUDIT_DRIFT',
+  alert_bias:          'WEBHOOK_ALERT_BIAS',
+  alert_hallucination: 'WEBHOOK_ALERT_HALLUCINATION',
 };
 
 const HMAC_SECRET_ENV = 'WEBHOOK_HMAC_SECRET';
