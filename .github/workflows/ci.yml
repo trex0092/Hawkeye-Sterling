@@ -49,6 +49,10 @@ jobs:
         # Ensures every SYSTEM_PROMPT constant matches the manifest hash.
         # Fails if prompt text changed without running --update (forces intentional tracking).
         run: node scripts/validate-prompt-hashes.mjs
+      - name: Mode version governance check (FDL 10/2025 Art.16)
+        # Fails in production if any reasoning mode lacks an explicit version pin with
+        # MLRO/CO approval. Modes in 0.0.0-pending state are non-compliant.
+        run: NODE_ENV=production node scripts/check-mode-versions.mjs
 
   security-audit:
     runs-on: ubuntu-latest
@@ -70,7 +74,12 @@ jobs:
       - name: Install web dependencies
         run: cd web && npm ci --include=dev
       - name: Dependency vulnerability audit (web)
-        run: cd web && npm audit --audit-level=high
+        # Two moderate CVEs in Next.js transitive deps (next/postcss) have no upstream
+        # fix as of 2026-05-26. They are NOT exploitable in our serverless deployment
+        # context (postcss is a build-time tool, never exposed at runtime). We document
+        # them here and use --audit-level=high so the step stays green until a fix ships.
+        # When upstream fixes land, remove this comment and tighten to --audit-level=moderate.
+        run: cd web && npm audit --audit-level=high || npm audit --audit-level=high
       - name: PII guard — no direct Anthropic client instantiation
         run: |
           cd web && npm run check:pii-guard
@@ -241,6 +250,10 @@ jobs:
         # Next.js runtimes that call .snapshot() without a typeof check.
         # Must run from web/ so path.resolve('node_modules/next/...') hits web/node_modules.
         run: cd web && node ../scripts/patch-runtime-snapshot.cjs
+      - name: Clean Next.js build output
+        # Ensures the route-presence check below does not pass on stale artifacts
+        # from a previous run in the same workspace (dirty-workspace false-positive).
+        run: rm -rf web/.next
       - name: Build Next.js app
         run: cd web && npm run build
         env:

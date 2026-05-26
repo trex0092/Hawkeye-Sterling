@@ -135,6 +135,39 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 
 ---
 
+---
+
+## CG-GOV-001 — Reasoning mode version governance: 338 modes on 0.0.0-pending
+
+**Risk:** HIGH (regulatory — FATF R.18, FDL 10/2025 Art.16)
+**Status:** OPEN (2026-05-26) — requires MLRO/CO sign-off on each pending mode
+
+**Description:**
+`src/brain/reasoning-modes.ts` contains 463 reasoning mode definitions across 13 waves.
+As of 2026-05-26: 125 modes have explicit version pins in `_MODE_VERSION_ENTRIES`; **338 modes**
+still carry `version: '0.0.0-pending'` and `approvedBy: 'pending'`.
+
+FATF R.18 requires financial institutions to document and approve the AI/algorithmic tools
+used in AML/CFT controls. FDL 10/2025 Art.16 requires that material changes to AI decision
+logic be recorded in the audit trail before deployment.
+
+**Technical controls in place:**
+- `scripts/check-mode-versions.mjs` (added 2026-05-26) fails the CI build in `NODE_ENV=production`
+  if any mode is on `0.0.0-pending`.
+- `MODE_REGISTRY` in `reasoning-modes.ts` makes the pending set discoverable via
+  `getMissingVersionPins()`.
+
+**Action required (MLRO/CO — cannot be auto-resolved):**
+1. For each of the 338 pending modes, review the mode's `description` and `apply()` logic.
+2. Assign a real `version` (semver), `deployedDate`, and `contentHash` (SHA-256 of description + apply source).
+3. Record approver name in `approvedBy` field.
+4. Add the entry to `_MODE_VERSION_ENTRIES` in `src/brain/reasoning-modes.ts`.
+5. Run `node scripts/check-mode-versions.mjs` to verify the pending count reaches 0.
+
+**Counts (2026-05-26):** total=463, pinned=125, pending=338. Deadline: before next regulatory examination.
+
+---
+
 ## Resolution Checklist
 
 | ID | Owner | Target Date | Status |
@@ -147,3 +180,4 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
+| CG-GOV-001 | MLRO / CO | Before next exam | Open — 338 of 463 modes pending version approval |

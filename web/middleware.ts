@@ -184,7 +184,10 @@ function resolveAllowedOrigin(): string {
       return origin;
     } catch {
       // Malformed NEXT_PUBLIC_APP_URL — fall through to wildcard.
+      console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL is set but malformed — falling back to wildcard origin. Set a valid URL (e.g. https://hawkeye-sterling-v2.netlify.app).");
     }
+  } else if (process.env["NODE_ENV"] === "production") {
+    console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL not set in production — falling back to wildcard origin. This allows any origin to call the API. Set NEXT_PUBLIC_APP_URL to restrict access.");
   }
   return "*";
 }

@@ -265,20 +265,21 @@ describe('consumeRateLimit — Upstash Redis path', () => {
     vi.resetModules();
   });
 
-  it('calls Redis INCR when env vars are configured', async () => {
+  it('calls Redis pipeline when env vars are configured', async () => {
     process.env['UPSTASH_REDIS_REST_URL'] = 'https://fake.upstash.io';
     process.env['UPSTASH_REDIS_REST_TOKEN'] = 'tok';
-    let incrCalled = false;
+    let pipelineCalled = false;
     global.fetch = vi.fn(async (url: string | URL | Request) => {
       const u = String(url instanceof Request ? url.url : url);
-      if (u.includes('/incr/')) incrCalled = true;
-      return new Response(JSON.stringify({ result: 1 }), { status: 200 });
+      if (u.includes('/pipeline')) pipelineCalled = true;
+      // Pipeline response: [INCRBY secKey, EXPIRE secKey, INCRBY minKey, EXPIRE minKey]
+      return new Response(JSON.stringify([{"result":1},{"result":1},{"result":1},{"result":1}]), { status: 200 });
     }) as typeof fetch;
 
     const { consumeRateLimit } = await import('@/lib/server/rate-limit');
     const result = await consumeRateLimit('key-redis-test', 'free');
 
-    expect(incrCalled).toBe(true);
+    expect(pipelineCalled).toBe(true);
     expect(result.allowed).toBe(true);
   });
 
@@ -307,8 +308,10 @@ describe('consumeRateLimit — Upstash Redis path', () => {
     process.env['UPSTASH_REDIS_REST_TOKEN'] = 'tok';
     global.fetch = vi.fn(async (url: string | URL | Request) => {
       const u = String(url instanceof Request ? url.url : url);
-      // Return a count that exceeds any reasonable per-second tier limit
-      if (u.includes('/incr/')) return new Response(JSON.stringify({ result: 9999 }), { status: 200 });
+      if (u.includes('/pipeline')) {
+        // Pipeline response: secKey count=9999 (over limit), EXPIRE=1, minKey count=9999, EXPIRE=1
+        return new Response(JSON.stringify([{"result":9999},{"result":1},{"result":9999},{"result":1}]), { status: 200 });
+      }
       return new Response(JSON.stringify({ result: 1 }), { status: 200 });
     }) as typeof fetch;
 
