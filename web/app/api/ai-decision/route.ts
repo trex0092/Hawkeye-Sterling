@@ -10,6 +10,8 @@ import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
+import { incrementCounter } from "@/lib/server/metrics-store";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -622,6 +624,23 @@ export async function POST(req: Request) {
       await recordDecision(driftTenant, responseBody.decision, responseBody.confidence, body.riskScore ?? 0);
     } catch { /* non-critical */ }
   })();
+
+  // Prometheus screening decisions counter.
+  incrementCounter('hawkeye_screening_decisions_total', 1, { verdict: responseBody.decision });
+
+  // Post-response hallucination check (fire-and-forget — writes to audit chain on detection).
+  const evidenceFragments = [
+    ...responseBody.keyFactors,
+    ...(body.adverseMedia ? [body.adverseMedia] : []),
+    ...body.sanctionsHits.map((h) => `${h.list}: score ${h.score}${h.details ? ` — ${h.details}` : ""}`),
+  ];
+  void checkHallucination(responseBody.rationale, evidenceFragments, {
+    route: 'ai-decision',
+    tenantId: tenantIdFromGate(gate),
+    actor: gate.keyId,
+  }).catch((err: unknown) =>
+    console.warn('[ai-decision] hallucination check failed:', err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }

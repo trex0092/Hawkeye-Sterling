@@ -20,6 +20,7 @@
 //   response._hallucinationCheck = hCheck;
 
 import { writeAuditChainEntry } from './audit-chain';
+import { incrementCounter } from './metrics-store';
 
 export interface HallucinationResult {
   detected: boolean;
@@ -77,6 +78,10 @@ export async function checkHallucination(
   }
 
   const checkedAt = new Date().toISOString();
+
+  if (detected) {
+    incrementCounter('hawkeye_hallucination_detected_total', 1, { route: opts.route, severity });
+  }
 
   if (detected || opts.alwaysAudit) {
     void writeAuditChainEntry(

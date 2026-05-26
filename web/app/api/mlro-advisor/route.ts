@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import {
   invokeMlroAdvisor,
@@ -866,6 +867,22 @@ export async function POST(req: Request): Promise<NextResponse> {
       { event: "mlro.advisor_call", actor: gate.keyId, meta: { seq: audit.seq, tenant: tenant ?? "anonymous" } },
       tenant ?? "anonymous",
     ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+    // Post-response hallucination gate (fire-and-forget). Evidence is the
+    // citation excerpts retrieved by the RAG pipeline before generation.
+    if (result.narrative) {
+      const evidenceFragments = retrieval.persistedSources.map((s) =>
+        [s.articleRef ?? '', s.text ?? ''].filter(Boolean).join(': ').slice(0, 500),
+      );
+      void checkHallucination(result.narrative, evidenceFragments, {
+        route: 'mlro-advisor',
+        tenantId: tenant ?? 'default',
+        actor: gate.keyId,
+      }).catch((err: unknown) =>
+        console.warn('[mlro-advisor] hallucination check failed:', err instanceof Error ? err.message : String(err)),
+      );
+    }
+
     return NextResponse.json(
       {
         ...result,

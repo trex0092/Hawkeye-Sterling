@@ -17,6 +17,7 @@
 
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";
+import { incrementCounter } from "./metrics-store";
 
 // ── Upstash Redis path ────────────────────────────────────────────────────────
 
@@ -178,6 +179,7 @@ export async function consumeRateLimit(
   const nextMinute = prior.minute.count + effectiveCost;
 
   if (nextSecond > tier.rateLimitPerSecond) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'second' });
     return {
       allowed: false,
       retryAfterSec: 1,
@@ -187,6 +189,7 @@ export async function consumeRateLimit(
     };
   }
   if (nextMinute > tier.rateLimitPerMinute) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'minute' });
     return {
       allowed: false,
       retryAfterSec: Math.max(1, Math.ceil((minuteStart + 60_000 - now) / 1_000)),

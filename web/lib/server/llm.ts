@@ -15,6 +15,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
 import { startSpan, SpanStatus } from "./tracer";
+import { incrementCounter } from "./metrics-store";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -182,6 +183,12 @@ export class AnthropicGuard {
           cacheReadTokens: u?.cache_read_input_tokens ?? 0,
           cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
           latencyMs,
+        });
+        // Prometheus counter: aggregate token volume per model/route pair for cost estimation.
+        incrementCounter('hawkeye_llm_tokens_total', (u?.input_tokens ?? 0) + (u?.output_tokens ?? 0), {
+          model: response.model,
+          route,
+          type: 'total',
         });
 
         return { ...response, content: rehydratedContent } as Anthropic.Message;

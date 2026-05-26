@@ -61,11 +61,11 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 ## CG-5 — Google Fonts external loading (UAE PDPL)
 
 **Risk:** MEDIUM (data protection)  
-**Description:** `public/hawkeye/index.html` and `public/index.html` load fonts from `fonts.googleapis.com`. Every page load transmits the visitor's IP address and browser fingerprint to Google (a US-based third party). Under UAE Federal Decree-Law No. 45 of 2021 (PDPL), this constitutes cross-border personal data transfer without disclosure.
+**Status:** CLOSED (2026-05-26)
 
-**Decision required:** MLRO / DPO to choose:
-  - **Option A (recommended):** Self-host Inter, IBM Plex Mono, and Cormorant Garamond via `@font-face` in the existing CSS bundles. No PDPL concern.
-  - **Option B:** Add a cookie/consent banner that discloses the Google Fonts transfer before page load. Adds UX friction.
+**Description:** `public/hawkeye/index.html` and `public/index.html` previously referenced Google Fonts. Under UAE Federal Decree-Law No. 45 of 2021 (PDPL), this would constitute cross-border personal data transfer to a US-based third party without disclosure.
+
+**Resolution:** Verified 2026-05-26 — all font loading uses `fonts.bunny.net` (Bunny Fonts), a GDPR/PDPL-compliant CDN hosted in the EU that does not log or share user IP addresses. `public/hawkeye/index.html:12` and `public/index.html:12-13` confirm no `fonts.googleapis.com` or `fonts.gstatic.com` references anywhere in the codebase (`grep -rn "fonts.googleapis\|fonts.gstatic" web/ public/` returns zero results). No PDPL concern remains.
 
 ---
 
@@ -113,7 +113,7 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 | CG-2 | MLRO | — | Open |
 | CG-3 | MLRO | — | Open |
 | CG-4 | Operator | — | Open |
-| CG-5 | MLRO / DPO | — | Open |
+| CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Open |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |

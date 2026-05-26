@@ -17,6 +17,7 @@
 
 import { createHash, createHmac } from 'node:crypto';
 import { startSpan, SpanStatus } from './tracer';
+import { incrementCounter } from './metrics-store';
 
 // ── Per-tenant key derivation ─────────────────────────────────────────────────
 // Derives a per-tenant HMAC signing key from the root AUDIT_CHAIN_SECRET.
@@ -305,7 +306,9 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
     'aml.event': String(event.event ?? 'unknown'),
   });
   try {
-    return await _writeAuditChainEntry(event, tenantId);
+    const ok = await _writeAuditChainEntry(event, tenantId);
+    if (ok) incrementCounter('hawkeye_audit_chain_entries_total', 1, { tenant: tenantId });
+    return ok;
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
     span.recordException(err instanceof Error ? err : new Error(String(err)));
