@@ -37,6 +37,11 @@
 
 const STORE_NAME = "hawkeye-opensanctions";
 const BLOB_KEY = "sanctions.json";
+// E-05 alignment: STORE_NAME + BLOB_KEY must match what opensanctions-datasets.ts writes.
+// refreshOpenSanctionsBlob() in opensanctions-datasets.ts writes to:
+//   store "hawkeye-opensanctions", key "sanctions.json" with metadata.writtenAt.
+// Any change to those values must be mirrored here.
+const MAX_BLOB_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours — trigger background refresh if stale
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,6 +84,7 @@ let _records: OpenSanctionsRecord[] | null = null;
 let _loadAttempted = false;
 let _loadError: string | null = null;
 let _loadInFlight: Promise<OpenSanctionsRecord[]> | null = null;
+let _refreshTriggered = false;
 
 async function loadFromBlobs(): Promise<OpenSanctionsRecord[]> {
   if (_records !== null) return _records;
@@ -89,6 +95,57 @@ async function loadFromBlobs(): Promise<OpenSanctionsRecord[]> {
   return _loadInFlight;
 }
 
+/** Trigger a background refresh of the OpenSanctions blob. Fire-and-forget —
+ *  must not block the response path. Only triggered once per warm Lambda instance. */
+function triggerBackgroundRefresh(reason: string): void {
+  if (_refreshTriggered) return;
+  _refreshTriggered = true;
+  void (async () => {
+    try {
+      const { refreshOpenSanctionsBlob } = await import("./opensanctions-datasets.js");
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          route: "openSanctions",
+          event: "opensanctions.degraded_mode",
+          detail: reason,
+          action: "background_refresh_triggered",
+          _msg: `[hawkeye] warn openSanctions opensanctions.degraded_mode ${reason} — background refresh started`,
+        }),
+      );
+      const result = await refreshOpenSanctionsBlob();
+      if (result.ok) {
+        // Invalidate the in-process cache so the next request picks up fresh data.
+        _records = null;
+        _loadAttempted = false;
+        _byId = null;
+        _byNameLower = null;
+        _byIdentifier = null;
+        _byCountry = null;
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            route: "openSanctions",
+            event: "opensanctions.background_refresh_complete",
+            detail: `${result.totalRecords} records written`,
+            _msg: `[hawkeye] warn openSanctions opensanctions.background_refresh_complete ${result.totalRecords} records`,
+          }),
+        );
+      }
+    } catch (err) {
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          route: "openSanctions",
+          event: "opensanctions.background_refresh_failed",
+          detail: err instanceof Error ? err.message : String(err),
+          _msg: `[hawkeye] warn openSanctions opensanctions.background_refresh_failed`,
+        }),
+      );
+    }
+  })().catch(() => undefined);
+}
+
 async function _doLoadFromBlobs(): Promise<OpenSanctionsRecord[]> {
 
   let mod: typeof import("@netlify/blobs") | null = null;
@@ -96,7 +153,15 @@ async function _doLoadFromBlobs(): Promise<OpenSanctionsRecord[]> {
     mod = await import("@netlify/blobs");
   } catch (err) {
     _loadError = `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}`;
-    console.warn("[openSanctions]", _loadError);
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        route: "openSanctions",
+        event: "opensanctions.degraded_mode",
+        detail: _loadError,
+        _msg: `[hawkeye] warn openSanctions opensanctions.degraded_mode blobs_unavailable — screening against empty OpenSanctions index`,
+      }),
+    );
     _records = [];
     return _records;
   }
@@ -115,18 +180,53 @@ async function _doLoadFromBlobs(): Promise<OpenSanctionsRecord[]> {
     if (token) opts.token = token;
     const store = mod.getStore(opts);
 
-    const raw = await store.get(BLOB_KEY, { type: "json" }) as OpenSanctionsRecord[] | null;
-    if (Array.isArray(raw)) {
-      _records = raw;
+    // Use getWithMetadata to also retrieve writtenAt for freshness check.
+    const result = await store.getWithMetadata(BLOB_KEY, { type: "json" }) as {
+      data: OpenSanctionsRecord[] | null;
+      metadata: Record<string, unknown>;
+    } | null;
+
+    if (result && Array.isArray(result.data) && result.data.length > 0) {
+      _records = result.data;
+
+      // Freshness check: trigger a background refresh if data is older than 24h.
+      const writtenAt = typeof result.metadata?.["writtenAt"] === "string"
+        ? new Date(result.metadata["writtenAt"]).getTime()
+        : null;
+      if (writtenAt !== null && Date.now() - writtenAt > MAX_BLOB_AGE_MS) {
+        const ageHours = Math.round((Date.now() - writtenAt) / (60 * 60 * 1000));
+        triggerBackgroundRefresh(`blob_stale (${ageHours}h old, threshold 24h)`);
+      }
+
       return _records;
     }
-    _loadError = "Blob is missing or empty — operator must POST the dataset to /api/admin/opensanctions-import once after deploy";
-    console.warn("[openSanctions]", _loadError);
+
+    // Blob is missing or empty — operating in degraded mode.
+    _loadError = "OpenSanctions blob missing or empty — operating in degraded mode. Screening will not match OpenSanctions entities until the blob is populated by the opensanctions-refresh scheduled function.";
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        route: "openSanctions",
+        event: "opensanctions.degraded_mode",
+        detail: _loadError,
+        action: "background_refresh_triggered",
+        _msg: `[hawkeye] warn openSanctions opensanctions.degraded_mode blob_missing — screening against empty OpenSanctions index`,
+      }),
+    );
+    triggerBackgroundRefresh("blob_missing");
     _records = [];
     return _records;
   } catch (err) {
     _loadError = `Blobs read failed — ${err instanceof Error ? err.message : String(err)}`;
-    console.warn("[openSanctions]", _loadError);
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        route: "openSanctions",
+        event: "opensanctions.degraded_mode",
+        detail: _loadError,
+        _msg: `[hawkeye] warn openSanctions opensanctions.degraded_mode blobs_read_error — screening against empty OpenSanctions index`,
+      }),
+    );
     _records = [];
     return _records;
   }
