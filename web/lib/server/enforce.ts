@@ -23,6 +23,7 @@ import { tierFor } from "@/lib/data/tiers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
 import { log } from "./logger";
+import { startSpan, SpanStatus } from "./tracer";
 
 // Memoized HMAC key for IP anonymization. Derived once per deployment from
 // SESSION_SECRET so that the same IP always produces the same hash within a
@@ -81,6 +82,24 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 export async function enforce(
   req: Request,
   opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number } = {},
+): Promise<EnforcementResult> {
+  const route = new URL(req.url).pathname;
+  const span = startSpan('enforce.auth', { 'http.route': route, 'http.method': req.method });
+  try {
+    return await _enforce(req, opts, span);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _enforce(
+  req: Request,
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number },
+  span: ReturnType<typeof startSpan>,
 ): Promise<EnforcementResult> {
   // Per-property defaulting so callers can override one option without
   // accidentally clearing the other. The previous all-or-nothing default
@@ -296,6 +315,9 @@ export async function enforce(
     };
   }
 
+  span.setAttribute('auth.keyId', keyId);
+  span.setAttribute('auth.tier', tierId);
+  span.setAttribute('auth.outcome', 'allow');
   return {
     ok: true,
     tier: rl.tier,

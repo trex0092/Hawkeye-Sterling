@@ -11,6 +11,7 @@
 import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 import { incrementCounter } from "./metrics-store";
+import { startSpan, SpanStatus } from "./tracer";
 
 export interface DriftEntry {
   ts:         number;    // epoch ms
@@ -103,6 +104,18 @@ export async function recordDecision(
 }
 
 export async function computeDriftReport(tenant: string, entries?: DriftEntry[]): Promise<DriftReport> {
+  const span = startSpan('drift-monitor.compute', { 'aml.tenant': tenant });
+  try {
+    return await _computeDriftReport(tenant, entries);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _computeDriftReport(tenant: string, entries?: DriftEntry[]): Promise<DriftReport> {
   const key = windowKey(tenant);
   const window = entries ?? ((await getJson<DriftEntry[]>(key).catch(() => null)) ?? []);
   const now = Date.now();

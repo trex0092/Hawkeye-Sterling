@@ -15,6 +15,7 @@
 // with zero added latency or cost.
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
 export type EgressVerdict = "approved" | "held_tipping_off" | "held_incomplete" | "held_review";
 
@@ -108,22 +109,37 @@ export async function runEgressCheck(
   narrative: string,
   reportType: string,
 ): Promise<EgressCheckResult> {
-  // Read per-call so env-var changes take effect without a cold-start restart.
-  const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
-  if (!gateEnabled) return { allowed: true, verdict: "approved" };
+  const span = startSpan('egress-gate.check', { 'aml.report_type': reportType });
+  try {
+    const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
+    if (!gateEnabled) {
+      span.setAttribute('egress.gate_enabled', false);
+      return { allowed: true, verdict: "approved" };
+    }
+    span.setAttribute('egress.gate_enabled', true);
 
-  // Fast path: regex tipping-off check (no LLM cost).
-  if (hasTippingOff(narrative)) {
-    console.warn(`[egress-check] tipping-off pattern detected in ${reportType} — artefact held`);
-    return {
-      allowed: false,
-      verdict: "held_tipping_off",
-      reason:
-        "Narrative contains language that may constitute tipping-off under FDL 10/2025 Art.17. " +
-        "Remove any references to the STR/SAR filing before delivery.",
-    };
+    if (hasTippingOff(narrative)) {
+      console.warn(`[egress-check] tipping-off pattern detected in ${reportType} — artefact held`);
+      span.setAttribute('egress.verdict', 'held_tipping_off');
+      span.setStatus({ code: SpanStatus.ERROR });
+      return {
+        allowed: false,
+        verdict: "held_tipping_off",
+        reason:
+          "Narrative contains language that may constitute tipping-off under FDL 10/2025 Art.17. " +
+          "Remove any references to the STR/SAR filing before delivery.",
+      };
+    }
+
+    const result = await llmEgressCheck(narrative, reportType);
+    span.setAttribute('egress.verdict', result.verdict);
+    if (!result.allowed) span.setStatus({ code: SpanStatus.ERROR });
+    return result;
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
   }
-
-  // Full LLM gate for broader compliance review.
-  return llmEgressCheck(narrative, reportType);
 }

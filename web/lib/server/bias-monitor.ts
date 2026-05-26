@@ -15,6 +15,7 @@
 import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 import { incrementCounter } from "./metrics-store";
+import { startSpan, SpanStatus } from "./tracer";
 
 export type NameScript =
   | "arabic" | "cjk" | "cyrillic" | "devanagari" | "greek"
@@ -251,6 +252,18 @@ function computeNationalityBias(pepEntries: PepNationalityEntry[]): {
 }
 
 export async function computeBiasReport(tenant: string, entries?: BiasEntry[]): Promise<BiasReport> {
+  const span = startSpan('bias-monitor.compute', { 'aml.tenant': tenant });
+  try {
+    return await _computeBiasReport(tenant, entries);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _computeBiasReport(tenant: string, entries?: BiasEntry[]): Promise<BiasReport> {
   const key = windowKey(tenant);
   const window = entries ?? ((await getJson<BiasEntry[]>(key).catch(() => null)) ?? []);
 

@@ -16,6 +16,7 @@
 // requires the verifier to surface ALL three classes.
 
 import { createHash, createHmac } from 'node:crypto';
+import { startSpan, SpanStatus } from './tracer';
 
 // ── Per-tenant key derivation ─────────────────────────────────────────────────
 // Derives a per-tenant HMAC signing key from the root AUDIT_CHAIN_SECRET.
@@ -299,6 +300,22 @@ async function loadAuditStore() {
  * Returns true on success, false after all retries exhausted (non-throwing).
  */
 export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "default"): Promise<boolean> {
+  const span = startSpan('audit-chain.write', {
+    'aml.tenant': tenantId,
+    'aml.event': String(event.event ?? 'unknown'),
+  });
+  try {
+    return await _writeAuditChainEntry(event, tenantId);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): Promise<boolean> {
   const chainSecret = getChainSecret(tenantId);
   if (!chainSecret) {
     console.error(

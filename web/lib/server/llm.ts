@@ -14,6 +14,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
+import { startSpan, SpanStatus } from "./tracer";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -143,7 +144,20 @@ export class AnthropicGuard {
           })),
         };
 
-        const response = await inner.messages.create(safe, requestOptions);
+        const span = startSpan('llm.messages.create', {
+          'llm.model': opts.model,
+          'llm.route': route,
+          'llm.max_tokens': opts.max_tokens,
+        });
+        let response: Anthropic.Message;
+        try {
+          response = await inner.messages.create(safe, requestOptions);
+        } catch (err) {
+          span.setStatus({ code: SpanStatus.ERROR });
+          span.recordException(err instanceof Error ? err : new Error(String(err)));
+          span.end();
+          throw err;
+        }
 
         // Rehydrate response text blocks
         const rehydratedContent = (response.content as Anthropic.Messages.ContentBlock[]).map((block) => {
@@ -155,6 +169,11 @@ export class AnthropicGuard {
 
         // Fire-and-forget telemetry
         const u = response.usage as Anthropic.Messages.Usage;
+        const latencyMs = Date.now() - t0;
+        span.setAttribute('llm.input_tokens', u?.input_tokens ?? 0);
+        span.setAttribute('llm.output_tokens', u?.output_tokens ?? 0);
+        span.setAttribute('llm.latency_ms', latencyMs);
+        span.end();
         void recordCall({
           route,
           model: response.model,
@@ -162,7 +181,7 @@ export class AnthropicGuard {
           outputTokens: u?.output_tokens ?? 0,
           cacheReadTokens: u?.cache_read_input_tokens ?? 0,
           cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
-          latencyMs: Date.now() - t0,
+          latencyMs,
         });
 
         return { ...response, content: rehydratedContent } as Anthropic.Message;
