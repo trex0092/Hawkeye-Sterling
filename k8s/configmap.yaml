@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hawkeye-config
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+data:
+  NODE_ENV: "production"
+  NODE_OPTIONS: "--max-old-space-size=1536"
+  NEXT_TELEMETRY_DISABLED: "1"
+  # Override these with your actual deployment URL
+  NEXT_PUBLIC_APP_URL: "https://hawkeye.example.com"
+  # Feature flags (non-sensitive)
+  MCP_ENABLED: "true"
+  EGRESS_GATE_ENABLED: "true"
+  RATE_LIMIT_STRICT: "true"
+  # Drift/bias thresholds — adjust per institution risk tolerance
+  DRIFT_APPROVE_DELTA_PCT: "20"
+  DRIFT_SCORE_THRESHOLD_PTS: "15"
+  BIAS_THRESHOLD_PCT: "15"
+  NATIONALITY_FP_DELTA_PCT: "20"

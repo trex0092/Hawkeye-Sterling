@@ -53,8 +53,27 @@ function reportKey(tenant: string): string {
 const WINDOW_MS   = 30 * 24 * 3_600_000;
 const WEEK_MS     = 7  * 24 * 3_600_000;
 const MAX_ENTRIES = 5_000;
-const DRIFT_APPROVE_DELTA   = 0.20; // >20% increase in approve rate
-const SCORE_DRIFT_THRESHOLD = 15;   // >15 point drift from 30-day rolling baseline
+
+// Thresholds are operator-configurable via env vars so regulated institutions
+// can apply institution-specific tolerance bands without a code deploy.
+// DRIFT_APPROVE_DELTA_PCT: integer percentage points (default 20 → 0.20 fraction)
+// DRIFT_SCORE_THRESHOLD_PTS: integer points of risk score deviation (default 15)
+function getDriftApproveThreshold(): number {
+  const raw = process.env["DRIFT_APPROVE_DELTA_PCT"];
+  if (raw !== undefined && raw !== "") {
+    const v = parseFloat(raw);
+    if (isFinite(v) && v > 0 && v < 100) return v / 100;
+  }
+  return 0.20;
+}
+function getScoreDriftThreshold(): number {
+  const raw = process.env["DRIFT_SCORE_THRESHOLD_PTS"];
+  if (raw !== undefined && raw !== "") {
+    const v = parseFloat(raw);
+    if (isFinite(v) && v > 0 && v <= 100) return v;
+  }
+  return 15;
+}
 
 export async function recordDecision(
   tenant: string,
@@ -114,7 +133,7 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
 
   if (tw && lw && lw.count >= 10 && tw.count >= 10) {
     const approveIncrease = tw.approveRate - lw.approveRate;
-    if (approveIncrease > DRIFT_APPROVE_DELTA) {
+    if (approveIncrease > getDriftApproveThreshold()) {
       driftDetected = true;
       driftReason = `Approve rate increased by ${(approveIncrease * 100).toFixed(1)}% this week vs last week — possible model drift or gaming`;
     }
@@ -142,7 +161,7 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
   let scoreDriftAlert = false;
   if (rollingBaselineScore !== null && currentMeanScore !== null) {
     scoreDrift = Math.round((currentMeanScore - rollingBaselineScore) * 10) / 10;
-    if (Math.abs(scoreDrift) > SCORE_DRIFT_THRESHOLD) {
+    if (Math.abs(scoreDrift) > getScoreDriftThreshold()) {
       scoreDriftAlert = true;
       const direction = scoreDrift > 0 ? "upward" : "downward";
       const driftMsg = `Composite risk score drifted ${direction} by ${Math.abs(scoreDrift).toFixed(1)} points from 30-day baseline (${rollingBaselineScore.toFixed(1)}) — possible data drift or model miscalibration`;

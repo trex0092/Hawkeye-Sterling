@@ -104,9 +104,27 @@ function detectScript(name: string): NameScript {
 
 const WINDOW_MS  = 30 * 24 * 3_600_000; // 30 days
 const MAX_ENTRIES = 5_000;
-const BIAS_THRESHOLD = 1.15; // 15% above global mean
-const NATIONALITY_FP_DELTA = 0.20; // >20% false positive rate difference
 const MIN_NATIONALITY_SAMPLE = 5;   // minimum entries per nationality for bias calc
+
+// Thresholds are operator-configurable via env vars.
+// BIAS_THRESHOLD_PCT: integer percentage above global mean that triggers a flag (default 15 → ratio 1.15)
+// NATIONALITY_FP_DELTA_PCT: integer percentage gap in false-positive rates between nationalities (default 20 → 0.20)
+function getBiasThreshold(): number {
+  const raw = process.env["BIAS_THRESHOLD_PCT"];
+  if (raw !== undefined && raw !== "") {
+    const v = parseFloat(raw);
+    if (isFinite(v) && v > 0 && v < 100) return 1 + v / 100;
+  }
+  return 1.15;
+}
+function getNationalityFpDelta(): number {
+  const raw = process.env["NATIONALITY_FP_DELTA_PCT"];
+  if (raw !== undefined && raw !== "") {
+    const v = parseFloat(raw);
+    if (isFinite(v) && v > 0 && v < 100) return v / 100;
+  }
+  return 0.20;
+}
 
 export async function recordScreeningBias(
   tenant: string,
@@ -210,7 +228,7 @@ function computeNationalityBias(pepEntries: PepNationalityEntry[]): {
     const hitRate = items.filter((e) => e.isHit).length / total;
     const fpRate  = items.filter((e) => e.isFalsePos).length / total;
     const biasRatio = globalFP > 0 ? fpRate / globalFP : (fpRate > 0 ? Infinity : 1);
-    const flagged = Math.abs(fpRate - globalFP) > NATIONALITY_FP_DELTA;
+    const flagged = Math.abs(fpRate - globalFP) > getNationalityFpDelta();
     groups.push({
       nationality,
       count: total,
@@ -259,7 +277,7 @@ export async function computeBiasReport(tenant: string, entries?: BiasEntry[]): 
       meanScore: Math.round(meanScore * 10) / 10,
       hitRate:   Math.round(hitRate * 1000) / 1000,
       biasRatio: Math.round(biasRatio * 1000) / 1000,
-      flagged:   biasRatio > BIAS_THRESHOLD,
+      flagged:   biasRatio > getBiasThreshold(),
     };
   }).sort((a, b) => b.biasRatio - a.biasRatio);
 

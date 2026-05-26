@@ -1,6 +1,6 @@
 # Hawkeye Sterling — Compliance Gaps
-**Date:** 2026-05-08  
-**Status:** These items cannot be closed by code alone. Each requires an explicit human or MLRO decision before it can be considered resolved.
+**Date:** 2026-05-26 (last updated)  
+**Status:** Items marked CLOSED have been addressed in code. Items marked Open require an explicit human or MLRO decision before they can be considered resolved.
 
 ---
 
@@ -87,11 +87,16 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 ## CG-7 — egressGate compliance pre-check not wired to all web routes
 
 **Risk:** HIGH (compliance process)  
-**Description:** `src/integrations/egressGate.ts` implements a compliance pre-check (invokes `complianceAgent` before releasing Asana tasks or goAML XML) but is only wired in `scripts/smoke-compliance-agent.mjs` (a test script). Production web API routes (`/api/screening-report`, `/api/batch-screen`, `/api/sar-report`) create Asana tasks directly, bypassing the egress gate.
+**Status:** PARTIALLY CLOSED (2026-05-26)
 
-The egress gate enforces the MLRO charter: outputs that do not pass compliance review are held, not released. Without it, AI-generated narratives reach the MLRO's inbox without a pre-flight compliance check.
+**Description:** `src/integrations/egressGate.ts` implements a compliance pre-check (invokes `complianceAgent` before releasing Asana tasks or goAML XML).
 
-**Decision required:** MLRO to confirm whether the egress gate should be mandated for all output-producing routes before the next production deploy.
+**Progress:**
+- `/api/sar-report/route.ts` — WIRED: `runEgressCheck` called at line 589 before filing.
+- `/api/goaml/route.ts` — WIRED: egress gate added 2026-05-26; returns 422 with `egressVerdict` on tipping-off detection.
+- `/api/screening-report`, `/api/batch-screen` — require MLRO decision on scope before wiring.
+
+**Remaining decision required:** MLRO to confirm whether the egress gate should be mandated for screening-report and batch-screen output routes before the next production deploy.
 
 ---
 
@@ -114,5 +119,5 @@ The egress gate enforces the MLRO charter: outputs that do not pass compliance r
 | CG-4 | Operator | — | Open |
 | CG-5 | MLRO / DPO | — | Open |
 | CG-6 | MLRO / CTO | — | Open |
-| CG-7 | MLRO | — | Open |
+| CG-7 | MLRO | 2026-05-26 | Partially Closed (goAML + SAR wired; screening-report/batch pending MLRO decision) |
 | CG-8 | Operator | — | Open |

@@ -75,8 +75,8 @@ applicable given the nature of regulated AML/CFT screening output.
 | CC7.1 | Detects security events | Audit chain `src/brain/audit-chain.ts` (FNV-1a hashed signature anchors); rate-limit telemetry |
 | CC7.2 | Monitors system components | Status route `web/app/api/status/route.ts`; brain-soul manifest |
 | CC7.3 | Evaluates security events | Meta-cognition layer; introspection alerts |
-| CC7.4 | Responds to security incidents | Out-of-repo: incident-response runbook |
-| CC7.5 | Recovers from incidents | Out-of-repo: DR plan; Netlify Blobs versioning |
+| CC7.4 | Responds to security incidents | In-repo: `docs/INCIDENT-RECOVERY.md` — covers secret rotation, AI model incidents, sanctions corpus staleness, JWT compromise; runbook sections: Detection → Containment → Eradication → Recovery → Lessons Learned |
+| CC7.5 | Recovers from incidents | `docs/INCIDENT-RECOVERY.md` § Recovery; Netlify Blobs 10-year audit chain retention configured via `AUDIT_CHAIN_SECRET` + `NETLIFY_BLOBS_TOKEN`; k8s self-healing via `k8s/deployment.yaml` readiness/liveness probes; `docs/AI_GOVERNANCE_POLICY.md` § 7 Incident Response |
 
 ## CC8 — Change Management
 

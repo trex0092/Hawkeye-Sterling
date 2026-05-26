@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hawkeye-sterling
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+    app.kubernetes.io/component: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hawkeye-sterling
+        app.kubernetes.io/component: web
+    spec:
+      serviceAccountName: hawkeye-sterling
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: ghcr.io/trex0092/hawkeye-sterling:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          envFrom:
+            - configMapRef:
+                name: hawkeye-config
+            - secretRef:
+                name: hawkeye-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nextjs-cache
+              mountPath: /app/.next/cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nextjs-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hawkeye-sterling
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hawkeye-sterling
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  selector:
+    app.kubernetes.io/name: hawkeye-sterling
+    app.kubernetes.io/component: web
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http

@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-default-deny
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-ingress
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from ingress controller only
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-egress
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Egress
+  egress:
+    # DNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # HTTPS to external APIs (Anthropic, Upstash Redis, Netlify Blobs, MoonDB, vendors)
+    - ports:
+        - protocol: TCP
+          port: 443
+    # Allow egress to osint-bridge sidecar within namespace
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: osint-bridge
+      ports:
+        - protocol: TCP
+          port: 8080

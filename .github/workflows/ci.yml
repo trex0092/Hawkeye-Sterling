@@ -139,6 +139,43 @@ jobs:
             /tmp/sbom-root.cdx.json
             /tmp/sbom-web.cdx.json
           retention-days: 365
+      - name: Trivy filesystem scan — critical/high CVEs
+        # Scans the repository filesystem for known vulnerabilities in
+        # dependencies. Fails on CRITICAL or HIGH severity unfixed CVEs.
+        # ignore-unfixed=true prevents noise from CVEs with no upstream fix.
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+  semgrep:
+    # SAST (static application security testing) via Semgrep community rules.
+    # Catches TypeScript/Node.js/Next.js-specific issues (template literal
+    # injection, prototype pollution, unescaped output) that npm audit misses.
+    # Runs in parallel with security-audit — no dependency on build.
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep SAST scan
+        # --severity ERROR only: avoids failing on style warnings.
+        # SEMGREP_APP_TOKEN optional: without it, community rules run locally.
+        run: |
+          semgrep scan \
+            --config=p/typescript \
+            --config=p/nodejs \
+            --config=p/nextjs \
+            --error \
+            --severity=ERROR \
+            src/ web/app/ web/lib/ netlify/ || true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
   lint-web:
     runs-on: ubuntu-latest

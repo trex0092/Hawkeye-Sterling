@@ -4,6 +4,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getEntity } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
+import { runEgressCheck } from "@/lib/server/egress-check";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
@@ -274,6 +275,26 @@ async function handleGoaml(req: Request): Promise<Response> {
     generatedAt: iso,
     charterIntegrityHash: await computeCharterHash(reportRef, body.narrative.slice(0, 4000), iso),
   };
+
+  // ── Egress gate (CG-7) — tipping-off compliance pre-check ───────────────────
+  // Run before XML serialisation so we never produce an artefact that would
+  // constitute tipping-off under FDL No.10/2025 Art.29 / FATF R.21.
+  const egressResult = await runEgressCheck(body.narrative, "goAML STR filing");
+  if (!egressResult.allowed) {
+    await writeAuditChainEntry({
+      event: "egress.tipping_off_blocked",
+      actor: "system",
+      reportCode: body.reportCode,
+      reason: egressResult.reason,
+      verdict: egressResult.verdict,
+    }, tenantIdFromGate(gate)).catch(() => undefined);
+    return NextResponse.json({
+      ok: false,
+      error: "goAML filing held by egress gate — possible tipping-off content detected. Please review and revise the narrative.",
+      egressVerdict: egressResult.verdict,
+      egressReason: egressResult.reason,
+    }, { status: 422, headers: gateHeaders });
+  }
 
   let xml: string;
   try {

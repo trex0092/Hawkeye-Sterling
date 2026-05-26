@@ -142,18 +142,46 @@ export async function register() {
       const { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } = await import('@opentelemetry/semantic-conventions').catch(() => ({ SEMRESATTRS_SERVICE_NAME: 'service.name', SEMRESATTRS_SERVICE_VERSION: 'service.version' }));
 
       if (NodeSDK && Resource) {
+        // Wire OTLP HTTP exporter when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+        // Lazy import keeps the package optional — deploy without it and the
+        // SDK still starts; add the env var + package to enable export.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore – optional peer dep, caught below
+        const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http')
+          .catch(() => ({ OTLPTraceExporter: null }));
+
+        function parseOtelHeaders(raw: string): Record<string, string> {
+          if (!raw) return {};
+          return Object.fromEntries(
+            raw.split(',')
+              .map((h) => h.split('=') as [string, string])
+              .filter(([k]) => k && k.trim()),
+          );
+        }
+
+        const spanExporter = OTLPTraceExporter && process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+          ? new OTLPTraceExporter({
+              url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT.replace(/\/$/, '')}/v1/traces`,
+              headers: parseOtelHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS ?? ''),
+            })
+          : undefined;
+
         const sdk = new NodeSDK({
           resource: new Resource({
             [SEMRESATTRS_SERVICE_NAME]: 'hawkeye-sterling',
             [SEMRESATTRS_SERVICE_VERSION]: '3.0.0',
             'deployment.environment': process.env.NODE_ENV ?? 'development',
           }),
+          ...(spanExporter ? { traceExporter: spanExporter } : {}),
           instrumentations: typeof getNodeAutoInstrumentations === 'function' ? getNodeAutoInstrumentations({
             '@opentelemetry/instrumentation-fs': { enabled: false },
           }) : [],
         });
         sdk.start();
-        console.info('[hawkeye] OpenTelemetry SDK started');
+        const exporterInfo = spanExporter
+          ? `(OTLP → ${process.env.OTEL_EXPORTER_OTLP_ENDPOINT})`
+          : '(no exporter — set OTEL_EXPORTER_OTLP_ENDPOINT to export traces)';
+        console.info(`[hawkeye] OpenTelemetry SDK started ${exporterInfo}`);
 
         // Graceful shutdown
         process.on('SIGTERM', () => {

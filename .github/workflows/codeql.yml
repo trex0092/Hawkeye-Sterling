@@ -1,0 +1,59 @@
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan on Monday at 02:00 UTC — catches new CVEs against existing code
+    - cron: '0 2 * * 1'
+
+jobs:
+  analyze:
+    name: CodeQL — javascript-typescript
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for CodeQL to write security results to the Security tab
+      security-events: write
+      # Required for private repos to fetch code
+      contents: read
+      # Required for CodeQL actions to write to the pull request
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # security-extended includes all security queries plus additional
+          # experimental queries not yet in the default suite.
+          queries: security-extended
+          # Point CodeQL at the source directories — avoids scanning
+          # build artifacts in dist/ and .next/ which inflate scan time.
+          config: |
+            paths:
+              - src
+              - web/app
+              - web/lib
+              - web/components
+              - netlify
+            paths-ignore:
+              - dist
+              - web/.next
+              - "**/*.test.ts"
+              - "**/__tests__/**"
+              - "**/node_modules/**"
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+          # Upload results to GitHub Security tab
+          upload: true

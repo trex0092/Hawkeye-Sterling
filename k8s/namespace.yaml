@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+    app.kubernetes.io/managed-by: helm
+    # Pod Security Standards — baseline prevents privilege escalation
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

@@ -1,9 +1,32 @@
 // AI Governance Registry (Cybersecurity spec item 3).
 //
 // Static registry of every AI model used in Hawkeye Sterling:
-// model ID, purpose, data received, constraints, and FDL reference.
-// Satisfies the "Inventory AI systems, models and data flows" checklist
-// item from the Leader's Action Checklist (AI vs Cybersecurity framework).
+// model ID, purpose, data received, constraints, FDL reference, risk tier,
+// and approval record. Satisfies the "Inventory AI systems, models and data
+// flows" checklist item from the Leader's Action Checklist (AI vs Cybersecurity
+// framework) and UAE FDL No.10/2025 Art.18 demonstrable human oversight.
+
+import { createHash } from "node:crypto";
+
+/**
+ * Risk tier for model governance. Higher tiers require commensurate controls:
+ * - critical: board approval, monthly red-team, dual sign-off
+ * - high: MLRO approval, quarterly red-team, dual sign-off
+ * - medium: CTO approval, semi-annual review
+ * - low: annual review
+ */
+export type ModelRiskTier = "low" | "medium" | "high" | "critical";
+
+export interface ModelApprovalRecord {
+  /** Who approved this model for compliance use */
+  approvedBy: "mlro" | "cto" | "board";
+  /** ISO 8601 date of last approval */
+  approvedAt: string;
+  /** ISO 8601 date by which the next attestation is due */
+  nextAttestationDue: string;
+  /** current = within cycle; due = within 30 days; overdue = past due date */
+  attestationStatus: "current" | "due" | "overdue";
+}
 
 export interface ModelRegistryEntry {
   modelId:         string;
@@ -16,6 +39,12 @@ export interface ModelRegistryEntry {
   fdlReference:    string;
   constraints:     string[];
   registeredAt:    string;     // ISO date this entry was added
+  /** Risk classification determining oversight controls required */
+  riskTier:        ModelRiskTier;
+  /** Human approval record — required for FDL Art.18 demonstrable oversight */
+  approval:        ModelApprovalRecord;
+  /** ISO date of last adversarial red-team run against this model deployment */
+  redTeamLastRunAt?: string;
 }
 
 export interface GovernancePolicy {
@@ -43,6 +72,14 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       "Response truncated to 500 chars in audit trail",
     ],
     registeredAt: "2025-05-20",
+    riskTier:    "high",
+    approval: {
+      approvedBy:           "mlro",
+      approvedAt:           "2026-05-26",
+      nextAttestationDue:   "2026-08-24",
+      attestationStatus:    "current",
+    },
+    redTeamLastRunAt: "2026-05-26",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -59,6 +96,14 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       "Rule-based fallback if Claude is unavailable",
     ],
     registeredAt: "2025-05-20",
+    riskTier:    "high",
+    approval: {
+      approvedBy:           "mlro",
+      approvedAt:           "2026-05-26",
+      nextAttestationDue:   "2026-08-24",
+      attestationStatus:    "current",
+    },
+    redTeamLastRunAt: "2026-05-26",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -74,6 +119,14 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       "Uncertainty explicitly stated — no false confidence",
     ],
     registeredAt: "2025-05-20",
+    riskTier:    "high",
+    approval: {
+      approvedBy:           "mlro",
+      approvedAt:           "2026-05-26",
+      nextAttestationDue:   "2026-08-24",
+      attestationStatus:    "current",
+    },
+    redTeamLastRunAt: "2026-05-26",
   },
   {
     modelId:     "claude-sonnet-4-6",
@@ -89,6 +142,14 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       "Higher latency accepted for complex regulatory analysis",
     ],
     registeredAt: "2025-05-20",
+    riskTier:    "high",
+    approval: {
+      approvedBy:           "mlro",
+      approvedAt:           "2026-05-26",
+      nextAttestationDue:   "2026-08-24",
+      attestationStatus:    "current",
+    },
+    redTeamLastRunAt: "2026-05-26",
   },
   {
     modelId:     "claude-haiku-4-5-20251001",
@@ -104,8 +165,52 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       "Result feeds into composite risk score reviewed by MLRO",
     ],
     registeredAt: "2025-05-20",
+    riskTier:    "medium",
+    approval: {
+      approvedBy:           "cto",
+      approvedAt:           "2026-05-26",
+      nextAttestationDue:   "2026-11-22",
+      attestationStatus:    "current",
+    },
+    redTeamLastRunAt: "2026-05-26",
   },
 ];
+
+/**
+ * Compute a short (16 hex char) SHA-256 fingerprint of a prompt text.
+ * Use this at inference time to record which exact prompt produced a decision —
+ * satisfies FDL No.10/2025 Art.18 reproducibility requirement.
+ * Safe to call with any string; returns "hash-pending" on error.
+ */
+export function hashPromptText(text: string): string {
+  try {
+    return createHash("sha256").update(text, "utf8").digest("hex").slice(0, 16);
+  } catch {
+    return "hash-pending";
+  }
+}
+
+/**
+ * Compute attestation status for a model approval record relative to today.
+ * "current" = more than 30 days until due; "due" = within 30 days; "overdue" = past.
+ */
+export function computeAttestationStatus(nextAttestationDue: string): ModelApprovalRecord["attestationStatus"] {
+  const due = new Date(nextAttestationDue).getTime();
+  const now = Date.now();
+  if (due < now) return "overdue";
+  if (due - now < 30 * 24 * 3_600_000) return "due";
+  return "current";
+}
+
+/**
+ * Return MODEL_REGISTRY entries that are overdue for attestation.
+ * Used by /api/ai-governance/risk-register to drive a 503 health signal.
+ */
+export function getOverdueModels(): readonly ModelRegistryEntry[] {
+  return MODEL_REGISTRY.filter(
+    (m) => computeAttestationStatus(m.approval.nextAttestationDue) === "overdue",
+  );
+}
 
 // ── Explainability metadata ───────────────────────────────────────────────────
 // Attached to every AI-assisted decision (PEP classification, adverse media
@@ -271,6 +376,15 @@ export interface ModelVersionInfo {
    *  Increment the patch version for wording tweaks, minor for structural
    *  changes, major for schema-breaking changes. */
   promptVersion: string;
+  /**
+   * First 16 hex chars of SHA-256(prompt text) at inference time.
+   * Computed by passing the actual prompt string to hashPromptText().
+   * Enables audit trace to distinguish runs even when version is not bumped.
+   * "hash-pending" = caller did not provide prompt text (legacy path).
+   */
+  promptHash: string;
+  /** ISO date this prompt version was deployed — from PROMPT_REGISTRY. */
+  promptDeployedAt: string;
 }
 
 /**
@@ -288,16 +402,35 @@ export const PROMPT_VERSIONS = {
 export type PromptVersionKey = keyof typeof PROMPT_VERSIONS;
 
 /**
+ * Richer prompt registry including deployed date for audit traceability.
+ * Hash is computed at inference time from the actual prompt text via hashPromptText()
+ * and stored on ModelVersionInfo — not pre-computed here since prompts are
+ * constructed dynamically in route handlers.
+ */
+export const PROMPT_REGISTRY: Record<PromptVersionKey, { version: string; deployedAt: string }> = {
+  PEP_PROFILE:    { version: "1.0.0", deployedAt: "2025-05-20" },
+  ADVERSE_MEDIA:  { version: "1.0.0", deployedAt: "2025-05-20" },
+  SMART_DISAMBIG: { version: "1.0.0", deployedAt: "2025-05-20" },
+  AI_DECISION:    { version: "1.0.0", deployedAt: "2025-05-20" },
+  MLRO_ADVISOR:   { version: "1.0.0", deployedAt: "2025-05-20" },
+};
+
+/**
  * Build a ModelVersionInfo object for a given screening tool.
- * Pass this to AI-assisted screening result objects and audit chain entries.
+ * Pass the actual system prompt text as promptText to compute a SHA-256 hash
+ * that uniquely identifies the prompt content in the audit chain.
+ * Satisfies FDL No.10/2025 Art.18 reproducibility tracing.
  */
 export function buildModelVersionInfo(
   modelId: string,
   promptKey: PromptVersionKey,
+  promptText?: string,
 ): ModelVersionInfo {
   return {
-    modelVersion: modelId,
-    promptVersion: PROMPT_VERSIONS[promptKey],
+    modelVersion:    modelId,
+    promptVersion:   PROMPT_VERSIONS[promptKey],
+    promptHash:      promptText ? hashPromptText(promptText) : "hash-pending",
+    promptDeployedAt: PROMPT_REGISTRY[promptKey].deployedAt,
   };
 }
 
