@@ -509,6 +509,7 @@ export async function POST(req: Request) {
   let keyFactors: string[];
   let nextSteps: string[];
   let regulatoryBasis: string;
+  let isDegraded = false;
 
   if (apiKey) {
     try {
@@ -536,8 +537,10 @@ export async function POST(req: Request) {
       keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
       nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
-    } catch {
-      // Fallback to rule-based
+    } catch (llmErr) {
+      // Fallback to rule-based — surface degraded flag so callers know
+      console.warn("[ai-decision] LLM call failed — falling back to rule-based:", llmErr instanceof Error ? llmErr.message : String(llmErr));
+      incrementCounter('hawkeye_llm_fallback_total', 1, { route: 'ai-decision' });
       decision = deriveRuleBasedDecision(body);
       confidence = 65;
       urgency = decision === "str" ? "critical" : decision === "escalate" ? "high" : decision === "edd" ? "medium" : "low";
@@ -545,6 +548,7 @@ export async function POST(req: Request) {
       keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
       nextSteps = defaultNextSteps(decision);
       regulatoryBasis = "FDL 10/2025 Art.20";
+      isDegraded = true;
     }
   } else {
     decision = deriveRuleBasedDecision(body);
@@ -554,6 +558,7 @@ export async function POST(req: Request) {
     keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
     nextSteps = defaultNextSteps(decision);
     regulatoryBasis = "FDL 10/2025 Art.20";
+    isDegraded = true;
   }
 
   // Auto-create Asana task (fire in parallel with response)
@@ -611,6 +616,7 @@ export async function POST(req: Request) {
           ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
         }),
     ...(fourEyesWarning ? { fourEyesWarning: true } : {}),
+    ...(isDegraded ? { degraded: true } : {}),
   };
 
   const latencyMs = Date.now() - t0;

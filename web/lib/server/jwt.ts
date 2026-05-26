@@ -15,6 +15,7 @@
 //     revocation; existing JWTs expire within JWT_TTL_SEC.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { incrementCounter } from "./metrics-store";
 
 const ALG = "HS256" as const;
 const DEFAULT_TTL_SEC = 600;
@@ -146,6 +147,7 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
 
   if (usedPrevKey) {
     console.warn("[jwt] token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC");
+    incrementCounter('hawkeye_jwt_signed_with_prev_key_total');
   }
 
   return { ok: true, payload, ...(usedPrevKey ? { usedPrevKey: true } : {}) };
