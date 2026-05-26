@@ -66,7 +66,7 @@ describe('HttpsGoamlTransport', () => {
   it('throws at construction when endpointUrl is missing', () => {
     const chain = makeChain();
     expect(() => new HttpsGoamlTransport(
-      { endpointUrl: '', username: 'user', password: 'pass' },
+      { endpointUrl: '', username: 'test-goaml-user', password: 'test-placeholder-not-real' },
       chain,
     )).toThrow('endpointUrl missing');
   });
@@ -85,7 +85,7 @@ describe('HttpsGoamlTransport', () => {
       new Response('<Error>Rejected</Error>', { status: 400, statusText: 'Bad Request' }),
     );
     const transport = new HttpsGoamlTransport(
-      { endpointUrl: 'https://fiu.example.com/submit', username: 'user', password: 'pass' },
+      { endpointUrl: 'https://fiu.example.com/submit', username: 'test-goaml-user', password: 'test-placeholder-not-real' },
       chain,
       mockFetch,
     );
@@ -103,7 +103,7 @@ describe('HttpsGoamlTransport', () => {
       new Response('<SubmissionID>FIU-2026-001</SubmissionID>', { status: 200 }),
     );
     const transport = new HttpsGoamlTransport(
-      { endpointUrl: 'https://fiu.example.com/submit', username: 'user', password: 'pass' },
+      { endpointUrl: 'https://fiu.example.com/submit', username: 'test-goaml-user', password: 'test-placeholder-not-real' },
       chain,
       mockFetch,
     );
@@ -118,7 +118,7 @@ describe('HttpsGoamlTransport', () => {
     const chain = makeChain();
     const mockFetch = vi.fn().mockResolvedValue(new Response('OK', { status: 200 }));
     const transport = new HttpsGoamlTransport(
-      { endpointUrl: 'https://fiu.example.com/submit', username: 'mlro', password: 's3cret' },
+      { endpointUrl: 'https://fiu.example.com/submit', username: 'test-mlro-user', password: 'test-placeholder-not-real' },
       chain,
       mockFetch,
     );
