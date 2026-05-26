@@ -17,6 +17,7 @@
 
 import { getStore } from '@netlify/blobs';
 import type { EntityRecord, ResolutionResult } from '../../../src/brain/entity-resolution.js';
+import type { MatchConfidenceLevel } from '../../../src/policy/systemPrompt.js';
 
 export interface ScreeningHistoryEntry {
   subjectId: string;
@@ -33,7 +34,7 @@ export interface ScreeningHistoryEntry {
 export interface EntityClusterMember {
   subjectId: string;
   name: string;
-  confidence: ResolutionResult['confidence'];
+  confidence: MatchConfidenceLevel;
   score: number;
   screenedAt: string;
   hitCount?: number;
@@ -52,14 +53,15 @@ const MAX_HISTORY_ENTRIES = 500;
 
 function toEntityRecord(entry: ScreeningHistoryEntry): EntityRecord {
   return {
+    id: entry.subjectId,
     name: entry.name,
     entityType: (entry.entityType as EntityRecord['entityType']) ?? 'individual',
     nationality: entry.nationality,
     dateOfBirth: entry.dateOfBirth,
     identifiers: (entry.identifiers ?? []).map((id) => ({
-      type: 'generic' as const,
-      value: id,
-      issuingCountry: entry.nationality,
+      kind: 'generic',
+      number: id,
+      issuer: entry.nationality,
     })),
     aliases: [],
   };
@@ -100,7 +102,7 @@ export async function buildEntityCluster(
   for (const candidate of candidates) {
     if (candidate.subjectId === queryEntry.subjectId) continue;
     let score = 0;
-    let confidence: ResolutionResult['confidence'] = 'unlikely';
+    let confidence: ResolutionResult['confidence'] = 'NO_MATCH';
     if (resolveEntities) {
       try {
         const result = resolveEntities(queryRecord, toEntityRecord(candidate));
@@ -110,7 +112,7 @@ export async function buildEntityCluster(
     } else {
       // Fallback: simple normalised Levenshtein on lowercased name
       score = nameSimilarity(queryEntry.name, candidate.name);
-      confidence = score >= 0.9 ? 'confirmed' : score >= 0.75 ? 'possible' : 'unlikely';
+      confidence = score >= 0.9 ? 'EXACT' : score >= 0.75 ? 'POSSIBLE' : 'NO_MATCH';
     }
     if (score >= minScore) {
       linked.push({
@@ -131,7 +133,7 @@ export async function buildEntityCluster(
   const canonical: EntityClusterMember = {
     subjectId: queryEntry.subjectId,
     name: queryEntry.name,
-    confidence: 'confirmed',
+    confidence: 'EXACT' as MatchConfidenceLevel,
     score: 1,
     screenedAt: queryEntry.screenedAt,
     hitCount: queryEntry.hitCount,

@@ -56,7 +56,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const regResult = await verifyRegulatorToken(rawToken);
   if (!regResult.ok) {
-    log({ level: "warn", event: "regulator_access.token_invalid", reason: regResult.reason, route: "/api/regulator/audit-trail" });
+  log({ level: "warn", route: "/api/regulator/audit-trail", event: "regulator_access.token_invalid", reason: regResult.reason });
     return NextResponse.json(
       { ok: false, error: "invalid regulator token", reason: regResult.reason },
       { status: 401 },
@@ -77,13 +77,14 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   // Audit the regulator access itself
-  void writeAuditChainEntry(tenantId, {
+  void writeAuditChainEntry({
+    actor: claims.sub,
     event: "regulator_access.audit_trail_read",
     examinerId: claims.sub,
     jti: claims.jti,
     tenantId,
     requestedAt: new Date().toISOString(),
-  }).catch(() => undefined);
+  }, tenantId).catch(() => undefined);
 
   // Load audit chain from Blobs
   let chain: ChainEntry[] = [];
@@ -124,6 +125,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   log({
     level: "info",
+    route: "/api/regulator/audit-trail",
     event: "regulator_access.audit_trail_read",
     examinerId: claims.sub,
     tenantId,

@@ -44,7 +44,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const b = enc.encode(presented);
   const adminMatch = a.byteLength === b.byteLength && timingSafeEqual(a, b);
   if (!adminMatch) {
-    log({ level: "warn", event: "regulator_token.unauthorized_issue_attempt", route: "/api/regulator/token" });
+    log({ level: "warn", route: "/api/regulator/token", event: "regulator_token.unauthorized_issue_attempt" });
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -93,18 +93,20 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Audit log: every token issuance is recorded. Token itself is NOT logged.
   for (const tenantId of body.scope.tenants ?? ["default"]) {
-    void writeAuditChainEntry(tenantId, {
+    void writeAuditChainEntry({
+      actor: "admin",
       event: "regulator_token.issued",
       examinerId: body.examinerId,
       jti: result.claims.jti,
       scope: result.claims.scope,
       exp: result.claims.exp,
       issuedBy: result.claims.issuedBy,
-    }).catch(() => undefined);
+    }, tenantId).catch(() => undefined);
   }
 
   log({
     level: "info",
+    route: "/api/regulator/token",
     event: "regulator_token.issued",
     examinerId: body.examinerId,
     jti: result.claims.jti,

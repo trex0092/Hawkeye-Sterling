@@ -48,13 +48,14 @@ export async function POST(req: Request) {
 
   const cluster = await buildEntityCluster(tenantId, subject, body.options ?? {});
 
-  void writeAuditChainEntry(tenantId, {
+  void writeAuditChainEntry({
     event: "subject_graph.cluster_built",
+    actor: gate.keyId ?? "system",
     subjectId: subject.subjectId,
     subjectName: subject.name,
     linkedCount: cluster.totalLinked,
     minScore: body.options?.minScore ?? 0.6,
-  }).catch(() => undefined);
+  }, tenantId).catch(() => undefined);
 
   return NextResponse.json({ ok: true, cluster }, { headers: gate.headers });
 }

@@ -115,7 +115,7 @@ export function pickModel(task: ModelTask): ModelChoice {
   // tight. Sonnet first-draft; MLRO review provides the Art.18 oversight.
   if (
     task.fastPath === true &&
-    task.regulatorFacing !== true &&
+    !task.regulatorFacing &&
     (task.latencyBudgetMs ?? Infinity) <= FAST_PATH_LATENCY_MS
   ) {
     if (task.kind === "screening_verdict" || task.kind === "narrative_drafting") {

@@ -87,13 +87,13 @@ export class BloomFilter {
   private setBit(pos: number): void {
     const idx = pos >>> 3;
     const bit = 1 << (pos & 7);
-    this.bits[idx] |= bit;
+    this.bits[idx]! |= bit;
   }
 
   private testBit(pos: number): boolean {
     const idx = pos >>> 3;
     const bit = 1 << (pos & 7);
-    return (this.bits[idx] & bit) !== 0;
+    return ((this.bits[idx] ?? 0) & bit) !== 0;
   }
 
   /** Add a name (and optionally its aliases) to the filter. */

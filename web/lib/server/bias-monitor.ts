@@ -16,7 +16,7 @@ import { getJson, setJson } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 import { incrementCounter } from "./metrics-store";
 import { startSpan, SpanStatus } from "./tracer";
-import { emitAndLog } from "../../src/integrations/webhook-emitter";
+import { emitAndLog } from "../../../src/integrations/webhook-emitter";
 
 export type NameScript =
   | "arabic" | "cjk" | "cyrillic" | "devanagari" | "greek"

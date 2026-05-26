@@ -73,7 +73,9 @@ async function consumeRedis(
     ["INCRBY", minKey, String(cost)],
     ["EXPIRE",  minKey, "62"],
   ];
-  const [secCount, , minCount] = await redisPipeline(pipeline);
+  const pipelineResult = await redisPipeline(pipeline);
+  const secCount = pipelineResult[0] ?? null;
+  const minCount = pipelineResult[2] ?? null;
   if (secCount === null || minCount === null) return null; // Redis unavailable
 
   const secAllowed = secCount <= tier.rateLimitPerSecond;

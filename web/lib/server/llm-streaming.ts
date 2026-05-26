@@ -122,8 +122,8 @@ export async function streamToString(opts: {
           modelId = msg.model;
           inputTokens = msg.usage?.input_tokens ?? 0;
           outputTokens = msg.usage?.output_tokens ?? 0;
-          cacheReadTokens = (msg.usage as Record<string, number>)?.cache_read_input_tokens ?? 0;
-          cacheWriteTokens = (msg.usage as Record<string, number>)?.cache_creation_input_tokens ?? 0;
+          cacheReadTokens = (msg.usage as unknown as Record<string, number>)?.cache_read_input_tokens ?? 0;
+          cacheWriteTokens = (msg.usage as unknown as Record<string, number>)?.cache_creation_input_tokens ?? 0;
         })
         .on("finalMessage", () => {
           clearTimeout(timer);

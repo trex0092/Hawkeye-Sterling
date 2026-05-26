@@ -21,7 +21,7 @@
 
 import { writeAuditChainEntry } from './audit-chain';
 import { incrementCounter } from './metrics-store';
-import { emitAndLog } from '../../src/integrations/webhook-emitter';
+import { emitAndLog } from '../../../src/integrations/webhook-emitter';
 
 export interface HallucinationResult {
   detected: boolean;
