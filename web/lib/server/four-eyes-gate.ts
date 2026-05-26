@@ -18,6 +18,12 @@ import { getJson, setJson, listKeys, del } from "@/lib/server/store";
 import { createHash, randomBytes } from "crypto";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
+// Hash actor for OTel span attributes — actor may be an email/GID (PII).
+// 12-hex prefix is sufficient for correlation without being reversible.
+function hashActor(actor: string): string {
+  return createHash("sha256").update(actor).digest("hex").slice(0, 12);
+}
+
 export interface ApprovalEntry {
   approvalId: string;
   caseId: string;
@@ -88,7 +94,7 @@ export async function recordApproval(input: {
 }): Promise<{ status: FourEyesStatus; entry: ApprovalEntry; conflict?: string }> {
   const span = startSpan('four-eyes.record-approval', {
     'four-eyes.caseId': input.caseId,
-    'four-eyes.actor': input.actor,
+    'four-eyes.actorHash': hashActor(input.actor),
     'four-eyes.decision': input.decision,
   });
   try {

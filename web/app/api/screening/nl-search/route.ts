@@ -155,7 +155,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     ).catch(() => undefined);
 
     return NextResponse.json(
-      { ok: true, ...parsed } satisfies NlSearchResponse,
+      {
+        ok: true,
+        query: parsed.query,
+        interpretation: parsed.interpretation,
+        confidence: parsed.confidence,
+        reasoning: parsed.reasoning,
+      } satisfies NlSearchResponse,
       { headers: gate.headers },
     );
   } catch (err) {

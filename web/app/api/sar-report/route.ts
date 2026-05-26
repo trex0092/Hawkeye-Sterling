@@ -205,19 +205,27 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   try {
     const { recordApproval } = await import("@/lib/server/four-eyes-gate");
     const caseRef = `sar:${body.subject?.name ?? "unknown"}:${Date.now()}`;
-    // Record MLRO filer first, then the second approver — order matches
-    // chronology of the request.
+    // Actor is the authenticated API key identity (gate.keyId), not the
+    // user-supplied body.mlro string. body.mlro is a display name only;
+    // recording it in the four-eyes ledger as the actor would allow any
+    // authenticated caller to impersonate arbitrary identities in the
+    // regulatory artefact (FDL 10/2025 Art.16 compliance control bypass).
+    const filerActor = actorKeyId ?? `mlro:${mlro}`;
+    // The second approver is still user-supplied since the route is single-
+    // session. Include the filer's API key as a prefix so the ledger entry
+    // distinguishes "approver declared by <keyId>" from a self-attestation.
+    const approverActor = `approver:${body.approver}:attested-by:${filerActor}`;
     await recordApproval({
       caseId: caseRef,
-      actor: mlro,
+      actor: filerActor,
       decision: "approve",
-      rationale: `${body.filingType} filer attestation`,
+      rationale: `${body.filingType} filer attestation (authenticated as ${filerActor})`,
     });
     await recordApproval({
       caseId: caseRef,
-      actor: body.approver,
+      actor: approverActor,
       decision: "approve",
-      rationale: `${body.filingType} second-approver (four-eyes) attestation`,
+      rationale: `${body.filingType} second-approver (four-eyes) attestation — declared by ${filerActor}`,
     });
   } catch (err) {
     // Audit-ledger write failures must NOT block the filing — the

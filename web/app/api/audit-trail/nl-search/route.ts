@@ -43,7 +43,9 @@ interface NlAuditResponse {
   auditRef?: string;
 }
 
-const SYSTEM_PROMPT = `You are a UAE AML audit trail query parser. Parse a compliance officer's plain-English request into structured audit trail filters.
+// SYSTEM_PROMPT is a template — today's date is injected per-request via
+// buildSystemPrompt() so warm-instance reuse never causes stale date parses.
+const SYSTEM_PROMPT_TEMPLATE = `You are a UAE AML audit trail query parser. Parse a compliance officer's plain-English request into structured audit trail filters.
 
 OUTPUT FORMAT — return ONLY this JSON object:
 {
@@ -61,7 +63,7 @@ OUTPUT FORMAT — return ONLY this JSON object:
   "reasoning": "One sentence explaining which fields were extracted and why"
 }
 
-DATE PARSING (relative to today ${new Date().toISOString().slice(0, 10)}):
+DATE PARSING (relative to today __TODAY__):
 - "today" → from: today 00:00 UTC, to: today 23:59 UTC
 - "last week" / "past 7 days" → from: 7 days ago
 - "last month" / "past 30 days" → from: 30 days ago
@@ -141,11 +143,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
+    const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace("__TODAY__", new Date().toISOString().slice(0, 10));
     const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: "user", content: sanitizeField(userQuery, 1000) }],
     });
 
@@ -170,7 +173,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     ).then(() => "recorded").catch(() => undefined);
 
     return NextResponse.json(
-      { ok: true, ...parsed, auditRef } satisfies NlAuditResponse,
+      {
+        ok: true,
+        filters: parsed.filters,
+        interpretation: parsed.interpretation,
+        confidence: parsed.confidence,
+        reasoning: parsed.reasoning,
+        auditRef,
+      } satisfies NlAuditResponse,
       { headers: gate.headers },
     );
   } catch (err) {

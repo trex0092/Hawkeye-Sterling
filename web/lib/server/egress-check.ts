@@ -46,8 +46,16 @@ function hasTippingOff(narrative: string): boolean {
 async function llmEgressCheck(narrative: string, reportType: string): Promise<EgressCheckResult> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    console.warn("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY missing — bypassing LLM gate");
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED: gate is enabled but no API key — hold the artefact for
+    // manual MLRO review rather than silently approving it. This is a
+    // configuration error (FDL 10/2025 Art.17 tipping-off is criminal);
+    // never disable the gate implicitly due to infrastructure misconfiguration.
+    console.error("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY absent — holding artefact for manual MLRO review");
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: "Egress gate misconfigured: ANTHROPIC_API_KEY absent. Artefact held for manual MLRO review before delivery (FDL 10/2025 Art.17).",
+    };
   }
 
   const client = getAnthropicClient(apiKey, 30_000, "egress-check");
@@ -74,8 +82,15 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       ],
     });
   } catch (err) {
-    console.error("[egress-check] LLM call failed — failing open to avoid blocking MLRO workflow:", err instanceof Error ? err.message : String(err));
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED on LLM error — hold for manual MLRO review rather than
+    // silently approving. Tipping-off (FDL 10/2025 Art.17) is criminal;
+    // infrastructure failures must not disable the compliance gate.
+    console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", err instanceof Error ? err.message : String(err));
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: `Egress gate LLM check failed (${err instanceof Error ? err.message : "unknown error"}). Artefact held for manual MLRO review (FDL 10/2025 Art.17).`,
+    };
   }
 
   const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -84,12 +99,17 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       verdict?: string;
       reason?: string;
     };
-    const verdict = (parsed.verdict ?? "approved") as EgressVerdict;
+    const verdict = (parsed.verdict ?? "held_review") as EgressVerdict;
     const allowed = verdict === "approved";
     return { allowed, verdict, reason: parsed.reason };
   } catch {
-    console.warn("[egress-check] could not parse LLM response — failing open:", raw.slice(0, 200));
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED on parse error — same rationale as LLM failure above.
+    console.warn("[egress-check] could not parse LLM response — holding artefact for manual MLRO review:", raw.slice(0, 200));
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: "Egress gate response unparseable. Artefact held for manual MLRO review (FDL 10/2025 Art.17).",
+    };
   }
 }
 

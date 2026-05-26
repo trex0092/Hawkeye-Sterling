@@ -25,6 +25,12 @@ export const maxDuration = 10;
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  if (gate.keyId !== "portal_admin" && gate.keyId !== "cron_internal") {
+    return NextResponse.json(
+      { ok: false, error: "Forbidden — AI governance data requires admin access." },
+      { status: 403, headers: gate.headers },
+    );
+  }
 
   const now = new Date().toISOString();
   const overdueModels = getOverdueModels();
