@@ -192,10 +192,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
 
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 6_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      max_tokens: 380, // per-hit JSON ~30 tok × 10 hits + overhead ≈ 350 tok; 380 keeps response under 0.8s
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });

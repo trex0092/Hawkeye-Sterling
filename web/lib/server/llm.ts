@@ -72,7 +72,7 @@ function redactSystem(
 // with cache_control marker IFF the prompt is long enough to be worth
 // caching (Anthropic charges a 25% cache-write premium, so very short
 // prompts come out negative).
-const CACHE_MIN_CHARS = 1024; // ~256 tokens; cache write cost amortises at ~2 hits
+const CACHE_MIN_CHARS = 256; // ~64 tokens; lower threshold caches more prompts, reducing TTFB on repeat calls
 function autoCacheSystem(
   system: string | SystemBlock[] | undefined,
 ): string | SystemBlock[] | undefined {

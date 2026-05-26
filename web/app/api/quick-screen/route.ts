@@ -565,7 +565,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
     const earlyNewsPromise: Promise<NewsResult> =
       subject.name.length >= 3
-        ? searchAllNews(subject.name, { limit: 50 }).catch((): NewsResult => ({ articles: [], providersUsed: [] }))
+        ? searchAllNews(subject.name, { limit: 8 }).catch((): NewsResult => ({ articles: [], providersUsed: [] }))
         : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] });
 
     const result = quickScreen(subject, candidates, screenOptions);
@@ -657,7 +657,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // immediately. Sanctions hits are always present (local match is O(1));
     // only the enrichment layer (news, registries, LLM) is deferred.
     // The client can re-poll for an enriched result if needed.
-    const HARD_DEADLINE_MS = 4_500;
+    const HARD_DEADLINE_MS = 3_000; // 3s hard cap — keeps end-to-end response in 3-5s target window
     const elapsedMs = Date.now() - t0;
     if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
@@ -726,11 +726,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     // ~2.5s; anything beyond that is almost certainly a transient hang
     // from a third-party that we'd rather degrade than block on. Returning
     // the empty type matches the existing .catch fallback contract.
-    const ADAPTER_TIMEOUT_MS = 2_500;
+    const ADAPTER_TIMEOUT_MS = 1_500; // 1.5s cap keeps full pipeline within 3-5s target
     const adapterTimeout = <T>(p: Promise<T>, fallback: T): Promise<T> => {
       let to: NodeJS.Timeout | null = null;
       const timeoutP = new Promise<T>((resolve) => {
-        to = setTimeout(() => { warn("adapter timeout >2.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+        to = setTimeout(() => { warn("adapter timeout >1.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
       });
       return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
     };

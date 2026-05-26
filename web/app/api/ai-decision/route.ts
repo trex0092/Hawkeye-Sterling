@@ -513,10 +513,10 @@ export async function POST(req: Request) {
 
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 4_500);
+      const client = getAnthropicClient(apiKey, 6_000);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 280, // JSON fields sum to ~220 tok; 280 keeps generation under 0.6s on Haiku
         system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });

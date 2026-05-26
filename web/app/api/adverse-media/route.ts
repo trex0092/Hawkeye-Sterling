@@ -273,7 +273,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   // When no Anthropic key is configured, run the deterministic 737-keyword
   // classifier directly on the (possibly empty) cached articles.
   if (!apiKey) {
-    const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
+    const taranisItems = items.slice(0, 10).map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);
     return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
   }
@@ -284,7 +284,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   const articleBlock =
     items.length > 0
       ? items
-          .slice(0, 50)
+          .slice(0, 10)
           .map((a, i) => {
             const date = _parseSeen(a.seendate);
             const tone = (a.tone ?? 0).toFixed(1);
@@ -295,10 +295,10 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
 
-  const client = getAnthropicClient(apiKey, 4_500);
+  const client = getAnthropicClient(apiKey, 6_000);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 800,
+    max_tokens: 500, // 10 articles × ~40 tok/finding + summary ≈ 450 tok; 500 keeps response in <1.5s on Haiku
     system: [
       {
         type: "text",
@@ -355,7 +355,7 @@ Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
         role: "user",
         content: `Analyse adverse media for subject: "${subject}"
 GDELT lookback anchored to: ${now.slice(0, 10)}
-Live articles retrieved from GDELT (${items.length} total):
+Live articles retrieved from GDELT (showing top ${Math.min(items.length, 10)} of ${items.length} total):
 ${articleBlock}`,
       },
     ],
