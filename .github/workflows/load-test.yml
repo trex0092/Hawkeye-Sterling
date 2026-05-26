@@ -1,0 +1,63 @@
+name: Load Test — p95 ≤ 5s @ 50 VUs
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL (default: staging)'
+        required: false
+        default: ''
+  schedule:
+    # Weekly Monday 04:00 UTC — after nightly refresh-lists (03:00)
+    - cron: '0 4 * * 1'
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    # Only run if TARGET_URL or LOAD_TEST_TARGET_URL is configured
+    # (prevents accidental runs with no target)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set target URL
+        id: target
+        run: |
+          URL="${{ github.event.inputs.target_url }}"
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.LOAD_TEST_TARGET_URL }}"
+          fi
+          if [ -z "$URL" ]; then
+            echo "No TARGET_URL configured — skipping load test"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "url=$URL" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install k6
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          curl https://github.com/grafana/k6/releases/download/v0.55.0/k6-v0.55.0-linux-amd64.tar.gz \
+            -L -o k6.tar.gz
+          tar xzf k6.tar.gz
+          sudo mv k6-v0.55.0-linux-amd64/k6 /usr/local/bin/k6
+          k6 version
+
+      - name: Run load test
+        if: steps.target.outputs.skip != 'true'
+        env:
+          TARGET_URL: ${{ steps.target.outputs.url }}
+          API_KEY: ${{ secrets.LOAD_TEST_API_KEY }}
+        run: |
+          k6 run k6/screening-load-test.js \
+            -e TARGET_URL="$TARGET_URL" \
+            -e API_KEY="$API_KEY" \
+            --out json=k6-results.json
+
+      - name: Upload k6 results
+        if: always() && steps.target.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-test-results-${{ github.run_id }}
+          path: k6-results.json
+          retention-days: 90

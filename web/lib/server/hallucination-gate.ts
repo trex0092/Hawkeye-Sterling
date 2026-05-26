@@ -21,6 +21,7 @@
 
 import { writeAuditChainEntry } from './audit-chain';
 import { incrementCounter } from './metrics-store';
+import { emitAndLog } from '../../src/integrations/webhook-emitter';
 
 export interface HallucinationResult {
   detected: boolean;
@@ -81,6 +82,14 @@ export async function checkHallucination(
 
   if (detected) {
     incrementCounter('hawkeye_hallucination_detected_total', 1, { route: opts.route, severity });
+    void emitAndLog('alert_hallucination', {
+      event: 'hallucination_detected',
+      route: opts.route,
+      severity,
+      patternCount: patterns.length,
+      tenantId: opts.tenantId ?? 'default',
+      detectedAt: checkedAt,
+    }).catch(() => undefined);
   }
 
   if (detected || opts.alwaysAudit) {

@@ -84,11 +84,29 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 ## CG-6 — Audit chain storage durability for 10-year retention
 
 **Risk:** HIGH (regulatory)  
+**Status:** PARTIALLY CLOSED (2026-05-26) — S3/WORM replication implemented; MLRO sign-off on bucket configuration required
+
 **Description:** The HMAC-sealed audit chain is stored in Netlify Blobs (`@netlify/blobs`). Netlify's service terms do not guarantee 10-year data retention. FDL 10/2025 Art. 24 requires DNFBP records to be retained for a minimum of 10 years.
 
-**Decision required:** MLRO / CTO to confirm:
-  1. Whether Netlify Blobs is contractually committed to 10-year retention in the current plan, or
-  2. Whether the audit chain should be replicated to a durable external store (S3, Azure Blob Storage, etc.) with explicit 10-year lifecycle policy
+**Resolution (2026-05-26):** `netlify/functions/audit-chain-s3-backup.mts` — nightly cron at 02:00 UTC mirrors every per-tenant audit chain blob to an S3-compatible store with object-lock (WORM) enabled:
+- Custom AWS Signature Version 4 implementation (no SDK dependency)
+- Object key: `audit-chain/<tenantId>/<YYYY-MM-DD>.json`
+- SHA-256 of the payload stored in S3 object metadata for integrity verification
+- Discovers tenants dynamically via `listStores()` filtering `hawkeye-audit-chain-*`
+- Fires `ALERT_WEBHOOK_URL` on backup failure (same channel as bias/drift alerts)
+- Default region: `me-south-1` (UAE/Bahrain) for data residency compliance
+
+**Env vars required (MLRO/CTO action):**
+  - `S3_BACKUP_ENDPOINT` — S3-compatible endpoint (AWS S3, Cloudflare R2, MinIO, etc.)
+  - `S3_BACKUP_BUCKET` — bucket name (must have object-lock/WORM enabled)
+  - `S3_BACKUP_REGION` — AWS region (default: me-south-1)
+  - `S3_BACKUP_ACCESS_KEY_ID` / `S3_BACKUP_SECRET_KEY` — IAM credentials
+
+**Remaining MLRO/CTO action required:**
+  1. Configure the four env vars above in Netlify environment settings
+  2. Confirm the S3 bucket has object-lock enabled with a 10-year governance/compliance retention policy
+  3. Confirm the bucket is located in a UAE-approved data residency region (me-south-1 recommended)
+  4. Verify the nightly backup by checking for objects in `s3://<bucket>/audit-chain/` after 02:00 UTC
 
 ---
 
@@ -126,6 +144,6 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 | CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
 | CG-4 | Operator | — | Open |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
-| CG-6 | MLRO / CTO | — | Open |
+| CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
