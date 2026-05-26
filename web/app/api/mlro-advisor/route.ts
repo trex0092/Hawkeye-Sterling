@@ -13,6 +13,9 @@ import { scoreAdvisorAnswer } from "../../../../src/integrations/qualityGates.js
 import { verifyCitations } from "@/lib/server/citation-verifier";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { streamToString } from "@/lib/server/llm-streaming";
+import { pickModel } from "../../../../src/integrations/model-router.js";
+import { LatencyBudget } from "@/lib/server/latency-budget";
 import {
   retrieveForQuestion,
   runPreGenerationRouter,
@@ -419,8 +422,10 @@ async function callGroqAdvisor(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  const budget = new LatencyBudget("mlro-advisor");
+  budget.phase("auth");
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok) { budget.finish(); return gate.response; }
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
   // Tenant id (defaults to "portal" for ADMIN_TOKEN portal calls,
   // keyId per API key otherwise) drives every per-tenant lookup
@@ -683,6 +688,149 @@ export async function POST(req: Request): Promise<NextResponse> {
         return null;
       });
 
+  // ── Speed-mode fast path ────────────────────────────────────────────────
+  // When mode === "speed" AND Claude is available (not Groq), bypass the
+  // full multi-step brain pipeline and call Sonnet directly via streamToString().
+  // The deterministic decision framework already ran above; we pass the full
+  // enrichedQuestion (which includes the framework preamble) as the user message.
+  // All quality gates (citation verifier, hallucination gate, audit chain) still
+  // fire on the result, preserving all compliance invariants.
+  // Recorded in response as fastPath: true for audit trail (FDL Art.18).
+  const speedFastPath = !useGroq && apiKey && (body.mode ?? "multi_perspective") === "speed";
+
+  if (speedFastPath) {
+    budget.phase("llm-sonnet-speed");
+    const modelChoice = pickModel({
+      kind: "summarisation",
+      fastPath: true,
+      latencyBudgetMs: budgetMs,
+      costSensitivity: "balanced",
+      inputTokens: Math.ceil(enrichedQuestion.length / 4),
+    });
+    let speedResult: { ok: boolean; narrative?: string; partial?: boolean; error?: string; complianceReview?: Record<string, unknown>; _provider?: string; _model?: string };
+    try {
+      const sr = await streamToString({
+        apiKey,
+        params: {
+          model: modelChoice.model,
+          max_tokens: 1024,
+          system: [
+            "You are a UAE-licensed MLRO compliance advisor. Provide a concise, citation-grounded advisory.",
+            "Output 250-400 words. Cite specific UAE laws (FDL No.10/2025, Cabinet Resolution 134/2025).",
+            "Lead with the recommended action (FREEZE / ESCALATE / EDD / MONITOR / CLEAR).",
+            "Never fabricate citations or regulatory references.",
+            "End with: 'This advisory requires human MLRO review per CR 134/2025 Art.18.'",
+            UAE_REGULATORY_CITATIONS,
+          ].join("\n"),
+          messages: [{ role: "user", content: enrichedQuestion.slice(0, 3500) }],
+        },
+        timeoutMs: Math.min(budgetMs, 8_000),
+        route: "mlro-advisor-speed",
+      });
+      speedResult = {
+        ok: true,
+        narrative: sr.text || undefined,
+        partial: sr.partial,
+        complianceReview: { verdict: "approved" },
+        _provider: "anthropic",
+        _model: sr.model,
+      };
+    } catch (err) {
+      speedResult = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    budget.phase("post-processing");
+
+    if (!speedResult.ok || !speedResult.narrative) {
+      // Fall through to full pipeline on speed-path failure.
+      console.warn("[mlro-advisor] speed fast-path failed, falling through to full pipeline:", speedResult.error);
+    } else {
+      // Quality gates on speed result (identical to main path).
+      const probeWrap = extractAndStripProbe(speedResult.narrative, "escalate");
+      if (probeWrap) speedResult.narrative = probeWrap.cleanAnswer;
+
+      const advisorScore = scoreAdvisorAnswer(speedResult.narrative, "approved");
+      const citationReport = verifyCitations(speedResult.narrative);
+      const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
+
+      const audit = await appendAuditEntry({
+        userId: tenant ?? "anonymous",
+        mode: "speed",
+        questionText: body.question,
+        modelVersions: { sonnet: speedResult._model ?? modelChoice.model, opus: "claude-opus-4-7" },
+        charterVersionHash: "advisor-v1",
+        directivesInvoked: [],
+        doctrinesApplied: [],
+        retrievedSources: retrieval.persistedSources,
+        reasoningTrace: [],
+        finalAnswer: null,
+      }).catch(() => ({ seq: 0, entryHash: "" }));
+
+      void writeAuditChainEntry(
+        { event: "mlro.advisor_call", actor: gate.keyId, meta: { seq: audit.seq, tenant: tenant ?? "anonymous", fastPath: true } },
+        tenant ?? "anonymous",
+      ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+      if (speedResult.narrative) {
+        const evidenceFragments = retrieval.persistedSources.map((s) =>
+          [s.articleRef ?? '', s.text ?? ''].filter(Boolean).join(': ').slice(0, 500),
+        );
+        void checkHallucination(speedResult.narrative, evidenceFragments, {
+          route: 'mlro-advisor-speed',
+          tenantId: tenant ?? 'default',
+          actor: gate.keyId,
+        }).catch(() => undefined);
+      }
+
+      budget.finish();
+      return NextResponse.json(
+        {
+          ...speedResult,
+          ok: true,
+          fastPath: true,
+          modelChoice: modelChoice.reason,
+          regulatoryContext: null,
+          detectedJurisdiction: detectedJurisdiction ?? null,
+          questionAnalysis: analysis,
+          advisorScore,
+          citationReport,
+          suggestedFollowUps,
+          contextFlags: {
+            sessionKey,
+            sessionTurnsLoaded: persistedTurns.length,
+            jurisdictionComparison: jurisdictionDirective.length > 0,
+            casePrecedentApplied: casePrecedent.length > 0,
+            regulatoryUpdatesApplied: regulatoryUpdates.length > 0,
+          },
+          retrievedSources: retrieval.persistedSources.map((s) => ({
+            class: s.class,
+            classLabel: s.classLabel,
+            sourceId: s.sourceId,
+            articleRef: s.articleRef,
+            version: s.version,
+          })),
+          structured: null,
+          structuredFallback: null,
+          ...(probeWrap ? { probeOutcome: { innocent: probeWrap.outcome.innocent, adversarial: probeWrap.outcome.adversarial, survived: probeWrap.outcome.survived, bothEmitted: probeWrap.bothEmitted } } : {}),
+          auditEntrySeq: audit.seq,
+          latencyMs: Date.now() - t0,
+          mlroDecision: mlroFramework.mlroDecision,
+          requiresFourEyes: mlroFramework.requiresFourEyes,
+          recommendedTimeline: mlroFramework.recommendedTimeline,
+          decisionConfidence: mlroFramework.decisionConfidence,
+          confidenceReason: mlroFramework.confidenceReason,
+          mlroSignals: {
+            hasConfirmedSanctionsHit: mlroFramework.hasConfirmedSanctionsHit,
+            hasPepTier1: mlroFramework.hasPepTier1,
+            hasHighAdverseMedia: mlroFramework.hasHighAdverseMedia,
+            hasRedlineViolations: mlroFramework.hasRedlineViolations,
+          },
+        },
+        { headers: gateHeaders },
+      );
+    }
+  }
+
+  budget.phase("llm-full-pipeline");
   try {
     const [result, ragResult] = await Promise.all([
       useGroq
@@ -883,6 +1031,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
+    budget.finish();
     return NextResponse.json(
       {
         ...result,

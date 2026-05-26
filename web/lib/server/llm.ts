@@ -253,15 +253,45 @@ export class AnthropicGuard {
   }
 }
 
+// ── Singleton client pool ─────────────────────────────────────────────────────
+// Creating `new Anthropic()` on every request throws away the underlying
+// Node.js HTTP keep-alive connection, adding 30-80 ms of TCP/TLS setup per
+// call. We maintain a module-level Map keyed on "keyPrefix:timeoutMs" so the
+// connection is reused across requests on the same Lambda warm instance.
+//
+// globalThis anchoring survives Next.js HMR in development — the same pattern
+// used by `store.ts` for the Blobs client and `quick-screen/route.ts` for the
+// result cache.
+declare global {
+  // eslint-disable-next-line no-var
+  var __hs_anthropic_pool: Map<string, AnthropicGuard> | undefined;
+}
+const _pool: Map<string, AnthropicGuard> =
+  globalThis.__hs_anthropic_pool ??
+  (globalThis.__hs_anthropic_pool = new Map());
+
 /**
  * Returns a PII-guarded Anthropic client with the same interface as `new Anthropic({ apiKey })`.
  * Swap every `new Anthropic({ apiKey })` call for `getAnthropicClient(apiKey)`.
  *
+ * Clients are pooled per (key-prefix, timeoutMs) pair so the underlying HTTP
+ * keep-alive connection is reused across calls on the same Lambda warm
+ * instance — saves 30-80 ms of TCP/TLS setup on every invocation.
+ *
  * @param apiKey   - Anthropic API key.
- * @param timeoutMs - Optional per-client request timeout. Defaults to 22 s for
- *                   routes on the standard Netlify Lambda budget. Routes that
- *                   set `export const maxDuration = 60` should pass ~55_000.
+ * @param timeoutMs - Optional per-client request timeout. Defaults to the
+ *                   hard SLA value of 4 500 ms. Routes with `maxDuration = 60`
+ *                   should pass a higher value (e.g. 55_000).
+ * @param route    - Caller route label for telemetry. Reused across pool hits.
  */
 export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: string): AnthropicGuard {
-  return new AnthropicGuard(apiKey, timeoutMs, route);
+  const tms = timeoutMs ?? DEFAULT_ANTHROPIC_TIMEOUT_MS;
+  // Key on first 8 chars of key + timeout. We never store the full key.
+  const poolKey = `${apiKey.slice(0, 8)}:${tms}`;
+  let guard = _pool.get(poolKey);
+  if (!guard) {
+    guard = new AnthropicGuard(apiKey, tms, route ?? "unknown");
+    _pool.set(poolKey, guard);
+  }
+  return guard;
 }
