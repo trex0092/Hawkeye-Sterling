@@ -15,32 +15,44 @@
 
 ---
 
-## CG-2 — No false-positive whitelist mechanism
+## CG-2 — False-positive whitelist mechanism
 
 **Risk:** HIGH (operational compliance)  
-**Description:** There is no mechanism to whitelist known-clear entities that generate repeated false-positive hits (e.g., common Arabic names that phonetically match list entries). Without a whitelist, compliance officers must manually re-clear the same subject on every re-screening run, creating alert fatigue and increasing the risk of a real hit being dismissed.
+**Status:** PARTIALLY CLOSED (2026-05-26) — mechanism implemented; MLRO workflow approval pending
 
-UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match" determinations, including a record of the disambiguation basis.
+**Description:** `web/app/api/whitelist/route.ts` implements a full per-tenant false-positive whitelist:
+- `GET /api/whitelist` — list active entries for the caller's tenant
+- `POST /api/whitelist` — add an entry (CO or MLRO role required)
+- `DELETE /api/whitelist?id=<entryId>` — remove an entry (MLRO role only)
 
-**Decision required:** MLRO to define:
-  1. Whitelist approval workflow (who can approve, what documentation is required)
-  2. Whitelist record format and retention period
-  3. Whether whitelists expire (recommended: annual review)
-  4. Whether whitelisted entries are excluded from ongoing monitoring or only from first-screening alerts
+All writes append to `whitelist-audit/<tenantId>.json` for a tamper-evident audit trail. The whitelist is checked during `quick-screen` and `screening/run` to suppress known-clear FP hits.
+
+UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match" determinations, including a record of the disambiguation basis. The audit trail satisfies this requirement.
+
+**Remaining MLRO decision required:**
+  1. Confirm the approval workflow (who can POST — CO vs. MLRO role gate)
+  2. Confirm whitelist expiry policy (recommended: annual review, `expiresAt` field supported)
+  3. Confirm whether whitelisted entries are excluded from ongoing monitoring (currently: excluded from first-screen alerts only)
 
 ---
 
 ## CG-3 — Periodic re-screening automation completeness
 
 **Risk:** HIGH (regulatory)  
-**Description:** `netlify/functions/ongoing-screen.mts` and `/api/ongoing/` routes exist but it is unclear from static analysis alone whether all active customers are enrolled in periodic re-screening and whether the schedule meets the frequency required by the MLRO's risk-based programme.
+**Status:** PARTIALLY CLOSED (2026-05-26) — schedules implemented; MLRO enrolment confirmation pending
 
-UAE MoE Circular 3/2025 requires DNFBPs to conduct ongoing monitoring commensurate with customer risk tier.
+**Description:** `web/lib/server/ongoing-monitoring-config.ts` defines risk-tier cadences per FATF R.10/R.12/FDL 10/2025:
+- `standard` (CDD): screen every 365 days, news every 30 days
+- `enhanced` (EDD): screen every 90 days, news every 7 days
+- `intensive`: screen every 30 days, news every 1 day
+- `pep`: screen every 7 days, news every 1 day (mandatory, FATF R.12)
+- `prohibited`: screen every 1 day, news every 6 hours
 
-**Decision required:** MLRO to confirm:
-  1. The frequency of automated re-screening per risk tier (HIGH/MEDIUM/LOW)
-  2. Whether all existing customers have an active `ongoing_screen` schedule
-  3. What happens when the `ongoing-screen` function fails (current: errors are logged but no escalation is triggered)
+`netlify/functions/ongoing-screen.mts` runs hourly (cron `0 * * * *`) and dispatches to `/api/ongoing/run` which advances subjects due for re-screening based on their cadence.
+
+**Remaining MLRO decision required:**
+  1. Confirm all existing customers have been assigned a risk tier and enrolled in a schedule (operator database check required)
+  2. Define escalation procedure for when `ongoing-screen` function fails (currently: errors logged, no Asana task or alert fired)
 
 ---
 
@@ -110,8 +122,8 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 | ID | Owner | Target Date | Status |
 |----|-------|-------------|--------|
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
-| CG-2 | MLRO | — | Open |
-| CG-3 | MLRO | — | Open |
+| CG-2 | MLRO | — | Partially closed — whitelist implemented, workflow approval pending |
+| CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
 | CG-4 | Operator | — | Open |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Open |
