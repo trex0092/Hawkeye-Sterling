@@ -24,6 +24,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
 import { log } from "./logger";
 import { startSpan, SpanStatus } from "./tracer";
+import { incrementCounter } from "./metrics-store";
 
 // Memoized HMAC key for IP anonymization. Derived once per deployment from
 // SESSION_SECRET so that the same IP always produces the same hash within a
@@ -66,6 +67,7 @@ function logAuthFailure(
     method: req.method,
     ...extra,
   });
+  incrementCounter('hawkeye_auth_failures_total', 1, { reason: reason.split(':')[0] ?? reason });
 }
 
 export interface EnforcementAllow {
