@@ -56,7 +56,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const regResult = await verifyRegulatorToken(rawToken);
   if (!regResult.ok) {
-  log({ level: "warn", route: "/api/regulator/audit-trail", event: "regulator_access.token_invalid", reason: regResult.reason });
+    log({ level: "warn", route: "/api/regulator/audit-trail", event: "regulator_access.token_invalid", reason: regResult.reason });
     return NextResponse.json(
       { ok: false, error: "invalid regulator token", reason: regResult.reason },
       { status: 401 },

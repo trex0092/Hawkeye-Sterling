@@ -116,10 +116,10 @@ export default async function handler(): Promise<void> {
   const currentEntities = extractEntities(xml);
   const newDesignations: string[] = [];
 
+  let hashChanged = false;
+
   if (lastSnapshot) {
-    // We don't persist the full entity list — instead, compare count + sample names
-    // For a true delta we'd need last run's entity map. Here we flag any hash change
-    // as "potential new designations" and include entity count delta for triage.
+    hashChanged = true;
     const countDelta = currentEntities.size - lastSnapshot.entityCount;
     if (countDelta > 0) {
       // New entries detected — sample up to 20 new names for the webhook payload
@@ -129,8 +129,16 @@ export default async function handler(): Promise<void> {
         newDesignations.push(name);
       }
       console.log(`[${LABEL}] OFAC SDN updated: +${countDelta} entities (${currentEntities.size} total). Emitting webhook.`);
+    } else if (countDelta < 0) {
+      // De-listing detected — entities removed (sanctions lifted or corrections).
+      // Still trigger fast refresh so screening corpus reflects the removal.
+      console.log(`[${LABEL}] OFAC SDN de-listing detected: ${countDelta} entities removed (${currentEntities.size} total). Triggering refresh.`);
     } else {
-      console.log(`[${LABEL}] OFAC SDN hash changed but entity count unchanged (${currentEntities.size}). Possible amendment/correction.`);
+      // Amendment: hash changed but count is the same — renamed designation,
+      // corrected address, alias update, or simultaneous add+remove.
+      // Trigger a fast refresh so the corpus picks up the change even without
+      // new designations (missed by the previous count-only check).
+      console.log(`[${LABEL}] OFAC SDN amendment detected: hash changed, entity count unchanged (${currentEntities.size}). Triggering refresh.`);
     }
   } else {
     console.log(`[${LABEL}] first run — establishing baseline. Entities: ${currentEntities.size}`);
@@ -156,10 +164,11 @@ export default async function handler(): Promise<void> {
   }
 
   // 7. Trigger a fast list refresh via the internal API so the screening
-  //    corpus is updated within minutes of the OFAC change.
+  //    corpus is updated within minutes of any OFAC change — including amendments,
+  //    de-listings, and metadata corrections that don't change the entity count.
   const cronToken = process.env['SANCTIONS_CRON_TOKEN'];
   const baseUrl = process.env['URL'] ?? process.env['DEPLOY_URL'];
-  if (cronToken && baseUrl && newDesignations.length > 0) {
+  if (cronToken && baseUrl && hashChanged) {
     try {
       await fetch(`${baseUrl}/api/sanctions/refresh`, {
         method: 'POST',
