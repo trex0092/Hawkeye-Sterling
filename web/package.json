@@ -37,10 +37,8 @@
   "devDependencies": {
     "@netlify/plugin-nextjs": "5.15.11",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/auto-instrumentations-node": "^0.56.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
     "@opentelemetry/resources": "^1.30.0",
-    "@opentelemetry/sdk-node": "^0.57.0",
     "@opentelemetry/semantic-conventions": "^1.30.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "20.14.10",
