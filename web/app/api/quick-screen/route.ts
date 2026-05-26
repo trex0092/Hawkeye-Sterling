@@ -59,6 +59,7 @@ import type { CaseRecord } from "@/lib/types";
 import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
 import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
 import { bloomPreScreen, isFilterStale, rebuildGlobalFilter } from "@/lib/server/bloom-filter";
+import { LatencyBudget } from "@/lib/server/latency-budget";
 
 // ── UN Security Council 1267 designated entity name matching ───────────────
 // Token-set similarity check: if the subject name shares >80% of word tokens
@@ -235,6 +236,8 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  const phaseBudget = new LatencyBudget("quick-screen");
+  phaseBudget.phase("parallel-kickoff");
   // Start list health check immediately — runs in parallel with auth + corpus
   // loading so it doesn't add latency to the critical path.
   const listHealthPromise = fetchListHealth().catch(() => null);
@@ -250,8 +253,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // tier without an API key) leaves audit chain entries with no operator
   // identity. For a public demo, use the separate /api/demo/quick-screen
   // path (if added) which logs actor: "public-demo" explicitly.
+  phaseBudget.phase("auth");
   const gate = await enforce(req, { requireAuth: true, cost: 2 });
-  if (!gate.ok) return gate.response;
+  if (!gate.ok) { phaseBudget.finish(); return gate.response; }
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   // When the poll endpoint re-calls quick-screen for full enrichment it sets
@@ -559,6 +563,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
 
+    phaseBudget.phase("bloom");
     // ── Bloom filter pre-screen ────────────────────────────────────────────
     // If the Bloom filter is stale (or caller supplies their own candidates),
     // rebuild it asynchronously in the background — it will be ready for the
@@ -626,7 +631,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       } as QuickScreenResponse & { _bloomFastPath: boolean }, gateHeaders);
     }
 
+    phaseBudget.phase("quickscreen");
     const result = quickScreen(subject, candidates, screenOptions);
+    phaseBudget.phase("augmentation");
 
     // Source attribution: enrich each hit with a human-readable list label,
     // risk category, and structured match reason. Additive — never overwrites
