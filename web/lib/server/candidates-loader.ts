@@ -20,6 +20,7 @@
 
 import type { QuickScreenCandidate } from "@/lib/api/quickScreen.types";
 import { CANDIDATES as STATIC_CANDIDATES } from "@/lib/data/candidates";
+import { rebuildGlobalFilter } from "./bloom-filter";
 
 // Adapter IDs written by netlify/functions/refresh-lists.ts (primary feeds)
 // plus LSEG-derived supplement IDs written by /api/admin/import-cfs.
@@ -366,6 +367,7 @@ async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: 
       _cached = STATIC_CANDIDATES;
       _cachedAt = now;
       _cachedHealth = health;
+      void Promise.resolve().then(() => rebuildGlobalFilter(STATIC_CANDIDATES)).catch(() => undefined);
       return { candidates: _cached, health };
     }
 
@@ -397,6 +399,10 @@ async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: 
     _cached = merged;
     _cachedAt = now;
     _cachedHealth = health;
+    // Rebuild Bloom filter in the background — non-blocking. The filter is
+    // used by quick-screen for sub-millisecond pre-screening of subject names
+    // before the O(n·m) quickScreen() pass runs.
+    void Promise.resolve().then(() => rebuildGlobalFilter(merged)).catch(() => undefined);
     return { candidates: merged, health };
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

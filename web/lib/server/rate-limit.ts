@@ -20,30 +20,36 @@ import { tierFor, type TierDefinition } from "@/lib/data/tiers";
 import { incrementCounter } from "./metrics-store";
 
 // ── Upstash Redis path ────────────────────────────────────────────────────────
+//
+// Latency optimisation: use the Upstash /pipeline endpoint to batch all INCR +
+// EXPIRE commands into a SINGLE HTTP round-trip instead of two sequential
+// requests.  The previous implementation called INCR and then (conditionally)
+// EXPIRE as separate fetches, adding ~40-80 ms per rate-limit check.
+//
+// Pipeline payload format per Upstash docs:
+//   POST /pipeline  body: [["INCR","key"],["EXPIRE","key","ttl"]]
+// Response:           [{"result":N},{"result":1}]
 
-async function redisIncr(key: string, ttlSeconds: number): Promise<number | null> {
+async function redisPipeline(
+  commands: Array<readonly [string, ...string[]]>,
+): Promise<Array<number | null>> {
   const url = process.env["UPSTASH_REDIS_REST_URL"];
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
-  if (!url || !token) return null;
+  if (!url || !token) return commands.map(() => null);
   try {
-    // INCR key — atomic increment
-    const incrRes = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
+    const res = await fetch(`${url}/pipeline`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(commands),
     });
-    if (!incrRes.ok) return null;
-    const incrBody = await incrRes.json() as { result?: number };
-    const count = incrBody.result ?? 0;
-    // Only set TTL on first write (count === 1) to avoid resetting the window
-    if (count === 1) {
-      await fetch(`${url}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => undefined);
-    }
-    return count;
+    if (!res.ok) return commands.map(() => null);
+    const results = await res.json() as Array<{ result?: number }>;
+    return results.map((r) => (typeof r?.result === "number" ? r.result : null));
   } catch {
-    return null;
+    return commands.map(() => null);
   }
 }
 
@@ -58,22 +64,16 @@ async function consumeRedis(
   const secKey = `rl:${keyId}:s:${secWindow}`;
   const minKey = `rl:${keyId}:m:${minWindow}`;
 
-  // For cost > 1 we issue cost increments but only one TTL set. Use sequential
-  // INCR calls so the final count reflects the full cost of this request.
-  async function incrBy(key: string, ttlSec: number, n: number): Promise<number | null> {
-    let last: number | null = null;
-    for (let i = 0; i < n; i++) {
-      const v = await redisIncr(key, ttlSec);
-      if (v === null) return null;
-      last = v;
-    }
-    return last;
-  }
-
-  const [secCount, minCount] = await Promise.all([
-    incrBy(secKey, 2, cost),
-    incrBy(minKey, 62, cost),
-  ]);
+  // Build a single pipeline: INCRBY secKey cost, EXPIRE secKey 2,
+  //                           INCRBY minKey cost, EXPIRE minKey 62
+  // All four commands go in one HTTP call — saves one full round-trip (~40-80 ms).
+  const pipeline: Array<readonly [string, ...string[]]> = [
+    ["INCRBY", secKey, String(cost)],
+    ["EXPIRE",  secKey, "2"],
+    ["INCRBY", minKey, String(cost)],
+    ["EXPIRE",  minKey, "62"],
+  ];
+  const [secCount, , minCount] = await redisPipeline(pipeline);
   if (secCount === null || minCount === null) return null; // Redis unavailable
 
   const secAllowed = secCount <= tier.rateLimitPerSecond;
