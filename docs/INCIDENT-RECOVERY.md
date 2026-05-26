@@ -198,7 +198,81 @@ schedule itself depending on cause.
 
 ---
 
-## 8. Escalation paths
+## 8. Secret rotation (JWT_SIGNING_SECRET / AUDIT_CHAIN_SECRET)
+
+**When to trigger:** Suspected credential compromise, scheduled rotation (recommended: 90-day cycle for JWT secrets), or pre-emptive rotation before a key escrow change.
+
+**Procedure (zero-downtime dual-secret overlap — see `web/lib/server/jwt.ts`):**
+
+1. **Rotate `JWT_SIGNING_SECRET`:**
+   - Set `JWT_SIGNING_SECRET_PREV` = current `JWT_SIGNING_SECRET` value in Netlify/k8s.
+   - Set `JWT_SIGNING_SECRET` = new random 64-byte hex string (`openssl rand -hex 64`).
+   - Deploy. `verifyJwt()` now tries the primary key first, then falls back to `_PREV`.
+   - Wait for JWT TTL to expire (default 600 s). Monitor logs for `jwt_signed_with_prev_key` — that counter reaching zero confirms all old tokens are expired.
+   - Remove `JWT_SIGNING_SECRET_PREV` from env and redeploy.
+
+2. **Rotate `AUDIT_CHAIN_SECRET`:**
+   - Audit chain HMACs use the secret only for new entries (previous entries remain valid with their recorded HMAC). Rolling forward is safe.
+   - Set `AUDIT_CHAIN_SECRET` = new value, deploy. All new chain entries use the new secret.
+   - Verify with `/api/audit/verify` — old entries verify against their stored HMAC (which was computed with the old key at write time). Verify response `ok: true` confirms chain integrity.
+   - Append a `chain.secret_rotated` audit event documenting the rotation.
+
+3. **Rotate `SESSION_SECRET`:**
+   - All active sessions are immediately invalidated on deploy (sessions are HMAC-signed with this key).
+   - Schedule rotation during low-traffic window. Users will need to re-authenticate.
+
+**Time to recover (planned):** ~15 min per secret including deploy time.  
+**Reference:** `web/lib/server/jwt.ts` (dual-secret path), `docs/governance/AI_GOVERNANCE_POLICY.md`.
+
+---
+
+## 9. AI model incident (hallucination detected / model drift alert)
+
+**Symptom.** One of:
+- Dashboard shows `ai.hallucination_detected` event in audit trail (from `web/lib/server/hallucination-gate.ts`).
+- `/api/ai-governance/risk-register` returns `attestationStatus: "overdue"` for a high/critical-tier model.
+- Drift monitor fires: `computeDriftReport()` returns `driftDetected: true` in the bias/drift report.
+- `hawkeye_bias_alert_total` counter spikes in Prometheus metrics.
+
+**Immediate response:**
+
+1. **Hallucination alert:** The `ai.hallucination_detected` audit chain entry identifies the route and response text. Retrieve via `/api/audit/view` (MLRO auth). Do NOT act on the AI output for the affected subject until a human review is completed. Log the hallucination as a `near-miss` in `docs/INCIDENTS.md`.
+
+2. **Model drift alert:** Review the drift report (`GET /api/ai-governance/risk-register`). If `verdictDrift > 20%` vs. prior 30-day window: (a) suspend automated escalations pending MLRO review, (b) file an internal model-change incident, (c) schedule re-attestation via Asana (`attestation-status` endpoint drives this automatically when configured).
+
+3. **Bias alert** (`ai.bias_detected` or `ai.nationality_bias_detected`): Suspend batch screening for the flagged script/nationality group until the bias source is diagnosed. Review `GET /api/bias-report` for the affected tenant. If `biasRatio > 1.5` for any group, treat as a FATF R.10 potential discriminatory screening incident and escalate to MLRO.
+
+4. **Attestation overdue:** The `/api/ai-governance/attestation-status` endpoint returns 503. The Netlify scheduled function automatically creates an Asana task 30 days before due date. If overdue: freeze new AI-assisted screening decisions for the overdue model tier until re-attestation is completed per `docs/governance/AI_GOVERNANCE_POLICY.md`.
+
+**Time to recover:** Hallucination/drift investigation: 2–24 h depending on scope. Attestation: scheduled review cycle.  
+**Reference:** `web/lib/server/hallucination-gate.ts`, `web/lib/server/drift-monitor.ts`, `web/lib/server/bias-monitor.ts`, `docs/governance/AI_GOVERNANCE_POLICY.md`.
+
+---
+
+## 10. Attestation overdue — quarterly model governance cycle
+
+**Symptom.** `GET /api/ai-governance/attestation-status` returns HTTP 503 with `hasCriticalOverdue: true`. An Asana task was created 30 days before the due date and was not actioned.
+
+**Recovery:**
+
+1. Retrieve the overdue model IDs from the 503 response `overdueModelIds` array.
+2. For each overdue high/critical-tier model:
+   - Convene the model attestation panel (MLRO + CTO minimum, per `AI_GOVERNANCE_POLICY.md`).
+   - Review the model card in `docs/model-cards/<model-id>.md`.
+   - Run or review the most recent adversarial red-team results (`dist/adversarial-results/latest.json`).
+   - Review the drift and bias reports for the past 90 days.
+   - Sign the attestation: update `approval.nextAttestationDue` and `approval.approvedAt` in `web/lib/server/ai-governance.ts` MODEL_REGISTRY, commit, and deploy.
+3. After deploy, verify `GET /api/ai-governance/attestation-status` returns 200 with `attestationStatus: "current"` for all models.
+4. Record the attestation in `docs/INCIDENTS.md` with the panel participants, date, and any model changes since the prior attestation.
+
+**Regulatory note:** UAE FDL 10/2025 Art.18 requires demonstrable human oversight of AI compliance tools. An overdue attestation is a regulatory control failure. If overdue by > 30 days without remediation, the MLRO must assess whether the AI-assisted decisions made during the overdue period require retrospective human review.
+
+**Time to recover:** Same-day if panel is available; up to 5 business days for a full attestation cycle.  
+**Reference:** `web/app/api/ai-governance/attestation-status/route.ts`, `web/lib/server/ai-governance.ts`, `docs/governance/AI_GOVERNANCE_POLICY.md`.
+
+---
+
+## 11. Escalation paths
 
 For incidents in §2, §3, §6 that persist > 30 minutes:
 
