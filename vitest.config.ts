@@ -31,6 +31,8 @@ export default defineConfig({
       { find: 'next/server', replacement: path.resolve(__dirname, 'src/__mocks__/next-server.ts') },
       // Resolve Next.js path alias `@/` → web/ so src/__tests__ can import web API routes.
       { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'web/$1') },
+      // Resolve @brain/* → src/brain/* (strips trailing .js extension for NodeNext compat).
+      { find: /^@brain\/(.+?)(?:\.js)?$/, replacement: path.resolve(__dirname, 'src/brain/$1') },
     ],
   },
 });

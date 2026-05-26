@@ -130,6 +130,22 @@ See `.env.example` for the complete list (~80 keys). Priority keys for UAE DPMS 
 
 ---
 
+## Tier 7 — Compliance / Retention (Missing = 10-year audit chain durability gap — CG-6)
+
+These variables are required by `netlify/functions/audit-chain-s3-backup.mts` to mirror the
+tamper-evident audit chain to an S3-compatible WORM store for FDL 10/2025 Art. 24 compliance.
+Without them, audit records are retained only in Netlify Blobs (no guaranteed 10-year durability).
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `S3_BACKUP_ENDPOINT` | REQUIRED (CG-6) | S3-compatible endpoint URL. AWS S3, Cloudflare R2, MinIO, or any S3-API-compatible store. | `https://s3.me-south-1.amazonaws.com` |
+| `S3_BACKUP_BUCKET` | REQUIRED (CG-6) | Bucket name. Must have object-lock / WORM mode enabled with a ≥10-year retention policy. | `hawkeye-audit-chain-worm` |
+| `S3_BACKUP_REGION` | REQUIRED (CG-6) | AWS region for SigV4 signing. Default: `me-south-1` (UAE/Bahrain — recommended for data residency). | `me-south-1` |
+| `S3_BACKUP_ACCESS_KEY_ID` | REQUIRED (CG-6) | IAM access key ID. Use a least-privilege IAM role with `s3:PutObject` only on the backup bucket. | From AWS IAM |
+| `S3_BACKUP_SECRET_KEY` | REQUIRED (CG-6) | IAM secret access key. Rotate annually per SOC2 CC6.1. | From AWS IAM |
+
+---
+
 ## Netlify Context Mapping
 
 | Context | NODE_ENV | Notes |

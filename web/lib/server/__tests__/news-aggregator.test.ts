@@ -247,7 +247,7 @@ describe("aggregateNews", () => {
     await aggregateNews("محمد علي", { noCache: true });
     // Should have been called twice: original + transliterated
     expect(mockSearchAllNews).toHaveBeenCalledTimes(2);
-    const calls = mockSearchAllNews.mock.calls.map((c) => c[0]);
+    const calls = mockSearchAllNews.mock.calls.map((c: [string, ...unknown[]]) => c[0]);
     expect(calls).toContain("محمد علي");
     expect(calls).toContain("Muhammad Ali");
   });

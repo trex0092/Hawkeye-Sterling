@@ -111,15 +111,32 @@ const nextConfig = {
       }
     }
 
-    // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.
-    // Next.js 15.5 compiled runtimes (app-page, app-route) capture
-    //   let eV = globalThis.AsyncLocalStorage
-    // at module load time and call eV.snapshot() per request.
+    // AsyncLocalStorage.snapshot() polyfill — BannerPlugin injection.
     //
-    // We patch ALL THREE known locations for the AsyncLocalStorage class
-    // because require('async_hooks') vs require('node:async_hooks') may be
-    // separate module-cache entries on some Lambda Node.js builds, and both
-    // differ from the globalThis copy set by node-environment-baseline.js.
+    // WHY: AsyncLocalStorage.snapshot() was added in Node.js 22.3.0. Next.js 15.5
+    // compiled runtimes (app-page, app-route) capture `let eV = globalThis.AsyncLocalStorage`
+    // at module load time and call `eV.snapshot()` per request. On Lambda/Netlify builds
+    // that ship a Node.js version < 22.3.0, this throws at runtime with no useful error.
+    //
+    // WHY THREE LOCATIONS: require('async_hooks') and require('node:async_hooks') can be
+    // separate module-cache entries on some Lambda Node.js builds (depends on how the
+    // resolver is initialised). Both may differ from the globalThis copy set by
+    // node-environment-baseline.js. Patching all three guarantees the polyfill is present
+    // regardless of which path Next.js or a dependency uses to obtain the class.
+    //
+    // WHY BANNER (not a polyfill module): The banner is injected as raw JS at the top of
+    // every compiled server entry, before any module evaluation. A runtime polyfill module
+    // would be too late — ALS is captured at module-load time, not at request time.
+    //
+    // WHEN CAN THIS BE REMOVED: When the minimum deployed Node.js version is >= 22.3.0
+    // across all Netlify function runtimes AND all k8s node pools. Check with
+    //   node -e "const {AsyncLocalStorage}=require('async_hooks');console.log(typeof AsyncLocalStorage.snapshot)"
+    // on each target environment. If it prints "function" everywhere, remove this block
+    // and the corresponding step in scripts/build.sh (patch-als.cjs).
+    //
+    // NOTE: The minified banner string has no source map. Stack traces from within it will
+    // show as anonymous code. This is acceptable — the polyfill only runs if snapshot() is
+    // absent; errors inside it indicate a Node.js environment regression, not app code.
     if (isServer && nextRuntime !== "edge") {
       config.plugins.push(
         new webpack.BannerPlugin({
