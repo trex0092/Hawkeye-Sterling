@@ -13,9 +13,11 @@ export async function POST(req: Request) {
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const composite = body['composite'] as { score?: number; breakdown?: Record<string, number> } | undefined;
-  const score = typeof composite?.score === 'number' ? composite.score : 0;
-  const breakdown = composite?.breakdown ?? {};
+  const score = typeof body['score'] === 'number' ? body['score'] : 0;
+  const breakdown =
+    typeof body['breakdown'] === 'object' && body['breakdown'] !== null
+      ? (body['breakdown'] as Record<string, number>)
+      : {};
 
   const decomposition = decomposeScore(score, breakdown);
 
@@ -31,5 +33,19 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ ok: true, ...decomposition });
+  // Map ShapDecomposition → ScoreExplainResponse expected by BrainXAIPanel
+  const shapValues = decomposition.contributions.map((c) => ({
+    feature: c.displayName,
+    contribution: c.shapValue,
+    direction: (c.direction === 'increases_risk' ? 'positive' : 'negative') as 'positive' | 'negative',
+    percentageOfScore: c.shapPercent,
+  }));
+
+  return NextResponse.json({
+    ok: true,
+    shapValues,
+    totalScore: decomposition.totalScore,
+    baseline: decomposition.baseline,
+    confidence: 0.85,
+  });
 }

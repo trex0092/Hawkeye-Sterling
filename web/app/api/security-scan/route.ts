@@ -62,16 +62,16 @@ export interface SecurityScanResult {
 type CheckResult = { finding?: ScanFinding };
 
 function checkAuthSecret(): CheckResult {
-  const configured = !!process.env["HAWKEYE_API_SECRET"];
+  const configured = !!process.env["ADMIN_TOKEN"];
   if (!configured) {
     return {
       finding: {
         id: "SEC-001",
         severity: "HIGH",
         category: "Authentication",
-        title: "API secret not configured",
-        detail: "HAWKEYE_API_SECRET is unset. The platform falls back to an open-access mode where any API key is accepted.",
-        remediation: "Set HAWKEYE_API_SECRET in your Netlify environment variables to enforce bearer-token authentication.",
+        title: "Admin token not configured",
+        detail: "ADMIN_TOKEN is unset. The web portal admin bypass is disabled — same-origin portal requests will be treated as unauthenticated and will require an explicit API key.",
+        remediation: "Set ADMIN_TOKEN in your Netlify environment variables to enable the portal admin authentication bypass.",
       },
     };
   }
@@ -113,16 +113,16 @@ function checkAnthropicKey(): CheckResult {
 }
 
 function checkHmacSecret(): CheckResult {
-  const configured = !!process.env["AUDIT_HMAC_SECRET"];
+  const configured = !!process.env["AUDIT_CHAIN_SECRET"];
   if (!configured) {
     return {
       finding: {
         id: "SEC-004",
         severity: "MEDIUM",
         category: "Audit Integrity",
-        title: "Audit HMAC secret not configured",
-        detail: "AUDIT_HMAC_SECRET is unset. Audit chain entries cannot be cryptographically signed — tamper-evidence is disabled.",
-        remediation: "Set AUDIT_HMAC_SECRET to a 256-bit random secret to enable HMAC-SHA256 signing of the audit chain.",
+        title: "Audit chain secret not configured",
+        detail: "AUDIT_CHAIN_SECRET is unset. Audit chain entries cannot be cryptographically signed with HMAC-SHA256 — tamper-evidence is disabled.",
+        remediation: "Set AUDIT_CHAIN_SECRET to a 256-bit random secret to enable HMAC-SHA256 signing of the audit chain.",
       },
     };
   }
