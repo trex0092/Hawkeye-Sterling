@@ -1,0 +1,42 @@
+version: 2
+updates:
+  # Root npm workspace
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+    ignore:
+      # These packages have known peer-dep conflicts with React 19 — tracked in COMPLIANCE_GAPS.md
+      # Remove entries once upstream resolves compatibility
+      - dependency-name: "react-debounce-input"
+      - dependency-name: "react-inspector"
+
+  # Web Next.js workspace
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10

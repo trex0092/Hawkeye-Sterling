@@ -1,0 +1,33 @@
+name: Dependency Review
+
+# Blocks PRs that introduce packages with known HIGH or CRITICAL vulnerabilities.
+# Uses the GitHub Dependency Review API — no external tools required.
+# Only runs on pull_request events (not push to main, as the merged state is
+# already validated by the ci.yml security-audit job).
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write  # Required to post the blocking comment on the PR
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Block on HIGH and CRITICAL severity CVEs in newly introduced packages.
+          # MODERATE are tracked in security-audit npm audit but not blocking here
+          # to avoid excessive churn from transitive updates.
+          fail-on-severity: high
+          # Post a summary comment on the PR when vulnerabilities are found
+          comment-summary-in-pr: on-failure
+          # Warn on packages with licenses incompatible with our compliance posture
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0

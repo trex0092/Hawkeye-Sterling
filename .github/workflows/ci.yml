@@ -6,86 +6,116 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel stale in-progress runs for the same branch/PR.
+# Never cancel runs on main — always let them complete for audit trail completeness.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-env
         with:
-          node-version: 22.x
-          cache: npm
-      - name: Install dependencies
-        run: npm ci --include=dev --no-audit --no-fund
-      - name: Install web dependencies (for web/lib unit tests)
-        # The root vitest config includes `web/lib/**/__tests__/**/*.test.ts`
-        # — these tests import production helpers that pull in `next/server`,
-        # `zod`, etc. Web/ install is therefore required before `Tests` runs.
-        run: cd web && npm ci --include=dev --no-audit --no-fund
+          install-web: 'true'
+
+      - name: Cache TypeScript build output
+        uses: actions/cache@v4
+        with:
+          path: dist/
+          key: tsc-${{ runner.os }}-${{ hashFiles('src/**/*.ts', 'tsconfig.json', 'tsconfig*.json') }}
+          restore-keys: tsc-${{ runner.os }}-
+
       - name: Compile TypeScript (root — produces dist/ for test imports)
         # tsc must run before vitest so that any test importing dist/src/brain/*
         # (e.g. integration tests using @brain alias) resolves against the
         # freshly-compiled output, not a stale or absent dist/.
         run: npm run build
+
       - name: Type check
         run: npm run typecheck
+
       - name: Tests
         run: npx vitest run --reporter=default
+
       - name: Integration tests (API route handlers)
         # Imports Next.js route handlers directly with synthetic Request objects.
         # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
         run: npx vitest run --config vitest.integration.ts --reporter=default
+
       - name: Brain audit
         run: npm run brain:audit
+
       - name: Prefix extractor check
         run: node scripts/extract-prefixes.cjs > /tmp/prefixes.ts && test -s /tmp/prefixes.ts
+
       - name: Capabilities extractor check
         run: test -f scripts/gen-capabilities.cjs
+
       - name: Red-flag extractor check
         run: test -f scripts/gen-redflags.cjs
+
       - name: Lethal-trifecta governance check (Control 5.08)
         run: node scripts/lethal-trifecta-check.mjs
+
       - name: Prompt hash integrity check (FDL 10/2025 Art.18)
         # Ensures every SYSTEM_PROMPT constant matches the manifest hash.
         # Fails if prompt text changed without running --update (forces intentional tracking).
         run: node scripts/validate-prompt-hashes.mjs
+
       - name: Mode version governance check (FDL 10/2025 Art.16)
         # Fails in production if any reasoning mode lacks an explicit version pin with
         # MLRO/CO approval. Modes in 0.0.0-pending state are non-compliant.
         run: NODE_ENV=production node scripts/check-mode-versions.mjs
 
+      - name: Build job summary
+        if: always()
+        run: |
+          {
+            echo "## Build — \`${GITHUB_SHA:0:8}\`"
+            echo "| Step | Result |"
+            echo "|------|--------|"
+            echo "| TypeScript compile | completed |"
+            echo "| Unit + integration tests | completed |"
+            echo "| Governance (prompt-hash, lethal-trifecta, mode-versions) | completed |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   security-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-env
         with:
-          node-version: 22.x
-          cache: npm
-      - name: Install root dependencies
-        run: npm ci --include=dev
+          install-web: 'true'
+          audit: 'true'
+
       - name: Dependency vulnerability audit (root)
         # Fail on high/critical severity vulnerabilities. The previous
         # `|| true` masked real findings — if the npm registry is
         # unreachable that's a CI-infra problem that should also be
-        # visible, not silently swallowed alongside actual security
-        # signal.
+        # visible, not silently swallowed alongside actual security signal.
         run: npm audit --audit-level=high
-      - name: Install web dependencies
-        run: cd web && npm ci --include=dev
+
       - name: Dependency vulnerability audit (web)
         # Two moderate CVEs in Next.js transitive deps (next/postcss) have no upstream
         # fix as of 2026-05-26. They are NOT exploitable in our serverless deployment
         # context (postcss is a build-time tool, never exposed at runtime). We document
         # them here and use --audit-level=high so the step stays green until a fix ships.
         # When upstream fixes land, remove this comment and tighten to --audit-level=moderate.
-        run: cd web && npm audit --audit-level=high || npm audit --audit-level=high
+        run: cd web && npm audit --audit-level=high
+
       - name: PII guard — no direct Anthropic client instantiation
-        run: |
-          cd web && npm run check:pii-guard
+        run: cd web && npm run check:pii-guard
+
       - name: Secret leak check — no hardcoded credentials in source
+        # Belt-and-suspenders fast check for Anthropic and AWS credential patterns.
+        # The gitleaks job (full history, 100+ patterns) is the primary secret gate.
         run: |
-          # Fail if any source file contains obvious hardcoded secrets
           if grep -rn --include="*.ts" --include="*.tsx" --include="*.js" \
             -E "(sk-ant-[a-zA-Z0-9]{32,}|AKIA[A-Z0-9]{16})" \
             src/ web/app/ web/lib/ netlify/ 2>/dev/null; then
@@ -93,9 +123,9 @@ jobs:
             exit 1
           fi
           echo "No hardcoded secrets found"
+
       - name: Check for exposed env var reads in client components
         run: |
-          # Warn if client-side components read server-only env vars
           if grep -rn --include="*.tsx" \
             -E "process\.env\.(ANTHROPIC_API_KEY|ADMIN_TOKEN|AUDIT_CHAIN_SECRET|SANCTIONS_CRON_TOKEN)" \
             web/app/ 2>/dev/null | grep -v "route.ts"; then
@@ -103,6 +133,7 @@ jobs:
             exit 1
           fi
           echo "No server-secret exposure in client components"
+
       - name: Auth coverage gate — no silent opt-outs of enforce()
         run: |
           # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
@@ -129,21 +160,26 @@ jobs:
             exit 1
           fi
           echo "PASS"
+
       - name: Generate SBOM (root)
         # Produces a CycloneDX SBOM for SOC 2 Type II / ISO 27001 evidence.
         # npm 10.x ships `npm sbom` natively; no external tool needed.
-        # The SBOM is uploaded as a CI artifact — it is not committed to source.
-        # continue-on-error: transitive deps of swagger-ui-react (react-debounce-input@3.3.0,
-        # react-inspector@6.0.2) declare peer deps that exclude React 19 even though they
-        # work at runtime. No React-19-compatible release exists yet. SBOM is best-effort
-        # audit evidence; a partial or empty fallback is written so the upload step succeeds.
+        # Primary: --omit dev (runtime deps only). Fallback: include dev deps if
+        # peer-dep conflict prevents --omit dev (react-debounce-input/React 19).
+        # Both outputs are real SBOMs. If both fail, CI fails — no fake fallback.
         run: |
-          npm sbom --sbom-format cyclonedx --sbom-type library --omit dev > /tmp/sbom-root.cdx.json 2>/dev/null \
-            || echo '{"bomFormat":"CycloneDX","specVersion":"1.4","metadata":{"component":{"type":"library","name":"hawkeye-sterling","version":"0.2.0"}},"components":[],"note":"SBOM incomplete — react-debounce-input peer-dep conflict with React 19"}' > /tmp/sbom-root.cdx.json
+          npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
+            > /tmp/sbom-root.cdx.json \
+            || npm sbom --sbom-format cyclonedx --sbom-type library \
+              > /tmp/sbom-root.cdx.json
+
       - name: Generate SBOM (web)
         run: |
-          cd web && npm sbom --sbom-format cyclonedx --sbom-type library --omit dev > /tmp/sbom-web.cdx.json 2>/dev/null \
-            || echo '{"bomFormat":"CycloneDX","specVersion":"1.4","metadata":{"component":{"type":"library","name":"hawkeye-sterling-web","version":"0.1.0"}},"components":[],"note":"SBOM incomplete — react-debounce-input peer-dep conflict with React 19"}' > /tmp/sbom-web.cdx.json
+          cd web && npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
+            > /tmp/sbom-web.cdx.json \
+            || npm sbom --sbom-format cyclonedx --sbom-type library \
+              > /tmp/sbom-web.cdx.json
+
       - name: Upload SBOMs
         uses: actions/upload-artifact@v4
         with:
@@ -152,39 +188,75 @@ jobs:
             /tmp/sbom-root.cdx.json
             /tmp/sbom-web.cdx.json
           retention-days: 365
+
       - name: Trivy filesystem scan — critical/high CVEs
-        # Scans the repository filesystem for known vulnerabilities in
-        # dependencies. Fails on CRITICAL or HIGH severity CVEs.
-        # ignore-unfixed changed to false so CVEs without upstream fixes are
-        # visible (they may have application-level mitigations). Exceptions
-        # documented in .trivyignore with justification and review date.
-        uses: aquasecurity/trivy-action@master
+        # Scans the repository filesystem for known vulnerabilities in dependencies.
+        # Fails on CRITICAL or HIGH severity CVEs.
+        # ignore-unfixed: false — CVEs without upstream fixes are visible (may have
+        # application-level mitigations). Exceptions documented in .trivyignore with
+        # justification and review date.
+        # SARIF output feeds the GitHub Security tab for unified vulnerability tracking.
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'table'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: false
           trivyignores: '.trivyignore'
 
+      - name: Upload Trivy SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      - name: Security audit summary
+        if: always()
+        run: |
+          {
+            echo "## Security Audit — \`${GITHUB_SHA:0:8}\`"
+            echo "| Check | Result |"
+            echo "|-------|--------|"
+            echo "| npm audit (root + web) | completed |"
+            echo "| PII guard | completed |"
+            echo "| Secret leak check | completed |"
+            echo "| Auth coverage gate | completed |"
+            echo "| SBOM (CycloneDX) | generated |"
+            echo "| Trivy CVE scan | completed — see Security tab |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   semgrep:
     # SAST (static application security testing) via Semgrep community rules.
     # Catches TypeScript/Node.js/Next.js-specific issues (template literal
     # injection, prototype pollution, unescaped output) that npm audit misses.
-    # Runs in parallel with security-audit — no dependency on build.
+    # Runs in parallel with other Tier 1 jobs — no dependency on build.
+    # SARIF results are uploaded to the GitHub Security tab for unified review.
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.actor != 'dependabot[bot]'
-    container:
-      image: semgrep/semgrep
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Semgrep
+        run: pip install semgrep==1.90.0
+
       - name: Semgrep SAST scan
         # --severity ERROR only: avoids failing on style warnings.
+        # --sarif + --output: writes SARIF for Security tab alongside blocking output.
         # SEMGREP_APP_TOKEN optional: without it, community rules run locally.
-        # Note: || true was previously here — REMOVED so SAST findings actually
-        # block CI. Any ERROR-severity finding must be fixed or explicitly
-        # suppressed with a `# nosemgrep` comment and a justification.
+        # Any ERROR-severity finding must be fixed or explicitly suppressed with a
+        # `# nosemgrep` comment and a justification.
         run: |
           semgrep scan \
             --config=p/typescript \
@@ -192,35 +264,69 @@ jobs:
             --config=p/nextjs \
             --error \
             --severity=ERROR \
+            --sarif \
+            --output semgrep-results.sarif \
             src/ web/app/ web/lib/ netlify/
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
-  lint-web:
+      - name: Upload Semgrep SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+  gitleaks:
+    # Comprehensive secret scanning across full git history using Gitleaks.
+    # Detects 100+ secret types (API keys, tokens, credentials) including deleted
+    # secrets that were committed and later removed — the grep check in security-audit
+    # only covers current files and two patterns (sk-ant-*, AKIA*).
     runs-on: ubuntu-latest
-    needs: [build]
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
         with:
-          node-version: 22.x
-          cache: npm
-      - name: Install root dependencies
-        run: npm ci --include=dev
+          fetch-depth: 0  # Full history required — secrets deleted from HEAD remain in git log
+
+      - name: Install Gitleaks
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v8.22.1/gitleaks_8.22.1_linux_x64.tar.gz" \
+            | tar xz
+          sudo mv gitleaks /usr/local/bin/gitleaks
+
+      - name: Gitleaks full-history secret scan
+        # --redact: replaces actual secret values in output with REDACTED (safe for logs).
+        # --exit-code 1: fails CI if any secret is detected.
+        # Scans all commits, not just the current working tree.
+        run: gitleaks detect --source . --redact --exit-code 1
+
+  lint-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    steps:
+      - uses: ./.github/actions/setup-env
+        with:
+          install-web: 'true'
+
       - name: Compile TypeScript (root — required for web lint)
         run: npm run build
-      - name: Install web dependencies
-        run: cd web && npm ci --include=dev
+
       - name: Generate Next.js type stubs
         # next-env.d.ts is gitignored but required for tsc to resolve React
         # types. Next.js generates it at build/dev time; replicate it here.
         run: |
           printf '/// <reference types="next" />\n/// <reference types="next/image-types/global" />\n' \
             > web/next-env.d.ts
+
       - name: Web typecheck
         run: cd web && npm run typecheck
+
       - name: ESLint (root)
         run: npm run lint
+
       - name: ESLint (web app + lib)
         # next lint covers app/, lib/, components/ using web/.eslintrc.json.
         # This catches prefer-const, no-explicit-any, and other violations
@@ -230,42 +336,54 @@ jobs:
         run: cd web && npx next lint
 
   nextjs-build:
+    # Production build gate — only runs when ALL security and quality checks pass.
+    # Enforces: lint → test → security → build order.
     runs-on: ubuntu-latest
-    needs: [build, security-audit]
+    timeout-minutes: 25
+    needs: [build, security-audit, semgrep, k8s-validate, lint-web, gitleaks]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-env
         with:
-          node-version: 22.x
-          cache: npm
-      - name: Install root dependencies
-        run: npm ci --include=dev
+          install-web: 'true'
+
       - name: Compile TypeScript (root)
         run: npm run build
+
       - name: Generate weaponized brain
         run: node scripts/gen-weaponized-brain.cjs
-      - name: Install web dependencies
-        run: cd web && npm ci --include=dev
+
       - name: Patch AsyncLocalStorage.snapshot (ALS polyfill)
         # Mirrors step 4b in scripts/build.sh — required for Next.js 15 compatibility
         # on runtimes where AsyncLocalStorage.snapshot() is not natively available.
         # Must run from web/ so path.resolve('node_modules/next/...') hits web/node_modules.
         run: cd web && node ../scripts/patch-als.cjs
+
       - name: Patch compiled runtime snapshot guards
         # Mirrors step 4c in scripts/build.sh — guards against crashes in compiled
         # Next.js runtimes that call .snapshot() without a typeof check.
-        # Must run from web/ so path.resolve('node_modules/next/...') hits web/node_modules.
         run: cd web && node ../scripts/patch-runtime-snapshot.cjs
+
       - name: Clean Next.js build output
         # Ensures the route-presence check below does not pass on stale artifacts
         # from a previous run in the same workspace (dirty-workspace false-positive).
         run: rm -rf web/.next
+
+      - name: Cache Next.js build output
+        uses: actions/cache@v4
+        with:
+          path: web/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+
       - name: Build Next.js app
         run: cd web && npm run build
         env:
           NODE_ENV: production
           APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('0.2.0-{0}', github.sha) }}
           GIT_COMMIT_SHA: ${{ github.sha }}
+
       - name: Verify critical API route files exist in build output
         run: |
           REQUIRED_ROUTES=(
@@ -298,14 +416,17 @@ jobs:
     # without requiring a live API server (unlike kubectl --validate=strict which
     # tries to download the schema from localhost:8080 and always fails in CI).
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - name: Install kubeconform
         run: |
           curl -fsSL --retry 3 --retry-delay 5 \
             "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz" \
             | tar xz
           sudo mv kubeconform /usr/local/bin/kubeconform
+
       - name: Validate K8s manifests
         # -strict: reject unknown fields not in the schema (equivalent to kubectl --validate=strict)
         # -kubernetes-version: pin to 1.31.0 to match our target cluster version

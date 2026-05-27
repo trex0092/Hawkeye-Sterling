@@ -1,0 +1,41 @@
+name: 'Setup Node Environment'
+description: 'Checkout, set up Node 22, install root dependencies, optionally install web/ dependencies'
+
+inputs:
+  install-web:
+    description: 'Install web/ dependencies after root install'
+    required: false
+    default: 'false'
+  audit:
+    description: 'Enable npm audit during install (omits --no-audit --no-fund; use true for security-audit job)'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: npm
+
+    - name: Install root dependencies
+      shell: bash
+      run: |
+        if [ "${{ inputs.audit }}" = "true" ]; then
+          npm ci --include=dev
+        else
+          npm ci --include=dev --no-audit --no-fund
+        fi
+
+    - name: Install web dependencies
+      if: inputs.install-web == 'true'
+      shell: bash
+      run: |
+        if [ "${{ inputs.audit }}" = "true" ]; then
+          cd web && npm ci --include=dev
+        else
+          cd web && npm ci --include=dev --no-audit --no-fund
+        fi
