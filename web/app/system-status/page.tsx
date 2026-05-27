@@ -164,8 +164,9 @@ export default function SystemStatusPage() {
   return (
     <ModuleLayout>
       <ModuleHero
+        eyebrow="Operational"
         title="System Status"
-        subtitle="Live health dashboard — sanctions lists, cron functions, four-eyes queue, ongoing monitoring, regulatory feed"
+        intro="Live health dashboard — sanctions lists, cron functions, four-eyes queue, ongoing monitoring, regulatory feed"
       />
 
       {/* Header bar */}
