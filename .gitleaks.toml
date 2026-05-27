@@ -1,0 +1,62 @@
+# Gitleaks v8 configuration — allowlist for confirmed false positives.
+# Each entry explains WHY it is a false positive.
+# New suppressions require MLRO/Security team review.
+# Last reviewed: 2026-05-27
+
+title = "Hawkeye Sterling"
+
+[allowlist]
+  description = "Confirmed false positives — reviewed 2026-05-27"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # PATH-BASED ALLOWLISTS
+  # Files that contain only example/placeholder/documentation content.
+  # ──────────────────────────────────────────────────────────────────────────
+  paths = [
+    # Example env file — contains placeholder variable names, not real values.
+    '''^\.env\.example$''',
+    # Documentation listing all required env vars with placeholder examples.
+    '''^ENV_VARS_REQUIRED\.md$''',
+    # Audit report — contains sanitised output excerpts, no live credentials.
+    '''^PLATFORM_AUDIT_REPORT\.md$''',
+    # Smoke test scripts — Asana GIDs are public board/project identifiers for
+    # the test environment, not API credentials. Auth is via ASANA_TOKEN env var.
+    '''^scripts/smoke-asana\.sh$''',
+    '''^docs/scripts/smoke-asana\.ps1$''',
+  ]
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # REGEX-BASED ALLOWLISTS (matched against the detected secret VALUE)
+  # ──────────────────────────────────────────────────────────────────────────
+  regexes = [
+    # EU EEAS Financial Sanctions portal URL token — publicly documented,
+    # embedded in the official EU portal URL, not a private credential.
+    # Reference: https://webgate.ec.europa.eu (anonymous public endpoint)
+    # Comment in eu-fsf.ts: "token is public, embedded in the portal"
+    '''dG9rZW4tMjAxNw''',
+  ]
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # STOPWORD-BASED ALLOWLISTS (strings that, if found in the secret, suppress)
+  # ──────────────────────────────────────────────────────────────────────────
+  stopwords = [
+    # generic-api-key matches TypeScript object key properties like:
+    #   key: "sanctions-watch-15min"
+    # These are schedule identifiers in FUNCTION_LABELS array (functions/route.ts)
+    # and cron heartbeat labels — not API keys.
+    "sanctions-watch",
+    "sanctions-daily",
+    "ongoing-screen",
+    "four-eyes-stale",
+    "eocn-poll",
+    "warm-pool",
+    "audit-chain",
+    "ofac-intraday",
+    "adverse-media",
+    # Asana GIDs are public workspace/project identifiers — not credentials.
+    # Auth uses ASANA_PAT env var; GIDs identify workspaces only.
+    "ASANA_WORKSPACE_GID",
+    "ASANA_PROJECT_GID",
+    "ASANA_ASSIGNEE_GID",
+    "ASANA_SECTION_GID",
+  ]

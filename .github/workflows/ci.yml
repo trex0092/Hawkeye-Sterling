@@ -17,9 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Cache TypeScript build output
         uses: actions/cache@v4
@@ -89,10 +98,18 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
-          audit: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev
 
       - name: Dependency vulnerability audit (root)
         # Fail on high/critical severity vulnerabilities. The previous
@@ -238,25 +255,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.actor != 'dependabot[bot]'
+    container:
+      image: semgrep/semgrep
     permissions:
       security-events: write
       contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Semgrep
-        run: pip install semgrep==1.90.0
-
       - name: Semgrep SAST scan
+        # Runs inside the semgrep container image which bundles community rules locally,
+        # avoiding HTTP 403 registry errors when SEMGREP_APP_TOKEN is absent.
         # --severity ERROR only: avoids failing on style warnings.
         # --sarif + --output: writes SARIF for Security tab alongside blocking output.
-        # SEMGREP_APP_TOKEN optional: without it, community rules run locally.
-        # Any ERROR-severity finding must be fixed or explicitly suppressed with a
-        # `# nosemgrep` comment and a justification.
+        # SEMGREP_APP_TOKEN optional: enables Semgrep Cloud dashboard if present.
+        # Any ERROR-severity finding must be fixed or suppressed with # nosemgrep.
         run: |
           semgrep scan \
             --config=p/typescript \
@@ -299,17 +312,27 @@ jobs:
       - name: Gitleaks full-history secret scan
         # --redact: replaces actual secret values in output with REDACTED (safe for logs).
         # --exit-code 1: fails CI if any secret is detected.
+        # --config: project allowlist for confirmed false positives (reviewed 2026-05-27).
         # Scans all commits, not just the current working tree.
-        run: gitleaks detect --source . --redact --exit-code 1
+        run: gitleaks detect --source . --redact --exit-code 1 --config .gitleaks.toml
 
   lint-web:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root — required for web lint)
         run: npm run build
@@ -342,9 +365,18 @@ jobs:
     timeout-minutes: 25
     needs: [build, security-audit, semgrep, k8s-validate, lint-web, gitleaks]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root)
         run: npm run build
