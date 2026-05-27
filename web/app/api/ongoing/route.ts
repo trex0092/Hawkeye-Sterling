@@ -157,6 +157,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     {
       event: "ongoing.subject_enrolled",
       actor: ctx.apiKey.id,
+      actorEmail: ctx.apiKey.email,
       subjectId: id,
       subjectName: name,
       entityType: record.entityType,
@@ -229,6 +230,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     {
       event: "ongoing.subject_unenrolled",
       actor: ctx.apiKey.id,
+      actorEmail: ctx.apiKey.email,
       subjectId: id,
       subjectName: existing.name,
       reason,

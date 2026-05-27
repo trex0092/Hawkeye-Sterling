@@ -262,6 +262,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   void writeAuditChainEntry({
     event: "four_eyes.enqueued",
     actor: initiatedBy,
+    actorEmail: ctx.apiKey.email,
     caseId: enrichedItem.caseId ?? enrichedItem.subjectId,
     itemId: id,
     subjectName: enrichedItem.subjectName,
