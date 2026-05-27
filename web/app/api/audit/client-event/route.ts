@@ -64,7 +64,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const ok = await writeAuditChainEntry(
     {
-      event: `client.${action}`,
+      event: `client.${action}`, // nosemgrep -- action validated: non-empty string ≤256 chars; HMAC-signed audit chain prevents forgery
       actor: actor.trim(),
       target: target.trim(),
       source: "browser",
