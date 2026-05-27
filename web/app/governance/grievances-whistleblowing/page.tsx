@@ -544,6 +544,7 @@ export default function GrievancesWhistleblowingPage() {
 
   return (
     <>
+      {/* nosemgrep: react-dangerously-set-innerhtml -- safe: PAGE_CSS is a compile-time static string constant defined in this file, not user input */}
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
 
       {/* Toast notification */}

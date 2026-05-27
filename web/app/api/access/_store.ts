@@ -45,6 +45,11 @@ export interface AccessUser {
   /** SHA-256 prefix of the most recent login IP — used for geo-velocity
    *  detection between sessions. Never stores the raw IP. */
   lastIpHash?: string;
+  /** Set to true after a successful LUISA_INITIAL_PASSWORD recovery login.
+   *  Once set, the recovery path is permanently disabled — the operator must
+   *  use their re-hashed password for all future logins. Prevents the master
+   *  recovery env var from acting as a persistent backdoor. */
+  recoveryUsed?: boolean;
 }
 
 export interface PermissionLogEntry {

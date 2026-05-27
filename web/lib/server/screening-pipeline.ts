@@ -20,8 +20,6 @@
 //   - Bloom filter (see bloom-filter.ts) short-circuits before Tier 3.
 
 import type {
-  QuickScreenCandidate,
-  QuickScreenOptions,
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";

@@ -93,7 +93,7 @@ export async function buildEntityCluster(
   const queryRecord = toEntityRecord(queryEntry);
   const linked: EntityClusterMember[] = [];
 
-  let resolveEntities: ((a: EntityRecord, b: EntityRecord) => ResolutionResult) | null = null;
+  let resolveEntities: ((_a: EntityRecord, _b: EntityRecord) => ResolutionResult) | null = null;
   try {
     const mod = await import('../../../src/brain/entity-resolution.js');
     resolveEntities = mod.resolveEntities;

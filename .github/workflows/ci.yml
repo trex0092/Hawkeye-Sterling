@@ -154,8 +154,10 @@ jobs:
           retention-days: 365
       - name: Trivy filesystem scan — critical/high CVEs
         # Scans the repository filesystem for known vulnerabilities in
-        # dependencies. Fails on CRITICAL or HIGH severity unfixed CVEs.
-        # ignore-unfixed=true prevents noise from CVEs with no upstream fix.
+        # dependencies. Fails on CRITICAL or HIGH severity CVEs.
+        # ignore-unfixed changed to false so CVEs without upstream fixes are
+        # visible (they may have application-level mitigations). Exceptions
+        # documented in .trivyignore with justification and review date.
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -163,7 +165,8 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
+          ignore-unfixed: false
+          trivyignores: '.trivyignore'
 
   semgrep:
     # SAST (static application security testing) via Semgrep community rules.
@@ -179,6 +182,9 @@ jobs:
       - name: Semgrep SAST scan
         # --severity ERROR only: avoids failing on style warnings.
         # SEMGREP_APP_TOKEN optional: without it, community rules run locally.
+        # Note: || true was previously here — REMOVED so SAST findings actually
+        # block CI. Any ERROR-severity finding must be fixed or explicitly
+        # suppressed with a `# nosemgrep` comment and a justification.
         run: |
           semgrep scan \
             --config=p/typescript \
@@ -186,7 +192,7 @@ jobs:
             --config=p/nextjs \
             --error \
             --severity=ERROR \
-            src/ web/app/ web/lib/ netlify/ || true
+            src/ web/app/ web/lib/ netlify/
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
@@ -285,3 +291,36 @@ jobs:
             exit 1
           fi
           echo "All critical routes present in build output"
+
+  k8s-validate:
+    # Validate Kubernetes manifests without a live cluster using kubectl dry-run.
+    # Catches YAML syntax errors, missing required fields, and schema violations
+    # before manifests reach a production cluster.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.31.0'
+      - name: Dry-run apply K8s manifests
+        # --dry-run=client validates YAML and resource schemas locally without
+        # contacting the API server. --validate=strict rejects unknown fields.
+        # ExternalSecret uses a 3rd-party CRD (external-secrets.io/v1beta1) that
+        # kubectl does not know about without the operator installed. It is
+        # validated for YAML syntax only (--validate=false) in a separate pass.
+        run: |
+          kubectl apply \
+            --dry-run=client \
+            --validate=strict \
+            -f k8s/namespace.yaml \
+            -f k8s/deployment.yaml \
+            -f k8s/hpa.yaml \
+            -f k8s/networkpolicy.yaml \
+            -f k8s/configmap.yaml \
+            -f k8s/pdb.yaml
+          kubectl apply \
+            --dry-run=client \
+            --validate=false \
+            -f k8s/externalsecret.yaml
+          echo "All K8s manifests passed dry-run validation"

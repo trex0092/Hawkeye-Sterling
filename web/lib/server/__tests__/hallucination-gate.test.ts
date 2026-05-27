@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { HallucinationResult } from '../hallucination-gate';
+import type { HallucinationResult as _HallucinationResult } from '../hallucination-gate';
 
 // Mock dependencies before importing the module under test
 vi.mock('../audit-chain', () => ({

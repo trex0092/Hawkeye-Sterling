@@ -82,10 +82,28 @@ export default async (_req: Request) => {
       },
     );
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // Fire alert webhook so operations team is notified of cron failure.
+    // CG-3 resolution: errors no longer silently disappear into logs.
+    const alertUrl = process.env["ALERT_WEBHOOK_URL"];
+    if (alertUrl) {
+      void fetch(alertUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          event: "cron_failure",
+          source: "ongoing-screen",
+          error: errMsg,
+          severity: "high",
+          at: new Date().toISOString(),
+        }),
+        signal: AbortSignal.timeout(5_000),
+      }).catch(() => undefined);
+    }
     return new Response(
       JSON.stringify({
         triggered: false,
-        error: err instanceof Error ? err.message : String(err),
+        error: errMsg,
       }),
       {
         status: 500,

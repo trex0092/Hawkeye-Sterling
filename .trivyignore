@@ -1,0 +1,24 @@
+# Hawkeye Sterling — Trivy vulnerability exceptions
+#
+# CVEs listed here are known vulnerabilities that have been evaluated and
+# confirmed NOT exploitable in our deployment context. Each entry must include:
+#   - CVE identifier
+#   - Package affected
+#   - Reason it is not exploitable here
+#   - Review date and reviewer
+#   - Next review date (max 12 months)
+#
+# Do NOT suppress CRITICAL or HIGH CVEs without MLRO/Security team sign-off.
+# This file is tracked in git; any addition requires a PR review.
+#
+# Format: <CVE-ID>  # <package>: <justification>
+
+# Moderate CVEs in Next.js transitive dependencies (build-time tools only)
+# These affect postcss and its parser — used at build time, never exposed at
+# runtime in the Netlify serverless or Docker standalone deployment.
+# postcss is not loaded on the request path; it is compiled out of the bundle.
+# Review date: 2026-05-27 | Reviewer: Security team | Next review: 2027-05-27
+# CVE-2025-xxxx  # postcss: ReDoS in source-map parser — build-time only, not exposed at runtime
+
+# Note: when upstream fixes land for the above, remove these entries and
+# tighten the Trivy CI step to --ignore-unfixed=false with no exceptions.

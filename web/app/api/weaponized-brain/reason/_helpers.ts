@@ -189,11 +189,9 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 5 · Redlines
   const tE = performance.now();
   const redlineKeywords = fullText.toLowerCase();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const firedRedlineIds = REDLINES.filter((r: any) =>
+  const firedRedlineIds = REDLINES.filter((r) =>
     redlineKeywordsMatch(redlineKeywords, r.id, r.precondition ?? r.label ?? ""),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ).map((r: any) => r.id);
+  ).map((r) => r.id);
   const redlines = evaluateRedlines(firedRedlineIds);
   for (const r of redlines.fired) {
     cited.push({ kind: "redline", id: r.id, label: r.label, detail: `${r.action} · ${r.regulatoryAnchor}` });
@@ -206,18 +204,15 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
 
   // 6 · Doctrines
   const tF = performance.now();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doctrineHits = DOCTRINES.filter((d: any) => doctrineApplies(d, body.subject, jurisdiction)).slice(0, 6);
+  const doctrineHits = DOCTRINES.filter((d) => doctrineApplies(d, body.subject, jurisdiction)).slice(0, 6);
   for (const d of doctrineHits) {
     cited.push({ kind: "doctrine", id: d.id, label: d.title, detail: d.authority });
   }
   if (doctrineHits.length > 0) {
     steps.push({
       step: "Doctrines in scope",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cited: doctrineHits.map((d: any) => d.id),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      finding: `${doctrineHits.length} doctrine(s) apply: ${doctrineHits.map((d: any) => d.title).join("; ")}.`,
+      cited: doctrineHits.map((d) => d.id),
+      finding: `${doctrineHits.length} doctrine(s) apply: ${doctrineHits.map((d) => d.title).join("; ")}.`,
     });
     if (jurisdiction?.cahra) firedModeIds.add("oecd_ddg_annex");
     if ((body.subject.sector ?? "").toLowerCase().includes("gold")) firedModeIds.add("lbma_rgg_five_step");
@@ -228,18 +223,15 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
   // 7 · Meta-cognition
   const tG = performance.now();
   const metaCtx = `${fullText} ${redlines.fired.length > 0 ? "redline" : ""} ${pep ? "pep" : ""} ${jurisdiction?.cahra ? "cahra" : ""}`.toLowerCase();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const metaHits = META_COGNITION.filter((m: any) => metaCognitionApplies(m, metaCtx)).slice(0, 6);
+  const metaHits = META_COGNITION.filter((m) => metaCognitionApplies(m, metaCtx)).slice(0, 6);
   for (const m of metaHits) {
     cited.push({ kind: "meta-cognition", id: m.id, label: m.label, detail: m.directive });
   }
   if (metaHits.length > 0) {
     steps.push({
       step: "Meta-cognition activation",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      cited: metaHits.map((m: any) => m.id),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      finding: `${metaHits.length} primitive(s) active: ${metaHits.map((m: any) => m.label).join("; ")}.`,
+      cited: metaHits.map((m) => m.id),
+      finding: `${metaHits.length} primitive(s) active: ${metaHits.map((m) => m.label).join("; ")}.`,
     });
   }
   // Always-on meta-cognition modes per charter.
@@ -331,8 +323,7 @@ export async function runReasoning(body: ReasonInput): Promise<ReasoningResult> 
       composite: round(tComposite),
       total: round(total),
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    firedModeIds: [...firedModeIds].filter((id: any) => REASONING_MODES.some((m: any) => m.id === id)),
+    firedModeIds: [...firedModeIds].filter((id) => REASONING_MODES.some((m) => m.id === id)),
   };
 }
 
@@ -498,8 +489,7 @@ export interface ModeCoverage {
 
 export function generateModeCoverage(firedModeIds: string[]): ModeCoverage {
   const fired = firedModeIds
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((id: any) => REASONING_MODES.find((m: any) => m.id === id))
+    .map((id) => REASONING_MODES.find((m) => m.id === id))
     .filter((m): m is NonNullable<typeof m> => m !== undefined);
   const byFaculty = new Map<string, ModeCoverage["byFaculty"][number]["modes"]>();
   for (const m of fired) {
@@ -548,10 +538,8 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
       : "(no narrative supplied — facts to be supplemented from primary records before filing)");
 
   const redFlags = [
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...result.redlines.fired.map((r: any) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...result.adverseMedia.map((a: any) => `ADVERSE MEDIA · ${a.categoryId.replace(/_/g, " ")} — keyword "${a.keyword}"`),
+    ...result.redlines.fired.map((r) => `REDLINE · ${r.label} (${r.action.toUpperCase()})`),
+    ...result.adverseMedia.map((a) => `ADVERSE MEDIA · ${a.categoryId.replace(/_/g, " ")} — keyword "${a.keyword}"`),
     ...result.typologies.hits.slice(0, 5).map((t) => `TYPOLOGY · ${t.name} (${t.family}) — "${t.snippet.slice(0, 140)}"`),
   ];
   if (redFlags.length === 0) redFlags.push("(no discrete red flags fired — composite score reflects accumulated weaker signals)");
@@ -639,8 +627,7 @@ function resolveJurisdiction(input?: string): {
   const byName = jurisdictionByName(raw);
   const iso2Guess = raw.length === 2 ? raw.toUpperCase() : byName?.iso2 ?? raw.toUpperCase();
   const regimes = (() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    try { return regimesForJurisdiction(iso2Guess).map((r: any) => r.id ?? String(r)); }
+    try { return regimesForJurisdiction(iso2Guess).map((r) => r.id); }
     catch { return []; }
   })();
   return {

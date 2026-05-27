@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Runs synchronously before paint — prevents flash of light theme on dark-mode reload */}
         <script
           nonce={nonce}
-          dangerouslySetInnerHTML={{
+          dangerouslySetInnerHTML={{ // nosemgrep: react-dangerously-set-innerhtml -- safe: hardcoded static string literal, not user input; nonce applied for CSP
             __html: `(function(){try{var t=localStorage.getItem('hawkeye.theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();`,
           }}
         />

@@ -29,11 +29,13 @@ spec:
           type: RuntimeDefault
       containers:
         - name: web
-          # Pin to a specific digest in production — never use :latest.
-          # Replace :latest with the Cosign-verified digest from the release
-          # workflow artifact: ghcr.io/trex0092/hawkeye-sterling@sha256:<digest>
-          # The SLSA release.yml workflow publishes the digest as a CI artifact.
-          image: ghcr.io/trex0092/hawkeye-sterling:latest
+          # REQUIRED: replace this placeholder with the Cosign-verified digest
+          # from the SLSA release workflow artifact before any production deploy.
+          # Example: ghcr.io/trex0092/hawkeye-sterling@sha256:<64-hex-chars>
+          # The exact digest is published as a CI artifact by .github/workflows/release.yml.
+          # Using :latest is a supply-chain risk — a compromised registry push can
+          # silently swap the image running in production.
+          image: ghcr.io/trex0092/hawkeye-sterling@sha256:0000000000000000000000000000000000000000000000000000000000000000
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

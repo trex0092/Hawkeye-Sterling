@@ -15,6 +15,7 @@
 
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { requireRole } from "@/lib/server/role-gate";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -358,6 +359,11 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
 }
 
 async function handlePatch(req: Request, ctx: RequestContext): Promise<NextResponse> {
+  // Four-eyes approval/rejection requires MLRO or CO portal session.
+  // External API key callers cannot approve regulator-facing decisions (FDL 10/2025 Art.16).
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
+
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });

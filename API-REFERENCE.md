@@ -883,7 +883,100 @@ Remove a four-eyes item. Uses `withGuard`. Prefer leaving items for audit purpos
 
 ---
 
-## 7. Audit Trail
+## 7. Regulatory Filings & AI Governance
+
+Routes in this section require **both** a valid API key (enforced by `enforce()`) **and** a valid portal session cookie with an `mlro`, `co`, or `admin` role (enforced by `requireRole()`). External API-key-only callers receive `401 SESSION_REQUIRED`.
+
+**Common RBAC error codes (all routes in this section):**
+
+| Code | Body `code` | Condition |
+|---|---|---|
+| `401` | `SESSION_REQUIRED` | No `hs_session` cookie present |
+| `401` | `SESSION_INVALID` | Session token cannot be verified (expired or tampered) |
+| `403` | `ROLE_FORBIDDEN` | Authenticated session role is not `mlro`, `co`, or `admin` |
+
+---
+
+### `POST /api/sar`
+
+Submit a Suspicious Activity Report narrative. Requires `mlro`, `co`, or `admin` portal session role. Calls the egress tipping-off gate before filing; returns `422` if tipping-off is detected.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `caseId` | string | Yes | Case identifier |
+| `narrative` | string | Yes | SAR narrative text |
+| `filingType` | string | No | e.g. `"STR"`, `"SAR"` |
+| `subject` | object | No | Subject metadata (`id`, `name`, `caseId`) |
+
+**Error codes:**
+
+| Code | Condition |
+|---|---|
+| `400` | Missing `caseId` or `narrative` |
+| `401` | `SESSION_REQUIRED` or `SESSION_INVALID` (see above) |
+| `403` | `ROLE_FORBIDDEN` (see above) |
+| `422` | Egress tipping-off check failed — filing blocked |
+| `500` | Unhandled internal error |
+
+---
+
+### `POST /api/goaml`
+
+Generate and file a goAML XML submission to the UAE FIU. Requires `mlro`, `co`, or `admin` portal session role. Calls the egress gate; returns `422` on tipping-off detection.
+
+**Error codes:**
+
+| Code | Condition |
+|---|---|
+| `400` | Missing required goAML fields |
+| `401` | `SESSION_REQUIRED` or `SESSION_INVALID` |
+| `403` | `ROLE_FORBIDDEN` |
+| `422` | Egress gate blocked — tipping-off risk detected |
+| `500` | XML generation or filing failure |
+
+---
+
+### `POST /api/ai-override`
+
+Override an AI-generated compliance decision. Requires `mlro`, `co`, or `admin` portal session role. Writes a tamper-evident audit chain entry recording the override actor, original AI decision, and override rationale.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `caseId` | string | Yes | |
+| `originalDecision` | string | Yes | AI-generated decision being overridden |
+| `overrideDecision` | string | Yes | Replacement decision |
+| `overrideReason` | string | Yes | Substantive rationale (≥ 20 chars) |
+
+**Error codes:**
+
+| Code | Condition |
+|---|---|
+| `400` | Missing fields or rationale too short |
+| `401` | `SESSION_REQUIRED` or `SESSION_INVALID` |
+| `403` | `ROLE_FORBIDDEN` |
+| `500` | Audit chain write failure |
+
+---
+
+### `PATCH /api/four-eyes?id=<id>` *(role-gated)*
+
+In addition to the existing `withGuard` API key check, this endpoint also enforces `requireRole(['mlro','co','admin'])` to prevent external integration keys from approving regulator filings. See [Section 6](#6-four-eyes-approval) for full request/response schema.
+
+**Additional RBAC error codes:**
+
+| Code | Body `code` | Condition |
+|---|---|---|
+| `401` | `SESSION_REQUIRED` | No `hs_session` cookie |
+| `401` | `SESSION_INVALID` | Session token invalid |
+| `403` | `ROLE_FORBIDDEN` | Role not in `[mlro, co, admin]` |
+
+---
+
+## 9. Audit Trail
 
 The audit chain is stored in Netlify Blobs (`hawkeye-audit-chain/chain.json`) as an append-only array. Each entry includes a FNV-1a hash linking it to the previous entry, creating a tamper-evident sequence.
 
@@ -991,7 +1084,7 @@ Verify the integrity of the full audit chain by recomputing every FNV-1a hash an
 
 ---
 
-## 8. Regulator Access
+## 10. Regulator Access
 
 ### `POST /api/admin/issue-regulator-token`
 
@@ -1076,7 +1169,7 @@ Returns `{"keys": []}` when `REPORT_ED25519_PRIVATE_KEY` is not set.
 
 ---
 
-## 9. Admin
+## 11. Admin
 
 ### `GET /api/admin/lseg-status`
 
@@ -1148,7 +1241,7 @@ Environment variable presence check for all platform configuration items. Requir
 
 ---
 
-## 10. Regulatory Feed
+## 12. Regulatory Feed
 
 ### `GET /api/regulatory-feed`
 
