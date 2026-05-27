@@ -1,0 +1,11 @@
+# Semgrep ignore — test files contain hardcoded mock credentials and tokens
+# by design. These are never deployed; excluding them avoids false positives
+# on hardcoded-secret and similar rules that would block CI on test fixtures.
+src/__tests__/
+src/__integration__/
+web/lib/server/__tests__/
+web/app/**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

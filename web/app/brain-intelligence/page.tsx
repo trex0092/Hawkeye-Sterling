@@ -310,7 +310,7 @@ export default function BrainIntelligencePage() {
                 </h2>
                 <p className="text-sm text-gray-400 mb-4">
                   For every escalation or STR disposition, generates a regulator-facing explanation:
-                  "What would this entity need to change to fall below the escalation threshold?"
+                  &ldquo;What would this entity need to change to fall below the escalation threshold?&rdquo;
                   Makes every AI decision defensible in a supervisory examination.
                 </p>
                 <CounterfactualCard
