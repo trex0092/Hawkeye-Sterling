@@ -42,7 +42,7 @@ function newId(): string {
 
 export function computeModeFpStats(
   records: readonly OutcomeRecord[],
-  currentWeights: Record<string, number> = {},
+  _currentWeights: Record<string, number> = {},
 ): ModeFpStats[] {
   const windowMs = WINDOW_DAYS * 86_400_000;
   const recentRecords = records.filter((r) => msSince(r.at) < windowMs);

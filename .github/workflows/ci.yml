@@ -300,9 +300,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'v1.31.0'
+        run: |
+          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl"
+          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
       - name: Dry-run apply K8s manifests
         # --dry-run=client validates YAML and resource schemas locally without
         # contacting the API server. --validate=strict rejects unknown fields.
