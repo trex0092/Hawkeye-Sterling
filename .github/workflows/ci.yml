@@ -196,7 +196,7 @@ jobs:
         # application-level mitigations). Exceptions documented in .trivyignore with
         # justification and review date.
         # SARIF output feeds the GitHub Security tab for unified vulnerability tracking.
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
