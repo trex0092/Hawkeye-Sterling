@@ -52,6 +52,22 @@ export interface FourEyesStatus {
   overdueHours?: number;
 }
 
+/** PII-safe view returned in API responses — actor identities are hashed. */
+export interface SanitizedFourEyesStatus {
+  caseId: string;
+  approverCount: number;
+  /** SHA-256 hashes (first 12 hex chars) of approver identities — no raw PII. */
+  approverHashes: string[];
+  passed: boolean;
+  rejectedAt?: string;
+  /** SHA-256 hash of rejecting actor's identity — no raw PII. */
+  rejectedByHash?: string;
+  rejectionReason?: string;
+  isExpired?: boolean;
+  expiresAt?: string;
+  overdueHours?: number;
+}
+
 const PREFIX = "four-eyes/approvals/";
 const FOUR_EYES_TTL_HOURS = 48; // Cases pending > 48h are flagged as overdue (FDL 10/2025 Art.16)
 const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
@@ -68,6 +84,15 @@ export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.n
 
 function approvalKey(caseId: string, approvalId: string): string {
   return `${PREFIX}${caseId}/${approvalId}.json`;
+}
+
+function sanitizeStatus(status: FourEyesStatus): SanitizedFourEyesStatus {
+  const { approverGids, rejectedBy, decisions: _decisions, ...rest } = status;
+  return {
+    ...rest,
+    approverHashes: approverGids.map(hashActor),
+    ...(rejectedBy ? { rejectedByHash: hashActor(rejectedBy) } : {}),
+  };
 }
 
 function digestApproval(input: { caseId: string; actor: string; decision: string; rationale: string }): string {
@@ -224,7 +249,7 @@ export async function requireFourEyes(caseId: string): Promise<{
   ok: false;
   error: "four-eyes-gate";
   message: string;
-  status: FourEyesStatus;
+  status: SanitizedFourEyesStatus;
   regulationBasis: string[];
 } | null> {
   const span = startSpan('four-eyes.require', { 'four-eyes.caseId': caseId });
@@ -233,14 +258,15 @@ export async function requireFourEyes(caseId: string): Promise<{
     span.setAttribute('four-eyes.passed', status.passed);
     span.setAttribute('four-eyes.approver-count', status.approverCount);
     if (status.passed) return null;
+    const sanitized = sanitizeStatus(status);
     const need = status.rejectedAt
-      ? `case was rejected by ${status.rejectedBy} (reason: ${status.rejectionReason}); submission blocked`
-      : `four-eyes principle requires TWO distinct approvers — case has ${status.approverGids.length} (${status.approverGids.join(", ") || "none"}). Record a second distinct approval before submitting.`;
+      ? `case was rejected by actor ${sanitized.rejectedByHash} (reason: ${status.rejectionReason}); submission blocked`
+      : `four-eyes principle requires TWO distinct approvers — case has ${sanitized.approverHashes.length} (${sanitized.approverHashes.join(", ") || "none"}). Record a second distinct approval before submitting.`;
     return {
       ok: false,
       error: "four-eyes-gate",
       message: need,
-      status,
+      status: sanitized,
       regulationBasis: [
         "UAE FDL 10/2025 Art.16 (dual-attestation for regulator filings)",
         "FATF Recommendation 26 (record-keeping + responsibility separation)",
