@@ -36,7 +36,7 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
     fetch("/api/score-explain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score, breakdown, runId }),
+      body: JSON.stringify({ composite: { score, breakdown }, runId }),
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

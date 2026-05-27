@@ -21,7 +21,7 @@ interface ApprovalRecord {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const DESTINATION_OPTIONS = ["UAE", "India", "Turkey", "Saudi Arabia", "UK", "USA", "Germany", "China"];
+const DESTINATION_OPTIONS = ["UAE", "India", "Turkey"];
 
 const RISK_COLORS: Record<RiskScore, string> = {
   low:    "bg-green/15 text-green border border-green/30",

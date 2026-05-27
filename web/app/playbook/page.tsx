@@ -5747,30 +5747,2319 @@ const PLAYBOOKS: Playbook[] = [
       },
     ],
   },
+  // ── NEW PLAYBOOKS (batch 2) ──────────────────────────────────────────────────
   {
-    id: "ai-vendor-assessment",
-    title: "AI Vendor / Third-Party Assessment",
-    typology: "ai-vendor-assessment",
+    id: "cash-intensive-business",
+    title: "Cash-Intensive Business (Restaurant / Retail / Car Wash)",
+    typology: "cash_intensive",
+    family: "ML",
+    steps: [
+      { title: "1. Business legitimacy", required: true, checks: [
+        "Obtain trade licence, municipal permit, and 2-year audited P&L",
+        "Verify physical premises via site visit or third-party confirmation",
+        "Cross-check declared revenue against sector benchmarks (sq-ft, covers, throughput)",
+      ]},
+      { title: "2. Cash flow reconciliation", required: true, checks: [
+        "Reconcile daily cash deposits with EPOS / POS sales records",
+        "Identify any deposit-to-revenue ratio > 130% over rolling 3-month window",
+        "Check for structured deposits just below AED 55,000 CTR threshold",
+      ]},
+      { title: "3. UBO and ownership", required: false, checks: [
+        "Apply 25% UBO threshold per Cabinet Decision 58/2020",
+        "Verify all UBOs against sanctions, PEP, and adverse-media lists",
+        "Confirm no cash-out to unrelated third-party accounts",
+      ]},
+    ],
+  },
+  {
+    id: "cyber-fraud-proceeds",
+    title: "Cyber-Fraud Proceeds (BEC / Phishing / Ransomware)",
+    typology: "cyber_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Fraud typology identification", required: true, checks: [
+        "Confirm transaction matches BEC / phishing / ransomware pattern (sudden large inbound wire)",
+        "Cross-reference sender details against known fraud databases and LE alerts",
+        "Hold funds pending MLRO review — do NOT credit beneficiary without clearance",
+      ]},
+      { title: "2. Law enforcement liaison", required: true, checks: [
+        "Notify UAE FIU within 24 h (FDL 10/2025 Art.26) and freeze pending instruction",
+        "Preserve all IP, device, and session logs for law enforcement",
+        "Do NOT tip off customer that an investigation is under way",
+      ]},
+      { title: "3. SAR filing", required: true, checks: [
+        "File STR via goAML portal within statutory window",
+        "Attach transaction narrative, counterparty details, and fraud indicators",
+        "Document escalation chain and MLRO sign-off in audit trail",
+      ]},
+    ],
+  },
+  {
+    id: "politically-sensitive-donation",
+    title: "Politically Sensitive Donation / Campaign Finance",
+    typology: "political_donation",
+    family: "PEP",
+    steps: [
+      { title: "1. Source of funds", required: true, checks: [
+        "Obtain documentary evidence of the donor's wealth (tax returns, audited accounts)",
+        "Verify the donation is lawful under the recipient jurisdiction's electoral finance rules",
+        "Check donor against Tier-1/2 PEP lists and sanctions screens",
+      ]},
+      { title: "2. Beneficial purpose", required: true, checks: [
+        "Confirm the recipient organisation is a registered charity or licensed political party",
+        "Verify no diversion of funds to shell entities or prohibited persons",
+        "Review whether donation coincides with a regulatory or licensing decision benefiting the donor",
+      ]},
+      { title: "3. Enhanced monitoring", required: false, checks: [
+        "Flag account for 12-month EDD monitoring post-donation",
+        "Apply MLRO sign-off for any subsequent transactions above AED 100,000",
+      ]},
+    ],
+  },
+  {
+    id: "correspondent-nested-account",
+    title: "Nested Correspondent Account Detection",
+    typology: "nested_correspondent",
+    family: "banking",
+    steps: [
+      { title: "1. Respondent identification", required: true, checks: [
+        "Map all sub-accounts and pass-through relationships within the respondent portfolio",
+        "Obtain respondent's own CDD file on each nested entity",
+        "Identify any entity that routes through the respondent without direct KYC with us",
+      ]},
+      { title: "2. Risk assessment", required: true, checks: [
+        "Apply Wolfsberg CBDDQ responses to nested-entity population",
+        "Flag nested entities in FATF grey/black-list jurisdictions for enhanced screening",
+        "Confirm respondent has AML programme equivalent to our own",
+      ]},
+      { title: "3. Contractual obligations", required: true, checks: [
+        "Ensure respondent agreement prohibits further nesting without prior written consent",
+        "Annual re-certification of respondent's nested-entity list",
+        "Right-to-audit clause covering nested entity CDD files",
+      ]},
+    ],
+  },
+  {
+    id: "art-antiquities-ml",
+    title: "Art and Antiquities Money Laundering",
+    typology: "art_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Provenance verification", required: true, checks: [
+        "Obtain provenance chain back to pre-1970 (UNESCO Convention baseline)",
+        "Check against Interpol Works of Art database and AIAD",
+        "Verify export permits from country of origin",
+      ]},
+      { title: "2. Buyer/seller identity", required: true, checks: [
+        "Apply full CDD to both buyer and seller (not just the facilitating dealer)",
+        "Screen agent or intermediary against PEP / sanctions lists",
+        "Identify UBOs of corporate buyers purchasing above EUR 10,000 (5th AMLD threshold)",
+      ]},
+      { title: "3. Valuation and payment", required: true, checks: [
+        "Obtain independent expert valuation — flag variance > 30% from auction records",
+        "Reject cash payments above applicable threshold",
+        "Confirm no third-party payment (payment from a party not in the transaction)",
+      ]},
+    ],
+  },
+  {
+    id: "gambling-proceeds",
+    title: "Casino / Online Gambling Proceeds",
+    typology: "gambling_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Licence and jurisdiction check", required: true, checks: [
+        "Confirm casino/platform holds valid gaming licence from a recognised jurisdiction",
+        "Screen the operator against sanctions and adverse-media lists",
+        "Verify customer is not in a jurisdiction where gambling is prohibited",
+      ]},
+      { title: "2. Source of gambling funds", required: true, checks: [
+        "Obtain evidence of funds deposited into the gaming account (bank statement, payslip)",
+        "Verify net winnings are plausible relative to declared stake and game type",
+        "Flag chip-dumping or rapid in-out patterns that suggest layering",
+      ]},
+      { title: "3. Transaction pattern review", required: false, checks: [
+        "Identify large frequent deposits to casino followed by immediate withdrawals",
+        "Review counterparty account for circular flow back to the customer",
+        "Request player account statement from casino if available",
+      ]},
+    ],
+  },
+  {
+    id: "foreign-exchange-ml",
+    title: "Foreign Exchange / Currency Conversion Laundering",
+    typology: "fx_ml",
+    family: "MSB",
+    steps: [
+      { title: "1. CBUAE licence check", required: true, checks: [
+        "Confirm FX dealer holds current CBUAE exchange licence",
+        "Verify dealers are not on the negative-list published by CBUAE",
+        "Apply enhanced screening where FX dealer's home jurisdiction is FATF grey/black-listed",
+      ]},
+      { title: "2. Rate and volume review", required: true, checks: [
+        "Compare customer's declared FX volumes against similar-size businesses",
+        "Flag any same-day spot conversions > AED 200,000 without clear commercial purpose",
+        "Review currency pairs for unusual combinations (e.g. AFN, SYP, IRR) without legitimate trade",
+      ]},
+      { title: "3. Counterparty and source", required: true, checks: [
+        "Identify ultimate beneficiary of converted funds",
+        "Obtain source-of-funds evidence for conversions above reporting threshold",
+        "Cross-check against known smurfing patterns (multiple small FX tickets below CTR)",
+      ]},
+    ],
+  },
+  {
+    id: "charity-abuse-pf",
+    title: "Charity / NPO Abuse for Proliferation Financing",
+    typology: "charity_pf",
+    family: "PF",
+    steps: [
+      { title: "1. NPO registration and purpose", required: true, checks: [
+        "Confirm NPO is registered with UAE Ministry of Community Development or equivalent",
+        "Review founding documents for geographic scope and target beneficiaries",
+        "Screen founders, trustees, and key officers against PEP/sanctions/PF lists",
+      ]},
+      { title: "2. Fund flows", required: true, checks: [
+        "Trace donations from source to ultimate beneficiary (no pooling without traceability)",
+        "Verify overseas recipients are not in sanctioned jurisdictions (IR, KP, SY)",
+        "Reject wire transfers to counterparties with no licensed financial institution intermediary",
+      ]},
+      { title: "3. Proliferation indicators", required: true, checks: [
+        "Check procurement requests against the UAE Strategic Goods List and UN control lists",
+        "Flag any dual-use goods procurement (chemical precursors, electronics, advanced materials)",
+        "Report to EOCN if UN PF resolution indicators are present (UNSCR 1718 / 1737)",
+      ]},
+    ],
+  },
+  {
+    id: "pre-paid-card-ml",
+    title: "Pre-Paid Card / E-Money Laundering",
+    typology: "prepaid_ml",
+    family: "Payments",
+    steps: [
+      { title: "1. Issuer and product check", required: true, checks: [
+        "Verify issuer is licensed by CBUAE or equivalent authority",
+        "Confirm product limits comply with AML thresholds (max load per day / total)",
+        "Identify whether card is anonymous or linked to verified identity",
+      ]},
+      { title: "2. Usage pattern review", required: true, checks: [
+        "Flag maximum daily loads across multiple cards by same customer (structuring)",
+        "Identify cards used exclusively for ATM cash withdrawals without retail spend",
+        "Check for cross-border usage inconsistent with customer's declared travel profile",
+      ]},
+      { title: "3. Top-up source", required: true, checks: [
+        "Verify top-up source — reject cash top-up above relevant threshold from unidentified sources",
+        "Trace any top-up from third-party accounts as potential third-party payment ML",
+      ]},
+    ],
+  },
+  {
+    id: "invoice-discounting-fraud",
+    title: "Invoice Discounting / Supply Chain Finance Fraud",
+    typology: "invoice_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Invoice authenticity", required: true, checks: [
+        "Verify invoice against purchase order and delivery confirmation",
+        "Contact debtor directly to confirm invoice exists and is unpaid",
+        "Flag invoices with round numbers, unusual VAT rates, or duplicate reference numbers",
+      ]},
+      { title: "2. Counterparty check", required: true, checks: [
+        "Screen the invoicing entity and debtor against sanctions and adverse-media lists",
+        "Verify debtor is an independent arm's-length party (not a related company)",
+        "Check whether both parties share directors, registered addresses, or bank accounts",
+      ]},
+      { title: "3. Concentration risk", required: false, checks: [
+        "Flag where one debtor accounts for > 50% of the client's receivables portfolio",
+        "Review for rollover invoicing (same invoices re-discounted in subsequent periods)",
+      ]},
+    ],
+  },
+  {
+    id: "pharmaceutical-precursor",
+    title: "Pharmaceutical Precursor / Narcotics Proceeds",
+    typology: "narco_precursor",
+    family: "ML",
+    steps: [
+      { title: "1. Regulatory authorisation", required: true, checks: [
+        "Confirm supplier and buyer hold UAE MOH or MOHAP controlled-substance import/export permits",
+        "Verify the substance is not on the UN Schedule I / II Controlled Substances list without authorisation",
+        "Cross-check permits against INCB Yellow / Red List notifications",
+      ]},
+      { title: "2. Trade route and counterparty", required: true, checks: [
+        "Screen all transit countries against narcotics-transit risk index (UNODC)",
+        "Check counterparty against DEA EPIC / Interpol drug-trafficking databases",
+        "Flag diversion to non-pharmaceutical end users",
+      ]},
+      { title: "3. Proceeds indicators", required: true, checks: [
+        "Identify large cash deposits inconsistent with licit pharma margins",
+        "Trace payments through multiple intermediaries to a known drug-source country",
+        "File STR if controlled-substance diversion is suspected",
+      ]},
+    ],
+  },
+  {
+    id: "beneficial-ownership-opacity",
+    title: "Beneficial Ownership Opacity / Layered Corporate Structures",
+    typology: "ubo_opacity",
+    family: "UBO",
+    steps: [
+      { title: "1. UBO penetration", required: true, checks: [
+        "Apply 25% threshold per Cabinet Decision 58/2020 — lower to 10% for high-risk sectors",
+        "Trace each holding layer to a natural person — reject 'foundation' or 'trust' as terminal UBO without trustee disclosure",
+        "Obtain certified shareholder registers for all intermediate entities",
+      ]},
+      { title: "2. Jurisdiction risk assessment", required: true, checks: [
+        "Flag UBO opaque jurisdictions (Cook Islands, Marshall Islands, Vanuatu, Labuan, etc.)",
+        "Request apostilled notarisation where UBO resides in non-Hague jurisdiction",
+        "Apply enhanced screening if any intermediate entity is in a FATF grey/black-listed country",
+      ]},
+      { title: "3. Ongoing monitoring", required: false, checks: [
+        "Re-verify UBO annually and on any ownership threshold crossing",
+        "Subscribe to Companies House / equivalent registry update alerts",
+        "Escalate to MLRO if UBO changes without prior notification",
+      ]},
+    ],
+  },
+  {
+    id: "crypto-defi-wash",
+    title: "DeFi Protocol / DEX Wash Trading",
+    typology: "defi_wash",
+    family: "VASP",
+    steps: [
+      { title: "1. Protocol risk assessment", required: true, checks: [
+        "Identify the DeFi protocol — check against sanctioned smart-contract addresses (OFAC SDN)",
+        "Assess protocol's AML controls (if any) and jurisdiction of developer team",
+        "Screen transaction hashes against Chainalysis / TRM Labs risk scores if available",
+      ]},
+      { title: "2. Wash-trading pattern", required: true, checks: [
+        "Identify buy/sell of same asset between related wallets within short time window",
+        "Flag self-funded liquidity pools used to generate artificial volume",
+        "Detect NFT wash trading (same NFT sold between linked wallets at escalating prices)",
+      ]},
+      { title: "3. Off-ramp monitoring", required: true, checks: [
+        "Apply enhanced screening to fiat off-ramp from DeFi proceeds",
+        "Verify CEX withdrawal wallet is the same as the initiating wallet (no address hopping)",
+        "File SAR if DeFi proceeds cannot be traced to a legitimate on-chain source",
+      ]},
+    ],
+  },
+  {
+    id: "asset-recovery-estate",
+    title: "Estate / Asset Recovery — Probate Accounts",
+    typology: "estate_probate",
+    family: "CDD",
+    steps: [
+      { title: "1. Legal authority", required: true, checks: [
+        "Obtain grant of probate / letters of administration certified by UAE courts or apostilled",
+        "Verify executor / administrator identity and screen against PEP/sanctions lists",
+        "Confirm no interim injunction or dispute in place that would freeze estate assets",
+      ]},
+      { title: "2. Estate composition", required: true, checks: [
+        "Obtain full asset schedule — include overseas assets and digital assets",
+        "Apply CDD to beneficiaries receiving distributions above applicable thresholds",
+        "Screen deceased's name and known associates against adverse-media lists",
+      ]},
+      { title: "3. Distribution controls", required: false, checks: [
+        "Distribute only to bank accounts in the beneficiary's own name",
+        "Escalate to MLRO if any beneficiary is a PEP or resides in a sanctioned jurisdiction",
+      ]},
+    ],
+  },
+  {
+    id: "correspondent-termination",
+    title: "Correspondent Banking Relationship Termination",
+    typology: "correspondent_exit",
+    family: "banking",
+    steps: [
+      { title: "1. De-risking assessment", required: true, checks: [
+        "Document specific AML/CFT concerns driving termination decision — avoid blanket de-risking",
+        "Confirm whether CBUAE guidance on de-risking has been followed",
+        "Notify compliance committee with written risk justification before issuing notice",
+      ]},
+      { title: "2. Wind-down execution", required: true, checks: [
+        "Provide respondent contractually required notice period (typically 60 days)",
+        "Return all in-flight transactions to originators before relationship close",
+        "Retain all CDD files for minimum 5 years post-exit per FDL 10/2025 Art.24",
+      ]},
+      { title: "3. Regulatory notification", required: false, checks: [
+        "Notify CBUAE if de-risking leaves material local market without correspondent access",
+        "File SAR if termination is driven by confirmed AML suspicion rather than risk appetite",
+      ]},
+    ],
+  },
+  {
+    id: "fta-export-control",
+    title: "Free-Trade Area / Export Control Evasion",
+    typology: "fta_evasion",
+    family: "Sanctions",
+    steps: [
+      { title: "1. End-user verification", required: true, checks: [
+        "Obtain end-user certificate (EUC) for dual-use goods exceeding EU Reg. 2021/821 thresholds",
+        "Verify EUC issuer is a genuine government authority — check against known forged-EUC databases",
+        "Screen ultimate end-user against BIS Entity List, Wassenaar, and CAATSA lists",
+      ]},
+      { title: "2. Transshipment risk", required: true, checks: [
+        "Apply UAE Strategic Goods Control List to all cargo routing through free zones",
+        "Flag transshipment through FATF grey-listed or comprehensive-sanctions countries",
+        "Verify AIS track and country of routing matches declared export destination",
+      ]},
+      { title: "3. Financial controls", required: true, checks: [
+        "Reject payments from third-party intermediaries with no apparent commercial role",
+        "Apply enhanced scrutiny to letters of credit drawn from sanctioned-country banks",
+        "File STR immediately if prohibited goods transshipment is confirmed",
+      ]},
+    ],
+  },
+  {
+    id: "payroll-fraud-ml",
+    title: "Payroll Fraud / Ghost Employee Laundering",
+    typology: "payroll_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Ghost employee detection", required: true, checks: [
+        "Cross-reference payroll recipients against HR headcount and Emirates ID records",
+        "Flag duplicate bank account numbers or IBANs across multiple payroll entries",
+        "Identify payroll payments to recently terminated employees or deceased persons",
+      ]},
+      { title: "2. Source analysis", required: true, checks: [
+        "Verify payroll source account matches the disclosed corporate operating account",
+        "Detect unusual payroll amounts (round numbers, multiple-of-salary patterns)",
+        "Flag manual payroll override entries without HR system approval trail",
+      ]},
+      { title: "3. Internal controls review", required: false, checks: [
+        "Confirm four-eyes approval on payroll preparation and authorisation",
+        "Verify payroll system access logs for any anomalous admin changes",
+        "Report to MLRO if confirmed ghost employees are linked to senior management",
+      ]},
+    ],
+  },
+  {
+    id: "cre-mortgage-fraud",
+    title: "Commercial Real Estate Mortgage Fraud",
+    typology: "cre_fraud",
+    family: "REML",
+    steps: [
+      { title: "1. Property and valuation", required: true, checks: [
+        "Obtain independent RICS-certified valuation — flag variance > 15% from purchase price",
+        "Verify title deed with Dubai Land Department (DLD) / Abu Dhabi equivalent",
+        "Check for prior encumbrances, caveats, or disputed ownership",
+      ]},
+      { title: "2. Borrower and UBO", required: true, checks: [
+        "Apply full CDD and EDD where borrower is a corporate entity",
+        "Verify rental income claimed supports debt-service coverage ratio",
+        "Identify any related-party transaction between seller and borrower",
+      ]},
+      { title: "3. Disbursement controls", required: true, checks: [
+        "Disburse only to the vendor's own verified bank account — reject third-party directions",
+        "Retain all valuation reports, title searches, and CDD files for 5+ years",
+        "Flag same property used as collateral for multiple concurrent loans",
+      ]},
+    ],
+  },
+  {
+    id: "pension-fund-ml",
+    title: "Pension / Provident Fund Laundering",
+    typology: "pension_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Fund legitimacy", required: true, checks: [
+        "Confirm pension fund is regulated by UAE GPSSA, SCA, or equivalent authority",
+        "Obtain fund's latest audited accounts and investment policy statement",
+        "Screen fund trustees and investment managers against PEP/sanctions lists",
+      ]},
+      { title: "2. Withdrawal pattern", required: true, checks: [
+        "Flag early withdrawal requests inconsistent with scheme rules",
+        "Identify pension liberation / unlocking schemes where proceeds are paid to third parties",
+        "Check whether withdrawal is directed to an overseas account in a high-risk jurisdiction",
+      ]},
+      { title: "3. Investment legitimacy", required: false, checks: [
+        "Verify fund investments are in arms-length, regulated securities",
+        "Flag opaque investments in unregistered limited partnerships or offshore vehicles",
+      ]},
+    ],
+  },
+  {
+    id: "sanctions-evasion-aircraft",
+    title: "Sanctions Evasion via Aircraft Ownership",
+    typology: "aircraft_sanctions",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Aircraft registry check", required: true, checks: [
+        "Verify registration with the General Civil Aviation Authority (GCAA) and cross-check against OFAC, EU, UK, and UN SDN lists",
+        "Identify beneficial owner of operating company — apply 25% UBO threshold",
+        "Check for recent flag changes (re-flagging from sanctioned jurisdiction is a red flag)",
+      ]},
+      { title: "2. Financial flows", required: true, checks: [
+        "Trace payment for charter / lease to a non-sanctioned counterparty",
+        "Flag payments routed via third-party aviation brokers without disclosed principal",
+        "Verify that maintenance providers and fuel suppliers are not in sanctioned entities",
+      ]},
+      { title: "3. Flight path analysis", required: false, checks: [
+        "Review ACARS / flight data for landings in sanctioned countries (IR, KP, SY, RU Crimea)",
+        "Flag unexplained positioning flights to dark airports or short-notice charter requests",
+      ]},
+    ],
+  },
+  {
+    id: "social-media-fraud-proceeds",
+    title: "Social Media / Influencer Investment Fraud",
+    typology: "social_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Scheme identification", required: true, checks: [
+        "Identify whether customer received funds from social-media promoted 'investment' or 'trading' scheme",
+        "Check the promoter platform / URL against UAE SCA Investor Warnings list",
+        "Determine whether customer is a victim or participant in the scheme",
+      ]},
+      { title: "2. Fund tracing", required: true, checks: [
+        "Trace inbound funds to origin — flag proceeds from multiple small retail victims",
+        "Identify crypto-to-fiat or fiat-to-crypto conversion as layering step",
+        "Co-operate with UAE cybercrime authority (TDRA) referral where requested",
+      ]},
+      { title: "3. Remediation", required: false, checks: [
+        "Freeze proceeds pending law enforcement instruction if victim-harm is confirmed",
+        "File STR within statutory period with full scheme description and transaction narrative",
+      ]},
+    ],
+  },
+  {
+    id: "watch-luxury-goods-ml",
+    title: "High-Value Watch / Jewellery Laundering",
+    typology: "watch_ml",
+    family: "DPMS",
+    steps: [
+      { title: "1. Customer identification", required: true, checks: [
+        "Verify identity for all cash transactions ≥ AED 55,000 (CTR threshold)",
+        "Screen buyer and seller against PEP, sanctions, and adverse-media lists",
+        "Obtain source-of-funds evidence for purchases above AED 100,000",
+      ]},
+      { title: "2. Valuation and authenticity", required: true, checks: [
+        "Obtain manufacturer authentication certificate or independent appraisal",
+        "Flag purchases significantly below grey-market retail price (possible stolen goods)",
+        "Verify serial numbers against manufacturer's lost / stolen watch registry where available",
+      ]},
+      { title: "3. Resale pattern", required: false, checks: [
+        "Identify rapid buy-sell cycles on high-value pieces without commercial purpose",
+        "Cross-check buyer against recent seller history — self-dealing indicates circular value transfer",
+      ]},
+    ],
+  },
+  {
+    id: "correspondent-usd-clearing",
+    title: "USD Clearing — Restricted Counterparty Risk",
+    typology: "usd_clearing",
+    family: "banking",
+    steps: [
+      { title: "1. Respondent OFAC compliance", required: true, checks: [
+        "Confirm respondent's OFAC compliance programme is adequate for USD clearing access",
+        "Request OFAC compliance certification or latest OFAC examination finding",
+        "Flag respondent with recent OFAC enforcement action or settlement",
+      ]},
+      { title: "2. Transaction screening", required: true, checks: [
+        "Screen all USD clearing messages against full OFAC SDN, Non-SDN, and secondary-sanctions lists",
+        "Apply blocking rules for 50%-owned-by-SDN entities (OFAC 50% rule)",
+        "Retain OFAC screening logs for 5 years per US recordkeeping requirements",
+      ]},
+      { title: "3. Escalation", required: true, checks: [
+        "Block and report to OFAC any transaction involving a blocked person — do NOT return funds without OFAC specific licence",
+        "Notify US correspondent bank immediately upon any OFAC match",
+      ]},
+    ],
+  },
+  {
+    id: "esg-greenwashing-risk",
+    title: "ESG / Greenwashing Risk Assessment",
+    typology: "esg_fraud",
+    family: "OECD",
+    steps: [
+      { title: "1. ESG claim verification", required: true, checks: [
+        "Obtain third-party ESG audit or assurance report from recognised body (CDP, GRI, SASB)",
+        "Cross-check carbon credit certificates against Verra / Gold Standard registry",
+        "Flag material discrepancy between disclosed ESG rating and independent media coverage",
+      ]},
+      { title: "2. Regulatory compliance", required: true, checks: [
+        "Verify TCFD-aligned climate disclosure is published and consistent with financial accounts",
+        "Flag EU Taxonomy non-eligible activity labelled as 'green' in green-bond prospectus",
+        "Apply OECD RBC due diligence for supply chain environmental claims",
+      ]},
+      { title: "3. Fraud indicators", required: false, checks: [
+        "Identify payments for carbon credits from unregistered or revoked project developers",
+        "Flag proceeds from green-bond issuance diverted to non-green uses",
+      ]},
+    ],
+  },
+  {
+    id: "human-organ-trafficking",
+    title: "Human Organ Trafficking Proceeds",
+    typology: "organ_trafficking",
+    family: "TF/ML",
+    steps: [
+      { title: "1. Typology recognition", required: true, checks: [
+        "Identify payments from overseas hospitals or 'medical tourism' brokers without clear commercial basis",
+        "Flag large cash payments described as 'medical fees' or 'consultation' without invoice",
+        "Review whether customer or counterparty has adverse media linking to illegal organ trade",
+      ]},
+      { title: "2. Regulatory referral", required: true, checks: [
+        "Report immediately to UAE FIU and refer to UAE Public Prosecution for human-trafficking offence assessment",
+        "Do NOT alert the customer — preserve evidence and await LE instruction",
+        "File STR within statutory period citing FDL 10/2025 Art.26",
+      ]},
+      { title: "3. Account freeze", required: false, checks: [
+        "Apply discretionary freeze pending LE instruction if proceeds are clearly identified",
+        "Preserve all transaction records and communications for LE disclosure",
+      ]},
+    ],
+  },
+  {
+    id: "sanctions-russia-oil",
+    title: "Russian Oil / Energy Sanctions Evasion",
+    typology: "russia_oil_evasion",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Oil origin tracing", required: true, checks: [
+        "Verify certificates of origin — reject vague 'blended' or 'third-country origin' without documentation",
+        "Cross-check tanker IMO against EU/UK/US 'shadow fleet' lists",
+        "Identify whether price exceeds G7/EU price cap (USD 60/bbl for crude as of Dec 2022 baseline)",
+      ]},
+      { title: "2. Counterparty and financial routing", required: true, checks: [
+        "Screen all parties (shipper, insurer, broker, refiner) against EU/UK/US/AU Russia sanctions lists",
+        "Flag payments routed through UAE, Turkey, or other third-country intermediaries for Russian-origin energy",
+        "Identify letters of credit from Russian banks under secondary-sanctions risk",
+      ]},
+      { title: "3. Escalation and filing", required: true, checks: [
+        "Halt transaction and notify MLRO if price-cap violation is suspected",
+        "File STR and notify relevant sanctions authority (OFAC, OFSI, EU) as applicable",
+        "Retain all documentary evidence for at least 5 years",
+      ]},
+    ],
+  },
+  {
+    id: "student-loan-fraud",
+    title: "Student Loan / Scholarship Fraud",
+    typology: "student_loan_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Disbursement legitimacy", required: true, checks: [
+        "Verify loan / scholarship proceeds are paid directly to the accredited institution",
+        "Flag disbursements redirected to personal accounts or third-party recipients",
+        "Confirm student enrolment with the institution independently",
+      ]},
+      { title: "2. Pattern analysis", required: false, checks: [
+        "Identify multiple scholarship applications from same address or device",
+        "Flag immediate withdrawal or transfer of full tuition disbursement on day of receipt",
+      ]},
+      { title: "3. Reporting", required: false, checks: [
+        "File STR if confirmed diversion of state-funded student loans",
+        "Notify the relevant scholarship authority (ADEK, MOE, or sponsor ministry)",
+      ]},
+    ],
+  },
+  {
+    id: "market-manipulation-proceeds",
+    title: "Market Manipulation / Insider Trading Proceeds",
+    typology: "market_manipulation",
+    family: "Fraud",
+    steps: [
+      { title: "1. Trade surveillance", required: true, checks: [
+        "Identify customer trading activity that precedes material corporate announcements",
+        "Detect wash trading, spoofing, or layering patterns on UAE regulated markets (DFM, ADX, DIFC)",
+        "Screen for contemporaneous social-media posts coinciding with unusual trading volumes",
+      ]},
+      { title: "2. SCA referral", required: true, checks: [
+        "Report suspected insider trading to UAE Securities and Commodities Authority (SCA)",
+        "Do NOT alert customer — preserve trading records and communications logs",
+        "Apply account freeze to identified proceeds pending SCA instruction",
+      ]},
+      { title: "3. STR filing", required: true, checks: [
+        "File STR via goAML within statutory period citing market manipulation as predicate offence",
+        "Attach SCA referral confirmation and transaction narrative",
+      ]},
+    ],
+  },
+  {
+    id: "wealth-management-pep",
+    title: "Wealth Management — PEP Client Review",
+    typology: "wealth_pep",
+    family: "PEP",
+    steps: [
+      { title: "1. PEP classification", required: true, checks: [
+        "Classify PEP tier (1–4) and apply appropriate EDD level per FDL 10/2025 Art.14",
+        "Identify family members and close associates (RCAs) who share economic interest",
+        "Confirm PEP is no longer in office for de-escalation eligibility (minimum 12-month cooling-off)",
+      ]},
+      { title: "2. Source of wealth", required: true, checks: [
+        "Obtain documentary evidence of wealth accumulation (salary history, business valuations, inheritance)",
+        "Reconcile disclosed wealth against known public salary and asset registers for the jurisdiction",
+        "Flag wealth accumulation inconsistent with public-sector salary in home country",
+      ]},
+      { title: "3. Annual EDD review", required: true, checks: [
+        "Conduct annual EDD refresh with updated sanctions and adverse-media screening",
+        "Obtain updated source-of-funds evidence if new wealth is presented",
+        "Escalate to board / senior management for approval to retain PEP client",
+      ]},
+    ],
+  },
+  {
+    id: "fintech-passthrough",
+    title: "Fintech / E-Money Passthrough Account Risk",
+    typology: "fintech_passthrough",
+    family: "Payments",
+    steps: [
+      { title: "1. Business model assessment", required: true, checks: [
+        "Confirm fintech holds CBUAE or equivalent e-money / payment-institution licence",
+        "Obtain the fintech's own AML policy and last regulatory inspection outcome",
+        "Identify the ultimate payer and payee — the fintech is a passthrough, not the principal",
+      ]},
+      { title: "2. Transaction monitoring", required: true, checks: [
+        "Apply transaction-volume benchmarks — flag volumes > 200% of industry peer",
+        "Identify high-velocity microtransactions that aggregate to large daily flows",
+        "Detect frequent top-up and immediate sweep patterns consistent with layering",
+      ]},
+      { title: "3. Nested account risk", required: true, checks: [
+        "Confirm fintech is not passing through funds for unlicensed sub-MSBs",
+        "Apply Wolfsberg CBDDQ to fintech where volumes exceed AED 10 million/month",
+      ]},
+    ],
+  },
+  {
+    id: "mobile-banking-takeover",
+    title: "Mobile Banking App Account Takeover",
+    typology: "mobile_ato",
+    family: "Fraud",
+    steps: [
+      { title: "1. ATO detection", required: true, checks: [
+        "Flag login from new device / new country immediately after password-reset request",
+        "Identify rapid beneficiary-addition followed by large transfer within 24 hours",
+        "Detect SIM-swap or OTP-intercept patterns (OTP delivered to new SIM shortly before authorisation)",
+      ]},
+      { title: "2. Customer contact and freeze", required: true, checks: [
+        "Call the customer on the previously registered contact number (not the new one) to verify",
+        "Suspend outgoing payments pending customer confirmation",
+        "Issue a fraud alert and initiate card block if card details are also at risk",
+      ]},
+      { title: "3. Reporting", required: true, checks: [
+        "Report to UAE eCrime portal (www.ecrime.ae) within 24 hours",
+        "File STR if confirmed criminal account takeover with proceeds laundering",
+        "Retain device fingerprint, IP address, and session logs for LE disclosure",
+      ]},
+    ],
+  },
+  {
+    id: "civil-asset-recovery",
+    title: "Civil Asset Recovery / Judgment Enforcement",
+    typology: "civil_recovery",
+    family: "CDD",
+    steps: [
+      { title: "1. Court order validation", required: true, checks: [
+        "Obtain certified copy of UAE court judgment or recognised foreign judgment",
+        "Verify order has not been stayed, appealed, or superseded",
+        "Confirm the entity executing the order is the named judgment creditor or authorised agent",
+      ]},
+      { title: "2. Asset identification", required: true, checks: [
+        "Trace debtor assets within the jurisdiction using available public registers (DLD, ADAFSA, company registries)",
+        "Apply sanctions and PEP screening to all parties named in the judgment",
+        "Flag if debtor is also subject to a pending criminal freeze or STR",
+      ]},
+      { title: "3. Compliance controls", required: false, checks: [
+        "Confirm civil recovery does not conflict with a criminal forfeiture order",
+        "Retain all court documentation and correspondence for 5 years",
+      ]},
+    ],
+  },
+  {
+    id: "contractor-bid-rigging",
+    title: "Contractor Bid Rigging / Kickback Scheme",
+    typology: "bid_rigging",
     family: "ABC",
     steps: [
-      { title: "1. Vendor due diligence", required: true, checks: [
-        "Assess vendor track record, financial strength, and security certifications",
-        "Verify model documentation, training-data provenance, and update cadence",
-        "Identify sub-processors and country of data processing",
+      { title: "1. Procurement pattern analysis", required: true, checks: [
+        "Flag same contractor winning consecutive tenders above probability threshold",
+        "Identify split contracts designed to circumvent tender thresholds",
+        "Review for unusually rapid tender award with limited competitive bids",
       ]},
-      { title: "2. Contractual safeguards", required: true, checks: [
-        "Lock in audit rights, model-change notification, and incident response",
-        "Specify exit / portability obligations",
-        "Restrict re-use of customer data for vendor-side training",
+      { title: "2. Payment flows", required: true, checks: [
+        "Identify kickback payments routed via consultant or agent fees to linked persons",
+        "Flag payments to offshore accounts of procurement officials' related parties",
+        "Detect invoice splitting or round-number payments without underlying work orders",
       ]},
-      { title: "3. Ongoing oversight", required: true, checks: [
-        "Run quarterly performance and bias monitoring on vendor outputs",
-        "Refresh vendor due diligence annually",
-        "Maintain a single-vendor concentration register at executive level",
+      { title: "3. Reporting", required: true, checks: [
+        "Report to MLRO and escalate to legal team for ABC policy assessment",
+        "File STR if bribery / corruption is the predicate ML offence",
+        "Notify UAE Attorney General if public procurement fraud is confirmed",
+      ]},
+    ],
+  },
+  {
+    id: "shell-nominee-directors",
+    title: "Shell Company with Nominee Directors / Shareholders",
+    typology: "nominee_shell",
+    family: "UBO",
+    steps: [
+      { title: "1. Nominee identification", required: true, checks: [
+        "Screen directors against known professional nominee databases and adverse media",
+        "Request nominee agreement and identify the appointing principal",
+        "Verify that the principal (real UBO) is identifiable and screened",
+      ]},
+      { title: "2. Economic substance", required: true, checks: [
+        "Confirm the entity meets UAE Economic Substance Regulations (Cabinet Decision 57/2020) where applicable",
+        "Verify physical office, local employees, and genuine business activity",
+        "Flag entities with no employees, no premises, and no operating accounts as potential shelf shells",
+      ]},
+      { title: "3. Regulatory notification", required: false, checks: [
+        "File UBO register notification with MoE / ADGM / DIFC registrar as required",
+        "Escalate to MLRO if nominee refuses to disclose the beneficial principal",
+      ]},
+    ],
+  },
+  {
+    id: "high-risk-country-onboarding",
+    title: "High-Risk Country Customer Onboarding",
+    typology: "high_risk_country",
+    family: "CDD",
+    steps: [
+      { title: "1. Country risk assessment", required: true, checks: [
+        "Apply FATF grey/black-list status, BCBS Country Risk, and internal country-risk rating",
+        "Obtain senior management approval for onboarding from FATF-listed high-risk jurisdiction",
+        "Apply countermeasures mandated by FATF for countries subject to call for action",
+      ]},
+      { title: "2. Enhanced CDD", required: true, checks: [
+        "Collect and verify extended source-of-funds documentation",
+        "Identify all correspondent banks and payment routes involving the high-risk country",
+        "Apply mandatory on-site verification for customers above AED 500,000 expected annual turnover",
+      ]},
+      { title: "3. Ongoing enhanced monitoring", required: true, checks: [
+        "Set transaction-monitoring rules with lower thresholds for high-risk country customers",
+        "Conduct semi-annual review of all high-risk country relationships",
+        "Escalate to MLRO for any deviation from expected transaction profile",
+      ]},
+    ],
+  },
+  {
+    id: "layered-property-trust",
+    title: "Layered Property Purchase via Trust Structure",
+    typology: "property_trust_ml",
+    family: "REML",
+    steps: [
+      { title: "1. Trust identification", required: true, checks: [
+        "Identify whether the trust is the legal purchaser or beneficial holder of the property",
+        "Obtain trust deed, schedule of trustees, settlor identity, and beneficiary list",
+        "Screen all named parties (settlor, trustee, protector, beneficiaries) against PEP/sanctions",
+      ]},
+      { title: "2. Layering indicators", required: true, checks: [
+        "Flag purchase funded by a trust in a secrecy jurisdiction (Cook Islands, BVI, Cayman) with unnamed beneficiaries",
+        "Trace purchase funds to source — reject 'trust income' without underlying evidence",
+        "Confirm no series of rapid property flips between related trusts",
+      ]},
+      { title: "3. DLD registration", required: false, checks: [
+        "Verify DLD registration reflects correct legal title holder and trust structure",
+        "Retain certified copy of trust deed for minimum 5 years post transaction",
+      ]},
+    ],
+  },
+  {
+    id: "cbdc-cross-border",
+    title: "CBDC Cross-Border Transfer Risk",
+    typology: "cbdc_risk",
+    family: "Payments",
+    steps: [
+      { title: "1. CBDC issuer assessment", required: true, checks: [
+        "Identify whether the CBDC is issued by a FATF-compliant central bank",
+        "Verify the mBridge / Buna / Aber corridor rules apply to the transfer",
+        "Confirm travel rule compliance — sender and beneficiary VASP/institution data is transmitted",
+      ]},
+      { title: "2. Cross-border controls", required: true, checks: [
+        "Apply country-risk screening to the recipient jurisdiction's CBDC infrastructure",
+        "Flag CBDC transfers to jurisdictions without reciprocal AML standards",
+        "Confirm no bypass of existing correspondent banking controls via CBDC rails",
+      ]},
+      { title: "3. Monitoring", required: false, checks: [
+        "Apply same transaction-monitoring rules as equivalent fiat cross-border wires",
+        "Report to CBUAE if novel CBDC use case falls outside current regulatory perimeter",
+      ]},
+    ],
+  },
+  {
+    id: "freelancer-gig-worker",
+    title: "Freelancer / Gig Worker Account Risk",
+    typology: "gig_worker",
+    family: "CDD",
+    steps: [
+      { title: "1. Income legitimacy", required: true, checks: [
+        "Verify freelance licence or platform registration (Upwork, Fiverr, Toptal, local equivalents)",
+        "Cross-check declared income against platform payment history if customer consents",
+        "Flag aggregated multiple-platform income flows that appear to exceed declared capacity",
+      ]},
+      { title: "2. Source-of-funds pattern", required: true, checks: [
+        "Identify whether inbound payments match the customer's declared freelance service type",
+        "Flag large inbound wires from single overseas counterparty without client contract evidence",
+        "Detect peer-to-peer payments used as layering mechanism between gig economy participants",
+      ]},
+      { title: "3. Enhanced review triggers", required: false, checks: [
+        "Escalate to EDD if annual gig income exceeds AED 500,000 without clear platform evidence",
+        "Apply MLRO review if customer operates accounts in multiple GCC states simultaneously",
+      ]},
+    ],
+  },
+  {
+    id: "bank-guarantee-fraud",
+    title: "Bank Guarantee / Standby Letter of Credit Fraud",
+    typology: "bg_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Instrument verification", required: true, checks: [
+        "Authenticate the guarantee via SWIFT MT760 or direct contact with issuing bank",
+        "Verify the issuing bank's SWIFT BIC is registered and not spoofed",
+        "Cross-check the guarantee amount and beneficiary against underlying contract",
+      ]},
+      { title: "2. Underlying transaction", required: true, checks: [
+        "Confirm the commercial purpose that the guarantee secures is legitimate",
+        "Flag guarantees where the underlying contract cannot be independently verified",
+        "Identify guarantees used as fictitious collateral to secure loans without real assets",
+      ]},
+      { title: "3. Escalation", required: false, checks: [
+        "Halt any drawdown on suspect guarantee and notify MLRO within 24 hours",
+        "File fraud report and STR concurrently if confirmed fraudulent instrument",
+      ]},
+    ],
+  },
+  {
+    id: "digital-id-deepfake",
+    title: "Deepfake / AI-Synthesised Identity Fraud",
+    typology: "deepfake_id",
+    family: "Fraud",
+    steps: [
+      { title: "1. Document authenticity checks", required: true, checks: [
+        "Apply liveness detection (ISO 30107-3 certified) to all remote selfie submissions",
+        "Cross-check document MRZ data against NFC chip data where available",
+        "Detect AI-generated portrait images using proprietary deepfake detection models",
+      ]},
+      { title: "2. Identity corroboration", required: true, checks: [
+        "Compare Emirates ID / passport against UAE ICA database or ABSHER (KSA) for real-time verification",
+        "Flag mismatch between document-issue date and apparent subject age",
+        "Identify recycled face images that appear in multiple onboarding attempts",
+      ]},
+      { title: "3. Escalation", required: true, checks: [
+        "Reject the application and file identity-fraud report with UAE eCrime portal",
+        "Preserve all biometric evidence for law enforcement disclosure",
+        "Block the device fingerprint and IP range from future onboarding attempts",
+      ]},
+    ],
+  },
+  {
+    id: "beneficial-trust-foundation",
+    title: "Trust / Private Foundation CDD",
+    typology: "trust_foundation",
+    family: "UBO",
+    steps: [
+      { title: "1. Trust / foundation structure", required: true, checks: [
+        "Obtain certified trust deed or foundation charter",
+        "Identify settlor, protector, trustee(s), all beneficiaries, and any letter of wishes",
+        "Verify the trust / foundation is validly constituted under applicable law",
+      ]},
+      { title: "2. UBO identification", required: true, checks: [
+        "Apply 25% beneficial interest threshold — request discretionary-trust beneficiary list",
+        "Screen all named parties against PEP, sanctions, and adverse-media lists",
+        "Flag purpose trusts with unnamed beneficiaries and no third-party enforcement mechanism",
+      ]},
+      { title: "3. Asset and income flows", required: false, checks: [
+        "Verify assets transferred into the trust are from a legitimate and documented source",
+        "Confirm distributions are made only to identified, screened beneficiaries",
+      ]},
+    ],
+  },
+  {
+    id: "financial-inclusion-kyc",
+    title: "Financial Inclusion / Simplified CDD Programme",
+    typology: "simplified_cdd",
+    family: "CDD",
+    steps: [
+      { title: "1. Eligibility assessment", required: true, checks: [
+        "Confirm customer qualifies for simplified CDD under CBUAE or applicable regulator guidance",
+        "Apply FATF R.10 low-risk criteria — government-issued ID, stable employment, low expected transaction volumes",
+        "Exclude PEPs, sanctions-listed persons, and high-risk-country nationals from simplified CDD",
+      ]},
+      { title: "2. Simplified controls", required: true, checks: [
+        "Set transaction limits appropriate to simplified CDD status (e.g. AED 50,000/month)",
+        "Apply real-time sanctions screening even under simplified CDD",
+        "Upgrade to standard or enhanced CDD immediately upon any risk-trigger event",
+      ]},
+      { title: "3. Monitoring", required: false, checks: [
+        "Review simplified CDD accounts annually for continued eligibility",
+        "Flag any transaction inconsistent with low-risk profile for MLRO review",
+      ]},
+    ],
+  },
+  {
+    id: "gold-refinery-eocn",
+    title: "Gold Refinery — EOCN Compliance Check",
+    typology: "gold_eocn",
+    family: "EOCN",
+    steps: [
+      { title: "1. EOCN screening", required: true, checks: [
+        "Screen refinery and all directors against EOCN List and UAE LTL (Latest Targeted List)",
+        "Verify licence with Dubai Multi Commodities Centre (DMCC) or relevant free-zone authority",
+        "Confirm refinery is in good standing with UAE Ministry of Economy trade register",
+      ]},
+      { title: "2. Supply chain compliance", required: true, checks: [
+        "Obtain OECD Step-1 to Step-5 due-diligence file for all gold suppliers",
+        "Verify responsible sourcing certification (LBMA, RJC, or equivalent)",
+        "Reject any gold sourced through an entity on the DMCC's suspended-refiners list",
+      ]},
+      { title: "3. Financial monitoring", required: true, checks: [
+        "Apply low-threshold CTR reporting (AED 55,000) for all gold purchase settlements",
+        "Flag round-number purchases structured across multiple days",
+        "Escalate immediately if any counterparty appears on the EOCN or UN sanctions list",
+      ]},
+    ],
+  },
+  {
+    id: "sanctions-wind-down",
+    title: "Sanctions Wind-Down / General Licence Compliance",
+    typology: "sanctions_winddown",
+    family: "Sanctions",
+    steps: [
+      { title: "1. General licence scope", required: true, checks: [
+        "Identify the applicable general licence (OFAC, OFSI, EU) and its expiry date",
+        "Confirm the proposed transaction falls squarely within the general licence scope",
+        "Obtain legal opinion if any element of the transaction is at the boundary of the licence",
+      ]},
+      { title: "2. Transaction execution", required: true, checks: [
+        "Document that all parties reviewed the general licence before execution",
+        "Retain all records of general-licence-authorised transactions for 5+ years",
+        "Report to OFAC / OFSI within required timeframe if proceeds cannot be transferred within the wind-down period",
+      ]},
+      { title: "3. Post-wind-down", required: false, checks: [
+        "Freeze any remaining funds that could not be transferred by licence expiry",
+        "Apply for specific licence if wind-down cannot be completed within general licence window",
+      ]},
+    ],
+  },
+  {
+    id: "loan-back-scheme",
+    title: "Loan-Back / Back-to-Back Loan Laundering",
+    typology: "loan_back",
+    family: "ML",
+    steps: [
+      { title: "1. Loan structure analysis", required: true, checks: [
+        "Identify whether the loan is secured against deposits held at the same institution",
+        "Verify the borrower is not using illicit funds deposited elsewhere as collateral",
+        "Flag loans where interest payments are sourced from the same funds as collateral",
+      ]},
+      { title: "2. Lender legitimacy", required: true, checks: [
+        "Screen the offshore lender against PEP, sanctions, and adverse-media lists",
+        "Confirm the lender is a regulated financial institution in its home jurisdiction",
+        "Request lender's AML compliance attestation and regulatory standing confirmation",
+      ]},
+      { title: "3. Commercial substance", required: true, checks: [
+        "Verify the loan is at arm's-length terms (market interest rate, repayment schedule)",
+        "Flag loans with no repayment obligation or circular repayment funded by the lender",
+        "Escalate to MLRO if back-to-back loan pattern is identified",
+      ]},
+    ],
+  },
+  {
+    id: "securities-market-ml",
+    title: "Securities / Capital Market Laundering",
+    typology: "securities_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Broker and account identification", required: true, checks: [
+        "Verify broker holds SCA or equivalent licence for securities dealing",
+        "Identify all accounts linked to the customer across brokers (aggregation risk)",
+        "Screen broker and all named account managers against sanctions and PEP lists",
+      ]},
+      { title: "2. Trading pattern review", required: true, checks: [
+        "Flag churning, front-running, or wash-trading patterns on UAE or international markets",
+        "Identify purchases of illiquid / lightly traded securities followed by rapid disposal",
+        "Cross-check trading activity with news events — identify correlation with insider information",
+      ]},
+      { title: "3. Proceeds tracing", required: true, checks: [
+        "Trace proceeds from securities disposal to ultimate beneficiary account",
+        "Flag dividend or coupon payments routed to third-party accounts",
+        "File STR if confirmed layering via securities market transactions",
+      ]},
+    ],
+  },
+  {
+    id: "luxury-yacht-ml",
+    title: "Luxury Yacht / Superyacht Laundering",
+    typology: "yacht_ml",
+    family: "REML",
+    steps: [
+      { title: "1. Vessel registry check", required: true, checks: [
+        "Verify IMO number and flag-state registration — flag recent re-flagging without commercial reason",
+        "Screen registered owner and beneficial owner against OFAC, EU, UK sanctions (secondary-sanctions risk for Russian-linked vessels)",
+        "Confirm yacht is not on the OFAC blocked-vessel list",
+      ]},
+      { title: "2. Ownership structure", required: true, checks: [
+        "Identify UBO through operating company, trust, or holding structure",
+        "Apply enhanced scrutiny for vessels flagged in Cayman, Marshall Islands, or Vanuatu without disclosed UBO",
+        "Verify that source of funds for purchase is consistent with UBO's declared wealth",
+      ]},
+      { title: "3. Charter and operating flows", required: false, checks: [
+        "Screen all charter clients for single-charter payments above AED 200,000",
+        "Flag fuel, docking, and maintenance payments to sanctioned-country ports",
+      ]},
+    ],
+  },
+  {
+    id: "trade-loan-ml",
+    title: "Trade Loan / Documentary Collection Laundering",
+    typology: "trade_loan_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Documentary trade check", required: true, checks: [
+        "Verify bill of lading, commercial invoice, and packing list are consistent",
+        "Confirm the underlying goods are not controlled or sanctioned items",
+        "Cross-reference declared unit prices against TRADEMAP / UN Comtrade benchmarks",
+      ]},
+      { title: "2. Counterparty screening", required: true, checks: [
+        "Screen importer, exporter, shipping agent, and confirming bank against all applicable sanctions lists",
+        "Apply enhanced scrutiny to documentary collections involving high-risk jurisdictions",
+        "Flag round-trip transactions where the importer and exporter appear related",
+      ]},
+      { title: "3. Loan repayment monitoring", required: false, checks: [
+        "Monitor repayment source — flag repayments from third-party accounts",
+        "Detect early repayment of structured trade loans using large cash payments",
+      ]},
+    ],
+  },
+  {
+    id: "pf-dual-use-machinery",
+    title: "Proliferation Financing — Dual-Use Machinery Procurement",
+    typology: "pf_machinery",
+    family: "PF",
+    steps: [
+      { title: "1. Goods classification", required: true, checks: [
+        "Identify HS code and cross-reference against UAE Strategic Goods List and EU Reg. 2021/821",
+        "Flag CNC machines, vacuum pumps, spectrometers, and other WMD-applicable equipment",
+        "Obtain end-user certificate from a recognised government authority in the destination country",
+      ]},
+      { title: "2. End-user verification", required: true, checks: [
+        "Contact end-user independently to confirm intended use and operational context",
+        "Verify end-user is not on BIS Entity List, Wassenaar Arrangement list, or UN PF lists",
+        "Flag 'front company' end-users with no plausible technical capacity to operate the equipment",
+      ]},
+      { title: "3. Pre-shipment compliance", required: true, checks: [
+        "Obtain export licence from UAE Ministry of Economy Strategic Goods Department before shipment",
+        "File EOCN pre-notification where dual-use goods exceed applicable control thresholds",
+        "Retain all export control documentation for minimum 5 years",
+      ]},
+    ],
+  },
+  {
+    id: "crypto-p2p-atm",
+    title: "Crypto P2P Platform / Bitcoin ATM Risk",
+    typology: "crypto_p2p",
+    family: "VASP",
+    steps: [
+      { title: "1. Platform / ATM registration", required: true, checks: [
+        "Verify the P2P platform or ATM operator holds UAE VARA or equivalent jurisdiction licence",
+        "Confirm the operator implements FATF Travel Rule (Recommendation 16) for transactions ≥ USD 1,000",
+        "Screen ATM operator against sanctions and adverse-media lists",
+      ]},
+      { title: "2. Transaction monitoring", required: true, checks: [
+        "Flag high-velocity P2P trades with multiple counterparties in short windows (structuring)",
+        "Apply blockchain analytics to identify ATM withdrawals linked to darknet market wallets",
+        "Detect frequent small ATM cash-outs just below transaction reporting thresholds",
+      ]},
+      { title: "3. EDD triggers", required: false, checks: [
+        "Apply EDD for any single ATM withdrawal or P2P transaction above AED 10,000",
+        "File STR if blockchain analytics confirm darknet or ransomware wallet exposure",
+      ]},
+    ],
+  },
+  {
+    id: "correspondent-sanctions-screening",
+    title: "Correspondent Bank Sanctions Screening Gap Assessment",
+    typology: "correspondent_sanctions",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Screening coverage audit", required: true, checks: [
+        "Map all payment corridors and confirm each is covered by real-time SWIFT screening",
+        "Verify the sanctions list version (SDN, EU, UK, UN) is updated at minimum daily",
+        "Test-fire a sample of known SDN entries against the live screening engine",
+      ]},
+      { title: "2. Gap remediation", required: true, checks: [
+        "Identify any unscreened payment types (bulk files, batch ACH, manual wires) and close gaps",
+        "Implement fuzzy-name matching at ≥ 85% similarity threshold across all lists",
+        "Document false-positive tuning decisions with MLRO sign-off",
+      ]},
+      { title: "3. Regulatory reporting", required: false, checks: [
+        "Report historical screening gaps to CBUAE within 30 days of discovery",
+        "Perform look-back review for the period covered by the gap",
+        "File STR for any confirmed unscreened sanctioned-entity payment",
+      ]},
+    ],
+  },
+  {
+    id: "digital-gold-token",
+    title: "Digital Gold Token / Tokenised Commodity Risk",
+    typology: "digital_gold",
+    family: "VASP",
+    steps: [
+      { title: "1. Token issuer assessment", required: true, checks: [
+        "Verify the digital gold token issuer holds VARA or equivalent regulatory approval",
+        "Confirm physical gold backing is independently audited and custodied by a licensed vault",
+        "Screen token issuer and custodian against sanctions and adverse-media lists",
+      ]},
+      { title: "2. Investor CDD", required: true, checks: [
+        "Apply standard CDD to all token purchasers — EDD for purchases above AED 200,000",
+        "Verify source of funds for fiat-to-token conversion",
+        "Flag rapid token accumulation followed by immediate fiat redemption as potential layering",
+      ]},
+      { title: "3. Token trading monitoring", required: false, checks: [
+        "Monitor secondary-market token trades for wash-trading or self-dealing patterns",
+        "Apply FATF Travel Rule to peer-to-peer token transfers above USD 1,000 equivalent",
+      ]},
+    ],
+  },
+  {
+    id: "informal-remittance-detection",
+    title: "Informal Remittance Detection — Worker Diaspora",
+    typology: "informal_remittance",
+    family: "MSB",
+    steps: [
+      { title: "1. Remittance pattern baseline", required: true, checks: [
+        "Establish expected remittance profile: destination country, frequency, amounts, channel",
+        "Flag deviations of > 50% from baseline in any rolling 30-day window",
+        "Identify use of multiple exchange houses for the same worker to aggregate above threshold",
+      ]},
+      { title: "2. Informal channel indicators", required: true, checks: [
+        "Flag payments described as 'gifts' or 'loans' to overseas parties in amounts consistent with salary forwarding",
+        "Identify collection-and-delivery networks using mule accounts in the destination country",
+        "Cross-check against CBUAE informal-remittance channel alerts and typology notices",
+      ]},
+      { title: "3. SAR / STR filing", required: false, checks: [
+        "File STR if confirmed unlicensed value-transfer activity exceeds AED 55,000",
+        "Refer to CBUAE MSB supervision team if an unlicensed hawaladar is identified",
+      ]},
+    ],
+  },
+  {
+    id: "supply-chain-esg-ml",
+    title: "Supply Chain ESG Misconduct / Modern Slavery Proceeds",
+    typology: "supply_chain_esg",
+    family: "OECD",
+    steps: [
+      { title: "1. Supplier risk mapping", required: true, checks: [
+        "Identify Tier-1 and Tier-2 suppliers in high-risk sectors (garments, electronics, agriculture, minerals)",
+        "Apply UNGP Pillar II due diligence — map salient human rights risks in supply chain",
+        "Screen key suppliers and subcontractors against UK Modern Slavery Act reporting requirements",
+      ]},
+      { title: "2. Labour-rights verification", required: true, checks: [
+        "Obtain supplier's most recent third-party labour audit (SMETA, BSCI, SA8000)",
+        "Flag suppliers in countries with forced-labour indices above ITUC threshold",
+        "Identify payments that may represent proceeds from forced or child labour",
+      ]},
+      { title: "3. Reporting obligations", required: false, checks: [
+        "Publish Modern Slavery Statement annually if turnover threshold applies",
+        "File SAR if supply-chain funds are confirmed to derive from forced labour as predicate offence",
+      ]},
+    ],
+  },
+  {
+    id: "crypto-ransomware-proceeds",
+    title: "Ransomware Payment / Crypto Extortion Proceeds",
+    typology: "ransomware_ml",
+    family: "Fraud",
+    steps: [
+      { title: "1. Wallet screening", required: true, checks: [
+        "Screen destination wallet against OFAC designated ransomware group addresses (e.g. REvil, DarkSide, Conti)",
+        "Apply Chainalysis / TRM Labs risk scoring — block any wallet with ≥ 1% exposure to ransomware",
+        "Confirm the customer is the victim — not a money mule facilitating the payment",
+      ]},
+      { title: "2. Regulatory notification", required: true, checks: [
+        "Notify CISA / FBI (or UAE TDRA / TRA) before making any ransomware payment if safe to do so",
+        "Obtain OFAC specific licence if the ransomware group is a designated SDN",
+        "File STR with full wallet address, transaction hash, and ransom demand details",
+      ]},
+      { title: "3. Post-payment monitoring", required: false, checks: [
+        "Monitor for re-infection or secondary extortion demands",
+        "Retain all blockchain transaction evidence for LE disclosure",
+      ]},
+    ],
+  },
+  {
+    id: "ngo-procurement-diversion",
+    title: "NGO / Humanitarian Procurement Diversion",
+    typology: "ngo_diversion",
+    family: "TF",
+    steps: [
+      { title: "1. Organisation screening", required: true, checks: [
+        "Confirm the NGO is registered with UAE Ministry of Community Development or recognised UN entity",
+        "Screen all programme directors and procurement staff against PEP/sanctions lists",
+        "Verify the NGO's programme area is consistent with the declared purpose",
+      ]},
+      { title: "2. Fund flow tracing", required: true, checks: [
+        "Trace donor funds to sub-grantees — all sub-grantees must be screened",
+        "Flag procurement contracts awarded to suppliers without competitive tender",
+        "Identify diversion of humanitarian funds to political or armed groups",
+      ]},
+      { title: "3. Escalation", required: true, checks: [
+        "Report to UAE FIU if confirmed diversion to sanctioned entities or TF groups",
+        "Suspend disbursements pending MLRO review upon any diversion indicator",
+      ]},
+    ],
+  },
+  {
+    id: "customer-risk-rating-review",
+    title: "Customer Risk Rating Annual Review",
+    typology: "crr_review",
+    family: "Risk",
+    steps: [
+      { title: "1. Trigger-event review", required: true, checks: [
+        "Identify any trigger events since last review: adverse media hit, sanctions addition, PEP change, conviction",
+        "Re-screen customer against current PEP, sanctions, and adverse-media lists",
+        "Verify business activity and source of funds are consistent with last-reviewed profile",
+      ]},
+      { title: "2. Risk factor re-scoring", required: true, checks: [
+        "Apply the institution's risk-scoring model to updated customer data",
+        "Document any factor changes that alter the customer's risk band (low/medium/high)",
+        "Escalate to senior management for approval where customer moves to 'high' risk",
+      ]},
+      { title: "3. Action and documentation", required: true, checks: [
+        "Update CRM / compliance system with new risk rating and review date",
+        "Trigger EDD if new rating is 'high' — complete within 30 days",
+        "File STR if review reveals historical transactions that should have been reported",
+      ]},
+    ],
+  },
+  {
+    id: "stablecoin-defi-bridge",
+    title: "Stablecoin Cross-Chain Bridge Risk",
+    typology: "stablecoin_bridge",
+    family: "VASP",
+    steps: [
+      { title: "1. Bridge protocol risk", required: true, checks: [
+        "Identify the cross-chain bridge protocol and its regulatory status",
+        "Screen the bridge smart-contract address against OFAC SDN (e.g. Tornado Cash precedent)",
+        "Apply blockchain analytics to source and destination wallets",
+      ]},
+      { title: "2. Stablecoin issuer check", required: true, checks: [
+        "Confirm the stablecoin issuer is regulated (Circle USDC, Tether, MAS-regulated SGD stablecoins)",
+        "Verify the issuer has freeze-function capability to comply with law enforcement requests",
+        "Flag bridge usage to chains with limited AML oversight (privacy chains, unregulated L2s)",
+      ]},
+      { title: "3. Travel Rule", required: true, checks: [
+        "Apply FATF Travel Rule for stablecoin transfers ≥ USD 1,000 across the bridge",
+        "Confirm the receiving VASP is registered and applies equivalent Travel Rule obligations",
+      ]},
+    ],
+  },
+  {
+    id: "letter-of-credit-fraud",
+    title: "Letter of Credit Fraud / Phantom Goods",
+    typology: "lc_fraud",
+    family: "Fraud",
+    steps: [
+      { title: "1. Document verification", required: true, checks: [
+        "Authenticate the L/C via SWIFT MT700 / MT740 with the issuing bank",
+        "Cross-reference shipping documents (B/L, commercial invoice, certificate of origin) for consistency",
+        "Contact the nominated carrier to confirm shipment exists and the B/L is genuine",
+      ]},
+      { title: "2. Underlying goods", required: true, checks: [
+        "Verify the goods described match the applicant's declared business activity",
+        "Flag L/Cs for intangible or easily inflated goods (software licences, consultancy, 'services')",
+        "Identify phantom shipment — no AIS trace, no customs entry, no delivery confirmation",
+      ]},
+      { title: "3. Payment controls", required: true, checks: [
+        "Suspend payment upon any document discrepancy — do NOT waive discrepancies without credit committee approval",
+        "File STR if phantom goods or fraudulent documents are confirmed",
+      ]},
+    ],
+  },
+  {
+    id: "aml-programme-gap-assessment",
+    title: "AML Programme Gap Assessment — Annual Review",
+    typology: "aml_programme_gap",
+    family: "Risk",
+    steps: [
+      { title: "1. Policy and procedure review", required: true, checks: [
+        "Confirm all AML policies reflect current UAE FDL 10/2025 and FATF 2022 Methodology",
+        "Verify policies have been approved by the Board and are dated within the last 12 months",
+        "Identify any FATF Recommendation gaps not addressed by existing policies",
+      ]},
+      { title: "2. Training and testing", required: true, checks: [
+        "Confirm all AML training is current and staff completion rates are ≥ 95%",
+        "Conduct targeted control testing on at least 3 high-risk customer segments",
+        "Review STR filing quality and timeliness — target 100% within statutory deadlines",
+      ]},
+      { title: "3. Independent review", required: true, checks: [
+        "Commission annual independent AML audit by a qualified external auditor",
+        "Ensure findings from the prior year's audit have been fully remediated",
+        "Present gap-assessment results to the Board Audit Committee",
+      ]},
+    ],
+  },
+  {
+    id: "wire-stripping",
+    title: "Wire Stripping / Payment-Message Manipulation",
+    typology: "wire_stripping",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Message integrity", required: true, checks: [
+        "Implement SWIFT message validation to detect removal or alteration of sanctions-relevant fields (50, 52, 57, 59)",
+        "Flag incoming wires where the originator or beneficiary field is missing or blank",
+        "Identify instructions from respondents to 'clean' or 'reformat' payment messages before onward transmission",
+      ]},
+      { title: "2. Investigation", required: true, checks: [
+        "Reconstruct the full payment chain by requesting original STP message from the sending institution",
+        "Identify whether stripping was systemic (policy-driven) or isolated (error)",
+        "Notify FinCEN / CBUAE / relevant authority if systemic wire stripping is discovered",
+      ]},
+      { title: "3. Remediation", required: true, checks: [
+        "Terminate the correspondent relationship if wire stripping is confirmed as policy",
+        "Conduct a look-back to identify all affected transactions and file STR batch for the period",
+        "Enhance inbound screening rules to reject messages with missing mandatory SWIFT fields",
+      ]},
+    ],
+  },
+  {
+    id: "construction-invoice-ml",
+    title: "Construction / Contracting Invoice Laundering",
+    typology: "construction_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Contract legitimacy", required: true, checks: [
+        "Obtain signed construction contract and engineer-certified completion certificates",
+        "Cross-check invoiced work against Ejari / DLD permit records",
+        "Flag contracts with no planning permission or occupancy certificate",
+      ]},
+      { title: "2. Sub-contractor screening", required: true, checks: [
+        "Apply CDD to all sub-contractors receiving payments above AED 100,000",
+        "Screen sub-contractor owners against PEP/sanctions/adverse-media lists",
+        "Identify sub-contractors with no verifiable workforce, equipment, or operational history",
+      ]},
+      { title: "3. Payment pattern", required: false, checks: [
+        "Flag invoices where amounts are just below contractual approval thresholds",
+        "Detect progress-payment anomalies (100% claimed before 50% completion)",
+      ]},
+    ],
+  },
+  {
+    id: "family-office-ml",
+    title: "Family Office / Private Wealth Vehicle Risk",
+    typology: "family_office",
+    family: "PEP",
+    steps: [
+      { title: "1. Principal identification", required: true, checks: [
+        "Identify the founding family and key decision-makers — apply full PEP screening",
+        "Obtain family office mandate, investment policy statement, and governance charter",
+        "Screen all portfolio managers, advisers, and service providers against PEP/sanctions lists",
+      ]},
+      { title: "2. Source of wealth — founding generation", required: true, checks: [
+        "Obtain documented history of how the family's original wealth was accumulated",
+        "Cross-check against home-country wealth registers, public records, and Forbes/Hurun data",
+        "Flag wealth accumulation in jurisdictions with high-corruption perception index (CPI < 40)",
+      ]},
+      { title: "3. Ongoing monitoring", required: true, checks: [
+        "Conduct annual EDD review with updated screening and source-of-funds refresh",
+        "Apply enhanced scrutiny to any investment in privately held entities without audited accounts",
+        "Escalate to MLRO if any new family member is identified as a PEP",
+      ]},
+    ],
+  },
+  {
+    id: "cross-border-insurance",
+    title: "Cross-Border Insurance Product ML Risk",
+    typology: "cross_border_insurance",
+    family: "ML",
+    steps: [
+      { title: "1. Policy structure", required: true, checks: [
+        "Identify whether the policy is a single-premium investment-linked product (high ML risk)",
+        "Verify the insurer is licensed in the policy-holder's jurisdiction and has reciprocal AML standards",
+        "Flag policies purchased in high-risk jurisdictions through brokers in low-risk jurisdictions",
+      ]},
+      { title: "2. Premium payment source", required: true, checks: [
+        "Confirm premium payments originate from the policy holder's own bank account",
+        "Reject third-party premium payments without documented legitimate purpose",
+        "Flag large single-premium payments funded by recent cash deposits",
+      ]},
+      { title: "3. Surrender and payout monitoring", required: true, checks: [
+        "Flag early surrender within 12 months of policy inception (classic ML red flag)",
+        "Identify claims paid to a beneficiary different from the named policy holder without clear justification",
+        "File STR if surrender proceeds are immediately transferred to a high-risk jurisdiction",
+      ]},
+    ],
+  },
+  {
+    id: "redomiciliation-risk",
+    title: "Company Redomiciliation / Jurisdiction Hop Risk",
+    typology: "redomiciliation",
+    family: "UBO",
+    steps: [
+      { title: "1. Redomiciliation trigger", required: true, checks: [
+        "Identify whether the company moved from a higher-regulation jurisdiction to a lower-regulation one",
+        "Confirm continuity of UBO — obtain updated shareholder register post-redomiciliation",
+        "Flag redomiciliation coinciding with regulatory investigation or AML action in the origin jurisdiction",
+      ]},
+      { title: "2. CDD refresh", required: true, checks: [
+        "Treat redomiciliation as a trigger for full CDD refresh",
+        "Re-screen all directors, UBOs, and authorised signatories in the new jurisdiction",
+        "Verify the company retains substance (employees, premises, activities) after the move",
+      ]},
+      { title: "3. Regulatory notification", required: false, checks: [
+        "Notify CBUAE / relevant regulator if a regulated entity redomiciles without prior approval",
+        "Escalate to MLRO if redomiciliation appears designed to evade AML obligations",
+      ]},
+    ],
+  },
+  {
+    id: "whistleblower-disclosure",
+    title: "Whistleblower / Internal Disclosure Handling",
+    typology: "whistleblower",
+    family: "Risk",
+    steps: [
+      { title: "1. Secure intake", required: true, checks: [
+        "Receive disclosure through a secure, anonymous-capable reporting channel",
+        "Assign a case reference and log the disclosure in the compliance system within 24 hours",
+        "Preserve the original disclosure in tamper-evident format",
+      ]},
+      { title: "2. Preliminary assessment", required: true, checks: [
+        "Assess whether the disclosure relates to AML/CFT, sanctions, fraud, or other regulated conduct",
+        "Escalate immediately to MLRO and General Counsel if the allegation involves senior management",
+        "Determine whether external reporting is required (FIU, CBUAE, SCA, law enforcement)",
+      ]},
+      { title: "3. Investigation and protection", required: true, checks: [
+        "Assign an independent investigator with no conflict of interest",
+        "Protect the whistleblower from retaliation per UAE Federal Decree-Law No.31/2021",
+        "Document investigation outcome and any AML/STR filing resulting from the disclosure",
+      ]},
+    ],
+  },
+  {
+    id: "dormant-account-reactivation",
+    title: "Dormant Account Reactivation Risk",
+    typology: "dormant_reactivation",
+    family: "CDD",
+    steps: [
+      { title: "1. Dormancy assessment", required: true, checks: [
+        "Confirm the account has been dormant for the institution's defined period (typically 12+ months)",
+        "Re-screen the account holder against current PEP, sanctions, and adverse-media lists",
+        "Verify that the person requesting reactivation is the genuine account holder",
+      ]},
+      { title: "2. Source of reactivation funds", required: true, checks: [
+        "Obtain explanation for the period of dormancy — flag implausible explanations",
+        "Verify source of any large initial deposit following reactivation",
+        "Apply enhanced transaction monitoring for 6 months following reactivation",
+      ]},
+      { title: "3. Controls", required: false, checks: [
+        "Require senior management approval for reactivation of accounts dormant > 5 years",
+        "Transfer unclaimed dormant balances to UAE Central Bank / unclaimed-assets fund per applicable rules",
+      ]},
+    ],
+  },
+  {
+    id: "senior-manager-override",
+    title: "Senior Management Override / Pressure to Approve",
+    typology: "mgmt_override",
+    family: "Risk",
+    steps: [
+      { title: "1. Override recognition", required: true, checks: [
+        "Document any instruction from senior management to approve a transaction that AML controls flagged",
+        "Record the instruction in writing — do NOT execute without written authorisation",
+        "Escalate immediately to the compliance function's independent reporting line (Board Audit Committee or CCO)",
+      ]},
+      { title: "2. Regulatory assessment", required: true, checks: [
+        "Assess whether executing the override would constitute tipping-off or facilitating a sanctioned transaction",
+        "Obtain legal opinion before proceeding with any override above AED 500,000",
+        "File STR if the override involves a customer or transaction that meets the reporting threshold regardless of senior instruction",
+      ]},
+      { title: "3. Escalation and protection", required: true, checks: [
+        "Activate the institution's whistleblower channel if override pressure constitutes misconduct",
+        "MLRO has statutory independence to reject override instructions — this cannot be waived",
+        "Document refusal and rationale in the audit trail with MLRO signature",
+      ]},
+    ],
+  },
+  {
+    id: "repatriation-of-funds",
+    title: "Repatriation of Overseas Assets — Tax Amnesty Risk",
+    typology: "repatriation",
+    family: "ML",
+    steps: [
+      { title: "1. Amnesty programme verification", required: true, checks: [
+        "Confirm the customer is participating in a recognised government tax amnesty or regularisation programme",
+        "Obtain a copy of the amnesty declaration / clean-bill certificate from the competent authority",
+        "Screen the customer against all applicable AML lists — tax amnesty does not waive AML obligations",
+      ]},
+      { title: "2. Underlying asset source", required: true, checks: [
+        "Identify the origin country and account/asset holding vehicle for the repatriated funds",
+        "Obtain bank statements or asset valuation reports confirming the asset predates the amnesty application",
+        "Flag repatriation of assets from FATF grey/black-listed jurisdictions for enhanced scrutiny",
+      ]},
+      { title: "3. Ongoing controls", required: false, checks: [
+        "Apply 12-month enhanced monitoring on repatriated funds accounts",
+        "Escalate to MLRO if repatriated funds are immediately transferred to a third party or offshore account",
+      ]},
+    ],
+  },
+  {
+    id: "embedded-finance-risk",
+    title: "Embedded Finance / Banking-as-a-Service Risk",
+    typology: "embedded_finance",
+    family: "Payments",
+    steps: [
+      { title: "1. BaaS provider assessment", required: true, checks: [
+        "Verify the BaaS provider holds full banking or e-money licence from CBUAE or equivalent",
+        "Obtain the provider's AML policy and last regulatory examination result",
+        "Confirm contractual AML responsibility allocation between the BaaS provider and the embedding fintech",
+      ]},
+      { title: "2. Customer journey controls", required: true, checks: [
+        "Verify that KYC / KYB is performed at least to the provider's own standard before account issuance",
+        "Confirm the BaaS provider's transaction-monitoring rules apply to embedded accounts",
+        "Flag the embedding fintech's sector if it is high-risk (crypto, gambling, DPMS)",
+      ]},
+      { title: "3. Ongoing oversight", required: false, checks: [
+        "Review BaaS sub-account transaction volumes quarterly against the fintech's stated business model",
+        "Apply contractual right-to-audit to the embedding fintech's AML programme annually",
+      ]},
+    ],
+  },
+  {
+    id: "crypto-token-issuance",
+    title: "Crypto Token Issuance / ICO / IEO Compliance",
+    typology: "token_issuance",
+    family: "VASP",
+    steps: [
+      { title: "1. Regulatory authorisation", required: true, checks: [
+        "Confirm the token issuance is authorised by UAE VARA or relevant jurisdiction regulator",
+        "Obtain a legal opinion confirming the token is not an unregistered security",
+        "Verify the white paper is published and consistent with the regulatory approval",
+      ]},
+      { title: "2. Investor CDD", required: true, checks: [
+        "Apply full CDD to all investors above the regulatory threshold",
+        "Screen investors against PEP, sanctions, and high-risk-jurisdiction lists",
+        "Reject investments from anonymous wallets or mixers",
+      ]},
+      { title: "3. Use of proceeds", required: true, checks: [
+        "Confirm proceeds are held in a regulated escrow or trust account",
+        "Implement milestones-based release of proceeds to prevent misappropriation",
+        "Provide quarterly proceeds-usage reports to investors and regulator",
+      ]},
+    ],
+  },
+  {
+    id: "sanctions-designation-response",
+    title: "New Sanctions Designation — Emergency Response",
+    typology: "sanctions_designation",
+    family: "Sanctions",
+    steps: [
+      { title: "1. Immediate screening", required: true, checks: [
+        "Update sanctions lists in the screening engine within 1 hour of designation publication",
+        "Run emergency re-screening of all active customer accounts against the new designation",
+        "Freeze any accounts or pending transactions matching the new SDN / listed entity",
+      ]},
+      { title: "2. Regulatory reporting", required: true, checks: [
+        "Report the match to CBUAE / OFAC / OFSI within the statutory notification window",
+        "Do NOT release frozen funds or execute blocked transactions without a specific licence",
+        "File STR via goAML citing the new designation as the triggering event",
+      ]},
+      { title: "3. Customer notification prohibition", required: true, checks: [
+        "Do NOT tip off the customer that their account has been frozen under sanctions",
+        "Direct any customer enquiry about account access to the sanctions compliance team",
+        "Document all actions taken and timestamps in the immutable audit trail",
+      ]},
+    ],
+  },
+  {
+    id: "pep-exit-review",
+    title: "PEP Relationship Exit / Cooling-Off Period",
+    typology: "pep_exit",
+    family: "PEP",
+    steps: [
+      { title: "1. Office cessation verification", required: true, checks: [
+        "Confirm the PEP has left office via official gazette, government website, or credible news source",
+        "Document the date of cessation and the reason (term expiry, resignation, removal)",
+        "Apply FDL 10/2025 Art.14 cooling-off period — minimum 12 months of continued EDD",
+      ]},
+      { title: "2. Residual risk assessment", required: true, checks: [
+        "Assess whether the former PEP retains ongoing influence over public decisions",
+        "Review for post-office business activities that exploit public position (revolving door risk)",
+        "Maintain adverse-media monitoring for at least 24 months post-office",
+      ]},
+      { title: "3. Downgrade decision", required: false, checks: [
+        "Obtain MLRO sign-off to downgrade from PEP to standard CDD after the cooling-off period",
+        "Document rationale for downgrade in customer file",
+        "Retain EDD files for minimum 5 years post-downgrade",
+      ]},
+    ],
+  },
+  {
+    id: "aml-data-quality",
+    title: "AML Data Quality / System Integrity Check",
+    typology: "aml_data_quality",
+    family: "Risk",
+    steps: [
+      { title: "1. CDD record completeness", required: true, checks: [
+        "Run a completeness check on all mandatory CDD fields in the core system",
+        "Flag records where ID documents have expired or review dates are overdue",
+        "Identify accounts with missing UBO data and schedule remediation within 30 days",
+      ]},
+      { title: "2. Transaction monitoring system", required: true, checks: [
+        "Verify the TM system has processed 100% of transactions for the past 30-day period",
+        "Confirm alert-to-SAR conversion rate is within expected bounds (benchmark: 5–15%)",
+        "Test that rule suppression / tuning changes have been approved by MLRO",
+      ]},
+      { title: "3. Audit trail integrity", required: true, checks: [
+        "Run chain-integrity verification on HMAC-sealed audit log",
+        "Confirm all STR filings in the system match goAML submission receipts",
+        "Flag any gap in sequential audit-entry numbering for immediate investigation",
+      ]},
+    ],
+  },
+  {
+    id: "third-party-payment",
+    title: "Third-Party Payment / Third-Party Funding Risk",
+    typology: "third_party_payment",
+    family: "ML",
+    steps: [
+      { title: "1. Third-party identification", required: true, checks: [
+        "Identify the ultimate source of funds where the payer is not the account holder",
+        "Apply full CDD to the third-party payer",
+        "Obtain a signed declaration from the account holder confirming the payer's identity and relationship",
+      ]},
+      { title: "2. Justification assessment", required: true, checks: [
+        "Verify a legitimate commercial or familial reason exists for the third-party payment",
+        "Flag third-party payments as a structuring or layering indicator if recurrent without clear purpose",
+        "Apply enhanced scrutiny where the third party is from a high-risk jurisdiction",
+      ]},
+      { title: "3. Controls", required: false, checks: [
+        "Restrict third-party funding to jurisdictions with equivalent AML standards",
+        "Reject anonymous third-party payments (no CDD on the payer) for high-risk products",
+      ]},
+    ],
+  },
+  {
+    id: "hawala-settlement-mapping",
+    title: "Hawala Network Settlement Mapping",
+    typology: "hawala_network",
+    family: "MSB",
+    steps: [
+      { title: "1. Network identification", required: true, checks: [
+        "Map all settlement counterparties in the hawaladar's network using ledger data",
+        "Apply CDD to each settlement counterparty — reject any who cannot be identified",
+        "Confirm all settlement counterparties are CBUAE-registered hawaladars or licensed MSBs",
+      ]},
+      { title: "2. Settlement pattern review", required: true, checks: [
+        "Identify net settlement positions across the network for the past 90 days",
+        "Flag settlement counterparties in jurisdictions not covered by CBUAE hawaladar MoU",
+        "Detect over-settlement or under-settlement patterns inconsistent with reported transaction volumes",
+      ]},
+      { title: "3. Reporting", required: false, checks: [
+        "File suspicious transaction report if unlicensed settlement counterparties are identified",
+        "Report to CBUAE Hawala Unit if network structure poses systemic risk",
+      ]},
+    ],
+  },
+  {
+    id: "conflict-zone-customer",
+    title: "Customer Originating from Active Conflict Zone",
+    typology: "conflict_zone",
+    family: "CDD",
+    steps: [
+      { title: "1. Jurisdiction risk classification", required: true, checks: [
+        "Apply FATF/OFAC/UN risk overlay for the customer's country of origin and residence",
+        "Identify any UN arms embargo, travel ban, or targeted financial sanctions applying to the jurisdiction",
+        "Confirm the customer is not a combatant, militia leader, or arms dealer",
+      ]},
+      { title: "2. Source of funds — conflict context", required: true, checks: [
+        "Obtain documentary evidence of pre-conflict wealth or legitimate post-displacement income",
+        "Flag large unexplained wealth accumulations relative to the customer's stated occupation and conflict-zone context",
+        "Apply UNHCR displaced-person typology guidance for refugee / asylum-seeker customers",
+      ]},
+      { title: "3. Ongoing monitoring", required: true, checks: [
+        "Apply 6-monthly enhanced monitoring for all conflict-zone-origin customers",
+        "Re-screen immediately upon any new UN designation or armed-group designation affecting the customer's home area",
+        "Escalate to MLRO if funds appear to originate from looting, extortion, or resource-capture schemes",
+      ]},
+    ],
+  },
+  {
+    id: "platform-economy-seller",
+    title: "Platform Economy — Marketplace Seller Risk",
+    typology: "marketplace_seller",
+    family: "CDD",
+    steps: [
+      { title: "1. Seller verification", required: true, checks: [
+        "Verify seller identity against platform KYC records and cross-check with Emirates ID / passport",
+        "Confirm seller's trade licence covers the goods / services being sold",
+        "Screen seller against PEP, sanctions, and counterfeit-goods enforcement databases",
+      ]},
+      { title: "2. Revenue pattern", required: true, checks: [
+        "Compare declared sales revenue against platform transaction data — flag > 30% variance",
+        "Identify sellers receiving large customer payments outside the platform (off-platform payments)",
+        "Detect rapid stock accumulation followed by selling-below-cost (potential proceeds laundering)",
+      ]},
+      { title: "3. Regulatory compliance", required: false, checks: [
+        "Confirm the marketplace has obtained the required MoE / DED / TDRA digital-commerce licence",
+        "Report to FIU if seller is confirmed to be selling sanctioned or counterfeit goods",
+      ]},
+    ],
+  },
+  {
+    id: "customer-adverse-media-hit",
+    title: "Customer Adverse-Media Hit — Triage and Response",
+    typology: "adverse_media_hit",
+    family: "Risk",
+    steps: [
+      { title: "1. Alert triage", required: true, checks: [
+        "Assess whether the adverse media relates to a financial crime, regulatory sanction, or reputational matter",
+        "Confirm the subject of the article is the same person / entity as the customer (disambiguation)",
+        "Grade severity: informational / medium / high / critical per the institution's adverse-media policy",
+      ]},
+      { title: "2. EDD decision", required: true, checks: [
+        "Upgrade to EDD if the adverse media relates to AML, fraud, bribery, or sanctions violations",
+        "Initiate a transaction review covering the period referenced in the adverse media",
+        "Obtain an updated source-of-funds statement from the customer within 5 business days",
+      ]},
+      { title: "3. SAR consideration", required: true, checks: [
+        "Assess whether the adverse media constitutes knowledge or reasonable suspicion of ML/TF",
+        "File STR within the statutory period if suspicion threshold is met",
+        "Document the triage outcome and MLRO decision in the audit trail",
+      ]},
+    ],
+  },
+  {
+    id: "ubo-threshold-breach",
+    title: "UBO Threshold Breach — Notification and Refresh",
+    typology: "ubo_breach",
+    family: "UBO",
+    steps: [
+      { title: "1. Threshold crossing detection", required: true, checks: [
+        "Identify the transaction or corporate event that causes a new party to cross the 25% UBO threshold",
+        "Obtain updated shareholder register within 10 business days of the crossing event",
+        "Screen the new UBO against PEP, sanctions, and adverse-media lists immediately",
+      ]},
+      { title: "2. CDD update", required: true, checks: [
+        "Complete CDD on the new UBO including identity verification and source-of-funds assessment",
+        "Update the institution's UBO registry and notify the relevant trade registrar",
+        "Escalate to MLRO if the new UBO is a PEP or from a high-risk jurisdiction",
+      ]},
+      { title: "3. Ongoing monitoring", required: false, checks: [
+        "Set a calendar alert for the next UBO certification (annual minimum)",
+        "Confirm the customer's ultimate-control structure in writing and retain in file",
+      ]},
+    ],
+  },
+  {
+    id: "data-breach-aml-impact",
+    title: "Data Breach — AML Impact Assessment",
+    typology: "data_breach_aml",
+    family: "Risk",
+    steps: [
+      { title: "1. Breach scope", required: true, checks: [
+        "Identify whether breached data includes CDD files, transaction records, STR drafts, or sanctions-hit lists",
+        "Determine whether the breach constitutes tipping-off risk (e.g. STR existence exposed to the subject)",
+        "Notify UAE FIU immediately if STR data or sanctions-screening results are compromised",
+      ]},
+      { title: "2. Remediation", required: true, checks: [
+        "Contain the breach within 1 hour — isolate affected systems",
+        "Notify UAE Data Protection Authority within 72 hours per UAE PDPL",
+        "Reset all credentials that may have been exposed in the breach",
+      ]},
+      { title: "3. AML-specific controls", required: true, checks: [
+        "Review whether any breached customer data enables circumvention of AML controls",
+        "Conduct enhanced transaction monitoring on accounts whose data was exposed",
+        "File incident report with CBUAE if breach affects the AML/CFT programme's integrity",
+      ]},
+    ],
+  },
+  {
+    id: "mass-payment-structuring",
+    title: "Mass Payment Structuring Detection",
+    typology: "mass_structuring",
+    family: "ML",
+    steps: [
+      { title: "1. Aggregation analysis", required: true, checks: [
+        "Apply aggregation rules: total same-day outflows across all accounts and channels",
+        "Identify patterns where multiple transactions just below CTR threshold (AED 55,000) are made across different branches or channels",
+        "Detect structuring across multiple accounts controlled by the same UBO",
+      ]},
+      { title: "2. Typology confirmation", required: true, checks: [
+        "Confirm the structuring is intentional by reviewing customer instructions, branch logs, and digital channels",
+        "Identify the ultimate beneficiary of the aggregated funds",
+        "Assess whether structuring coincides with a wire transfer to a high-risk jurisdiction",
+      ]},
+      { title: "3. Filing and controls", required: true, checks: [
+        "File CTR for each transaction at or above the AED 55,000 threshold",
+        "File STR for confirmed intentional structuring regardless of individual transaction amounts",
+        "Apply an account restriction flag pending MLRO review",
+      ]},
+    ],
+  },
+  {
+    id: "vehicle-trade-ml",
+    title: "High-Value Vehicle Trade Laundering",
+    typology: "vehicle_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Transaction identification", required: true, checks: [
+        "Apply CDD to buyer and seller for vehicle transactions ≥ AED 55,000",
+        "Screen both parties against PEP, sanctions, and adverse-media lists",
+        "Obtain vehicle VIN, customs clearance document, and original invoice",
+      ]},
+      { title: "2. Source of funds", required: true, checks: [
+        "Verify buyer's source of funds matches declared income and wealth profile",
+        "Flag cash purchases — require bank transfer for transactions above AED 55,000",
+        "Identify rapid buy-sell cycles (vehicle purchased and resold within 30 days) as potential layering",
+      ]},
+      { title: "3. Export controls", required: false, checks: [
+        "Verify export is not destined for a sanctioned country without export licence",
+        "Flag exports of high-performance vehicles to jurisdictions under OFAC general sanctions",
+        "File STR if vehicle is used in sanctions evasion (export to RU, IR, KP via third country)",
+      ]},
+    ],
+  },
+  {
+    id: "sovereign-wealth-cdd",
+    title: "Sovereign Wealth Fund / State Entity CDD",
+    typology: "sovereign_wealth",
+    family: "CDD",
+    steps: [
+      { title: "1. Entity verification", required: true, checks: [
+        "Confirm the entity is a publicly disclosed sovereign wealth fund (SWFI database or official gazette)",
+        "Identify controlling government ministry and key executives — apply PEP screening to officials",
+        "Verify the entity has not been designated under any sanctions regime",
+      ]},
+      { title: "2. Mandate and governance", required: true, checks: [
+        "Obtain the SWF's investment mandate and governance charter",
+        "Confirm there is no evidence of political misuse (corruption, kleptocracy, state capture)",
+        "Review the SWF's jurisdiction for sovereign immunity from court orders (potential enforcement risk)",
+      ]},
+      { title: "3. Ongoing oversight", required: false, checks: [
+        "Apply annual CDD refresh — SWF leadership changes are trigger events",
+        "Monitor for adverse media linking the SWF to corruption or sanctions-evasion schemes",
+      ]},
+    ],
+  },
+  {
+    id: "ml-through-litigation",
+    title: "ML Through Litigation / Sham Lawsuit",
+    typology: "litigation_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Litigation legitimacy", required: true, checks: [
+        "Verify the court proceedings are genuine by checking UAE court cause-list records",
+        "Identify whether the settlement amount is disproportionate to the claim merits",
+        "Flag where both plaintiff and defendant appear to be related or controlled by the same UBO",
+      ]},
+      { title: "2. Settlement payment source", required: true, checks: [
+        "Trace the source of the settlement payment — confirm it originates from a legitimate account",
+        "Flag settlements paid from offshore accounts without underlying business purpose",
+        "Verify that the settlement recipient (plaintiff) passes CDD including source-of-funds checks",
+      ]},
+      { title: "3. Reporting", required: false, checks: [
+        "File STR if sham litigation is confirmed as a ML layering mechanism",
+        "Refer to UAE Public Prosecution if the settlement appears to involve abuse of court process",
+      ]},
+    ],
+  },
+  {
+    id: "gem-diamond-ml",
+    title: "Precious Gems & Diamond Money Laundering",
+    typology: "gem_diamond_ml",
+    family: "DPMS",
+    steps: [
+      { title: "1. Dealer CDD", required: true, checks: [
+        "Verify DMCC or local trade-body licence for gem and diamond dealers",
+        "Screen controlling owners and key gemologists against sanctions lists and PEP databases",
+        "Obtain source-of-funds documentation for inventory purchases exceeding AED 55,000",
+      ]},
+      { title: "2. Transaction typologies", required: true, checks: [
+        "Flag sales paid in multiple small cash tranches below reporting thresholds (structuring)",
+        "Identify re-export of gem parcels to secrecy jurisdictions without business justification",
+        "Check for circular gem purchases — entity buys and sells identical parcels within 30 days",
+        "Flag diamond consignments shipped to or from conflict-mineral jurisdictions (CAR, DRC, Zimbabwe)",
+      ]},
+      { title: "3. Certification verification", required: true, checks: [
+        "Verify Kimberley Process certificates for rough diamonds",
+        "Cross-check GIA or HRD grading reports against physical parcel description",
+        "Confirm insurance valuation is consistent with stated purchase price",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File DPMSR report for cash transactions ≥ AED 55,000 (CR 134/2025 Art.3)",
+        "File STR where gem purchases appear to be layering proceeds of crime",
+      ]},
+    ],
+  },
+  {
+    id: "art-nft-ml",
+    title: "NFT & Digital Art Money Laundering",
+    typology: "nft_art_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Platform and artist CDD", required: true, checks: [
+        "Identify the NFT marketplace and confirm it applies FATF-compliant KYC to creators and buyers",
+        "Screen artist/creator and high-value buyer wallets for sanctions and adverse media",
+        "Obtain source-of-funds declaration for purchases exceeding USD 10,000 equivalent",
+      ]},
+      { title: "2. Transaction typologies", required: true, checks: [
+        "Flag wash trading — same wallet or related wallets buying and selling same NFT to inflate value",
+        "Identify rapid price escalation (> 300% in 30 days) without auction or critical provenance",
+        "Check for NFT royalty manipulation — creator and buyer controlled by same UBO",
+      ]},
+      { title: "3. Blockchain analysis", required: true, checks: [
+        "Trace on-chain provenance of purchase funds; flag mixer or tumbler-routed ETH/SOL",
+        "Verify that proceeds from NFT sale are not sent to unhosted wallets or cross-chain bridges immediately",
+        "Confirm marketplace smart contract is audited and not on known scam registry",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where NFT transaction appears to be layering or integration of criminal proceeds",
+      ]},
+    ],
+  },
+  {
+    id: "environmental-crime-ml",
+    title: "Environmental Crime Proceeds (Illegal Wildlife, Logging, Waste)",
+    typology: "environmental_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Business sector screening", required: true, checks: [
+        "Screen timber exporters, wildlife traders, and waste processors against CITES violation databases",
+        "Verify CITES export permits for species listed under Appendix I and II",
+        "Check for UAE Ministry of Climate Change permits for import of restricted flora and fauna",
+      ]},
+      { title: "2. Financial pattern analysis", required: true, checks: [
+        "Flag cash-heavy timber or fishing businesses without documented revenue from certified buyers",
+        "Identify payments routed through front companies in jurisdictions with weak forestry controls",
+        "Check for inflated invoicing on legally-sourced goods to co-mingle illegal proceeds",
+      ]},
+      { title: "3. Sanctions and adverse media", required: true, checks: [
+        "Screen counterparties against INTERPOL 'Project Leaf' and 'Project Scale' enforcement lists",
+        "Review adverse media for environmental enforcement actions, fines, or prosecutions",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where environmental crime proceeds are confirmed or highly suspected",
+        "Refer to UAE Ministry of Climate Change enforcement unit for CITES violations",
+      ]},
+    ],
+  },
+  {
+    id: "cash-courier-smuggling",
+    title: "Cash Courier & Cross-Border Currency Smuggling",
+    typology: "cash_courier_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Customer profile review", required: true, checks: [
+        "Identify customers who make frequent cross-border trips and subsequently deposit large cash sums",
+        "Flag declarations of physical cash at UAE Customs (CBR form) inconsistent with declared income",
+        "Screen customer travel patterns — multiple same-day round trips to high-risk jurisdictions",
+      ]},
+      { title: "2. Deposit pattern analysis", required: true, checks: [
+        "Flag large cash deposits immediately following international travel",
+        "Identify structuring — multiple sub-threshold deposits across branches or accounts on same day",
+        "Check for use of 'smurfing' — third parties depositing cash for the same beneficial recipient",
+      ]},
+      { title: "3. Counterparty review", required: true, checks: [
+        "Screen wire transfer counterparties receiving funds deposited from physical cash",
+        "Verify legitimacy of stated business purpose for cash (trade, hospitality, retail)",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where cash courier activity is confirmed or highly suspected",
+        "Report to UAE FIU if cross-border cash smuggling is linked to organised crime networks",
+      ]},
+    ],
+  },
+  {
+    id: "nominee-bank-accounts",
+    title: "Nominee Bank Account Networks",
+    typology: "nominee_accounts_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Network mapping", required: true, checks: [
+        "Identify accounts operated by third parties on behalf of an undisclosed beneficial owner",
+        "Map shared device fingerprints, IP addresses, or contact details across accounts",
+        "Flag accounts where all instructions are received from a non-account-holder email or phone",
+      ]},
+      { title: "2. Transaction review", required: true, checks: [
+        "Identify pass-through patterns — funds received and immediately sent to a single destination",
+        "Flag accounts with no personal financial activity (no salary, utility, or retail payments)",
+        "Check for coordinated timing of transfers across the nominee network (same-hour batch)",
+      ]},
+      { title: "3. CDD refresh", required: true, checks: [
+        "Interview account holder to confirm they are the true beneficial owner and source of funds",
+        "Obtain signed declaration that account is operated solely on account holder's behalf",
+        "Escalate to EDD where nominee arrangement cannot be disproved",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where nominee arrangement is confirmed as ML layering mechanism",
+        "Consider account closure and notification to UAE FIU",
+      ]},
+    ],
+  },
+  {
+    id: "sports-club-ml",
+    title: "Sports Club & Athlete Payment Laundering",
+    typology: "sports_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Entity CDD", required: true, checks: [
+        "Verify sports club registration with UAE Sports Council or relevant federation",
+        "Screen club owners, directors, and majority investors against PEP and sanctions lists",
+        "Obtain source of funds for club acquisition price and capitalisation",
+      ]},
+      { title: "2. Financial typologies", required: true, checks: [
+        "Flag inflated player transfer fees with third-party ownership of player economic rights",
+        "Identify image-rights payments routed through opaque offshore entities",
+        "Check for sponsorship payments from unknown or unverifiable sponsors (shell company names)",
+        "Flag prize-money distribution to accounts other than the athlete's verified personal account",
+      ]},
+      { title: "3. Agent and intermediary screening", required: true, checks: [
+        "Screen player agents and intermediaries for adverse media, regulatory actions, and sanctions",
+        "Verify agent fee as a percentage of transfer value does not exceed FIFA/national federation cap",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where sports financing appears to involve ML, bribery, or corruption of officials",
+      ]},
+    ],
+  },
+  {
+    id: "micro-enterprise-ml",
+    title: "Micro-Enterprise & SME Misuse for Money Laundering",
+    typology: "micro_sme_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Business model validation", required: true, checks: [
+        "Verify business activity matches stated trade licence category and physical location",
+        "Confirm revenue is plausible given business size, staff count, and premises",
+        "Obtain copies of recent audited accounts, VAT returns, or trade invoices for businesses > AED 1M turnover",
+      ]},
+      { title: "2. Cash-flow analysis", required: true, checks: [
+        "Flag micro-businesses with account turnover vastly exceeding sector benchmarks",
+        "Identify deposits of round-number cash sums inconsistent with retail or service revenue patterns",
+        "Check for same-day cash deposits and outward transfers to unrelated overseas counterparties",
+      ]},
+      { title: "3. Ownership review", required: true, checks: [
+        "Identify silent partners or undisclosed UBOs behind registered sole-trader or LLC structure",
+        "Verify that UBO is not a disqualified director or sanctioned person",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where business is confirmed to be a front for ML integration",
+      ]},
+    ],
+  },
+  {
+    id: "virtual-asset-exchange-cdd",
+    title: "Virtual Asset Exchange Customer Due Diligence",
+    typology: "vasp_cdd",
+    family: "ML",
+    steps: [
+      { title: "1. VASP registration check", required: true, checks: [
+        "Confirm the exchange is registered with VARA (UAE) or equivalent FATF-compliant VASP regulator",
+        "Screen exchange name, founders, and primary wallets against OFAC, UN, and EU lists",
+        "Verify exchange publishes a proof-of-reserves report and has undergone independent security audit",
+      ]},
+      { title: "2. Customer wallet screening", required: true, checks: [
+        "Apply blockchain analytics to incoming wallet addresses for taint from darknet, mixers, or scams",
+        "Flag wallets previously flagged by Chainalysis Reactor, Elliptic, or TRM Labs as high-risk",
+        "Verify Travel Rule compliance — sender VASP must provide originator information per FATF R.16",
+      ]},
+      { title: "3. Transaction monitoring", required: true, checks: [
+        "Alert on rapid conversion of crypto to fiat without established withdrawal history",
+        "Flag repeated use of crypto ATMs for top-ups prior to exchange deposit",
+        "Monitor for chain-hopping — rapid conversion between crypto assets to obscure trail",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where crypto exchange activity is linked to proceeds of crime or sanctions evasion",
+      ]},
+    ],
+  },
+  {
+    id: "private-banking-pep",
+    title: "Private Banking & PEP Relationship Risk",
+    typology: "private_banking_pep",
+    family: "PEP",
+    steps: [
+      { title: "1. PEP identification and tier classification", required: true, checks: [
+        "Classify PEP as domestic/foreign Tier 1–4 per FATF R.12 and FDL 10/2025 Art.14",
+        "Identify close associates and family members subject to EDD",
+        "Obtain written MLRO sign-off before onboarding any foreign Tier 1 PEP",
+      ]},
+      { title: "2. Source of wealth and funds", required: true, checks: [
+        "Obtain independently verifiable source-of-wealth documentation (salary slips, asset valuations, inheritance records)",
+        "Compare declared wealth with public salary data for the PEP's official position",
+        "Flag significant unexplained wealth relative to declared public-sector income",
+      ]},
+      { title: "3. Ongoing EDD", required: true, checks: [
+        "Conduct annual EDD review including re-screening against all sanctions and adverse media sources",
+        "Monitor all transactions over AED 50,000 against stated purpose",
+        "Escalate any gift, political donation, or unexplained transfer to MLRO for review",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where PEP transactions indicate corruption, bribery, or misappropriation of public funds",
+        "Comply with FATF R.12 requirement to obtain senior management approval for continued PEP relationship",
+      ]},
+    ],
+  },
+  {
+    id: "cryptocurrency-mixer-detection",
+    title: "Cryptocurrency Mixer & Tumbler Detection",
+    typology: "crypto_mixer_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Mixer identification", required: true, checks: [
+        "Check incoming crypto addresses against known mixer/tumbler contract addresses (Tornado Cash, Chipmixer, Blender.io)",
+        "Apply blockchain analytics to detect CoinJoin patterns or equal-output transactions indicative of mixing",
+        "Flag wallets that show input consolidation followed by equal-output splitting (classic tumbler signature)",
+      ]},
+      { title: "2. Risk assessment", required: true, checks: [
+        "Determine taint percentage — proportion of wallet balance traceable to mixer input",
+        "Assess whether mixing is consistent with stated business purpose (e.g., privacy for legitimate business)",
+        "Screen counterparties receiving post-mix funds against sanctions and darknet market lists",
+      ]},
+      { title: "3. Customer response", required: true, checks: [
+        "Issue written request for explanation of mixer use to customer within 5 business days",
+        "Assess customer explanation against known typologies for sanctions evasion and OFAC exposure",
+        "Escalate to MLRO within 24 hours where Tornado Cash or OFAC-designated mixer is identified",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where mixer use is confirmed as ML obfuscation with no legitimate explanation",
+        "Apply enhanced transaction monitoring to all subsequent customer activity for 12 months",
+      ]},
+    ],
+  },
+  {
+    id: "offshore-secrecy-jurisdiction",
+    title: "Offshore Secrecy Jurisdiction Entity Risk",
+    typology: "offshore_secrecy_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Jurisdiction risk assessment", required: true, checks: [
+        "Classify entity incorporation jurisdiction using FATF/EU/OECD non-cooperative jurisdiction lists",
+        "Identify whether jurisdiction has beneficial ownership public registry or inter-agency sharing",
+        "Flag BVI, Cayman, Marshall Islands, Seychelles, and Cook Islands as requiring EDD automatically",
+      ]},
+      { title: "2. Beneficial ownership verification", required: true, checks: [
+        "Obtain certified copies of register of members, directors, and UBO declaration from offshore jurisdiction",
+        "Cross-reference UBO against OpenCorporates, OpenSanctions, and company registries in jurisdiction of operation",
+        "Flag structures with nominee shareholders, bearer shares, or protector arrangements",
+      ]},
+      { title: "3. Business purpose assessment", required: true, checks: [
+        "Verify genuine commercial substance in the offshore jurisdiction (staff, premises, contracts)",
+        "Confirm that tax structure is commercially motivated and not solely for secrecy",
+        "Obtain group structure chart certified by independent legal counsel",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where offshore structure appears designed solely to conceal beneficial ownership from authorities",
+      ]},
+    ],
+  },
+  {
+    id: "real-estate-developer-ml",
+    title: "Real Estate Developer & Project Financing ML",
+    typology: "real_estate_developer_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Developer CDD", required: true, checks: [
+        "Verify UAE DLD registration and RERA licence for real estate developer",
+        "Screen developers, board members, and project sponsors against sanctions and PEP lists",
+        "Obtain audited financial statements and project funding structure",
+      ]},
+      { title: "2. Project financing typologies", required: true, checks: [
+        "Flag off-plan sales settled entirely in cash or crypto without mortgage involvement",
+        "Identify investor buyers in project who are also politically exposed or sanctioned relatives",
+        "Check for multiple unit purchases by same UBO across different shell companies in same development",
+        "Flag early exit/resale of off-plan units at below-market prices (layering)",
+      ]},
+      { title: "3. Escrow and collection account review", required: true, checks: [
+        "Verify escrow account is registered with DLD/RERA and funds are only released per milestone",
+        "Flag diversions of escrow funds to unrelated accounts before project completion",
+        "Screen all investors contributing > 10% of project financing against FATF high-risk criteria",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where developer financing appears to be layering proceeds of crime",
+        "Notify DLD and RERA via appropriate regulatory disclosure channel where required",
+      ]},
+    ],
+  },
+  {
+    id: "legal-professional-ml",
+    title: "Legal Professional & Law Firm ML Facilitation",
+    typology: "legal_professional_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Law firm CDD", required: true, checks: [
+        "Verify UAE Ministry of Justice or DIFC/ADGM bar association registration of firm and partners",
+        "Screen partners, associates, and beneficial owners of law firm against sanctions and adverse media",
+        "Flag firms with prior disciplinary proceedings for client-fund mismanagement",
+      ]},
+      { title: "2. Client-account typologies", required: true, checks: [
+        "Flag large inward transfers to law firm client accounts with no visible legal matter reference",
+        "Identify 'round-trip' funds — funds enter client account and exit to third party unrelated to legal matter",
+        "Check for law firm receiving funds from offshore entity and onward transferring to UAE real estate",
+        "Identify fees disproportionate to scope of legal work (e.g., AED 500,000 for a routine filing)",
+      ]},
+      { title: "3. Matter legitimacy", required: true, checks: [
+        "Request documentation of the underlying legal matter (court filing, contract, regulatory submission)",
+        "Verify that counterparty on the other side of the legal matter is not controlled by the same UBO",
+        "Confirm that escrow or trust purpose is documented and ring-fenced per matter",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where law firm appears to be facilitating ML through misuse of client accounts",
+        "Consider whether Tipping-Off restrictions under UAE FDL apply before disclosing to customer",
+      ]},
+    ],
+  },
+  {
+    id: "insurance-life-ml",
+    title: "Life Insurance & Investment-Linked Policy ML",
+    typology: "life_insurance_ml",
+    family: "ML",
+    steps: [
+      { title: "1. Policy CDD", required: true, checks: [
+        "Screen policyholder, beneficiary, and premium payer against all sanctions and PEP lists",
+        "Verify source of premium payments — flag where premiums funded by third parties",
+        "Obtain source-of-wealth declaration for single-premium policies exceeding AED 100,000",
+      ]},
+      { title: "2. Policy typologies", required: true, checks: [
+        "Flag early surrender requests within 12 months of policy inception (pre-planned layering)",
+        "Identify policies with frequent beneficiary changes, especially to offshore entities",
+        "Check for large policy loans immediately after premium payment — classic ML mechanism",
+        "Flag premiums paid via overseas wire from high-risk jurisdiction without CDD",
+      ]},
+      { title: "3. Beneficiary due diligence", required: true, checks: [
+        "Screen all named beneficiaries against sanctions, PEP, and adverse media databases",
+        "Verify insurable interest exists between policyholder and beneficiary",
+        "Escalate where beneficiary is an offshore entity or corporate nominee",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where life insurance policy is confirmed as ML layering vehicle",
+        "Comply with CBUAE Insurance Authority reporting obligations for suspicious policy activity",
+      ]},
+    ],
+  },
+  {
+    id: "free-zone-entity-risk",
+    title: "UAE Free Zone Entity Misuse Risk",
+    typology: "free_zone_ml",
+    family: "DPMS",
+    steps: [
+      { title: "1. Free zone entity CDD", required: true, checks: [
+        "Verify free zone licence with issuing authority (JAFZA, DIFC, ADGM, RAKEZ, IFZA, etc.)",
+        "Screen registered owners, directors, and UBOs against all sanctions and PEP databases",
+        "Obtain certified copy of licence, MOA, and share certificate",
+        "Flag entities registered in free zones known for minimal physical-presence requirements",
+      ]},
+      { title: "2. Business activity validation", required: true, checks: [
+        "Confirm business activity matches licence category — flag 'general trading' without specific commodities",
+        "Verify physical presence: office address, staff, phone number (not a mailbox address only)",
+        "Request copies of recent trade invoices or contracts to confirm active business",
+      ]},
+      { title: "3. Financial pattern review", required: true, checks: [
+        "Flag free zone entities that receive large inward remittances and immediately re-export",
+        "Identify pass-through patterns with no value-adding business activity in UAE",
+        "Check for multiple UAE free zone entities controlled by same UBO with overlapping transactions",
+      ]},
+      { title: "4. Reporting", required: false, checks: [
+        "File STR where free zone entity appears to be a conduit for ML with no genuine business substance",
       ]},
     ],
   },
 ];
+
 
 const FAMILY_COLORS: Record<string, string> = {
   ML: "bg-red-dim text-red",

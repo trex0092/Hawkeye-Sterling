@@ -1071,10 +1071,14 @@ const AI_REGISTRY: AiSystem[] = [
   { component: "Typology Matcher", model: "claude-haiku-4-5-20251001", purpose: "FATF typology identification", dataProcessed: "Transaction facts, red flags", limitations: "Pattern matching only; not legal advice" },
   { component: "False Positive Assessor", model: "claude-haiku-4-5-20251001", purpose: "Hit disambiguation", dataProcessed: "Client vs. hit metadata", limitations: "Cannot verify external database records" },
   { component: "PEP Network Intelligence", model: "claude-haiku-4-5-20251001", purpose: "PEP relationship mapping", dataProcessed: "PEP name, role, country", limitations: "Knowledge cutoff applies" },
-  { component: "Sanctions Nexus", model: "claude-haiku-4-5-2025101", purpose: "Indirect sanctions exposure", dataProcessed: "Transaction details", limitations: "Does not access live OFAC/UN list APIs" },
   { component: "Name Variant Generator", model: "claude-haiku-4-5-20251001", purpose: "Alias/transliteration generation", dataProcessed: "Subject name, nationality", limitations: "Probabilistic — not exhaustive" },
   { component: "EWRA Board Report", model: "claude-haiku-4-5-20251001", purpose: "Risk assessment narrative", dataProcessed: "Risk dimension scores", limitations: "Annual review required" },
   { component: "Adverse Media Assessment", model: "claude-haiku-4-5-20251001", purpose: "Threat profile synthesis", dataProcessed: "Media findings, categories", limitations: "Based on provided media data only" },
+  { component: "Risk Disposition Engine", model: "claude-haiku-4-5-20251001", purpose: "AI-assisted case disposition (clear / escalate / STR / EDD)", dataProcessed: "Risk score, sanctions hits, PEP tier, adverse media, exposure AED", limitations: "Advisory only — MLRO sign-off required before action" },
+  { component: "SAR/STR Narrative Generator", model: "claude-haiku-4-5-20251001", purpose: "Draft STR narrative for GoAML XML submission", dataProcessed: "Case facts, transaction details, risk signals", limitations: "Draft only — not filed automatically; mandatory human review" },
+  { component: "EDD Questionnaire Generator", model: "claude-haiku-4-5-20251001", purpose: "Enhanced Due Diligence questionnaire generation", dataProcessed: "Subject profile, risk tier, PEP classification", limitations: "Template-based — must be reviewed and tailored by MLRO" },
+  { component: "Transaction Anomaly Detector", model: "claude-haiku-4-5-20251001", purpose: "Detect structuring, smurfing, and FATF typology red flags", dataProcessed: "Transaction amounts, frequency, counterparties", limitations: "Probabilistic — requires analyst validation" },
+  { component: "Sanctions Nexus", model: "claude-haiku-4-5-20251001", purpose: "Indirect sanctions exposure analysis", dataProcessed: "Transaction details, counterparty network", limitations: "Does not access live OFAC/UN list APIs in real-time" },
 ];
 
 function statusClass(status: PrincipleStatusSimple): string {

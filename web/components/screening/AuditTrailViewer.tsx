@@ -115,6 +115,7 @@ export function AuditTrailViewer({
   const [verifyResult, setVerifyResult] = useState<VerifyResponse | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -218,6 +219,10 @@ export function AuditTrailViewer({
       else next.add(seq);
       return next;
     });
+  };
+
+  const dismissEntry = (seq: number): void => {
+    setDismissed((prev) => new Set(prev).add(seq));
   };
 
   const verifyBanner = useMemo(() => {
@@ -376,7 +381,19 @@ export function AuditTrailViewer({
 
       {data && (data.entries ?? []).length > 0 ? (
         <div className="space-y-1.5">
-          {(data.entries ?? []).filter((e): e is AuditEntry => e != null).map((entry) => {
+          {dismissed.size > 0 && (
+            <div className="text-11 text-ink-3 font-mono flex items-center gap-2 px-1">
+              <span>{dismissed.size} {dismissed.size === 1 ? "entry" : "entries"} hidden from view</span>
+              <button
+                type="button"
+                onClick={() => setDismissed(new Set())}
+                className="text-brand hover:underline"
+              >
+                restore all
+              </button>
+            </div>
+          )}
+          {(data.entries ?? []).filter((e): e is AuditEntry => e != null && !dismissed.has(e.sequence)).map((entry) => {
             const isOpen = expanded.has(entry.sequence);
             return (
               <article
@@ -384,12 +401,13 @@ export function AuditTrailViewer({
                 aria-labelledby={`audit-entry-${entry.sequence}`}
                 className="border border-hair-2 rounded-md overflow-hidden bg-bg-1"
               >
+                <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => toggleExpanded(entry.sequence)}
                   aria-expanded={isOpen}
                   aria-controls={`audit-entry-body-${entry.sequence}`}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
+                  className="flex-1 flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
                 >
                   <span
                     id={`audit-entry-${entry.sequence}`}
@@ -403,6 +421,16 @@ export function AuditTrailViewer({
                   <span className="font-mono text-10 text-ink-2 tabular-nums hidden md:inline">{formatDate(entry.at)}</span>
                   <span aria-hidden="true" className="text-ink-2 text-12">{isOpen ? "−" : "+"}</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => dismissEntry(entry.sequence)}
+                  aria-label={`Dismiss entry #${entry.sequence} from view`}
+                  title="Hide from view (entry remains in the immutable audit chain)"
+                  className="flex-shrink-0 w-8 h-full flex items-center justify-center text-ink-3 hover:text-red-400 hover:bg-red-950/20 transition-colors border-l border-hair-2 px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
+                >
+                  ×
+                </button>
+                </div>
                 {isOpen ? (
                   <div
                     id={`audit-entry-body-${entry.sequence}`}
@@ -423,6 +451,7 @@ export function AuditTrailViewer({
                   </div>
                 ) : null}
               </article>
+
             );
           })}
         </div>
