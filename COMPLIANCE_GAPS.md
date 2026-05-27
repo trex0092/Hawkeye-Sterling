@@ -206,6 +206,9 @@ The following critical security defects were resolved:
 **Fix-1.5 — Semgrep SAST silenced:**
 `.github/workflows/ci.yml` — removed `|| true` from the Semgrep scan step. SAST ERROR-severity findings now block CI.
 
+**Fix-1.6 — requireFourEyes() PII exposure in API responses:**
+`web/lib/server/four-eyes-gate.ts` — `requireFourEyes()` previously returned the full `FourEyesStatus` object (containing raw `approverGids: string[]` and `rejectedBy?: string` actor identities) and used them verbatim in error message strings. Both paths now return `SanitizedFourEyesStatus` (`approverHashes`, `rejectedByHash` — SHA-256 first 12 hex chars via `hashActor()`). The `decisions[]` array (raw `ApprovalEntry.actor` values) is stripped from all API responses. Internal audit chain reads retain the full unmasked record. Satisfies UAE PDPL + FDL 10/2025 Art.16 PII hygiene requirement.
+
 ---
 
 ## Resolution Checklist
