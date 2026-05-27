@@ -46,7 +46,7 @@ interface ComtradeResult {
 
 type TbmlRisk = "low" | "medium" | "high" | "critical";
 
-function tbmlAssess(hsCode: string, value: number, reporterCode: number): { risk: TbmlRisk; flags: string[] } {
+function tbmlAssess(hsCode: string, value: number, _reporterCode: number): { risk: TbmlRisk; flags: string[] } {
   const flags: string[] = [];
   // High-risk HS chapters for TBML (gold, diamonds, electronics, chemicals, weapons precursors)
   const highRiskChapters = ["71", "84", "85", "90", "28", "29", "93"];
@@ -110,8 +110,9 @@ export default function ComtradePage() {
   return (
     <ModuleLayout>
       <ModuleHero
+        eyebrow="TBML Intelligence"
         title="Comtrade TBML Risk Query"
-        subtitle="UN Comtrade trade statistics lookup — identify trade-based money laundering risk by HS code, origin country, and transaction value"
+        intro="UN Comtrade trade statistics lookup — identify trade-based money laundering risk by HS code, origin country, and transaction value"
       />
 
       <form onSubmit={(e) => void handleSubmit(e)} className="bg-surface-1 border border-border-subtle rounded-lg p-5 mb-6">

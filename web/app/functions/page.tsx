@@ -82,8 +82,9 @@ export default function FunctionsPage() {
   return (
     <ModuleLayout>
       <ModuleHero
+        eyebrow="Operational"
         title="Scheduled Functions"
-        subtitle="Cron execution log — last run timestamps and health status for all Netlify scheduled functions"
+        intro="Cron execution log — last run timestamps and health status for all Netlify scheduled functions"
       />
 
       {/* Summary bar */}
