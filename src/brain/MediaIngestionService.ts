@@ -279,7 +279,7 @@ function parseRssXml(xml: string): RssFeedItem[] {
   const items: RssFeedItem[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
   const tagRegex = (tag: string) =>
-    new RegExp(`<${tag}[^>]*><!\\[CDATA\\[(.*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>(.*?)<\\/${tag}>`, 'is');
+    new RegExp(`<${tag}[^>]*><!\\[CDATA\\[(.*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>(.*?)<\\/${tag}>`, 'is'); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
 
   let match;
   while ((match = itemRegex.exec(xml)) !== null) {

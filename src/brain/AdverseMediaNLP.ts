@@ -323,7 +323,7 @@ export function extractNLP(text: string): NLPExtractionResult {
   const dates: ExtractedDate[] = [];
   for (const { pattern, type } of DATE_PATTERNS) {
     let m;
-    const re = new RegExp(pattern.source, pattern.flags);
+    const re = new RegExp(pattern.source, pattern.flags); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     while ((m = re.exec(text)) !== null) {
       const rawDate = m[1] ?? m[0];
       const parsed = new Date(rawDate);

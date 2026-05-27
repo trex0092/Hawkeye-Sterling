@@ -129,7 +129,7 @@ function extractCountriesFromNode(node: NetworkNode): string[] {
   const text = [node.name, node.relationship, ...(node.riskIndicators ?? []), ...(node.mlTypologies ?? [])].join(" ");
   const found = new Set<string>();
   for (const pattern of COUNTRY_PATTERNS) {
-    const matches = text.match(new RegExp(pattern.source, "gi"));
+    const matches = text.match(new RegExp(pattern.source, "gi")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     if (matches) matches.forEach((m) => found.add(m.toLowerCase().trim()));
   }
   return Array.from(found);

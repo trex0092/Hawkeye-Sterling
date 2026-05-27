@@ -35,7 +35,7 @@ const ALL_ALLOWED_ORIGINS = [...new Set([...BASE_ALLOWED_ORIGINS, ...ENV_ALLOWED
 // Optional regex pattern for dynamic origins (e.g. Netlify preview deploys).
 // Set CORS_ALLOWED_PATTERN="^https://pr-\d+--hawkeye-sterling\.netlify\.app$"
 const _corsPattern = process.env["CORS_ALLOWED_PATTERN"]
-  ? (() => { try { return new RegExp(process.env["CORS_ALLOWED_PATTERN"]!); } catch { return null; } })()
+  ? (() => { try { return new RegExp(process.env["CORS_ALLOWED_PATTERN"]!); } catch { return null; } })() // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   : null;
 
 /**

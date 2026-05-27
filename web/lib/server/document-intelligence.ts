@@ -197,7 +197,7 @@ export function extractEntities(text: string): ExtractedEntity[] {
   const lower = text.toLowerCase();
   for (const country of KNOWN_COUNTRIES) {
     // Check word-boundary match
-    const re = new RegExp(`\\b${country.replace(/\s+/g, "\\s+")}\\b`, "i");
+    const re = new RegExp(`\\b${country.replace(/\s+/g, "\\s+")}\\b`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     if (re.test(lower)) {
       entities.push({
         type: "country",

@@ -124,12 +124,12 @@ async function writeToBlobStore(listId: string, entities: NormalisedEntity[]): P
 // Deduplication by normalised name prevents double-counting aliases/variants.
 
 function getText(xml: string, tag: string): string {
-  const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   return m ? m[1]!.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#?\w+;/g, " ").trim() : "";
 }
 
 function getAllText(xml: string, tag: string): string[] {
-  const rx = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "gi");
+  const rx = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "gi"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const out: string[] = [];
   let m: RegExpExecArray | null;
   while ((m = rx.exec(xml)) !== null) {

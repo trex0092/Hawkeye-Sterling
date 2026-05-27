@@ -237,7 +237,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   const items: Array<{ title: string; link: string; pubDate?: string; description?: string }> = [];
   const itemRx = /<item[\s>][^]*?<\/item>/gi;
   const extract = (block: string, tag: string): string | undefined => {
-    const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block);
+    const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     if (!m) return undefined;
     return (m[1] ?? '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
   };

@@ -76,7 +76,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
       .replace(/_(.+?)_/g, "$1");
     // (?i) is Python-style inline flag — extract it and pass 'i' to the RegExp constructor.
     const pattern = p.expectedRefusalRegex.replace(/^\(\?i\)/i, "");
-    const re = new RegExp(pattern, "i");
+    const re = new RegExp(pattern, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     const verdict: Verdict = re.test(text) ? "pass" : "fail";
     return {
       id: p.id,

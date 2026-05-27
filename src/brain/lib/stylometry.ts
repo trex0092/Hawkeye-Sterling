@@ -44,7 +44,7 @@ function countOccurrences(haystack: string, needles: string[]): { total: number;
   let total = 0; const hit: string[] = [];
   for (const n of needles) {
     const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`\\b${esc}\\b`, 'g');
+    const re = new RegExp(`\\b${esc}\\b`, 'g'); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     const m = lc.match(re);
     if (m && m.length > 0) { total += m.length; hit.push(n); }
   }

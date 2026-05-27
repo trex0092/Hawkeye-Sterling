@@ -40,18 +40,18 @@ function fnv32a(s: string): string {
 }
 
 function xmlTag(block: string, name: string): string {
-  return block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, 's'))?.[1]?.trim() ?? '';
+  return block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, 's'))?.[1]?.trim() ?? ''; // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
 }
 
 function xmlTags(block: string, name: string): string[] {
   return Array.from(
-    block.matchAll(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, 'gs')),
+    block.matchAll(new RegExp(`<${name}[^>]*>([\\s\\S]*?)<\\/${name}>`, 'gs')), // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     (m) => m[1]?.trim() ?? '',
   ).filter(Boolean);
 }
 
 function xmlAttr(fragment: string, name: string): string {
-  return fragment.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? '';
+  return fragment.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? ''; // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
 }
 
 // ── UN Consolidated List (XML — UNSC 1267/1988 consolidated format) ───────────

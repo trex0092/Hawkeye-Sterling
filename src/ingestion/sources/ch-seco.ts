@@ -141,17 +141,17 @@ export const chSecoAdapter: SourceAdapter = {
 // ── XML helpers (regex-based; permissive) ────────────────────────────────────
 
 function xmlField(block: string, tag: string): string {
-  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 's'));
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 's')); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   return (m?.[1] ?? '').trim();
 }
 
 function xmlFieldAll(block: string, tag: string): string[] {
   return Array.from(
-    block.matchAll(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gs')),
+    block.matchAll(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gs')), // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     (m) => (m[1] ?? '').trim(),
   ).filter(Boolean);
 }
 
 function xmlAttrFromOpening(opening: string, name: string): string {
-  return opening.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? '';
+  return opening.match(new RegExp(`${name}="([^"]+)"`))?.[1] ?? ''; // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
 }

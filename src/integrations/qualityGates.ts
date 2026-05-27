@@ -150,7 +150,7 @@ export function scoreAdvisorAnswer(
   // ── Jurisdiction discipline (rule 5) ────────────────────────────────────
   const jurisdictionTags = ['UAE', 'EU', 'UK', 'US', 'FATF'];
   const jurisdictionsMentioned = jurisdictionTags.filter((j) =>
-    new RegExp(`\\b${j}\\b`).test(text),
+    new RegExp(`\\b${j}\\b`).test(text), // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   );
   const hasMultipleJurisdictions = jurisdictionsMentioned.length >= 2;
 

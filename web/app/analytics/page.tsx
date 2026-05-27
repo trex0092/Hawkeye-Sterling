@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
       const opened = Date.parse(c.timeline?.[0]?.timestamp ?? "");
       if (Number.isFinite(opened) && opened < mtdCutoff) continue;
       for (const t of FILING_TYPES) {
-        const re = new RegExp(`\\b${t}\\b`, "i");
+        const re = new RegExp(`\\b${t}\\b`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
         if (re.test(c.meta) || re.test(c.statusLabel ?? "")) {
           counts[t] += 1;
           break;

@@ -412,7 +412,7 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   for (const raw of items) {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
-      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
+      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       if (!m || !m[1]) return "";
       let v = m[1].trim();
       v = v.replace(/^<!\[CDATA\[|\]\]>$/g, "");

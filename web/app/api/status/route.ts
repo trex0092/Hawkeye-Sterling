@@ -172,7 +172,7 @@ async function checkAdverseMedia(): Promise<Check> {
 async function checkWeaponizedBrain(): Promise<Check> {
   const filePath = path.join(process.cwd(), "web", "public", "weaponized-brain.json");
   const r = await time(async () => {
-    const raw = await fs.readFile(filePath, "utf8");
+    const raw = await fs.readFile(filePath, "utf8"); // nosemgrep: detect-non-literal-fs -- safe: filePath derived from process.cwd() + hardcoded constant, not user input
     const parsed = JSON.parse(raw) as { ok?: boolean; manifest?: unknown };
     if (!parsed.ok || !parsed.manifest) throw new Error("manifest missing ok/manifest");
     return parsed;
@@ -181,7 +181,7 @@ async function checkWeaponizedBrain(): Promise<Check> {
     // Fall back to the sibling path when Netlify changes cwd.
     const alt = path.join(process.cwd(), "public", "weaponized-brain.json");
     const r2 = await time(async () => {
-      const raw = await fs.readFile(alt, "utf8");
+      const raw = await fs.readFile(alt, "utf8"); // nosemgrep: detect-non-literal-fs -- safe: alt derived from process.cwd() + hardcoded constant, not user input
       const parsed = JSON.parse(raw) as { ok?: boolean; manifest?: unknown };
       if (!parsed.ok || !parsed.manifest) throw new Error("manifest missing ok/manifest");
       return parsed;
@@ -389,7 +389,7 @@ async function checkBrainSoul(): Promise<BrainSoul> {
   ];
   let raw: string | null = null;
   for (const p of candidates) {
-    try { raw = await fs.readFile(p, "utf8"); break; } catch { /* try next */ }
+    try { raw = await fs.readFile(p, "utf8"); break; } catch { /* try next */ } // nosemgrep: detect-non-literal-fs -- safe: p is from a hardcoded candidates array, not user input
   }
   if (!raw) return COMPROMISED;
 

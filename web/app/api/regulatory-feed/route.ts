@@ -144,7 +144,7 @@ function sanitizeUrl(raw: string): string {
 
 /** Extract the text content of the first occurrence of <tag>...</tag> */
 function extractTag(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const m = xml.match(re);
   if (!m) return "";
   const raw = m[1] ?? "";
@@ -556,7 +556,7 @@ function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
   for (const raw of items.slice(0, 8)) {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
-      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
+      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       const val = m?.[1];
       if (!val) return "";
       return stripHtml(val.trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));

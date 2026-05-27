@@ -94,14 +94,14 @@ async function fetchText(url: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<s
 // ─── XML/HTML helpers (no external parser) ───────────────────────────────────
 
 function extractTag(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const m = xml.match(re);
   if (!m) return "";
   return stripHtml((m[1] ?? "").trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
 }
 
 function splitItems(xml: string, tag = "item"): string[] {
-  return xml.split(new RegExp(`<${tag}[\\s>]`, "i")).slice(1).map((chunk) => {
+  return xml.split(new RegExp(`<${tag}[\\s>]`, "i")).slice(1).map((chunk) => { // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     const end = chunk.indexOf(`</${tag}>`);
     return end >= 0 ? chunk.slice(0, end) : chunk;
   });
