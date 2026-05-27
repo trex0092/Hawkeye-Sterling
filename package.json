@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "python3 -m http.server --directory public 8080",
     "build": "tsc",
+    "bootstrap": "npm ci --include=dev && npm run build && cd web && npm ci --include=dev && npm run gen:next-env",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run",
