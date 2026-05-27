@@ -301,8 +301,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install kubectl
         run: |
-          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl"
-          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl.sha256"
+          # -f: fail on server errors (no silent HTML error downloads)
+          # --retry 3 / --retry-delay 5: survive transient dl.k8s.io blips
+          curl -fL --retry 3 --retry-delay 5 \
+            "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl" \
+            -o kubectl
+          curl -fL --retry 3 --retry-delay 5 \
+            "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl.sha256" \
+            -o kubectl.sha256
           echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/kubectl
