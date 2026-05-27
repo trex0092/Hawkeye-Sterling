@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { insertCaseRecord } from "@/lib/server/case-vault";
+import { generateCaseId } from "@/lib/server/case-id";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,6 +129,28 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   };
   await setJson(`ongoing/subject/${id}`, record);
 
+  // Seed the case vault so the case appears in the operator dashboard.
+  // Uses the caller-supplied caseId if present; otherwise generates a new one.
+  const caseId = record.caseId ?? generateCaseId();
+  const now = new Date().toISOString();
+  void insertCaseRecord(ctx.tenantId, {
+    id: caseId,
+    badge: "OM",
+    badgeTone: "violet",
+    subject: name,
+    meta: `Ongoing monitoring — enrolled ${now.slice(0, 10)}`,
+    status: "active",
+    evidenceCount: "0",
+    lastActivity: now,
+    opened: now,
+    statusLabel: "Active",
+    statusDetail: "Ongoing monitoring enrolled",
+    evidence: [],
+    timeline: [{ timestamp: now, event: "Subject enrolled in ongoing monitoring" }],
+  }).catch((err) =>
+    console.warn("[ongoing] case vault insert failed:", err instanceof Error ? err.message : String(err)),
+  );
+
   // Enrolment in the ongoing-monitoring register is a compliance event
   // (FDL 10/2025 Art.16 — enhanced ongoing monitoring for high-risk subjects).
   void writeAuditChainEntry(
@@ -179,6 +203,16 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
       { status: 400 },
     );
   }
+
+  // Mandatory reason field — min 10 chars (FDL 10/2025 Art.16, audit trail).
+  const reason = url.searchParams.get("reason")?.trim() ?? "";
+  if (reason.length < 10) {
+    return NextResponse.json(
+      { ok: false, error: "reason required (min 10 characters)" },
+      { status: 400 },
+    );
+  }
+
   // Verify ownership — only the enrolling tenant may delete the subject.
   // Strict equality check: if tenantId is missing on the record (legacy),
   // treat as a different tenant to prevent cross-tenant deletion.
@@ -197,6 +231,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
       actor: ctx.apiKey.id,
       subjectId: id,
       subjectName: existing.name,
+      reason,
     },
     ctx.tenantId,
   ).catch((err) =>

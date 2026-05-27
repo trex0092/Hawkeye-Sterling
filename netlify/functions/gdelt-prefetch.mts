@@ -225,5 +225,7 @@ export default async function handler(_req: Request): Promise<Response> {
 }
 
 export const config: Config = {
-  schedule: "0 */6 * * *",
+  // Every 2h — aligns cache freshness with the adverse-media-rss 30min cadence
+  // while keeping GDELT API costs manageable (12 runs/day vs 48).
+  schedule: "0 */2 * * *",
 };

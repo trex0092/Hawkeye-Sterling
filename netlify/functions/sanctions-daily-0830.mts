@@ -25,4 +25,4 @@ export default async (_req: Request): Promise<Response> => {
   });
 };
 
-export const config: Config = { schedule: "30 4 * * *" };
+export const config: Config = { schedule: "0 5 * * *" };

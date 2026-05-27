@@ -27,6 +27,7 @@ import {
   readRegulatoryDigest,
   type RegulatoryDigest,
 } from "@/lib/intelligence/regulatory-parsers";
+import { getJson, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,6 +100,9 @@ interface CacheEntry {
 const _cache = globalThis as unknown as Record<string, CacheEntry | undefined>;
 const CACHE_KEY = "__hsRegulatoryFeedCache";
 const CACHE_TTL_MS = 30 * 60_000; // 30 minutes
+// Blobs-backed persistent cache — survives cold starts.
+const BLOB_CACHE_KEY = "hawkeye-regulatory/feed-cache.json";
+const BLOB_STALE_TTL_MS = 6 * 60 * 60_000; // serve stale blobs cache up to 6h old
 
 const FETCH_TIMEOUT_MS = 5_000;
 // GDELT free API p95 is routinely 10-14s. Cap at 8s here (vs 18s before) so
@@ -964,6 +968,19 @@ export async function GET(req: Request): Promise<NextResponse> {
     return await _handleGet(req);
   } catch (err) {
     console.error("[regulatory-feed] unhandled top-level error:", err instanceof Error ? err.message : err);
+    // Before returning 503, attempt to serve a stale Blobs-backed cache entry.
+    try {
+      const blob = await getJson<CacheEntry>(BLOB_CACHE_KEY);
+      if (blob?.payload) {
+        const staleAgeMin = Math.round((Date.now() - blob.ts) / 60_000);
+        return NextResponse.json(
+          { ...blob.payload, stale: true, staleAgeMin, error: "Live feed unavailable — serving cached data." },
+          { status: 200, headers: { "X-Cache": "STALE", "Cache-Control": "no-store" } },
+        );
+      }
+    } catch {
+      // If blobs read also fails, fall through to 503.
+    }
     return NextResponse.json(
       { ok: false, error: "regulatory-feed temporarily unavailable — please retry.", degraded: true },
       { status: 503, headers: gate.headers },
@@ -986,9 +1003,23 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   const includeArchived = url.searchParams.get("includeArchived") === "true";
   const ARCHIVE_CUTOFF_MS = 180 * 24 * 60 * 60 * 1_000; // 180 days
 
-  // Return cached payload if still fresh (15-minute TTL) — but only
+  // Return cached payload if still fresh (30-minute TTL) — but only
   // when the caller didn't explicitly ask for a fresh fetch.
-  const cached = _cache[CACHE_KEY];
+  // On cold start (no module-level cache) fall back to the Blobs-backed
+  // persistent cache so a timeout never returns an empty feed.
+  let cached = _cache[CACHE_KEY];
+  if (!force && !cached) {
+    try {
+      const blob = await getJson<CacheEntry>(BLOB_CACHE_KEY);
+      if (blob && blob.ts && Date.now() - blob.ts < BLOB_STALE_TTL_MS) {
+        cached = blob;
+        _cache[CACHE_KEY] = blob; // warm the module-level cache
+        console.info("[regulatory-feed] served from persistent Blobs cache (cold start)");
+      }
+    } catch {
+      // Non-fatal — fall through to live fetch
+    }
+  }
   if (!force && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     let items = cached.payload.items;
     if (categoryFilter) items = items.filter((i) => i.category.toLowerCase().includes(categoryFilter));
@@ -1307,8 +1338,12 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     digest: regulatoryDigest ?? undefined,
   };
 
-  // Write to cache (unfiltered full set — filters applied at response time only)
-  _cache[CACHE_KEY] = { payload: fullPayload, ts: Date.now() };
+  // Write to module-level cache and persist to Blobs for cold-start fallback.
+  const cacheEntry: CacheEntry = { payload: fullPayload, ts: Date.now() };
+  _cache[CACHE_KEY] = cacheEntry;
+  setJson(BLOB_CACHE_KEY, cacheEntry).catch((err: unknown) =>
+    console.warn("[regulatory-feed] Blobs cache write failed (non-fatal):", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(
     { ...fullPayload, items: pagedItems, totalCount, latencyMs: Date.now() - t0, meta },

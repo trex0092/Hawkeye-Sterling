@@ -5,6 +5,7 @@ import { postWebhook } from "@/lib/server/webhook";
 import { getEntity } from "@/lib/config/entities";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { listKeys, getJson } from "@/lib/server/store";
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../src/brain/goaml-shapes.js";
 import {
@@ -38,6 +39,38 @@ type FilingType =
   | "AIF"
   | "PEPR"
   | "FTFR";
+
+interface FourEyesItemPartial {
+  status: string;
+  subjectId?: string;
+  caseId?: string;
+  filingBlocked?: boolean;
+  initiatedAt?: string;
+}
+
+// Returns the first blocking four-eyes item for the given subject/case, or null.
+// A filing is blocked when any pending item for the subject has been marked
+// filingBlocked=true by the stale-alert cron (age > 72h). ADD-5.
+async function findBlockingFourEyesItem(
+  subjectId: string | undefined,
+  caseId: string | undefined,
+): Promise<FourEyesItemPartial | null> {
+  if (!subjectId && !caseId) return null;
+  try {
+    const keys = await listKeys("four-eyes/");
+    const items = (await Promise.all(
+      keys.map((k) => getJson<FourEyesItemPartial>(k).catch(() => null)),
+    )).filter((i): i is FourEyesItemPartial => i !== null);
+    return items.find(
+      (i) =>
+        i.status === "pending" &&
+        i.filingBlocked === true &&
+        (i.subjectId === subjectId || i.caseId === caseId),
+    ) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // Phrases that constitute tipping-off under FDL 10/2025 Art.29.
 // The list is broad on purpose: false-positive flagging an MLRO draft is
@@ -169,6 +202,19 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     return NextResponse.json(
       { ok: false, error: "subject and filingType are required" },
       { status: 400, headers: gateHeaders }
+    );
+  }
+
+  // ADD-5: block filing when a four-eyes item for this subject is overdue > 72h.
+  const blockedItem = await findBlockingFourEyesItem(body.subject?.id, body.subject?.caseId);
+  if (blockedItem) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "four_eyes_overdue_blocked",
+        detail: "A four-eyes approval for this subject has been pending > 72h and is now blocking STR/SAR filings. Resolve the overdue four-eyes item first (UAE FDL 10/2025 Art.16).",
+      },
+      { status: 422, headers: gateHeaders },
     );
   }
 

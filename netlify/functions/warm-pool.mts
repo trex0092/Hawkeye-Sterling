@@ -148,6 +148,6 @@ export default async function handler(req: Request): Promise<Response> {
 }
 
 export const config: Config = {
-  // Every 4 minutes — inside the ~15-minute Lambda idle reclamation window.
-  schedule: '*/4 * * * *',
+  // Every 10 minutes — balances warm-pool benefit against invocation budget.
+  schedule: '*/10 * * * *',
 };
