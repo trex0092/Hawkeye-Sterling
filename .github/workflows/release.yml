@@ -88,7 +88,6 @@ jobs:
   # SLSA provenance generation — level 2 (signed build provenance)
   provenance:
     needs: build-and-sign
-    timeout-minutes: 15
     permissions:
       actions: read
       id-token: write
