@@ -81,7 +81,7 @@ async function emitSanctionsDeltaWebhook(newDesignations: string[]): Promise<voi
 export default async function handler(): Promise<void> {
   const store = getStore({ name: 'hawkeye-lists-cache' });
   const now = new Date().toISOString();
-  console.log(`[${LABEL}] intraday OFAC SDN check started at ${now}`);
+  console.info(`[${LABEL}] intraday OFAC SDN check started at ${now}`);
 
   // 1. Fetch OFAC SDN XML
   let xml: string;
@@ -108,7 +108,7 @@ export default async function handler(): Promise<void> {
   } catch { /* first run */ }
 
   if (lastSnapshot?.hash === currentHash) {
-    console.log(`[${LABEL}] no change detected (hash match). Last checked: ${lastSnapshot.checkedAt}`);
+    console.info(`[${LABEL}] no change detected (hash match). Last checked: ${lastSnapshot.checkedAt}`);
     return;
   }
 
@@ -128,20 +128,20 @@ export default async function handler(): Promise<void> {
         if (i++ >= 20) break;
         newDesignations.push(name);
       }
-      console.log(`[${LABEL}] OFAC SDN updated: +${countDelta} entities (${currentEntities.size} total). Emitting webhook.`);
+      console.info(`[${LABEL}] OFAC SDN updated: +${countDelta} entities (${currentEntities.size} total). Emitting webhook.`);
     } else if (countDelta < 0) {
       // De-listing detected — entities removed (sanctions lifted or corrections).
       // Still trigger fast refresh so screening corpus reflects the removal.
-      console.log(`[${LABEL}] OFAC SDN de-listing detected: ${countDelta} entities removed (${currentEntities.size} total). Triggering refresh.`);
+      console.info(`[${LABEL}] OFAC SDN de-listing detected: ${countDelta} entities removed (${currentEntities.size} total). Triggering refresh.`);
     } else {
       // Amendment: hash changed but count is the same — renamed designation,
       // corrected address, alias update, or simultaneous add+remove.
       // Trigger a fast refresh so the corpus picks up the change even without
       // new designations (missed by the previous count-only check).
-      console.log(`[${LABEL}] OFAC SDN amendment detected: hash changed, entity count unchanged (${currentEntities.size}). Triggering refresh.`);
+      console.info(`[${LABEL}] OFAC SDN amendment detected: hash changed, entity count unchanged (${currentEntities.size}). Triggering refresh.`);
     }
   } else {
-    console.log(`[${LABEL}] first run — establishing baseline. Entities: ${currentEntities.size}`);
+    console.info(`[${LABEL}] first run — establishing baseline. Entities: ${currentEntities.size}`);
   }
 
   // 5. Persist new snapshot
@@ -160,7 +160,7 @@ export default async function handler(): Promise<void> {
   // 6. Emit webhook on new designations
   if (newDesignations.length > 0) {
     await emitSanctionsDeltaWebhook(newDesignations);
-    console.log(`[${LABEL}] sanctions_delta webhook emitted for ${newDesignations.length} new designation(s).`);
+    console.info(`[${LABEL}] sanctions_delta webhook emitted for ${newDesignations.length} new designation(s).`);
   }
 
   // 7. Trigger a fast list refresh via the internal API so the screening
@@ -176,7 +176,7 @@ export default async function handler(): Promise<void> {
         body: JSON.stringify({ lists: ['ofac_sdn', 'ofac_cons'], reason: 'intraday_delta' }),
         signal: AbortSignal.timeout(10_000),
       });
-      console.log(`[${LABEL}] triggered fast refresh of ofac_sdn + ofac_cons`);
+      console.info(`[${LABEL}] triggered fast refresh of ofac_sdn + ofac_cons`);
     } catch (err) {
       console.warn(`[${LABEL}] fast refresh trigger failed:`, err instanceof Error ? err.message : String(err));
     }

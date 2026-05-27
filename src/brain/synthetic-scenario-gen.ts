@@ -81,7 +81,6 @@ export async function generateScenarios(
   params: ScenarioGenParams,
   apiKey?: string,
 ): Promise<ScenarioGenResult> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { default: AnthropicCtor } = await import('@anthropic-ai/sdk' as string).catch(() => {
     throw new Error('ANTHROPIC_SDK_UNAVAILABLE: @anthropic-ai/sdk not found in this execution context');
   }) as { default: new(opts: Record<string, string>) => Record<string, unknown> };

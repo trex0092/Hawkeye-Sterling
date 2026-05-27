@@ -45,7 +45,7 @@ function getS3Config(): {
   return { endpoint, bucket, region, accessKeyId, secretKey };
 }
 
-async function hmacSha256Hex(key: string, data: string): Promise<string> {
+async function _hmacSha256Hex(key: string, data: string): Promise<string> {
   // Node.js crypto — synchronous for small payloads
   const { createHmac } = await import('node:crypto');
   return createHmac('sha256', key).update(data).digest('hex');
@@ -178,7 +178,7 @@ export default async function handler(): Promise<void> {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  console.log(`[${LABEL}] starting nightly audit chain backup → s3://${cfg.bucket}/audit-chain/ (${today})`);
+  console.info(`[${LABEL}] starting nightly audit chain backup → s3://${cfg.bucket}/audit-chain/ (${today})`);
 
   // Discover tenants by listing audit-chain store names.
   // Fallback: always include 'default' tenant.
@@ -195,7 +195,7 @@ export default async function handler(): Promise<void> {
     // listStores unavailable — proceed with default only
   }
 
-  console.log(`[${LABEL}] backing up ${tenants.length} tenant(s): ${tenants.join(', ')}`);
+  console.info(`[${LABEL}] backing up ${tenants.length} tenant(s): ${tenants.join(', ')}`);
   const results = await Promise.all(tenants.map((t) => backupTenant(t, cfg, today)));
 
   const failed = results.filter((r) => !r.ok);
@@ -233,7 +233,7 @@ export default async function handler(): Promise<void> {
       }).catch(() => undefined);
     }
   } else {
-    console.log(`[${LABEL}] all ${tenants.length} tenant(s) backed up successfully. Total: ${totalBytes.toLocaleString()} bytes.`);
+    console.info(`[${LABEL}] all ${tenants.length} tenant(s) backed up successfully. Total: ${totalBytes.toLocaleString()} bytes.`);
   }
 }
 
