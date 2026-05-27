@@ -306,6 +306,9 @@ jobs:
       - name: Dry-run apply K8s manifests
         # --dry-run=client validates YAML and resource schemas locally without
         # contacting the API server. --validate=strict rejects unknown fields.
+        # ExternalSecret uses a 3rd-party CRD (external-secrets.io/v1beta1) that
+        # kubectl does not know about without the operator installed. It is
+        # validated for YAML syntax only (--validate=false) in a separate pass.
         run: |
           kubectl apply \
             --dry-run=client \
@@ -315,6 +318,9 @@ jobs:
             -f k8s/hpa.yaml \
             -f k8s/networkpolicy.yaml \
             -f k8s/configmap.yaml \
-            -f k8s/externalsecret.yaml \
             -f k8s/pdb.yaml
+          kubectl apply \
+            --dry-run=client \
+            --validate=false \
+            -f k8s/externalsecret.yaml
           echo "All K8s manifests passed dry-run validation"
