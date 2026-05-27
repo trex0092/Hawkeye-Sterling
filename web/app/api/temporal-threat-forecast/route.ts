@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { enforce } from '@/lib/server/enforce';
 import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 import { tenantIdFromGate } from '@/lib/server/tenant';
-import { forecastThreatMaturity } from '../../../../src/brain/temporal-forecast-engine.js';
-import type { GeopoliticalTrigger } from '../../../../src/brain/temporal-forecast-engine.js';
+import { forecastThreatMaturity, type GeopoliticalTrigger } from '../../../../src/brain/temporal-forecast-engine.js';
 
 export const maxDuration = 15;
 
