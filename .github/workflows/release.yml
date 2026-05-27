@@ -1,18 +1,21 @@
 name: Release
 
-# SLSA level 2 provenance + Cosign signing for tagged releases.
-# Triggered only on version tags (v*.*.*). Produces:
-#   - SLSA provenance JSON (intoto envelope) for the dist tarball
+# Release pipeline — Cosign signing for tagged releases.
+# Produces:
 #   - Signed osint-bridge Docker image via Cosign (sigstore transparency log)
 #   - Release SBOM (CycloneDX) attached to the GitHub release
+#
+# SLSA level 2 provenance is generated in release-provenance.yml (separate
+# file) so this workflow can carry a pull_request trigger for the GitHub
+# required-workflow check without conflicting with the SLSA generator's
+# trusted-context requirements.
 #
 # Security gate order: build → scan (Trivy) → sign (Cosign)
 # An image is never signed before it has passed a CVE scan.
 #
-# pull_request trigger is present only to satisfy GitHub's "required workflow"
-# check on PRs targeting main. Every job has an if: condition that gates on a
-# real version tag, so all jobs are skipped on PR runs — GitHub counts
-# all-jobs-skipped as success for the required-workflow check.
+# pull_request trigger: satisfies the GitHub required-workflow check on PRs.
+# Every job gates on startsWith(github.ref, 'refs/tags/v'), so all jobs are
+# skipped on PR runs — GitHub counts all-jobs-skipped as success.
 
 on:
   push:
@@ -31,8 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: startsWith(github.ref, 'refs/tags/v')
-    outputs:
-      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@v4
 
@@ -92,19 +93,6 @@ jobs:
             hawkeye-sterling-${{ github.ref_name }}.tar.gz
             hawkeye-sterling-${{ github.ref_name }}.cdx.json
             checksums.sha256
-
-  # SLSA provenance generation — level 2 (signed build provenance)
-  provenance:
-    needs: build-and-sign
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-    with:
-      base64-subjects: "${{ needs.build-and-sign.outputs.hashes }}"
-      upload-assets: true
 
   # Trivy CVE scan of the osint-bridge container image BEFORE signing.
   # An image must pass this scan before Cosign will sign it.
