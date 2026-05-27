@@ -744,7 +744,7 @@ const TOOLS: ToolDef[] = [
     name: "sanctions_status",
     description: "Check freshness and coverage of all loaded sanctions lists.",
     inputSchema: { type: "object", properties: {} },
-    handler: async () => callApi("/api/sanctions/status", "GET"),
+    handler: async () => callApi("/api/sanctions/status", "GET", undefined, undefined, 25_000),
   },
 
   // ── REPORTS ─────────────────────────────────────────────────────────────────

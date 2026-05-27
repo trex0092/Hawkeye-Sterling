@@ -25,6 +25,41 @@ export default async (_req: Request) => {
   };
   if (token) headers.authorization = `Bearer ${token}`;
 
+  // ENHANCE 1: Check /api/health before screening. Skip if mandatory
+  // sanctions lists are unhealthy to avoid screening against stale data.
+  try {
+    const healthRes = await fetch(`${base}/api/health`, {
+      headers: token ? { authorization: `Bearer ${token}` } : {},
+      signal: AbortSignal.timeout(8_000),
+    });
+    const health = (await healthRes.json().catch(() => null)) as {
+      mandatoryListsHealthy?: boolean;
+      degraded?: boolean;
+    } | null;
+    if (health && health.mandatoryListsHealthy === false) {
+      console.warn(
+        "[ongoing-screen] mandatory sanctions lists unhealthy — skipping screening run to avoid stale-data results.",
+      );
+      await writeHeartbeat("ongoing-screen");
+      return new Response(
+        JSON.stringify({
+          triggered: false,
+          skipped: true,
+          reason: "mandatory_lists_unhealthy",
+          health,
+          at: new Date().toISOString(),
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+  } catch (healthErr) {
+    // Health check failure is non-blocking — proceed with screening and log.
+    console.warn(
+      "[ongoing-screen] health check failed (proceeding with screening):",
+      healthErr instanceof Error ? healthErr.message : String(healthErr),
+    );
+  }
+
   const controller = new AbortController();
   const deadline = setTimeout(() => controller.abort(), 24_000);
   try {

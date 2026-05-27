@@ -35,6 +35,9 @@ const ALLOWED_ACTIONS: ReadonlySet<FourEyesAction> = new Set([
 const ALLOWED_STATUSES: ReadonlySet<FourEyesStatus> = new Set([
   "pending", "approved", "rejected", "expired",
 ]);
+// Virtual status values that map to multiple concrete statuses.
+const VIRTUAL_STATUS_ALL = "all";
+const VIRTUAL_STATUS_COMPLETED = "completed";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -93,9 +96,19 @@ const OVERDUE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 h
 
 async function handleGet(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
-  // Default to pending queue; caller can override with ?status=approved|rejected|expired
+  // ?status= accepts concrete values (pending|approved|rejected|expired) plus
+  // virtual values: "all" (every item) and "completed" (approved + rejected).
   const wantStatus = url.searchParams.get("status")?.trim() ?? "pending";
   const wantCaseId = url.searchParams.get("caseId")?.trim();
+
+  // Pagination: ?page=1&pageSize=50 (1-based; pageSize capped at 200).
+  const pageRaw = parseInt(url.searchParams.get("page") ?? "1", 10);
+  const pageSizeRaw = parseInt(url.searchParams.get("pageSize") ?? "50", 10);
+  const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+  const pageSize = Number.isFinite(pageSizeRaw) && pageSizeRaw >= 1
+    ? Math.min(pageSizeRaw, 200)
+    : 50;
+
   let keys: string[];
   try {
     keys = await listKeys("four-eyes/");
@@ -110,9 +123,15 @@ async function handleGet(req: Request, ctx: RequestContext): Promise<NextRespons
   // Tenant isolation: only return items belonging to this tenant.
   // Items without tenantId are pre-multi-tenant legacy; shown to all for backward compat.
   items = items.filter((i) => !i.tenantId || i.tenantId === ctx.tenantId);
-  if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
+
+  if (wantStatus === VIRTUAL_STATUS_ALL) {
+    // no status filter — return everything
+  } else if (wantStatus === VIRTUAL_STATUS_COMPLETED) {
+    items = items.filter((i) => i.status === "approved" || i.status === "rejected");
+  } else if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
   }
+
   if (wantCaseId) {
     items = items.filter(
       (i) => i.caseId === wantCaseId || i.subjectId === wantCaseId,
@@ -130,8 +149,19 @@ async function handleGet(req: Request, ctx: RequestContext): Promise<NextRespons
       : i;
   });
 
+  const totalCount = enriched.length;
+  const offset = (page - 1) * pageSize;
+  const pageItems = enriched.slice(offset, offset + pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
   return NextResponse.json(
-    { ok: true, pending: enriched, total: enriched.length, items: enriched },
+    {
+      ok: true,
+      pending: pageItems,
+      total: totalCount,
+      items: pageItems,
+      pagination: { page, pageSize, totalCount, totalPages },
+    },
     { headers: {} },
   );
 }
@@ -232,6 +262,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   void writeAuditChainEntry({
     event: "four_eyes.enqueued",
     actor: initiatedBy,
+    actorEmail: ctx.apiKey.email,
     caseId: enrichedItem.caseId ?? enrichedItem.subjectId,
     itemId: id,
     subjectName: enrichedItem.subjectName,

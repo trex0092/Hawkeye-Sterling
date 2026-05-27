@@ -444,6 +444,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const negativeEvidence = buildNegativeEvidence(result, listsLoaded);
 
+  // ADD-4: if any mandatory list was stale at screening time, mark result
+  // REQUIRES_REVERIFICATION so operators and downstream consumers know the
+  // screening must be repeated after the next successful list refresh.
+  const requiresReverification = uaeStale;
+
   return NextResponse.json(
     {
       ok: true,
@@ -452,6 +457,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       requestId: reqId,
       ...result,
       provisionalScreening: uaeStale,
+      ...(requiresReverification ? {
+        requiresReverification: true,
+        reverificationReason: "Screened while one or more mandatory lists were stale (>36h). Result must be re-verified after the next successful sanctions list refresh. UAE FDL No.10/2025 Art.15.",
+      } : {}),
       adversarialRisk: adversarialCheck.risk !== "none" ? adversarialCheck.risk : undefined,
       negativeEvidence,
       confidenceNote,

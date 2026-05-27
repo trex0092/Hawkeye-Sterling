@@ -135,10 +135,45 @@ async function backupTenant(
   }
 }
 
+export interface BackupStatusRecord {
+  lastRunAt: string;
+  lastRunDate: string;
+  ok: boolean;
+  tenantCount: number;
+  failedTenants: string[];
+  totalBytes: number;
+  s3Bucket: string | null;
+  s3Endpoint: string | null;
+  schedule: string;
+  configuredAt: string;
+}
+
+async function writeBackupStatus(status: BackupStatusRecord): Promise<void> {
+  try {
+    const store = getStore('hawkeye-sterling');
+    await store.setJSON('hawkeye-backup/audit-chain-status.json', status);
+  } catch (err) {
+    console.warn(`[${LABEL}] status write failed (non-fatal):`, err instanceof Error ? err.message : String(err));
+  }
+}
+
 export default async function handler(): Promise<void> {
   const cfg = getS3Config();
+  const startedAt = new Date().toISOString();
   if (!cfg) {
     console.warn(`[${LABEL}] S3 backup skipped — S3_BACKUP_ENDPOINT/BUCKET/ACCESS_KEY_ID/SECRET_KEY not configured. Set these env vars to enable CG-6 10-year retention.`);
+    await writeBackupStatus({
+      lastRunAt: startedAt,
+      lastRunDate: startedAt.slice(0, 10),
+      ok: false,
+      tenantCount: 0,
+      failedTenants: [],
+      totalBytes: 0,
+      s3Bucket: null,
+      s3Endpoint: null,
+      schedule,
+      configuredAt: startedAt,
+    });
     return;
   }
 
@@ -165,6 +200,19 @@ export default async function handler(): Promise<void> {
 
   const failed = results.filter((r) => !r.ok);
   const totalBytes = results.reduce((s, r) => s + (r.bytes ?? 0), 0);
+
+  await writeBackupStatus({
+    lastRunAt: startedAt,
+    lastRunDate: today,
+    ok: failed.length === 0,
+    tenantCount: tenants.length,
+    failedTenants: failed.map((r) => r.tenant),
+    totalBytes,
+    s3Bucket: cfg.bucket,
+    s3Endpoint: cfg.endpoint,
+    schedule,
+    configuredAt: startedAt,
+  });
 
   if (failed.length > 0) {
     console.error(`[${LABEL}] ${failed.length} tenant(s) failed:`,
