@@ -59,7 +59,17 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # HTTPS to external APIs (Anthropic, Upstash Redis, Netlify Blobs, MoonDB, vendors)
+    # HTTPS to external APIs. Required egress destinations (for documentation —
+    # Kubernetes NetworkPolicy cannot filter by FQDN; use a service mesh or
+    # egress gateway such as Calico GlobalNetworkPolicy, Cilium FQDN policy, or
+    # Istio ServiceEntry for FQDN-level enforcement in production):
+    #   api.anthropic.com         — Claude LLM calls
+    #   <id>.upstash.io           — Upstash Redis rate limiting
+    #   api.netlify.com           — Netlify Blobs audit chain
+    #   *.me-south-1.amazonaws.com — S3 WORM audit backup (UAE residency)
+    #   goaml.uae.gov             — UAE FIU goAML STR/SAR filing
+    #   <moondb-endpoint>         — MoonDB primary database
+    # Restrict to named CIDR blocks using ipBlock rules once service IPs are known.
     - ports:
         - protocol: TCP
           port: 443

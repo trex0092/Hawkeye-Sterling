@@ -15,14 +15,22 @@
 #   - HEALTHCHECK via /api/health
 #   - Signal-forward via tini (graceful shutdown)
 
-FROM node:22-alpine AS base
+# syntax=docker/dockerfile:1
+# Multi-arch support: BUILDPLATFORM = builder host (amd64 or arm64),
+# TARGETPLATFORM = final image target. Using --platform=$BUILDPLATFORM on
+# build-only stages (deps, builder) avoids slow cross-compilation emulation
+# while ensuring the runner image matches the target platform.
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+
+FROM --platform=$BUILDPLATFORM node:22-alpine AS base
 # Install tini for proper PID 1 signal forwarding (graceful shutdown support)
 RUN apk add --no-cache tini
 # Disable Next.js telemetry globally
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # ── Dependency installation ───────────────────────────────────────────────────
-FROM base AS deps
+FROM --platform=$BUILDPLATFORM base AS deps
 WORKDIR /app
 
 # Copy manifests for cache-efficient layer invalidation
@@ -33,7 +41,7 @@ COPY web/package.json web/package-lock.json ./web/
 RUN cd web && npm ci --include=dev --no-audit --no-fund
 
 # ── Build stage ───────────────────────────────────────────────────────────────
-FROM deps AS builder
+FROM --platform=$BUILDPLATFORM deps AS builder
 WORKDIR /app
 
 # Copy all source (after deps are cached)
@@ -52,7 +60,8 @@ RUN cd web && node ../scripts/patch-als.cjs && node ../scripts/patch-runtime-sna
 RUN cd web && NODE_ENV=production npm run build
 
 # ── Production runner ─────────────────────────────────────────────────────────
-FROM base AS runner
+# Runner uses TARGETPLATFORM so the output image runs on the intended platform.
+FROM --platform=$TARGETPLATFORM base AS runner
 WORKDIR /app
 
 # Create non-root user

@@ -168,6 +168,46 @@ logic be recorded in the audit trail before deployment.
 
 ---
 
+---
+
+## CG-9 — Role-based access control on regulatory-filing routes
+
+**Risk:** HIGH (security)
+**Status:** CLOSED (2026-05-27)
+
+**Description:** Routes generating regulatory filings (SAR, goAML XML) and AI governance decisions (ai-override, four-eyes approval) previously accepted any authenticated API key — no role check beyond API key validation. An external integration key could have been used to generate a SAR or override an AI decision without MLRO authorisation.
+
+**Resolution (2026-05-27):** `web/lib/server/role-gate.ts` — new `requireRole()` RBAC middleware wired to:
+- `web/app/api/sar/route.ts` — POST requires `mlro`, `co`, or `admin` portal session role
+- `web/app/api/goaml/route.ts` — POST requires `mlro`, `co`, or `admin` portal session role
+- `web/app/api/four-eyes/route.ts` — PATCH (approve/reject) requires `mlro`, `co`, or `admin`
+- `web/app/api/ai-override/route.ts` — POST requires `mlro`, `co`, or `admin`
+
+All four routes call `enforce(req)` first (API key / rate limit), then `requireRole()` (portal session role). External API-key-only callers receive 401 SESSION_REQUIRED.
+
+---
+
+## Phase 1 Security Fixes (2026-05-27)
+
+The following critical security defects were resolved:
+
+**Fix-1.1 — Login lockout silent failure:**
+`web/app/api/auth/login/route.ts` — when `setJson()` throws on lockout write, the route now returns 503 `Service temporarily unavailable` instead of silently allowing the request. Metric `hawkeye_auth_failures_total{reason="lockout_write_failed"}` fired.
+
+**Fix-1.2 — Rate-limit concurrent write bypass:**
+`web/lib/server/rate-limit.ts` — post-write read-back detecting `readBack.second.count > nextSecond + 1` now returns `{ allowed: false }` instead of logging and allowing. Metric `hawkeye_rate_limit_rejections_total{window="concurrent_write"}` fired.
+
+**Fix-1.3 — Four-eyes PII exposure:**
+`web/lib/server/four-eyes-gate.ts` — conflict messages now use `hashActor()` (SHA-256, first 12 hex chars) instead of the raw actor email/GID in both the pre-write same-actor check and the TOCTOU race rollback message.
+
+**Fix-1.4 — LUISA recovery password single-use enforcement:**
+`web/app/api/auth/login/route.ts` + `web/app/api/access/_store.ts` — `LUISA_INITIAL_PASSWORD` recovery path checks `luisaRecord.recoveryUsed`; sets it to `true` after first successful use. Subsequent recovery attempts using `LUISA_INITIAL_PASSWORD` are rejected, forcing normal password auth.
+
+**Fix-1.5 — Semgrep SAST silenced:**
+`.github/workflows/ci.yml` — removed `|| true` from the Semgrep scan step. SAST ERROR-severity findings now block CI.
+
+---
+
 ## Resolution Checklist
 
 | ID | Owner | Target Date | Status |
@@ -180,4 +220,5 @@ logic be recorded in the audit trail before deployment.
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
+| CG-9 | Engineering | 2026-05-27 | CLOSED — requireRole() RBAC wired to SAR, goAML, four-eyes, ai-override |
 | CG-GOV-001 | MLRO / CO | Before next exam | Open — 338 of 463 modes pending version approval |

@@ -24,6 +24,8 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ONGOING_RUN_TOKEN` | REQUIRED | Bearer token protecting `/api/ongoing/run` from public invocation. If unset, returns 503 (fail-closed). | `openssl rand -hex 32` |
 | `SANCTIONS_CRON_TOKEN` | REQUIRED | Bearer token protecting `/api/sanctions/watch` scheduled ingestion. If unset, returns 503. | `openssl rand -hex 32` |
 | `JWT_SIGNING_SECRET` | REQUIRED | HMAC-SHA256 key for short-lived bearer JWTs issued by `/api/auth/token`. If unset or shorter than 32 bytes, the server throws at request time — all JWT-authenticated API calls fail with an unhandled exception. | `openssl rand -hex 32` |
+| `RATE_LIMIT_STRICT` | **REQUIRED (production)** | When `true`, refuses requests if Upstash Redis is unavailable rather than falling back to blob-based soft enforcement (which is race-prone under concurrent Lambda invocations). Setting this to `false` or leaving it unset in production silently degrades rate limiting to a non-atomic path. | `true` |
+| `EGRESS_GATE_ENABLED` | **REQUIRED (production)** | When `true`, the egress tipping-off gate (`web/lib/server/egress-check.ts`) runs before every SAR/goAML filing. Setting to `false` in production bypasses the FDL 10/2025 Art.29 pre-check. | `true` |
 
 ---
 

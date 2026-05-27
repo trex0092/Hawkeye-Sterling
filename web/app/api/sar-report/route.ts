@@ -6,6 +6,7 @@ import { getEntity } from "@/lib/config/entities";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listKeys, getJson } from "@/lib/server/store";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope, type GoAmlEnvelope, type GoAmlPerson, type GoAmlEntity, type GoAmlReportCode } from "../../../../src/brain/goaml-shapes.js";
 import {
@@ -188,6 +189,7 @@ interface Body {
 
 async function handleSarReport(req: Request, gateHeaders: Record<string, string>, tenant: string = "default", actorKeyId?: string): Promise<Response> {
   const _handlerStart = Date.now();
+  const span = startSpan('sar.filing', { 'aml.route': 'sar-report', 'aml.tenant': tenant });
   try {
   const token = process.env["ASANA_TOKEN"];
   const asanaEnabled = !!token;
@@ -198,6 +200,9 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gateHeaders });
   }
+  span.setAttribute('aml.filing_type', body.filingType ?? '');
+  span.setAttribute('aml.subject_id', body.subject?.id ?? '');
+  span.setAttribute('aml.case_id', body.subject?.caseId ?? '');
   if (!body?.subject?.name || !body?.filingType) {
     return NextResponse.json(
       { ok: false, error: "subject and filingType are required" },
@@ -757,6 +762,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     latencyMs,
   }, { status: 201 , headers: gateHeaders });
   } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
     console.error("[sar-report] unhandled exception:", err);
     return NextResponse.json({
       ok: false,
@@ -768,6 +774,8 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       requestId: randomUUID(),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500 , headers: gateHeaders });
+  } finally {
+    span.end();
   }
 }
 

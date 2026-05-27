@@ -206,18 +206,27 @@ export async function consumeRateLimit(
   prior.minute.count = nextMinute;
   await setJson(storageKey, prior);
 
-  // Post-write read-back: detect concurrent increments. If the stored value
-  // jumped further than our write (another Lambda incremented concurrently),
-  // log it so operators know the soft-limit is being exercised. The check
-  // is best-effort — a second concurrent read could mask the discrepancy.
-  // For hard enforcement, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.
+  // Post-write read-back: detect concurrent increments from other Lambda instances.
+  // If the stored value jumped further than our own write, another Lambda raced
+  // us. Rather than silently allowing the request (previous behaviour), treat
+  // it as a limit-exceeded so the rate limit is conservatively enforced even
+  // under concurrent soft-enforcement. For strict atomic enforcement configure
+  // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (the primary Redis path).
   const readBack = await getJson<LimitState>(storageKey).catch(() => null);
   if (readBack && readBack.second.count > nextSecond + 1) {
     console.warn(
       `[rate-limit] concurrent write detected for key=${keyId}: ` +
       `expected count=${nextSecond}, stored count=${readBack.second.count} ` +
-      `— rate limit is soft-enforced (blob CAS unavailable)`,
+      `— treating as limit exceeded (blob CAS unavailable; use Redis for atomic enforcement)`,
     );
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'concurrent_write' });
+    return {
+      allowed: false,
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - readBack.minute.count),
+      tier,
+    };
   }
 
   return {

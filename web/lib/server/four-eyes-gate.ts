@@ -127,7 +127,9 @@ async function _recordApproval(
     return {
       status: existing,
       entry: sameActor,
-      conflict: `actor ${input.actor} already recorded a ${sameActor.decision} on this case at ${sameActor.approvedAt}`,
+      // Use hash of actor identity in the conflict message — raw actor value
+      // (email/GID) must not appear in error responses or logs (UAE PDPL + FATF R.7).
+      conflict: `actor ${hashActor(input.actor)} already recorded a ${sameActor.decision} on this case at ${sameActor.approvedAt}`,
     };
   }
 
@@ -156,7 +158,7 @@ async function _recordApproval(
     return {
       status: await getCaseApprovals(input.caseId),
       entry: earlier,
-      conflict: `actor ${input.actor} already recorded a ${earlier.decision} on this case at ${earlier.approvedAt} (concurrent write detected and rolled back)`,
+      conflict: `actor ${hashActor(input.actor)} already recorded a ${earlier.decision} on this case at ${earlier.approvedAt} (concurrent write detected and rolled back)`,
     };
   }
   span.setAttribute('four-eyes.passed', status.passed);

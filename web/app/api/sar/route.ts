@@ -27,6 +27,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { requireRole } from "@/lib/server/role-gate";
 import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 import { getEntity } from "@/lib/config/entities";
@@ -329,6 +330,10 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  // SAR generation is a regulator-facing action requiring MLRO or CO oversight
+  // (UAE FDL 10/2025 Art.16 + FATF R.26). External API callers do not qualify.
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
   const tenant = tenantIdFromGate(gate);
   return handlePost(req, gate.record, gate.headers, tenant, gate.keyId);
 }

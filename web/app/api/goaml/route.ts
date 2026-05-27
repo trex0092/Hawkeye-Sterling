@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { requireRole } from "@/lib/server/role-gate";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getEntity } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 import { runEgressCheck } from "@/lib/server/egress-check";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
@@ -132,8 +134,14 @@ function splitFullName(full: string): { first: string; last: string; middle?: st
 }
 
 async function handleGoaml(req: Request): Promise<Response> {
+  const span = startSpan('sar.filing', { 'aml.route': 'goaml' });
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  // goAML filing is a direct regulatory submission (UAE FDL 10/2025 Art.15).
+  // Only MLRO or CO portal sessions may submit to the UAE FIU.
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;
@@ -142,6 +150,9 @@ async function handleGoaml(req: Request): Promise<Response> {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
+  span.setAttribute('aml.report_code', body.reportCode ?? '');
+  span.setAttribute('aml.subject_id', body.subject?.caseId ?? '');
+  span.setAttribute('aml.case_id', body.subject?.caseId ?? '');
   if (!body?.subject?.name || !body?.reportCode || !body?.narrative) {
     return NextResponse.json(
       { ok: false, error: "subject.name, reportCode and narrative are required" },
@@ -380,6 +391,12 @@ async function handleGoaml(req: Request): Promise<Response> {
       "cache-control": "no-store",
     },
   });
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    throw err;
+  } finally {
+    span.end();
+  }
 }
 
 export const POST = handleGoaml;
