@@ -8,7 +8,7 @@ export const maxDuration = 5;
 
 export async function POST(req: Request) {
   const gate = await enforce(req);
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 401 });
+  if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   await writeAuditChainEntry({
     tenantId,
     event: 'ai.shap_score_explanation_generated',
-    actor: gate.sub ?? 'system',
+    actor: gate.keyId ?? 'system',
     payload: {
       totalScore: decomposition.totalScore,
       dominantFeature: decomposition.dominantFeature,

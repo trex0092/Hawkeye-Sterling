@@ -11,10 +11,10 @@ const eventsKey = (tenantId: string, actorId: string) => `hs-cognitive-load/${te
 
 export async function GET(req: Request) {
   const gate = await enforce(req);
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 401 });
+  if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
-  const actorId = url.searchParams.get('actor') ?? gate.sub ?? 'unknown';
+  const actorId = url.searchParams.get('actor') ?? gate.keyId ?? 'unknown';
   const windowHours = Number(url.searchParams.get('windowHours') ?? '4');
 
   const tenantId = tenantIdFromGate(gate);
@@ -39,18 +39,18 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const gate = await enforce(req);
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: 401 });
+  if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
   // Record a new disposal event
-  const event = body as DisposalEvent;
+  const event = body as unknown as DisposalEvent;
   if (!event.eventId || !event.caseId || !event.disposedAt) {
     return NextResponse.json({ error: 'eventId, caseId, disposedAt required' }, { status: 400 });
   }
 
-  const actorId = event.actorId ?? gate.sub ?? 'unknown';
+  const actorId = event.actorId ?? gate.keyId ?? 'unknown';
   const tenantId = tenantIdFromGate(gate);
   const existing = await getJson<DisposalEvent[]>(eventsKey(tenantId, actorId)) ?? [];
 
