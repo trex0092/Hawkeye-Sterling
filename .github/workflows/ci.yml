@@ -293,38 +293,40 @@ jobs:
           echo "All critical routes present in build output"
 
   k8s-validate:
-    # Validate Kubernetes manifests without a live cluster using kubectl dry-run.
-    # Catches YAML syntax errors, missing required fields, and schema violations
-    # before manifests reach a production cluster.
+    # Validate Kubernetes manifests without a live cluster using kubeconform.
+    # kubeconform validates against published Kubernetes OpenAPI JSON schemas
+    # without requiring a live API server (unlike kubectl --validate=strict which
+    # tries to download the schema from localhost:8080 and always fails in CI).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install kubectl
+      - name: Install kubeconform
         run: |
-          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl"
-          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl.sha256"
-          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/kubectl
-          kubectl version --client
-      - name: Dry-run apply K8s manifests
-        # --dry-run=client validates YAML and resource schemas locally without
-        # contacting the API server. --validate=strict rejects unknown fields.
-        # ExternalSecret uses a 3rd-party CRD (external-secrets.io/v1beta1) that
-        # kubectl does not know about without the operator installed. It is
-        # validated for YAML syntax only (--validate=false) in a separate pass.
+          curl -fsSL --retry 3 --retry-delay 5 \
+            "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz" \
+            | tar xz
+          sudo mv kubeconform /usr/local/bin/kubeconform
+      - name: Validate K8s manifests
+        # -strict: reject unknown fields not in the schema (equivalent to kubectl --validate=strict)
+        # -kubernetes-version: pin to 1.31.0 to match our target cluster version
+        # -ignore-missing-schemas: skip CRDs kubeconform doesn't know about (ExternalSecret)
+        # -summary: print pass/fail counts at the end
         run: |
-          kubectl apply \
-            --dry-run=client \
-            --validate=strict \
-            -f k8s/namespace.yaml \
-            -f k8s/deployment.yaml \
-            -f k8s/hpa.yaml \
-            -f k8s/networkpolicy.yaml \
-            -f k8s/configmap.yaml \
-            -f k8s/pdb.yaml
-          kubectl apply \
-            --dry-run=client \
-            --validate=false \
-            -f k8s/externalsecret.yaml
-          echo "All K8s manifests passed dry-run validation"
+          kubeconform \
+            -strict \
+            -summary \
+            -kubernetes-version 1.31.0 \
+            -ignore-missing-schemas \
+            k8s/namespace.yaml \
+            k8s/deployment.yaml \
+            k8s/hpa.yaml \
+            k8s/networkpolicy.yaml \
+            k8s/configmap.yaml \
+            k8s/pdb.yaml
+          # ExternalSecret uses external-secrets.io/v1beta1 CRD — schema is not in the
+          # standard k8s registry. kubeconform skips it (Skipped: 1) rather than erroring.
+          kubeconform \
+            -ignore-missing-schemas \
+            -summary \
+            k8s/externalsecret.yaml
+          echo "All K8s manifests passed validation"

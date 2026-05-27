@@ -206,6 +206,10 @@ export default function OngoingMonitorPage() {
   // Background-operation error banner
   const [bgError, setBgError] = useState<string | null>(null);
 
+  // Unenrolment confirmation dialog
+  const [removeConfirm, setRemoveConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [removeReason, setRemoveReason] = useState("");
+
   // Enrichment state
   const [enrichName, setEnrichName] = useState("");
   const [enrichLei, setEnrichLei] = useState("");
@@ -310,14 +314,15 @@ export default function OngoingMonitorPage() {
     save(next); setSubjects(next);
   };
 
-  const remove = async (id: string) => {
+  const remove = async (id: string, reason: string) => {
     setBgError(null);
     const next = subjects.filter((s) => s.id !== id);
     save(next); setSubjects(next);
     try {
-      const res = await fetch(`/api/ongoing?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/ongoing?id=${encodeURIComponent(id)}&reason=${encodeURIComponent(reason)}`,
+        { method: "DELETE" },
+      );
       if (!res.ok) {
         console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
         if (mountedRef.current) setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
@@ -326,6 +331,13 @@ export default function OngoingMonitorPage() {
       console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
       if (mountedRef.current) setBgError("Could not reach the server to remove this subject. It has been removed locally but may reappear on next sync.");
     }
+  };
+
+  const confirmRemove = () => {
+    if (!removeConfirm) return;
+    void remove(removeConfirm.id, removeReason);
+    setRemoveConfirm(null);
+    setRemoveReason("");
   };
 
   const screenNow = async (s: MonitoredSubject) => {
@@ -631,7 +643,7 @@ export default function OngoingMonitorPage() {
                       <RowActions
                         label={`subject ${s.id}`}
                         onEdit={() => startEdit(s)}
-                        onDelete={() => remove(s.id)}
+                        onDelete={() => { setRemoveReason(""); setRemoveConfirm({ id: s.id, name: s.name }); }}
                         confirmDelete={false}
                       />
                     </td>
@@ -839,6 +851,44 @@ export default function OngoingMonitorPage() {
             </div>
           )}
         </>
+      )}
+      {/* ── Unenrolment confirmation dialog ────────────────────────────────── */}
+      {removeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-bg-panel border border-hair-2 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-14 font-semibold text-ink-0 mb-1">Unenrol subject</h3>
+            <p className="text-12 text-ink-2 mb-4">
+              Remove <span className="font-medium text-ink-0">{removeConfirm.name}</span> from ongoing monitoring?
+              This action is recorded in the audit trail (FDL 10/2025 Art.16).
+            </p>
+            <label className="block text-11 font-medium text-ink-2 mb-1">
+              Reason <span className="text-red">*</span> <span className="text-ink-3">(min 10 characters)</span>
+            </label>
+            <input
+              className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0 mb-4"
+              placeholder="e.g. Relationship ended, no ongoing risk"
+              value={removeReason}
+              onChange={(e) => setRemoveReason(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter" && removeReason.trim().length >= 10) confirmRemove(); }}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-12 rounded border border-hair-2 text-ink-2 hover:text-ink-0"
+                onClick={() => { setRemoveConfirm(null); setRemoveReason(""); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-12 rounded bg-red text-white font-medium disabled:opacity-40"
+                disabled={removeReason.trim().length < 10}
+                onClick={confirmRemove}
+              >
+                Unenrol
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </ModuleLayout>
   );

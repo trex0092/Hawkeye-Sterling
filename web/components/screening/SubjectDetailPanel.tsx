@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -89,7 +89,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "Adverse Media", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
@@ -1440,13 +1440,300 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
 
-
+        {activeTab === "Adverse Media" && (
+          <AdverseMediaTab subject={subject} news={news} superBrain={superBrain} />
+        )}
 
       </div>
 
       <NewsDossierPanel state={news} />
 
     </aside>
+  );
+}
+
+// ── AdverseMediaTab — full MLRO-grade adverse media verdict ─────────────────
+// Fetches /api/adverse-media on demand and displays the complete verdict:
+// risk tier, category breakdown, findings, SAR recommendation, investigation
+// lines, FATF references. This gives analysts the full picture rather than
+// the queue-level summary badge.
+interface AmVerdict {
+  subject: string;
+  riskTier: string;
+  riskDetail: string;
+  totalItems: number;
+  adverseItems: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  sarRecommended: boolean;
+  sarBasis: string;
+  confidenceTier: string;
+  confidenceBasis: string;
+  counterfactual: string;
+  investigationLines: string[];
+  findings: Array<{ item: string; severity: string; categories: string[]; reasoning: string }>;
+  fatfRecommendations: string[];
+  categoryBreakdown: Array<{ categoryId?: string; displayName?: string; category?: string; count: number; severity: string }>;
+  analysedAt: string;
+  modesCited: string[];
+}
+
+const TIER_STYLES: Record<string, string> = {
+  critical: "bg-red-dim text-red border border-red/30",
+  high: "bg-red-dim text-red border border-red/20",
+  medium: "bg-amber-dim text-amber border border-amber/30",
+  low: "bg-blue-dim text-blue border border-blue/30",
+  clear: "bg-green-dim text-green border border-green/30",
+  unknown: "bg-bg-2 text-ink-3 border border-hair-2",
+};
+
+function AdverseMediaTab({
+  subject,
+  news,
+  superBrain,
+}: {
+  subject: Subject;
+  news: NewsSearchState;
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+}) {
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [verdict, setVerdict] = useState<AmVerdict | null>(null);
+  const [error, setError] = useState("");
+  const [degraded, setDegraded] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const run = useCallback(async () => {
+    setStatus("loading"); setError(""); setDegraded(false);
+    try {
+      const res = await fetch("/api/adverse-media", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subject: subject.name, limit: 50 }),
+      });
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; verdict?: AmVerdict; degraded?: boolean; degradedReason?: string; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (!mountedRef.current) return;
+      setVerdict(data.verdict ?? null);
+      setDegraded(Boolean(data.degraded));
+      setStatus("success");
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setError(e instanceof Error ? e.message : String(e));
+      setStatus("error");
+    }
+  }, [subject.name]);
+
+  // Auto-run when tab mounts
+  useEffect(() => {
+    void run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject.id]);
+
+  const sbResult = superBrain.status === "success" ? superBrain.result : null;
+  const newsArticles = news.status === "success" ? news.result.articles : [];
+
+  const tierStyle = TIER_STYLES[verdict?.riskTier ?? "unknown"] ?? TIER_STYLES["unknown"]!;
+
+  return (
+    <div className="space-y-4">
+      {/* Header row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2">
+          Adverse Media · MLRO Intelligence
+        </div>
+        <button
+          type="button"
+          onClick={() => { void run(); }}
+          disabled={status === "loading"}
+          className="ml-auto px-2.5 py-1 rounded text-10 font-semibold bg-brand text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
+        >
+          {status === "loading" ? "Scanning…" : "↺ Rescan"}
+        </button>
+      </div>
+
+      {status === "loading" && (
+        <div className="text-11 text-ink-2 animate-pulse">Running MLRO-grade adverse media scan…</div>
+      )}
+
+      {status === "error" && (
+        <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">{error}</div>
+      )}
+
+      {status === "success" && verdict && (
+        <>
+          {degraded && (
+            <div className="text-10 font-mono text-amber bg-amber-dim rounded px-3 py-2 border border-amber/30">
+              ⚠ Degraded scan — primary data source unavailable. Results based on cached intelligence.
+            </div>
+          )}
+
+          {/* Risk tier badge */}
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center px-3 py-1.5 rounded font-mono text-12 font-bold uppercase tracking-wide-3 ${tierStyle}`}>
+              {verdict.riskTier}
+            </span>
+            {verdict.sarRecommended && (
+              <span className="inline-flex items-center px-2 py-1 rounded bg-red text-white font-mono text-10 font-bold uppercase">
+                SAR R.20
+              </span>
+            )}
+            <span className="text-11 text-ink-2">{verdict.riskDetail}</span>
+          </div>
+
+          {/* Counts row */}
+          <div className="flex gap-4 flex-wrap text-11">
+            <span className="text-ink-2">Total articles: <strong className="text-ink-0">{verdict.totalItems}</strong></span>
+            <span className="text-ink-2">Adverse: <strong className="text-red">{verdict.adverseItems}</strong></span>
+            {verdict.criticalCount > 0 && <span className="text-red font-semibold">{verdict.criticalCount} critical</span>}
+            {verdict.highCount > 0 && <span className="text-red">{verdict.highCount} high</span>}
+            {verdict.mediumCount > 0 && <span className="text-amber">{verdict.mediumCount} medium</span>}
+          </div>
+
+          {/* Category breakdown */}
+          {verdict.categoryBreakdown.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Categories</div>
+              <div className="flex flex-wrap gap-1">
+                {verdict.categoryBreakdown.map((c, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10 bg-red-dim text-red"
+                  >
+                    {c.displayName ?? c.category ?? c.categoryId ?? "—"}
+                    <span className="bg-red/20 px-1 rounded-sm">{c.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SAR basis */}
+          {verdict.sarRecommended && verdict.sarBasis && (
+            <div className="rounded border border-red/30 bg-red-dim px-3 py-2.5">
+              <div className="text-10 font-semibold text-red uppercase tracking-wide-3 mb-1">SAR Filing Basis (FATF R.20)</div>
+              <div className="text-11 text-ink-0">{verdict.sarBasis}</div>
+            </div>
+          )}
+
+          {/* Top findings */}
+          {verdict.findings.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Top findings ({verdict.findings.length})</div>
+              <ul className="space-y-2">
+                {verdict.findings.slice(0, 8).map((f, i) => (
+                  <li key={i} className="rounded border border-hair-2 bg-bg-panel px-2.5 py-2">
+                    <div className="flex items-start gap-2 mb-0.5">
+                      <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-10 font-mono uppercase ${TIER_STYLES[f.severity] ?? TIER_STYLES["unknown"]!}`}>
+                        {f.severity}
+                      </span>
+                      <span className="text-11 text-ink-0 leading-snug">{f.item}</span>
+                    </div>
+                    {f.reasoning && (
+                      <div className="text-10 text-ink-3 mt-0.5 pl-0">{f.reasoning}</div>
+                    )}
+                    {f.categories.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {f.categories.map((c) => (
+                          <span key={c} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9.5 bg-amber-dim text-amber">{c}</span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Investigation lines */}
+          {verdict.investigationLines.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">MLRO investigation lines</div>
+              <ul className="list-none p-0 m-0 space-y-1">
+                {verdict.investigationLines.map((l, i) => (
+                  <li key={i} className="text-11 text-ink-1 flex gap-2">
+                    <span className="text-brand shrink-0">→</span>{l}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* FATF references */}
+          {verdict.fatfRecommendations.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-10 uppercase tracking-wide-3 text-ink-3">FATF:</span>
+              {verdict.fatfRecommendations.map((r) => (
+                <span key={r} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-brand-dim text-brand">{r}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Confidence */}
+          <div className="text-10 text-ink-3 font-mono">
+            Confidence: <span className="text-ink-1">{verdict.confidenceTier}</span>
+            {verdict.confidenceBasis ? ` — ${verdict.confidenceBasis}` : ""}
+          </div>
+
+          {/* Counterfactual */}
+          {verdict.counterfactual && (
+            <div className="text-10 text-ink-3 italic">{verdict.counterfactual}</div>
+          )}
+        </>
+      )}
+
+      {/* Super-brain AM categories (always available if super-brain ran) */}
+      {sbResult && (sbResult.adverseMedia.length > 0 || (sbResult.adverseKeywordGroups?.length ?? 0) > 0) && (
+        <div className="border-t border-hair pt-3">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Brain classifier signals</div>
+          <div className="flex flex-wrap gap-1">
+            {sbResult.adverseMedia.map((am, i) => (
+              <span key={`am-${i}`} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                {am.categoryId.replace(/_/g, " ")}
+              </span>
+            ))}
+            {sbResult.adverseKeywordGroups?.map((g) => (
+              <span key={g.group} className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber">
+                {g.group.replace(/-/g, " ")} <span className="bg-amber/20 px-1 rounded-sm">{g.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Live news dossier preview */}
+      {newsArticles.length > 0 && (
+        <div className="border-t border-hair pt-3">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Live news ({newsArticles.length} articles)</div>
+          <ul className="space-y-2">
+            {newsArticles.slice(0, 10).map((a, i) => (
+              <li key={i} className="rounded border border-hair-2 bg-bg-panel px-2.5 py-2">
+                <div className="flex items-start gap-2 mb-0.5">
+                  <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-10 font-mono uppercase ${TIER_STYLES[a.severity] ?? TIER_STYLES["unknown"]!}`}>
+                    {a.severity}
+                  </span>
+                  <a
+                    href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-11 text-brand hover:underline leading-snug"
+                  >
+                    {a.title}
+                  </a>
+                </div>
+                <div className="text-10 text-ink-3 font-mono">{a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {status === "success" && !verdict && (
+        <div className="text-11 text-green">✓ No adverse media found — scan returned no adverse findings</div>
+      )}
+    </div>
   );
 }
 
