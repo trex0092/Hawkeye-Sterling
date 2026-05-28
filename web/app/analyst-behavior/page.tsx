@@ -158,11 +158,12 @@ export default function AnalystBehaviorPage() {
         }
       />
       <ModuleFamilyBar
-        suiteName="Security Operations"
+        suiteName="Security"
         modules={[
-          { label: "Analyst UEBA", href: "/analyst-behavior", icon: "🕵️" },
-          { label: "Security Audit", href: "/security-audit", icon: "🔒" },
-          { label: "Audit Trail", href: "/audit-trail", icon: "📋" },
+          { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+          { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+          { label: "Access Control", href: "/access-control", icon: "🔐" },
+          { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
         ]}
       />
 
