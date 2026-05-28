@@ -196,6 +196,42 @@ async function checkUebaAlerts(tenantId: string): Promise<{ findings: ScanFindin
   }
 }
 
+async function checkCodeAnalyzer(): Promise<{ findings: ScanFinding[]; checksRun: number }> {
+  try {
+    const { getStore } = await import("@netlify/blobs") as { getStore: Function };
+    const store = getStore({
+      name: "hawkeye-code-scan",
+      siteID: process.env["NETLIFY_SITE_ID"],
+      token: process.env["NETLIFY_BLOBS_TOKEN"] ?? process.env["NETLIFY_TOKEN"],
+      consistency: "strong",
+    }) as { get: (_key: string, _opts?: { type?: string }) => Promise<unknown> };
+
+    const raw = await store.get("latest.json", { type: "text" }).catch(() => null);
+    if (!raw || typeof raw !== "string") {
+      return {
+        findings: [
+          {
+            id: "SEC-007",
+            severity: "INFO",
+            category: "Code Analysis",
+            title: "Code analysis not yet run",
+            detail:
+              "The code-scan scheduled function has not run yet. Static analysis of security-critical source files is pending.",
+            remediation:
+              "Trigger the code-scan Netlify function manually or wait for the daily 03:15 UTC schedule.",
+          },
+        ],
+        checksRun: 0,
+      };
+    }
+
+    const cached = JSON.parse(raw) as { findings: ScanFinding[]; totalFiles: number };
+    return { findings: cached.findings ?? [], checksRun: cached.totalFiles ?? 6 };
+  } catch {
+    return { findings: [], checksRun: 0 };
+  }
+}
+
 async function checkDesignationAlerts(): Promise<{ findings: ScanFinding[]; checksRun: number }> {
   try {
     const { getStore } = await import("@netlify/blobs") as { getStore: Function };
@@ -273,9 +309,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   const tenantId = tenantIdFromGate(gate);
 
   // Run all checks in parallel where independent
-  const [uebaResult, alertsResult] = await Promise.all([
+  const [uebaResult, alertsResult, codeResult] = await Promise.all([
     checkUebaAlerts(tenantId),
     checkDesignationAlerts(),
+    checkCodeAnalyzer(),
   ]);
 
   const configFindings: ScanFinding[] = [
@@ -289,6 +326,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     ...configFindings,
     ...uebaResult.findings,
     ...alertsResult.findings,
+    ...codeResult.findings,
   ];
 
   const score = computeScore(allFindings);
@@ -332,6 +370,17 @@ export async function GET(req: Request): Promise<NextResponse> {
         : "pass",
       checksRun: alertsResult.checksRun,
       findings: alertsResult.findings.length,
+    },
+    {
+      id: "code-analyzer",
+      name: "Code Analysis",
+      icon: "🔬",
+      status: codeResult.findings.some((f) => f.severity === "CRITICAL") ? "fail"
+        : codeResult.findings.some((f) => f.severity === "HIGH" || f.severity === "MEDIUM") ? "warn"
+        : codeResult.checksRun === 0 ? "warn"
+        : "pass",
+      checksRun: codeResult.checksRun,
+      findings: codeResult.findings.filter((f) => f.id !== "SEC-007").length,
     },
   ];
 
