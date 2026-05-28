@@ -36,7 +36,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
 
   try {
-    const webhooks = await loadRegistrations();
+    const webhooks = await loadRegistrations(tenantIdFromGate(gate));
     return NextResponse.json({ webhooks }, { headers: gate.headers });
   } catch (err) {
     console.error("[webhooks GET]", err instanceof Error ? err.message : err);
@@ -113,7 +113,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    const registrations = await loadRegistrations();
+    const tenantId = tenantIdFromGate(gate);
+    const registrations = await loadRegistrations(tenantId);
 
     const webhook: WebhookRegistration = {
       id: randomUUID(),
@@ -126,7 +127,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     };
 
     registrations.push(webhook);
-    await saveRegistrations(registrations);
+    await saveRegistrations(registrations, tenantId);
 
     void writeAuditChainEntry(
       { event: "webhook.registered", actor: gate.keyId, meta: { id: webhook.id, url: webhook.url } },

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { emitWebhookEvent } from "@/lib/server/webhook-emitter";
 
 // POST /api/maker-checker/notify
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
   await emitWebhookEvent("maker_checker_pending", {
     requestId,
     emittedAt: new Date().toISOString(),
-  });
+  }, tenantIdFromGate(gate));
 
   return NextResponse.json(
     { ok: true, requestId, event: "maker_checker_pending" },

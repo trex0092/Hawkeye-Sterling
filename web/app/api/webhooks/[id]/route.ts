@@ -39,7 +39,7 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const registrations = await loadRegistrations();
+    const registrations = await loadRegistrations(tenantIdFromGate(gate));
     const webhook = registrations.find((r) => r.id === id);
     if (!webhook) {
       return NextResponse.json(
@@ -82,7 +82,7 @@ export async function PATCH(
   }
 
   try {
-    const registrations = await loadRegistrations();
+    const registrations = await loadRegistrations(tenantId);
     const idx = registrations.findIndex((r) => r.id === id);
     if (idx === -1) {
       return NextResponse.json(
@@ -140,7 +140,7 @@ export async function PATCH(
     }
 
     registrations[idx] = webhook;
-    await saveRegistrations(registrations);
+    await saveRegistrations(registrations, tenantId);
 
     void writeAuditChainEntry(
       { event: "webhook.updated", actor: gate.keyId, meta: { id } },
@@ -168,7 +168,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const registrations = await loadRegistrations();
+    const registrations = await loadRegistrations(tenantId);
     const idx = registrations.findIndex((r) => r.id === id);
     if (idx === -1) {
       return NextResponse.json(
@@ -178,7 +178,7 @@ export async function DELETE(
     }
 
     registrations.splice(idx, 1);
-    await saveRegistrations(registrations);
+    await saveRegistrations(registrations, tenantId);
 
     void writeAuditChainEntry(
       { event: "webhook.deleted", actor: gate.keyId, meta: { id } },

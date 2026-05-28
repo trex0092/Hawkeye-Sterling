@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { createHmac, randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadRegistrations, isSafeWebhookUrl } from "@/lib/server/webhook-emitter";
 
 export const runtime = "nodejs";
@@ -19,7 +20,7 @@ export async function POST(
   const { id } = await params;
 
   try {
-    const registrations = await loadRegistrations();
+    const registrations = await loadRegistrations(tenantIdFromGate(gate));
     const webhook = registrations.find((r) => r.id === id);
     if (!webhook) {
       return NextResponse.json(

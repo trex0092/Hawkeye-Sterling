@@ -48,9 +48,6 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-const REGISTRATIONS_KEY = "webhooks:registrations";
-const DELIVERY_KEY_PREFIX = "webhooks:deliveries:";
-
 // SSRF prevention — block private ranges and cloud metadata endpoints.
 // Covers RFC 1918, CGNAT (100.64.0.0/10), Azure IMDS (168.63.129.x),
 // IPv6 ULA (fc00::/7), IPv6 link-local (fe80::/10), IPv4-mapped (::ffff:).
@@ -70,9 +67,9 @@ export function isSafeWebhookUrl(raw: string): boolean {
   }
 }
 
-export async function loadRegistrations(): Promise<WebhookRegistration[]> {
+export async function loadRegistrations(tenantId: string): Promise<WebhookRegistration[]> {
   const store = getLocalStore();
-  const raw = await store.get(REGISTRATIONS_KEY);
+  const raw = await store.get(`webhooks:registrations:${tenantId}`);
   if (!raw) return [];
   try {
     return JSON.parse(raw) as WebhookRegistration[];
@@ -83,22 +80,24 @@ export async function loadRegistrations(): Promise<WebhookRegistration[]> {
 
 export async function saveRegistrations(
   registrations: WebhookRegistration[],
+  tenantId: string,
 ): Promise<void> {
   const store = getLocalStore();
-  await store.set(REGISTRATIONS_KEY, JSON.stringify(registrations));
+  await store.set(`webhooks:registrations:${tenantId}`, JSON.stringify(registrations));
 }
 
-async function storeDelivery(delivery: WebhookDelivery): Promise<void> {
-  await setJson(`${DELIVERY_KEY_PREFIX}${delivery.id}`, delivery);
+async function storeDelivery(delivery: WebhookDelivery, tenantId: string): Promise<void> {
+  await setJson(`webhooks:deliveries:${tenantId}:${delivery.id}`, delivery);
 }
 
 export async function emitWebhookEvent(
   event: WebhookEvent,
   payload: Record<string, unknown>,
+  tenantId: string,
 ): Promise<void> {
   let registrations: WebhookRegistration[];
   try {
-    registrations = await loadRegistrations();
+    registrations = await loadRegistrations(tenantId);
   } catch {
     console.warn("[webhook-emitter] Failed to load registrations");
     return;
@@ -192,7 +191,7 @@ export async function emitWebhookEvent(
       }
 
       // Persist delivery record (never throw)
-      await storeDelivery(delivery).catch((e) =>
+      await storeDelivery(delivery, tenantId).catch((e) =>
         console.warn(
           "[webhook-emitter] Failed to store delivery record:",
           e instanceof Error ? e.message : e,
@@ -202,7 +201,7 @@ export async function emitWebhookEvent(
   }
 
   // Persist updated registration stats (best-effort)
-  await saveRegistrations(registrations).catch((e) =>
+  await saveRegistrations(registrations, tenantId).catch((e) =>
     console.warn(
       "[webhook-emitter] Failed to save registrations after delivery:",
       e instanceof Error ? e.message : e,

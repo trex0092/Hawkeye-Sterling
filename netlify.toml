@@ -46,7 +46,10 @@
   # Exclude LSEG credential env vars from Netlify secrets scanning so that
   # any incidental appearance of credentials in build logs or docs doesn't
   # block the deploy.  The actual values are never committed to source.
-  SECRETS_SCAN_OMIT_KEYS = "LSEG_USERNAME,LSEG_PASSWORD,LSEG_APP_KEY,LSEG_SQS_ENDPOINT"
+  # GITHUB_TOKEN is added because the build uses it for the code-scan scheduled
+  # function that fetches source files for AI security analysis. The token value
+  # is only used at function runtime, never embedded in build artifacts.
+  SECRETS_SCAN_OMIT_KEYS = "LSEG_USERNAME,LSEG_PASSWORD,LSEG_APP_KEY,LSEG_SQS_ENDPOINT,GITHUB_TOKEN"
   # UAE seed file paths (non-sensitive paths — actual JSON files are committed to the repo).
   # The JSON files are empty templates; populate them manually from EOCN email updates.
   # Do NOT set these here if they differ per deploy context — use Netlify env vars instead.
@@ -54,7 +57,10 @@
   UAE_LTL_SEED_PATH = "data/seeds/uae_ltl_seed.json"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
+  # Pinned to 5.15.11 — matches the version in package-lock.json.
+  # Without an explicit version, Netlify may resolve a newer release that
+  # can break the build when the plugin's Next.js processing changes.
+  package = "@netlify/plugin-nextjs@5.15.11"
 
 [functions]
   # Look for the scheduled Netlify Function(s) at the repo root.
