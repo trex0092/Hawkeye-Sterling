@@ -153,7 +153,7 @@ export async function POST(req: Request) {
       incrementCounter('hawkeye_auth_failures_total', 1, { reason: 'lockout_write_failed' });
       return NextResponse.json({ ok: false, error: "Service temporarily unavailable" }, { status: 503 });
     }
-    console.warn("[auth/login] rate-limited", { uKey, ip, retryAfterSec: userRl.retryAfterSec });
+    console.warn("[auth/login] rate-limited", { uKey, ipHash: iKey, retryAfterSec: userRl.retryAfterSec });
     return NextResponse.json(
       { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: userRl.retryAfterSec },
       { status: 429, headers: { "retry-after": String(userRl.retryAfterSec ?? 900) } },
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
     users = await loadUsers();
   } catch (err) {
     console.error("[auth/login] loadUsers failed — login unavailable", {
-      ip,
+      ipHash: iKey,
       reason: err instanceof Error ? err.message : String(err),
     });
     await new Promise((r) => setTimeout(r, 400));
@@ -247,7 +247,7 @@ export async function POST(req: Request) {
         recordFailure(USER_LOCK_PREFIX, uKey),
         recordFailure(IP_LOCK_PREFIX, iKey),
       ]);
-      console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
+      console.warn("[auth/login] failed attempt", { uKey, ipHash: iKey, userFound: !!user });
       return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
     }
   }
