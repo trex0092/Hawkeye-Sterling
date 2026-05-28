@@ -88,7 +88,7 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number } = {},
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number; maxBodyBytes?: number } = {},
 ): Promise<EnforcementResult> {
   const route = new URL(req.url).pathname;
   const span = startSpan('enforce.auth', { 'http.route': route, 'http.method': req.method });
@@ -105,7 +105,7 @@ export async function enforce(
 
 async function _enforce(
   req: Request,
-  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number },
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number; maxBodyBytes?: number },
   span: ReturnType<typeof startSpan>,
 ): Promise<EnforcementResult> {
   // Per-property defaulting so callers can override one option without
@@ -116,9 +116,13 @@ async function _enforce(
   const requireAuth = opts.requireAuth ?? true;
   const requireJsonBody = opts.requireJsonBody ?? true;
   const cost = opts.cost ?? 1;
+  // 1 MiB default. Override with a larger value only for routes that legitimately
+  // accept documents (e.g. trade-finance, EOCN ingest). Netlify's reverse proxy
+  // strips content-length so this check is enforced on direct/k8s callers only
+  // — it is defence-in-depth, not the sole body-size gate.
+  const maxBodyBytes = opts.maxBodyBytes ?? 1_048_576;
 
-  // Content-Type guard — for JSON-body methods, callers must declare
-  // application/json so the handler can safely call req.json().
+  // Content-Type + body-size guard — for JSON-body methods.
   // Skip GET/HEAD/DELETE/OPTIONS which have no body by convention.
   // Set requireJsonBody: false to bypass (e.g. multipart upload routes).
   const bodyMethod = ["POST", "PUT", "PATCH"].includes(req.method);
@@ -130,13 +134,24 @@ async function _enforce(
     // POST requests, even body-less ones — relying on transfer-encoding alone
     // produces false 415s for legitimate body-less POSTs from the UI.
     const cl = req.headers.get("content-length");
-    const hasBody = cl !== null && parseInt(cl, 10) > 0;
+    const clNum = cl !== null ? parseInt(cl, 10) : -1;
+    const hasBody = clNum > 0;
     if (hasBody && !ct.toLowerCase().includes("application/json")) {
       return {
         ok: false,
         response: NextResponse.json(
           { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
           { status: 415 },
+        ),
+      };
+    }
+    if (hasBody && clNum > maxBodyBytes) {
+      logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+          { status: 413 },
         ),
       };
     }
