@@ -85,7 +85,10 @@ export function recordFailure(key: string): void {
   hydrate(key);
   const s = breakers.get(key) ?? { failures: 0, openedAt: null };
   s.failures++;
-  if (s.failures >= THRESHOLD) {
+  // Only stamp openedAt on the closed→open transition. Re-stamping on every
+  // subsequent failure would extend the RESET_MS window indefinitely, preventing
+  // recovery when a service fails intermittently above the threshold.
+  if (s.failures >= THRESHOLD && s.openedAt === null) {
     s.openedAt = Date.now();
     setGauge('hawkeye_circuit_breaker_open', 1, { service: key });
   }

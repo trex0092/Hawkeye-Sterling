@@ -18,7 +18,7 @@
 //   { ok: true, token: string, claims: RegulatorTokenClaims, publicKeyUrl: string }
 
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { issueRegulatorToken } from "@/lib/server/regulator-jwt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { log } from "@/lib/server/logger";
@@ -39,10 +39,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Authorization: Bearer <ADMIN_TOKEN> required" }, { status: 401 });
   }
 
-  const enc = new TextEncoder();
-  const a = enc.encode(adminToken);
-  const b = enc.encode(presented);
-  const adminMatch = a.byteLength === b.byteLength && timingSafeEqual(a, b);
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(adminToken).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(presented).digest();
+  const adminMatch = timingSafeEqual(ha, hb);
   if (!adminMatch) {
     log({ level: "warn", route: "/api/regulator/token", event: "regulator_token.unauthorized_issue_attempt" });
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });

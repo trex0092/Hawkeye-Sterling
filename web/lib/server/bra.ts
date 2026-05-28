@@ -5,6 +5,7 @@
 //
 // Regulatory basis: MOE Circular 6/2025, CBUAE Rulebook Ch.6
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -72,7 +73,7 @@ function addDays(date: Date, days: number): string {
 function generateBraId(): string {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const suffix = randomBytes(2).toString("hex").toUpperCase();
   return `BRA-${yyyymmdd}-${suffix}`;
 }
 

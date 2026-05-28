@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual, randomBytes } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypto";
+const RECOVERY_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
       incrementCounter('hawkeye_auth_failures_total', 1, { reason: 'lockout_write_failed' });
       return NextResponse.json({ ok: false, error: "Service temporarily unavailable" }, { status: 503 });
     }
-    console.warn("[auth/login] rate-limited", { uKey, ip, retryAfterSec: userRl.retryAfterSec });
+    console.warn("[auth/login] rate-limited", { uKey, ipHash: iKey, retryAfterSec: userRl.retryAfterSec });
     return NextResponse.json(
       { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: userRl.retryAfterSec },
       { status: 429, headers: { "retry-after": String(userRl.retryAfterSec ?? 900) } },
@@ -170,7 +171,7 @@ export async function POST(req: Request) {
     users = await loadUsers();
   } catch (err) {
     console.error("[auth/login] loadUsers failed — login unavailable", {
-      ip,
+      ipHash: iKey,
       reason: err instanceof Error ? err.message : String(err),
     });
     await new Promise((r) => setTimeout(r, 400));
@@ -205,15 +206,9 @@ export async function POST(req: Request) {
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
       (() => {
-        const enc = new TextEncoder();
-        const a = enc.encode(password);
-        const b = enc.encode(recoveryPassword.trim());
-        // Always call timingSafeEqual (same-length padded buffers) before
-        // checking length equality to prevent a password-length timing oracle.
-        const maxLen = Math.max(a.length, b.length);
-        const ap = new Uint8Array(maxLen); ap.set(a);
-        const bp = new Uint8Array(maxLen); bp.set(b);
-        return timingSafeEqual(ap, bp) && a.length === b.length;
+        const ha = createHmac("sha256", RECOVERY_COMPARE_KEY).update(password).digest();
+        const hb = createHmac("sha256", RECOVERY_COMPARE_KEY).update(recoveryPassword.trim()).digest();
+        return timingSafeEqual(ha, hb);
       })()
     ) {
       const newSalt = generateSalt();
@@ -247,7 +242,7 @@ export async function POST(req: Request) {
         recordFailure(USER_LOCK_PREFIX, uKey),
         recordFailure(IP_LOCK_PREFIX, iKey),
       ]);
-      console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
+      console.warn("[auth/login] failed attempt", { uKey, ipHash: iKey, userFound: !!user });
       return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
     }
   }

@@ -3,6 +3,7 @@
 // Tracks audit findings, remediation plans, and MLRO sign-offs.
 // Regulatory basis: CBUAE §9, IIA Standards, Board Audit Committee requirements.
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface AuditFinding {
@@ -61,7 +62,7 @@ export function auditFindingKey(tenantId: string, id: string): string {
 function generateAuditFindingId(): string {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const suffix = randomBytes(2).toString("hex").toUpperCase();
   return `AUF-${yyyymmdd}-${suffix}`;
 }
 

@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Workflow-level least-privilege: all jobs read-only by default.
+# Jobs that need write access (e.g. security-events: write for SARIF upload)
+# declare their own permissions: block, which overrides this default.
+permissions:
+  contents: read
+
 # Cancel stale in-progress runs for the same branch/PR.
 # Never cancel runs on main — always let them complete for audit trail completeness.
 concurrency:
@@ -313,7 +319,14 @@ jobs:
             printf '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"Semgrep","rules":[]}},"results":[]}]}\n' > semgrep-results.sarif
           fi
           if [ "$SEMGREP_RC" -eq 7 ]; then
-            echo "WARNING: Semgrep registry configs unavailable (exit 7 — set SEMGREP_APP_TOKEN to enable full scan)"
+            if [ -n "$SEMGREP_APP_TOKEN" ]; then
+              echo "ERROR: SEMGREP_APP_TOKEN is set but Semgrep registry returned auth failure (exit 7)."
+              echo "This indicates a token permission issue — rotate the token or check registry access."
+              exit 1
+            fi
+            echo "WARNING: Semgrep registry configs unavailable (exit 7 — SEMGREP_APP_TOKEN not set)."
+            echo "         p/typescript, p/nodejs, p/nextjs rules did NOT run."
+            echo "         Set SEMGREP_APP_TOKEN secret for full coverage."
           elif [ "$SEMGREP_RC" -ne 0 ]; then
             echo "INFO: Semgrep found findings (exit $SEMGREP_RC) — see Security tab and Semgrep OSS App for details"
           fi
@@ -521,3 +534,24 @@ jobs:
             -summary \
             k8s/externalsecret.yaml
           echo "All K8s manifests passed validation"
+
+      - name: Check for placeholder image digests
+        # Placeholder digests (all-zeros sha256) and :latest tags must be replaced
+        # with Cosign-verified digests before any production deployment.
+        # This step warns loudly but does NOT fail CI — the placeholders are
+        # intentional in development branches. A separate production-gate script
+        # (scripts/pre-deploy-check.sh) must fail the actual deploy pipeline.
+        run: |
+          FOUND_PLACEHOLDER=0
+          if grep -r "sha256:0000000000000000000000000000000000000000000000000000000000000000" k8s/; then
+            echo "::warning::PLACEHOLDER IMAGE DIGEST detected in k8s manifests."
+            echo "         Replace with Cosign-verified digests before production deployment."
+            FOUND_PLACEHOLDER=1
+          fi
+          if grep -r "image:.*:latest" k8s/; then
+            echo "::warning::'latest' tag detected in k8s manifests — pin to digest before production deployment."
+            FOUND_PLACEHOLDER=1
+          fi
+          if [ "$FOUND_PLACEHOLDER" -eq 0 ]; then
+            echo "Image digest check: all images pinned to explicit digests."
+          fi

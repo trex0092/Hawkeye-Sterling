@@ -21,6 +21,7 @@ import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 // enforce is provided by withGuard; no direct import needed here.
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
+import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -221,7 +222,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   // Capture actor alias if provided (for external API compat).
   const actorAlias = stringField(raw["actor"]);
 
-  const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const id = `fe-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const item: FourEyesItem = {
     id,
     tenantId: ctx.tenantId,

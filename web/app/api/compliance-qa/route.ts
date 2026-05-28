@@ -8,6 +8,7 @@
 // Body: { query: string; mode?: "multi-agent" | "single"; context?: {q,a}[] }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { askComplianceQuestion } from "../../../../src/integrations/complianceRag.js";
 import {
@@ -456,7 +457,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tool: "compliance_qa",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...CORS } });
   }

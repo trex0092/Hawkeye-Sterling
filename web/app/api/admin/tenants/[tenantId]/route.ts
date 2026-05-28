@@ -13,6 +13,10 @@ export const dynamic = "force-dynamic";
 const VALID_PLANS: TenantPlan[] = ["free", "starter", "pro", "enterprise"];
 const TENANT_KEY_PREFIX = "tenants:";
 
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 // ── GET — get single tenant ───────────────────────────────────────────────────
 
 export async function GET(
@@ -27,7 +31,7 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "tenantId is required" }, { status: 400 });
   }
 
-  const key = `${TENANT_KEY_PREFIX}${tenantId}`;
+  const key = `${TENANT_KEY_PREFIX}${safeSegment(tenantId)}`;
   let record: TenantRecord | null = null;
 
   try {
@@ -84,7 +88,7 @@ export async function PATCH(
     );
   }
 
-  const key = `${TENANT_KEY_PREFIX}${tenantId}`;
+  const key = `${TENANT_KEY_PREFIX}${safeSegment(tenantId)}`;
 
   let existing: TenantRecord | null = null;
   try {

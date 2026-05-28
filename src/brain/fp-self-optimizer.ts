@@ -2,6 +2,7 @@
 // Tracks MLRO FP confirmation outcomes and proposes Bayesian threshold adjustments.
 // All proposals require four-eyes MLRO approval before going live. CG-8 partial closure.
 
+import { randomBytes } from 'node:crypto';
 import type { OutcomeRecord } from './outcome-feedback.js';
 
 export interface ModeFpStats {
@@ -37,7 +38,7 @@ function msSince(isoDate: string): number {
 }
 
 function newId(): string {
-  return `prop_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `prop_${Date.now()}_${randomBytes(3).toString("hex")}`;
 }
 
 export function computeModeFpStats(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -101,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const deadlineDate = addBusinessDays(freezeDate, 5);
 
   const newCase: CnmrCase = {
-    id: `cnmr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `cnmr-${Date.now()}-${randomBytes(4).toString("hex")}`,
     createdAt: new Date().toISOString(),
     subjectId: body.subjectId ?? "",
     subjectName: body.subjectName,

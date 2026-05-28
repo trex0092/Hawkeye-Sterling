@@ -130,7 +130,7 @@ function counterKey(tenant: Tenant): string {
 }
 
 function caseKey(tenant: Tenant, caseId: string): string {
-  return `hs-compliance/${safeId(tenant)}/cases/${caseId}.json`;
+  return `hs-compliance/${safeId(tenant)}/cases/${safeId(caseId)}.json`;
 }
 
 function safeId(s: string): string {

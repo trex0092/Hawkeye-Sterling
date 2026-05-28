@@ -11,6 +11,9 @@ on:
     # Weekly Monday 04:00 UTC — after nightly refresh-lists (03:00)
     - cron: '0 4 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   load-test:
     runs-on: ubuntu-latest

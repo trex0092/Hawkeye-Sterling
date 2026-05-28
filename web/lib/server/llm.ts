@@ -12,6 +12,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { createHash } from "node:crypto";
 import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
 import { startSpan, SpanStatus } from "./tracer";
@@ -286,8 +287,11 @@ const _pool: Map<string, AnthropicGuard> =
  */
 export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: string): AnthropicGuard {
   const tms = timeoutMs ?? DEFAULT_ANTHROPIC_TIMEOUT_MS;
-  // Key on first 8 chars of key + timeout. We never store the full key.
-  const poolKey = `${apiKey.slice(0, 8)}:${tms}`;
+  // Key on SHA-256(key) + timeout. All Anthropic API keys share the prefix
+  // "sk-ant-a" so an 8-char prefix produces a collision-universal pool key.
+  // SHA-256 is safe to store as a pool key — it cannot be reversed to the
+  // original key via brute force (256-bit preimage resistance).
+  const poolKey = `${createHash("sha256").update(apiKey).digest("hex").slice(0, 32)}:${tms}`;
   let guard = _pool.get(poolKey);
   if (!guard) {
     guard = new AnthropicGuard(apiKey, tms, route ?? "unknown");

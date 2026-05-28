@@ -31,6 +31,12 @@ function djb2(s: string): string {
   return Math.abs(h).toString(16).padStart(8, "0");
 }
 
+function randomHex6(): string {
+  const arr = new Uint8Array(3);
+  globalThis.crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function chainHash(partial: Omit<AuditEntry, "hash">, prevHash: string): string {
   const payload = [prevHash, partial.id, partial.timestamp, partial.actor, partial.action, partial.target].join("|");
   return `hs:${djb2(payload)}`;
@@ -71,7 +77,7 @@ export function writeAuditEvent(
   target: string,
 ): AuditEntry {
   const partial: Omit<AuditEntry, "hash"> = {
-    id: `ae-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `ae-${Date.now()}-${randomHex6()}`,
     timestamp: new Date().toISOString(),
     actor,
     action,

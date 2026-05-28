@@ -23,14 +23,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  return timingSafeEqual(expBuf, gotBuf);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 interface ListReport {

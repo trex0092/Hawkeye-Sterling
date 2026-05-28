@@ -15,7 +15,7 @@
 // regulator JWT before invoking this gate.
 
 import { getJson, setJson, listKeys, del } from "@/lib/server/store";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
 // Hash actor for OTel span attributes — actor may be an email/GID (PII).
@@ -72,6 +72,10 @@ const PREFIX = "four-eyes/approvals/";
 const FOUR_EYES_TTL_HOURS = 48; // Cases pending > 48h are flagged as overdue (FDL 10/2025 Art.16)
 const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
 
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 export function isCaseOverdue(firstApprovalAt: string, nowMs = Date.now()): boolean {
   const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
   return ageHours >= FOUR_EYES_TTL_HOURS;
@@ -83,7 +87,7 @@ export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.n
 }
 
 function approvalKey(caseId: string, approvalId: string): string {
-  return `${PREFIX}${caseId}/${approvalId}.json`;
+  return `${PREFIX}${safeSegment(caseId)}/${approvalId}.json`;
 }
 
 function sanitizeStatus(status: FourEyesStatus): SanitizedFourEyesStatus {
@@ -158,7 +162,7 @@ async function _recordApproval(
     };
   }
 
-  const approvalId = `appr_${Date.now()}_${randomBytes(4).toString("hex")}`;
+  const approvalId = `appr_${Date.now()}_${randomBytes(8).toString("hex")}`;
   const entry: ApprovalEntry = {
     approvalId,
     caseId: input.caseId,
@@ -193,7 +197,7 @@ async function _recordApproval(
 
 /** Read all approvals for a case and compute pass/reject state. */
 export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> {
-  const keys = await listKeys(`${PREFIX}${caseId}/`);
+  const keys = await listKeys(`${PREFIX}${safeSegment(caseId)}/`);
   const results = await Promise.all(keys.map((k) => getJson<ApprovalEntry>(k)));
   const decisions: ApprovalEntry[] = results.filter(
     (e): e is ApprovalEntry => e != null && !!e.approvalId && !!e.actor,
@@ -286,7 +290,7 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
   const expiry: ApprovalEntry = {
-    approvalId: `expiry_${Date.now()}_${randomBytes(4).toString("hex")}`,
+    approvalId: `expiry_${Date.now()}_${randomBytes(8).toString("hex")}`,
     caseId,
     actor: expiredBy,
     decision: 'reject',

@@ -10,6 +10,7 @@
 //   - Chain-specific privacy risk modifiers (Monero +20, Zcash shielded +15, etc.)
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { scoreWallet, type CryptoChain, type WalletRiskResult } from "../../../../src/integrations/cryptoRisk.js";
 
@@ -611,7 +612,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       errorType: "internal",
       tool: "crypto_risk",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...CORS } });
   }

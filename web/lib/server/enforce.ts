@@ -31,6 +31,11 @@ import { incrementCounter } from "./metrics-store";
 // deployment but cannot be reversed via a rainbow table of 4B IPv4 addresses.
 // Falls back to a fixed dev string when SESSION_SECRET is absent so that dev
 // behaviour is explicit rather than silently using bare SHA-256.
+// HMAC normalization key for constant-time token comparisons (ADMIN_TOKEN,
+// SANCTIONS_CRON_TOKEN). Produces fixed 32-byte digests so timingSafeEqual
+// never short-circuits on byte-length mismatch — avoids leaking token length.
+const ENFORCE_COMPARE_KEY = Buffer.from("hawkeye-enforce-token-v1", "utf8");
+
 let _anonIpKey: string | undefined;
 function anonIpKey(): string {
   if (_anonIpKey) return _anonIpKey;
@@ -145,10 +150,9 @@ async function _enforce(
   // limits without consuming monthly quota.
   const adminToken = process.env["ADMIN_TOKEN"];
   const adminMatch = adminToken && plaintext !== null && (() => {
-    const enc = new TextEncoder();
-    const a = enc.encode(adminToken);
-    const b = enc.encode(plaintext);
-    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+    const ha = createHmac("sha256", ENFORCE_COMPARE_KEY).update(adminToken).digest();
+    const hb = createHmac("sha256", ENFORCE_COMPARE_KEY).update(plaintext).digest();
+    return timingSafeEqual(ha, hb);
   })();
   if (adminMatch) {
     const rl = await consumeRateLimit("portal_admin", "enterprise");
@@ -167,13 +171,12 @@ async function _enforce(
 
   // Cron bypass: SANCTIONS_CRON_TOKEN allows internal scheduled functions
   // (health-monitor, sanctions-daily-report, refresh-lists) to call protected
-  // API routes without consuming an API key quota. Same constant-time compare.
+  // API routes without consuming an API key quota. Same HMAC-normalised compare.
   const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
   const cronMatch = cronToken && plaintext !== null && (() => {
-    const enc = new TextEncoder();
-    const a = enc.encode(cronToken);
-    const b = enc.encode(plaintext);
-    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+    const ha = createHmac("sha256", ENFORCE_COMPARE_KEY).update(cronToken).digest();
+    const hb = createHmac("sha256", ENFORCE_COMPARE_KEY).update(plaintext).digest();
+    return timingSafeEqual(ha, hb);
   })();
   if (cronMatch) {
     const rl = await consumeRateLimit("cron_internal", "enterprise");

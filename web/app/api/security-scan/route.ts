@@ -13,6 +13,7 @@
 // Auth: standard session cookie or API key (analyst+ role).
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
@@ -335,7 +336,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   ];
 
   const result: SecurityScanResult = {
-    scanId: `scan_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+    scanId: `scan_${Date.now().toString(36)}_${randomBytes(2).toString("hex")}`,
     scannedAt: new Date().toISOString(),
     status,
     score,

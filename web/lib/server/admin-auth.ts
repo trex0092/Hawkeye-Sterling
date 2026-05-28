@@ -6,7 +6,20 @@
 // -hex 32`) in Netlify → Site settings → Environment variables.
 
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+// Normalize variable-length strings to fixed-length HMAC digests before
+// constant-time comparison. The early-exit `byteLength === byteLength` check
+// in timingSafeEqual() would otherwise leak the exact byte length of
+// ADMIN_TOKEN via timing (an attacker submits tokens of increasing length
+// and watches for the first response that takes longer than empty-string
+// rejection). Both values are always hashed so comparison is always 32 bytes.
+const COMPARE_KEY = Buffer.from("hawkeye-admin-auth-compare-v1", "utf8");
+function constantTimeEq(a: string, b: string): boolean {
+  const ha = createHmac("sha256", COMPARE_KEY).update(a).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 export function adminAuth(req: Request): NextResponse | null {
   const expected = process.env["ADMIN_TOKEN"];
@@ -21,11 +34,7 @@ export function adminAuth(req: Request): NextResponse | null {
   }
   const auth = req.headers.get("authorization");
   const token = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const tokBuf = enc.encode(token);
-  const match = token.length > 0 && expBuf.byteLength === tokBuf.byteLength && timingSafeEqual(expBuf, tokBuf);
-  if (!match) {
+  if (!constantTimeEq(token, expected)) {
     return NextResponse.json(
       { ok: false, error: "Admin authorization required." },
       { status: 401 },

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
@@ -53,7 +54,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   }
   // Generate or honour caller-supplied id.
   let id = stringField(raw["id"]) ?? "";
-  if (!id) id = `ss-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  if (!id) id = `ss-${Date.now()}-${randomBytes(4).toString("hex")}`;
   if (id.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(id)) {
     return NextResponse.json({ ok: false, error: "id must be alphanumeric/_- and max 64 chars" }, { status: 400 });
   }

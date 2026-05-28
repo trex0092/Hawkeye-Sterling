@@ -15,7 +15,7 @@
 //   openssl pkeyutl -verify -pubin -inkey hawkeye-pubkey.pem \
 //     -sigfile <certificate>.sig -in <certificate>.snapshot
 
-import { createHash, createHmac, randomBytes, createPrivateKey, type KeyObject } from "crypto";
+import { createHash, createHmac, randomBytes, createPrivateKey, sign as cryptoSign, type KeyObject } from "node:crypto";
 
 export interface AuditSnapshotInput {
   /** Stable case / report identifier. Becomes part of the signed payload. */
@@ -173,10 +173,9 @@ export function buildAuditCertificate(input: AuditSnapshotInput): AuditCertifica
   if (key) {
     try {
       // Ed25519 in Node: pass null algorithm to crypto.sign.
-      const { sign } = require("crypto") as typeof import("crypto");
       const msgBuf = Buffer.from(snapshotSha256);
       const msgView = new Uint8Array(msgBuf.buffer, msgBuf.byteOffset, msgBuf.byteLength);
-      signature = sign(null, msgView, key).toString("base64");
+      signature = cryptoSign(null, msgView, key).toString("base64");
     } catch {
       signature = "";
     }

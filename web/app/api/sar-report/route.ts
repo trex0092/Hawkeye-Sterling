@@ -236,13 +236,19 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
 
   // Four-eyes gate — approver must be set and differ from filer
   const mlro = body.mlro ?? "[MLRO NAME NOT CONFIGURED]";
-  if (!body.approver?.trim()) {
+  if (!body.approver?.trim() || body.approver.trim().length > 128) {
     return NextResponse.json(
-      { ok: false, error: "four_eyes_required", detail: "A second approver (four-eyes) is required before this filing can proceed." },
+      { ok: false, error: "four_eyes_required", detail: "A second approver (four-eyes) is required before this filing can proceed. Approver name must not exceed 128 characters." },
       { status: 422, headers: gateHeaders }
     );
   }
-  if (body.approver.trim().toLowerCase() === mlro.trim().toLowerCase()) {
+  // Normalize via NFKD + strip combining marks before comparing: prevents
+  // homoglyph spoofing (e.g. Cyrillic lookalikes) from bypassing the
+  // same-person check. An attacker submitting "Jоhn" (Cyrillic 'о')
+  // vs "John" (Latin 'o') would otherwise pass as different approvers.
+  const normApprover = (s: string) =>
+    s.trim().normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
+  if (normApprover(body.approver) === normApprover(mlro)) {
     return NextResponse.json(
       { ok: false, error: "four_eyes_same_person", detail: "The approver must be a different person from the MLRO filing this report." },
       { status: 422, headers: gateHeaders }

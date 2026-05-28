@@ -18,6 +18,7 @@
 //   • Only "pending" requests can be approved or rejected.
 //   • All state transitions are reflected in requestedAt / checkedAt.
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "./store";
 import { writeAuditChainEntry } from "./audit-chain";
 
@@ -60,7 +61,7 @@ function prefixForTenant(tenantId: string): string {
 }
 
 function newId(): string {
-  return `mc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return `mc-${Date.now()}-${randomBytes(4).toString("hex")}`;
 }
 
 function safeId(raw: string): string | null {

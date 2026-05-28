@@ -52,9 +52,11 @@ const REGISTRATIONS_KEY = "webhooks:registrations";
 const DELIVERY_KEY_PREFIX = "webhooks:deliveries:";
 
 // SSRF prevention — block private ranges and cloud metadata endpoints.
+// Covers RFC 1918, CGNAT (100.64.0.0/10), Azure IMDS (168.63.129.x),
+// IPv6 ULA (fc00::/7), IPv6 link-local (fe80::/10), IPv4-mapped (::ffff:).
 const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
 const PRIVATE_IP =
-  /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+  /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|168\.63\.129\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|0\.0\.0\.0|::1$|::ffff:|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f])/i;
 
 export function isSafeWebhookUrl(raw: string): boolean {
   try {
@@ -108,11 +110,15 @@ export async function emitWebhookEvent(
 
   if (active.length === 0) return;
 
-  await Promise.all(
-    active.map(async (reg) => {
+  // Cap concurrent outbound HTTP deliveries to prevent unbounded fan-out.
+  const CONCURRENCY_LIMIT = 10;
+  for (let i = 0; i < active.length; i += CONCURRENCY_LIMIT) {
+    await Promise.all(active.slice(i, i + CONCURRENCY_LIMIT).map(async (reg) => {
       const deliveryId = randomUUID();
       const sentAt = new Date().toISOString();
-      const body = JSON.stringify({ event, ...payload, deliveryId, sentAt });
+      // Spread payload first so envelope fields (event, deliveryId, sentAt)
+      // always win over any colliding keys in the caller-supplied payload.
+      const body = JSON.stringify({ ...payload, event, deliveryId, sentAt });
 
       const hmac = createHmac("sha256", reg.secret)
         .update(body)
@@ -192,8 +198,8 @@ export async function emitWebhookEvent(
           e instanceof Error ? e.message : e,
         ),
       );
-    }),
-  );
+    }));
+  }
 
   // Persist updated registration stats (best-effort)
   await saveRegistrations(registrations).catch((e) =>

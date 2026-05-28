@@ -17,7 +17,7 @@
 //   hawkeye-regulatory/digest        — unified RegulatoryUpdate[] (6-hour TTL)
 //   hawkeye-regulatory/eocn-hash     — last-known EOCN response hash
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { getNamedStore } from "@/lib/server/blob-getter";
 
 // ─── Unified update type ──────────────────────────────────────────────────────

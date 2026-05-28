@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY main.py ./
 
 # Create non-root user for runtime
-RUN useradd -r -s /bin/false -u 10001 osint
+RUN useradd -r -s /bin/false -u 1001 osint
 USER osint
 
 # ---------------------------------------------------------------------------

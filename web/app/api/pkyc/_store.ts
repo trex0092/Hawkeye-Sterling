@@ -7,6 +7,10 @@
 
 import { del, getJson, setJson, listKeys } from "@/lib/server/store";
 
+function safeId(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 export type PKycCadence = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
 
 export function nextRunAt(cadence: PKycCadence, from = new Date()): string {
@@ -81,7 +85,7 @@ export interface PKycDelta {
 
 export async function listSubjects(tenantId: string): Promise<PKycSubject[]> {
   try {
-    const keys = await listKeys(`pkyc/${tenantId}/subject/`);
+    const keys = await listKeys(`pkyc/${safeId(tenantId)}/subject/`);
     const subjects = await Promise.all(keys.map((k) => getJson<PKycSubject>(k)));
     return subjects.filter((s): s is PKycSubject => s !== null);
   } catch (err) {
@@ -91,22 +95,22 @@ export async function listSubjects(tenantId: string): Promise<PKycSubject[]> {
 }
 
 export async function getSubject(id: string, tenantId: string): Promise<PKycSubject | null> {
-  return getJson<PKycSubject>(`pkyc/${tenantId}/subject/${id}`).catch((err) => {
+  return getJson<PKycSubject>(`pkyc/${safeId(tenantId)}/subject/${safeId(id)}`).catch((err) => {
     console.error("[pkyc] getSubject failed:", err instanceof Error ? err.message : err);
     return null;
   });
 }
 
 export async function saveSubject(subject: PKycSubject, tenantId: string): Promise<void> {
-  await setJson(`pkyc/${tenantId}/subject/${subject.id}`, subject);
+  await setJson(`pkyc/${safeId(tenantId)}/subject/${safeId(subject.id)}`, subject);
 }
 
 export async function deleteSubject(id: string, tenantId: string): Promise<void> {
-  await del(`pkyc/${tenantId}/subject/${id}`);
+  await del(`pkyc/${safeId(tenantId)}/subject/${safeId(id)}`);
 }
 
 export async function saveDelta(delta: PKycDelta, tenantId: string): Promise<void> {
-  await setJson(`pkyc/${tenantId}/delta/${delta.id}`, delta).catch((err) =>
+  await setJson(`pkyc/${safeId(tenantId)}/delta/${safeId(delta.id)}`, delta).catch((err) =>
     console.warn("[pkyc] saveDelta failed:", err instanceof Error ? err.message : err)
   );
 }

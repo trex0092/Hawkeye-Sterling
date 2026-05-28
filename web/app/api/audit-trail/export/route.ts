@@ -19,7 +19,7 @@
 //
 // Auth: withGuard (API key required)
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 

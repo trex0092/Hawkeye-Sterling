@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface StrCase {
@@ -73,7 +74,7 @@ async function saveStrCase(tenantId: string, c: StrCase): Promise<void> {
 function generateStrId(): string {
   const now = new Date();
   const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
-  const rand = Math.random().toString(36).slice(2, 6);
+  const rand = randomBytes(2).toString("hex");
   return `STR-${stamp}-${rand}`;
 }
 

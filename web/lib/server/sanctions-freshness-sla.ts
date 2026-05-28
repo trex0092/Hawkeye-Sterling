@@ -16,7 +16,7 @@
 //
 // Privacy: this module contains no PII. Only structural metadata.
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 
 // ─── Freshness SLA definitions ────────────────────────────────────────────────
 

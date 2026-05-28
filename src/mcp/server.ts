@@ -11,7 +11,7 @@
 //   { "mcpServers": { "hawkeye-sterling": { "command": "node",
 //     "args": ["<repo>/dist/src/mcp/server.js"] } } }
 
-import { createHmac } from 'crypto';
+import { createHmac } from 'node:crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {

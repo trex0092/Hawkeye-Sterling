@@ -26,6 +26,7 @@
 // GET: list all open FFR records for the tenant
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, listKeys as _listKeys } from "@/lib/server/store";
@@ -95,7 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const frozenAt = body.frozenAt ?? new Date().toISOString();
   const { slaDeadline, slaStatus } = computeSlaStatus(frozenAt);
-  const id = `FFR-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const id = `FFR-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   const record: FFRRecord = {
     id,

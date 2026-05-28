@@ -5,6 +5,7 @@
 // Body: { imoNumber: string }  — or batch: { imoNumbers: string[] }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { checkVessel, screenVessels } from "../../../../src/integrations/vesselCheck.js";
 import { withRetry } from "@/lib/server/circuitBreaker";
@@ -244,7 +245,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tool: "vessel_check",
       message: "Internal screening error",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...{}, ...CORS } });
   }

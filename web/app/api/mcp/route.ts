@@ -15,6 +15,7 @@
 // `generate_report`, `mlro_analyze`, `disposition`, `relationship_graph`.
 
 import { AsyncLocalStorage } from "node:async_hooks";
+import { randomBytes } from "node:crypto";
 import { getToolLevel, type ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
 import {
@@ -235,7 +236,7 @@ async function writeAnomaly(data: Record<string, unknown>): Promise<void> {
     if (!mod) return;
     const store = mod.getStore({ name: "mcp-anomaly-logs" });
     const ts = new Date().toISOString().replace(/[:.]/g, "-");
-    await store.setJSON(`anomaly/${ts}-${Math.random().toString(36).slice(2, 8)}`, {
+    await store.setJSON(`anomaly/${ts}-${randomBytes(3).toString("hex")}`, {
       ...data,
       detectedAt: new Date().toISOString(),
     });
@@ -304,13 +305,15 @@ async function getSanctionsHealthMemoised(): Promise<Awaited<ReturnType<typeof g
 function deriveSessionId(req: Request, explicit?: string): string {
   if (explicit) return explicit;
   const xff = req.headers.get("x-forwarded-for") ?? "";
-  const first = xff.split(",")[0]?.trim() ?? "";
-  if (!first) return "anonymous";
+  // Use the LAST value (proxy-appended) — the first is attacker-controlled.
+  const segments = xff.split(",").map((s) => s.trim()).filter(Boolean);
+  const ip = segments[segments.length - 1] ?? "";
+  if (!ip) return "anonymous";
   // IPv4: 1.2.3.4 → 1.2.3 ; IPv6: keep first 4 groups
-  if (first.includes(":")) {
-    return first.split(":").slice(0, 4).join(":") || "anonymous";
+  if (ip.includes(":")) {
+    return ip.split(":").slice(0, 4).join(":") || "anonymous";
   }
-  const parts = first.split(".");
+  const parts = ip.split(".");
   return parts.length >= 3 ? parts.slice(0, 3).join(".") : "anonymous";
 }
 
@@ -1393,7 +1396,7 @@ async function dispatch(msg: {
     const injectedField = scanArgsForInjection(toolArgs);
     if (injectedField) {
       void logToolCall({
-        id: Math.random().toString(36).slice(2, 10),
+        id: randomBytes(4).toString("hex"),
         timestamp: new Date().toISOString(),
         tool: toolName,
         consequenceLevel: level,
@@ -1414,7 +1417,7 @@ async function dispatch(msg: {
 
     // Sanctions gate (ADD-01): block screening tools when critical lists are missing.
     if (GATE_BLOCKED_TOOLS.has(toolName) && !sanctionsHealth.listsVerified) {
-      const requestId = Math.random().toString(36).slice(2, 10);
+      const requestId = randomBytes(4).toString("hex");
       return ok(id, {
         content: [
           {
@@ -1471,7 +1474,7 @@ async function dispatch(msg: {
         sanctionsHealth.listsVerified, sanctionsHealth.missingCritical,
       );
       void logToolCall({
-        id: Math.random().toString(36).slice(2, 10),
+        id: randomBytes(4).toString("hex"),
         timestamp: new Date().toISOString(),
         tool: toolName,
         consequenceLevel: level,
@@ -1488,7 +1491,7 @@ async function dispatch(msg: {
       const durationMs = Date.now() - t0;
       // Fire-and-forget — breaker write shouldn't block the error response.
       void recordBreakerFailure(toolName).catch((e2: unknown) => console.warn("[mcp] recordBreakerFailure failed:", e2 instanceof Error ? e2.message : String(e2)));
-      const requestId = Math.random().toString(36).slice(2, 10);
+      const requestId = randomBytes(4).toString("hex");
       const errMsg = e instanceof Error ? e.message : String(e);
       void logToolCall({
         id: requestId,

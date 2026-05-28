@@ -53,11 +53,11 @@ function expectedSignature(secret: string, payload: string): string {
   return `sha256=${createHmac("sha256", secret).update(payload).digest("hex")}`;
 }
 
+const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(new Uint8Array(ba), new Uint8Array(bb));
+  const ha = createHmac("sha256", COMPARE_KEY).update(a).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(b).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {

@@ -1,0 +1,61 @@
+# Git history — never ship source control metadata into the image layer.
+.git
+.gitignore
+.gitattributes
+
+# Local environment files with secrets — must never enter build context.
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Node module trees — reinstalled from lockfiles inside the build.
+node_modules
+web/node_modules
+
+# Next.js build output and cache — built from scratch in the builder stage.
+web/.next
+web/.turbo
+
+# Test, E2E, and coverage artifacts.
+web/e2e
+web/__tests__
+web/coverage
+**/*.test.ts
+**/*.spec.ts
+**/*.test.tsx
+**/*.spec.tsx
+vitest.config.*
+vitest.integration.*
+web/playwright.config.ts
+
+# Documentation and compliance reports that must not inflate the image.
+docs/
+*.md
+COMPLIANCE_GAPS.md
+AUDIT*.md
+AUDIT_*.md
+BACKLOG.md
+CHANGELOG.md
+FIX_REPORT.md
+SECURITY-NOTES.md
+
+# K8s manifests and infrastructure files not needed at runtime.
+k8s/
+k6/
+contracts/
+services/
+
+# macOS and editor noise.
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript build info caches.
+*.tsbuildinfo
+web/tsconfig.tsbuildinfo

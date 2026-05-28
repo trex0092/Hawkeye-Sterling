@@ -26,7 +26,7 @@
 // Auth: ADMIN_TOKEN (operator must verify identity OOB before invoking).
 
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -139,7 +139,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const erasureId = `erase_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const erasureId = `erase_${Date.now()}_${randomBytes(3).toString("hex")}`;
   const prefixes = [
     "ongoing/subject/",
     "ongoing/last/",

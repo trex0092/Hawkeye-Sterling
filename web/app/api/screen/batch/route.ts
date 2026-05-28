@@ -49,6 +49,7 @@
 //   }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -216,7 +217,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const threshold = body.options?.threshold ?? 70;
-  const requestId = `sbatch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const requestId = `sbatch_${Date.now()}_${randomBytes(3).toString("hex")}`;
   const screenedAt = new Date().toISOString();
 
   // Load candidates corpus once.

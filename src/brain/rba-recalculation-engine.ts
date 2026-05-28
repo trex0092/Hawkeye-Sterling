@@ -2,6 +2,8 @@
 // Event-driven customer risk-tier recalculation. Triggered by sanctions deltas,
 // adverse media, or geopolitical events. Closes CG-2 (OFAC SDN delta monitoring).
 
+import { randomBytes } from 'node:crypto';
+
 export type RbaTriggerKind =
   | 'sanctions_delta'
   | 'adverse_media_live'
@@ -45,7 +47,7 @@ export interface RbaRecalcResult {
 }
 
 function newId(): string {
-  return `rba_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `rba_${Date.now()}_${randomBytes(3).toString("hex")}`;
 }
 
 const TIER_ORDER: CddTier[] = ['simplified', 'standard', 'enhanced', 'intensive', 'prohibited'];

@@ -10,6 +10,7 @@
 // Persistence: writes 'pep/current.json' with the entire PEP record
 // set, plus 'pep/delta-<ts>.json' on every diff with new arrivals.
 
+import { randomBytes } from "node:crypto";
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { emit } from "../../dist/src/integrations/webhook-emitter.js";
@@ -73,7 +74,7 @@ function normalisePepLine(line: string): PepRecord | null {
     const props = (obj["properties"] as Record<string, unknown> | undefined) ?? {};
     const name = firstString(props["name"]) ?? firstString(obj["caption"]);
     if (!name) return null;
-    const id = String(obj["id"] ?? `pep_${Math.random().toString(36).slice(2, 10)}`);
+    const id = String(obj["id"] ?? `pep_${randomBytes(4).toString("hex")}`);
     const out: PepRecord = { id, name };
     const aliases = arrayString(props["alias"]);
     const countries = arrayString(props["country"]);

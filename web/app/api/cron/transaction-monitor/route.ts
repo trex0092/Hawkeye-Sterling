@@ -10,6 +10,10 @@
 
 import { NextResponse } from "next/server";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
+
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { TxnFlagRecord } from "@/app/api/transaction-anomaly/route";
 
@@ -120,13 +124,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(cronSecret);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  if (got.length !== cronSecret.length || !timingSafeEqual(expBuf, gotBuf)) {
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(cronSecret).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  if (!timingSafeEqual(ha, hb)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -151,7 +153,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       // Mark processed regardless — even if we didn't open a case
-      await setJson(`hawkeye-txn-flags/${record.tenantId}/${record.flagId}.json`, {
+      await setJson(`hawkeye-txn-flags/${safeSegment(record.tenantId)}/${safeSegment(record.flagId)}.json`, {
         ...record,
         processed: true,
         processedAt: new Date().toISOString(),
