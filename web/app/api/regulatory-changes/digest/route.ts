@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       summary: digest.summary,
       changes: digest.changes,
       generatedAt: new Date().toISOString(),
-    });
+    }, tenantId);
   } catch (err) {
     console.error(
       "[regulatory-changes/digest POST] emitWebhookEvent failed:",

@@ -9,7 +9,9 @@ import type { AIDecision } from "../route";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
-const FEEDBACK_STORE_KEY = "ai-decision:feedback:v1";
+function feedbackKey(tenantId: string): string {
+  return `ai-decision:feedback:v1:${tenantId}`;
+}
 const MAX_RECORDS = 50;
 
 interface FeedbackRecord {
@@ -68,14 +70,15 @@ export async function POST(req: Request) {
     notes: body.notes,
   };
 
+  const storeKey = feedbackKey(tenantIdFromGate(gate));
   try {
-    const existing = (await getJson<FeedbackRecord[]>(FEEDBACK_STORE_KEY)) ?? [];
+    const existing = (await getJson<FeedbackRecord[]>(storeKey)) ?? [];
     // Remove duplicate if re-submitting feedback for same decision
     const deduped = existing.filter((r) => r.id !== record.id);
     deduped.push(record);
     // Keep only the most recent MAX_RECORDS
     const trimmed = deduped.slice(-MAX_RECORDS);
-    await setJson(FEEDBACK_STORE_KEY, trimmed);
+    await setJson(storeKey, trimmed);
 
     void writeAuditChainEntry(
       { event: "ai_decision.feedback.submitted", actor: gate.keyId, meta: { decisionId: body.decisionId, outcome: body.outcome } },
@@ -105,7 +108,7 @@ export async function GET(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   try {
-    const records = (await getJson<FeedbackRecord[]>(FEEDBACK_STORE_KEY)) ?? [];
+    const records = (await getJson<FeedbackRecord[]>(feedbackKey(tenantIdFromGate(gate)))) ?? [];
     const accepted = records.filter((r) => r.outcome === "accepted").length;
     const overridden = records.filter((r) => r.outcome === "overridden").length;
     return NextResponse.json({

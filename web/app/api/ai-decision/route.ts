@@ -12,6 +12,7 @@ import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { checkHallucination } from "@/lib/server/hallucination-gate";
 import { incrementCounter } from "@/lib/server/metrics-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -633,6 +634,24 @@ export async function POST(req: Request) {
 
   // Prometheus screening decisions counter.
   incrementCounter('hawkeye_screening_decisions_total', 1, { verdict: responseBody.decision });
+
+  // Audit chain entry for AI decision (FDL 10/2025 Art.18 — fire-and-forget).
+  void writeAuditChainEntry(
+    {
+      event: 'ai_decision.generated',
+      actor: gate.keyId,
+      meta: {
+        decisionId,
+        decision,
+        confidence,
+        urgency,
+        isDegraded,
+      },
+    },
+    tenantIdFromGate(gate),
+  ).catch((err: unknown) =>
+    console.warn('[ai-decision] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
 
   // Post-response hallucination check (fire-and-forget — writes to audit chain on detection).
   const evidenceFragments = [

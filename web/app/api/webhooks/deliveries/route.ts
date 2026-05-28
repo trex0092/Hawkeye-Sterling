@@ -3,6 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys } from "@/lib/server/store";
 import type { WebhookDelivery } from "@/lib/server/webhook-emitter";
 
@@ -10,17 +11,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
-const DELIVERY_KEY_PREFIX = "webhooks:deliveries:";
-
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
+  const tenantId = tenantIdFromGate(gate);
   const url = new URL(req.url);
   const webhookId = url.searchParams.get("webhookId") ?? undefined;
 
   try {
-    const keys = await listKeys(DELIVERY_KEY_PREFIX);
+    const keys = await listKeys(`webhooks:deliveries:${tenantId}:`);
 
     // Load all delivery records in parallel
     const records = await Promise.all(
