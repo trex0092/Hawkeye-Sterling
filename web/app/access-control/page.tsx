@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -768,6 +769,12 @@ export default function AccessControlPage() {
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
+      <ModuleFamilyBar suiteName="Security" modules={[
+        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+        { label: "Access Control", href: "/access-control", icon: "🔐" },
+        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+      ]} />
       <ModuleHero
 
         eyebrow="Module 34 · Governance"

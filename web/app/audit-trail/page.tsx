@@ -170,9 +170,11 @@ export default function AuditTrailPage() {
 
   return (
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
-      <ModuleFamilyBar suiteName="Audit Trail & Operator Console" modules={[
+      <ModuleFamilyBar suiteName="Security" modules={[
+        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
         { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Operator Console", href: "/operator", icon: "🔭" },
+        { label: "Access Control", href: "/access-control", icon: "🔐" },
+        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
       ]} />
       <div>
         <div className="mb-8">
