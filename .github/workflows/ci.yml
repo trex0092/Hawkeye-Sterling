@@ -17,9 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Cache TypeScript build output
         uses: actions/cache@v5
@@ -89,10 +98,18 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
-          audit: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev
 
       - name: Dependency vulnerability audit (root)
         # Fail on high/critical severity vulnerabilities. The previous
@@ -307,9 +324,18 @@ jobs:
     timeout-minutes: 15
     needs: [build]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root — required for web lint)
         run: npm run build
@@ -340,9 +366,18 @@ jobs:
     timeout-minutes: 25
     needs: [build, security-audit, semgrep, k8s-validate, lint-web, gitleaks]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root)
         run: npm run build
