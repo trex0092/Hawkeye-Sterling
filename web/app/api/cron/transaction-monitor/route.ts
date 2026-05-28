@@ -10,6 +10,10 @@
 
 import { NextResponse } from "next/server";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
+
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { TxnFlagRecord } from "@/app/api/transaction-anomaly/route";
 
@@ -149,7 +153,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       // Mark processed regardless — even if we didn't open a case
-      await setJson(`hawkeye-txn-flags/${record.tenantId}/${record.flagId}.json`, {
+      await setJson(`hawkeye-txn-flags/${safeSegment(record.tenantId)}/${safeSegment(record.flagId)}.json`, {
         ...record,
         processed: true,
         processedAt: new Date().toISOString(),

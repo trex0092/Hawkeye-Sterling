@@ -45,12 +45,16 @@ export function validateEntryId(id: string): boolean {
   return ID_RE.test(id);
 }
 
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 function blobKey(tenantId: string, entryId: string): string {
-  return `whitelist/${tenantId}/${entryId}.json`;
+  return `whitelist/${safeSegment(tenantId)}/${safeSegment(entryId)}.json`;
 }
 
 export async function listWhitelist(tenantId: string): Promise<WhitelistEntry[]> {
-  const keys = await listKeys(`whitelist/${tenantId}/`);
+  const keys = await listKeys(`whitelist/${safeSegment(tenantId)}/`);
   const loaded = await Promise.all(keys.map((k) => getJson<WhitelistEntry>(k)));
   return loaded
     .filter((e): e is WhitelistEntry => e !== null)

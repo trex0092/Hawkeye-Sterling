@@ -401,23 +401,27 @@ export function validateRule(raw: unknown): { ok: true; rule: Omit<WorkflowRule,
 // We try both the canonical cdd-vault key and a simple "screening/subject/<id>"
 // key so callers can test with lightweight mock subjects.
 
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 export async function loadSubjectForWorkflow(
   subjectId: string,
   tenant: string,
 ): Promise<Subject | null> {
+  const st = safeSegment(tenant);
+  const si = safeSegment(subjectId);
+
   // Primary: cdd-vault snapshot
-  const cddKey = `cdd/${tenant}/${subjectId}`;
-  const fromCdd = await getJson<Subject>(cddKey);
+  const fromCdd = await getJson<Subject>(`cdd/${st}/${si}`);
   if (fromCdd) return fromCdd;
 
   // Fallback: raw screening subject key
-  const screenKey = `screening/subject/${tenant}/${subjectId}`;
-  const fromScreen = await getJson<Subject>(screenKey);
+  const fromScreen = await getJson<Subject>(`screening/subject/${st}/${si}`);
   if (fromScreen) return fromScreen;
 
   // Last resort: subject-profile (subset of Subject shape)
-  const profileKey = `hs-subjects/${tenant}/${subjectId}.json`;
-  const fromProfile = await getJson<Subject>(profileKey);
+  const fromProfile = await getJson<Subject>(`hs-subjects/${st}/${si}.json`);
   return fromProfile ?? null;
 }
 
