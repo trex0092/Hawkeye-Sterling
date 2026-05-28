@@ -17,9 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Cache TypeScript build output
         uses: actions/cache@v5
@@ -89,10 +98,18 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
-          audit: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev
 
       - name: Dependency vulnerability audit (root)
         # Fail on high/critical severity vulnerabilities. The previous
@@ -307,9 +324,18 @@ jobs:
     timeout-minutes: 15
     needs: [build]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root — required for web lint)
         run: npm run build
@@ -328,10 +354,9 @@ jobs:
         run: npm run lint
 
       - name: ESLint (web app + lib)
-        # Next.js 16 removed the `next lint` CLI subcommand. eslint-config-next v16
-        # also switched to flat config format, so .eslintrc.json extends no longer
-        # works. web/eslint.config.mjs loads eslint-config-next/core-web-vitals as a
-        # flat config array and enforces the same rules as before with --max-warnings=0.
+        # next lint was removed in Next.js 16; use eslint directly with the
+        # flat config at web/eslint.config.mjs. Covers app/, lib/, and components/
+        # with the same rules as the former next lint invocation.
         run: cd web && npm run lint
 
   nextjs-build:
@@ -341,9 +366,18 @@ jobs:
     timeout-minutes: 25
     needs: [build, security-audit, semgrep, k8s-validate, lint-web, gitleaks]
     steps:
-      - uses: ./.github/actions/setup-env
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          install-web: 'true'
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Compile TypeScript (root)
         run: npm run build

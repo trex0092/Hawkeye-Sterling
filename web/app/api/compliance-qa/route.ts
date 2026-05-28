@@ -108,7 +108,7 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
       });
     const answer = upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
     return { ok: true, answer, elapsedMs: Date.now() - startedAt };
-  } catch {
+  } catch (_err) {
     const aborted = ctl.signal.aborted;
     return {
       ok: false,
