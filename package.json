@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@netlify/blobs": "^10.0.0",
+    "@netlify/blobs": "^10.7.8",
     "exceljs": "^4.4.0"
   },
   "devDependencies": {
