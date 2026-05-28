@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v5
+        uses: actions/dependency-review-action@v4
         with:
           # Block on HIGH and CRITICAL severity CVEs in newly introduced packages.
           # MODERATE are tracked in security-audit npm audit but not blocking here
