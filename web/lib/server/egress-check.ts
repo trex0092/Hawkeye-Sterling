@@ -99,7 +99,13 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       verdict?: string;
       reason?: string;
     };
-    const verdict = (parsed.verdict ?? "held_review") as EgressVerdict;
+    const VALID_VERDICTS: ReadonlySet<EgressVerdict> = new Set([
+      "approved", "held_tipping_off", "held_incomplete", "held_review",
+    ]);
+    const rawVerdict = parsed.verdict ?? "held_review";
+    const verdict: EgressVerdict = VALID_VERDICTS.has(rawVerdict as EgressVerdict)
+      ? (rawVerdict as EgressVerdict)
+      : "held_review";
     const allowed = verdict === "approved";
     return { allowed, verdict, reason: parsed.reason };
   } catch {
@@ -119,8 +125,10 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
  *
  * Returns `{ allowed: true }` immediately when `EGRESS_GATE_ENABLED` is not
  * set to "true". When enabled: first performs a fast regex tipping-off scan,
- * then calls Claude Haiku for a broader compliance review. Fails open on any
- * LLM error so that MLRO operations are never blocked by a gate outage.
+ * then calls Claude Haiku for a broader compliance review. Fails CLOSED on any
+ * LLM error — artefact is held for manual MLRO review rather than auto-approved.
+ * Tipping-off (FDL 10/2025 Art.17) is a criminal offence; infrastructure
+ * failures must never silently disable this gate.
  *
  * @param narrative  The full text of the report / artefact being delivered.
  * @param reportType Human-readable type label (e.g. "STR filing", "Screening report").

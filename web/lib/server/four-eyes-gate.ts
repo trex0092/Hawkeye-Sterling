@@ -158,7 +158,7 @@ async function _recordApproval(
     };
   }
 
-  const approvalId = `appr_${Date.now()}_${randomBytes(4).toString("hex")}`;
+  const approvalId = `appr_${Date.now()}_${randomBytes(8).toString("hex")}`;
   const entry: ApprovalEntry = {
     approvalId,
     caseId: input.caseId,
@@ -286,7 +286,7 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
   const expiry: ApprovalEntry = {
-    approvalId: `expiry_${Date.now()}_${randomBytes(4).toString("hex")}`,
+    approvalId: `expiry_${Date.now()}_${randomBytes(8).toString("hex")}`,
     caseId,
     actor: expiredBy,
     decision: 'reject',

@@ -22,31 +22,42 @@ export const maxDuration = 10;
 
 const STARTED_AT = new Date().toISOString();
 
+// Prometheus exposition format label-value escaping per text format 0.0.4 spec.
+// Order matters: backslash first, then newline, then double-quote.
+function promEscapeLabelValue(v: string): string {
+  return v.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/"/g, '\\"');
+}
+
 function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string {
   const ts = Date.now();
   const lines: string[] = [];
+  // Track emitted family names to guarantee exactly one # HELP / # TYPE per family
+  // even if a dynamic counter/gauge name collides with a static metric name.
+  const emittedFamilies = new Set<string>();
 
-  function metric(
+  function emitFamily(
     type: "gauge" | "counter",
     name: string,
     help: string,
-    value: number,
-    labelStr = "",
+    samples: Array<{ labels: string; value: number }>,
   ): void {
+    if (emittedFamilies.has(name)) return;
+    emittedFamilies.add(name);
     lines.push(`# HELP ${name} ${help}`);
     lines.push(`# TYPE ${name} ${type}`);
-    lines.push(`${name}${labelStr} ${value} ${ts}`);
+    for (const { labels, value } of samples) {
+      lines.push(`${name}${labels} ${value} ${ts}`);
+    }
   }
 
-  metric("gauge", "hawkeye_uptime_seconds", "Server uptime in seconds since last cold start", uptimeMs / 1000);
-  metric("gauge", "hawkeye_redis_configured", "1 if Upstash Redis is configured, 0 otherwise", redisConfigured ? 1 : 0);
-  metric(
-    "gauge",
-    "hawkeye_build_info",
-    "Build metadata — always 1, use labels to read values",
-    1,
-    `{service="hawkeye-sterling",version="3.0.0",env="${(process.env.NODE_ENV ?? "development").replace(/"/g, '\\"')}"}`,
-  );
+  const nodeEnvSafe = promEscapeLabelValue(process.env["NODE_ENV"] ?? "development");
+
+  emitFamily("gauge", "hawkeye_uptime_seconds", "Server uptime in seconds since last cold start",
+    [{ labels: "", value: uptimeMs / 1000 }]);
+  emitFamily("gauge", "hawkeye_redis_configured", "1 if Upstash Redis is configured, 0 otherwise",
+    [{ labels: "", value: redisConfigured ? 1 : 0 }]);
+  emitFamily("gauge", "hawkeye_build_info", "Build metadata — always 1, use labels to read values",
+    [{ labels: `{service="hawkeye-sterling",version="3.0.0",env="${nodeEnvSafe}"}`, value: 1 }]);
 
   // Compliance counters from metrics-store (drift, bias, hallucination alerts, etc.)
   // Prometheus spec requires exactly one # HELP and # TYPE per metric family
@@ -60,11 +71,7 @@ function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string
     counterFamilies.get(name)!.push({ labels, value });
   }
   for (const [name, samples] of counterFamilies) {
-    lines.push(`# HELP ${name} Hawkeye compliance event counter`);
-    lines.push(`# TYPE ${name} counter`);
-    for (const { labels, value } of samples) {
-      lines.push(`${name}${labels} ${value} ${ts}`);
-    }
+    emitFamily("counter", name, "Hawkeye compliance event counter", samples);
   }
 
   // Compliance gauges (circuit breaker states, etc.)
@@ -77,11 +84,7 @@ function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string
     gaugeFamilies.get(name)!.push({ labels, value });
   }
   for (const [name, samples] of gaugeFamilies) {
-    lines.push(`# HELP ${name} Hawkeye compliance gauge`);
-    lines.push(`# TYPE ${name} gauge`);
-    for (const { labels, value } of samples) {
-      lines.push(`${name}${labels} ${value} ${ts}`);
-    }
+    emitFamily("gauge", name, "Hawkeye compliance gauge", samples);
   }
 
   return lines.join("\n") + "\n";

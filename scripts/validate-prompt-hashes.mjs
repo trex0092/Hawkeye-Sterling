@@ -55,7 +55,11 @@ function extractSystemPrompts(fileContent, filePath) {
 }
 
 function sha256slice(text) {
-  return createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 16);
+  // 32 hex chars = 128 bits — sufficient to make accidental collision negligible
+  // while remaining human-readable in diff output. Upgrading from the original
+  // 16-char (64-bit) truncation which approaches birthday-paradox collision risk
+  // at tens of thousands of distinct prompts.
+  return createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 32);
 }
 
 function walkDir(dir) {

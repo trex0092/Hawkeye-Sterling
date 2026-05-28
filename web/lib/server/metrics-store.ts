@@ -38,7 +38,7 @@ function labelKey(name: string, labels?: Record<string, string>): string {
   if (!labels || Object.keys(labels).length === 0) return name;
   const encoded = Object.entries(labels)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}="${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`)
+    .map(([k, v]) => `${k}="${v.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"')}"`)
     .join(',');
   return `${name}{${encoded}}`;
 }
