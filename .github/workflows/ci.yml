@@ -204,7 +204,7 @@ jobs:
               > /tmp/sbom-web.cdx.json
 
       - name: Upload SBOMs
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-${{ github.sha }}
           path: |
@@ -229,6 +229,16 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: false
           trivyignores: '.trivyignore'
+
+      - name: Ensure Trivy SARIF exists for upload
+        # Trivy-action creates trivy-fs.sarif; this step guards against edge cases
+        # (e.g. a previous step failure that skipped the Trivy action) so the
+        # upload-sarif step below never fails due to a missing file.
+        if: always()
+        run: |
+          if [ ! -f trivy-fs.sarif ]; then
+            printf '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","rules":[]}},"results":[]}]}\n' > trivy-fs.sarif
+          fi
 
       - name: Upload Trivy SARIF to Security tab
         uses: github/codeql-action/upload-sarif@v3
@@ -293,6 +303,11 @@ jobs:
             --sarif \
             --output semgrep-results.sarif \
             src/ web/app/ web/lib/ netlify/ && SEMGREP_RC=0 || SEMGREP_RC=$?
+          # Ensure SARIF file exists for upload step: exit 7 = registry auth failure,
+          # semgrep exits before writing any output file.
+          if [ ! -f semgrep-results.sarif ]; then
+            printf '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"Semgrep","rules":[]}},"results":[]}]}\n' > semgrep-results.sarif
+          fi
           if [ "$SEMGREP_RC" -eq 7 ]; then
             echo "WARNING: Semgrep registry configs unavailable (exit 7 — set SEMGREP_APP_TOKEN to enable full scan)"
             exit 0
