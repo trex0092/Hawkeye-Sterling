@@ -36,16 +36,6 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  eslint: {
-    // Previously set ignoreDuringBuilds: true because react-hooks/rules-of-hooks
-    // hit a stack overflow analysing MlroAdvisorPage. Re-probing 2026-05-18:
-    // `next lint` completes (warnings only, no stack overflow), full
-    // `next build` exits 0. Flag removed so lint errors fail the deploy.
-    // If the stack overflow returns, restore the flag and split
-    // web/app/mlro-advisor/page.tsx (1398+ lines).
-    ignoreDuringBuilds: false,
-  },
-
   // NOTE: Next.js `async headers()` was tried in PR #496 but @netlify/plugin-nextjs
   // 5.7.2 silently ignores it for SSR + Lambda responses (verified empirically:
   // headers landed on /manifest.webmanifest from netlify.toml, but NOT on /login

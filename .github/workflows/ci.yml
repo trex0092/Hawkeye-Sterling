@@ -328,12 +328,11 @@ jobs:
         run: npm run lint
 
       - name: ESLint (web app + lib)
-        # next lint covers app/, lib/, components/ using web/.eslintrc.json.
-        # This catches prefer-const, no-explicit-any, and other violations
-        # in API routes that the root eslint.config.js does not reach because
-        # it only targets src/ and netlify/. next lint exits non-zero on any
-        # warning or error (equivalent to --max-warnings=0).
-        run: cd web && npx next lint
+        # Next.js 16 removed the `next lint` CLI subcommand. eslint-config-next v16
+        # also switched to flat config format, so .eslintrc.json extends no longer
+        # works. web/eslint.config.mjs loads eslint-config-next/core-web-vitals as a
+        # flat config array and enforces the same rules as before with --max-warnings=0.
+        run: cd web && npm run lint
 
   nextjs-build:
     # Production build gate — only runs when ALL security and quality checks pass.
