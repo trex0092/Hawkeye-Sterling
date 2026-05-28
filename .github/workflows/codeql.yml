@@ -9,6 +9,9 @@ on:
     # Weekly scan on Monday at 02:00 UTC — catches new CVEs against existing code
     - cron: '0 2 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: CodeQL — javascript-typescript

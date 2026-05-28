@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Workflow-level least-privilege: all jobs read-only by default.
+# Jobs that need write access (e.g. security-events: write for SARIF upload)
+# declare their own permissions: block, which overrides this default.
+permissions:
+  contents: read
+
 # Cancel stale in-progress runs for the same branch/PR.
 # Never cancel runs on main — always let them complete for audit trail completeness.
 concurrency:
