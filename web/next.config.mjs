@@ -20,12 +20,17 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
-  // Limit static-page-generation workers to 1 to prevent EMFILE on Netlify
-  // build agents whose per-process fd hard limit is 4096. With 3 workers
-  // (os.cpus()-1 default) each worker opens dist/ trace files concurrently,
-  // exhausting the fd limit during manifest writes. Verified 2026-05-28.
+  // EMFILE mitigation for Netlify build agents (fd hard limit ~4096).
+  // cpus:1 — serialises page generation to 1 worker (default = os.cpus()-1 = 3).
+  // workerThreads:false — switches workers from worker_threads (which SHARE the
+  // parent process fd table) to child_process (isolated fd tables). With
+  // worker_threads, any fds leaked across 133 page generations accumulate in the
+  // parent's table, exhausting the limit before manifest writes. child_process
+  // workers are reaped by the OS on exit, releasing all their fds regardless of
+  // leaks, so the parent always has headroom to write pages-manifest.json.
   experimental: {
     cpus: 1,
+    workerThreads: false,
   },
 
   // Don't disclose the framework + version to attackers. Removes the default
