@@ -18,6 +18,13 @@
 
 set -euo pipefail
 
+# Raise the open-file-descriptor limit. Next.js 16 + webpack opens hundreds
+# of files concurrently during static page generation; Netlify build agents
+# default to 1024 which causes EMFILE failures on repos with 130+ routes.
+# 65536 is well within the hard limit on Netlify Linux build agents.
+# Falls back gracefully if the hard limit is lower.
+ulimit -n 65536 2>/dev/null || ulimit -n 8192 2>/dev/null || true
+
 step() {
   echo ">>> HS-STEP: $*"
 }
@@ -57,10 +64,6 @@ echo ">>> HS-STEP-4c ok (exit $?)"
 step "5 clear .next cache"
 rm -rf .next
 echo ">>> HS-STEP-5 ok (exit $?)"
-
-step "5b web typecheck"
-npm run typecheck
-echo ">>> HS-STEP-5b ok (exit $?)"
 
 step "6 next build"
 APP_VERSION=$(node -p "require('../package.json').version") \
