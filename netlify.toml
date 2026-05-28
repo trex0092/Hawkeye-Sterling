@@ -57,10 +57,7 @@
   UAE_LTL_SEED_PATH = "data/seeds/uae_ltl_seed.json"
 
 [[plugins]]
-  # Pinned to 5.15.11 — matches the version in package-lock.json.
-  # Without an explicit version, Netlify may resolve a newer release that
-  # can break the build when the plugin's Next.js processing changes.
-  package = "@netlify/plugin-nextjs@5.15.11"
+  package = "@netlify/plugin-nextjs"
 
 [functions]
   # Look for the scheduled Netlify Function(s) at the repo root.
