@@ -7,6 +7,7 @@
 //
 // Storage layout: eocn-sla/<tenantId>/<id>.json
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export type EocnSlaType =
@@ -69,7 +70,7 @@ function eocnSlaKey(tenantId: string, id: string): string {
 function generateEocnSlaId(): string {
   const now = new Date();
   const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
-  const rand = Math.random().toString(36).slice(2, 6);
+  const rand = randomBytes(2).toString("hex");
   return `ESLA-${stamp}-${rand}`;
 }
 

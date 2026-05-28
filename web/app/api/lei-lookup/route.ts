@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
 
@@ -706,7 +707,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         tool: "lei_lookup",
         message: "LEI lookup failed",
         retryAfterSeconds: null,
-        requestId: Math.random().toString(36).slice(2, 10),
+        requestId: randomBytes(4).toString("hex"),
         latencyMs: Date.now() - _handlerStart,
       },
       { status: 500, headers: { ...CORS } },

@@ -6,6 +6,7 @@
 // Regulatory basis: FATF Recommendation 35, CBUAE Governance Guidelines,
 // UAE Federal Decree-Law 10/2025 Article 19
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface CoiDeclaration {
@@ -53,7 +54,7 @@ export function coiKey(tenantId: string, id: string): string {
 function generateCoiId(): string {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const suffix = randomBytes(2).toString("hex").toUpperCase();
   return `COI-${yyyymmdd}-${suffix}`;
 }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson } from "@/lib/server/store";
@@ -183,7 +184,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const now = new Date().toISOString();
   const record: SowRecord = {
-    id: `sow-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `sow-${Date.now()}-${randomBytes(3).toString("hex")}`,
     subjectId: body.subjectId.trim(),
     sourceType: body.sourceType,
     estimatedAmountAed: body.estimatedAmountAed,

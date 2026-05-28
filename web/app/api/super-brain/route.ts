@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -177,7 +178,7 @@ const BUILD_SHA =
   "local";
 
 function makeRunId(): string {
-  return `sb_${Math.random().toString(16).slice(2, 10)}`;
+  return `sb_${randomBytes(4).toString("hex")}`;
 }
 
 // ── Result cache (cost reduction) ────────────────────────────────────────────

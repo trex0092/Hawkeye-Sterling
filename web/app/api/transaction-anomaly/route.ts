@@ -17,6 +17,7 @@
 //   · correspondent_layering  — >3 correspondent bank hops (FATF R.13)
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { setJson } from "@/lib/server/store";
@@ -860,7 +861,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // cron can pick them up, run typology matching, and open cases.
   if (result.tier === "flag" || result.tier === "hold") {
     const tenant = tenantIdFromGate(gate);
-    const flagId = `txf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const flagId = `txf-${Date.now()}-${randomBytes(4).toString("hex")}`;
     const record: TxnFlagRecord = {
       flagId,
       tenantId: tenant,

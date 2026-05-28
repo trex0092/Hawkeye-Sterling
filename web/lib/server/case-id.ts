@@ -3,7 +3,9 @@
 // Example: CASE-20260517-a3f9
 //
 // The random 4-hex suffix avoids counter collisions across Lambda instances
-// that share the same UTC date. No external dependencies.
+// that share the same UTC date.
+
+import { randomBytes } from "node:crypto";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -25,19 +27,7 @@ function utcDateStamp(): string {
 }
 
 function randomHex4(): string {
-  if (
-    typeof globalThis !== "undefined" &&
-    globalThis.crypto &&
-    typeof globalThis.crypto.getRandomValues === "function"
-  ) {
-    const buf = new Uint16Array(1);
-    globalThis.crypto.getRandomValues(buf);
-    return ((buf[0] ?? 0) & 0xffff).toString(16).padStart(4, "0");
-  }
-  // Node.js crypto fallback — always available in the serverless runtime.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { randomBytes } = require("node:crypto") as { randomBytes: (_n: number) => Buffer };
-  return randomBytes(2).readUInt16LE(0).toString(16).padStart(4, "0");
+  return randomBytes(2).toString("hex");
 }
 
 // ---------------------------------------------------------------------------

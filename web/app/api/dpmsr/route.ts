@@ -31,6 +31,7 @@
 //   }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, listKeys as _listKeys } from "@/lib/server/store";
@@ -131,7 +132,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const thresholdType: "single" | "cumulative" | undefined = amountAed >= THRESHOLD_AED_CUMULATIVE ? "cumulative"
     : amountAed >= THRESHOLD_AED_SINGLE ? "single" : undefined;
 
-  const id = `DPMSR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const id = `DPMSR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
   const record: DPMSRRecord = {
     id,
     reportType: body.reportType ?? "threshold_transaction",

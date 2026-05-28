@@ -6,6 +6,7 @@
 //
 // Regulatory basis: FDL 10/2025 Art.18, CBUAE Outsourcing Guidance, FATF R.2
 
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface OutsourcingArrangement {
@@ -66,7 +67,7 @@ function addYears(dateStr: string, years: number): string {
 function generateOsrId(): string {
   const now = new Date();
   const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const suffix = randomBytes(2).toString("hex").toUpperCase();
   return `OSR-${yyyymmdd}-${suffix}`;
 }
 
