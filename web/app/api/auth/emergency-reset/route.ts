@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
@@ -28,9 +28,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!expectedSecret) {
     return NextResponse.json({ ok: false, error: "LUISA_INITIAL_PASSWORD is not configured in Netlify env vars." }, { status: 503 });
   }
-  const aBuf = new Uint8Array(Buffer.from(expectedSecret, "utf8"));
-  const bBuf = new Uint8Array(Buffer.from(secret, "utf8"));
-  if (!secret || secret.length !== expectedSecret.length || !timingSafeEqual(aBuf, bBuf)) {
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expectedSecret).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(secret).digest();
+  if (!secret || !timingSafeEqual(ha, hb)) {
     return NextResponse.json({ ok: false, error: "Invalid secret." }, { status: 403 });
   }
   if (!newPassword || newPassword.length < 8) {

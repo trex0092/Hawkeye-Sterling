@@ -28,7 +28,7 @@ import {
   bucketKey,
   getBillingStore,
 } from "@/lib/server/billing";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 // Fail-closed: ADMIN_TOKEN must be set and must match the bearer token.
 function requireAdminToken(req: Request): NextResponse | null {
@@ -41,10 +41,10 @@ function requireAdminToken(req: Request): NextResponse | null {
   }
   const auth = req.headers.get("authorization") ?? "";
   const bearer = auth.startsWith("Bearer ") ? auth.slice(7) : auth;
-  const enc = new TextEncoder();
-  const a = enc.encode(adminToken);
-  const b = enc.encode(bearer);
-  const match = a.byteLength === b.byteLength && timingSafeEqual(a, b);
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(adminToken).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(bearer).digest();
+  const match = timingSafeEqual(ha, hb);
   if (!match) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401, headers: {} });
   }
