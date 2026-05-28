@@ -1,4 +1,4 @@
-// Next.js edge middleware — three responsibilities:
+// Next.js proxy (edge) — three responsibilities:
 // 1. Session guard: redirect unauthenticated users to /login.
 // 2. API token injection: for same-origin API calls, inject the server-side
 //    ADMIN_TOKEN so it is never shipped to the browser JS bundle.
@@ -207,7 +207,7 @@ function corsResponse(): NextResponse {
   return res;
 }
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const requestId = resolveRequestId(req);
 
