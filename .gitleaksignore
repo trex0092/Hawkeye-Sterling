@@ -1,0 +1,49 @@
+# Gitleaks false-positive allowlist.
+# Each line is a fingerprint: <commit-sha>:<file>:<rule-id>:<line>
+# All entries below are confirmed false positives — see justifications.
+
+# generic-api-key — cron schedule key names ("sanctions-daily-0830"),
+# localStorage key constants ("hawkeye.subject-details.v1", "hawkeye.compliance.consent.v1"),
+# and JSX key props. None are credentials.
+bc4b77eb1e6734ba31cbd91dcf412e92c307dcf8:web/app/api/functions/route.ts:generic-api-key:17
+bc4b77eb1e6734ba31cbd91dcf412e92c307dcf8:web/app/api/functions/route.ts:generic-api-key:18
+db1f5837fc3172f47777a0bb0c276f23d667c806:netlify/functions/sanctions-ingest.mts:generic-api-key:89
+db1f5837fc3172f47777a0bb0c276f23d667c806:src/ingestion/sources/eu-fsf.ts:generic-api-key:2
+db1f5837fc3172f47777a0bb0c276f23d667c806:src/ingestion/sources/eu-fsf.ts:generic-api-key:9
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/app/responsible-ai/page.tsx:generic-api-key:269
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/app/responsible-sourcing/page.tsx:generic-api-key:15
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/app/vendor-dd/page.tsx:generic-api-key:30
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/components/layout/ComplianceConsentGate.tsx:generic-api-key:14
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/lib/data/subject-store.ts:generic-api-key:14
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:netlify/functions/sanctions-ingest.mts:generic-api-key:89
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:src/ingestion/sources/eu-fsf.ts:generic-api-key:2
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:src/ingestion/sources/eu-fsf.ts:generic-api-key:9
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/app/responsible-ai/page.tsx:generic-api-key:266
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/app/responsible-sourcing/page.tsx:generic-api-key:15
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/app/vendor-dd/page.tsx:generic-api-key:30
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/components/layout/ComplianceConsentGate.tsx:generic-api-key:14
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/lib/data/subject-store.ts:generic-api-key:14
+
+# asana-client-id — Asana GID values (ASANA_WORKSPACE_GID, ASANA_PROJECT_GID,
+# ASANA_ASSIGNEE_GID). Asana GIDs are public object identifiers, not credentials.
+# They identify workspaces/projects/users and appear in env-var documentation.
+db1f5837fc3172f47777a0bb0c276f23d667c806:.env.example:asana-client-id:36
+db1f5837fc3172f47777a0bb0c276f23d667c806:.env.example:asana-client-id:41
+db1f5837fc3172f47777a0bb0c276f23d667c806:ENV_VARS_REQUIRED.md:asana-client-id:152
+db1f5837fc3172f47777a0bb0c276f23d667c806:ENV_VARS_REQUIRED.md:asana-client-id:153
+db1f5837fc3172f47777a0bb0c276f23d667c806:ENV_VARS_REQUIRED.md:asana-client-id:154
+db1f5837fc3172f47777a0bb0c276f23d667c806:PLATFORM_AUDIT_REPORT.md:asana-client-id:1073
+db1f5837fc3172f47777a0bb0c276f23d667c806:docs/scripts/smoke-asana.ps1:asana-client-id:7
+db1f5837fc3172f47777a0bb0c276f23d667c806:scripts/smoke-asana.sh:asana-client-id:12
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/app/api/tfs-alerts/create-task/route.ts:asana-client-id:12
+db1f5837fc3172f47777a0bb0c276f23d667c806:web/app/api/tfs-alerts/create-task/route.ts:asana-client-id:13
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:.env.example:asana-client-id:36
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:.env.example:asana-client-id:41
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:ENV_VARS_REQUIRED.md:asana-client-id:152
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:ENV_VARS_REQUIRED.md:asana-client-id:153
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:ENV_VARS_REQUIRED.md:asana-client-id:154
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:PLATFORM_AUDIT_REPORT.md:asana-client-id:1073
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:docs/scripts/smoke-asana.ps1:asana-client-id:7
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:scripts/smoke-asana.sh:asana-client-id:12
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/app/api/tfs-alerts/create-task/route.ts:asana-client-id:12
+ddf7f4a6d81fc1ae0dd741606732b3943d36d392:web/app/api/tfs-alerts/create-task/route.ts:asana-client-id:13
