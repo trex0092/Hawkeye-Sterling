@@ -53,7 +53,7 @@ const nextConfig = {
   // 5.7.2 silently ignores it for SSR + Lambda responses (verified empirically:
   // headers landed on /manifest.webmanifest from netlify.toml, but NOT on /login
   // or /api/health). Security headers for dynamic surfaces are now set in
-  // web/middleware.ts via applySecurityHeaders().
+  // web/proxy.ts via applySecurityHeaders().
 
   async redirects() {
     return [
@@ -69,7 +69,7 @@ const nextConfig = {
   // entries. Verified empirically that @netlify/plugin-nextjs does not
   // honour Next rewrites for dot-prefix paths in production — /.well-known/
   // calls returned 404 while the underlying /api/well-known/ routes worked.
-  // The rewrite is now done in web/middleware.ts (early-return NextResponse
+  // The rewrite is now done in web/proxy.ts (early-return NextResponse
   // .rewrite) which the plugin DOES honour.
 
   // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
