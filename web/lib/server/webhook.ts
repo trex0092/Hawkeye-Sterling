@@ -6,8 +6,11 @@ const RETRY_DELAYS_MS = [2_000, 4_000, 8_000] as const;
 
 // Private/loopback IP ranges and cloud metadata hostnames that must never
 // receive outbound webhook traffic (SSRF prevention).
+// Covers RFC 1918, CGNAT (100.64.0.0/10), Azure IMDS (168.63.129.x),
+// IPv6 ULA (fc00::/7), IPv6 link-local (fe80::/10), IPv4-mapped (::ffff:).
 const BLOCKED_HOSTS = /^(localhost|.*\.local|metadata\.google\.internal)$/i;
-const PRIVATE_IP = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|::1$|0\.0\.0\.0)/;
+const PRIVATE_IP =
+  /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|168\.63\.129\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|0\.0\.0\.0|::1$|::ffff:|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f])/i;
 
 export function assertSafeWebhookUrl(raw: string): void {
   let u: URL;
