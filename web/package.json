@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app/ lib/ --max-warnings=0",
     "gen:next-env": "printf '/// <reference types=\"next\" />\\n/// <reference types=\"next/image-types/global\" />\\n' > next-env.d.ts",
     "typecheck": "npm run gen:next-env && tsc --noEmit",
     "test:reports": "tsx scripts/test-compliance-report.ts",

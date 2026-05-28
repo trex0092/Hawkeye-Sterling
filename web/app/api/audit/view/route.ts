@@ -302,7 +302,7 @@ async function handleGet(req: Request): Promise<NextResponse | Response> {
         secretConfigured: secretPresent,
         invalidCount,
       });
-      return new Response(pdfBytes, {
+      return new Response(Buffer.from(pdfBytes), {
         status: 200,
         headers: {
           ...gateHeaders,
