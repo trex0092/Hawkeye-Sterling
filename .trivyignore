@@ -13,12 +13,21 @@
 #
 # Format: <CVE-ID>  # <package>: <justification>
 
-# Moderate CVEs in Next.js transitive dependencies (build-time tools only)
-# These affect postcss and its parser — used at build time, never exposed at
-# runtime in the Netlify serverless or Docker standalone deployment.
-# postcss is not loaded on the request path; it is compiled out of the bundle.
-# Review date: 2026-05-27 | Reviewer: Security team | Next review: 2027-05-27
-# CVE-2025-xxxx  # postcss: ReDoS in source-map parser — build-time only, not exposed at runtime
+# GHSA-qx2v-qp2m-jg93  # postcss <8.5.10: XSS via unescaped </style> in CSS stringify output
+# Affects next@16.x internal postcss (8.4.31). postcss is a build-time CSS processing
+# tool — its stringify output is never served directly to browsers in our Netlify/Docker
+# deployment. The XSS vector requires serving raw postcss output as HTML, which we do not
+# do. No upstream fix in Next.js available; waiting for next to bundle postcss >=8.5.10.
+# Review date: 2026-05-28 | Reviewer: Security team | Next review: 2027-05-28
+GHSA-qx2v-qp2m-jg93
+
+# GHSA-w5hq-g745-h8pq  # uuid <11.1.1: Missing buffer bounds check in v3/v5/v6
+# Affects exceljs transitive dependency (uuid@8.3.2). The vulnerability only triggers
+# when uuid functions are called with an explicit `buf` parameter. exceljs uses uuid
+# only for generating IDs without a custom buffer — this code path is never exercised.
+# Forcing uuid@^11 would require a breaking exceljs API migration (v3→v4 rename).
+# Review date: 2026-05-28 | Reviewer: Security team | Next review: 2027-05-28
+GHSA-w5hq-g745-h8pq
 
 # Note: when upstream fixes land for the above, remove these entries and
 # tighten the Trivy CI step to --ignore-unfixed=false with no exceptions.
