@@ -22,7 +22,7 @@ jobs:
           install-web: 'true'
 
       - name: Cache TypeScript build output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: dist/
           key: tsc-${{ runner.os }}-${{ hashFiles('src/**/*.ts', 'tsconfig.json', 'tsconfig*.json') }}
@@ -369,7 +369,7 @@ jobs:
         run: rm -rf web/.next
 
       - name: Cache Next.js build output
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: web/.next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}-${{ hashFiles('web/**/*.ts', 'web/**/*.tsx', 'web/**/*.js') }}
