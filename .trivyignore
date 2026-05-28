@@ -13,12 +13,24 @@
 #
 # Format: <CVE-ID>  # <package>: <justification>
 
-# Moderate CVEs in Next.js transitive dependencies (build-time tools only)
-# These affect postcss and its parser — used at build time, never exposed at
-# runtime in the Netlify serverless or Docker standalone deployment.
-# postcss is not loaded on the request path; it is compiled out of the bundle.
-# Review date: 2026-05-27 | Reviewer: Security team | Next review: 2027-05-27
-# CVE-2025-xxxx  # postcss: ReDoS in source-map parser — build-time only, not exposed at runtime
+# GHSA-w5hq-g745-h8pq  # uuid 8.3.2 (nested in exceljs 4.4.0):
+# Missing buffer bounds check in uuid.v3/v4/v5/v6 when the optional `buf`
+# argument is provided. The `buf` parameter is only passed by calling code
+# (never from user input) and in Node.js a too-small Buffer throws a RangeError
+# rather than causing memory corruption. exceljs uses uuid internally for
+# spreadsheet cell identity — the `buf` argument is never used. Fix requires
+# exceljs@3.4.0 downgrade (semver major — breaks XLSX streaming API).
+# Review date: 2026-05-28 | Reviewer: Security team | Next review: 2027-05-28
+GHSA-w5hq-g745-h8pq
+
+# GHSA-qx2v-qp2m-jg93  # postcss (nested in next.js 16.x):
+# PostCSS XSS via unescaped </style> in CSS stringify output. Affects
+# next.js 9.3.4-canary.0 through 16.3.0-canary.5 due to a bundled postcss
+# < 8.5.10. postcss is a build-time CSS processor — it is never exposed at
+# runtime in Netlify serverless or Docker standalone deployments; CSS is
+# compiled out of the request path. No stable Next.js 16.x fix available yet.
+# Review date: 2026-05-28 | Reviewer: Security team | Next review: 2027-05-28
+GHSA-qx2v-qp2m-jg93
 
 # Note: when upstream fixes land for the above, remove these entries and
 # tighten the Trivy CI step to --ignore-unfixed=false with no exceptions.
