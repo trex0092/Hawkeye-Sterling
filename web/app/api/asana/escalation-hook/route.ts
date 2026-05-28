@@ -104,13 +104,12 @@ async function verifySignature(body: string, signature: string, secret: string):
   try {
     const { createHmac, timingSafeEqual } = await import("node:crypto");
     const expected = createHmac("sha256", secret).update(body, "utf8").digest("hex");
-    if (expected.length !== signature.length) return false;
-    // Cast Buffer → Uint8Array view explicitly — Node Buffer extends Uint8Array
-    // at runtime, but TS 5.7+ strict typings require the explicit view to call
-    // timingSafeEqual without a type error.
-    const a = new Uint8Array(Buffer.from(expected, "utf8"));
-    const b = new Uint8Array(Buffer.from(signature, "utf8"));
-    return timingSafeEqual(a, b);
+    // Normalise both values to fixed-length HMAC digests — eliminates the
+    // early-exit length check and makes comparison unconditionally constant-time.
+    const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+    const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+    const hb = createHmac("sha256", COMPARE_KEY).update(signature).digest();
+    return timingSafeEqual(ha, hb);
   } catch {
     return false;
   }

@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual, randomBytes } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypto";
+const RECOVERY_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -205,15 +206,9 @@ export async function POST(req: Request) {
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
       (() => {
-        const enc = new TextEncoder();
-        const a = enc.encode(password);
-        const b = enc.encode(recoveryPassword.trim());
-        // Always call timingSafeEqual (same-length padded buffers) before
-        // checking length equality to prevent a password-length timing oracle.
-        const maxLen = Math.max(a.length, b.length);
-        const ap = new Uint8Array(maxLen); ap.set(a);
-        const bp = new Uint8Array(maxLen); bp.set(b);
-        return timingSafeEqual(ap, bp) && a.length === b.length;
+        const ha = createHmac("sha256", RECOVERY_COMPARE_KEY).update(password).digest();
+        const hb = createHmac("sha256", RECOVERY_COMPARE_KEY).update(recoveryPassword.trim()).digest();
+        return timingSafeEqual(ha, hb);
       })()
     ) {
       const newSalt = generateSalt();

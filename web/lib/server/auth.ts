@@ -100,22 +100,19 @@ export function computeRequestFingerprint(ip: string, userAgent: string): string
     .slice(0, 16);
 }
 
+const SESSION_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+
 export function verifySession(token: string): SessionPayload | null {
   const dot = token.lastIndexOf(".");
   if (dot === -1) return null;
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
   const expected = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
-  // constant-time compare — pad to avoid length-based timing side-channel
-  const expBuf = Buffer.from(expected, "utf8");
-  const sigRaw = Buffer.from(sig, "utf8");
-  const sigBuf = sigRaw.length === expBuf.length
-    ? sigRaw
-    : Buffer.concat([
-        new Uint8Array(sigRaw.buffer, sigRaw.byteOffset, Math.min(sigRaw.length, expBuf.length)),
-        new Uint8Array(Math.max(0, expBuf.length - sigRaw.length)),
-      ]);
-  if (!timingSafeEqual(new Uint8Array(expBuf), new Uint8Array(sigBuf)) || sigRaw.length !== expBuf.length) return null;
+  // Normalise both values to fixed-length HMAC digests before constant-time
+  // comparison — eliminates the padded-buffer length oracle entirely.
+  const ha = createHmac("sha256", SESSION_COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", SESSION_COMPARE_KEY).update(sig).digest();
+  if (!timingSafeEqual(ha, hb)) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as SessionPayload;
     // RFC 7519 §4.1.4: token is valid only if exp is strictly after now.
