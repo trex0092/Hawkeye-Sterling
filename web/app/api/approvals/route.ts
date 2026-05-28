@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { getJson, setJson } from "@/lib/server/store";
 import { enforce } from "@/lib/server/enforce";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 

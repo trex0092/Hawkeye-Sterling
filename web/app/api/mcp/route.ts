@@ -304,13 +304,15 @@ async function getSanctionsHealthMemoised(): Promise<Awaited<ReturnType<typeof g
 function deriveSessionId(req: Request, explicit?: string): string {
   if (explicit) return explicit;
   const xff = req.headers.get("x-forwarded-for") ?? "";
-  const first = xff.split(",")[0]?.trim() ?? "";
-  if (!first) return "anonymous";
+  // Use the LAST value (proxy-appended) — the first is attacker-controlled.
+  const segments = xff.split(",").map((s) => s.trim()).filter(Boolean);
+  const ip = segments[segments.length - 1] ?? "";
+  if (!ip) return "anonymous";
   // IPv4: 1.2.3.4 → 1.2.3 ; IPv6: keep first 4 groups
-  if (first.includes(":")) {
-    return first.split(":").slice(0, 4).join(":") || "anonymous";
+  if (ip.includes(":")) {
+    return ip.split(":").slice(0, 4).join(":") || "anonymous";
   }
-  const parts = first.split(".");
+  const parts = ip.split(".");
   return parts.length >= 3 ? parts.slice(0, 3).join(".") : "anonymous";
 }
 

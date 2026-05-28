@@ -21,7 +21,7 @@
 // compliance-report and audit-certificate flows already use. Verifiers
 // fetch the public key from /.well-known/hawkeye-pubkey.pem.
 
-import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "crypto";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "node:crypto";
 
 export interface RegulatorTokenClaims {
   iss: "hawkeye-sterling";

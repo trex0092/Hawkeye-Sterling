@@ -15,7 +15,7 @@
 //   openssl pkeyutl -verify -pubin -inkey hawkeye-pubkey.pem \
 //     -sigfile <certificate>.sig -in <certificate>.snapshot
 
-import { createHash, createHmac, randomBytes, createPrivateKey, type KeyObject } from "crypto";
+import { createHash, createHmac, randomBytes, createPrivateKey, type KeyObject } from "node:crypto";
 
 export interface AuditSnapshotInput {
   /** Stable case / report identifier. Becomes part of the signed payload. */

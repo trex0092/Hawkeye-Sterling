@@ -13,7 +13,7 @@
  *   - Deterministic: same value in same request → same token (safe dedup)
  */
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

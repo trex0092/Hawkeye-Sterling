@@ -16,7 +16,7 @@
 // Auth: withGuard (API key required)
 
 import { NextResponse } from "next/server";
-import { createHash, createHmac } from "crypto";
+import { createHash, createHmac } from "node:crypto";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getChainSecret } from "@/lib/server/audit-chain";
 

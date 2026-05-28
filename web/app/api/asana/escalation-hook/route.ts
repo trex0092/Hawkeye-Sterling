@@ -102,7 +102,7 @@ async function loadSecret(): Promise<string | null> {
 
 async function verifySignature(body: string, signature: string, secret: string): Promise<boolean> {
   try {
-    const { createHmac, timingSafeEqual } = await import("crypto");
+    const { createHmac, timingSafeEqual } = await import("node:crypto");
     const expected = createHmac("sha256", secret).update(body, "utf8").digest("hex");
     if (expected.length !== signature.length) return false;
     // Cast Buffer → Uint8Array view explicitly — Node Buffer extends Uint8Array

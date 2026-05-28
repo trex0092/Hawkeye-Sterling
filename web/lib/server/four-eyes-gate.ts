@@ -15,7 +15,7 @@
 // regulator JWT before invoking this gate.
 
 import { getJson, setJson, listKeys, del } from "@/lib/server/store";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
 // Hash actor for OTel span attributes — actor may be an email/GID (PII).

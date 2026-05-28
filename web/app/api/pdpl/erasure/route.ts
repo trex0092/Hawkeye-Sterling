@@ -15,7 +15,7 @@ export const maxDuration = 15;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getJson, setJson, del, listKeys } from '@/lib/server/store';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { enforce } from '@/lib/server/enforce';
 import { adminAuth } from '@/lib/server/admin-auth';
 import { writeAuditChainEntry } from '@/lib/server/audit-chain';

@@ -26,7 +26,7 @@
 // Auth: ADMIN_TOKEN (operator must verify identity OOB before invoking).
 
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
