@@ -68,7 +68,6 @@ vi.mock('@/lib/server/audit-chain', () => ({
 // ─── ScreeningAuditWriter spy ─────────────────────────────────────────────
 // Must use a regular function (not arrow) so `new ScreeningAuditWriter()` works.
 vi.mock('@/lib/server/screening-audit', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ScreeningAuditWriter: vi.fn(function(this: unknown) {
     return { write: screeningAuditWriteMock };
   }),
