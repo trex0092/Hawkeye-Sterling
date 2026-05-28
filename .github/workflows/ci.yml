@@ -181,20 +181,26 @@ jobs:
       - name: Generate SBOM (root)
         # Produces a CycloneDX SBOM for SOC 2 Type II / ISO 27001 evidence.
         # npm 10.x ships `npm sbom` natively; no external tool needed.
-        # Primary: --omit dev (runtime deps only). Fallback: include dev deps if
-        # peer-dep conflict prevents --omit dev (react-debounce-input/React 19).
+        # --legacy-peer-deps: ESLint 10 / React 19 break peer-dep validation in npm
+        # sbom; the flag preserves npm 6-era resolution semantics so sbom succeeds
+        # despite eslint-plugin-* expecting ≤9 and react-debounce-input expecting ≤18.
+        # Primary: --omit dev (runtime deps only). Fallback: include dev deps.
         # Both outputs are real SBOMs. If both fail, CI fails — no fake fallback.
         run: |
           npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
+            --legacy-peer-deps \
             > /tmp/sbom-root.cdx.json \
             || npm sbom --sbom-format cyclonedx --sbom-type library \
+              --legacy-peer-deps \
               > /tmp/sbom-root.cdx.json
 
       - name: Generate SBOM (web)
         run: |
           cd web && npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
+            --legacy-peer-deps \
             > /tmp/sbom-web.cdx.json \
             || npm sbom --sbom-format cyclonedx --sbom-type library \
+              --legacy-peer-deps \
               > /tmp/sbom-web.cdx.json
 
       - name: Upload SBOMs
