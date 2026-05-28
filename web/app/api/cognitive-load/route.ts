@@ -7,7 +7,12 @@ import { detectAlertFatigue, type DisposalEvent } from '../../../../src/brain/co
 
 export const maxDuration = 10;
 
-const eventsKey = (tenantId: string, actorId: string) => `hs-cognitive-load/${tenantId}/${actorId}/events.json`;
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
+const eventsKey = (tenantId: string, actorId: string) =>
+  `hs-cognitive-load/${safeSegment(tenantId)}/${safeSegment(actorId)}/events.json`;
 
 export async function GET(req: Request) {
   const gate = await enforce(req);

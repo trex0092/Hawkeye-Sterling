@@ -34,11 +34,16 @@ async function getUsersWithRoles(): Promise<
     }));
 }
 
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+
 async function assignRole(userId: string, role: UserRole): Promise<{ ok: boolean; error?: string }> {
-  const record = await getJson<ApiKeyRecord>(`keys/${userId}`);
+  const key = `keys/${safeSegment(userId)}`;
+  const record = await getJson<ApiKeyRecord>(key);
   if (!record) return { ok: false, error: "user not found" };
   const updated: ApiKeyRecord = { ...record, role };
-  await setJson(`keys/${userId}`, updated);
+  await setJson(key, updated);
   return { ok: true };
 }
 
