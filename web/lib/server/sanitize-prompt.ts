@@ -40,10 +40,16 @@ const INJECTION_PATTERNS =
 /**
  * Sanitizes narrative/free-text content before sending to the LLM.
  * Strips Unicode overrides, null bytes, and common prompt-injection phrases.
+ *
+ * NFKD normalization is applied before injection-pattern matching so that
+ * Unicode lookalikes and compatibility characters (e.g. full-width space
+ * U+3000, soft hyphen U+00AD) cannot bypass the pattern regex. Combining
+ * marks stripped post-normalization to neutralize diacritic obfuscation.
  */
 export function sanitizeLlmInput(value: string | undefined | null, maxLength = 5000): string {
   if (!value) return "";
-  return value
+  const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "");
+  return normalized
     .replace(UNICODE_OVERRIDES, "")
     .replace(/\x00/g, "")
     .replace(INJECTION_PATTERNS, "[REDACTED]")

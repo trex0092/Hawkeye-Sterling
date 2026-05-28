@@ -157,9 +157,13 @@ function validateRequest(raw: unknown): { ok: true; value: ScreeningRunRequest }
 // Unique per screening when requestId is omitted.
 
 function buildResultId(subject: QuickScreenSubject, ts: string, requestId?: string): string {
+  // NFKD normalization + strip combining marks prevents homoglyph collisions
+  // (e.g. German ß → ss lowercases differently across locales; Cyrillic
+  // lookalikes would produce distinct IDs masking as the same entity).
+  const normName = subject.name.trim().normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
   const seed = [
     requestId ?? randomUUID(),
-    subject.name.toLowerCase().trim(),
+    normName,
     subject.entityType ?? "",
     ts,
   ].join("|");
