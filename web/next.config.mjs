@@ -20,6 +20,14 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // Limit static-page-generation workers to 1 to prevent EMFILE on Netlify
+  // build agents whose per-process fd hard limit is 4096. With 3 workers
+  // (os.cpus()-1 default) each worker opens dist/ trace files concurrently,
+  // exhausting the fd limit during manifest writes. Verified 2026-05-28.
+  experimental: {
+    cpus: 1,
+  },
+
   // Don't disclose the framework + version to attackers. Removes the default
   // `x-powered-by: Next.js` response header. Zero functional impact.
   poweredByHeader: false,

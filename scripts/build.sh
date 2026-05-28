@@ -21,9 +21,12 @@ set -euo pipefail
 # Raise the open-file-descriptor limit. Next.js 16 + webpack opens hundreds
 # of files concurrently during static page generation; Netlify build agents
 # default to 1024 which causes EMFILE failures on repos with 130+ routes.
-# 65536 is well within the hard limit on Netlify Linux build agents.
-# Falls back gracefully if the hard limit is lower.
-ulimit -n 65536 2>/dev/null || ulimit -n 8192 2>/dev/null || true
+# 65535 is the standard Linux per-user ulimit hard limit (RLIMIT_NOFILE_MAX
+# on most distros). Falls back to lower values if the hard limit is stricter
+# (container-constrained environments may lock the hard limit at 4096).
+# experimental.cpus=1 in next.config.mjs further reduces concurrent fd usage.
+ulimit -n 65535 2>/dev/null || ulimit -n 8192 2>/dev/null || ulimit -n 4096 2>/dev/null || true
+echo ">>> HS-ULIMIT: open-files limit = $(ulimit -n)"
 
 step() {
   echo ">>> HS-STEP: $*"
