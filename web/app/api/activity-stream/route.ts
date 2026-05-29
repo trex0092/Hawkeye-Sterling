@@ -79,7 +79,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     kind,
     text: text.slice(0, 500),
   };
-  await setJson(`engine-events/${at}-${ev.id}`, ev);
+  try {
+    await setJson(`engine-events/${at}-${ev.id}`, ev);
+  } catch (err) {
+    console.error("[activity-stream] POST setJson failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to buffer activity event" }, { status: 500, headers: gate.headers });
+  }
 
   const tenant = tenantIdFromGate(gate);
   void writeAuditChainEntry(

@@ -158,10 +158,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     regulatoryReference: "MoE Circular 08/AML/2021 §4 — DPMS threshold transaction reporting. UAE FDL No.10/2025 Art.15.",
   };
 
-  await setJson(dpmsr_key(tenant, id), record);
-  const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
-  idx.unshift(id);
-  await setJson(dpmsr_index_key(tenant), idx.slice(0, 500));
+  try {
+    await setJson(dpmsr_key(tenant, id), record);
+    const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
+    idx.unshift(id);
+    await setJson(dpmsr_index_key(tenant), idx.slice(0, 500));
+  } catch (err) {
+    console.error("[dpmsr] POST store failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save DPMSR record" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "dpmsr.created",
@@ -204,9 +209,14 @@ export async function GET(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
 
-  const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
-  const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<DPMSRRecord>(dpmsr_key(tenant, id))))).filter((r): r is DPMSRRecord => r !== null);
-  const filtered = status ? records.filter((r) => r.status === status) : records;
+  try {
+    const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
+    const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<DPMSRRecord>(dpmsr_key(tenant, id))))).filter((r): r is DPMSRRecord => r !== null);
+    const filtered = status ? records.filter((r) => r.status === status) : records;
 
-  return NextResponse.json({ ok: true, tenant, total: filtered.length, records: filtered }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, tenant, total: filtered.length, records: filtered }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[dpmsr] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load DPMSR records" }, { status: 500, headers: gate.headers });
+  }
 }

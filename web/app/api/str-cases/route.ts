@@ -88,25 +88,30 @@ export async function GET(req: Request): Promise<NextResponse> {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "200", 10) || 200, 500);
   const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
 
-  let cases = await loadAllStrCases(tenant);
+  try {
+    let cases = await loadAllStrCases(tenant);
 
-  if (status) cases = cases.filter((c) => c.status === status);
-  cases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    if (status) cases = cases.filter((c) => c.status === status);
+    cases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-  const total = cases.length;
-  const page = cases.slice(offset, offset + limit);
+    const total = cases.length;
+    const page = cases.slice(offset, offset + limit);
 
-  const enrichedPage = page.map((c) => {
-    const daysRemaining = c.fiuDeadline35Day
-      ? Math.ceil((Date.parse(c.fiuDeadline35Day) - Date.now()) / 86400000)
-      : null;
-    return { ...c, daysRemaining };
-  });
+    const enrichedPage = page.map((c) => {
+      const daysRemaining = c.fiuDeadline35Day
+        ? Math.ceil((Date.parse(c.fiuDeadline35Day) - Date.now()) / 86400000)
+        : null;
+      return { ...c, daysRemaining };
+    });
 
-  return NextResponse.json(
-    { ok: true, tenant, cases: enrichedPage, total, limit, offset },
-    { headers: gate.headers },
-  );
+    return NextResponse.json(
+      { ok: true, tenant, cases: enrichedPage, total, limit, offset },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[str-cases] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load STR cases" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

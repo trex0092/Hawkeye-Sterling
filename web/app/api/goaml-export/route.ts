@@ -88,38 +88,43 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
   }
 
-  const t = tenant.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
-  const i = caseId.replace(/[^a-zA-Z0-9_\-.:]/g, "_").slice(0, 128);
-  const stored = await getJson<StrCaseRecord>(`str-cases/${t}/${i}.json`);
+  try {
+    const t = tenant.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+    const i = caseId.replace(/[^a-zA-Z0-9_\-.:]/g, "_").slice(0, 128);
+    const stored = await getJson<StrCaseRecord>(`str-cases/${t}/${i}.json`);
 
-  if (!stored) {
-    return NextResponse.json(
-      { ok: false, error: `STR case "${caseId}" not found. Use POST /api/goaml-export with a full body.` },
-      { status: 404, headers: gate.headers },
-    );
+    if (!stored) {
+      return NextResponse.json(
+        { ok: false, error: `STR case "${caseId}" not found. Use POST /api/goaml-export with a full body.` },
+        { status: 404, headers: gate.headers },
+      );
+    }
+
+    const body = caseToGoAmlBody(stored);
+    const { POST: xmlHandler } = await import("@/app/api/goaml-xml/route");
+    const synthetic = new Request(req.url.replace("/goaml-export", "/goaml-xml"), {
+      method: "POST",
+      headers: new Headers({ "content-type": "application/json", ...Object.fromEntries(req.headers) }),
+      body: JSON.stringify(body),
+    });
+    const xmlRes = await xmlHandler(synthetic);
+    const data = (await xmlRes.json()) as GoAmlXmlResult & { ok: boolean };
+
+    if (!data.ok) return NextResponse.json(data, { status: 503, headers: gate.headers });
+
+    void writeAuditChainEntry(
+      { event: "goaml.export_generated", actor: gate.keyId, meta: { subjectName: stored.subject, caseId } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+    const headers = new Headers(gate.headers);
+    headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? caseId)}.xml"`);
+    headers.set("Content-Type", "application/xml");
+    return new NextResponse(data.xml, { status: 200, headers });
+  } catch (err) {
+    console.error("[goaml-export] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to generate goAML export" }, { status: 500, headers: gate.headers });
   }
-
-  const body = caseToGoAmlBody(stored);
-  const { POST: xmlHandler } = await import("@/app/api/goaml-xml/route");
-  const synthetic = new Request(req.url.replace("/goaml-export", "/goaml-xml"), {
-    method: "POST",
-    headers: new Headers({ "content-type": "application/json", ...Object.fromEntries(req.headers) }),
-    body: JSON.stringify(body),
-  });
-  const xmlRes = await xmlHandler(synthetic);
-  const data = (await xmlRes.json()) as GoAmlXmlResult & { ok: boolean };
-
-  if (!data.ok) return NextResponse.json(data, { status: 503, headers: gate.headers });
-
-  void writeAuditChainEntry(
-    { event: "goaml.export_generated", actor: gate.keyId, meta: { subjectName: stored.subject, caseId } },
-    tenantIdFromGate(gate),
-  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
-
-  const headers = new Headers(gate.headers);
-  headers.set("Content-Disposition", `attachment; filename="${safeFilenameSegment(data.reportRef ?? caseId)}.xml"`);
-  headers.set("Content-Type", "application/xml");
-  return new NextResponse(data.xml, { status: 200, headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
