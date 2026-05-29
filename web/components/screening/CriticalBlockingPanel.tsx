@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Hit {
   listId?: string;
@@ -64,7 +65,7 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
         onCaseOpened?.(caseId);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(caughtErrorMessage(e, "Network error"));
     } finally {
       setOpening(false);
     }

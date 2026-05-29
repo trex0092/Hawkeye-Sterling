@@ -18,6 +18,7 @@
 //   · color is never the only signal — every status carries a label
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface BrierMode {
   modeId: string;
@@ -150,7 +151,7 @@ export function PerformanceMonitoringDashboard({
       setDrift((await driftRes.json()) as DriftResponse);
       setRefreshedAt(new Date());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load performance data.");
+      setError(caughtErrorMessage(e, "Failed to load performance data."));
     } finally {
       setLoading(false);
     }

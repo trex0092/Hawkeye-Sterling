@@ -19,6 +19,7 @@
 // in the rendered output — no opaque view).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AuditEntry {
   sequence: number;
@@ -139,7 +140,7 @@ export function AuditTrailViewer({
         const json = await res.json().catch(() => ({})) as ViewResponse;
         if (mountedRef.current) setData(json);
       } catch (e) {
-        if (mountedRef.current) setError(e instanceof Error ? e.message : "Failed to load audit trail.");
+        if (mountedRef.current) setError(caughtErrorMessage(e, "Failed to load audit trail."));
       } finally {
         if (mountedRef.current) setLoading(false);
       }
@@ -181,7 +182,7 @@ export function AuditTrailViewer({
         sequenceGaps: [],
         headConsistent: false,
         head: { sequence: 0, hash: "" },
-        error: e instanceof Error ? e.message : "Verification request failed.",
+        error: caughtErrorMessage(e, "Verification request failed."),
       });
     } finally {
       if (mountedRef.current) setVerifying(false);

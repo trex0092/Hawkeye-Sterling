@@ -1522,7 +1522,7 @@ function AdverseMediaTab({
       setStatus("success");
     } catch (e: unknown) {
       if (!mountedRef.current) return;
-      setError(e instanceof Error ? e.message : String(e));
+      setError(caughtErrorMessage(e, "Request failed — please try again."));
       setStatus("error");
     }
   }, [subject.name]);

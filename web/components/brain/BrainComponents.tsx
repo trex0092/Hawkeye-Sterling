@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { BarChart, Donut } from "@/components/ui/Charts";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Manifest {
   product: string;
@@ -157,7 +158,7 @@ export function BrainManifestPanel() {
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setState({ status: "error", error: e instanceof Error ? e.message : String(e) });
+        setState({ status: "error", error: caughtErrorMessage(e, "Request failed") });
       });
     return () => { cancelled = true; };
   }, []);
@@ -264,7 +265,7 @@ export function AuditStrip() {
       })
       .then((d) => { if (mountedRef.current) setData(d); })
       .catch((e: unknown) => {
-        if (mountedRef.current) setData({ ok: false, error: e instanceof Error ? e.message : String(e) });
+        if (mountedRef.current) setData({ ok: false, error: caughtErrorMessage(e, "Request failed") });
       })
       .finally(() => { if (mountedRef.current) setReloading(false); });
   };
@@ -558,7 +559,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
         setResult(data);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(caughtErrorMessage(e, "Network error"));
     } finally {
       setRunning(false);
     }
