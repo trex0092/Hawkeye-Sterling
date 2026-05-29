@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface ClientRisk {
   ok: boolean;
@@ -319,7 +320,7 @@ export default function ClientPortalPage() {
         setClientRisk(data);
       } else {
         console.error(`[hawkeye] client-portal/client-risk HTTP ${res.status}`);
-        if (mountedRef.current) setClientRiskError(`Risk assessment failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setClientRiskError(apiErrorMessage(res.status, "Risk assessment"));
       }
     } catch (err) {
       console.error("[hawkeye] client-portal/client-risk threw:", err);
