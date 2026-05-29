@@ -117,7 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const degraded = {
         subject,
         riskTier: "unknown" as const,
-        riskDetail: `Adverse media unavailable — neither Taranis nor live GDELT/Claude path is reachable (${detail}). Manual MLRO review required.`,
+        riskDetail: "Adverse media unavailable — both primary and fallback data sources are unreachable. Manual MLRO review required.",
         totalItems: 0,
         adverseItems: 0,
         criticalCount: 0,
@@ -127,7 +127,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         sarRecommended: false,
         sarBasis: "Cannot determine — adverse-media pipeline unavailable",
         confidenceTier: "low" as const,
-        confidenceBasis: detail,
+        confidenceBasis: "Data sources unavailable — manual review required",
         counterfactual: "Restore Taranis or set ANTHROPIC_API_KEY and re-run",
         investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
         findings: [],

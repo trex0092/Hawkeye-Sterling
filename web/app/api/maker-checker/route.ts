@@ -82,9 +82,9 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
       payload,
     });
     return NextResponse.json({ ok: true, item: created }, { status: 201 });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "create failed" },
+      { ok: false, error: "Create failed — service temporarily unavailable" },
       { status: 500 },
     );
   }

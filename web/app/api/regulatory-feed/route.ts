@@ -1081,7 +1081,8 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     try {
       regulatoryDigest = await digestRefreshPromise;
     } catch (err) {
-      errors.push(`regulatory-digest: build failed — ${err instanceof Error ? err.message : String(err)}`);
+      console.error("[regulatory-feed] regulatory-digest build failed:", err instanceof Error ? err.message : String(err));
+      errors.push("regulatory-digest: build failed — service temporarily unavailable");
     }
   }
 
