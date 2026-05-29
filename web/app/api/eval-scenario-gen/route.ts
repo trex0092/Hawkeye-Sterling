@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;
-  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
   const typology = typeof body['typology'] === 'string' ? body['typology'] : 'tbml';
   const jurisdiction = typeof body['jurisdiction'] === 'string' ? body['jurisdiction'] : 'AE';
@@ -24,24 +24,28 @@ export async function POST(req: Request) {
   const count = typeof body['count'] === 'number' ? Math.min(body['count'], 20) : 5;
 
   const tenantId = tenantIdFromGate(gate);
-  const existing = await getJson<RegressionScenario[]>(scenariosKey(tenantId)) ?? [];
-  const existingIds = existing.map((s) => s.id);
+  try {
+    const existing = await getJson<RegressionScenario[]>(scenariosKey(tenantId)) ?? [];
+    const existingIds = existing.map((s) => s.id);
 
-  const result = await generateScenarios({
-    typology, jurisdiction, entityType, evasionSophistication, count,
-    existingIds,
-  });
+    const result = await generateScenarios({
+      typology, jurisdiction, entityType, evasionSophistication, count,
+      existingIds,
+    });
 
-  if (result.added > 0) {
-    await setJson(scenariosKey(tenantId), [...existing, ...result.scenarios]);
+    if (result.added > 0) {
+      await setJson(scenariosKey(tenantId), [...existing, ...result.scenarios]);
+    }
+
+    void writeAuditChainEntry({
+      event: 'ai.synthetic_scenarios_generated',
+      actor: gate.keyId ?? 'system',
+      typology, jurisdiction, requested: count, added: result.added, rejected: result.rejectedCount,
+    }, tenantId).catch((e: unknown) => console.warn('[eval-scenario-gen] audit write failed:', e instanceof Error ? e.message : String(e)));
+
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  } catch (err) {
+    console.error('[eval-scenario-gen] POST failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to generate scenarios' }, { status: 500, headers: gate.headers });
   }
-
-  await writeAuditChainEntry({
-    tenantId,
-    event: 'ai.synthetic_scenarios_generated',
-    actor: gate.keyId ?? 'system',
-    payload: { typology, jurisdiction, requested: count, added: result.added, rejected: result.rejectedCount },
-  });
-
-  return NextResponse.json({ ok: true, ...result });
 }
