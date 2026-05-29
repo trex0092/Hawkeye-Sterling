@@ -325,7 +325,7 @@ export default async function middleware(req: NextRequest): Promise<NextResponse
     if (!await verifySessionEdge(token)) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
-      loginUrl.search = "";
+      loginUrl.search = token ? "?__hs_dbg=malformed" : "?__hs_dbg=no-cookie";
       return NextResponse.redirect(loginUrl);
     }
   }
