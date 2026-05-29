@@ -48,6 +48,7 @@ export default function FunctionsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/functions");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as FunctionsData;
       if (!mountedRef.current) return;
       setData(json);

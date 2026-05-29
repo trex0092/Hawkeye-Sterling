@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Check {
   name: string;
@@ -196,7 +196,7 @@ export default function StatusPage() {
         const r = await fetch("/api/status", { cache: "no-store" });
         if (!r.ok) {
           console.error(`[hawkeye] status HTTP ${r.status}`);
-          if (active) setErr(`HTTP ${r.status}`);
+          if (active) setErr(apiErrorMessage(r.status, "Status check"));
           return;
         }
         const payload = (await r.json()) as StatusPayload;
@@ -206,7 +206,7 @@ export default function StatusPage() {
           const allSvcs = [
             ...payload.checks,
             ...payload.externalChecks,
-            { name: payload.sanctions.name, status: effectiveSanctionsStatus(payload.sanctions) },
+            ...(payload.sanctions ? [{ name: payload.sanctions.name, status: effectiveSanctionsStatus(payload.sanctions) }] : []),
           ];
           for (const svc of allSvcs) {
             const prev = historyRef.current[svc.name] ?? [];
