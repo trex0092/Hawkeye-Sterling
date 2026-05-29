@@ -447,6 +447,9 @@ export default function EsgRiskPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
   useEffect(() => { setHistory(loadHistory()); }, []);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const setField = <K extends keyof FormData>(key: K, val: FormData[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
   };

@@ -71,6 +71,8 @@ jobs:
 
       - name: Red-flag extractor check
         run: test -f scripts/gen-redflags.cjs
+      - name: Lethal-trifecta governance check (Control 5.08)
+        run: node scripts/lethal-trifecta-check.mjs
 
       - name: Lethal-trifecta governance check (Control 5.08)
         run: node scripts/lethal-trifecta-check.mjs
@@ -158,6 +160,22 @@ jobs:
             exit 1
           fi
           echo "No server-secret exposure in client components"
+      - name: Auth coverage gate — no silent opt-outs of enforce()
+        run: |
+          # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
+          # any route that explicitly opts out with `{ requireAuth: false }` must
+          # be deliberately reviewed. The current allowed count is 0 — bump this
+          # number when adding a deliberate public/sandbox route, and document why.
+          OPTED_OUT=$(grep -rE "requireAuth:\s*false" web/app/api \
+            --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
+          ALLOWED_COUNT=0
+          echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
+          if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
+            echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
+            grep -rE "requireAuth:\s*false" web/app/api --include="route.ts" -l 2>/dev/null
+            exit 1
+          fi
+          echo "PASS"
 
       - name: Auth coverage gate (requireAuth:false allowlist)
         run: |

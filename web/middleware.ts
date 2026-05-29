@@ -94,6 +94,30 @@ function resolveRequestId(req: NextRequest): string {
   return crypto.randomUUID();
 }
 
+// Defense-in-depth security headers. We set these in middleware (not
+// next.config.mjs `headers()`) because @netlify/plugin-nextjs silently
+// ignores the Next config for SSR/Lambda responses — only static-asset
+// responses pick up netlify.toml [[headers]]. Verified empirically post
+// PR #496: headers() landed on /manifest.webmanifest but NOT on /login
+// or /api/*. Middleware runs on every matched route and is the only
+// surface where we can guarantee these land on dynamic responses.
+//
+// Cache-Control is deliberately NOT forced on every /api/* response —
+// /api/well-known/jwks.json + /api/well-known/hawkeye-pubkey.pem set
+// `public, max-age=300, must-revalidate` so verifiers can cache the
+// signing keys per RFC. The route's setting takes precedence; routes
+// that handle dynamic auth-gated data set their own no-store.
+function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  if (isApi) {
+    response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  }
+}
+
 function buildCspHeader(_nonce: string): string {
   // Next.js dev mode uses the `eval-source-map` webpack devtool, which loads
   // every module via `eval()` for live-reloading and rich stack traces. Without
@@ -240,6 +264,20 @@ export default async function middleware(req: NextRequest): Promise<NextResponse
     const target = new URL(req.url);
     target.pathname = canonical;
     return NextResponse.rewrite(target);
+  }
+
+  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // Next.js rewrites declared in next.config.mjs don't reach Lambda when
+  // routed through @netlify/plugin-nextjs — verified empirically: the
+  // /.well-known/* paths returned 404 in production while the underlying
+  // /api/well-known/* routes responded 200. Doing the rewrite in middleware
+  // guarantees regulator JWT verifiers can fetch the signing key set at
+  // the RFC-conformant path.
+  if (pathname === "/.well-known/jwks.json") {
+    return NextResponse.rewrite(new URL("/api/well-known/jwks.json", req.url));
+  }
+  if (pathname === "/.well-known/hawkeye-pubkey.pem") {
+    return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
   }
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────

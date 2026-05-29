@@ -1406,6 +1406,8 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     { id: "anthropic",   label: "ANTHROPIC_API_KEY",       required: true  },
     { id: "admin_token", label: "ADMIN_TOKEN",              required: true  },
     { id: "audit_chain", label: "AUDIT_CHAIN_SECRET",       required: true  },
+    { id: "session_sec", label: "SESSION_SECRET",           required: true  },
+    { id: "jwt_secret",  label: "JWT_SIGNING_SECRET",       required: true  },
     { id: "app_url",     label: "NEXT_PUBLIC_APP_URL",      required: true  },
     { id: "ongoing_tok", label: "ONGOING_RUN_TOKEN",        required: true  },
     { id: "sanct_tok",   label: "SANCTIONS_CRON_TOKEN",     required: true  },
@@ -1419,7 +1421,16 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     anthropic:   ["ANTHROPIC_API_KEY"],
     admin_token: ["ADMIN_TOKEN"],
     audit_chain: ["AUDIT_CHAIN_SECRET"],
-    app_url:     ["NEXT_PUBLIC_APP_URL"],
+    session_sec: ["SESSION_SECRET"],
+    jwt_secret:  ["JWT_SIGNING_SECRET"],
+    // NEXT_PUBLIC_APP_URL is needed at runtime to construct absolute URLs
+    // in Server Components and email templates. Netlify auto-injects two
+    // equivalent vars on every build — `URL` (canonical site URL) and
+    // `DEPLOY_PRIME_URL` (preview deploy URL). Treat any of the three as
+    // satisfying the requirement so deployments don't need a manual env
+    // setup step. The codebase's resolveBaseUrl() helper already reads
+    // the same three sources at runtime.
+    app_url:     ["NEXT_PUBLIC_APP_URL", "URL", "DEPLOY_PRIME_URL"],
     ongoing_tok: ["ONGOING_RUN_TOKEN"],
     sanct_tok:   ["SANCTIONS_CRON_TOKEN"],
     goaml_ent:   ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"],
@@ -1440,6 +1451,84 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     optionalConfigured:  configChecks.filter((c) => !c.required && c.present).length,
     checks: configChecks,
   };
+
+  // ENH-D: sanctions list age alert — fire if any list > 36h old
+  const staleLists = sanctions.lists.filter((l) => l.ageH !== null && l.ageH > 36);
+  const sanctionsAgeWarning = staleLists.length > 0
+    ? `Sanctions lists stale: ${staleLists.map((l) => `${l.id} (${l.ageH}h)`).join(", ")} — expected refresh every 24h. Trigger cron or investigate blob storage.`
+    : undefined;
+
+  // ENH-B: fire alert webhook on degraded critical services (best-effort, non-blocking)
+  const alertWebhookUrl = process.env["ALERT_WEBHOOK_URL"];
+  const alertDegraded = [...internalChecks, gdelt].filter((c) => c.status !== "operational");
+  if (alertWebhookUrl && alertDegraded.length > 0) {
+    const payload = {
+      source: "hawkeye-sterling/status",
+      timestamp: new Date().toISOString(),
+      degradedServices: alertDegraded.map((c) => ({ name: c.name, status: c.status, note: c.note })),
+      sanctionsAgeWarning,
+      pepCountWarning,
+      brainCatalogueWarning,
+    };
+    void fetch(alertWebhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(4_000),
+    }).catch((err: unknown) => console.warn("[status] alert webhook failed:", err instanceof Error ? err.message : err));
+  }
+
+  const warnings = [sanctionsAgeWarning, pepCountWarning, brainCatalogueWarning].filter(Boolean) as string[];
+
+  const gdeltCache = {
+    ...gdeltCacheStats(),
+    redisConfigured: isRedisConfigured(),
+  };
+
+  // Structured service arrays required by system_status MCP tool
+  const servicesUp = [...internalChecks, ...externalChecks]
+    .filter((c) => c.status === "operational")
+    .map((c) => c.name);
+  const servicesDown = [...internalChecks, ...externalChecks]
+    .filter((c) => c.status !== "operational")
+    .map((c) => ({ name: c.name, status: c.status, note: c.note }));
+  const listsFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; entityCount: number | null; status: string }> = {};
+  for (const l of sanctions.lists) {
+    listsFreshness[l.id] = {
+      lastRefreshed: l.ageH !== null ? new Date(Date.now() - l.ageH * 3_600_000).toISOString() : null,
+      ageHours: l.ageH,
+      entityCount: l.recordCount,
+      status: l.ageH === null ? "missing" : l.ageH > 48 ? "stale" : "healthy",
+    };
+  }
+
+  // Defense-in-depth: even authenticated non-admin callers don't need
+  // env-var names, build SHAs, or brain integrity hashes. Those fields are
+  // operationally useful only to admins / portal MLROs and recon-useful to
+  // anyone else. configHealth keeps the aggregate counts so non-admins still
+  // see "8/9 required configured" without learning the missing var's name.
+  const configHealthOut = isAdmin
+    ? configHealth
+    : {
+        requiredTotal: configHealth.requiredTotal,
+        requiredConfigured: configHealth.requiredConfigured,
+        requiredMissingCount: configHealth.requiredMissing.length,
+        optionalTotal: configHealth.optionalTotal,
+        optionalConfigured: configHealth.optionalConfigured,
+      };
+  const brainSoulOut = isAdmin
+    ? brainSoul
+    : {
+        status: brainSoul.status,
+        amplifierVersion: brainSoul.amplifierVersion,
+        catalogue: brainSoul.catalogue,
+      };
+  const deploysOut = isAdmin
+    ? deploys
+    : deploys.map(({ sha: _sha, ...rest }) => rest);
+  const feedVersionsOut = isAdmin
+    ? feedVersions
+    : (() => { const { commitSha: _c, ...rest } = feedVersions; return rest; })();
 
   return NextResponse.json({
     ok: true,

@@ -904,6 +904,50 @@ export async function POST(req: Request): Promise<NextResponse> {
     tenantIdFromGate(gate),
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
+  // Apply rule-based DPMS compliance override (cash threshold, precious metals,
+  // round-amount structuring signals) on top of the ML score.
+  const result = applyDpmsRules(mlResult, tx);
+
+  // Persist flag/hold results to Blob storage so the transaction-monitor
+  // cron can pick them up, run typology matching, and open cases.
+  if (result.tier === "flag" || result.tier === "hold") {
+    const tenant = tenantIdFromGate(gate);
+    const flagId = `txf-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const record: TxnFlagRecord = {
+      flagId,
+      tenantId: tenant,
+      sessionId,
+      tier: result.tier,
+      score: result.score,
+      amountUsd: tx.amountUsd,
+      timestampUtc: tx.timestampUtc ?? new Date().toISOString(),
+      drivers: result.drivers,
+      processed: false,
+      createdAt: new Date().toISOString(),
+    };
+    void setJson(`hawkeye-txn-flags/${tenant}/${flagId}.json`, record)
+      .catch((err) => console.error("[transaction-anomaly] flag persist failed:", err));
+  }
+
+  const MINIMUM_OBSERVATIONS = 30;
+  const obs = streamingGate.observations;
+  const dataQuality = {
+    sufficient: obs >= MINIMUM_OBSERVATIONS,
+    currentObservations: obs,
+    minimumRequired: MINIMUM_OBSERVATIONS,
+    ...(obs < MINIMUM_OBSERVATIONS
+      ? {
+          warningMessage:
+            `Only ${obs} transaction(s) observed in this session. ` +
+            `The model requires at least ${MINIMUM_OBSERVATIONS} observations to produce reliable anomaly scores. ` +
+            `Scores below this threshold are indicative only — do not use as the sole basis for compliance action.`,
+        }
+      : {}),
+  };
+  const effectiveTier = obs < MINIMUM_OBSERVATIONS ? "insufficient_data" : result.tier;
+
+  const latencyMs = Date.now() - t0;
+  if (latencyMs > 5000) console.warn(`[transaction-anomaly] slow response latencyMs=${latencyMs}`);
   return NextResponse.json(
     {
       ok: true,

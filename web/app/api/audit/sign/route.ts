@@ -272,6 +272,23 @@ async function handleSign(req: Request, ctx: RequestContext): Promise<NextRespon
       { status: 500 },
     );
   }
+  // Head hash is id — links the next entry to this one.
+  // Split from the entry write so that a partial failure (entry written, head
+  // not updated) is logged accurately rather than misreporting the entry as
+  // un-persisted.
+  try {
+    await setJson("audit/head.json", { sequence: nextSequence, hash: id });
+  } catch (err) {
+    console.error(
+      "[hawkeye] audit/sign: head pointer write failed — entry IS persisted but chain head NOT advanced (orphaned entry):",
+      err,
+      { sequence: nextSequence, paddedSeq },
+    );
+    return NextResponse.json(
+      { ok: false, error: "Audit entry persisted but chain head could not be updated — manual reconciliation required" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true, entry });
 }

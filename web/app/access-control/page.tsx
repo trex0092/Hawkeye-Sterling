@@ -649,6 +649,10 @@ export default function AccessControlPage() {
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);

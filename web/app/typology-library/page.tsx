@@ -341,6 +341,8 @@ function FiuDpmsSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const fetchMatrix = async () => {
     if (data) { setOpen(true); return; }
@@ -348,14 +350,18 @@ function FiuDpmsSection() {
     setError(null);
     try {
       const res = await fetch("/api/fiu-typology-check");
-      if (!res.ok) { setError(`Failed to load coverage matrix (HTTP ${res.status})`); return; }
+      if (!res.ok) {
+        if (mountedRef.current) setError(`Failed to load coverage matrix (HTTP ${res.status})`);
+        return;
+      }
       const json = (await res.json()) as FiuCoverageResponse;
+      if (!mountedRef.current) return;
       setData(json);
       setOpen(true);
     } catch {
-      setError("Network error — could not load FIU coverage matrix.");
+      if (mountedRef.current) setError("Network error — could not load FIU coverage matrix.");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 

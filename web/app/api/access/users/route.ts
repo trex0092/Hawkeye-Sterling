@@ -4,7 +4,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { loadUsers } from "../_store";
-import { adminAuth } from "@/lib/server/admin-auth";
+import { enforce } from "@/lib/server/enforce";
 
 export async function GET(req: Request) {
   const deny = adminAuth(req);
