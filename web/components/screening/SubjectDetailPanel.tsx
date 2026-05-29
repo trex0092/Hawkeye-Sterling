@@ -978,6 +978,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               score: h.score,
               method: h.method,
               ...(h.programs ? { programs: h.programs } : {}),
+              ...(h.matchedAlias ? { matchedAlias: h.matchedAlias } : {}),
+              ...(h.reason ? { reason: h.reason } : {}),
             })),
           }
         : { topScore: 0, severity: "clear", hits: [] },

@@ -42,9 +42,22 @@ export interface ReportScreeningResult {
     score: number;
     programs?: string[];
     method: string;
+    matchedAlias?: string;
+    reason?: string;
   }>;
   /** True when the result is a placeholder — no screening was run */
   _unscreened?: boolean;
+}
+
+export interface ReportNewsArticle {
+  title: string;
+  source: string;
+  pubDate: string;
+  link: string;
+  lang?: string;
+  severity?: string;
+  matchedVariant?: string;
+  keywordGroups?: string[];
 }
 
 export interface ReportSuperBrain {
