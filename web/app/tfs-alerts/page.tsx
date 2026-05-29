@@ -741,10 +741,17 @@ export default function TFSAlertsPage() {
           <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">
             Subscription Status:
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green text-11 font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-green shrink-0" />
-            ACTIVE
-          </span>
+          {gmailReAuthNeeded ? (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-dim text-red text-11 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-red shrink-0" />
+              DISCONNECTED
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green text-11 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-green shrink-0" />
+              ACTIVE
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">Source:</span>

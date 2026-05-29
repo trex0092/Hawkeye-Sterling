@@ -150,7 +150,13 @@ export function SavedSearchBar({ active, onApply, appliedId }: Props) {
           + Save current
         </button>
       )}
-      {error && <span className="text-10 text-red ml-2">{error}</span>}
+      {error && (
+        <span className="text-10 text-red ml-2">
+          {error.includes("401") || error.includes("API key") || error.includes("key required")
+            ? "Saved searches unavailable — please refresh."
+            : error}
+        </span>
+      )}
     </div>
   );
 }

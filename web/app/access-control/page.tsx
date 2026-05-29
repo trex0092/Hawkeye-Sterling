@@ -162,7 +162,10 @@ function SessionMonitorTab() {
     setError(null);
     try {
       const res = await fetch("/api/access/sessions");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("Authentication required — please refresh the page.");
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json() as { ok: boolean; sessions?: AccessSession[]; error?: string };
       if (!data.ok) throw new Error(data.error ?? "Failed to load sessions");
       setSessions(data.sessions ?? []);

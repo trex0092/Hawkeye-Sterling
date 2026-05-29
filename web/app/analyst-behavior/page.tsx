@@ -126,7 +126,10 @@ export default function AnalystBehaviorPage() {
     setError(null);
     try {
       const res = await fetch(`/api/analyst-behavior?windowDays=${days}`);
-      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
+      if (!res.ok) {
+        setError(res.status === 401 ? "Authentication required — please refresh the page." : `HTTP ${res.status}`);
+        return;
+      }
       const json = await res.json() as ApiResponse;
       setData(json);
     } catch (err) {

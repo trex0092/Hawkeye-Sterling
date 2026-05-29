@@ -102,7 +102,10 @@ export default function SecurityScanPage() {
     setError(null);
     try {
       const res = await fetch("/api/security-scan");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("Authentication required — please refresh the page or contact your administrator.");
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = (await res.json()) as SecurityScanResult & { ok?: boolean };
       setResult(data);
     } catch (e) {

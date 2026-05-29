@@ -182,7 +182,10 @@ async function _recordApproval(
   const actorDecisions = status.decisions.filter((d) => d.actor === input.actor);
   if (actorDecisions.length > 1) {
     // We lost the race — delete our entry and surface the earlier one.
-    await del(approvalKey(input.caseId, approvalId)).catch(() => undefined);
+    await del(approvalKey(input.caseId, approvalId)).catch(async () => {
+      await new Promise((r) => setTimeout(r, 200));
+      await del(approvalKey(input.caseId, approvalId)).catch(() => undefined);
+    });
     const earlier = actorDecisions[0]!;
     return {
       status: await getCaseApprovals(input.caseId),

@@ -191,6 +191,12 @@ export class AnthropicGuard {
           route,
           type: 'total',
         });
+        const inputPricePerMTok = response.model.includes('haiku') ? 0.80 : 3.00;
+        const outputPricePerMTok = response.model.includes('haiku') ? 4.00 : 15.00;
+        const inputTokens = response.usage?.input_tokens ?? 0;
+        const outputTokens = response.usage?.output_tokens ?? 0;
+        const costUsd = (inputTokens * inputPricePerMTok + outputTokens * outputPricePerMTok) / 1_000_000;
+        incrementCounter('hawkeye_llm_cost_usd_total', costUsd, { model: response.model, route });
 
         return { ...response, content: rehydratedContent } as Anthropic.Message;
       },

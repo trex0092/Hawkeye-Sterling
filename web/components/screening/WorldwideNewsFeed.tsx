@@ -184,7 +184,9 @@ export function WorldwideNewsFeed() {
             </div>
           ) : error && articles.length === 0 ? (
             <div className="px-4 py-6 text-center text-12 text-ink-3">
-              {error}
+              {error.includes("401") || error.includes("API key") || error.includes("key required")
+                ? "News feed temporarily unavailable — retrying automatically."
+                : error}
             </div>
           ) : (
             <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
