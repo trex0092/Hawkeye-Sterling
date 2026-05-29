@@ -233,6 +233,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     validatedEvidenceReviewed = v.value.evidenceReviewed;
   }
 
+  // J-06 / G-05 — on false-positive dispositions, validate the structured
+  // reason code (and the free-text reason when reasonCode === "FP_06"). A
+  // missing or malformed reasonCode is a 400 — every FP must carry an
+  // immutable, queryable justification per FDL 10/2025 Art.19.
+  let validatedReasonCode: FpReasonCode | null = null;
+  let validatedReason: string | null = typeof reason === "string" && reason.trim().length > 0 ? reason.trim() : null;
+  if (resolution === "false") {
+    const v = validateFpDisposition({ reasonCode, reason });
+    if (!v.ok) {
+      return respond(400, { ok: false, resolution, auditId: "", error: v.error }, origin);
+    }
+    validatedReasonCode = v.value.reasonCode;
+    validatedReason = v.value.reason;
+  }
+
   const auditId = `res_${randomUUID()}`;
   const timestamp = new Date().toISOString();
 

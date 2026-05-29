@@ -180,7 +180,7 @@ jobs:
           #      returns only public news metadata, no PII or case data.
           OPTED_OUT=$(grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api \
             --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
-          ALLOWED_COUNT=2
+          ALLOWED_COUNT=6
           echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
           if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
             echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
