@@ -85,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as PostBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const VALID_TYPES: IncidentType[] = [
@@ -95,19 +95,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   const VALID_SEVERITIES: IncidentSeverity[] = ["critical", "high", "medium", "low"];
 
   if (!body.type || !VALID_TYPES.includes(body.type)) {
-    return NextResponse.json({ ok: false, error: "Invalid incident type" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid incident type" }, { status: 400, headers: gate.headers });
   }
   if (!body.severity || !VALID_SEVERITIES.includes(body.severity)) {
-    return NextResponse.json({ ok: false, error: "Invalid severity" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid severity" }, { status: 400, headers: gate.headers });
   }
   if (!body.title?.trim() || body.title.length > 200) {
-    return NextResponse.json({ ok: false, error: "title required (≤200 chars)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "title required (≤200 chars)" }, { status: 400, headers: gate.headers });
   }
   if (!body.description?.trim() || body.description.length > 2000) {
-    return NextResponse.json({ ok: false, error: "description required (≤2000 chars)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "description required (≤2000 chars)" }, { status: 400, headers: gate.headers });
   }
   if (!body.affectedModel?.trim() || body.affectedModel.length > 100) {
-    return NextResponse.json({ ok: false, error: "affectedModel required (≤100 chars)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "affectedModel required (≤100 chars)" }, { status: 400, headers: gate.headers });
   }
 
   const now = new Date().toISOString();
@@ -161,25 +161,25 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as PatchBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   if (!body.id?.trim()) {
-    return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "id required" }, { status: 400, headers: gate.headers });
   }
   const VALID_STATUSES: IncidentStatus[] = ["open", "investigating", "mitigated", "closed"];
   if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) {
-    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400, headers: gate.headers });
   }
   if (body.rootCause !== undefined && body.rootCause.length > 2000) {
-    return NextResponse.json({ ok: false, error: "rootCause ≤2000 chars" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "rootCause ≤2000 chars" }, { status: 400, headers: gate.headers });
   }
   if (body.lessonsLearned !== undefined && body.lessonsLearned.length > 2000) {
-    return NextResponse.json({ ok: false, error: "lessonsLearned ≤2000 chars" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "lessonsLearned ≤2000 chars" }, { status: 400, headers: gate.headers });
   }
   if (body.containmentSteps !== undefined) {
     if (!Array.isArray(body.containmentSteps) || body.containmentSteps.some((s) => typeof s !== "string" || s.length > 500)) {
-      return NextResponse.json({ ok: false, error: "containmentSteps must be array of strings ≤500 chars each" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "containmentSteps must be array of strings ≤500 chars each" }, { status: 400, headers: gate.headers });
     }
     body.containmentSteps = body.containmentSteps.slice(0, 20);
   }
@@ -187,7 +187,7 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   const incidents = await loadIncidents(tenant);
   const idx = incidents.findIndex((i) => i.id === body.id);
   if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "Incident not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "Incident not found" }, { status: 404, headers: gate.headers });
   }
 
   const updated: AIIncidentRecord = {
