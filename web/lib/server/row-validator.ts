@@ -1,9 +1,7 @@
-// Row-level Zod schema validation + date-fns DOB checks.
+// Row-level Zod schema validation + DOB checks (native Date API — no extra dependency).
 // github.com/colinhacks/zod  — TypeScript-first schema validation (36k★)
-// github.com/date-fns/date-fns — date utility library (35k★)
 
 import { z } from "zod";
-import { isValid, parseISO, isFuture, differenceInYears } from "date-fns";
 
 export const BatchRowSchema = z.object({
   name: z
@@ -39,10 +37,13 @@ export function validateDob(dob: string): DobValidation {
   // Accept ISO 8601 (YYYY-MM-DD) and YYYY only
   const yearOnly = /^\d{4}$/.test(dob.trim());
   const dateStr = yearOnly ? `${dob.trim()}-01-01` : dob.trim();
-  const parsed = parseISO(dateStr);
-  if (!isValid(parsed)) return { valid: false, flag: "invalid-date-format" };
-  if (isFuture(parsed)) return { valid: false, flag: "dob-in-future" };
-  const age = differenceInYears(new Date(), parsed);
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) return { valid: false, flag: "invalid-date-format" };
+  if (parsed > new Date()) return { valid: false, flag: "dob-in-future" };
+  const now = new Date();
+  let age = now.getFullYear() - parsed.getFullYear();
+  const monthDiff = now.getMonth() - parsed.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < parsed.getDate())) age--;
   if (age > 130) return { valid: false, flag: "implausible-age" };
   return { valid: true, age };
 }

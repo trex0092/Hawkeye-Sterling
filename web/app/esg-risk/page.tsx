@@ -36,36 +36,6 @@ function appendHistory(entry: HistoryEntry): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// History helpers (localStorage)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const HISTORY_KEY = "hawkeye.esg.history";
-
-interface HistoryEntry {
-  entity: string;
-  score: number;
-  rating: EsgRating;
-  mlRisk: MlRiskLevel;
-  ratedAt: string;
-}
-
-function loadHistory(): HistoryEntry[] {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
-  } catch { return []; }
-}
-
-function saveHistory(entries: HistoryEntry[]): void {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 20))); } catch { /* noop */ }
-}
-
-function appendHistory(entry: HistoryEntry): void {
-  const existing = loadHistory();
-  saveHistory([entry, ...existing]);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -472,10 +442,6 @@ export default function EsgRiskPage() {
   const [csvError, setCsvError] = useState<string | null>(null);
   const [csvQueue, setCsvQueue] = useState<string[] | null>(null); // entity names pending batch run
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-  useEffect(() => { setHistory(loadHistory()); }, []);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);

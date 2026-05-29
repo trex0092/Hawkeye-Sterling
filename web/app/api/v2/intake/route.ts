@@ -271,41 +271,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  const ALLOWED_ENTITY_TYPES = ["individual", "organisation", "vessel", "aircraft", "other"] as const;
-  if (body.entityType !== undefined && !ALLOWED_ENTITY_TYPES.includes(body.entityType)) {
-    return NextResponse.json(
-      { ok: false, error: `entityType must be one of: ${ALLOWED_ENTITY_TYPES.join(", ")}` },
-      { status: 400 },
-    );
-  }
-
-  if (body.aliases !== undefined) {
-    if (!Array.isArray(body.aliases) || !body.aliases.every((a) => typeof a === "string" && a.length <= 256)) {
-      return NextResponse.json(
-        { ok: false, error: "aliases must be string[] with each entry ≤ 256 chars" },
-        { status: 400 },
-      );
-    }
-    if (body.aliases.length > 50) {
-      return NextResponse.json({ ok: false, error: "aliases exceeds 50 entries" }, { status: 400 });
-    }
-  }
-
-  const stringBounds: Array<[keyof IntakeBody, number]> = [
-    ["jurisdiction", 64], ["dateOfBirth", 32], ["nationality", 64],
-    ["passportNumber", 64], ["nationalIdNumber", 64],
-    ["submittedBy", 200], ["referenceId", 128], ["notes", 4_000],
-  ];
-  for (const [field, max] of stringBounds) {
-    const v = body[field];
-    if (v !== undefined && (typeof v !== "string" || v.length > max)) {
-      return NextResponse.json(
-        { ok: false, error: `${field} must be string ≤ ${max} chars` },
-        { status: 400 },
-      );
-    }
-  }
-
   const subject: QuickScreenSubject = {
     name: body.name.trim(),
     ...(body.aliases?.length ? { aliases: body.aliases } : {}),

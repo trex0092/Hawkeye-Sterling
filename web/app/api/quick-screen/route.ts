@@ -43,16 +43,6 @@ import {
 // @brain/* is resolved via web/tsconfig.json paths → ../src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
-
-// ── In-memory result cache ─────────────────────────────────────────────────
-// Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
-// TTL: 3 minutes — sanctions lists refresh frequently so we can't cache longer.
-const SCREEN_CACHE_TTL_MS = 180_000;
-// eslint-disable-next-line no-var
-declare global { var __hs_screen_cache: Map<string, { result: unknown; cachedAt: number }> | undefined; }
-const _screenCache: Map<string, { result: unknown; cachedAt: number }> =
-  globalThis.__hs_screen_cache ?? (globalThis.__hs_screen_cache = new Map());
-import { getCountryRisk } from "@/lib/server/high-risk-countries";
 import { insertCaseRecord } from "@/lib/server/case-vault";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { saveSubject, getSubject } from "../pkyc/_store";
@@ -62,135 +52,6 @@ import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
 import { bloomPreScreen, isFilterStale, rebuildGlobalFilter } from "@/lib/server/bloom-filter";
 import { LatencyBudget } from "@/lib/server/latency-budget";
 
-// ── UN Security Council 1267 designated entity name matching ───────────────
-// Token-set similarity check: if the subject name shares >80% of word tokens
-// with any UN 1267 designated group, immediately flag with critical severity.
-// This is a lightweight pre-screen before the full watchlist engine runs.
-
-function tokenize(s: string): Set<string> {
-  return new Set(
-    s.toLowerCase()
-      .replace(/[^a-z0-9\s؀-ۿݐ-ݿ]/g, " ")
-      .split(/\s+/)
-      .filter((t) => t.length >= 2),
-  );
-}
-
-function tokenSetSimilarity(a: string, b: string): number {
-  const ta = tokenize(a);
-  const tb = tokenize(b);
-  if (ta.size === 0 || tb.size === 0) return 0;
-  let intersection = 0;
-  for (const t of ta) {
-    if (tb.has(t)) intersection++;
-  }
-  return intersection / Math.max(ta.size, tb.size);
-}
-
-function checkUn1267Match(
-  name: string,
-  aliases: string[] = [],
-): { matched: true; entity: string; similarity: number } | { matched: false } {
-  const THRESHOLD = 0.80;
-  const namesToCheck = [name, ...aliases];
-  for (const n of namesToCheck) {
-    for (const entity of UN_1267_DESIGNATED_ENTITIES) {
-      const sim = tokenSetSimilarity(n, entity);
-      if (sim >= THRESHOLD) {
-        return { matched: true, entity, similarity: sim };
-      }
-    }
-  }
-  return { matched: false };
-}
-
-// ── Sanctions list health snapshot ─────────────────────────────────────────
-// Attached to every screening response so audit records capture which lists
-// had data (and how fresh) at the moment of screening. A "clear" verdict
-// against empty UAE lists is a compliance failure — not a real clear.
-
-const LIST_IDS = [
-  "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
-  "ca_osfi", "ch_seco", "au_dfat", "fatf", "uae_eocn", "uae_ltl",
-] as const;
-
-type ListHealthStatus = "healthy" | "stale" | "missing";
-
-interface ListHealthEntry {
-  entityCount: number | null;
-  ageHours: number | null;
-  status: ListHealthStatus;
-}
-
-type ListHealthSnapshot = Record<string, ListHealthEntry>;
-
-async function fetchListHealth(): Promise<ListHealthSnapshot> {
-  const STALE_HOURS = 36;
-  const HOUR_MS = 3_600_000;
-  const snapshot: ListHealthSnapshot = {};
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let stores: { get: (_key: string, _opts?: any) => Promise<unknown> }[] = [];
-  try {
-    const { getStore } = await import("@netlify/blobs");
-    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
-    // Dual-store: try hawkeye-list-reports (entities written there post-deploy)
-    // then hawkeye-lists (entities present now from existing ingestion runs).
-    const token =
-      process.env["NETLIFY_API_TOKEN"] ??
-      process.env["NETLIFY_AUTH_TOKEN"];
-    const mkStore = (name: string) => siteID && token
-      ? getStore({ name, siteID, token, consistency: "strong" })
-      : getStore({ name });
-    stores = [mkStore("hawkeye-list-reports"), mkStore("hawkeye-lists")];
-  } catch {
-    for (const id of LIST_IDS) {
-      snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
-    }
-    return snapshot;
-  }
-
-  const LIST_HEALTH_BLOB_TIMEOUT_MS = 1_200;
-  await Promise.all(LIST_IDS.map(async (listId) => {
-    const key = `${listId}/latest.json`;
-    for (const store of stores) {
-      try {
-        const raw = await Promise.race([
-          store.get(key, { type: "json" }) as Promise<{ entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number } | null>,
-          new Promise<null>((r) => setTimeout(() => r(null), LIST_HEALTH_BLOB_TIMEOUT_MS)),
-        ]);
-        if (!raw || !Array.isArray(raw.entities)) continue;
-        const entityCount = raw.entities.length;
-        const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
-        const ageHours = typeof fetchedAtMs === "number"
-          ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
-          : null;
-        const status: ListHealthStatus =
-          ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
-        snapshot[listId] = { entityCount, ageHours, status };
-        return; // found data — skip fallback store
-      } catch { /* try next store */ }
-    }
-    snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
-  }));
-
-  return snapshot;
-}
-
-function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
-  const warnings: string[] = [];
-  for (const [listId, entry] of Object.entries(health)) {
-    if (entry.status === "missing") {
-      warnings.push(`${listId} list is missing from blob store at time of screening — no match possible against this list`);
-    } else if (entry.entityCount === 0) {
-      warnings.push(`${listId} had 0 entities at time of screening — no match possible against this list`);
-    } else if (entry.status === "stale") {
-      warnings.push(`${listId} data is stale (${entry.ageHours}h old) at time of screening — may not reflect recent designations`);
-    }
-  }
-  return warnings;
-}
-
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
 // TTL: 3 minutes — sanctions lists refresh frequently so we can't cache longer.
@@ -199,15 +60,6 @@ const SCREEN_CACHE_TTL_MS = 180_000;
 declare global { var __hs_screen_cache: Map<string, { result: unknown; cachedAt: number }> | undefined; }
 const _screenCache: Map<string, { result: unknown; cachedAt: number }> =
   globalThis.__hs_screen_cache ?? (globalThis.__hs_screen_cache = new Map());
-import { getCountryRisk } from "@/lib/server/high-risk-countries";
-import { insertCaseRecord } from "@/lib/server/case-vault";
-import { tenantIdFromGate } from "@/lib/server/tenant";
-import { saveSubject, getSubject } from "../pkyc/_store";
-import type { CaseRecord } from "@/lib/types";
-import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
-import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
-import { bloomPreScreen, isFilterStale, rebuildGlobalFilter } from "@/lib/server/bloom-filter";
-import { LatencyBudget } from "@/lib/server/latency-budget";
 
 // ── UN Security Council 1267 designated entity name matching ───────────────
 // Token-set similarity check: if the subject name shares >80% of word tokens

@@ -540,61 +540,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     }
   };
 
-  const handleSaveReport = async () => {
-    if (reportSaving) return;
-    setReportSaving(true);
-    try {
-      const qsSubject = {
-        name: subject.name,
-        ...(subject.entityType ? { entityType: subject.entityType } : {}),
-        ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
-        ...(subject.aliases ? { aliases: subject.aliases } : {}),
-      };
-      const screenResult = screening.status === "success"
-        ? {
-            subject: screening.result.subject ?? qsSubject,
-            hits: screening.result.hits,
-            topScore: screening.result.topScore,
-            severity: screening.result.severity,
-            listsChecked: screening.result.listsChecked,
-            candidatesChecked: screening.result.candidatesChecked,
-            durationMs: screening.result.durationMs,
-            generatedAt: screening.result.generatedAt,
-          }
-        : { subject: qsSubject, hits: [], topScore: subject.riskScore, severity: "medium" as const, listsChecked: 0, candidatesChecked: 0, durationMs: 0, generatedAt: new Date().toISOString() };
-      const res = await postScreeningReport({
-        subject: {
-          id: subject.id,
-          name: subject.name,
-          entityType: subject.entityType,
-          jurisdiction: subject.jurisdiction,
-          ...(subject.aliases ? { aliases: subject.aliases } : {}),
-          caseId: subject.id,
-        },
-        result: screenResult,
-        trigger: "save",
-      });
-      if (!mountedRef.current) return;
-      if (res.ok) {
-        setReportSaved(true);
-        attachEvidenceToSubject(subject.name, {
-          category: "screening-report",
-          title: "Compliance report saved & filed to Asana",
-          meta: new Date().toISOString(),
-          detail: res.taskUrl ? `Asana task: ${res.taskUrl}` : "Report saved (Asana task created)",
-          timelineEvent: "Compliance report saved",
-        });
-        showFlash(res.taskUrl ? `Report filed to Asana ✓` : "Report saved ✓");
-      } else {
-        showFlash(res.error ?? "Report save failed — check Asana configuration");
-      }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      showFlash(err instanceof Error ? err.message : "Report save failed");
-    } finally {
-      if (mountedRef.current) setReportSaving(false);
-    }
-  };
 
   const handleRaiseSTR = async () => {
     if (strRaised || isRaisingSTR) return;
@@ -1483,6 +1428,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             subjectName={subject.name}
             subjectId={subject.id}
             news={news}
+            roleOverride={roleOverride}
+            setRoleOverride={setRoleOverride}
+            narrativeOverride={narrativeOverride}
+            setNarrativeOverride={setNarrativeOverride}
+            liveNarrativePreview={effectiveAdverseMediaText}
           />
         )}
 

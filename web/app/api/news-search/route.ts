@@ -392,12 +392,6 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 }
 
-// Strip diacritics so "halac" matches "Halaç", "ozcan" matches "Özcan", etc.
-function normalizeDiacritics(s: string): string {
-  // eslint-disable-next-line no-control-regex
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
-
 // Sanitize RSS link fields: only allow https/http URLs — block javascript:,
 // data: and other dangerous schemes that could execute as href values.
 function sanitizeLink(raw: string): string {

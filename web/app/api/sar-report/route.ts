@@ -291,36 +291,6 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       `[sar-report] four-eyes ledger persist failed: ${err instanceof Error ? err.message : String(err)} — synchronous gate still enforced.`,
     );
   }
-  // ENH-04: persist both approvals to the canonical four-eyes ledger so
-  // post-facto regulator audit can reconstruct who attested what + when.
-  // The synchronous body-field check above guards this single submission;
-  // the ledger preserves dual-attestation history per case (UAE FDL
-  // 10/2025 Art.16 + FATF R.26).
-  try {
-    const { recordApproval } = await import("@/lib/server/four-eyes-gate");
-    const caseRef = `sar:${body.subject?.name ?? "unknown"}:${Date.now()}`;
-    // Record MLRO filer first, then the second approver — order matches
-    // chronology of the request.
-    await recordApproval({
-      caseId: caseRef,
-      actor: filerActor,
-      decision: "approve",
-      rationale: `${body.filingType} filer attestation (authenticated as ${filerActor})`,
-    });
-    await recordApproval({
-      caseId: caseRef,
-      actor: approverActor,
-      decision: "approve",
-      rationale: `${body.filingType} second-approver (four-eyes) attestation — declared by ${filerActor}`,
-    });
-  } catch (err) {
-    // Audit-ledger write failures must NOT block the filing — the
-    // synchronous gate above already enforced the rule. Surface to ops.
-    console.warn(
-      `[sar-report] four-eyes ledger persist failed: ${err instanceof Error ? err.message : String(err)} — synchronous gate still enforced.`,
-    );
-  }
-
   const projectGid = asanaGids.sar();
   const workspaceGid = asanaGids.workspace();
   const now = new Date().toISOString();

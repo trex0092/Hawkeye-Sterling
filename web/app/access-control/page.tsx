@@ -651,9 +651,6 @@ export default function AccessControlPage() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
   // Load from sessionStorage or API (sessionStorage so sensitive user lists don't persist across sessions)
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);

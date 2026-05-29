@@ -111,10 +111,6 @@ export default function InvestigationPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
   const [error, setError] = useState<string | null>(null);
 
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-  const [error, setError] = useState<string | null>(null);
-
   useEffect(() => { setAllCases(loadCases()); }, []);
 
   const suggestions = useMemo(() => {

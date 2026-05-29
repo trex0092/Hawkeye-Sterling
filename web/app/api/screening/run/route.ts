@@ -222,8 +222,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const t0 = Date.now();
 
-  const t0 = Date.now();
-
   // Structured request ID for observability
   const reqId = req.headers.get("x-request-id") ?? randomUUID();
   const responseHeaders: Record<string, string> = {

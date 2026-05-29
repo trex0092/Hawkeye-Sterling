@@ -121,9 +121,6 @@ export function AuditTrailViewer({
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
   const load = useCallback(
     async (nextOffset: number) => {
       setLoading(true);

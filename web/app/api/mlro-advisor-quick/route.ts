@@ -380,46 +380,6 @@ export async function POST(req: Request): Promise<Response> {
       { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   }
-  const question = gateResult.question;
-
-  // Layer 1 retrieval — pull class-tagged chunks for this question so
-  // the Advisor's prompt is anchored to the source-of-truth registry
-  // and Layer 2's citation validator can later check every cite
-  // against this exact retrieval set.
-  const retrieval: RetrievalContext = retrieveForQuestion(question, 12);
-
-  // Layer 5 pre-generation refusal router — six paths (out-of-scope
-  // legal/tax, named individuals, sanctions verdicts, unsigned filing
-  // drafts, low retrieval confidence). Short-circuits before we burn
-  // an API call. The audit log records the refusal so refusal
-  // precision can be graded by Layer 7.
-  const preGen = runPreGenerationRouter({ question, retrieval });
-  if (preGen.refused) {
-    void appendAuditEntry({
-      userId: "anonymous",
-      mode: "quick",
-      questionText: question,
-      modelVersions: { haiku: MODEL },
-      charterVersionHash: "quick-v1",
-      directivesInvoked: [],
-      doctrinesApplied: [],
-      retrievedSources: retrieval.persistedSources,
-      reasoningTrace: [],
-      finalAnswer: null,
-      refusalReason: preGen.reason,
-    }).catch(() => {});
-    return NextResponse.json(
-      {
-        ok: false,
-        refused: true,
-        reason: preGen.reason,
-        message: preGen.message,
-        escalation: preGen.escalation,
-        elapsedMs: Date.now() - startedAt,
-      },
-      { status: 200, headers: CORS },
-    );
-  }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

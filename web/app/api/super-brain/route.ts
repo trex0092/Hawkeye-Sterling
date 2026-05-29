@@ -20,7 +20,7 @@ import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../src/br
 import { variantsOf } from "../../../../src/brain/translit.js";
 import { expandAliases } from "../../../../src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../src/brain/matching.js";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidates, loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
 import { jurisdictionProfile } from "../../../../src/brain/lib/jurisdictions.js";
@@ -48,6 +48,7 @@ import { enrichSubject as enrichOpenBanking } from "@/lib/intelligence/openBanki
 import { enrichSubject as enrichOpenSanctions } from "@/lib/intelligence/openSanctions";
 import type {
   QuickScreenCandidate,
+  QuickScreenOptions,
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
@@ -55,6 +56,7 @@ import type {
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
   _candidates: QuickScreenCandidate[],
+  _options?: QuickScreenOptions,
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 
@@ -180,37 +182,6 @@ const BUILD_SHA =
 
 function makeRunId(): string {
   return `sb_${randomBytes(4).toString("hex")}`;
-}
-
-// ── Result cache (cost reduction) ────────────────────────────────────────────
-// Super-brain is compute + I/O heavy (watchlist read, OpenSanctions, LSEG).
-// Cache full results for 4 hours keyed on the normalised input hash.
-// The ongoing thrice-daily screen cadence (08:30 / 15:00 / 17:30) has a 2.5h
-// gap between runs 2 and 3 — run 3 is always a cache hit, saving ~33% of calls.
-const SUPER_BRAIN_CACHE_TTL_MS = 4 * 60 * 60 * 1_000; // 4 hours
-
-function cacheHash(s: string): string {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 33) + s.charCodeAt(i)) | 0;
-  return (h >>> 0).toString(16).padStart(8, "0");
-}
-
-interface CachedSuperBrain {
-  cachedAt: string;
-  ttlMs: number;
-  result: Record<string, unknown>;
-}
-
-function buildCacheKey(body: Body): string {
-  const norm = JSON.stringify({
-    n: body.subject.name.trim().toLowerCase(),
-    a: (body.subject.aliases ?? []).map((x) => x.trim().toLowerCase()).sort(),
-    e: body.subject.entityType ?? "individual",
-    j: (body.subject.jurisdiction ?? "").trim().toLowerCase(),
-    r: (body.roleText ?? "").trim().toLowerCase(),
-    m: (body.adverseMediaText ?? "").trim().toLowerCase(),
-  });
-  return `super-brain-cache/${cacheHash(norm)}`;
 }
 
 // ── Result cache (cost reduction) ────────────────────────────────────────────
@@ -562,6 +533,13 @@ export async function POST(req: Request): Promise<NextResponse> {
           pepPenalty,
       ),
     );
+
+    const compositeLabel: "critical" | "high" | "medium" | "low" | "clear" =
+      composite >= 85 ? "critical"
+      : composite >= 65 ? "high"
+      : composite >= 40 ? "medium"
+      : composite >= 15 ? "low"
+      : "clear";
 
     // ── Wave 4 additions ────────────────────────────────────────
     // Richer jurisdiction profile (FATF tier + secrecy + sanctions

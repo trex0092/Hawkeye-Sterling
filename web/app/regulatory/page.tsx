@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RegulatorySourcesSection } from "@/components/regulatory/RegulatorySourcesSection";
 import type { CalendarEvent, RegCalendarLiveResult } from "@/app/api/regulatory-calendar-live/route";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -880,7 +881,6 @@ export default function RegulatoryPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [liveItems, setLiveItems] = useState<LiveItem[]>([]);
   const [liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
   useEffect(() => {
     setLiveStatus("loading");

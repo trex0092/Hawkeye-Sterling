@@ -670,7 +670,7 @@ export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult })
   const redlines = result.redlines.fired.length;
   const typologies = result.typologies?.hits.length ?? 0;
 
-  if (hitCount > 0 && amFired && !pepFired) {
+  if (confirmedHitCount > 0 && amFired && !pepFired) {
     patterns.push({
       name: "Sanctions-linked adverse-media",
       likelihood: 0.88,

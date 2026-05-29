@@ -885,6 +885,7 @@ function SessionActivity({ historyRef, checks, externalChecks, sanctionsName, sa
 }
 
 interface CmResult { envVar: string; name: string; gid: string | null; status: "created" | "already_exists" | "failed"; error?: string }
+type ResetResult = { name: string; deleted: number; created: number; errors: string[] };
 
 function AsanaRebuildSection() {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
@@ -897,6 +898,13 @@ function AsanaRebuildSection() {
   const [cmErr, setCmErr] = useState("");
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const [rebuildState, setRebuildState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [rebuildResults, setRebuildResults] = useState<ResetResult[]>([]);
+  const [rebuildErr, setRebuildErr] = useState("");
+  const [resetState, setResetState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [resetResults, setResetResults] = useState<ResetResult[]>([]);
+  const [resetErr, setResetErr] = useState("");
 
   const createMissing = async () => {
     setCmState("running");

@@ -34,13 +34,6 @@ import {
   extractAndStripProbe,
 } from "@/lib/server/mlro-probe";
 import {
-  retrieveForQuestion,
-  runPreGenerationRouter,
-  runPostGenerationCheck,
-  appendAuditEntry,
-  type RetrievalContext,
-} from "@/lib/server/mlro-integration";
-import {
   buildJurisdictionComparator,
   buildCasePrecedentPreamble,
   buildRegulatoryUpdatePreamble,
@@ -275,6 +268,22 @@ interface Body {
   /** Convenience alias: when the screening panel has a caseId open,
    *  pass it through. Used as sessionKey when sessionKey isn't set. */
   caseId?: string;
+  // Optional enriched screening context fields
+  riskClassification?: "low" | "medium" | "high" | "very_high";
+  customerStatus?: "new_onboarding" | "existing" | "exit";
+  subjectDateOfBirth?: string;
+  subjectNationality?: string;
+  subjectIdNumber?: string;
+  matchConfidence?: "EXACT" | "STRONG" | "POSSIBLE" | "WEAK" | "NO_MATCH";
+  predicateCategory?: string;
+  transactionAmount?: number | null;
+  transactionCurrency?: string;
+  transactionDate?: string;
+  priorEddPerformed?: boolean | null;
+  priorStrFiled?: boolean | null;
+  observedRedFlags?: string[];
+  commodityType?: string;
+  originCountry?: string;
   /** Optional super-brain snapshot from the screening panel. When
    *  present, the advisor is briefed with the subject's actual
    *  composite/sanctions/PEP/AM/redlines/typology posture so the

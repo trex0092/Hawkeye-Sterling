@@ -276,15 +276,6 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     "OECD Due Diligence Guidance — Gold Supplement",
   ];
 
-  const amScored = sb?.adverseMediaScored ?? null;
-  const amTotalHits = amScored?.total
-    ?? ((sb?.adverseKeywordGroups ?? []).reduce((acc, g) => acc + g.count, 0) + (sb?.adverseMedia?.length ?? 0));
-  const amCategoriesTripped =
-    amScored?.categoriesTripped?.length
-      ? amScored.categoriesTripped
-      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
-  const amVectorScore = amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
-  const newsArticles = (sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string }> } } | null | undefined)?.newsDossier?.articles ?? [];
 
   // ── extra CSS (scr-* classes) ──────────────────────────────────────
   const extraCss = `<style>
