@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { AIIncidentRecord, IncidentType, IncidentSeverity, IncidentStatus } from "@/app/api/ai-incident-playbook/route";
 
 // UAE AI Incident Response — FDL 10/2025 Art.24 + CBUAE AI Governance Guidelines 2025
@@ -111,8 +111,8 @@ export default function AIIncidentPlaybookPage() {
       const data = await res.json() as { ok: boolean; incidents?: AIIncidentRecord[]; error?: string };
       if (data.ok) setIncidents(data.incidents ?? []);
       else setError(data.error ?? "Failed to load incidents");
-    } catch {
-      setError("Network error loading incidents");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading incidents"));
     } finally {
       setLoading(false);
     }
@@ -139,8 +139,8 @@ export default function AIIncidentPlaybookPage() {
       } else {
         setError(data.error ?? "Failed to log incident");
       }
-    } catch {
-      setError("Network error logging incident");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error logging incident"));
     } finally {
       setSubmitting(false);
     }
@@ -157,8 +157,8 @@ export default function AIIncidentPlaybookPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchIncidents();
       else setError(data.error ?? "Update failed");
-    } catch {
-      setError("Network error updating incident");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error updating incident"));
     }
   }
 

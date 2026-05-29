@@ -349,7 +349,7 @@ export default function EocnPage() {
         headers: { accept: "application/json", "content-type": "application/json" },
         body: "{}",
       });
-      if (r.ok || r.status === 502) {
+      if (r.ok) {
         const next = (await r.json()) as EocnFeedPayload;
         if (next?.listUpdates?.length) {
           setFeed(next);
