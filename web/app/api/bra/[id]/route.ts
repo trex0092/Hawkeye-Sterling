@@ -80,8 +80,9 @@ export async function PATCH(
         { status: 404, headers: gate.headers },
       );
     }
+    console.error("[bra] update failed:", message);
     return NextResponse.json(
-      { ok: false, error: message },
+      { ok: false, error: "BRA update failed — service temporarily unavailable" },
       { status: 500, headers: gate.headers },
     );
   }
