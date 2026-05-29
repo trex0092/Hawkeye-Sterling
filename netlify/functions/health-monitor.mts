@@ -105,6 +105,14 @@ const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
   { label: "sanctions-daily-0830",   maxSilenceHours: 26 }, // daily 04:30 UTC → alert after 26h
   { label: "sanctions-daily-1300",   maxSilenceHours: 26 }, // daily 09:00 UTC → alert after 26h
   { label: "sanctions-daily-1730",   maxSilenceHours: 26 }, // daily 13:30 UTC → alert after 26h
+  { label: "ofac-intraday-check",    maxSilenceHours: 9  }, // every 4h → alert after 9h
+  { label: "sla-monitor",            maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "freeze-sla-monitor",     maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "ongoing-screen",         maxSilenceHours: 2  }, // every 1h → alert after 2h
+  { label: "gdelt-prefetch",         maxSilenceHours: 5  }, // every 2h → alert after 5h
+  { label: "pep-refresh",            maxSilenceHours: 26 }, // daily 04:23 UTC → alert after 26h
+  { label: "audit-chain-s3-backup",  maxSilenceHours: 26 }, // daily 02:00 UTC → alert after 26h
+  { label: "opensanctions-refresh",  maxSilenceHours: 170}, // weekly Sunday 02:30 → alert after 1 week + 2h
 ];
 
 interface HeartbeatEntry {
