@@ -637,7 +637,6 @@ export default function AccessControlPage() {
   const [activeTab, setActiveTab] = useState<Tab>("👥 Users");
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [log, setLog] = useState<PermissionLogEntry[]>([]);
-  const [_sessions, _setSessions] = useState<AccessSession[]>([]);
   const [selectedUser, setSelectedUser] = useState<AccessUser | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -646,8 +645,6 @@ export default function AccessControlPage() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
-  const [_revokeError, setRevokeError] = useState<string | null>(null);
-  const [_revokingId, setRevokingId] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -741,35 +738,14 @@ export default function AccessControlPage() {
     }
   };
 
-  const _handleRevokeSession = async (session: AccessSession) => {
-    setRevokeError(null);
-    setRevokingId(session.id);
-    try {
-      await fetch("/api/access/revoke-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.userId, reason: "Manual session revocation by administrator." }),
-      });
-      if (!mountedRef.current) return;
-      _setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
-      setUsers((prev) => prev.map((u) => (u.id === session.userId ? { ...u, active: false } : u)));
-      void fetchLog();
-    } catch (err) {
-      console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
-      if (mountedRef.current) setRevokeError("Network error — session could not be revoked. Please try again.");
-    } finally {
-      if (mountedRef.current) setRevokingId(null);
-    }
-  };
-
   // KPIs
   const totalUsers = users.length;
-  const activeSessions = _sessions.filter((s) => s.active).length;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const roleChangesThisWeek = log.filter(
     (e) => e.action === "role_assigned" && new Date(e.timestamp) >= weekAgo,
   ).length;
+  const totalAuditEvents = log.length;
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
@@ -786,7 +762,7 @@ export default function AccessControlPage() {
         titleEm="permissions."
         kpis={[
           { value: String(totalUsers), label: "Total users" },
-          { value: String(activeSessions), label: "Active sessions" },
+          { value: String(totalAuditEvents), label: "Permission events" },
           { value: String(roleChangesThisWeek), label: "Role changes this week" },
           { value: String(ALL_MODULES.length), label: "Modules protected" },
         ]}
