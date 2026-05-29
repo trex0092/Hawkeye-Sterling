@@ -42,6 +42,7 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+import { getCountryRisk } from "@/lib/server/high-risk-countries";
 
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
@@ -136,7 +137,6 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
     // Dual-store: try hawkeye-list-reports (entities written there post-deploy)
     // then hawkeye-lists (entities present now from existing ingestion runs).
     const token =
-      process.env["NETLIFY_BLOBS_TOKEN"] ??
       process.env["NETLIFY_API_TOKEN"] ??
       process.env["NETLIFY_AUTH_TOKEN"];
     const mkStore = (name: string) => siteID && token
