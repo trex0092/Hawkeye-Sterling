@@ -232,9 +232,9 @@ function EocnPdfUploadPanel() {
         <div className="font-semibold text-ink-0 mb-2">EOCN notification workflow</div>
         <ol className="list-decimal list-inside flex flex-col gap-1.5">
           <li>Register on NAS and ARS at <span className="font-mono text-ink-0">uaeiec.gov.ae</span> (Registration tab)</li>
-          <li>When you receive a PDF email from EOCN, open this tab</li>
+          <li>When you receive an email from EOCN (.xls, .xml, or PDF), open this tab</li>
           <li>Select list type (EOCN TFS or Local Terrorist List)</li>
-          <li>Upload the PDF — Hawkeye automatically extracts all designees</li>
+          <li>Upload the file — Hawkeye automatically parses all designees</li>
           <li>Run &ldquo;Re-screen portfolio&rdquo; on the Screening page within 24 hours</li>
           <li>Any new hits create automatic MLRO inbox alerts for 24-hour freeze decision</li>
         </ol>
