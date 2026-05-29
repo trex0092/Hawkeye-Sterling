@@ -297,13 +297,23 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
 // Merge Wave 3: new modes + real-implementation upgrades for existing wave 1/2 stubs.
 const existingIds = new Set(REASONING_MODES.map((r) => r.id));
 for (const m of WAVE3_MODES) {
-  if (!existingIds.has(m.id)) REASONING_MODES.push(m);
+  if (!existingIds.has(m.id)) {
+    REASONING_MODES.push(m);
+    existingIds.add(m.id);
+  }
 }
 // Apply WAVE3_OVERRIDES — replaces stubs in wave 1/2 with working implementations.
 for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]; if (!r) continue;
   const w3override = WAVE3_OVERRIDES.find((o) => o.id === r.id);
   if (w3override) REASONING_MODES[i] = w3override;
+}
+// Wave 4 — AI governance + financial-crime-predicate expansion (60 modes).
+for (const m of WAVE4_MODES) {
+  if (!existingIds.has(m.id)) {
+    REASONING_MODES.push(m);
+    existingIds.add(m.id);
+  }
 }
 
 // Merge Wave 4: new predicate-crime, proliferation, correspondent-banking, hawala modes.

@@ -194,6 +194,7 @@ export function buildWeaponizedBrainManifest(version = '0.2.0'): WeaponizedBrain
   for (const mode of REASONING_MODES) {
     byCategory[mode.category] = (byCategory[mode.category] ?? 0) + 1;
     if (mode.wave === 1) byWave.wave1 += 1;
+    else if (mode.wave === 2) byWave.wave2 += 1;
     else if (mode.wave === 3) byWave.wave3 += 1;
     else if (mode.wave === 4) byWave.wave4 += 1;
     else if (mode.wave === 5) byWave.wave5 += 1;
