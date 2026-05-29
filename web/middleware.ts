@@ -207,7 +207,7 @@ function corsResponse(): NextResponse {
   return res;
 }
 
-export async function proxy(req: NextRequest): Promise<NextResponse> {
+export default async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const requestId = resolveRequestId(req);
 
