@@ -116,7 +116,7 @@ async function handleGet(req: Request, ctx: RequestContext): Promise<NextRespons
     keys = await listKeys("four-eyes/");
   } catch (err) {
     console.warn("[hawkeye] four-eyes GET listKeys failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: true, pending: [], total: 0, items: [] }, { headers: {} });
+    return NextResponse.json({ ok: false, error: "Four-eyes store temporarily unavailable — please retry" }, { status: 503 });
   }
   const loaded = await Promise.all(
     keys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
