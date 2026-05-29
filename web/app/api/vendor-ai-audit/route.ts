@@ -90,13 +90,18 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const assessments = await loadAssessments(tenant);
-  assessments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  try {
+    const assessments = await loadAssessments(tenant);
+    assessments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  // Seed Anthropic entry if empty (default vendor for Hawkeye Sterling)
-  const seeded = assessments.length === 0 ? [buildAnthropicSeed(tenant)] : assessments;
+    // Seed Anthropic entry if empty (default vendor for Hawkeye Sterling)
+    const seeded = assessments.length === 0 ? [buildAnthropicSeed(tenant)] : assessments;
 
-  return NextResponse.json({ ok: true, assessments: seeded }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, assessments: seeded }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[vendor-ai-audit] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load vendor AI assessments" }, { status: 500, headers: gate.headers });
+  }
 }
 
 function buildAnthropicSeed(tenant: string): VendorAIAssessment {
@@ -221,8 +226,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     updatedAt: now,
   };
 
-  const existing = await loadAssessments(tenant);
-  await setJson(blobKey(tenant), [assessment, ...existing].slice(0, 200));
+  try {
+    const existing = await loadAssessments(tenant);
+    await setJson(blobKey(tenant), [assessment, ...existing].slice(0, 200));
+  } catch (err) {
+    console.error("[vendor-ai-audit] POST store failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save vendor AI assessment" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "vendor_ai_audit.created",
@@ -286,42 +296,47 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     }
   }
 
-  const assessments = await loadAssessments(tenant);
-  const idx = assessments.findIndex((a) => a.id === body.id);
-  if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "Assessment not found" }, { status: 404 });
+  try {
+    const assessments = await loadAssessments(tenant);
+    const idx = assessments.findIndex((a) => a.id === body.id);
+    if (idx === -1) {
+      return NextResponse.json({ ok: false, error: "Assessment not found" }, { status: 404, headers: gate.headers });
+    }
+
+    const existing = assessments[idx]!;
+    const mergedChecklist = body.checklist
+      ? { ...existing.checklist, ...body.checklist }
+      : existing.checklist;
+    const newScore = scoreChecklist(mergedChecklist);
+    const newGaps = body.criticalGaps ?? existing.criticalGaps;
+    const newRisk = computeRiskTier(newScore, newGaps);
+    const newStatus = body.status ?? existing.status;
+
+    const updated: VendorAIAssessment = {
+      ...existing,
+      checklist: mergedChecklist,
+      checklistScore: newScore,
+      riskTier: newRisk,
+      criticalGaps: newGaps,
+      status: newStatus,
+      ...(body.overallFindings !== undefined ? { overallFindings: body.overallFindings } : {}),
+      ...(body.contractReference !== undefined ? { contractReference: body.contractReference } : {}),
+      nextReviewDate: nextReview(newStatus, newRisk),
+      updatedAt: new Date().toISOString(),
+    };
+
+    assessments[idx] = updated;
+    await setJson(blobKey(tenant), assessments);
+
+    void writeAuditChainEntry({
+      event: "vendor_ai_audit.updated",
+      actor: gate.keyId ?? "system",
+      detail: `${body.id} — score ${newScore}% (${newRisk})`,
+    }, tenant).catch(() => {});
+
+    return NextResponse.json({ ok: true, assessment: updated }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[vendor-ai-audit] PATCH failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to update vendor AI assessment" }, { status: 500, headers: gate.headers });
   }
-
-  const existing = assessments[idx]!;
-  const mergedChecklist = body.checklist
-    ? { ...existing.checklist, ...body.checklist }
-    : existing.checklist;
-  const newScore = scoreChecklist(mergedChecklist);
-  const newGaps = body.criticalGaps ?? existing.criticalGaps;
-  const newRisk = computeRiskTier(newScore, newGaps);
-  const newStatus = body.status ?? existing.status;
-
-  const updated: VendorAIAssessment = {
-    ...existing,
-    checklist: mergedChecklist,
-    checklistScore: newScore,
-    riskTier: newRisk,
-    criticalGaps: newGaps,
-    status: newStatus,
-    ...(body.overallFindings !== undefined ? { overallFindings: body.overallFindings } : {}),
-    ...(body.contractReference !== undefined ? { contractReference: body.contractReference } : {}),
-    nextReviewDate: nextReview(newStatus, newRisk),
-    updatedAt: new Date().toISOString(),
-  };
-
-  assessments[idx] = updated;
-  await setJson(blobKey(tenant), assessments);
-
-  void writeAuditChainEntry({
-    event: "vendor_ai_audit.updated",
-    actor: gate.keyId ?? "system",
-    detail: `${body.id} — score ${newScore}% (${newRisk})`,
-  }, tenant).catch(() => {});
-
-  return NextResponse.json({ ok: true, assessment: updated }, { headers: gate.headers });
 }

@@ -60,10 +60,15 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const incidents = await loadIncidents(tenant);
-  incidents.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  try {
+    const incidents = await loadIncidents(tenant);
+    incidents.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  return NextResponse.json({ ok: true, incidents }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, incidents }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[ai-incident-playbook] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load AI incidents" }, { status: 500, headers: gate.headers });
+  }
 }
 
 interface PostBody {
@@ -129,8 +134,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     updatedAt: now,
   };
 
-  const existing = await loadIncidents(tenant);
-  await setJson(blobKey(tenant), [record, ...existing].slice(0, 1000));
+  try {
+    const existing = await loadIncidents(tenant);
+    await setJson(blobKey(tenant), [record, ...existing].slice(0, 1000));
+  } catch (err) {
+    console.error("[ai-incident-playbook] POST store failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save AI incident" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "ai_incident.created",
@@ -184,31 +194,36 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     body.containmentSteps = body.containmentSteps.slice(0, 20);
   }
 
-  const incidents = await loadIncidents(tenant);
-  const idx = incidents.findIndex((i) => i.id === body.id);
-  if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "Incident not found" }, { status: 404, headers: gate.headers });
+  try {
+    const incidents = await loadIncidents(tenant);
+    const idx = incidents.findIndex((i) => i.id === body.id);
+    if (idx === -1) {
+      return NextResponse.json({ ok: false, error: "Incident not found" }, { status: 404, headers: gate.headers });
+    }
+
+    const updated: AIIncidentRecord = {
+      ...incidents[idx]!,
+      ...(body.status !== undefined ? { status: body.status } : {}),
+      ...(body.rootCause !== undefined ? { rootCause: body.rootCause } : {}),
+      ...(body.lessonsLearned !== undefined ? { lessonsLearned: body.lessonsLearned } : {}),
+      ...(body.containmentSteps !== undefined ? { containmentSteps: body.containmentSteps } : {}),
+      ...(body.regulatoryNotificationSent !== undefined ? { regulatoryNotificationSent: body.regulatoryNotificationSent } : {}),
+      ...(body.resolvedAt !== undefined ? { resolvedAt: body.resolvedAt } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+
+    incidents[idx] = updated;
+    await setJson(blobKey(tenant), incidents);
+
+    void writeAuditChainEntry({
+      event: "ai_incident.updated",
+      actor: gate.keyId ?? "system",
+      detail: `${body.id} → status:${body.status ?? "unchanged"}`,
+    }, tenant).catch(() => {});
+
+    return NextResponse.json({ ok: true, incident: updated }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[ai-incident-playbook] PATCH failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to update AI incident" }, { status: 500, headers: gate.headers });
   }
-
-  const updated: AIIncidentRecord = {
-    ...incidents[idx]!,
-    ...(body.status !== undefined ? { status: body.status } : {}),
-    ...(body.rootCause !== undefined ? { rootCause: body.rootCause } : {}),
-    ...(body.lessonsLearned !== undefined ? { lessonsLearned: body.lessonsLearned } : {}),
-    ...(body.containmentSteps !== undefined ? { containmentSteps: body.containmentSteps } : {}),
-    ...(body.regulatoryNotificationSent !== undefined ? { regulatoryNotificationSent: body.regulatoryNotificationSent } : {}),
-    ...(body.resolvedAt !== undefined ? { resolvedAt: body.resolvedAt } : {}),
-    updatedAt: new Date().toISOString(),
-  };
-
-  incidents[idx] = updated;
-  await setJson(blobKey(tenant), incidents);
-
-  void writeAuditChainEntry({
-    event: "ai_incident.updated",
-    actor: gate.keyId ?? "system",
-    detail: `${body.id} → status:${body.status ?? "unchanged"}`,
-  }, tenant).catch(() => {});
-
-  return NextResponse.json({ ok: true, incident: updated }, { headers: gate.headers });
 }
