@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Country Risk Heat-Map — Module 35b
 // SVG-based rectangular grid world map showing country risk levels.
@@ -582,7 +582,7 @@ export default function CountryRiskMapPage() {
         }));
       }
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Failed to load risk data");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Failed to load risk data"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

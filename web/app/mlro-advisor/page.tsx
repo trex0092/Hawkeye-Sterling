@@ -1624,7 +1624,6 @@ export default function MlroAdvisorPage() {
       throw new Error("__no_background__");
     }
     if (startResp.status !== 202 && !startResp.ok) {
-      const txt = await startResp.text().catch(() => "");
       throw new Error(apiErrorMessage(startResp.status, "Background job start"));
     }
 

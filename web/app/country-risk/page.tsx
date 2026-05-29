@@ -5,7 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
 import type { CountryCompareResult } from "@/app/api/country-risk/compare/route";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Country Risk Intelligence Hub — Module 35
 // Covers Basel AML Index, TI CPI, FATF grey/black lists, OFAC/EU/UN/UK sanctions,
@@ -409,7 +409,7 @@ export default function CountryRiskPage() {
       if (data.error) throw new Error(data.error);
       setResult(data as CountryRiskResult);
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Analysis failed");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Analysis failed"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -452,7 +452,7 @@ export default function CountryRiskPage() {
       if (data.error) throw new Error(data.error);
       setCompareResult(data as CountryCompareResult);
     } catch (e) {
-      if (mountedRef.current) setCompareError(e instanceof Error ? e.message : "Comparison failed");
+      if (mountedRef.current) setCompareError(caughtErrorMessage(e, "Comparison failed"));
     } finally {
       if (mountedRef.current) setComparing(false);
     }

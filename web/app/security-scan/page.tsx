@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { SecurityScanBanner } from "@/components/layout/SecurityScanBanner";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { SecurityScanResult, ScanFinding, ScanModule } from "@/app/api/security-scan/route";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -103,13 +104,13 @@ export default function SecurityScanPage() {
     try {
       const res = await fetch("/api/security-scan");
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Authentication required — please refresh the page or contact your administrator.");
-        throw new Error(`HTTP ${res.status}`);
+        setError(apiErrorMessage(res.status, "Security scan"));
+        return;
       }
       const data = (await res.json()) as SecurityScanResult & { ok?: boolean };
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scan failed");
+      setError(caughtErrorMessage(e, "Scan failed — please try again."));
     } finally {
       setLoading(false);
     }
@@ -193,9 +194,7 @@ export default function SecurityScanPage() {
 
         {error && (
           <div role="alert" aria-live="assertive" className="rounded-xl border border-red-500/30 bg-red-950/20 p-6 text-13 text-red-300">
-            {error.toLowerCase().startsWith("authentication") || error.toLowerCase().startsWith("access denied")
-              ? error
-              : `Scan failed: ${error}`}
+            {error}
           </div>
         )}
 

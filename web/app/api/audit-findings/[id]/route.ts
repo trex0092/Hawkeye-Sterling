@@ -69,8 +69,9 @@ export async function PATCH(
         { status: 404, headers: gate.headers },
       );
     }
+    console.error("[audit-findings] update failed:", message);
     return NextResponse.json(
-      { ok: false, error: message },
+      { ok: false, error: "Update failed — service temporarily unavailable" },
       { status: 500, headers: gate.headers },
     );
   }

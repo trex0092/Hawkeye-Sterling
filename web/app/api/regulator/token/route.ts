@@ -79,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
   } catch (err) {
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "Token issuance failed — check Ed25519 key configuration" },
       { status: 422 },
     );
   }
