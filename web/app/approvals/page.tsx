@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -272,8 +272,8 @@ export default function ApprovalsPage() {
       if (!res.ok) throw new Error(apiErrorMessage(res.status, "Approval"));
       const data = (await res.json()) as { ok: boolean; records?: ApprovalRecord[] };
       if (data.ok && data.records) setRecords(data.records);
-    } catch {
-      setError("Failed to load approvals");
+    } catch (e) {
+      setError(caughtErrorMessage(e, "Failed to load approvals"));
     } finally {
       setLoading(false);
     }
@@ -298,8 +298,8 @@ export default function ApprovalsPage() {
       if (!data.ok) { setError(data.error ?? "Save failed"); return; }
       setShowForm(false);
       await load();
-    } catch {
-      setError("Network error");
+    } catch (e) {
+      setError(caughtErrorMessage(e, "Save failed — please try again."));
     } finally {
       setSaving(false);
     }
@@ -322,8 +322,8 @@ export default function ApprovalsPage() {
       if (!data.ok) { setError(data.error ?? "Update failed"); return; }
       setEditingId(null);
       await load();
-    } catch {
-      setError("Network error");
+    } catch (e) {
+      setError(caughtErrorMessage(e, "Update failed — please try again."));
     } finally {
       setSaving(false);
     }
@@ -332,10 +332,11 @@ export default function ApprovalsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this approval record?")) return;
     try {
-      await fetch(`/api/approvals/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/approvals/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Delete"));
       await load();
-    } catch {
-      setError("Delete failed");
+    } catch (e) {
+      setError(caughtErrorMessage(e, "Delete failed — please try again."));
     }
   };
 

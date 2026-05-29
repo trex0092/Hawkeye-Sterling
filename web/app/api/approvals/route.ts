@@ -50,7 +50,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const entityName = (body["entityName"] as string | undefined)?.trim();
@@ -61,13 +61,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const underProcess = body["underProcess"] === true || !approvalDate;
 
   if (!entityName) {
-    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "entityName is required" }, { status: 400, headers: gate.headers });
   }
   if (!country) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400, headers: gate.headers });
   }
   if (!riskScore || !["low", "medium", "high"].includes(riskScore)) {
-    return NextResponse.json({ ok: false, error: "riskScore must be low, medium, or high" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "riskScore must be low, medium, or high" }, { status: 400, headers: gate.headers });
   }
 
   const now = new Date().toISOString();

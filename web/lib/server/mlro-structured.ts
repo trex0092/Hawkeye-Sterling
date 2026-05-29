@@ -126,7 +126,8 @@ export function tryParseStructured(text: string): { ok: true; value: AdvisorResp
     const value = JSON.parse(jsonText) as AdvisorResponseV1;
     return { ok: true, value };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e), raw: jsonText };
+    console.error("[mlro-structured] JSON parse failed:", e instanceof Error ? e.message : String(e));
+    return { ok: false, error: "Response parsing failed — advisor output was not valid JSON", raw: jsonText };
   }
 }
 

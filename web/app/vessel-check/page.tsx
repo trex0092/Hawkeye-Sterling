@@ -184,7 +184,7 @@ export default function VesselCheckPage() {
               <button
                 key={m}
                 type="button"
-                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); }}
+                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); setRiskProfile(null); }}
                 className={tabCls(mode === m)}
               >
                 {m === "single" ? "Single Vessel" : "Batch (CSV / list)"}

@@ -34,13 +34,13 @@ export async function PATCH(
   try {
     body = (await req.json()) as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const records = await loadRecords();
   const idx = records.findIndex((r) => r.id === id);
   if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
 
   const existing = records[idx]!;
@@ -88,7 +88,7 @@ export async function DELETE(
   const records = await loadRecords();
   const filtered = records.filter((r) => r.id !== id);
   if (filtered.length === records.length) {
-    return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "not found" }, { status: 404, headers: gate.headers });
   }
 
   await saveRecords(filtered);
