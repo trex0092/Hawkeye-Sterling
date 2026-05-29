@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
 
@@ -1377,12 +1378,12 @@ export default function ResponsibleAIPage() {
         body: JSON.stringify({ models, incidents, biasData }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "AI ethics assessment"));
       const data = await res.json().catch(() => ({})) as EthicsAssessmentResult & { ok?: boolean };
       if (!mountedRef.current) return;
       setAssessmentResult(data);
     } catch (e) {
-      if (mountedRef.current) setAssessmentError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setAssessmentError(caughtErrorMessage(e, "Ethics assessment failed — please retry"));
     } finally {
       if (mountedRef.current) setAssessmentLoading(false);
     }

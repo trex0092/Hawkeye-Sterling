@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Check {
   name: string;
@@ -214,7 +215,7 @@ export default function StatusPage() {
         }
       } catch (e) {
         console.error("[hawkeye] status threw:", e);
-        if (active) setErr(e instanceof Error ? e.message : String(e));
+        if (active) setErr(caughtErrorMessage(e, "Status check failed — please retry"));
       }
     };
     void load();
@@ -718,7 +719,7 @@ function SanctionsRefreshButton() {
         setState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setMsg(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setState("error");
     }
   };
@@ -924,7 +925,7 @@ function AsanaRebuildSection() {
         setCmState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setCmErr(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setCmErr(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setCmState("error");
     }
   };
@@ -962,7 +963,7 @@ function AsanaRebuildSection() {
         setState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setErrMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setErrMsg(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setState("error");
     }
   };

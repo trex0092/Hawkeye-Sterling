@@ -54,7 +54,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   let mod: BlobsModuleShape;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
@@ -93,7 +93,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         return { bucket, lastPolled: v ?? null };
       }),
     );
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,

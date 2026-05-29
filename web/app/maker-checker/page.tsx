@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type {
   MakerCheckerRequest,
   MakerCheckerActionType,
@@ -252,13 +253,13 @@ export default function MakerCheckerPage() {
     try {
       const url = showAll ? "/api/maker-checker?status=all" : "/api/maker-checker";
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`API error ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Maker-checker queue"));
       const data = await res.json() as { ok: boolean; items?: ItemWithAge[]; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) throw new Error(data.error ?? "Failed to load");
       setItems(data.items ?? []);
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Load failed");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Load failed"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -287,7 +288,7 @@ export default function MakerCheckerPage() {
       // Reload list after decision
       await loadItems();
     } catch (e) {
-      if (mountedRef.current) setActionError(e instanceof Error ? e.message : "Decision failed");
+      if (mountedRef.current) setActionError(caughtErrorMessage(e, "Decision failed"));
     } finally {
       if (mountedRef.current) setSubmitting(null);
     }

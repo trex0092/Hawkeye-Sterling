@@ -5,7 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { AdverseMediaLiveResult } from "@/app/api/adverse-media-live/route";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Live Adverse Media Monitor — FDL 10/2025 Art.10 (ongoing CDD monitoring)
 // and Art.19 (10-year lookback). Uses GDELT Project API (free, no key).
@@ -343,7 +343,7 @@ export default function AdverseMediaLivePage() {
         setResult(data);
         setLastSearched(params);
       } catch (e) {
-        if (mountedRefPage.current) setError(e instanceof Error ? e.message : "Search failed");
+        if (mountedRefPage.current) setError(caughtErrorMessage(e, "Search failed"));
       } finally {
         if (mountedRefPage.current) setLoading(false);
       }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { SupplyChainRiskResult } from "@/app/api/supply-chain/risk/route";
 import type { SupplyChainMapResult } from "@/app/api/supply-chain/map/route";
@@ -396,7 +397,7 @@ export default function SupplyChainPage() {
       setResult(riskData);
       setMapResult(mapData);
     } catch (e) {
-      setError(String(e));
+      setError(caughtErrorMessage(e, "Supply chain analysis failed — please retry"));
     } finally {
       setLoading(false);
     }

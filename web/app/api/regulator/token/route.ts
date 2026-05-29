@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       notBefore: body.notBefore,
       issuedBy: body.issuedBy ?? "admin",
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { ok: false, error: "Token issuance failed — check Ed25519 key configuration" },
       { status: 422 },

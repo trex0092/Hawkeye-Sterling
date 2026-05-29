@@ -8,6 +8,7 @@ import {
   type PromptCategory,
   type RedTeamPrompt,
 } from "@/lib/data/red-team-prompts";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 type Verdict = "pass" | "fail" | "error" | "untested";
 
@@ -88,7 +89,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
     return {
       id: p.id,
       verdict: "error",
-      responseExcerpt: e instanceof Error ? e.message : "fetch failed",
+      responseExcerpt: caughtErrorMessage(e, "fetch failed"),
       testedAt: Date.now(),
     };
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ function SessionMonitorTab() {
       if (!data.ok) throw new Error(data.error ?? "Failed to load sessions");
       setSessions(data.sessions ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(caughtErrorMessage(e, "Network error"));
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ function SessionMonitorTab() {
       if (!res.ok) throw new Error(apiErrorMessage(res.status));
       void fetchSessions();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Revoke failed");
+      alert(caughtErrorMessage(e, "Revoke failed"));
     } finally {
       setRevoking(null);
     }

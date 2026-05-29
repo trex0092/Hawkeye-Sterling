@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { formatDMY } from "@/lib/utils/dateFormat";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 type Capacity =
   | "subject"
@@ -62,7 +63,7 @@ export default function CorrectionsPage() {
         setReceipt(payload);
       }
     } catch (e) {
-      if (mountedRef.current) setErr(e instanceof Error ? e.message : String(e));
+      if (mountedRef.current) setErr(caughtErrorMessage(e, "Submission failed — please retry"));
     } finally {
       if (mountedRef.current) setSubmitting(false);
     }

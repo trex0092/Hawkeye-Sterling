@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Provider {
   id: string;
@@ -59,7 +60,7 @@ export default function IntelStatusPage(): React.ReactElement {
       .catch((e: unknown) => {
         if (cancelled) return;
         console.error("[hawkeye] intel-status threw:", e);
-        setError(e instanceof Error ? e.message : String(e));
+        setError(caughtErrorMessage(e, "Failed to load intelligence provider status"));
       });
     return () => { cancelled = true; };
   }, []);

@@ -500,7 +500,7 @@ export default function EsgRiskPage() {
       const isTimeout = e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError");
       if (mountedRef.current) setError(isTimeout
         ? "ESG scorer timed out after 60s — please retry."
-        : `Request failed: ${e instanceof Error ? e.message : String(e)}`);
+        : caughtErrorMessage(e, "Request failed — please retry"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

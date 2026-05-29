@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface EnvCheck {
   id: string;
@@ -46,7 +47,7 @@ export default function EnvCheckPage() {
       })
       .catch((e) => {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : String(e));
+        setError(caughtErrorMessage(e, "Failed to load environment status"));
         setLoading(false);
       });
     return () => { cancelled = true; };
