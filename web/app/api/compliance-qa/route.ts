@@ -337,14 +337,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const enrichedQuestion = `${preamble}${body.query.trim()}`.slice(0, 3500);
   const detectedJurisdiction = detectJurisdiction(body.query);
 
-  // 'balanced' mode skips the 25 s executor stage and runs the advisor only,
-  // so the round-trip fits comfortably inside the Netlify function timeout.
-  // 'deep' mode runs the full executor → advisor pipeline (multi_perspective)
-  // for higher answer quality at the cost of latency. Caller opts in via the
-  // `depth` field; we still cap budgetMs below to stay inside maxDuration.
+  // Use 'speed' mode (Sonnet executor only) for the fallback so the response
+  // reliably fits within Netlify's ~26 s edge ceiling. The RAG call above is
+  // also capped at 4 s, leaving ~18 s for the advisor. 'deep' opts in to the
+  // full multi_perspective pipeline, but is also capped for the same reason.
   const wantsDeep = body.depth === "deep";
-  const advisorMode: "balanced" | "multi_perspective" = wantsDeep ? "multi_perspective" : "balanced";
-  const advisorBudgetMs = wantsDeep ? 95_000 : 50_000;
+  const advisorMode: "speed" | "multi_perspective" = wantsDeep ? "multi_perspective" : "speed";
+  const advisorBudgetMs = wantsDeep ? 17_000 : 18_000;
 
   const advisorReq: MlroAdvisorRequest = {
     question: enrichedQuestion,
@@ -368,17 +367,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   try {
-    // Netlify's edge layer enforces a ~26 s "inactivity timeout" on
-    // synchronous functions independent of route-level maxDuration.
-    // We HARD-CAP both balanced and deep modes at 22 s so the platform
-    // always sees JSON before its timeout fires — the alternative is
-    // an HTML 504 page the client cannot parse. Deep mode therefore
-    // returns its best-effort partial reasoning trail when it cannot
-    // finish; the response.partial flag tells the UI to render the
-    // partial answer with a "budget exceeded" notice. To re-enable
-    // longer-budget deep reasoning, port this route to a Netlify
-    // background function (15-minute timeout) and remove the cap.
-    const safeBudgetMs = Math.min(advisorBudgetMs, 22_000);
+    const safeBudgetMs = advisorBudgetMs;
     const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: safeBudgetMs });
 
     if (!advisorResult.ok) {
