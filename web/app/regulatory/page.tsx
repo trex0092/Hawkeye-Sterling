@@ -1090,6 +1090,8 @@ export default function RegulatoryPage() {
           {filtered.length === 0 && (
             <div className="text-12 text-ink-2 py-8 text-center">No entries match.</div>
           )}
+
+          <RegulatorySourcesSection />
         </div>
       </div>
     </ModuleLayout>
