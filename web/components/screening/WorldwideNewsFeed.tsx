@@ -179,17 +179,17 @@ export function WorldwideNewsFeed() {
         <>
           {/* Body */}
           {loading && articles.length === 0 ? (
-            <div>
+            <div aria-live="polite" aria-label="Loading news articles">
               {[0, 1, 2, 3, 4].map((i) => <SkeletonRow key={i} />)}
             </div>
           ) : error && articles.length === 0 ? (
-            <div className="px-4 py-6 text-center text-12 text-ink-3">
+            <div role="alert" aria-live="assertive" className="px-4 py-6 text-center text-12 text-ink-3">
               {error.includes("401") || error.includes("API key") || error.includes("key required")
                 ? "News feed temporarily unavailable — retrying automatically."
                 : error}
             </div>
           ) : (
-            <div className="overflow-y-auto" style={{ maxHeight: "400px" }}>
+            <div className="overflow-y-auto" aria-live="polite" aria-label="AML news articles" style={{ maxHeight: "400px" }}>
               {articles.map((article) => (
                 <div
                   key={article.url}

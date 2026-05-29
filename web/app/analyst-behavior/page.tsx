@@ -201,7 +201,7 @@ export default function AnalystBehaviorPage() {
           Analysing analyst activity…
         </div>
       ) : error ? (
-        <div className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
+        <div role="alert" aria-live="assertive" className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
           UEBA engine error: {error}
         </div>
       ) : !report ? (

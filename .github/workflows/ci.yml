@@ -149,8 +149,10 @@ jobs:
 
       - name: Check for exposed env var reads in client components
         run: |
+          # Pattern covers all server-only secrets — any read of these in a .tsx
+          # file that is NOT a route handler risks shipping them to the browser bundle.
           if grep -rn --include="*.tsx" \
-            -E "process\.env\.(ANTHROPIC_API_KEY|ADMIN_TOKEN|AUDIT_CHAIN_SECRET|SANCTIONS_CRON_TOKEN)" \
+            -E "process\.env\.(ANTHROPIC_API_KEY|ADMIN_TOKEN|AUDIT_CHAIN_SECRET|SANCTIONS_CRON_TOKEN|JWT_SIGNING_SECRET|SESSION_SECRET|GMAIL_CLIENT_SECRET|GMAIL_REFRESH_TOKEN|S3_BACKUP_SECRET_KEY|UPSTASH_REDIS_REST_TOKEN|ONGOING_RUN_TOKEN|HAWKEYE_CRON_TOKEN|ALERT_WEBHOOK_URL)" \
             web/app/ 2>/dev/null | grep -v "route.ts"; then
             echo "WARNING: server-only env var read in potential client component"
             exit 1
