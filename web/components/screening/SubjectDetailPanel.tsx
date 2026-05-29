@@ -1483,11 +1483,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             subjectName={subject.name}
             subjectId={subject.id}
             news={news}
-            roleOverride={roleOverride}
-            setRoleOverride={setRoleOverride}
-            narrativeOverride={narrativeOverride}
-            setNarrativeOverride={setNarrativeOverride}
-            liveNarrativePreview={adverseMediaText}
           />
         )}
 
@@ -3133,6 +3128,12 @@ function LiveReasoningTab({
           <span className="ml-auto font-mono text-11 opacity-70">
             {result.composite.score}/100
           </span>
+        )}
+        {!disposition && superBrain.status === "success" && (
+          <div className="text-12 font-medium text-green">No action required</div>
+        )}
+        {!disposition && superBrain.status === "idle" && (
+          <div className="text-12 text-ink-2">Waiting for screening to complete…</div>
         )}
       </div>
 
