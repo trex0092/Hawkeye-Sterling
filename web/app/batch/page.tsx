@@ -3,6 +3,7 @@
 import Papa from "papaparse";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { RowActions } from "@/components/shared/RowActions";
 import BatchSeverityChart from "@/components/batch/BatchSeverityChart";
 
@@ -217,7 +218,7 @@ export default function BatchPage() {
       });
       if (!res.ok || !res.body) {
         if (!mountedRef.current) return;
-        setError(`Batch failed server ${res.status}`);
+        setError(apiErrorMessage(res.status, "Batch screening"));
         setProgress(null);
         return;
       }
@@ -256,7 +257,7 @@ export default function BatchPage() {
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : "Batch failed");
+      setError(caughtErrorMessage(err, "Batch failed"));
       setProgress(null);
     }
   };

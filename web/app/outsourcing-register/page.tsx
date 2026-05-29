@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface OutsourcingArrangement {
   id: string;
@@ -96,7 +97,7 @@ export default function OutsourcingRegisterPage() {
     setError(null);
     try {
       const res = await fetch("/api/outsourcing-register", { headers: authHeaders() });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Outsourcing register"));
       const data = await res.json() as { ok: boolean; records?: OutsourcingArrangement[]; error?: string };
       if (data.ok) setArrangements(data.records ?? []);
       else setError(data.error ?? "Failed to load outsourcing arrangements");
@@ -126,7 +127,7 @@ export default function OutsourcingRegisterPage() {
           ...(form.notes ? { notes: form.notes } : {}),
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Outsourcing register"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -171,7 +172,7 @@ export default function OutsourcingRegisterPage() {
           mlroSignOff: upd.mlroSignOff, notes: upd.notes,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Outsourcing register"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) { setExpandedId(null); void fetchArrangements(); }
       else setError(data.error ?? "Failed to update arrangement");

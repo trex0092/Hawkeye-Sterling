@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { RowActions } from "@/components/shared/RowActions";
 import {
   fixturePayload,
@@ -123,7 +124,7 @@ function EocnPdfUploadPanel() {
       // (we handled that above).
       setResult({
         ok: false,
-        error: `Network error: ${err instanceof Error ? err.message : String(err)}. Retry, or check connectivity.`,
+        error: caughtErrorMessage(err, "Network error — retry or check connectivity"),
       });
     } finally {
       setUploading(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleHeader,
@@ -372,7 +373,7 @@ export default function StrCasesPage() {
       const data = await res.json().catch(() => ({})) as { ok: boolean; briefing: MlroBriefing };
       if (data.ok) setBriefing(data.briefing);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Briefing generation failed — please retry";
+      const msg = caughtErrorMessage(err, "Briefing generation failed — please retry");
       setBriefingError(msg);
     } finally { setBriefingLoading(false); }
   };
@@ -405,7 +406,7 @@ export default function StrCasesPage() {
       setPatternResult(data);
       setPatternExpanded(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Pattern detection failed — please retry";
+      const msg = caughtErrorMessage(err, "Pattern detection failed — please retry");
       setPatternError(msg);
     } finally { setPatternLoading(false); }
   };
@@ -442,7 +443,7 @@ export default function StrCasesPage() {
       setTriageResult(data);
       setTriageExpanded(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Triage failed — please retry";
+      const msg = caughtErrorMessage(err, "Triage failed — please retry");
       setTriageError(msg);
     } finally { setTriageLoading(false); }
   };
@@ -478,7 +479,7 @@ export default function StrCasesPage() {
       if (!data.ok) throw new Error(data.error ?? "SAR scoring failed — please retry");
       setSarResult(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "SAR scoring failed — please retry";
+      const msg = caughtErrorMessage(err, "SAR scoring failed — please retry");
       setSarError(msg);
     } finally { setSarLoading(false); }
   };

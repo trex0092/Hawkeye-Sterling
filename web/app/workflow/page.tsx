@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type {
   WorkflowRule,
   WorkflowCondition,
@@ -375,7 +376,7 @@ function RuleFormModal({
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       setSaving(false);
     }
@@ -612,7 +613,7 @@ function TestRuleModal({
       }
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       setRunning(false);
     }
@@ -727,7 +728,7 @@ export default function WorkflowPage() {
       if (data.ok) setRules(data.rules);
       else setFetchError("Failed to load rules");
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Network error");
+      setFetchError(caughtErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
     }

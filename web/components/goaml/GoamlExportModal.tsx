@@ -11,6 +11,7 @@
 // entry point regulators expect to see in an audit trail.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import {
   REPORT_CODES,
   REPORT_CODE_LABEL,
@@ -176,7 +177,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
       setSubmission({ status: "ready", xml, filename });
       onExportComplete?.({ filename, xmlBytes: xml.length });
     } catch (err) {
-      if (mountedRef.current) setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (mountedRef.current) setSubmission({ status: "error", error: caughtErrorMessage(err) });
     }
   };
 

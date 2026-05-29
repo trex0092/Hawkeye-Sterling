@@ -15,6 +15,7 @@
 // without auth so the MLRO can read the stats before deciding to sign off.
 
 import React, { useEffect, useState } from "react";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ export default function BrainCataloguePage() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/status")
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error(apiErrorMessage(r.status)); return r.json(); })
       .then((d: StatusSnapshot) => { if (!cancelled) setSnapshot(d); })
       .catch((e: Error) => { if (!cancelled) setLoadError(e.message); });
     return () => { cancelled = true; };
@@ -171,14 +172,14 @@ export default function BrainCataloguePage() {
         setSubmitResult({ ok: true, message: body.hint ?? "Review recorded. Page will reflect new date on next reload." });
         // Re-fetch status to update displayed date
         fetch("/api/status")
-          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+          .then((r) => { if (!r.ok) throw new Error(apiErrorMessage(r.status)); return r.json(); })
           .then((d: StatusSnapshot) => setSnapshot(d))
           .catch(() => null);
       } else {
-        setSubmitResult({ ok: false, message: body.error ?? `HTTP ${res.status}` });
+        setSubmitResult({ ok: false, message: body.error ?? apiErrorMessage(res.status) });
       }
     } catch (err) {
-      setSubmitResult({ ok: false, message: err instanceof Error ? err.message : "Network error" });
+      setSubmitResult({ ok: false, message: caughtErrorMessage(err, "Network error") });
     } finally {
       setSubmitting(false);
     }

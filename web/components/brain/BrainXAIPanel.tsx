@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface ShapValue {
   feature: string;
@@ -46,7 +47,7 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
         if (!cancelled) setData(d);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load explanation");
+        if (!cancelled) setError(caughtErrorMessage(err, "Failed to load explanation"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

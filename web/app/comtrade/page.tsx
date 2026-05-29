@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // UN Comtrade reporter codes (major trading partners relevant to UAE AML/TBML)
 const REPORTER_CODES: Array<{ code: number; label: string }> = [
@@ -99,7 +100,7 @@ export default function ComtradePage() {
         setResult(json);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
     }

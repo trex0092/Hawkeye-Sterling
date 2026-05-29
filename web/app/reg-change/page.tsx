@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { RegChangeResult, RegChange } from "@/app/api/reg-change/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { ImpactAssessmentResult } from "@/app/api/reg-change/impact/route";
 
 // ──────────────────────────────────────────────
@@ -308,12 +309,12 @@ export default function RegChangePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ institution }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Regulatory change scan"));
       const d = await res.json().catch(() => ({})) as RegChangeResult;
       if (!mountedRef.current) return;
       setResult(d);
     } catch (e) {
-      if (mountedRef.current) setError(String(e));
+      if (mountedRef.current) setError(caughtErrorMessage(e));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
@@ -1091,7 +1092,7 @@ export default function ShipmentsPage() {
       if (!mountedRef.current) return;
       setTbml(data);
     } catch (err) {
-      if (mountedRef.current) setTbmlError(err instanceof Error ? err.message : "TBML scan failed — please retry");
+      if (mountedRef.current) setTbmlError(caughtErrorMessage(err, "TBML scan failed — please retry"));
     } finally {
       if (mountedRef.current) setTbmlLoading(false);
     }

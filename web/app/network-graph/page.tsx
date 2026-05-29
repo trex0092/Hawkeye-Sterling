@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import type { RelationshipGraph, GraphNode, GraphEdge } from "@/lib/server/relationship-graph";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { Subject } from "@/lib/types";
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -576,14 +577,14 @@ export default function NetworkGraphPage() {
         if (!mountedRef.current) return;
 
         if (!json.ok || !json.graph) {
-          setError(json.error ?? `HTTP ${res.status}`);
+          setError(json.error ?? apiErrorMessage(res.status));
         } else {
           setGraph(json.graph);
         }
       } catch (err) {
         if (mountedRef.current) {
           setError(
-            err instanceof Error ? err.message : "Failed to load graph",
+            caughtErrorMessage(err, "Failed to load graph"),
           );
         }
       } finally {

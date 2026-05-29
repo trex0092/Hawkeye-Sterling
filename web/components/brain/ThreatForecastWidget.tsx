@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 type ThreatLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -66,7 +67,7 @@ export function ThreatForecastWidget({ caseId, subject, className = "" }: Threat
       })
       .then((d) => { if (!cancelled) setData(d); })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load forecast");
+        if (!cancelled) setError(caughtErrorMessage(err, "Failed to load forecast"));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
 

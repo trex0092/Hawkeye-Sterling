@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { DocumentAnalysis, ExtractedEntity } from "@/lib/server/document-intelligence";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,13 +112,13 @@ function DocumentAnalysisTab() {
       const data = (await res.json()) as { ok: boolean; analysis?: DocumentAnalysis; error?: string };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${res.status}`);
+        setError(data.error ?? apiErrorMessage(res.status, "Document analysis"));
       } else {
         setAnalysis(data.analysis ?? null);
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : "Request failed");
+      setError(caughtErrorMessage(err, "Request failed"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -375,13 +376,13 @@ function IdentityVerificationTab() {
       const data = (await res.json()) as KycStatus & { ok: boolean; error?: string };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${res.status}`);
+        setError(data.error ?? apiErrorMessage(res.status, "Identity verification"));
       } else {
         setResult(data);
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : "Request failed");
+      setError(caughtErrorMessage(err, "Request failed"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

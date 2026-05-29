@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import type {
   MlroDecision,
   FpAnalysisResult,
@@ -105,7 +106,7 @@ export default function FpOptimizerPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] fp-optimizer/analyze HTTP ${res.status}`);
-        if (mountedRef.current) setError(`Pattern analysis failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setError(apiErrorMessage(res.status, "Pattern analysis"));
         return;
       }
       const data = await res.json().catch(() => ({})) as FpAnalysisResult;
@@ -130,7 +131,7 @@ export default function FpOptimizerPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] fp-optimizer/predict HTTP ${res.status}`);
-        if (mountedRef.current) setError(`FP prediction failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setError(apiErrorMessage(res.status, "FP prediction"));
         return;
       }
       const data = await res.json().catch(() => ({})) as PredictResult;

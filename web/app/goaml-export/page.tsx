@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { loadOperatorRole } from "@/lib/data/operator-role";
 import {
   REPORT_CODES,
@@ -175,7 +176,7 @@ export default function GoAmlExportPage() {
       const m = /filename="([^"]+)"/.exec(dispo);
       if (mountedRef.current) setSubmission({ status: "ready", xml, filename: m?.[1] ?? "goaml-export.xml" });
     } catch (err) {
-      if (mountedRef.current) setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (mountedRef.current) setSubmission({ status: "error", error: caughtErrorMessage(err) });
     }
   };
 

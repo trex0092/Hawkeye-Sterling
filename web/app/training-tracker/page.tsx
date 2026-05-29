@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { TrainingRecord } from "@/lib/server/training-records";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Status badge ───────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           ...(form.certificateRef.trim() ? { certificateRef: form.certificateRef.trim() } : {}),
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) {
         setError(data.error ?? "Add failed");
@@ -89,7 +90,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
       setForm(emptyForm());
       onAdded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       setSaving(false);
     }
@@ -215,7 +216,7 @@ export default function TrainingTrackerPage() {
     setFetchError(null);
     try {
       const res = await fetch("/api/training");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = (await res.json()) as {
         ok: boolean;
         records?: TrainingRecord[];
@@ -227,7 +228,7 @@ export default function TrainingTrackerPage() {
         setFetchError(data.error ?? "Failed to load records");
       }
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Network error");
+      setFetchError(caughtErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
     }

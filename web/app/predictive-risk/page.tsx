@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PredictiveRiskResult, RiskSignal } from "@/lib/server/predictive-risk";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { CorporateRecord } from "@/lib/intelligence/opencorporates";
 import type { WikidataPepProfile } from "@/lib/intelligence/wikidata-pep";
 
@@ -297,7 +298,7 @@ export default function PredictiveRiskPage() {
       if (!mountedRef.current) return;
 
       if (!res.ok || !data.ok) {
-        setError(data.error ?? `Error ${res.status}`);
+        setError(data.error ?? apiErrorMessage(res.status, "Predictive risk"));
         return;
       }
       if (data.result) {
@@ -305,7 +306,7 @@ export default function PredictiveRiskPage() {
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

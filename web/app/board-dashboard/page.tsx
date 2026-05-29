@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { BoardDashboardResponse, BoardPanel, BoardMetric } from "@/app/api/board-dashboard/route";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
@@ -118,11 +119,11 @@ export default function BoardDashboardPage() {
     setError(null);
     try {
       const res = await fetch("/api/board-dashboard");
-      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
+      if (!res.ok) { setError(apiErrorMessage(res.status, "Board dashboard")); return; }
       const json = await res.json() as BoardDashboardResponse;
       setData(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(caughtErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // FIU 2025 DPMS typology coverage matrix types (mirrors /api/fiu-typology-check)
 interface FiuTypologyEntry {
@@ -131,7 +132,7 @@ function FiuDpmsSection() {
     try {
       const res = await fetch("/api/fiu-typology-check");
       if (!res.ok) {
-        if (mountedRef.current) setError(`Failed to load coverage matrix (HTTP ${res.status})`);
+        if (mountedRef.current) setError(apiErrorMessage(res.status, "Coverage matrix load"));
         return;
       }
       const json = await res.json().catch(() => ({})) as FiuCoverageResponse;
@@ -343,7 +344,7 @@ function DeepDiveModal({
       });
       if (!res.ok) {
         console.error("[hawkeye] typology-library detail fetch HTTP", res.status);
-        if (mountedRef.current) setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
+        if (mountedRef.current) setDetailError(apiErrorMessage(res.status, "Typology detail load"));
       } else {
         const json = await res.json().catch(() => ({})) as TypologyDetailResult;
         if (!mountedRef.current) return;
@@ -351,7 +352,7 @@ function DeepDiveModal({
       }
     } catch (err) {
       console.error("[hawkeye] typology-library detail fetch threw:", err);
-      if (mountedRef.current) setDetailError(`Network error — ${err instanceof Error ? err.message : String(err)}.`);
+      if (mountedRef.current) setDetailError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) { setLoading(false); setFetched(true); }
     }
@@ -673,9 +674,7 @@ export default function TypologyLibraryPage() {
         if (mountedRef.current) setSearchError(
           res.status === 503
             ? "Typology-library AI service unavailable — set ANTHROPIC_API_KEY or retry in a moment."
-            : isHtml
-              ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout.`
-              : `Search failed (HTTP ${res.status}).`,
+            : apiErrorMessage(res.status, "Search"),
         );
         return;
       }
@@ -692,7 +691,7 @@ export default function TypologyLibraryPage() {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
       if (mountedRef.current) setSearchError(isTimeout
         ? "Typology search timed out after 45s — please retry or use a tighter query."
-        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
+        : caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

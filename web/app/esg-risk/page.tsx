@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EsgRiskResult, EsgRating, MlRiskLevel } from "@/app/api/esg-risk/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // History helpers (localStorage)
@@ -485,7 +486,7 @@ export default function EsgRiskPage() {
       if (!res.ok || isHtml) {
         const detail = isHtml
           ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry; if it persists, set ANTHROPIC_API_KEY in the deployment.`
-          : raw.slice(0, 240) || `HTTP ${res.status}`;
+          : raw.slice(0, 240) || apiErrorMessage(res.status, "ESG scorer");
         setError(`ESG scorer unavailable: ${detail}`);
         return;
       }
@@ -587,7 +588,7 @@ export default function EsgRiskPage() {
               const data = await res.json().catch(() => ({})) as { answer?: string; message?: string; error?: string };
               if (!res.ok) {
                 if (!mountedRef.current) return;
-                throw new Error(data.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
+                throw new Error(data.error ?? apiErrorMessage(res.status, "AI suggest"));
               }
               if (!mountedRef.current) return;
               const text = data.answer ?? data.message ?? "";
@@ -602,7 +603,7 @@ export default function EsgRiskPage() {
               if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
               if (parsed.notes) setField("notes", String(parsed.notes));
             } catch (err) {
-              if (mountedRef.current) setError(err instanceof Error ? err.message : "AI suggest failed — please retry");
+              if (mountedRef.current) setError(caughtErrorMessage(err, "AI suggest failed — please retry"));
             }
           }}
           disabled={loading}

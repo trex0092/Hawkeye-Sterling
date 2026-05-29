@@ -9,6 +9,7 @@
 // (tamper-evident retention) + Charter P9 (explicit calibration trail).
 
 import { useState, useRef, useEffect } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface ReasoningChainNode {
   step: number;
@@ -74,7 +75,7 @@ export function ChainReplayPanel(): JSX.Element {
       }
       setData(json);
     } catch (err) {
-      if (mountedRef.current) setErrorText(err instanceof Error ? err.message : String(err));
+      if (mountedRef.current) setErrorText(caughtErrorMessage(err));
     } finally {
       if (mountedRef.current) setBusy(false);
     }

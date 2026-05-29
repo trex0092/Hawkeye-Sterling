@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,7 +105,7 @@ export function SowVerificationPanel({
       if (mountedRef.current) setData(json);
     } catch (err) {
       if (mountedRef.current)
-        setError(err instanceof Error ? err.message : "Failed to load SOW records");
+        setError(caughtErrorMessage(err, "Failed to load SOW records"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -163,7 +164,7 @@ export function SowVerificationPanel({
       onVerificationComplete?.();
     } catch (err) {
       if (mountedRef.current)
-        setSubmitError(err instanceof Error ? err.message : "Submission failed — please retry");
+        setSubmitError(caughtErrorMessage(err, "Submission failed — please retry"));
     } finally {
       if (mountedRef.current) setSubmitLoading(false);
     }

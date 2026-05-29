@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PepProfileResult } from "@/app/api/pep-profile/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Module 36 — PEP Profile Builder
 // Comprehensive Politically Exposed Person risk assessment per FATF R.12/R.13,
@@ -87,10 +88,9 @@ export default function PepProfilePage() {
         }),
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] pep-profile HTTP ${res.status}`);
         if (!mountedRef.current) return;
-        setError(`Request failed (HTTP ${res.status})${body ? ` — ${body}` : ""} — please try again.`);
+        setError(apiErrorMessage(res.status, "Request"));
         return;
       }
       const data = await res.json().catch(() => ({})) as PepProfileResult;

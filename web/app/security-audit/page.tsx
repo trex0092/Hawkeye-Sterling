@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { AnalysisResult } from "@/app/api/security-analyse/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
@@ -327,7 +328,7 @@ export default function SecurityAuditPage() {
       });
       const data = await res.json().catch(() => ({})) as AnalysisResult & { error?: string };
       if (!res.ok) {
-        throw new Error(data.error ?? `HTTP ${res.status}`);
+        throw new Error(data.error ?? apiErrorMessage(res.status));
       }
       setResult(data);
     } catch (e) {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -231,7 +232,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) return { ...localFallback(draft), error: `HTTP ${res.status}` };
+    if (!res.ok) return { ...localFallback(draft), error: apiErrorMessage(res.status, "Screening") };
     const json = await res.json().catch(() => ({})) as QuickScreenResponse;
     if (json.ok) {
       return {
@@ -246,7 +247,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
     const err = "error" in json ? json.error : "unknown error";
     return { ...localFallback(draft), error: err };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = caughtErrorMessage(err, "Screening failed");
     return { ...localFallback(draft), error: msg };
   }
 }

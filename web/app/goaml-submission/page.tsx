@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { GoAmlXmlResult } from "@/app/api/goaml-xml/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ────────────────────────────────────────────────────────────────────
 //  Types
@@ -262,7 +263,7 @@ export default function GoAmlSubmissionPage() {
         })) as { error?: string };
         console.error(`[hawkeye] goaml-xml HTTP ${res.status}: ${j.error ?? '(no error body)'}`);
         if (!mountedRef.current) return;
-        setGen({ status: "error", message: j.error ?? `HTTP ${res.status}` });
+        setGen({ status: "error", message: j.error ?? apiErrorMessage(res.status) });
         return;
       }
       const data = await res.json().catch(() => ({})) as GoAmlXmlResult;
@@ -271,7 +272,7 @@ export default function GoAmlSubmissionPage() {
     } catch (err) {
       if (mountedRef.current) setGen({
         status: "error",
-        message: err instanceof Error ? err.message : String(err),
+        message: caughtErrorMessage(err),
       });
     }
   }, [form]);

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -330,7 +331,7 @@ export default function RegulatoryFilingPage() {
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({ error: "unknown error" }));
-          throw new Error((errData as { error?: string; message?: string }).message ?? (errData as { error?: string }).error ?? `HTTP ${res.status}`);
+          throw new Error((errData as { error?: string; message?: string }).message ?? (errData as { error?: string }).error ?? apiErrorMessage(res.status, "Regulatory filing"));
         }
 
         // Trigger file download from the response blob
@@ -351,7 +352,7 @@ export default function RegulatoryFilingPage() {
           `${jurisMeta.name} filing generated. Follow the checklist to complete submission.`,
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Filing generation failed.");
+        setError(caughtErrorMessage(err, "Filing generation failed."));
       } finally {
         setLoading(false);
       }

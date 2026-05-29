@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -358,7 +359,7 @@ export function AuditTrailViewer({
         if (!cancelled) setData(json);
       } catch (err) {
         if (!cancelled)
-          setError(err instanceof Error ? err.message : "Failed to load audit record");
+          setError(caughtErrorMessage(err, "Failed to load audit record"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -390,7 +391,7 @@ export function AuditTrailViewer({
       setHmacStatus(json.valid ? "valid" : "invalid");
     } catch (err) {
       if (!mountedRef.current) return;
-      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+      setVerifyError(caughtErrorMessage(err, "Verification failed"));
       setHmacStatus("error");
     } finally {
       if (mountedRef.current) setVerifying(false);

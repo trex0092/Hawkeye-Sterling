@@ -184,7 +184,12 @@ async function _recordApproval(
     // We lost the race — delete our entry and surface the earlier one.
     await del(approvalKey(input.caseId, approvalId)).catch(async () => {
       await new Promise((r) => setTimeout(r, 200));
-      await del(approvalKey(input.caseId, approvalId)).catch(() => undefined);
+      await del(approvalKey(input.caseId, approvalId)).catch((retryErr) => {
+        console.error(
+          "[four-eyes] orphaned approval entry — both delete attempts failed:",
+          { caseId: input.caseId, approvalId, err: retryErr instanceof Error ? retryErr.message : String(retryErr) },
+        );
+      });
     });
     const earlier = actorDecisions[0]!;
     return {

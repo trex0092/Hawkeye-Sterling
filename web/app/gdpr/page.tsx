@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ function ErasurePanel() {
         | { ok: false; error: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setError((data as { ok: false; error: string }).error ?? `HTTP ${resp.status}`);
+        setError((data as { ok: false; error: string }).error ?? apiErrorMessage(resp.status, "GDPR erasure"));
       } else {
         setResult(data as ErasureResult & { ok: true });
       }
@@ -155,7 +156,7 @@ function ExportPanel() {
       if (!resp.ok) {
         const data = (await resp.json().catch(() => ({}))) as { error?: string };
         if (mountedRef.current) {
-          setError(data.error ?? `HTTP ${resp.status}`);
+          setError(data.error ?? apiErrorMessage(resp.status, "GDPR export"));
         }
         return;
       }
@@ -244,7 +245,7 @@ function RetentionPanel() {
         | { ok: false; error: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setError((data as { ok: false; error: string }).error ?? `HTTP ${resp.status}`);
+        setError((data as { ok: false; error: string }).error ?? apiErrorMessage(resp.status, "GDPR retention sweep"));
       } else {
         setResult(data as SweepResult & { ok: true });
       }

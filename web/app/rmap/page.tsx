@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface RmapSmelter {
   cid: string;
@@ -43,7 +44,7 @@ export default function RmapPage() {
     try {
       const url = q ? `/api/rmap?q=${encodeURIComponent(q)}` : "/api/rmap";
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "RMAP data"));
       const data = await res.json() as { ok: boolean; smelters?: RmapSmelter[]; error?: string };
       if (data.ok) {
         setSmelters(data.smelters ?? []);

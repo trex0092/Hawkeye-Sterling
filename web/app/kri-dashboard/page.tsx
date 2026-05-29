@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { KriDashboardResponse, KriResult, KriStatus } from "@/app/api/kri-dashboard/route";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -132,12 +133,12 @@ export default function KriDashboardPage() {
     setError(null);
     try {
       const res = await fetch("/api/kri-dashboard");
-      if (!res.ok) { setError(`HTTP ${res.status}`); return; }
+      if (!res.ok) { setError(apiErrorMessage(res.status)); return; }
       const json = await res.json() as KriDashboardResponse;
       setData(json);
       setRefreshedAt(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(caughtErrorMessage(err));
     } finally {
       setLoading(false);
     }

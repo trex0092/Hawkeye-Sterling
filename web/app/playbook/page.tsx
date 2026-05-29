@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Playbook {
   id: string;
@@ -8158,7 +8159,7 @@ export default function PlaybookPage() {
       if (!mountedRef.current) return;
       setSimResult(data);
     } catch (err) {
-      if (mountedRef.current) setSimError(err instanceof Error ? err.message : "Simulation failed — please retry");
+      if (mountedRef.current) setSimError(caughtErrorMessage(err, "Simulation failed — please retry"));
     } finally { if (mountedRef.current) setSimLoading(false); }
   };
 
@@ -8207,7 +8208,7 @@ export default function PlaybookPage() {
       if (!mountedRef.current) return;
       if (data.ok) setQaAnswer(data);
     } catch (err) {
-      if (mountedRef.current) setQaError(err instanceof Error ? err.message : "Playbook QA failed — please retry");
+      if (mountedRef.current) setQaError(caughtErrorMessage(err, "Playbook QA failed — please retry"));
     } finally { if (mountedRef.current) setQaLoading(false); }
   };
 

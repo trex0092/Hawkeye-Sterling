@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface LbmaRecord {
   id: string;
@@ -52,7 +53,7 @@ export default function LbmaPage() {
     setError(null);
     try {
       const res = await fetch("/api/lbma");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "LBMA data"));
       const data = await res.json() as { ok: boolean; records?: LbmaRecord[]; error?: string };
       if (data.ok) setRecords(data.records ?? []);
       else setError(data.error ?? "Failed to load");
@@ -75,7 +76,7 @@ export default function LbmaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "LBMA submission"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);

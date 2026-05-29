@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface PnmrRecord {
   id: string;
@@ -66,11 +67,11 @@ export default function PnmrQueuePage() {
       setLoading(true);
       setError(null);
       const res = await fetch("/api/pnmr");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = (await res.json()) as { ok: boolean; records: PnmrRecord[] };
       setRecords(data.records ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load PNMR records");
+      setError(caughtErrorMessage(err, "Failed to load PNMR records"));
     } finally {
       setLoading(false);
     }
@@ -86,10 +87,10 @@ export default function PnmrQueuePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       void fetchRecords();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Action failed");
+      alert(caughtErrorMessage(err, "Action failed"));
     } finally {
       setActionLoading(null);
     }

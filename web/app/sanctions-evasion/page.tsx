@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { SanctionsEvasionResult, EvasionPattern } from "@/app/api/sanctions-evasion/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Module 39 — Sanctions Evasion Detector
 // AI-powered evasion pattern detection using Claude with prompt caching.
@@ -193,7 +194,7 @@ export default function SanctionsEvasionPage() {
           transactions,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Sanctions evasion analysis"));
       const json = await res.json().catch(() => ({})) as SanctionsEvasionResult;
       if (!mountedRef.current) return;
       setResult(json);

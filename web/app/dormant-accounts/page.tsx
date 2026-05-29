@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface DormantAccount {
   id: string;
@@ -89,7 +90,7 @@ export default function DormantAccountsPage() {
     setError(null);
     try {
       const res = await fetch("/api/dormant-accounts", { headers: authHeaders() });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; records?: DormantAccount[]; error?: string };
       if (data.ok) setAccounts(data.records ?? []);
       else setError(data.error ?? "Failed to load dormant accounts");
@@ -118,7 +119,7 @@ export default function DormantAccountsPage() {
           ...(form.notes ? { notes: form.notes } : {}),
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -165,7 +166,7 @@ export default function DormantAccountsPage() {
           notes: upd.notes || undefined,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) { setExpandedId(null); void fetchAccounts(); }
       else setError(data.error ?? "Failed to update account");
@@ -185,7 +186,7 @@ export default function DormantAccountsPage() {
         headers: authHeaders(true),
         body: JSON.stringify({ mlroNotified: true, mlroNotifiedDate: today }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchAccounts();
       else setError(data.error ?? "Failed to notify MLRO");

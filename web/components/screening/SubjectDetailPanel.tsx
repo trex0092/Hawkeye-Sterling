@@ -83,6 +83,7 @@ import {
   type HitResolutionVerdict,
 } from "@/lib/data/subject-store";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
@@ -533,7 +534,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      showFlash(err instanceof Error ? err.message : "Report save failed");
+      showFlash(caughtErrorMessage(err, "Report save failed"));
     } finally {
       if (mountedRef.current) setReportSaving(false);
     }

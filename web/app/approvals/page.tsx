@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -268,7 +269,7 @@ export default function ApprovalsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/approvals");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Approval"));
       const data = (await res.json()) as { ok: boolean; records?: ApprovalRecord[] };
       if (data.ok && data.records) setRecords(data.records);
     } catch {
@@ -292,7 +293,7 @@ export default function ApprovalsPage() {
           approvalDate: form.underProcess ? null : form.approvalDate || null,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Approval"));
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) { setError(data.error ?? "Save failed"); return; }
       setShowForm(false);
@@ -316,7 +317,7 @@ export default function ApprovalsPage() {
           approvalDate: form.underProcess ? null : form.approvalDate || null,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Approval"));
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) { setError(data.error ?? "Update failed"); return; }
       setEditingId(null);

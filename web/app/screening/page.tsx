@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
@@ -1288,7 +1289,7 @@ export default function ScreeningPage() {
         writeAuditEvent("analyst", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
       }
     } catch (err) {
-      if (mountedRef.current) setRescreenError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setRescreenError(caughtErrorMessage(err, "Request failed"));
     } finally {
       if (mountedRef.current) setRescreenLoading(false);
     }
@@ -1401,7 +1402,7 @@ export default function ScreeningPage() {
                       setRefreshMsg({ text: `Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`, type: "error" });
                     }
                   } catch (err) {
-                    setRefreshMsg({ text: `Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`, type: "error" });
+                    setRefreshMsg({ text: caughtErrorMessage(err, "Sanctions refresh could not be reached — check your connection and try again."), type: "error" });
                   }
                 }}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber/10 transition-colors"

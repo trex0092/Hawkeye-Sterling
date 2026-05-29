@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type { RiskAppetiteConfig } from "@/lib/server/risk-appetite";
 
 // ── Badge ──────────────────────────────────────────────────────────────────────
@@ -154,7 +155,7 @@ export default function RiskAppetitePage() {
         setFetchError(data.error ?? "Failed to load configuration");
       }
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Network error");
+      setFetchError(caughtErrorMessage(err, "Network error"));
     } finally {
       setLoading(false);
     }
@@ -186,7 +187,7 @@ export default function RiskAppetitePage() {
         setSaveError(data.error ?? "Save failed");
       }
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Network error");
+      setSaveError(caughtErrorMessage(err, "Network error"));
     } finally {
       setSaving(false);
     }

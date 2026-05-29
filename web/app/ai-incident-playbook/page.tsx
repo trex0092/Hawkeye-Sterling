@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import type { AIIncidentRecord, IncidentType, IncidentSeverity, IncidentStatus } from "@/app/api/ai-incident-playbook/route";
 
 // UAE AI Incident Response — FDL 10/2025 Art.24 + CBUAE AI Governance Guidelines 2025
@@ -106,7 +107,7 @@ export default function AIIncidentPlaybookPage() {
     setError(null);
     try {
       const res = await fetch("/api/ai-incident-playbook");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "AI incident"));
       const data = await res.json() as { ok: boolean; incidents?: AIIncidentRecord[]; error?: string };
       if (data.ok) setIncidents(data.incidents ?? []);
       else setError(data.error ?? "Failed to load incidents");
@@ -129,7 +130,7 @@ export default function AIIncidentPlaybookPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "AI incident"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -152,7 +153,7 @@ export default function AIIncidentPlaybookPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "AI incident"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchIncidents();
       else setError(data.error ?? "Update failed");

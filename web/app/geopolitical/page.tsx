@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type { GeopoliticalEvent } from "@/app/api/geopolitical/events/route";
 import type {
   PortfolioClient,
@@ -199,7 +200,7 @@ export default function GeopoliticalPage() {
       const data = await res.json().catch(() => ({})) as PortfolioImpactResult;
       if (mountedRef.current) setImpactResult(data);
     } catch (err) {
-      if (mountedRef.current) setImpactError(err instanceof Error ? err.message : "Impact assessment failed — please retry");
+      if (mountedRef.current) setImpactError(caughtErrorMessage(err, "Impact assessment failed — please retry"));
     } finally {
       if (mountedRef.current) setImpactLoading(false);
     }

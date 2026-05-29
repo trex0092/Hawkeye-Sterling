@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
@@ -421,7 +422,7 @@ export default function CddReviewPage() {
       if (!mountedRef.current) return;
       setEddComplResult(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "EDD completeness check failed — please retry";
+      const msg = caughtErrorMessage(err, "EDD completeness check failed — please retry");
       if (mountedRef.current) setEddComplError(msg);
     } finally {
       if (mountedRef.current) setEddComplLoading(false);
@@ -456,7 +457,7 @@ export default function CddReviewPage() {
       }
       setPolicyResult(data);
     } catch (err) {
-      if (mountedRef.current) setPolicyError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setPolicyError(caughtErrorMessage(err, "Network error — please retry"));
     } finally {
       if (mountedRef.current) setPolicyLoading(false);
     }
@@ -494,7 +495,7 @@ export default function CddReviewPage() {
       }
       setExitResult(data);
     } catch (err) {
-      if (mountedRef.current) setExitError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setExitError(caughtErrorMessage(err, "Network error — please retry"));
     } finally {
       if (mountedRef.current) setExitLoading(false);
     }
@@ -535,7 +536,7 @@ export default function CddReviewPage() {
       saveEddChecks({});
       setTimeout(() => eddRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (err) {
-      if (mountedRef.current) setEddError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setEddError(caughtErrorMessage(err, "Network error — please retry"));
     } finally { if (mountedRef.current) setEddLoading(false); }
   };
 
@@ -705,7 +706,7 @@ export default function CddReviewPage() {
       }
       setAdequacy(data);
     } catch (err) {
-      if (mountedRef.current) setAdequacyError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setAdequacyError(caughtErrorMessage(err, "Network error — please retry"));
     } finally { if (mountedRef.current) setAdequacyLoading(false); }
   };
 

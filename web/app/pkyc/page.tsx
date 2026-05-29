@@ -7,6 +7,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 const BAND_CLS: Record<string, string> = {
   clear:    "text-green  border-green/40  bg-green-dim",
@@ -108,7 +109,7 @@ export default function PKycPage() {
       setRunResult(`Ran ${data.ran ?? 0} subjects · ${data.changed ?? 0} changes · ${data.errors ?? 0} errors`);
       void load();
     } catch (err) {
-      setRunResult(`Run failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Run failed: ${caughtErrorMessage(err)}`);
     } finally {
       setRunning(false);
     }
@@ -127,7 +128,7 @@ export default function PKycPage() {
       setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
       void load();
     } catch (err) {
-      setRunResult(`Force run failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Force run failed: ${caughtErrorMessage(err)}`);
     }
   }
 
@@ -138,7 +139,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       void load();
     } catch (err) {
-      setRunResult(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Delete failed: ${caughtErrorMessage(err)}`);
     }
   }
 
@@ -163,7 +164,7 @@ export default function PKycPage() {
       setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
       void load();
     } catch (err) {
-      setRunResult(`Enroll failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Enroll failed: ${caughtErrorMessage(err)}`);
     } finally {
       setEnrolling(false);
     }

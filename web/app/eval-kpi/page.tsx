@@ -14,6 +14,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface KpiBreach {
   kpi: string;
@@ -107,7 +108,7 @@ export default function EvalKpiPage() {
         const res = await fetch("/api/eval-kpi", { signal: ctl.signal });
         if (!res.ok) {
           console.error(`[hawkeye] eval-kpi HTTP ${res.status}`);
-          if (!cancelled) setError(`HTTP ${res.status}`);
+          if (!cancelled) setError(apiErrorMessage(res.status, "Eval KPI"));
           return;
         }
         const json = await res.json().catch(() => ({})) as ApiResponse;
@@ -116,7 +117,7 @@ export default function EvalKpiPage() {
       } catch (err) {
         if (cancelled) return;
         console.error("[hawkeye] eval-kpi threw:", err);
-        setError(err instanceof Error ? err.message : String(err));
+        setError(caughtErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }

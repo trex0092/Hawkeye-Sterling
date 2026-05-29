@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
 import type { CountryCompareResult } from "@/app/api/country-risk/compare/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Country Risk Intelligence Hub — Module 35
 // Covers Basel AML Index, TI CPI, FATF grey/black lists, OFAC/EU/UN/UK sanctions,
@@ -402,7 +403,7 @@ export default function CountryRiskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: country.trim(), analysisDepth: depth }),
       });
-      if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json().catch(() => ({})) as CountryRiskResult & { ok?: boolean; error?: string };
       if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);
@@ -445,7 +446,7 @@ export default function CountryRiskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ countries: compareList }),
       });
-      if (!res.ok) throw new Error(`API error ${res.status} — please try again`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json().catch(() => ({})) as CountryCompareResult & { ok?: boolean; error?: string };
       if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);

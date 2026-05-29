@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
 import {
@@ -117,7 +118,7 @@ export default function AuditTrailPage() {
       } else {
         if (!mountedRef.current) return;
         console.error(`[hawkeye] audit-trail/anomaly-detect HTTP ${res.status}`);
-        setError(`Anomaly scan failed (HTTP ${res.status}). Please try again.`);
+        setError(apiErrorMessage(res.status, "Anomaly scan"));
       }
     } catch (err) {
       if (!mountedRef.current) return;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type { WebhookRegistration, WebhookDelivery, WebhookEvent } from "@/lib/server/webhook-emitter";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -131,7 +132,7 @@ function RegisterForm({ onCreated }: { onCreated: () => void }) {
       setOpen(false);
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(caughtErrorMessage(err, "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -410,7 +411,7 @@ export default function WebhooksPage() {
       }
       setWebhooks(data.webhooks ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(caughtErrorMessage(err, "Unknown error"));
     }
   }, []);
 

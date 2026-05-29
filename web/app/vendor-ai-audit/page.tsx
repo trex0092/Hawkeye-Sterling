@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { VendorAIAssessment, VendorAIChecklist, VendorAuditStatus } from "@/app/api/vendor-ai-audit/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Vendor AI Audit Framework — UAE CBUAE AI Governance Guidelines 2025
 // FATF R.18 (Third-party reliance) · ADGM DPR 2021 · DIFC DP Law 2020
@@ -85,7 +86,7 @@ export default function VendorAIAuditPage() {
     setError(null);
     try {
       const res = await fetch("/api/vendor-ai-audit");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Vendor AI audit"));
       const data = await res.json() as { ok: boolean; assessments?: VendorAIAssessment[]; error?: string };
       if (data.ok) setAssessments(data.assessments ?? []);
       else setError(data.error ?? "Failed to load assessments");
@@ -116,7 +117,7 @@ export default function VendorAIAuditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Vendor AI audit"));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);

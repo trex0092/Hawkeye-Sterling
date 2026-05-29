@@ -6,6 +6,7 @@
 
 import { useState, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,15 +141,15 @@ export default function SarNarrativePage() {
         }),
       });
 
-      const data = (await resp.json().catch(() => ({ ok: false, error: `HTTP ${resp.status}` }))) as NarrativeResult;
+      const data = (await resp.json().catch(() => ({ ok: false, error: apiErrorMessage(resp.status, "SAR narrative") }))) as NarrativeResult;
 
       if (!resp.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${resp.status}`);
+        setError(data.error ?? apiErrorMessage(resp.status, "SAR narrative"));
       } else {
         setResult(data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error — please try again.");
+      setError(caughtErrorMessage(err, "Network error — please try again."));
     } finally {
       setLoading(false);
     }

@@ -33,17 +33,29 @@ export function apiErrorMessage(
 
 /**
  * Returns a user-friendly error string from a caught exception.
- * Strips known auth-related messages that expose internal details.
+ * Strips raw HTTP status codes and server-internal auth error text.
  */
 export function caughtErrorMessage(err: unknown, fallback = "An unexpected error occurred."): string {
   if (!(err instanceof Error)) return fallback;
   const msg = err.message;
-  // Catch raw HTTP status strings produced by throw new Error(`HTTP ${status}`)
+  // Catch bare `throw new Error(\`HTTP ${status}\`)` pattern.
   if (/^HTTP \d{3}$/.test(msg)) {
     const status = parseInt(msg.slice(5), 10);
     return apiErrorMessage(status);
   }
-  // Mask any message that contains API key / token hints.
+  // Catch `throw new Error(\`Something (HTTP ${status})\`)` pattern.
+  const embeddedStatus = msg.match(/\(HTTP (\d{3})\)/);
+  if (embeddedStatus) {
+    const status = parseInt(embeddedStatus[1]!, 10);
+    return apiErrorMessage(status, msg.replace(/\s*\(HTTP \d{3}\)[^)]*$/i, "").trim());
+  }
+  // Catch `throw new Error(\`Something (HTTP ${status}) — ...\`)` pattern.
+  const trailingStatus = msg.match(/HTTP (\d{3})/);
+  if (trailingStatus) {
+    const status = parseInt(trailingStatus[1]!, 10);
+    if (status === 401 || status === 403) return apiErrorMessage(status);
+  }
+  // Mask any message that contains API key / token hints from server responses.
   if (/api key|bearer token|authorization|supply auth/i.test(msg)) {
     return "Authentication required — please refresh the page.";
   }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
 type FilterLevel = "all" | "read-only" | "supervised" | "action";
@@ -63,11 +64,11 @@ export default function OperatorConsolePage() {
       const res = await fetch("/api/operator/logs?limit=200");
       const data = await res.json().catch(() => ({})) as { ok: boolean; entries?: McpLogEntry[]; error?: string; note?: string };
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? apiErrorMessage(res.status)); return; }
       setEntries(data.entries ?? []);
     } catch (err) {
       if (!mountedRef.current) return;
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

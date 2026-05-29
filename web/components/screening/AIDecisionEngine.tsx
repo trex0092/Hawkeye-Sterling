@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type { Subject } from "@/lib/types";
 import type { AIDecision, DecisionResponse } from "@/app/api/ai-decision/route";
 
@@ -126,7 +127,7 @@ export function AIDecisionEngine({
       }
       setState({ phase: "ready", result: data as DecisionResponse });
     } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+      setState({ phase: "error", message: caughtErrorMessage(err, "Network error") });
     }
   }, [subject, screeningTopScore, screeningSeverity, sanctionsHits, adverseMediaText]);
 

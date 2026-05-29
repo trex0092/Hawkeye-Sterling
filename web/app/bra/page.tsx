@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface BraRecord {
   id: string;
@@ -68,7 +69,7 @@ export default function BraPage() {
     setError(null);
     try {
       const res = await fetch("/api/bra");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; records?: typeof records; error?: string };
       if (data.ok) setRecords(data.records ?? []);
       else setError(data.error ?? "Failed to load BRA records");
@@ -101,7 +102,7 @@ export default function BraPage() {
           aedThresholdApplies: form.aedThresholdApplies,
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // SWIFT MT103 / SEPA XML payment-rail screener. Paste a raw payment
 // message; the server parses it, screens ordering + beneficiary parties
@@ -101,7 +102,7 @@ export function PaymentScreen() {
     } catch (err) {
       if (mountedRef.current) setResult({
         ok: false,
-        error: err instanceof Error ? err.message : "Payment screen failed",
+        error: caughtErrorMessage(err, "Payment screen failed"),
       });
     } finally {
       if (mountedRef.current) setLoading(false);

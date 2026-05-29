@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { ShadowAIEntry, ShadowAIStatus } from "@/app/api/shadow-ai/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Shadow AI Detection Register — UAE CBUAE AI Governance Guidelines 2025
 // Monitors unauthorized / unregistered AI tool usage across compliance workflows
@@ -85,7 +86,7 @@ export default function ShadowAIPage() {
     setError(null);
     try {
       const res = await fetch("/api/shadow-ai");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; entries?: ShadowAIEntry[]; stats?: StatsPayload; error?: string };
       if (data.ok) {
         setEntries(data.entries ?? []);
@@ -112,7 +113,7 @@ export default function ShadowAIPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -135,7 +136,7 @@ export default function ShadowAIPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchEntries();
       else setError(data.error ?? "Update failed");

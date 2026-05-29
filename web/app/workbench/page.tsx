@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
 import { ModeGrid } from "@/components/workbench/ModeGrid";
@@ -201,14 +202,14 @@ export default function WorkbenchPage() {
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
         console.error(`[hawkeye] workbench brain HTTP ${res.status}: ${data.error ?? '(no error)'}`);
-        setBrainError(data.error ?? `HTTP ${res.status}`);
+        setBrainError(data.error ?? apiErrorMessage(res.status));
       } else {
         setBrainResult(data);
       }
     } catch (err) {
       if (ac.signal.aborted) return;
       console.error("[hawkeye] workbench brain threw:", err);
-      if (mountedRef.current) setBrainError(err instanceof Error ? err.message : "Network error");
+      if (mountedRef.current) setBrainError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setIsRunning(false);
       window.requestAnimationFrame(() => {

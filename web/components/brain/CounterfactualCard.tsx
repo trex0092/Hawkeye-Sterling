@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface FlipFactor {
   factor: string;
@@ -59,7 +60,7 @@ export function CounterfactualCard({
       })
       .then((d) => { if (!cancelled) setData(d); })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load counterfactual");
+        if (!cancelled) setError(caughtErrorMessage(err, "Failed to load counterfactual"));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
 

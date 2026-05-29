@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
@@ -586,7 +587,7 @@ export default function TFSAlertsPage() {
       );
     } catch (err) {
       if (!mountedRef.current) return;
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = caughtErrorMessage(err);
       if (msg.includes("fetch") || msg.includes("network")) {
         setErrorMsg("Search timed out. Please try again.");
       } else {

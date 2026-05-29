@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Country Risk Heat-Map — Module 35b
 // SVG-based rectangular grid world map showing country risk levels.
@@ -568,7 +569,7 @@ export default function CountryRiskMapPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: name, analysisDepth: "quick" }),
       });
-      if (!res.ok) throw new Error(`API error ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json().catch(() => ({})) as CountryRiskResult & { error?: string };
       if (!mountedRef.current) return;
       if (data.error) throw new Error(data.error);

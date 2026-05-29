@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 
 interface SanctionsListInfo {
@@ -121,7 +122,7 @@ export default function SystemStatusPage() {
       setData((prev) => ({
         ...(prev ?? { systemStatus: null, fourEyesPending: null, ongoing: null, regulatoryFeed: null }),
         fetchedAt: new Date().toISOString(),
-        error: err instanceof Error ? err.message : String(err),
+        error: caughtErrorMessage(err),
       }));
     } finally {
       if (mountedRef.current) {

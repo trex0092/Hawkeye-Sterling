@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface AuditFinding {
   id: string;
@@ -103,7 +104,7 @@ export default function AuditFindingsPage() {
     setError(null);
     try {
       const res = await fetch("/api/audit-findings", { headers: authHeaders() });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; records?: AuditFinding[]; error?: string };
       if (!mountedRef.current) return;
       if (data.ok) setFindings(data.records ?? []);
@@ -137,7 +138,7 @@ export default function AuditFindingsPage() {
           ...(form.remediationPlan.trim() ? { remediationPlan: form.remediationPlan.trim() } : {}),
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) {
         setShowForm(false);
@@ -162,7 +163,7 @@ export default function AuditFindingsPage() {
         headers: authHeaders(),
         body: JSON.stringify({ mlroSignOff: true, mlroSignOffDate: today }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchFindings();
       else setError(data.error ?? "Failed to record MLRO sign-off");

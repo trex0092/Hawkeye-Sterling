@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,19 +95,19 @@ function CreateTenantForm({ onCreated, onCancel }: CreateFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = (await resp.json().catch(() => ({ ok: false, error: `HTTP ${resp.status}` }))) as {
+      const data = (await resp.json().catch(() => ({ ok: false, error: apiErrorMessage(resp.status) }))) as {
         ok: boolean;
         tenant?: TenantRecord;
         error?: string;
       };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${resp.status}`);
+        setError(data.error ?? apiErrorMessage(resp.status));
       } else if (data.tenant) {
         onCreated(data.tenant);
       }
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Network error.");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Network error."));
     } finally {
       if (mountedRef.current) setSaving(false);
     }
@@ -218,20 +219,20 @@ function InlinePlanEditor({ tenant, onUpdated }: InlinePlanEditorProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
-      const data = (await resp.json().catch(() => ({ ok: false, error: `HTTP ${resp.status}` }))) as {
+      const data = (await resp.json().catch(() => ({ ok: false, error: apiErrorMessage(resp.status) }))) as {
         ok: boolean;
         tenant?: TenantRecord;
         error?: string;
       };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${resp.status}`);
+        setError(data.error ?? apiErrorMessage(resp.status));
       } else if (data.tenant) {
         onUpdated(data.tenant);
         setEditing(false);
       }
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Network error.");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Network error."));
     } finally {
       if (mountedRef.current) setSaving(false);
     }
@@ -284,7 +285,7 @@ export default function AdminTenantsPage() {
     setError(null);
     try {
       const resp = await fetch("/api/admin/tenants");
-      const data = (await resp.json().catch(() => ({ ok: false, error: `HTTP ${resp.status}` }))) as {
+      const data = (await resp.json().catch(() => ({ ok: false, error: apiErrorMessage(resp.status) }))) as {
         ok: boolean;
         tenants?: TenantRecord[];
         count?: number;
@@ -292,12 +293,12 @@ export default function AdminTenantsPage() {
       };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${resp.status}`);
+        setError(data.error ?? apiErrorMessage(resp.status));
       } else {
         setTenants(data.tenants ?? []);
       }
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Network error.");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Network error."));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

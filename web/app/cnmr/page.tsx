@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import type { CnmrCase } from "@/app/api/cnmr/route";
 
 // CNMR — Confirmed Name Match Report
@@ -90,7 +91,7 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
       });
       const data = await res.json().catch(() => ({})) as { ok: boolean; case?: CnmrCase; error?: string };
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? apiErrorMessage(res.status, "CNMR")); return; }
       onCreated(data.case!);
     } catch { if (mountedRef.current) setError("Network error"); }
     finally { if (mountedRef.current) setSaving(false); }

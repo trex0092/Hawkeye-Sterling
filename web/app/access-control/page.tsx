@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ function SessionMonitorTab() {
       const res = await fetch("/api/access/sessions");
       if (!res.ok) {
         if (res.status === 401) throw new Error("Authentication required — please refresh the page.");
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(apiErrorMessage(res.status));
       }
       const data = await res.json() as { ok: boolean; sessions?: AccessSession[]; error?: string };
       if (!data.ok) throw new Error(data.error ?? "Failed to load sessions");
@@ -183,7 +184,7 @@ function SessionMonitorTab() {
     setRevoking(id);
     try {
       const res = await fetch(`/api/access/sessions?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
       void fetchSessions();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Revoke failed");
@@ -357,7 +358,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       const data = await resp.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setPwMsg({ ok: false, text: data.error ?? `HTTP ${resp.status}` });
+        setPwMsg({ ok: false, text: data.error ?? apiErrorMessage(resp.status) });
       } else {
         setPwMsg({ ok: true, text: "Credentials updated successfully." });
         setNewPassword("");
@@ -386,7 +387,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         }),
       });
       const data = await resp.json().catch(() => ({})) as RoleRecommendation & { ok?: boolean };
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (!resp.ok) throw new Error(apiErrorMessage(resp.status));
       if (mountedRef.current) setAiResult(data);
     } catch {
       if (mountedRef.current) setAiError("AI recommendation unavailable.");
@@ -415,7 +416,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok || !data.user) {
         console.error("[hawkeye] access-control role-change rejected:", data);
-        setRoleError(data.error ?? `HTTP ${resp.status}`);
+        setRoleError(data.error ?? apiErrorMessage(resp.status));
       } else {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
@@ -725,7 +726,7 @@ export default function AccessControlPage() {
       });
       const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
       if (!mountedRef.current) return;
-      if (!resp.ok || !data.ok) { setAddError(data.error ?? `HTTP ${resp.status}`); return; }
+      if (!resp.ok || !data.ok) { setAddError(data.error ?? apiErrorMessage(resp.status)); return; }
       if (data.user) {
         setUsers((prev) => [...prev, data.user!]);
         setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });
