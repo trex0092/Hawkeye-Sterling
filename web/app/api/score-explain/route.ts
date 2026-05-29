@@ -13,9 +13,11 @@ export async function POST(req: Request) {
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
-  const composite = body['composite'] as { score?: number; breakdown?: Record<string, number> } | undefined;
-  const score = typeof composite?.score === 'number' ? composite.score : 0;
-  const breakdown = composite?.breakdown ?? {};
+  const score = typeof body['score'] === 'number' ? body['score'] : 0;
+  const breakdown =
+    typeof body['breakdown'] === 'object' && body['breakdown'] !== null
+      ? (body['breakdown'] as Record<string, number>)
+      : {};
 
   try {
     const decomposition = decomposeScore(score, breakdown);
