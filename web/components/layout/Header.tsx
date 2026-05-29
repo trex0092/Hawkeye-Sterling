@@ -105,6 +105,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🔧 AI Reasoning Workbench", href: "/workbench", hint: "Multi-mode AI reasoning · counterfactual · steelman · brain manifest" },
       { label: "📡 Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "🥷 Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
+      { label: "🛡️ Security Audit", href: "/security-audit", hint: "AI code analyser · OWASP checklist · free scan tools" },
       { label: "💚 Status", href: "/status", hint: "Live endpoint & watchlist health" },
       { label: "📘 API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],

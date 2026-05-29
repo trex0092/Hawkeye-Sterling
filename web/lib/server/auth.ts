@@ -2,7 +2,7 @@
 // scrypt options: N=65536 (2^16), r=8, p=1 — ~200ms on modern hardware, GPU-resistant.
 // Session signing:  HMAC-SHA256 over base64url(payload) using SESSION_SECRET env var
 
-import { scryptSync, timingSafeEqual, createHmac, randomBytes } from "node:crypto";
+import { scryptSync, timingSafeEqual, createHmac, createHash, randomBytes } from "node:crypto";
 
 const SESSION_COOKIE = "hs_session";
 const SESSION_TTL_S = 8 * 60 * 60; // 8 hours

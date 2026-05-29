@@ -683,6 +683,43 @@ export function quickScreen(
     (h) => (h as QuickScreenHit & { falsePositiveFlag?: string }).falsePositiveFlag === 'likely_false_positive',
   ).length;
 
+  // ── Weighted scoring across all hits ──────────────────────────────────────
+  // Build per-list summary; use the highest-scoring hit per list.
+  const listBreakdown: Record<string, { hits: number; topScore: number; weight: number }> = {};
+  for (const h of clipped) {
+    const rec = listBreakdown[h.listId];
+    const hs100 = Math.round(h.score * 100);
+    if (!rec) {
+      listBreakdown[h.listId] = { hits: 1, topScore: hs100, weight: listWeight(h.listId) };
+    } else {
+      rec.hits++;
+      if (hs100 > rec.topScore) rec.topScore = hs100;
+    }
+  }
+
+  let totalWeightedScore: number | undefined;
+  if (clipped.length > 0) {
+    let wSum = 0; let wTotal = 0;
+    for (const rec of Object.values(listBreakdown)) {
+      wSum += rec.topScore * rec.weight;
+      wTotal += rec.weight;
+    }
+    totalWeightedScore = wTotal > 0 ? Math.round(wSum / wTotal) : topScore;
+  }
+
+  // Aggregate confidence: mean of per-hit disambiguation confidences.
+  // Only include hits that actually have a computed discriminator confidence;
+  // defaulting absent values to 50 would produce a spuriously confident
+  // aggregate when no discriminators are available.
+  let confidenceScore: number | undefined;
+  if (clipped.length > 0) {
+    const withConfidence = clipped.filter((h) => h.disambiguationConfidence !== undefined);
+    if (withConfidence.length > 0) {
+      const sum = withConfidence.reduce((acc, h) => acc + (h.disambiguationConfidence as number), 0);
+      confidenceScore = Math.round(sum / withConfidence.length);
+    }
+  }
+
   return {
     subject,
     hits: finalHits,

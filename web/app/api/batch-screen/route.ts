@@ -218,6 +218,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ~1ms/row so 10,000 rows completes in ~10s well within maxDuration.
   const useFastPath = body.rows.length > 500;
 
+  // For small batches (≤500 rows) that use external validators, process rows in
+  // concurrent chunks so multiple external calls overlap. Fast-path (>500 rows)
+  // skips external validators and runs at ~1ms/row so chunking adds no value.
+  const BATCH_CONCURRENCY = 10;
+
   const started = Date.now();
   const results: RowResult[] = [];
 

@@ -95,6 +95,84 @@ async function writeHeartbeat(): Promise<void> {
   }
 }
 
+const RETRY_STORE = "hawkeye-alert-retry";
+const RETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop retries older than 24 h
+
+interface AlertPayload {
+  id: string;
+  listId: string;
+  listLabel: string;
+  matchedEntry: string;
+  sourceRef: string;
+  severity: string;
+  detectedAt: string;
+  read: boolean;
+  queuedAt?: string;
+}
+
+async function saveRetry(alertId: string, payload: AlertPayload): Promise<void> {
+  try {
+    const store = getStore(RETRY_STORE);
+    await store.set(`retry/${alertId}.json`, JSON.stringify({ ...payload, queuedAt: new Date().toISOString() }));
+  } catch (err) {
+    console.warn(`[designation-alert-check] retry save failed for ${alertId}:`, err instanceof Error ? err.message : String(err));
+  }
+}
+
+async function replayRetries(base: string, token: string): Promise<{ replayed: number; stillFailed: number }> {
+  let replayed = 0;
+  let stillFailed = 0;
+  try {
+    const store = getStore(RETRY_STORE);
+    const list = await store.list({ prefix: "retry/" });
+    const now = Date.now();
+    for (const blob of list.blobs) {
+      try {
+        const raw = await store.get(blob.key, { type: "text" });
+        if (!raw) { await store.delete(blob.key).catch(() => {}); continue; }
+        const payload = JSON.parse(raw) as AlertPayload;
+        // Drop stale retries that are too old to be useful.
+        if (payload.queuedAt && now - new Date(payload.queuedAt).getTime() > RETRY_MAX_AGE_MS) {
+          await store.delete(blob.key).catch(() => {});
+          continue;
+        }
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 20_000);
+        try {
+          const res = await fetch(`${base}/api/alerts`, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+            signal: ctrl.signal,
+          });
+          if (res.ok) {
+            await store.delete(blob.key).catch(() => {});
+            replayed++;
+          } else {
+            stillFailed++;
+          }
+        } catch { stillFailed++; }
+        finally { clearTimeout(t); }
+      } catch { stillFailed++; }
+    }
+  } catch (err) {
+    console.warn("[designation-alert-check] retry replay failed:", err instanceof Error ? err.message : String(err));
+  }
+  return { replayed, stillFailed };
+}
+
+async function writeHeartbeat(): Promise<void> {
+  try {
+    const hb = getStore("hawkeye-function-heartbeats");
+    await hb.setJSON("designation-alert-check", {
+      lastSuccess: new Date().toISOString(),
+      label: "designation-alert-check",
+    });
+  } catch (err) {
+    console.warn("[designation-alert-check] heartbeat write failed (non-critical):", err instanceof Error ? err.message : String(err));
+  }
+}
+
 const SANCTIONS_STORE = "hawkeye-sanctions-feeds";
 const FETCH_TIMEOUT_MS = 20_000;
 

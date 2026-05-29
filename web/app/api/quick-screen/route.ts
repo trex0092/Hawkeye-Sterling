@@ -42,6 +42,98 @@ import {
 // netlify.toml; local dev runs `npm run build` at the root once to produce dist/.
 // @brain/* is resolved via web/tsconfig.json paths → ../src/brain/*.
 import { quickScreen as brainQuickScreen } from "@brain/quick-screen.js";
+import { getCountryRisk } from "@/lib/server/high-risk-countries";
+import { insertCaseRecord } from "@/lib/server/case-vault";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { saveSubject, getSubject } from "../pkyc/_store";
+import type { CaseRecord } from "@/lib/types";
+import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
+
+// ── Sanctions list health snapshot ─────────────────────────────────────────
+// Attached to every screening response so audit records capture which lists
+// had data (and how fresh) at the moment of screening. A "clear" verdict
+// against empty UAE lists is a compliance failure — not a real clear.
+
+const LIST_IDS = [
+  "un_consolidated", "ofac_sdn", "ofac_cons", "eu_fsf", "uk_ofsi",
+  "ca_osfi", "ch_seco", "au_dfat", "fatf", "uae_eocn", "uae_ltl",
+] as const;
+
+type ListHealthStatus = "healthy" | "stale" | "missing";
+
+interface ListHealthEntry {
+  entityCount: number | null;
+  ageHours: number | null;
+  status: ListHealthStatus;
+}
+
+type ListHealthSnapshot = Record<string, ListHealthEntry>;
+
+async function fetchListHealth(): Promise<ListHealthSnapshot> {
+  const STALE_HOURS = 36;
+  const HOUR_MS = 3_600_000;
+  const snapshot: ListHealthSnapshot = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let stores: { get: (_key: string, _opts?: any) => Promise<unknown> }[] = [];
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
+    // Dual-store: try hawkeye-list-reports (entities written there post-deploy)
+    // then hawkeye-lists (entities present now from existing ingestion runs).
+    const token =
+      process.env["NETLIFY_BLOBS_TOKEN"] ??
+      process.env["NETLIFY_API_TOKEN"] ??
+      process.env["NETLIFY_AUTH_TOKEN"];
+    const mkStore = (name: string) => siteID && token
+      ? getStore({ name, siteID, token, consistency: "strong" })
+      : getStore({ name });
+    stores = [mkStore("hawkeye-list-reports"), mkStore("hawkeye-lists")];
+  } catch {
+    for (const id of LIST_IDS) {
+      snapshot[id] = { entityCount: null, ageHours: null, status: "missing" };
+    }
+    return snapshot;
+  }
+
+  await Promise.all(LIST_IDS.map(async (listId) => {
+    const key = `${listId}/latest.json`;
+    for (const store of stores) {
+      try {
+        const raw = await store.get(key, { type: "json" }) as {
+          entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
+        } | null;
+        if (!raw || !Array.isArray(raw.entities)) continue;
+        const entityCount = raw.entities.length;
+        const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
+        const ageHours = typeof fetchedAtMs === "number"
+          ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
+          : null;
+        const status: ListHealthStatus =
+          ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
+        snapshot[listId] = { entityCount, ageHours, status };
+        return; // found data — skip fallback store
+      } catch { /* try next store */ }
+    }
+    snapshot[listId] = { entityCount: null, ageHours: null, status: "missing" };
+  }));
+
+  return snapshot;
+}
+
+function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
+  const warnings: string[] = [];
+  for (const [listId, entry] of Object.entries(health)) {
+    if (entry.status === "missing") {
+      warnings.push(`${listId} list is missing from blob store at time of screening — no match possible against this list`);
+    } else if (entry.entityCount === 0) {
+      warnings.push(`${listId} had 0 entities at time of screening — no match possible against this list`);
+    } else if (entry.status === "stale") {
+      warnings.push(`${listId} data is stale (${entry.ageHours}h old) at time of screening — may not reflect recent designations`);
+    }
+  }
+  return warnings;
+}
 
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).

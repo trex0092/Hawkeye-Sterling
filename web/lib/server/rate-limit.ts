@@ -109,6 +109,81 @@ async function consumeRedis(
   };
 }
 
+// ── Upstash Redis path ────────────────────────────────────────────────────────
+
+async function redisIncr(key: string, ttlSeconds: number): Promise<number | null> {
+  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
+  if (!url || !token) return null;
+  try {
+    // INCR key — atomic increment
+    const incrRes = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!incrRes.ok) return null;
+    const incrBody = await incrRes.json() as { result?: number };
+    const count = incrBody.result ?? 0;
+    // Only set TTL on first write (count === 1) to avoid resetting the window
+    if (count === 1) {
+      await fetch(`${url}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+    }
+    return count;
+  } catch {
+    return null;
+  }
+}
+
+async function consumeRedis(
+  keyId: string,
+  tier: TierDefinition,
+): Promise<RateLimitResult | null> {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const secWindow = Math.floor(nowSec);
+  const minWindow = Math.floor(nowSec / 60);
+  const secKey = `rl:${keyId}:s:${secWindow}`;
+  const minKey = `rl:${keyId}:m:${minWindow}`;
+
+  const [secCount, minCount] = await Promise.all([
+    redisIncr(secKey, 2),
+    redisIncr(minKey, 62),
+  ]);
+  if (secCount === null || minCount === null) return null; // Redis unavailable
+
+  const secAllowed = secCount <= tier.rateLimitPerSecond;
+  const minAllowed = minCount <= tier.rateLimitPerMinute;
+
+  if (!secAllowed) {
+    return {
+      allowed: false,
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - minCount),
+      tier,
+    };
+  }
+  if (!minAllowed) {
+    const secsToNextMinute = 60 - (nowSec % 60);
+    return {
+      allowed: false,
+      retryAfterSec: Math.max(1, secsToNextMinute),
+      remainingSecond: Math.max(0, tier.rateLimitPerSecond - secCount),
+      remainingMinute: 0,
+      tier,
+    };
+  }
+  return {
+    allowed: true,
+    retryAfterSec: 0,
+    remainingSecond: Math.max(0, tier.rateLimitPerSecond - secCount),
+    remainingMinute: Math.max(0, tier.rateLimitPerMinute - minCount),
+    tier,
+  };
+}
+
 interface Window {
   startMs: number;
   count: number;

@@ -23,8 +23,8 @@ export default defineConfig({
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],
-    // Rewrite `.js` imports to resolve against `.ts` sources.
     alias: [
+      // Rewrite `.js` imports to resolve against `.ts` sources.
       { find: /^(\.{1,2}\/.*)\.js$/, replacement: '$1' },
       // Provide a lightweight NextResponse shim so web/lib tests that import
       // validate.ts (which uses next/server) run without the Next.js runtime.

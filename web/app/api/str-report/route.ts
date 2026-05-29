@@ -35,6 +35,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "transactions must be an array" }, { status: 400, headers: gate.headers });
   }
 
+  if (!body?.subject || !body?.jurisdiction) {
+    return NextResponse.json({ ok: false, error: "subject and jurisdiction are required" }, { status: 400, headers: gate.headers });
+  }
+  if (!Array.isArray(body.transactions)) {
+    return NextResponse.json({ ok: false, error: "transactions must be an array" }, { status: 400, headers: gate.headers });
+  }
+
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `STR-DRAFT-${dd}-${mm}-${yyyy}`;

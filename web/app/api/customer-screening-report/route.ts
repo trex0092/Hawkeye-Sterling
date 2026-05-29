@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (!["ember","amber","sage"].includes(body.verdictTone)) body.verdictTone = "amber";
 
   if (!body?.subjectName?.trim()) {
-    return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400 });
+    return new Response(JSON.stringify({ ok: false, error: "subjectName required" }), { status: 400, headers: gate.headers });
   }
   if (!Array.isArray(body.subjectDetails)) body.subjectDetails = [];
   if (!Array.isArray(body.findings)) body.findings = [];

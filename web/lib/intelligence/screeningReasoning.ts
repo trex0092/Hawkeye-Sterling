@@ -176,6 +176,7 @@ export interface ConsensusOutput {
   sourcesUncertain: number;
   weightedFor: number;         // sum of credibility weights
   weightedAgainst: number;
+  noDataProvided?: true;       // set when inputs array is empty — callers must NOT treat this as a confirmed clear
 }
 
 /**
@@ -187,12 +188,16 @@ export interface ConsensusOutput {
  */
 export function multiSourceConsensus(inputs: ConsensusInput[]): ConsensusOutput {
   if (inputs.length === 0) {
+    // Return noDataProvided:true so callers can distinguish "no sources
+    // consulted" from "sources consulted and all returned uncertain/no-match".
+    // Callers MUST NOT treat unified:0 here as a confirmed clear result.
     return {
       unified: 0,
-      confidence: { low: 0, high: 0 },
+      confidence: { low: 0, high: 100 },
       agreementLevel: "weak",
       sourcesFor: 0, sourcesAgainst: 0, sourcesUncertain: 0,
       weightedFor: 0, weightedAgainst: 0,
+      noDataProvided: true,
     };
   }
 

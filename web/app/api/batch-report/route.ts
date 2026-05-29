@@ -31,6 +31,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "results must be an array" }, { status: 400, headers: gate.headers });
   }
 
+  if (!Array.isArray(body?.results)) {
+    return NextResponse.json({ ok: false, error: "results must be an array" }, { status: 400, headers: gate.headers });
+  }
+
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `HWK-BATCH-${dd}-${mm}-${yyyy}`;

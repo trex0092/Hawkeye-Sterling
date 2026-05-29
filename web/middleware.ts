@@ -107,15 +107,37 @@ function resolveRequestId(req: NextRequest): string {
 // `public, max-age=300, must-revalidate` so verifiers can cache the
 // signing keys per RFC. The route's setting takes precedence; routes
 // that handle dynamic auth-gated data set their own no-store.
-function applySecurityHeaders(response: NextResponse, isApi: boolean): void {
+function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   if (isApi) {
-    response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+    // Attach CORS headers to all API responses so browser callers (dashboard,
+    // regulator portal) receive them on non-preflight requests too.
+    for (const [k, v] of Object.entries(CORS_HEADERS)) response.headers.set(k, v);
+    if (requestId) {
+      response.headers.set("X-Request-ID", requestId);
+    }
   }
+  // Reflect request-id on the response so external callers + log
+  // aggregators can correlate every request lifecycle event.
+  if (requestId) {
+    response.headers.set("x-request-id", requestId);
+  }
+}
+
+// Request-id propagation (RULE 5/9/10). Mint a fresh id when the caller
+// did not pass one. Reflect the resolved id back on the response so log
+// correlation works across the full request lifecycle. Edge runtime
+// has `crypto.randomUUID()` per WHATWG spec.
+function resolveRequestId(req: NextRequest): string {
+  const incoming = req.headers.get("x-request-id");
+  if (incoming && incoming.length > 0 && incoming.length <= 128 && /^[\x21-\x7E]+$/.test(incoming)) {
+    return incoming;
+  }
+  return crypto.randomUUID();
 }
 
 function buildCspHeader(_nonce: string): string {
@@ -266,7 +288,14 @@ export default async function middleware(req: NextRequest): Promise<NextResponse
     return NextResponse.rewrite(target);
   }
 
-  // ── 0. /.well-known rewrites ──────────────────────────────────────────────
+  // ── CORS preflight — handle OPTIONS before any auth/redirect logic ──────
+  // This single handler covers all /api/* routes so individual route files
+  // do not each need an `export const OPTIONS` export.
+  if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    return corsResponse();
+  }
+
+  // ── 0. /.well-known + /api/v1/ rewrites ──────────────────────────────────
   // Next.js rewrites declared in next.config.mjs don't reach Lambda when
   // routed through @netlify/plugin-nextjs — verified empirically: the
   // /.well-known/* paths returned 404 in production while the underlying
@@ -278,6 +307,16 @@ export default async function middleware(req: NextRequest): Promise<NextResponse
   }
   if (pathname === "/.well-known/hawkeye-pubkey.pem") {
     return NextResponse.rewrite(new URL("/api/well-known/hawkeye-pubkey.pem", req.url));
+  }
+  // /api/v1/* → /api/* stable alias. Allows callers to pin a versioned
+  // prefix and survive future /api/v2/* breakouts without changing URLs.
+  // This rewrite is transparent — the canonical route still lives under
+  // /api/ and handles all business logic.
+  if (pathname.startsWith("/api/v1/")) {
+    const canonical = pathname.replace(/^\/api\/v1\//, "/api/");
+    const target = new URL(req.url);
+    target.pathname = canonical;
+    return NextResponse.rewrite(target);
   }
 
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
@@ -306,7 +345,6 @@ export default async function middleware(req: NextRequest): Promise<NextResponse
     if (adminToken) {
       const host = req.headers.get("host") ?? "";
       const origin = req.headers.get("origin");
-      const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
       // A HMAC-verified session cookie is a reliable same-origin indicator:

@@ -223,7 +223,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const imoTrimmed = body.imoNumber.trim();
   if (!/^\d{7}$/.test(imoTrimmed)) {
-    return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: CORS });
+    return NextResponse.json({ ok: false, error: "imoNumber must be exactly 7 digits (IMO format)" }, { status: 400, headers: { ...gate.headers, ...CORS } });
   }
 
   // Audit C-02 (closeout): consult the LSEG CFS vessel index FIRST. If

@@ -185,6 +185,7 @@ export default async (req: Request): Promise<Response> => {
       });
     }
   }
+  await hbStore.setJSON(`${LABEL}/lock`, { lockedAt: new Date().toISOString(), label: LABEL });
 
   const alertWebhook = process.env['ALERT_WEBHOOK_URL'];
   const hbStore = getStore('hawkeye-function-heartbeats');

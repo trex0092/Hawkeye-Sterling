@@ -147,6 +147,7 @@ const MODULE_WEIGHTS = {
   adverseMediaScoredCap: 40,
   adverseMediaScoredFloorHighSeverity: 8,
   pepMaxFromSalience: 20,
+  adverseKeywordPenaltyCap: 40,
 } as const;
 
 // Static data sources — what the brain consulted to produce its
@@ -179,6 +180,37 @@ const BUILD_SHA =
 
 function makeRunId(): string {
   return `sb_${randomBytes(4).toString("hex")}`;
+}
+
+// ── Result cache (cost reduction) ────────────────────────────────────────────
+// Super-brain is compute + I/O heavy (watchlist read, OpenSanctions, LSEG).
+// Cache full results for 4 hours keyed on the normalised input hash.
+// The ongoing thrice-daily screen cadence (08:30 / 15:00 / 17:30) has a 2.5h
+// gap between runs 2 and 3 — run 3 is always a cache hit, saving ~33% of calls.
+const SUPER_BRAIN_CACHE_TTL_MS = 4 * 60 * 60 * 1_000; // 4 hours
+
+function cacheHash(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 33) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+interface CachedSuperBrain {
+  cachedAt: string;
+  ttlMs: number;
+  result: Record<string, unknown>;
+}
+
+function buildCacheKey(body: Body): string {
+  const norm = JSON.stringify({
+    n: body.subject.name.trim().toLowerCase(),
+    a: (body.subject.aliases ?? []).map((x) => x.trim().toLowerCase()).sort(),
+    e: body.subject.entityType ?? "individual",
+    j: (body.subject.jurisdiction ?? "").trim().toLowerCase(),
+    r: (body.roleText ?? "").trim().toLowerCase(),
+    m: (body.adverseMediaText ?? "").trim().toLowerCase(),
+  });
+  return `super-brain-cache/${cacheHash(norm)}`;
 }
 
 // ── Result cache (cost reduction) ────────────────────────────────────────────
@@ -304,8 +336,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
     //     UK, UAE-EOCN/LTL) merged with the static seed corpus as fallback.
-    const liveCandidates = await loadCandidates();
-    const screen = quickScreen(body.subject, liveCandidates);
+    // Use loadCandidatesWithHealth so data-source provenance is embedded in
+    // the super-brain response for audit-trail and MLRO review purposes.
+    const { candidates: liveCandidates, health: corpusHealth } = await loadCandidatesWithHealth();
+    if (!corpusHealth.healthy) {
+      noteDegradation(
+        "candidatesLoader",
+        corpusHealth.degradationNote ?? `Sanctions lists unavailable (source=${corpusHealth.source}; candidates=${corpusHealth.candidateCount})`,
+      );
+    }
+    const screen = quickScreen(body.subject, liveCandidates, { scoreThreshold: 0.82 });
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised
@@ -345,10 +385,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     //      to the composite score per KEYWORD_GROUP_WEIGHT.
     const adverseKeywords = classifyAdverseKeywords(fullText);
     const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
-    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
+    // Cap at 40 — same ceiling as the structured adverse-media scorer.
+    // Without the cap, all 16 keyword groups firing yields 180 pts, consuming the
+    // entire composite budget and zeroing out the relative contribution of every
+    // other signal. The breakdown records the raw sum so analysts can see how many
+    // groups fired; the capped value is what enters the formula.
+    const adverseKeywordPenaltyRaw = adverseKeywordGroups.reduce(
       (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
       0,
     );
+    const adverseKeywordPenalty = Math.min(adverseKeywordPenaltyRaw, 40);
 
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
@@ -731,7 +777,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
       // degraded — the composite score is missing that signal.
-      ...(degradation.length > 0 ? { degradation } : {}),
+      ...(degradation.length > 0 ? { degraded: true, degradation } : {}),
       ...(intelligence ? { intelligence } : {}),
       ...(openBanking ? { openBanking } : {}),
       ...(openSanctions ? { openSanctions } : {}),
@@ -754,6 +800,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       crossRegimeConflict,
       composite: {
         score: composite,
+        label: compositeLabel,
         breakdown: {
           quickScreen: screen.topScore,
           jurisdictionPenalty,
@@ -761,6 +808,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           redlinesPenalty,
           adverseMediaPenalty,
           adverseMediaScoredPenalty,
+          adverseKeywordPenaltyRaw,
           adverseKeywordPenalty,
           pepPenalty,
         },
