@@ -406,6 +406,15 @@ function sanitizeLink(raw: string): string {
   return "";
 }
 
+// Strip combining diacritics (NFD decomposition) + Turkish dotless-ı so that
+// a query token like "basak" matches article text containing "başak".
+function normalizeDiacritics(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ı/g, "i"); // Turkish dotless ı is not a combining mark
+}
+
 function parseRss(xml: string, subject: string, variants: string[], lang: string): Article[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: Article[] = [];
