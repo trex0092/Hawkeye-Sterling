@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AuditFinding {
   id: string;
@@ -109,8 +109,8 @@ export default function AuditFindingsPage() {
       if (!mountedRef.current) return;
       if (data.ok) setFindings(data.records ?? []);
       else setError(data.error ?? "Failed to load audit findings");
-    } catch {
-      if (mountedRef.current) setError("Network error loading audit findings");
+    } catch (err) {
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Network error loading audit findings"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -147,8 +147,8 @@ export default function AuditFindingsPage() {
       } else {
         setError(data.error ?? "Failed to create audit finding");
       }
-    } catch {
-      setError("Network error creating audit finding");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error creating audit finding"));
     } finally {
       setSubmitting(false);
     }
@@ -167,8 +167,8 @@ export default function AuditFindingsPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchFindings();
       else setError(data.error ?? "Failed to record MLRO sign-off");
-    } catch {
-      setError("Network error recording MLRO sign-off");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error recording MLRO sign-off"));
     } finally {
       setSigningOff(null);
     }

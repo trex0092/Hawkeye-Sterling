@@ -22,7 +22,7 @@ function StatusBadge({ status }: { status: TrainingRecord["status"] }) {
       cls: "bg-red-950/30 text-red-300",
     },
   };
-  const { label, cls } = map[status];
+  const { label, cls } = map[status] ?? { label: status, cls: "bg-bg-2 text-ink-2" };
   return (
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}

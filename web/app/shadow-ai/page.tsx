@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { ShadowAIEntry, ShadowAIStatus } from "@/app/api/shadow-ai/route";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Shadow AI Detection Register — UAE CBUAE AI Governance Guidelines 2025
 // Monitors unauthorized / unregistered AI tool usage across compliance workflows
@@ -94,8 +94,8 @@ export default function ShadowAIPage() {
       } else {
         setError(data.error ?? "Failed to load shadow AI register");
       }
-    } catch {
-      setError("Network error loading shadow AI register");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading shadow AI register"));
     } finally {
       setLoading(false);
     }
@@ -122,8 +122,8 @@ export default function ShadowAIPage() {
       } else {
         setError(data.error ?? "Failed to log shadow AI entry");
       }
-    } catch {
-      setError("Network error logging shadow AI entry");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error logging shadow AI entry"));
     } finally {
       setSubmitting(false);
     }
@@ -140,8 +140,8 @@ export default function ShadowAIPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchEntries();
       else setError(data.error ?? "Update failed");
-    } catch {
-      setError("Network error updating entry");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error updating entry"));
     }
   }
 

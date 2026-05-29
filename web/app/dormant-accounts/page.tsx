@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface DormantAccount {
   id: string;
@@ -94,8 +94,8 @@ export default function DormantAccountsPage() {
       const data = await res.json() as { ok: boolean; records?: DormantAccount[]; error?: string };
       if (data.ok) setAccounts(data.records ?? []);
       else setError(data.error ?? "Failed to load dormant accounts");
-    } catch {
-      setError("Network error loading dormant accounts");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading dormant accounts"));
     } finally {
       setLoading(false);
     }
@@ -128,8 +128,8 @@ export default function DormantAccountsPage() {
       } else {
         setError(data.error ?? "Failed to flag account");
       }
-    } catch {
-      setError("Network error flagging account");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error flagging account"));
     } finally {
       setSubmitting(false);
     }
@@ -170,8 +170,8 @@ export default function DormantAccountsPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) { setExpandedId(null); void fetchAccounts(); }
       else setError(data.error ?? "Failed to update account");
-    } catch {
-      setError("Network error updating account");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error updating account"));
     } finally {
       setUpdatingId(null);
     }
@@ -190,8 +190,8 @@ export default function DormantAccountsPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) void fetchAccounts();
       else setError(data.error ?? "Failed to notify MLRO");
-    } catch {
-      setError("Network error notifying MLRO");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error notifying MLRO"));
     } finally {
       setNotifyingId(null);
     }

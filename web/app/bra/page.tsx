@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface BraRecord {
   id: string;
@@ -73,8 +73,8 @@ export default function BraPage() {
       const data = await res.json() as { ok: boolean; records?: typeof records; error?: string };
       if (data.ok) setRecords(data.records ?? []);
       else setError(data.error ?? "Failed to load BRA records");
-    } catch {
-      setError("Network error loading BRA records");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading BRA records"));
     } finally {
       setLoading(false);
     }
@@ -110,8 +110,8 @@ export default function BraPage() {
       } else {
         setError(data.error ?? "Failed to create BRA record");
       }
-    } catch {
-      setError("Network error creating BRA record");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error creating BRA record"));
     } finally {
       setSubmitting(false);
     }
