@@ -295,6 +295,48 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "FDL 10/2025 Art.18 (UBO mandate)",
     ],
   },
+  human_trafficking: {
+    typologyId: "human_trafficking",
+    summary:
+      "Human trafficking / modern slavery proceeds laundering: aggregation of victim payments " +
+      "through controller accounts, placement via cash-intensive front businesses (escort, massage, " +
+      "nail salons), and layering through wires, prepaid cards, or hawala. A FATF 2018 predicate offence.",
+    immediate: [
+      "Identify all counterparties sending recurring small payments to the flagged account.",
+      "Request source-of-funds explanation — legitimate purpose must explain the many-to-one payment pattern.",
+      "Map the business type: verify MCC, trading licence, and actual services rendered.",
+      "Check recipient account for rapid outward disbursement following aggregation (funnel-account indicator).",
+      "Screen all associated parties against INTERPOL, IOM, and national TIP (trafficking in persons) watchlists.",
+    ],
+    secondary: [
+      "Obtain business licences for any adult-entertainment, massage, or escort business.",
+      "Verify staffing records match the volume of client payments (ghost-worker / victim employment indicator).",
+      "Cross-check wire destinations against known trafficking source-country corridors (Philippines, Thailand, Vietnam, Nigeria, Eastern Europe).",
+      "Review prepaid card / gift card purchase patterns — common value-transfer method for trafficker proceeds.",
+      "Check for co-located accounts sharing the same device fingerprint, IP address, or mobile number.",
+    ],
+    escalationTriggers: [
+      "Business cannot produce legitimate revenue documentation explaining the payment volume.",
+      "Counterparties identified as potential trafficking victims (age, nationality, pattern of activity).",
+      "Rapid wire transfer to high-risk corridors immediately after aggregation.",
+      "Any associated party appears on a TIP or modern-slavery watchlist.",
+      "Law enforcement request or referral related to the account.",
+    ],
+    redLines: [
+      "Confirmed link to a trafficking network or law-enforcement investigation.",
+      "Business account for an unlicensed escort agency or brothel.",
+      "Any counterparty confirmed as a trafficking victim.",
+    ],
+    citations: [
+      "FATF Report: Financial Flows from Human Trafficking (2018)",
+      "FATF Recommendation 20 (suspicious transaction reporting)",
+      "FATF Recommendation 10 (ongoing customer due diligence)",
+      "FinCEN Advisory FIN-2014-A008 (human trafficking red flags)",
+      "ILO Global Estimates of Modern Slavery (2022)",
+      "FDL 10/2025 Art.3 (predicate offences include trafficking in persons)",
+      "UN Protocol to Prevent, Suppress and Punish Trafficking in Persons (Palermo Protocol)",
+    ],
+  },
 };
 
 export function playbookFor(typologyId: string): TypologyPlaybook | null {

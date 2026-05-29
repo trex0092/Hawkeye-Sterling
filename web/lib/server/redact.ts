@@ -13,7 +13,7 @@
  *   - Deterministic: same value in same request → same token (safe dedup)
  */
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -80,7 +80,9 @@ const PATTERNS: Pattern[] = [
   // Contact & identity
   {
     type: "EMAIL",
-    re: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
+    // RFC 5321-aligned: domain labels must not start/end with hyphens.
+    // Prior pattern allowed @-invalid.com (leading hyphen in domain label).
+    re: /[a-zA-Z0-9._%+\-]+@(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g,
   },
   {
     type: "PHONE",

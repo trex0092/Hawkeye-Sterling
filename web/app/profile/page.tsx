@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface UserProfile {
   id: string;
@@ -38,7 +39,7 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me")
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d: { ok: boolean; user?: UserProfile; error?: string }) => {
         if (cancelled) return;
         if (d.ok && d.user) setProfile(d.user);
@@ -75,7 +76,7 @@ export default function ProfilePage() {
       });
       const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
       if (!res.ok || !json.ok) {
-        setSaveError(json.error ?? `HTTP ${res.status}`);
+        setSaveError(json.error ?? apiErrorMessage(res.status, "Password change"));
       } else {
         setSaveSuccess(true);
         setCurrentPassword("");
@@ -258,8 +259,8 @@ export default function ProfilePage() {
             <div className="font-mono text-10 uppercase tracking-wide-4 text-ink-3 mb-1">Need help?</div>
             <p className="text-12 text-ink-2">
               If you are locked out or cannot remember your current password, contact your MLRO at{" "}
-              <a href="mailto:hawkeye.sterling.v2@gmail.com" className="text-brand hover:underline">
-                hawkeye.sterling.v2@gmail.com
+              <a href="mailto:dpo@hawkeyesterling.com" className="text-brand hover:underline">
+                dpo@hawkeyesterling.com
               </a>{" "}
               to have your password reset.
             </p>

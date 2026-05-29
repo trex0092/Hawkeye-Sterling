@@ -21,7 +21,7 @@
 // compliance-report and audit-certificate flows already use. Verifiers
 // fetch the public key from /.well-known/hawkeye-pubkey.pem.
 
-import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "crypto";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign as cryptoSign, verify as cryptoVerify, type KeyObject } from "node:crypto";
 
 export interface RegulatorTokenClaims {
   iss: "hawkeye-sterling";
@@ -120,6 +120,12 @@ export function issueRegulatorToken(opts: IssueOptions): {
     issuedBy: opts.issuedBy,
     ...(() => {
       if (!opts.notBefore) return {};
+      // Accept only ISO 8601 date strings (YYYY-MM-DD or full datetime).
+      // Non-ISO locale formats (e.g. "01/01/2026") silently NaN in Date.parse
+      // which would drop the nbf claim without error; reject them explicitly.
+      if (!/^\d{4}-\d{2}-\d{2}(T[\d:.Z+\-]+)?$/.test(opts.notBefore)) {
+        throw new Error(`regulator-jwt: notBefore must be ISO 8601 (YYYY-MM-DD), got: ${opts.notBefore}`);
+      }
       const ms = Date.parse(opts.notBefore);
       if (!Number.isFinite(ms)) return {};
       return { nbf: Math.floor(ms / 1000) };
@@ -143,44 +149,84 @@ export function issueRegulatorToken(opts: IssueOptions): {
   return { token, claims, publicKeyUrl };
 }
 
+export type VerifyRegulatorTokenResult =
+  | { ok: true; claims: RegulatorTokenClaims }
+  | { ok: false; reason: string };
+
 /**
- * Verify + decode a regulator JWT. Returns the claims on success or null
- * if the token is malformed / signature invalid / expired / not-yet-valid.
+ * Verify + decode a regulator JWT. Returns `{ ok: true, claims }` on success
+ * or `{ ok: false, reason }` if the token is malformed / signature invalid /
+ * expired / not-yet-valid / revoked.
  * Caller MUST cross-check that the requested resource is within scope.
  */
-export function verifyRegulatorToken(token: string): RegulatorTokenClaims | null {
+export async function verifyRegulatorToken(token: string): Promise<VerifyRegulatorTokenResult> {
   const parts = token.split(".");
-  if (parts.length !== 3) return null;
+  if (parts.length !== 3) return { ok: false, reason: "malformed token" };
   const [headerB64, claimsB64, sigB64] = parts as [string, string, string];
+
+  let header: { alg?: string };
+  try {
+    header = JSON.parse(base64urlDecode(headerB64).toString("utf8")) as { alg?: string };
+  } catch { return { ok: false, reason: "malformed header" }; }
+  if (header.alg !== "EdDSA") return { ok: false, reason: "unsupported algorithm" };
 
   let claims: RegulatorTokenClaims;
   try {
     claims = JSON.parse(base64urlDecode(claimsB64).toString("utf8")) as RegulatorTokenClaims;
   } catch {
-    return null;
+    return { ok: false, reason: "malformed claims" };
   }
-  if (claims.iss !== "hawkeye-sterling") return null;
-  if (claims.aud !== "regulator-read-only") return null;
+  if (claims.iss !== "hawkeye-sterling") return { ok: false, reason: "invalid issuer" };
+  if (claims.aud !== "regulator-read-only") return { ok: false, reason: "invalid audience" };
   const now = Math.floor(Date.now() / 1000);
   // RFC 7519 §4.1.4: token is valid only if exp is *strictly after* the current
   // time. Using `<= now` ensures a token with exp == now is treated as expired
   // (the prior `< now` would have accepted it for the remainder of that second).
-  if (typeof claims.exp !== "number" || claims.exp <= now) return null;
-  if (typeof claims.nbf === "number" && claims.nbf > now) return null;
+  if (typeof claims.exp !== "number" || claims.exp <= now) return { ok: false, reason: "token expired" };
+  if (typeof claims.nbf === "number" && claims.nbf > now) return { ok: false, reason: "token not yet valid" };
 
   const pub = loadPublicKey();
-  if (!pub) return null;
+  if (!pub) return { ok: false, reason: "no public key configured" };
   try {
     const inBuf = Buffer.from(`${headerB64}.${claimsB64}`);
     const inView = new Uint8Array(inBuf.buffer, inBuf.byteOffset, inBuf.byteLength);
     const sigBuf = base64urlDecode(sigB64);
     const sigView = new Uint8Array(sigBuf.buffer, sigBuf.byteOffset, sigBuf.byteLength);
     const valid = cryptoVerify(null, inView, pub, sigView);
-    if (!valid) return null;
+    if (!valid) return { ok: false, reason: "invalid signature" };
   } catch {
-    return null;
+    return { ok: false, reason: "signature verification error" };
   }
-  return claims;
+
+  // After signature verification, check revocation list before returning claims.
+  const jti = claims.jti as string | undefined;
+  if (jti) {
+    try {
+      const { getStore } = await import("@netlify/blobs") as unknown as { getStore: (..._args: unknown[]) => { get: (_key: string) => Promise<string | null> } };
+      const store = getStore({ name: "hawkeye-revoked-tokens" });
+      const revoked = await store.get(jti);
+      if (revoked) {
+        return { ok: false, reason: "token has been revoked" };
+      }
+    } catch {
+      // Revocation store unavailable — log and allow (fail-open is acceptable
+      // since Ed25519 signature is still the primary control)
+      console.warn("[regulator-jwt] revocation store unavailable");
+    }
+  }
+
+  return { ok: true, claims };
+}
+
+/**
+ * Revoke a regulator token by its jti claim. Writes a marker to the
+ * Netlify Blobs revocation store; subsequent calls to verifyRegulatorToken
+ * with the same jti will return { ok: false, reason: "token has been revoked" }.
+ */
+export async function revokeRegulatorToken(jti: string): Promise<void> {
+  const { getStore } = await import("@netlify/blobs") as unknown as { getStore: (..._args: unknown[]) => { set: (_key: string, _value: string) => Promise<void> } };
+  const store = getStore({ name: "hawkeye-revoked-tokens" });
+  await store.set(jti, JSON.stringify({ revokedAt: new Date().toISOString() }));
 }
 
 /**

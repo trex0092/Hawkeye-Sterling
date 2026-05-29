@@ -1,4 +1,4 @@
-// Next.js edge middleware — three responsibilities:
+// Next.js proxy (edge) — three responsibilities:
 // 1. Session guard: redirect unauthenticated users to /login.
 // 2. API token injection: for same-origin API calls, inject the server-side
 //    ADMIN_TOKEN so it is never shipped to the browser JS bundle.
@@ -65,6 +65,8 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  response.headers.set("X-DNS-Prefetch-Control", "off");
   if (isApi) {
     // Attach CORS headers to all API responses so browser callers (dashboard,
     // regulator portal) receive them on non-preflight requests too.
@@ -123,24 +125,35 @@ function buildCspHeader(_nonce: string): string {
 }
 
 // ── Session verification in Edge ─────────────────────────────────────────────
-// The Edge runtime cannot reliably access all Netlify env vars (SESSION_SECRET
-// is a Node.js Lambda concern). We do NOT attempt HMAC verification here.
-// Instead we just check that the session cookie exists and hasn't expired.
-//
-// Full HMAC verification happens in auth.ts (Node.js runtime) for every API
-// call and in the /api/auth/me route — so spoofing the cookie only lets an
-// attacker see the (empty) app shell; they cannot load any real data.
+// Uses Web Crypto (available in all Netlify edge/V8 runtimes) to do full
+// HMAC-SHA256 verification — the same scheme auth.ts uses in Node.js.
+// A forged cookie with a valid exp but wrong HMAC will fail here, so it cannot
+// trigger ADMIN_TOKEN injection or bypass the session guard.
 
-function isValidSession(token: string): boolean {
-  if (!token) return false;
+const _b64url = (s: string) =>
+  s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4);
+
+async function verifySessionEdge(token: string): Promise<boolean> {
+  const secret = process.env["SESSION_SECRET"];
+  if (!secret || !token) return false;
   try {
     const dot = token.lastIndexOf(".");
     if (dot === -1) return false;
-    const encoded = token.slice(0, dot);
-    // Restore base64 padding that base64url strips — Deno's atob requires it.
-    const b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    const payload = JSON.parse(atob(padded)) as { exp?: number };
+    const encodedPayload = token.slice(0, dot);
+    const encodedSig = token.slice(dot + 1);
+    const sigBytes = Uint8Array.from(atob(_b64url(encodedSig)), (c) => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    const valid = await crypto.subtle.verify(
+      "HMAC", key, sigBytes, new TextEncoder().encode(encodedPayload),
+    );
+    if (!valid) return false;
+    const payload = JSON.parse(atob(_b64url(encodedPayload))) as { exp?: number };
     return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
   } catch {
     return false;
@@ -171,7 +184,10 @@ function resolveAllowedOrigin(): string {
       return origin;
     } catch {
       // Malformed NEXT_PUBLIC_APP_URL — fall through to wildcard.
+      console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL is set but malformed — falling back to wildcard origin. Set a valid URL (e.g. https://hawkeye-sterling-v2.netlify.app).");
     }
+  } else if (process.env["NODE_ENV"] === "production") {
+    console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL not set in production — falling back to wildcard origin. This allows any origin to call the API. Set NEXT_PUBLIC_APP_URL to restrict access.");
   }
   return "*";
 }
@@ -191,7 +207,7 @@ function corsResponse(): NextResponse {
   return res;
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export default async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const requestId = resolveRequestId(req);
 
@@ -229,10 +245,10 @@ export function middleware(req: NextRequest): NextResponse {
   // ── 1. Session guard (non-API routes) ──────────────────────────────────────
   if (!pathname.startsWith("/api/") && !isPublic(pathname)) {
     const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
-    if (!isValidSession(token)) {
+    if (!await verifySessionEdge(token)) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
-      loginUrl.search = "";
+      loginUrl.search = token ? "?__hs_dbg=malformed" : "?__hs_dbg=no-cookie";
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -255,14 +271,14 @@ export function middleware(req: NextRequest): NextResponse {
       const referer = req.headers.get("referer");
 
       const hostHostname = hostnameOf(host);
-      // A request carrying our HttpOnly session cookie must have originated
-      // from the same site — browsers cannot forge httpOnly cookies from
-      // cross-origin contexts, so this is a safe same-origin indicator
-      // even when origin/referer headers are absent (e.g. strict no-referrer
-      // browser policy or certain fetch modes).
-      const hasSessionCookie = req.cookies.get(SESSION_COOKIE)?.value != null;
+      // A HMAC-verified session cookie is a reliable same-origin indicator:
+      // browsers attach HttpOnly cookies automatically on same-origin requests,
+      // and verifySessionEdge() checks the full HMAC so a forged cookie cannot
+      // trigger injection. origin/referer match is kept as the alternative for
+      // requests from browser contexts where the cookie isn't yet set.
+      const hasValidSession = await verifySessionEdge(req.cookies.get(SESSION_COOKIE)?.value ?? "");
       const isSameOrigin =
-        hasSessionCookie ||
+        hasValidSession ||
         (hostHostname !== null &&
           ((origin != null && hostnameOf(origin) === hostHostname) ||
             (referer != null && hostnameOf(referer) === hostHostname)));

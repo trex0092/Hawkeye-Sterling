@@ -133,16 +133,34 @@ async function maybeMigrateLegacy(): Promise<void> {
 
 export async function loadAllCases(tenant: string): Promise<CaseRecord[]> {
   await maybeMigrateLegacy();
-  const idx = await readIndex(tenant);
-  if (idx.entries.length === 0) return [];
-  // Fan-out reads: one blob per case. Capped at 200 cases per fetch to
-  // bound function runtime — beyond that the operator should paginate
-  // (or the index API should evolve to surface lazy fetches).
   const cap = 200;
-  const fetched = await Promise.all(
-    idx.entries.slice(0, cap).map((e) => getJson<CaseRecord>(caseKey(tenant, e.id))),
-  );
-  return fetched.filter((c): c is CaseRecord => c != null);
+
+  async function fetchFromTenant(t: string): Promise<CaseRecord[]> {
+    const idx = await readIndex(t);
+    if (idx.entries.length === 0) return [];
+    const fetched = await Promise.all(
+      idx.entries.slice(0, cap).map((e) => getJson<CaseRecord>(caseKey(t, e.id))),
+    );
+    return fetched.filter((c): c is CaseRecord => c != null);
+  }
+
+  // Fan-out reads: one blob per case. Capped at 200 cases per fetch to
+  // bound function runtime — beyond that the operator should paginate.
+  const primary = await fetchFromTenant(tenant);
+  if (primary.length > 0) return primary;
+
+  // Fallback: try well-known alternative tenant slugs when the primary returns
+  // empty. Covers the common case where cases were stored under the legacy
+  // migration target ("portal") but are being read by an API-key tenant.
+  const fallbacks = ["portal", "default", "hawkeye"].filter((t) => t !== tenant);
+  for (const fallback of fallbacks) {
+    const cases = await fetchFromTenant(fallback);
+    if (cases.length > 0) {
+      console.info(`[case-vault] tenant "${tenant}" empty — serving ${cases.length} case(s) from fallback tenant "${fallback}"`);
+      return cases;
+    }
+  }
+  return [];
 }
 
 export async function loadCase(
@@ -163,38 +181,55 @@ export async function mergeCases(
   incoming: CaseRecord[],
 ): Promise<CaseRecord[]> {
   await maybeMigrateLegacy();
-  const idx = await readIndex(tenant);
-  const indexById = new Map(idx.entries.map((e) => [e.id, e]));
-  const incomingById = new Map(incoming.map((c) => [c.id, c]));
 
-  const writes: Promise<unknown>[] = [];
-  // Merge: for every incoming record, decide if it's newer than the
-  // existing index entry, and only write when it is.
-  for (const c of incoming) {
-    const prior = indexById.get(c.id);
-    if (!prior || c.lastActivity >= prior.lastActivity) {
-      writes.push(setJson(caseKey(tenant, c.id), c));
-      indexById.set(c.id, entryFromCase(c));
-    }
+  // Acquire index lock before read-modify-write to prevent concurrent sync
+  // operations from dropping index entries (same pattern as insertCaseRecord).
+  let lockAcquired = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    lockAcquired = await acquireIndexLock(tenant);
+    if (lockAcquired) break;
+    await new Promise((r) => setTimeout(r, 500 + attempt * 500));
+  }
+  if (!lockAcquired) {
+    console.warn("[case-vault] mergeCases index lock contention for tenant:", tenant);
   }
 
-  await Promise.all(writes);
+  try {
+    const idx = await readIndex(tenant);
+    const indexById = new Map(idx.entries.map((e) => [e.id, e]));
+    const incomingById = new Map(incoming.map((c) => [c.id, c]));
 
-  // Resolve full records for the response: refetch any case the
-  // client didn't send so the merged set is complete.
-  const merged: CaseRecord[] = [];
-  for (const e of indexById.values()) {
-    const incomingRec = incomingById.get(e.id);
-    if (incomingRec && incomingRec.lastActivity >= e.lastActivity) {
-      merged.push(incomingRec);
-    } else {
-      const existing = await getJson<CaseRecord>(caseKey(tenant, e.id));
-      if (existing) merged.push(existing);
+    const writes: Promise<unknown>[] = [];
+    // Merge: for every incoming record, decide if it's newer than the
+    // existing index entry, and only write when it is.
+    for (const c of incoming) {
+      const prior = indexById.get(c.id);
+      if (!prior || c.lastActivity >= prior.lastActivity) {
+        writes.push(setJson(caseKey(tenant, c.id), c));
+        indexById.set(c.id, entryFromCase(c));
+      }
     }
+
+    await Promise.all(writes);
+
+    // Resolve full records for the response: refetch any case the
+    // client didn't send so the merged set is complete.
+    const merged: CaseRecord[] = [];
+    for (const e of indexById.values()) {
+      const incomingRec = incomingById.get(e.id);
+      if (incomingRec && incomingRec.lastActivity >= e.lastActivity) {
+        merged.push(incomingRec);
+      } else {
+        const existing = await getJson<CaseRecord>(caseKey(tenant, e.id));
+        if (existing) merged.push(existing);
+      }
+    }
+    await writeIndex(tenant, Array.from(indexById.values()));
+    await bumpMeta(tenant, "merge");
+    return merged.sort((a, b) => (a.lastActivity < b.lastActivity ? 1 : -1));
+  } finally {
+    if (lockAcquired) await releaseIndexLock(tenant);
   }
-  await writeIndex(tenant, Array.from(indexById.values()));
-  await bumpMeta(tenant, "merge");
-  return merged.sort((a, b) => (a.lastActivity < b.lastActivity ? 1 : -1));
 }
 
 export async function saveAllCases(
@@ -221,13 +256,17 @@ function indexLockKey(tenant: string): string {
 
 async function acquireIndexLock(tenant: string): Promise<boolean> {
   const lockKey = indexLockKey(tenant);
-  const existing = await getJson<{ lockedAt: string }>(lockKey).catch(() => null);
+  const existing = await getJson<{ lockedAt: number; claimId: string }>(lockKey).catch(() => null);
   if (existing) {
-    const age = Date.now() - new Date(existing.lockedAt).getTime();
+    const age = Date.now() - existing.lockedAt;
     if (age < INDEX_LOCK_TTL_MS) return false; // lock held by another write
   }
-  await setJson(lockKey, { lockedAt: new Date().toISOString() });
-  return true;
+  const claimId = crypto.randomUUID();
+  await setJson(lockKey, { lockedAt: Date.now(), claimId });
+  // Read-back: confirm our write landed last (last-write-wins KV).
+  await new Promise((r) => setTimeout(r, 10 + Math.random() * 20));
+  const readBack = await getJson<{ lockedAt: number; claimId: string }>(lockKey).catch(() => null);
+  return readBack?.claimId === claimId;
 }
 
 async function releaseIndexLock(tenant: string): Promise<void> {

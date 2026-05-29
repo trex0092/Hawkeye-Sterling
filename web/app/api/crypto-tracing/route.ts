@@ -471,6 +471,21 @@ Typology confidence thresholds:
 
 Be exhaustive, technically precise, and maximally helpful to an MLRO making consequential decisions. Every field must be substantively populated.`;
 
+// ── GET Handler — 405 with helpful hint ──────────────────────────────────────
+// Returns a descriptive 405 so callers using the generic call_api tool with
+// method=GET get a clear message rather than a raw empty 405 response.
+
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Method Not Allowed",
+      hint: "Use POST /api/crypto-tracing with body { walletAddress, blockchain, ... }. See /api/routes?mcpTool=crypto_risk for the full schema.",
+    },
+    { status: 405, headers: { Allow: "POST" } },
+  );
+}
+
 // ── POST Handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -488,7 +503,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "crypto-tracing temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const tp = body.transactionPatterns ?? {};
     const rf = body.riskFlags ?? {};

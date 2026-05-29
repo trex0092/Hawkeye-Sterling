@@ -24,6 +24,8 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ONGOING_RUN_TOKEN` | REQUIRED | Bearer token protecting `/api/ongoing/run` from public invocation. If unset, returns 503 (fail-closed). | `openssl rand -hex 32` |
 | `SANCTIONS_CRON_TOKEN` | REQUIRED | Bearer token protecting `/api/sanctions/watch` scheduled ingestion. If unset, returns 503. | `openssl rand -hex 32` |
 | `JWT_SIGNING_SECRET` | REQUIRED | HMAC-SHA256 key for short-lived bearer JWTs issued by `/api/auth/token`. If unset or shorter than 32 bytes, the server throws at request time — all JWT-authenticated API calls fail with an unhandled exception. | `openssl rand -hex 32` |
+| `RATE_LIMIT_STRICT` | **REQUIRED (production)** | When `true`, refuses requests if Upstash Redis is unavailable rather than falling back to blob-based soft enforcement (which is race-prone under concurrent Lambda invocations). Setting this to `false` or leaving it unset in production silently degrades rate limiting to a non-atomic path. | `true` |
+| `EGRESS_GATE_ENABLED` | **REQUIRED (production)** | When `true`, the egress tipping-off gate (`web/lib/server/egress-check.ts`) runs before every SAR/goAML filing. Setting to `false` in production bypasses the FDL 10/2025 Art.29 pre-check. | `true` |
 
 ---
 
@@ -127,6 +129,22 @@ See `.env.example` for the complete list (~80 keys). Priority keys for UAE DPMS 
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | OPTIONAL | Atomic rate limiting. Without it, rate limiting falls back to Netlify Blobs (soft-enforced). |
 | `HAWKEYE_WEBHOOK_URL` / `HAWKEYE_WEBHOOK_SECRET` | OPTIONAL | Outbound delta-alert webhooks to customer systems. |
 | `COMPLIANCE_RAG_URL` | OPTIONAL | AML-MultiAgent-RAG instance URL for regulatory Q&A. Falls back to MLRO Advisor pipeline. |
+
+---
+
+## Tier 7 — Compliance / Retention (Missing = 10-year audit chain durability gap — CG-6)
+
+These variables are required by `netlify/functions/audit-chain-s3-backup.mts` to mirror the
+tamper-evident audit chain to an S3-compatible WORM store for FDL 10/2025 Art. 24 compliance.
+Without them, audit records are retained only in Netlify Blobs (no guaranteed 10-year durability).
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `S3_BACKUP_ENDPOINT` | REQUIRED (CG-6) | S3-compatible endpoint URL. AWS S3, Cloudflare R2, MinIO, or any S3-API-compatible store. | `https://s3.me-south-1.amazonaws.com` |
+| `S3_BACKUP_BUCKET` | REQUIRED (CG-6) | Bucket name. Must have object-lock / WORM mode enabled with a ≥10-year retention policy. | `hawkeye-audit-chain-worm` |
+| `S3_BACKUP_REGION` | REQUIRED (CG-6) | AWS region for SigV4 signing. Default: `me-south-1` (UAE/Bahrain — recommended for data residency). | `me-south-1` |
+| `S3_BACKUP_ACCESS_KEY_ID` | REQUIRED (CG-6) | IAM access key ID. Use a least-privilege IAM role with `s3:PutObject` only on the backup bucket. | From AWS IAM |
+| `S3_BACKUP_SECRET_KEY` | REQUIRED (CG-6) | IAM secret access key. Rotate annually per SOC2 CC6.1. | From AWS IAM |
 
 ---
 

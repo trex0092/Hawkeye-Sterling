@@ -9,7 +9,8 @@
 //   POST /api/ewra/threat-intel  — real-time threat intelligence feed
 //
 // Regulatory basis: FATF Recommendation 1 (risk-based approach);
-// UAE FDL 10/2025 Art.5 — obliged entity risk assessment requirement.
+// UAE FDL 10/2025 Art.5 — obliged entity risk assessment requirement;
+// CBUAE AML/CFT Supervisory Standards — risk appetite framework.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,22 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import {
+  FATF_RISK_FACTOR_MATRIX,
+  computeFatfCategoryScore,
+  computeSectorModifier,
+  calculateResidualRisk,
+  assessCbuaeRiskAppetite,
+  loadPreviousEwraSnapshot,
+  saveEwraSnapshot,
+  buildTrendAnalysis,
+  ratingFromScore,
+  type FatfRiskFactor,
+  type SectorRiskModifier,
+  type ResidualRiskResult,
+  type CbuaeRiskAppetiteAlignment,
+  type EwraTrendAnalysis,
+} from "@/lib/server/ewra-engine";
 
 export interface EwraDimension {
   name: string;
@@ -42,14 +59,30 @@ export interface EwraResult {
   boardSummary: string;
   nextReviewDate: string;
   generatedAt: string;
+  fatfRiskMatrix: {
+    categoryScores: Record<string, number>;
+    appliedFactors: Array<{
+      factor: string;
+      category: string;
+      baseScore: number;
+      ratingLabel: string;
+    }>;
+  };
+  sectorModifiers: {
+    totalModifier: number;
+    applied: Array<{
+      sector: string;
+      modifier: number;
+      regulatoryBasis: string;
+    }>;
+  };
+  residualRisk: ResidualRiskResult;
+  cbuaeRiskAppetite: CbuaeRiskAppetiteAlignment;
+  trendAnalysis: EwraTrendAnalysis;
 }
 
-function ratingFromScore(score: number): "low" | "medium" | "high" | "critical" {
-  if (score >= 75) return "critical";
-  if (score >= 50) return "high";
-  if (score >= 25) return "medium";
-  return "low";
-}
+// Re-export engine types for consumers of this route module
+export type { FatfRiskFactor, SectorRiskModifier, ResidualRiskResult, CbuaeRiskAppetiteAlignment, EwraTrendAnalysis };
 
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
@@ -90,7 +123,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 503, headers: gate.headers },
     );
   }
-  const anthropic = getAnthropicClient(apiKey, 55_000);
+  const anthropic = getAnthropicClient(apiKey, 4_500);
+
+  // ── Pre-compute structured enhancements ─────────────────────────────────────
+  // These run deterministically before the LLM call so the AI response can be
+  // enriched with regulatory-grade structured data.
+
+  // 1. FATF risk factor matrix — weighted average scores per category
+  const fatfCategoryScores: Record<string, number> = {
+    customer: computeFatfCategoryScore("customer"),
+    product_service: computeFatfCategoryScore("product_service"),
+    geographic: computeFatfCategoryScore("geographic"),
+    delivery_channel: computeFatfCategoryScore("delivery_channel"),
+  };
+
+  // 2. UAE sector-specific risk modifiers
+  const { totalModifier, applied: appliedModifiers } = computeSectorModifier(sector);
+
+  // 3. Load previous EWRA snapshot for trend analysis (non-blocking)
+  const previousSnapshot = await loadPreviousEwraSnapshot(sector, jurisdiction);
 
   try {
     const response = await anthropic.messages.create({
@@ -103,6 +154,13 @@ export async function POST(req: Request): Promise<NextResponse> {
 Sector: ${sector}
 Jurisdiction: ${jurisdiction}
 Reporting period: ${reportingPeriod}
+
+FATF Risk Matrix context (pre-computed weighted category scores):
+- Customer Risk: ${fatfCategoryScores["customer"]}
+- Product/Service Risk: ${fatfCategoryScores["product_service"]}
+- Geographic Risk: ${fatfCategoryScores["geographic"]}
+- Delivery Channel Risk: ${fatfCategoryScores["delivery_channel"]}
+UAE sector modifier: +${totalModifier} points (${appliedModifiers.map((m) => m.sector).join(", ") || "none"})
 
 Return ONLY valid JSON matching this exact structure (no markdown, no explanation):
 {
@@ -120,7 +178,8 @@ Return ONLY valid JSON matching this exact structure (no markdown, no explanatio
   "boardSummary": "<2-3 sentence executive summary>"
 }
 
-Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geographic Risk, Sanctions Risk, PEP Exposure.`,
+Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geographic Risk, Sanctions Risk, PEP Exposure.
+The overallScore should reflect the FATF category scores and sector modifier above.`,
         },
       ],
     });
@@ -134,7 +193,10 @@ Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geog
       boardSummary?: string;
     };
 
-    const overallScore = Math.max(0, Math.min(100, parsed.overallScore ?? 50));
+    // Apply UAE sector modifier to inherent score (capped at 100)
+    const baseScore = Math.max(0, Math.min(100, parsed.overallScore ?? 50));
+    const inherentScore = Math.min(100, baseScore + totalModifier);
+
     const dimensions: EwraDimension[] = (parsed.dimensions ?? []).map((d) => ({
       name: d.name,
       score: Math.max(0, Math.min(100, d.score ?? 50)),
@@ -143,22 +205,57 @@ Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geog
       mitigationControls: d.mitigationControls ?? [],
     }));
 
+    // ── Residual risk = inherent × (1 - control_effectiveness) ───────────────
+    const residualRisk = calculateResidualRisk(inherentScore, dimensions);
+
+    // ── CBUAE risk appetite alignment ─────────────────────────────────────────
+    const cbuaeRiskAppetite = assessCbuaeRiskAppetite(residualRisk.residualScore, appliedModifiers);
+
+    // ── Trend analysis vs. previous assessment ────────────────────────────────
+    const trendAnalysis = buildTrendAnalysis(inherentScore, previousSnapshot);
+
     const nextReview = new Date();
     nextReview.setFullYear(nextReview.getFullYear() + 1);
+    const generatedAt = new Date().toISOString();
 
     const result: EwraResult = {
       ok: true,
       sector,
       jurisdiction,
-      overallScore,
-      overallRating: ratingFromScore(overallScore),
+      overallScore: inherentScore,
+      overallRating: ratingFromScore(inherentScore),
       dimensions,
       topRisks: parsed.topRisks ?? [],
       mitigationPriorities: parsed.mitigationPriorities ?? [],
       boardSummary: parsed.boardSummary ?? "",
       nextReviewDate: nextReview.toISOString().split("T")[0]!,
-      generatedAt: new Date().toISOString(),
+      generatedAt,
+      // ── FATF risk factor matrix ──────────────────────────────────────────────
+      fatfRiskMatrix: {
+        categoryScores: fatfCategoryScores,
+        appliedFactors: FATF_RISK_FACTOR_MATRIX.map((f) => ({
+          factor: f.factor,
+          category: f.category,
+          baseScore: f.baseScore,
+          ratingLabel: f.ratingLabel,
+        })),
+      },
+      // ── UAE sector modifiers ─────────────────────────────────────────────────
+      sectorModifiers: {
+        totalModifier,
+        applied: appliedModifiers.map((m) => ({
+          sector: m.sector,
+          modifier: m.modifier,
+          regulatoryBasis: m.regulatoryBasis,
+        })),
+      },
+      residualRisk,
+      cbuaeRiskAppetite,
+      trendAnalysis,
     };
+
+    // ── Persist snapshot for future trend analysis (non-blocking) ────────────
+    void saveEwraSnapshot({ overallScore: inherentScore, generatedAt, sector, jurisdiction });
 
     // FATF R.1 / FDL 10/2025 Art.5 — EWRA generation is a board-level
     // compliance event; must be on the tamper-evident chain.
@@ -170,11 +267,17 @@ Dimensions must include: Customer Risk, Product/Service Risk, Channel Risk, Geog
         jurisdiction,
         overallScore: result.overallScore,
         overallRating: result.overallRating,
+        residualScore: residualRisk.residualScore,
+        residualRating: residualRisk.residualRating,
+        cbuaeExceedsAppetite: cbuaeRiskAppetite.exceedsAppetite,
+        trendSignificantIncrease: trendAnalysis.significantIncrease,
+        sectorModifierTotal: totalModifier,
       },
       tenantIdFromGate(gate),
     ).catch((err) =>
       console.warn("[ewra] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
+
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

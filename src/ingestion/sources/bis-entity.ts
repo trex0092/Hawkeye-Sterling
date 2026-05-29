@@ -92,9 +92,7 @@ export const bisEntityAdapter: SourceAdapter = {
     try {
       raw = await fetchText(SOURCE_URL, { timeoutMs: FETCH_TIMEOUT_MS });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`fetch failed: ${msg}`);
-      return { entities: [], rawChecksum: await sha256Hex('') };
+      throw new Error(`bis_entity: fetch failed — ${err instanceof Error ? err.message : String(err)}`);
     }
 
     const rows = parseCsv(raw);

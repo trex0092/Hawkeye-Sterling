@@ -136,6 +136,9 @@ export interface Subject {
   aircraftTail?: string;
   /** Last N screening runs for diff + replay. Bounded to ~10 entries. */
   screeningHistory?: ScreeningHistoryEntry[];
+  /** Warnings about degraded data sources at last screening time. Persisted
+   *  so analysts see stale-list warnings after page reload. */
+  listHealthWarnings?: string[];
 }
 
 // ─── Saved searches ────────────────────────────────────────────────────────
@@ -172,6 +175,9 @@ export type FourEyesStatus = "pending" | "approved" | "rejected" | "expired";
 
 export interface FourEyesItem {
   id: string;
+  /** Tenant that owns this item. Absent on pre-multi-tenant items (visible
+   *  to all authenticated callers for backward compat). */
+  tenantId?: string;
   subjectId: string;
   /** Explicit case reference — stored separately from subjectId so the SAR
    *  gate and GET ?caseId filter can match without conflating two concepts. */
@@ -465,4 +471,78 @@ export interface CaseRecord {
     superBrain?: Record<string, unknown> | null;
     capturedAt: string;
   };
+}
+
+// ── Regulatory compliance types (GAP 4, 5, 6, 7) ────────────────────────────
+
+/** FATF Recommendation 16 (June 2025) — Travel Rule payload for wire transfers ≥ USD 1,000 */
+export interface TravelRulePayload {
+  isCrossBorder?: boolean;
+  amount?: number;
+  currency?: string;
+  originatorAddress?: string;
+  originatorDob?: string;
+  beneficiaryAddress?: string;
+  legalEntityBic?: string;
+  legalEntityLei?: string;
+  legalEntityRegNumber?: string;
+}
+
+/** Business Risk Assessment record (MOE Circular 6/2025 — 90-day mandatory review) */
+export interface BraRecord {
+  id: string;
+  tenantId: string;
+  status: "draft" | "active" | "archived";
+  inherentRisk: number;
+  controlsEffectiveness: number;
+  residualRisk: number;
+  customerRisk: number;
+  productRisk: number;
+  channelRisk: number;
+  geographyRisk: number;
+  isDnfbp: boolean;
+  aedThresholdApplies: boolean;
+  activityScope: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  nextReviewDate: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+  isOverdueReview?: boolean;
+}
+
+/** RMI RMAP smelter/refiner conformance record */
+export interface RmapSmelter {
+  cid: string;
+  facilityName: string;
+  country: string;
+  countryCode: string;
+  products: string[];
+  rmapStatus: "conformant" | "active" | "non_conformant" | "suspended" | "unknown";
+  lastAuditDate?: string;
+  auditValidity?: string;
+  source: string;
+  updatedAt: string;
+}
+
+/** LBMA Responsible Gold V9 annual declaration */
+export interface LbmaDeclaration {
+  id: string;
+  tenantId: string;
+  reportingYear: number;
+  counterpartyName: string;
+  counterpartyCountry: string;
+  counterpartyType: string;
+  isGdlListed: boolean;
+  watchlistResult: string;
+  cahraSourcing: boolean;
+  supplyChainVerified: boolean;
+  ongoingMonitoringFrequency: string;
+  declarationSubmitted: boolean;
+  declarationDate?: string;
+  signedBy?: string;
+  status: "draft" | "submitted" | "approved";
+  createdAt: string;
+  updatedAt: string;
 }

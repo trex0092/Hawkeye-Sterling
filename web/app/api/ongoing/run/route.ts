@@ -12,6 +12,19 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
+import {
+  type CustomerRiskTier,
+  MONITORING_FREQUENCIES,
+  isNewsCheckDue,
+  loadAlertThresholds,
+  meetsAdverseMediaThreshold as _meetsAdverseMediaThreshold,
+  detectChanges,
+  loadMonitoringSnapshot,
+  saveMonitoringSnapshot as _saveMonitoringSnapshot,
+  buildQueueItem as _buildQueueItem,
+  sortMonitoringQueue as _sortMonitoringQueue,
+  type AdverseMediaCategory,
+} from "@/lib/server/ongoing-monitoring-config";
 
 const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
   "terrorism-financing": 20,
@@ -53,12 +66,29 @@ import { ESCALATION_DELTA, shouldEscalate } from "@/lib/server/ongoing-escalatio
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
+// Validated customer risk tiers.
+const VALID_RISK_TIERS = new Set<CustomerRiskTier>([
+  "standard",
+  "enhanced",
+  "intensive",
+  "pep",
+  "prohibited",
+]);
+
+function toRiskTier(raw: unknown): CustomerRiskTier {
+  if (typeof raw === "string" && VALID_RISK_TIERS.has(raw as CustomerRiskTier)) {
+    return raw as CustomerRiskTier;
+  }
+  return "standard";
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 interface EnrolledSubject {
   id: string;
+  tenantId?: string;
   name: string;
   aliases?: string[];
   entityType?: "individual" | "organisation" | "vessel" | "aircraft" | "other";
@@ -66,6 +96,10 @@ interface EnrolledSubject {
   group?: string;
   caseId?: string;
   enrolledAt: string;
+  /** Customer risk tier for risk-based monitoring frequency. */
+  riskTier?: CustomerRiskTier;
+  /** True when the subject is a politically exposed person (FATF R.12). */
+  isPep?: boolean;
 }
 
 interface LastHit {
@@ -87,6 +121,17 @@ interface Schedule {
   scoreThreshold?: number;
   nextRunAt: string;
   lastRunAt?: string;
+}
+
+// Risk-based schedule — written by the monitoring run, consumed by the
+// queue endpoint and by isScreenDue / isNewsCheckDue helpers.
+interface RiskBasedSchedule {
+  subjectId: string;
+  riskTier: CustomerRiskTier;
+  nextScreenAt: string;
+  lastScreenAt?: string;
+  nextNewsCheckAt: string;
+  lastNewsCheckAt?: string;
 }
 
 // Fixed-interval cadences (hourly / daily / weekly / monthly) use a
@@ -152,16 +197,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
   }
   const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  // Timing-safe comparison — use TextEncoder for Uint8Array compatibility.
-  // Pad `got` to the expected length so timingSafeEqual always compares the
-  // same byte count; the length check ensures a shorter token still fails.
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length); // zero-padded
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  if (!timingSafeEqual(ha, hb)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -185,11 +225,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const results: Array<{
     subjectId: string;
     subjectName: string;
+    riskTier?: CustomerRiskTier;
     topScore: number;
     rawScore: number;
     severity: string;
     scoreDelta: number;
     escalated: boolean;
+    changeSummary?: string[];
     newHits: Array<{ listId: string; listRef: string; candidateName: string }>;
     webhook: Awaited<ReturnType<typeof postWebhook>>;
     asanaTaskUrl?: string;
@@ -210,13 +252,35 @@ export async function POST(req: Request): Promise<NextResponse> {
   for (let i = 0; i < subjects.length; i += CONCURRENCY) {
   await Promise.all(subjects.slice(i, i + CONCURRENCY).map(async (s) => {
     try {
-      // Respect per-subject schedule. If a schedule exists and the next
-      // run isn't due yet, skip this subject. Subjects without a
-      // schedule run on every tick (legacy behaviour).
-      const schedule = await getJson<Schedule>(`schedule/${s.id}`);
-      if (schedule && Date.parse(schedule.nextRunAt) > nowMs) {
-        return;
+      // ── Risk-based frequency check ──────────────────────────────────────────
+      // Determine whether a re-screen / news-check is due based on the subject's
+      // risk tier and the risk-based schedule stored from the previous run.
+      const riskTier = toRiskTier(s.riskTier);
+      const freq = MONITORING_FREQUENCIES[riskTier];
+      const riskSchedule = await getJson<RiskBasedSchedule>(`ongoing/risk-schedule/${s.id}`);
+
+      if (riskSchedule?.nextScreenAt) {
+        // Risk-based schedule takes precedence over the legacy cadence schedule.
+        const nextScreenMs = Date.parse(riskSchedule.nextScreenAt);
+        if (Number.isFinite(nextScreenMs) && nextScreenMs > nowMs) return; // not due yet
+      } else {
+        // Legacy cadence-based schedule fallback for subjects enrolled before
+        // risk-based scheduling was introduced.
+        const legacySchedule = await getJson<Schedule>(`schedule/${s.id}`);
+        if (legacySchedule) {
+          const nextRunAt = Date.parse(legacySchedule.nextRunAt);
+          if (Number.isFinite(nextRunAt) && nextRunAt > nowMs) return; // skip if not due
+        }
       }
+
+      // Determine whether a news/adverse-media check is due on this tick.
+      const lastNewsCheckMs = riskSchedule?.lastNewsCheckAt
+        ? Date.parse(riskSchedule.lastNewsCheckAt)
+        : null;
+      const newsCheckDue = isNewsCheckDue(riskTier, lastNewsCheckMs, nowMs);
+
+      // Load per-customer alert thresholds (defaults apply if never configured).
+      const _alertThresholds = await loadAlertThresholds(s.id);
 
       const subject = {
         name: s.name,
@@ -253,6 +317,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       // so the threshold and the snapshot agree.
       const scoreDelta = prev ? adjustedScore - prev.topScore : 0;
       const escalated = shouldEscalate(prev?.topScore, adjustedScore);
+
+      // ── Change detection ─────────────────────────────────────────────────────
+      // Load the previous monitoring snapshot to compare adverse-media categories
+      // and jurisdiction. detectChanges fires an automatic escalation when:
+      //   - Sanctions score increased by > 10 points
+      //   - A new adverse-media category emerged (not in prior snapshot)
+      //   - Jurisdiction changed to a CAHRA or FATF-blacklist country
+      const prevMonSnapshot = await loadMonitoringSnapshot(s.id);
+      const currentAdverseCategories = kwGroups as AdverseMediaCategory[];
+      const changeDetection = detectChanges({
+        previousScore: prevMonSnapshot?.topScore ?? prev?.topScore,
+        currentScore: adjustedScore,
+        previousAdverseCategories: prevMonSnapshot?.adverseMediaCategories ?? [],
+        currentAdverseCategories,
+        previousJurisdiction: prevMonSnapshot?.jurisdiction,
+        currentJurisdiction: s.jurisdiction ?? null,
+      });
+      // Escalate on either the legacy score-jump rule OR the new change-detection rules.
+      const changeEscalated = escalated || changeDetection.shouldEscalate;
 
       // Persist the fresh snapshot (using keyword-adjusted score/severity).
       const snapshot: LastSnapshot = {
@@ -592,7 +675,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             }
           }
         } catch (err) {
-          asanaSkipReason = err instanceof Error ? err.message : String(err);
+          asanaSkipReason = "screening-report request failed";
           console.error(
             `[ongoing/run] /api/screening-report POST threw for ${s.id}:`,
             err,
@@ -703,7 +786,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               }
             }
           } catch (err) {
-            escalationSkipReason = err instanceof Error ? err.message : String(err);
+            escalationSkipReason = "escalation task creation failed";
             console.error(
               `[ongoing/run] escalation POST threw for ${s.id}:`,
               err,
@@ -724,6 +807,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           subjectName: s.name,
           severity: adjustedSeverity,
           topScore: adjustedScore,
+          newRiskScore: adjustedScore,
+          riskTier,
           scoreDelta,
           newHitCount: newHits.length,
           runAt,
@@ -743,6 +828,8 @@ export async function POST(req: Request): Promise<NextResponse> {
           subjectName: s.name,
           severity: adjustedSeverity,
           topScore: adjustedScore,
+          newRiskScore: adjustedScore,
+          riskTier,
           scoreDelta: 0,
           newHitCount: 0,
           runAt,
@@ -750,7 +837,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
-        escalated
+        changeEscalated
           ? "screening.escalated"
           : newHits.length > 0
             ? "screening.delta"
@@ -763,7 +850,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         severity: adjustedSeverity,
         topScore: adjustedScore,
         scoreDelta,
-        escalated,
+        escalated: changeEscalated,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,
@@ -791,13 +878,28 @@ export async function POST(req: Request): Promise<NextResponse> {
           severity: adjustedSeverity,
           caseId: s.caseId,
           newHitCount: newHits.length,
-          escalated,
+          escalated: changeEscalated,
         }).catch((err) => console.warn("[ongoing/run] deliverWebhookEvent failed:", err instanceof Error ? err.message : String(err)));
       }
 
-      // Advance the schedule clock. thrice_daily pins to the next fixed
-      // Dubai slot (08:30 / 15:00 / 17:30); everything else uses a simple
-      // now + interval advance.
+      // ── Advance schedules ────────────────────────────────────────────────────
+      // 1. Risk-based schedule: compute next screen / news-check timestamps from
+      //    the subject's risk tier interval. This is the authoritative schedule
+      //    used by the queue endpoint and the isScreenDue helper.
+      const nextScreenAtMs = nowMs + freq.screenIntervalDays * 24 * 60 * 60 * 1_000;
+      const nextNewsCheckAtMs = nowMs + freq.newsCheckIntervalDays * 24 * 60 * 60 * 1_000;
+      const updatedRiskSchedule: RiskBasedSchedule = {
+        subjectId: s.id,
+        riskTier,
+        nextScreenAt: new Date(nextScreenAtMs).toISOString(),
+        lastScreenAt: runAt,
+        nextNewsCheckAt: new Date(nextNewsCheckAtMs).toISOString(),
+        ...(newsCheckDue ? { lastNewsCheckAt: runAt } : riskSchedule?.lastNewsCheckAt ? { lastNewsCheckAt: riskSchedule.lastNewsCheckAt } : {}),
+      };
+      await setJson(`ongoing/risk-schedule/${s.id}`, updatedRiskSchedule);
+
+      // 2. Legacy cadence-based schedule — update for backward compatibility.
+      const schedule = await getJson<Schedule>(`schedule/${s.id}`);
       if (schedule) {
         const nextRunAt =
           schedule.cadence === "thrice_daily"
@@ -814,11 +916,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       results.push({
         subjectId: s.id,
         subjectName: s.name,
+        riskTier,
         topScore: adjustedScore,
         rawScore: screen.topScore,
         severity: adjustedSeverity,
         scoreDelta,
-        escalated,
+        escalated: changeEscalated,
+        changeSummary: changeDetection.changeSummary,
         newHits: newHits.map((h) => ({
           listId: h.listId,
           listRef: h.listRef,
@@ -834,6 +938,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(sarRecommended !== undefined ? { sarRecommended } : {}),
       });
     } catch (err) {
+      console.error("[ongoing/run] subject processing failed:", err);
       results.push({
         subjectId: s.id,
         subjectName: s.name ?? "",
@@ -848,7 +953,16 @@ export async function POST(req: Request): Promise<NextResponse> {
           error: "Webhook delivery failed — please retry.",
         },
       });
-      console.error("[ongoing/run] subject processing failed:", err instanceof Error ? err.message : err);
+      // Record the processing failure in the audit chain so the regulator can
+      // identify subjects that were skipped due to errors in a given run.
+      void writeAuditChainEntry({
+        event: "ongoing.monitor_error",
+        actor: "cron_internal",
+        subjectId: s.id,
+        subjectName: s.name ?? "",
+        error: "subject processing failed — see server logs",
+        runAt,
+      }).catch((e) => console.warn("[ongoing/run] audit chain write failed (monitor_error):", e instanceof Error ? e.message : String(e)));
     }
   }));
   } // end CONCURRENCY batch loop

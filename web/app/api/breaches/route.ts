@@ -3,6 +3,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   createBreach,
   listBreaches,
@@ -19,7 +21,7 @@ const VALID_CATEGORIES = new Set<BreachCategory>(["minor", "moderate", "signific
 const VALID_STATUSES   = new Set<BreachStatus>(["open", "remediation_in_progress", "closed"]);
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   // Seed 7 confirmed live-system breaches on first call (idempotent).
@@ -78,6 +80,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...(typeof linkedCaseId === "string"  ? { linkedCaseId }  : {}),
     ...(typeof linkedAuditSeq === "number" ? { linkedAuditSeq } : {}),
   });
+
+  void writeAuditChainEntry(
+    { event: "breaches.recorded", actor: gate.keyId, meta: { id: breach.breachId, category: breach.category } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, breach }, { status: 201, headers: gate.headers });
 }

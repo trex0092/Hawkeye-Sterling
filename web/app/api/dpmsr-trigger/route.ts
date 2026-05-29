@@ -1,6 +1,9 @@
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +56,10 @@ const LEGAL_BASIS = "CR134/2025 Art.3 + MoE Circ.08/AML/2021";
 const STORE = "hawkeye-dpmsr";
 
 function daysBetween(a: string, b: string): number {
-  return Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+  const ta = Date.parse(a);
+  const tb = Date.parse(b);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return Infinity;
+  return Math.abs(ta - tb) / 86_400_000;
 }
 
 function addHours(from: Date, h: number): Date {
@@ -90,7 +96,11 @@ function evaluateObligations(txns: DpmsrTransaction[]): Omit<DpmsrObligation, "i
   }
 
   for (const [customerId, cts] of byCustomer) {
-    const sorted = [...cts].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+    const sorted = [...cts].sort((a, b) => {
+      const ta = Date.parse(a.at);
+      const tb = Date.parse(b.at);
+      return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
+    });
     for (let i = 0; i < sorted.length; i++) {
       const anchor = sorted[i]!;
       const window = [anchor];
@@ -217,13 +227,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const obligations = await loadObligations(tenant);
     const newObs: DpmsrObligation[] = evalResults.map((r) => ({
       ...r,
-      id: `dpmsr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `dpmsr-${Date.now()}-${randomBytes(4).toString("hex")}`,
       createdAt: new Date().toISOString(),
       mlroSignedOff: false,
       status: "pending" as const,
     }));
     obligations.unshift(...newObs);
     await saveObligations(tenant, obligations);
+    void writeAuditChainEntry(
+      { event: "dpms.registration_triggered", actor: gate.keyId, meta: { entityName: newObs[0]?.customerName, triggerType: newObs[0]?.triggerType, obligationsCreated: newObs.length } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, obligationsCreated: newObs.length, obligations: newObs }, { headers: gate.headers });
   }
 

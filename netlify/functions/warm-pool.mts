@@ -29,7 +29,11 @@ const PING_TIMEOUT_MS = 4_000;
 // HEAD is auto-derived but several handlers in this repo gate on `req.method`
 // equality and return 405 for HEAD even when the underlying logic is read-only.
 const KEEPALIVE_ROUTES: ReadonlyArray<{ path: string; method: 'GET' }> = [
-  { path: '/api/status', method: 'GET' },
+  { path: '/api/status',           method: 'GET' },
+  { path: '/api/health',           method: 'GET' },
+  { path: '/api/routes',           method: 'GET' },
+  { path: '/api/system-status',    method: 'GET' },
+  { path: '/api/sanctions/status', method: 'GET' },
 ];
 
 async function pingWithTimeout(
@@ -144,6 +148,6 @@ export default async function handler(req: Request): Promise<Response> {
 }
 
 export const config: Config = {
-  // Every 4 minutes — inside the ~15-minute Lambda idle reclamation window.
-  schedule: '*/4 * * * *',
+  // Every 10 minutes — balances warm-pool benefit against invocation budget.
+  schedule: '*/10 * * * *',
 };

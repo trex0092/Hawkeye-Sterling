@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { requireRole } from "@/lib/server/role-gate";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getEntity } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
+import { runEgressCheck } from "@/lib/server/egress-check";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
@@ -130,8 +134,14 @@ function splitFullName(full: string): { first: string; last: string; middle?: st
 }
 
 async function handleGoaml(req: Request): Promise<Response> {
+  const span = startSpan('sar.filing', { 'aml.route': 'goaml' });
+  try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  // goAML filing is a direct regulatory submission (UAE FDL 10/2025 Art.15).
+  // Only MLRO or CO portal sessions may submit to the UAE FIU.
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;
@@ -140,6 +150,9 @@ async function handleGoaml(req: Request): Promise<Response> {
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gateHeaders });
   }
+  span.setAttribute('aml.report_code', body.reportCode ?? '');
+  span.setAttribute('aml.subject_id', body.subject?.caseId ?? '');
+  span.setAttribute('aml.case_id', body.subject?.caseId ?? '');
   if (!body?.subject?.name || !body?.reportCode || !body?.narrative) {
     return NextResponse.json(
       { ok: false, error: "subject.name, reportCode and narrative are required" },
@@ -225,10 +238,16 @@ async function handleGoaml(req: Request): Promise<Response> {
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
   const reportingEntity = getEntity(body.entityId);
 
-  const mlroName = process.env["GOAML_MLRO_FULL_NAME"] ?? "Luisa Fernanda";
+  const mlroName = process.env["GOAML_MLRO_FULL_NAME"];
+  if (!mlroName) {
+    return NextResponse.json(
+      { ok: false, error: "GOAML_MLRO_FULL_NAME environment variable is not set — cannot generate goAML XML without a valid MLRO name" },
+      { status: 503 }
+    );
+  }
   const mlroEmail = process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae";
   const mlroPhone = process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000";
-  const usingPlaceholderMlro = !process.env["GOAML_MLRO_FULL_NAME"] || !process.env["GOAML_MLRO_EMAIL"];
+  const usingPlaceholderMlro = !process.env["GOAML_MLRO_EMAIL"];
 
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,
@@ -249,7 +268,7 @@ async function handleGoaml(req: Request): Promise<Response> {
     ...(involvedEntities.length > 0 ? { involvedEntities } : {}),
     ...(() => {
       const rawAmt = body.amount ?? body.amountAed;
-      const safeAmt = Number.isFinite(rawAmt) && (rawAmt as number) > 0 ? (rawAmt as number) : 0;
+      const safeAmt = typeof rawAmt === "number" && Number.isFinite(rawAmt) && rawAmt > 0 ? rawAmt : 0;
       return safeAmt > 0 ? {
         transactions: [
           {
@@ -267,6 +286,26 @@ async function handleGoaml(req: Request): Promise<Response> {
     generatedAt: iso,
     charterIntegrityHash: await computeCharterHash(reportRef, body.narrative.slice(0, 4000), iso),
   };
+
+  // ── Egress gate (CG-7) — tipping-off compliance pre-check ───────────────────
+  // Run before XML serialisation so we never produce an artefact that would
+  // constitute tipping-off under FDL No.10/2025 Art.29 / FATF R.21.
+  const egressResult = await runEgressCheck(body.narrative, "goAML STR filing");
+  if (!egressResult.allowed) {
+    await writeAuditChainEntry({
+      event: "egress.tipping_off_blocked",
+      actor: "system",
+      reportCode: body.reportCode,
+      reason: egressResult.reason,
+      verdict: egressResult.verdict,
+    }, tenantIdFromGate(gate)).catch(() => undefined);
+    return NextResponse.json({
+      ok: false,
+      error: "goAML filing held by egress gate — possible tipping-off content detected. Please review and revise the narrative.",
+      egressVerdict: egressResult.verdict,
+      egressReason: egressResult.reason,
+    }, { status: 422, headers: gateHeaders });
+  }
 
   let xml: string;
   try {
@@ -301,8 +340,8 @@ async function handleGoaml(req: Request): Promise<Response> {
     if (prov.reportSha256) lines.push(`  screening.report.sha256   : ${safeStr(prov.reportSha256)}`);
     if (prov.signature) lines.push(`  screening.report.signature: ${safeStr(prov.signature)}`);
     if (prov.signingKeyFp) lines.push(`  signing.key_fp            : ${safeStr(prov.signingKeyFp)}`);
-    lines.push(`  goaml.envelope.generated  : ${iso}`);
-    lines.push(`  goaml.internal_reference  : ${reportRef}`);
+    lines.push(`  goaml.envelope.generated  : ${safeStr(iso)}`);
+    lines.push(`  goaml.internal_reference  : ${safeStr(reportRef)}`);
     lines.push("-->");
     const comment = lines.join("\n");
     // Insert after the <?xml ... ?> declaration so the comment is
@@ -331,10 +370,17 @@ async function handleGoaml(req: Request): Promise<Response> {
     caseId: body.subject.caseId,
   }).catch((err) => console.error("[goaml] draft record save failed:", err));
 
+  void writeAuditChainEntry(
+    { event: "goaml.submission_generated", actor: gate.keyId, meta: { reportRef, reportCode: body.reportCode } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
-  const warningHeaders: Record<string, string> = usingPlaceholderMlro
-    ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." }
-    : {};
+  const narrativeTruncated = body.narrative.length > 4000;
+  const warningHeaders: Record<string, string> = {
+    ...(usingPlaceholderMlro ? { "X-Hawkeye-Warning": "GOAML_MLRO_FULL_NAME/GOAML_MLRO_EMAIL not set — placeholder MLRO values used. Set env vars before FIU submission." } : {}),
+    ...(narrativeTruncated ? { "X-Hawkeye-Narrative-Warning": `narrative truncated from ${body.narrative.length} to 4000 characters in XML reason field` } : {}),
+  };
   return new Response(xml, {
     status: 200,
     headers: {
@@ -345,6 +391,12 @@ async function handleGoaml(req: Request): Promise<Response> {
       "cache-control": "no-store",
     },
   });
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    throw err;
+  } finally {
+    span.end();
+  }
 }
 
 export const POST = handleGoaml;

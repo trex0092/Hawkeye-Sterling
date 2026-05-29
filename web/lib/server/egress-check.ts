@@ -15,6 +15,7 @@
 // with zero added latency or cost.
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { startSpan, SpanStatus } from "@/lib/server/tracer";
 
 export type EgressVerdict = "approved" | "held_tipping_off" | "held_incomplete" | "held_review";
 
@@ -23,8 +24,6 @@ export interface EgressCheckResult {
   verdict: EgressVerdict;
   reason?: string;
 }
-
-const GATE_ENABLED = process.env["EGRESS_GATE_ENABLED"] === "true";
 
 // Tipping-off patterns: phrases that could alert a subject that an STR/SAR
 // has been filed about them. Under UAE FDL 10/2025 Art.17 and FATF R.21
@@ -47,8 +46,16 @@ function hasTippingOff(narrative: string): boolean {
 async function llmEgressCheck(narrative: string, reportType: string): Promise<EgressCheckResult> {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    console.warn("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY missing — bypassing LLM gate");
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED: gate is enabled but no API key — hold the artefact for
+    // manual MLRO review rather than silently approving it. This is a
+    // configuration error (FDL 10/2025 Art.17 tipping-off is criminal);
+    // never disable the gate implicitly due to infrastructure misconfiguration.
+    console.error("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY absent — holding artefact for manual MLRO review");
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: "Egress gate misconfigured: ANTHROPIC_API_KEY absent. Artefact held for manual MLRO review before delivery (FDL 10/2025 Art.17).",
+    };
   }
 
   const client = getAnthropicClient(apiKey, 30_000, "egress-check");
@@ -75,8 +82,15 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       ],
     });
   } catch (err) {
-    console.error("[egress-check] LLM call failed — failing open to avoid blocking MLRO workflow:", err instanceof Error ? err.message : String(err));
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED on LLM error — hold for manual MLRO review rather than
+    // silently approving. Tipping-off (FDL 10/2025 Art.17) is criminal;
+    // infrastructure failures must not disable the compliance gate.
+    console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", err instanceof Error ? err.message : String(err));
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: `Egress gate LLM check failed (${err instanceof Error ? err.message : "unknown error"}). Artefact held for manual MLRO review (FDL 10/2025 Art.17).`,
+    };
   }
 
   const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -85,12 +99,23 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       verdict?: string;
       reason?: string;
     };
-    const verdict = (parsed.verdict ?? "approved") as EgressVerdict;
+    const VALID_VERDICTS: ReadonlySet<EgressVerdict> = new Set([
+      "approved", "held_tipping_off", "held_incomplete", "held_review",
+    ]);
+    const rawVerdict = parsed.verdict ?? "held_review";
+    const verdict: EgressVerdict = VALID_VERDICTS.has(rawVerdict as EgressVerdict)
+      ? (rawVerdict as EgressVerdict)
+      : "held_review";
     const allowed = verdict === "approved";
     return { allowed, verdict, reason: parsed.reason };
   } catch {
-    console.warn("[egress-check] could not parse LLM response — failing open:", raw.slice(0, 200));
-    return { allowed: true, verdict: "approved" };
+    // FAIL CLOSED on parse error — same rationale as LLM failure above.
+    console.warn("[egress-check] could not parse LLM response — holding artefact for manual MLRO review:", raw.slice(0, 200));
+    return {
+      allowed: false,
+      verdict: "held_review",
+      reason: "Egress gate response unparseable. Artefact held for manual MLRO review (FDL 10/2025 Art.17).",
+    };
   }
 }
 
@@ -100,8 +125,10 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
  *
  * Returns `{ allowed: true }` immediately when `EGRESS_GATE_ENABLED` is not
  * set to "true". When enabled: first performs a fast regex tipping-off scan,
- * then calls Claude Haiku for a broader compliance review. Fails open on any
- * LLM error so that MLRO operations are never blocked by a gate outage.
+ * then calls Claude Haiku for a broader compliance review. Fails CLOSED on any
+ * LLM error — artefact is held for manual MLRO review rather than auto-approved.
+ * Tipping-off (FDL 10/2025 Art.17) is a criminal offence; infrastructure
+ * failures must never silently disable this gate.
  *
  * @param narrative  The full text of the report / artefact being delivered.
  * @param reportType Human-readable type label (e.g. "STR filing", "Screening report").
@@ -110,20 +137,37 @@ export async function runEgressCheck(
   narrative: string,
   reportType: string,
 ): Promise<EgressCheckResult> {
-  if (!GATE_ENABLED) return { allowed: true, verdict: "approved" };
+  const span = startSpan('egress-gate.check', { 'aml.report_type': reportType });
+  try {
+    const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
+    if (!gateEnabled) {
+      span.setAttribute('egress.gate_enabled', false);
+      return { allowed: true, verdict: "approved" };
+    }
+    span.setAttribute('egress.gate_enabled', true);
 
-  // Fast path: regex tipping-off check (no LLM cost).
-  if (hasTippingOff(narrative)) {
-    console.warn(`[egress-check] tipping-off pattern detected in ${reportType} — artefact held`);
-    return {
-      allowed: false,
-      verdict: "held_tipping_off",
-      reason:
-        "Narrative contains language that may constitute tipping-off under FDL 10/2025 Art.17. " +
-        "Remove any references to the STR/SAR filing before delivery.",
-    };
+    if (hasTippingOff(narrative)) {
+      console.warn(`[egress-check] tipping-off pattern detected in ${reportType} — artefact held`);
+      span.setAttribute('egress.verdict', 'held_tipping_off');
+      span.setStatus({ code: SpanStatus.ERROR });
+      return {
+        allowed: false,
+        verdict: "held_tipping_off",
+        reason:
+          "Narrative contains language that may constitute tipping-off under FDL 10/2025 Art.17. " +
+          "Remove any references to the STR/SAR filing before delivery.",
+      };
+    }
+
+    const result = await llmEgressCheck(narrative, reportType);
+    span.setAttribute('egress.verdict', result.verdict);
+    if (!result.allowed) span.setStatus({ code: SpanStatus.ERROR });
+    return result;
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
   }
-
-  // Full LLM gate for broader compliance review.
-  return llmEgressCheck(narrative, reportType);
 }

@@ -47,8 +47,8 @@ export async function GET(
 
   if (!raw) {
     return NextResponse.json(
-      { ok: false, status: "pending", error: "job not found yet — keep polling" },
-      { status: 404, headers: gate.headers }
+      { ok: true, status: "pending", jobId },
+      { status: 202, headers: gate.headers }
     );
   }
 

@@ -88,6 +88,7 @@ export interface NewsArticle {
   sentiment?: number;         // -1..+1 when provider supplies it
   language?: string;
   relevanceScore?: number;    // 0–1 relevance from provider (tavily, exa)
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social"; // editorial category
 }
 
 export interface NewsAdapter {
@@ -2650,7 +2651,7 @@ function maplecroftAdapter(): NewsAdapter {
           source: "maplecroft", outlet: a.country ?? "maplecroft", title: a.headline!, url: a.url!,
           publishedAt: a.publishedAt ?? new Date().toISOString(),
           ...(a.summary ? { snippet: a.summary } : {}),
-          ...(typeof a.riskScore === "number" ? { sentiment: -a.riskScore / 10 } : {}),
+          ...(typeof a.riskScore === "number" ? { sentiment: -(a.riskScore / 100) } : {}),
         } as NewsArticle));
       } catch (err) { console.warn("[maplecroft] failed:", err instanceof Error ? err.message : err); return []; }
     },
@@ -3158,6 +3159,184 @@ const perplexityAdapter = (): NewsAdapter => {
   };
 };
 
+// ── African regional RSS feeds ──────────────────────────────────────────
+// Pan-African and regional African news sources. No API key required —
+// always active. Per-feed timeout 2s; failed feeds are silently skipped.
+// sourceTier indicates editorial quality: tier1 = intergovernmental/official,
+// tier2 = major regional outlet.
+const AFRICAN_FEEDS = [
+  // Pan-African
+  { url: "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf", lang: "en", name: "AllAfrica", sourceTier: "tier2" as const },
+  // East Africa
+  { url: "https://nation.africa/rss.xml", lang: "en", name: "Nation Africa", sourceTier: "tier2" as const },
+  // South Africa - investigative
+  { url: "https://www.dailymaverick.co.za/article-type/investigations/feed/", lang: "en", name: "Daily Maverick", sourceTier: "tier2" as const },
+  // Nigeria
+  { url: "https://www.premiumtimesng.com/feed", lang: "en", name: "Premium Times NG", sourceTier: "tier2" as const },
+  // Pan-African business
+  { url: "https://www.theafricareport.com/feed/", lang: "en", name: "The Africa Report", sourceTier: "tier2" as const },
+  // AMBD (Anti-Money Laundering / Counter Terrorism Financing) news
+  { url: "https://www.egmontgroup.org/en/news/feed", lang: "en", name: "Egmont Group", sourceTier: "tier1" as const },
+];
+
+const AFRICAN_FEED_TIMEOUT_MS = 2_000;
+
+function fetchAfricanFeeds(): NewsAdapter {
+  return {
+    source: "african-feeds",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      const limit = opts?.limit ?? 25;
+      const perFeed = Math.ceil(limit / AFRICAN_FEEDS.length);
+      const lowerSubject = subjectName.toLowerCase();
+
+      async function fetchOneFeed(feed: (typeof AFRICAN_FEEDS)[number]): Promise<NewsArticle[]> {
+        try {
+          const res = await abortable(
+            fetch(feed.url, {
+              headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml, application/xml, text/xml" },
+            }),
+            AFRICAN_FEED_TIMEOUT_MS,
+          );
+          if (!res.ok) return [];
+          const xml = await res.text();
+          const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+          const articles: NewsArticle[] = [];
+          for (const it of items) {
+            const title = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/.exec(it)?.[1]?.trim();
+            const link  = /<link>([\s\S]*?)<\/link>/.exec(it)?.[1]?.trim()
+                       ?? /<link[^>]+href="([^"]+)"/.exec(it)?.[1]?.trim();
+            const pub   = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim();
+            const desc  = /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/.exec(it)?.[1]?.trim();
+            if (!title || !link) continue;
+            // Filter: title or description must mention the subject name
+            if (
+              !title.toLowerCase().includes(lowerSubject) &&
+              !(desc && desc.toLowerCase().includes(lowerSubject))
+            ) continue;
+            articles.push({
+              source: `african-rss-${feed.name.toLowerCase().replace(/\s+/g, "-")}`,
+              outlet: feed.name,
+              title,
+              url: link,
+              publishedAt: pub ? new Date(pub).toISOString() : new Date().toISOString(),
+              ...(desc ? { snippet: desc.replace(/<[^>]+>/g, "").trim().slice(0, 240) } : {}),
+              language: feed.lang,
+            } as NewsArticle);
+            if (articles.length >= perFeed) break;
+          }
+          return articles;
+        } catch {
+          return [];
+        }
+      }
+
+      try {
+        const settled = await Promise.allSettled(AFRICAN_FEEDS.map(fetchOneFeed));
+        const seen = new Set<string>();
+        const articles: NewsArticle[] = [];
+        for (const r of settled) {
+          if (r.status !== "fulfilled") continue;
+          for (const a of r.value) {
+            const k = a.url.toLowerCase();
+            if (seen.has(k)) continue;
+            seen.add(k);
+            articles.push(a);
+          }
+        }
+        return articles.slice(0, limit);
+      } catch (err) {
+        console.warn("[african-feeds] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
+// ── South Asian regional RSS feeds ─────────────────────────────────────
+// Key South Asian news sources covering Pakistan, India, and Bangladesh.
+// No API key required — always active. Per-feed timeout 2s.
+const SOUTH_ASIAN_FEEDS = [
+  { url: "https://www.dawn.com/feed", lang: "ur-en", name: "Dawn Pakistan", sourceTier: "tier2" as const },
+  { url: "https://indianexpress.com/feed/", lang: "en-IN", name: "Indian Express", sourceTier: "tier2" as const },
+  { url: "https://www.thehindu.com/news/feeder/default.rss", lang: "en-IN", name: "The Hindu", sourceTier: "tier2" as const },
+  { url: "https://bdnews24.com/rss/", lang: "bn-en", name: "BD News 24", sourceTier: "tier2" as const },
+];
+
+const SOUTH_ASIAN_FEED_TIMEOUT_MS = 2_000;
+
+function fetchSouthAsianFeeds(): NewsAdapter {
+  return {
+    source: "south-asian-feeds",
+    isAvailable: () => true,
+    search: async (subjectName, opts) => {
+      const limit = opts?.limit ?? 25;
+      const perFeed = Math.ceil(limit / SOUTH_ASIAN_FEEDS.length);
+      const lowerSubject = subjectName.toLowerCase();
+
+      async function fetchOneFeed(feed: (typeof SOUTH_ASIAN_FEEDS)[number]): Promise<NewsArticle[]> {
+        try {
+          const res = await abortable(
+            fetch(feed.url, {
+              headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml, application/xml, text/xml" },
+            }),
+            SOUTH_ASIAN_FEED_TIMEOUT_MS,
+          );
+          if (!res.ok) return [];
+          const xml = await res.text();
+          const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+          const articles: NewsArticle[] = [];
+          for (const it of items) {
+            const title = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/.exec(it)?.[1]?.trim();
+            const link  = /<link>([\s\S]*?)<\/link>/.exec(it)?.[1]?.trim()
+                       ?? /<link[^>]+href="([^"]+)"/.exec(it)?.[1]?.trim();
+            const pub   = /<pubDate>([\s\S]*?)<\/pubDate>/.exec(it)?.[1]?.trim();
+            const desc  = /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/.exec(it)?.[1]?.trim();
+            if (!title || !link) continue;
+            // Filter: title or description must mention the subject name
+            if (
+              !title.toLowerCase().includes(lowerSubject) &&
+              !(desc && desc.toLowerCase().includes(lowerSubject))
+            ) continue;
+            articles.push({
+              source: `south-asian-rss-${feed.name.toLowerCase().replace(/\s+/g, "-")}`,
+              outlet: feed.name,
+              title,
+              url: link,
+              publishedAt: pub ? new Date(pub).toISOString() : new Date().toISOString(),
+              ...(desc ? { snippet: desc.replace(/<[^>]+>/g, "").trim().slice(0, 240) } : {}),
+              language: feed.lang,
+            } as NewsArticle);
+            if (articles.length >= perFeed) break;
+          }
+          return articles;
+        } catch {
+          return [];
+        }
+      }
+
+      try {
+        const settled = await Promise.allSettled(SOUTH_ASIAN_FEEDS.map(fetchOneFeed));
+        const seen = new Set<string>();
+        const articles: NewsArticle[] = [];
+        for (const r of settled) {
+          if (r.status !== "fulfilled") continue;
+          for (const a of r.value) {
+            const k = a.url.toLowerCase();
+            if (seen.has(k)) continue;
+            seen.add(k);
+            articles.push(a);
+          }
+        }
+        return articles.slice(0, limit);
+      } catch (err) {
+        console.warn("[south-asian-feeds] failed:", err instanceof Error ? err.message : err);
+        return [];
+      }
+    },
+  };
+}
+
 // ── Master aggregator ───────────────────────────────────────────────────
 /**
  * Returns ALL available news adapters whose env keys are configured.
@@ -3247,6 +3426,9 @@ export function activeNewsAdapters(): NewsAdapter[] {
     tavilyAdapter(),      // TAVILY_API_KEY — deep web search for AI agents
     exaAdapter(),         // EXA_API_KEY — neural/embedding search
     perplexityAdapter(),  // PERPLEXITY_API_KEY — synthesised adverse media
+    // ── African + South Asian regional RSS (always active, no key required)
+    fetchAfricanFeeds(),    // AllAfrica, Nation Africa, Daily Maverick, Premium Times, The Africa Report, Egmont Group
+    fetchSouthAsianFeeds(), // Dawn Pakistan, Indian Express, The Hindu, BD News 24
   ].filter((a) => a.isAvailable());
 }
 
@@ -3332,7 +3514,6 @@ export function activeNewsProviders(): string[] {
     ["COMPLIANCEWEEK_API_KEY", "complianceweek"],
     ["AMLWATCHDOG_API_KEY", "aml-watchdog"],
     ["PEGASUS_API_KEY", "pegasus"],
-    ["FREE_RSS_ENABLED", "free-rss-aggregator"],
     // OSINT aggregation
     ["TARANIS_URL", "taranis"],
     // AI-native research adapters
@@ -3340,14 +3521,56 @@ export function activeNewsProviders(): string[] {
     ["EXA_API_KEY", "exa"],
     ["PERPLEXITY_API_KEY", "perplexity"],
   ];
-  return keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name);
+  // African and South Asian regional RSS feeds are always active (no key required)
+  const alwaysOn = [
+    "african-rss-allafrica",
+    "african-rss-nation-africa",
+    "african-rss-daily-maverick",
+    "african-rss-premium-times-ng",
+    "african-rss-the-africa-report",
+    "african-rss-egmont-group",
+    "south-asian-rss-dawn-pakistan",
+    "south-asian-rss-indian-express",
+    "south-asian-rss-the-hindu",
+    "south-asian-rss-bd-news-24",
+    "free-rss-aggregator",
+  ];
+  return [
+    ...keys.filter(([envKey]) => process.env[envKey]).map(([, name]) => name),
+    ...alwaysOn,
+  ];
 }
 
 /** Run every active adapter in parallel against a subject name. */
+// In-process news result cache — 60-minute TTL, bounded at 1 000 entries.
+// Keyed on normalised subject name. Prevents redundant external API calls
+// for repeated screenings of the same subject within a Lambda warm window.
+interface _NewsCacheEntry {
+  articles: NewsArticle[];
+  providersUsed: string[];
+  cachedAt: number;
+}
+const _newsCache = new Map<string, _NewsCacheEntry>();
+const _NEWS_CACHE_TTL_MS = 60 * 60 * 1_000;   // 60 minutes
+const _NEWS_CACHE_MAX = 1_000;
+
+function _newsCacheKey(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
+}
+
 export async function searchAllNews(
   subjectName: string,
   opts?: { limit?: number; since?: string },
 ): Promise<{ articles: NewsArticle[]; providersUsed: string[] }> {
+  // Cache lookup — skip for since-bounded queries (caller wants fresh data).
+  if (!opts?.since) {
+    const key = _newsCacheKey(subjectName);
+    const cached = _newsCache.get(key);
+    if (cached && Date.now() - cached.cachedAt < _NEWS_CACHE_TTL_MS) {
+      return { articles: cached.articles, providersUsed: cached.providersUsed };
+    }
+  }
+
   const adapters = activeNewsAdapters();
   if (adapters.length === 0) return { articles: [], providersUsed: [] };
   const results = await Promise.all(adapters.map((a) => a.search(subjectName, opts)));
@@ -3360,7 +3583,19 @@ export async function searchAllNews(
     seen.add(k);
     return true;
   });
-  return { articles, providersUsed: activeNewsProviders() };
+  const providersUsed = activeNewsProviders();
+
+  // Cache the result (FIFO eviction when cap is reached).
+  if (!opts?.since) {
+    const key = _newsCacheKey(subjectName);
+    if (_newsCache.size >= _NEWS_CACHE_MAX) {
+      const firstKey = _newsCache.keys().next().value;
+      if (firstKey !== undefined) _newsCache.delete(firstKey);
+    }
+    _newsCache.set(key, { articles, providersUsed, cachedAt: Date.now() });
+  }
+
+  return { articles, providersUsed };
 }
 
 /**

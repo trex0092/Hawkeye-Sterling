@@ -24,6 +24,7 @@
 // Response: { ok, answer, elapsedMs, advisorScore, citationReport,
 //             suggestedFollowUps, verification }
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
@@ -63,6 +64,8 @@ let scoreAdvisorAnswer: ScoreFn = (_answer, _mode) => ({ passedQualityGate: true
 })();
 import { verifyCitations, type CitationReport } from "@/lib/server/citation-verifier";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 import {
   appendProbeInstructions,
@@ -402,7 +405,7 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const client = getAnthropicClient(apiKey!, 55000);
+    const client = getAnthropicClient(apiKey!, 4_500);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
@@ -600,6 +603,11 @@ export async function POST(req: Request): Promise<Response> {
       validation: postGen.validation,
     }).catch(() => ({ seq: 0, entryHash: "" }));
 
+    void writeAuditChainEntry(
+      { event: "mlro.advisor_quick_call", actor: gate.keyId, meta: { seq: audit.seq } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[mlro_advisor_quick] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
@@ -664,12 +672,13 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     const aborted = upstreamCtl.signal.aborted;
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[mlro-advisor-quick] upstream catch:", msg);
     return NextResponse.json(
       {
         ok: false,
         error: aborted
           ? `Quick mode budget exceeded (>${Math.round(HARD_TIMEOUT_MS / 1000)} s) — try Balanced.`
-          : `upstream connect failed: ${msg}`,
+          : "upstream service unavailable",
         elapsedMs: Date.now() - startedAt,
       },
       { status: aborted ? 504 : 502, headers: { ...gate.headers, ...corsHeaders(origin) } }
@@ -687,7 +696,7 @@ export async function POST(req: Request): Promise<Response> {
       tool: "mlro_advisor_quick",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...gateHeaders, ...corsHeaders(origin) } });
   }

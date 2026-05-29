@@ -83,7 +83,7 @@ describe('ScreeningAuditWriter', () => {
     // Capture happens once even though 3 writes happened — measured by the
     // number of times blobGetMock was called for any single list id. Each
     // capture issues exactly one read per list in SNAPSHOT_LIST_IDS.
-    const uniqueCalls = new Set(blobGetMock.mock.calls.map((c) => c[0])).size;
+    const uniqueCalls = new Set(blobGetMock.mock.calls.map((c: unknown[]) => c[0])).size;
     // 10 unique snapshot ids; if we re-captured per write we'd see 30 calls.
     expect(blobGetMock.mock.calls.length).toBe(uniqueCalls);
 

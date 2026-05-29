@@ -175,26 +175,31 @@ async function runHandler(req: Request): Promise<Response> {
     });
   }
 
-  // Protect HTTP-triggered invocations with bearer token
+  // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
+  // If a claimed scheduled event also carries an Authorization header, verify it —
+  // a genuine Netlify scheduler invocation never sends Authorization.
   const cronToken = process.env['HAWKEYE_CRON_TOKEN'];
-  if (cronToken) {
-    const auth = req.headers.get('authorization');
-    if (auth !== null) {
-      const supplied = auth.replace(/^Bearer\s+/i, '').trim();
-      const enc = new TextEncoder();
-      const a = enc.encode(cronToken);
-      const b = enc.encode(supplied);
-      const padded = new Uint8Array(a.byteLength);
-      padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
-      const match =
-        (await import('node:crypto')
-          .then(({ timingSafeEqual }) =>
-            timingSafeEqual(new Uint8Array(a.buffer), padded),
-          )
-          .catch(() => false)) && a.byteLength === b.byteLength;
-      if (!match) {
-        return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
-      }
+  const authHeader = req.headers.get('authorization');
+
+  async function verifyToken(supplied: string): Promise<boolean> {
+    if (!cronToken) return true;
+    const enc = new TextEncoder();
+    const a = enc.encode(cronToken);
+    const b = enc.encode(supplied);
+    const padded = new Uint8Array(a.byteLength);
+    padded.set(new Uint8Array(b.buffer, b.byteOffset, Math.min(b.byteLength, a.byteLength)));
+    return (
+      ((await import('node:crypto')
+        .then(({ timingSafeEqual }) => timingSafeEqual(new Uint8Array(a.buffer), padded))
+        .catch(() => false)) as boolean) && a.byteLength === b.byteLength
+    );
+  }
+
+  {
+    const supplied = authHeader?.replace(/^Bearer\s+/i, '').trim() ?? '';
+    if (!await verifyToken(supplied)) {
+      return jsonResponse({ ok: false, label: RUN_LABEL, error: 'Unauthorized' }, 401);
     }
   }
 
@@ -258,12 +263,12 @@ async function runHandler(req: Request): Promise<Response> {
   //    is removed here: the cron POSTs to the indexer using the ADMIN_TOKEN
   //    from env and folds the result into the summary.
   //
-  //    Skipped when ADMIN_TOKEN is missing (would 503 anyway) or when no new
-  //    files were downloaded (re-indexing the same corpus is wasted work).
+  //    Skipped when ADMIN_TOKEN is missing (would 503 anyway). Always triggered
+  //    regardless of whether new files were downloaded so that files from prior
+  //    runs (when the token was absent) get indexed into hawkeye-lists.
   let importCfs: ImportResult | undefined;
-  const anyNewFiles = outcomes.some((o) => o.filesDownloaded > 0);
   const adminToken = process.env['ADMIN_TOKEN'];
-  if (anyNewFiles && adminToken) {
+  if (adminToken) {
     const baseUrl =
       process.env['URL'] ??
       process.env['DEPLOY_PRIME_URL'] ??
@@ -305,7 +310,8 @@ async function runHandler(req: Request): Promise<Response> {
         error: err instanceof Error ? err.message : String(err),
       };
     }
-  } else if (anyNewFiles && !adminToken) {
+  } else if (!adminToken) {
+    console.error('[lseg-cfs-poll] ADMIN_TOKEN not set — auto-import skipped, run /api/admin/import-cfs manually. LSEG lists will remain missing from hawkeye-lists store until ADMIN_TOKEN is configured.');
     importCfs = { ok: false, error: 'ADMIN_TOKEN not set — auto-import skipped, run /api/admin/import-cfs manually' };
   }
 

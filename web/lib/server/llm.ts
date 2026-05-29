@@ -12,8 +12,11 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { createHash } from "node:crypto";
 import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
+import { startSpan, SpanStatus } from "./tracer";
+import { incrementCounter } from "./metrics-store";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -70,7 +73,7 @@ function redactSystem(
 // with cache_control marker IFF the prompt is long enough to be worth
 // caching (Anthropic charges a 25% cache-write premium, so very short
 // prompts come out negative).
-const CACHE_MIN_CHARS = 1024; // ~256 tokens; cache write cost amortises at ~2 hits
+const CACHE_MIN_CHARS = 256; // ~64 tokens; lower threshold caches more prompts, reducing TTFB on repeat calls
 function autoCacheSystem(
   system: string | SystemBlock[] | undefined,
 ): string | SystemBlock[] | undefined {
@@ -143,7 +146,20 @@ export class AnthropicGuard {
           })),
         };
 
-        const response = await inner.messages.create(safe, requestOptions);
+        const span = startSpan('llm.messages.create', {
+          'llm.model': opts.model,
+          'llm.route': route,
+          'llm.max_tokens': opts.max_tokens,
+        });
+        let response: Anthropic.Message;
+        try {
+          response = await inner.messages.create(safe, requestOptions);
+        } catch (err) {
+          span.setStatus({ code: SpanStatus.ERROR });
+          span.recordException(err instanceof Error ? err : new Error(String(err)));
+          span.end();
+          throw err;
+        }
 
         // Rehydrate response text blocks
         const rehydratedContent = (response.content as Anthropic.Messages.ContentBlock[]).map((block) => {
@@ -155,6 +171,11 @@ export class AnthropicGuard {
 
         // Fire-and-forget telemetry
         const u = response.usage as Anthropic.Messages.Usage;
+        const latencyMs = Date.now() - t0;
+        span.setAttribute('llm.input_tokens', u?.input_tokens ?? 0);
+        span.setAttribute('llm.output_tokens', u?.output_tokens ?? 0);
+        span.setAttribute('llm.latency_ms', latencyMs);
+        span.end();
         void recordCall({
           route,
           model: response.model,
@@ -162,8 +183,20 @@ export class AnthropicGuard {
           outputTokens: u?.output_tokens ?? 0,
           cacheReadTokens: u?.cache_read_input_tokens ?? 0,
           cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
-          latencyMs: Date.now() - t0,
+          latencyMs,
         });
+        // Prometheus counter: aggregate token volume per model/route pair for cost estimation.
+        incrementCounter('hawkeye_llm_tokens_total', (u?.input_tokens ?? 0) + (u?.output_tokens ?? 0), {
+          model: response.model,
+          route,
+          type: 'total',
+        });
+        const inputPricePerMTok = response.model.includes('haiku') ? 0.80 : 3.00;
+        const outputPricePerMTok = response.model.includes('haiku') ? 4.00 : 15.00;
+        const inputTokens = response.usage?.input_tokens ?? 0;
+        const outputTokens = response.usage?.output_tokens ?? 0;
+        const costUsd = (inputTokens * inputPricePerMTok + outputTokens * outputPricePerMTok) / 1_000_000;
+        incrementCounter('hawkeye_llm_cost_usd_total', costUsd, { model: response.model, route });
 
         return { ...response, content: rehydratedContent } as Anthropic.Message;
       },
@@ -227,15 +260,48 @@ export class AnthropicGuard {
   }
 }
 
+// ── Singleton client pool ─────────────────────────────────────────────────────
+// Creating `new Anthropic()` on every request throws away the underlying
+// Node.js HTTP keep-alive connection, adding 30-80 ms of TCP/TLS setup per
+// call. We maintain a module-level Map keyed on "keyPrefix:timeoutMs" so the
+// connection is reused across requests on the same Lambda warm instance.
+//
+// globalThis anchoring survives Next.js HMR in development — the same pattern
+// used by `store.ts` for the Blobs client and `quick-screen/route.ts` for the
+// result cache.
+declare global {
+  // eslint-disable-next-line no-var
+  var __hs_anthropic_pool: Map<string, AnthropicGuard> | undefined;
+}
+const _pool: Map<string, AnthropicGuard> =
+  globalThis.__hs_anthropic_pool ??
+  (globalThis.__hs_anthropic_pool = new Map());
+
 /**
  * Returns a PII-guarded Anthropic client with the same interface as `new Anthropic({ apiKey })`.
  * Swap every `new Anthropic({ apiKey })` call for `getAnthropicClient(apiKey)`.
  *
+ * Clients are pooled per (key-prefix, timeoutMs) pair so the underlying HTTP
+ * keep-alive connection is reused across calls on the same Lambda warm
+ * instance — saves 30-80 ms of TCP/TLS setup on every invocation.
+ *
  * @param apiKey   - Anthropic API key.
- * @param timeoutMs - Optional per-client request timeout. Defaults to 22 s for
- *                   routes on the standard Netlify Lambda budget. Routes that
- *                   set `export const maxDuration = 60` should pass ~55_000.
+ * @param timeoutMs - Optional per-client request timeout. Defaults to the
+ *                   hard SLA value of 4 500 ms. Routes with `maxDuration = 60`
+ *                   should pass a higher value (e.g. 55_000).
+ * @param route    - Caller route label for telemetry. Reused across pool hits.
  */
 export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: string): AnthropicGuard {
-  return new AnthropicGuard(apiKey, timeoutMs, route);
+  const tms = timeoutMs ?? DEFAULT_ANTHROPIC_TIMEOUT_MS;
+  // Key on SHA-256(key) + timeout. All Anthropic API keys share the prefix
+  // "sk-ant-a" so an 8-char prefix produces a collision-universal pool key.
+  // SHA-256 is safe to store as a pool key — it cannot be reversed to the
+  // original key via brute force (256-bit preimage resistance).
+  const poolKey = `${createHash("sha256").update(apiKey).digest("hex").slice(0, 32)}:${tms}`;
+  let guard = _pool.get(poolKey);
+  if (!guard) {
+    guard = new AnthropicGuard(apiKey, tms, route ?? "unknown");
+    _pool.set(poolKey, guard);
+  }
+  return guard;
 }

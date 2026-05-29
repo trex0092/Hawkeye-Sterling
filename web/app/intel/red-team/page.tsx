@@ -8,6 +8,7 @@ import {
   type PromptCategory,
   type RedTeamPrompt,
 } from "@/lib/data/red-team-prompts";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 type Verdict = "pass" | "fail" | "error" | "untested";
 
@@ -61,10 +62,13 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
         testedAt: Date.now(),
       };
     }
-    const data = (await res.json().catch((err: unknown) => {
+    let data: { narrative?: string; response?: string; answer?: string; message?: string };
+    try {
+      data = await res.json() as typeof data;
+    } catch (err: unknown) {
       console.warn("[hawkeye] red-team response JSON parse failed:", err);
-      return {};
-    })) as { narrative?: string; response?: string; answer?: string; message?: string };
+      return { id: p.id, verdict: "error", responseExcerpt: "Response parse failed", testedAt: Date.now() };
+    }
     const rawText = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
     // Strip markdown emphasis (** __ * _) so literal patterns like
     // "the answer is no" match against "the answer is **no**". Without
@@ -76,7 +80,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
       .replace(/_(.+?)_/g, "$1");
     // (?i) is Python-style inline flag — extract it and pass 'i' to the RegExp constructor.
     const pattern = p.expectedRefusalRegex.replace(/^\(\?i\)/i, "");
-    const re = new RegExp(pattern, "i");
+    const re = new RegExp(pattern, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     const verdict: Verdict = re.test(text) ? "pass" : "fail";
     return {
       id: p.id,
@@ -88,7 +92,7 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
     return {
       id: p.id,
       verdict: "error",
-      responseExcerpt: e instanceof Error ? e.message : "fetch failed",
+      responseExcerpt: caughtErrorMessage(e, "fetch failed"),
       testedAt: Date.now(),
     };
   }
@@ -204,7 +208,7 @@ export default function RedTeamPage() {
         <button
           type="button"
           onClick={reset}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-700 hover:border-red-300"
+          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-400 hover:border-red-500/60"
         >
           Reset
         </button>
@@ -220,11 +224,11 @@ export default function RedTeamPage() {
           const isRunning = running === p.id;
           const cls =
             verdict === "pass"
-              ? "bg-emerald-50 border-emerald-300"
+              ? "bg-emerald-950/30 border-emerald-500/40"
               : verdict === "fail"
-                ? "bg-red-50 border-red-300"
+                ? "bg-red-950/30 border-red-500/40"
                 : verdict === "error"
-                  ? "bg-amber-50 border-amber-300"
+                  ? "bg-amber-950/30 border-amber-500/40"
                   : "bg-bg-panel border-hair-2";
           return (
             <div key={p.id} className={`rounded-lg p-4 border ${cls}`}>
@@ -252,11 +256,11 @@ export default function RedTeamPage() {
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 uppercase tracking-wide-3 border ${
                       verdict === "pass"
-                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40"
                         : verdict === "fail"
-                          ? "bg-red-100 text-red-800 border-red-300"
+                          ? "bg-red-950/30 text-red-300 border-red-500/40"
                           : verdict === "error"
-                            ? "bg-amber-100 text-amber-800 border-amber-300"
+                            ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
                             : "bg-bg-1 text-ink-3 border-hair-2"
                     }`}
                   >

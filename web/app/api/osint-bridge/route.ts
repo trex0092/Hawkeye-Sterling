@@ -56,6 +56,12 @@ const VALID_TOOLS = new Set([
   "amlsim",
 ]);
 
+function toolError(tool: string, err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`[osint-bridge] ${tool} failed:`, msg);
+  return `${tool} tool unavailable`;
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
@@ -97,7 +103,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       username: b.username,
       profiles: [],
       totalFound: 0,
-      error: String(err),
+      error: toolError(tool, err),
     }));
   } else if (tool === "maigret") {
     const b = body as MaigretBody;
@@ -112,7 +118,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       username: b.username,
       profiles: [],
       totalFound: 0,
-      error: String(err),
+      error: toolError(tool, err),
     }));
   } else if (tool === "harvester") {
     const b = body as HarvesterBody;
@@ -128,7 +134,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       emails: [],
       hosts: [],
       ips: [],
-      error: String(err),
+      error: toolError(tool, err),
     }));
   } else if (tool === "social-analyzer") {
     const b = body as SocialAnalyzerBody;
@@ -142,7 +148,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ok: false,
       person: b.person,
       profiles: [],
-      error: String(err),
+      error: toolError(tool, err),
     }));
   } else if (tool === "anomaly") {
     const b = body as AnomalyBody;
@@ -158,7 +164,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         algorithm: b.algorithm ?? "IsolationForest",
         scores: [],
         outliers: [],
-        error: String(err),
+        error: toolError(tool, err),
       }),
     );
   } else {
@@ -179,7 +185,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       pattern: b.pattern,
       accounts: [],
       transactions: [],
-      error: String(err),
+      error: toolError(tool, err),
     }));
   }
 

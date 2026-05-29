@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "python3 -m http.server --directory public 8080",
     "build": "tsc",
+    "bootstrap": "npm ci --include=dev && npm run build && cd web && npm ci --include=dev && npm run gen:next-env",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run",
@@ -28,7 +29,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@netlify/blobs": "^10.0.0",
+    "@netlify/blobs": "^10.7.8",
     "exceljs": "^4.4.0"
   },
   "devDependencies": {
@@ -44,5 +45,9 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "overrides": {
+    "tmp": ">=0.2.6",
+    "qs": ">=6.15.2"
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface VesselOwner {
   name: string;
@@ -147,7 +148,7 @@ export default function VesselCheckPage() {
       });
       const data = await res.json().catch(() => ({})) as ApiResponse;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? apiErrorMessage(res.status, "Vessel check"));
       else setResult(data);
     } catch (err) {
       if (!mountedRef.current) return;
@@ -183,7 +184,7 @@ export default function VesselCheckPage() {
               <button
                 key={m}
                 type="button"
-                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); }}
+                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); setRiskProfile(null); }}
                 className={tabCls(mode === m)}
               >
                 {m === "single" ? "Single Vessel" : "Batch (CSV / list)"}

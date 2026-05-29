@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface SherlockProfile { site: string; url: string; exists: boolean }
 interface HarvesterResult { ok: boolean; emails: string[]; hosts: string[]; ips: string[]; error?: string }
@@ -78,7 +79,7 @@ export default function OsintPage() {
         });
         const data = await res.json().catch(() => ({})) as HarvesterResult;
         if (!mountedRef.current) return;
-        if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
+        if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? apiErrorMessage(res.status, "OSINT"));
         else { setDomainResult(data); setScannedAt(new Date().toLocaleTimeString()); }
       } else {
         const [sh, sa] = await Promise.allSettled([
@@ -86,12 +87,12 @@ export default function OsintPage() {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ tool: "sherlock", username: t }),
-          }).then((r) => r.json() as Promise<SherlockResult>),
+          }).then((r) => { if (!r.ok) throw new Error(apiErrorMessage(r.status, "OSINT")); return r.json() as Promise<SherlockResult>; }),
           fetch("/api/osint-bridge", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ tool: "social-analyzer", person: t }),
-          }).then((r) => r.json() as Promise<SocialResult>),
+          }).then((r) => { if (!r.ok) throw new Error(apiErrorMessage(r.status, "OSINT")); return r.json() as Promise<SocialResult>; }),
         ]);
         if (!mountedRef.current) return;
         if (sh.status === "fulfilled") setSherlockResult(sh.value);

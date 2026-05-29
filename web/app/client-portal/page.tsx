@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface ClientRisk {
   ok: boolean;
@@ -66,7 +67,7 @@ const BLANK_ENTITY: EntityForm = {
 
 function blankShareholder(): Shareholder {
   return {
-    id: `sh-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: `sh-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
     designation: "",
     name: "",
     sharesPct: "",
@@ -319,7 +320,7 @@ export default function ClientPortalPage() {
         setClientRisk(data);
       } else {
         console.error(`[hawkeye] client-portal/client-risk HTTP ${res.status}`);
-        if (mountedRef.current) setClientRiskError(`Risk assessment failed (HTTP ${res.status}). Please try again.`);
+        if (mountedRef.current) setClientRiskError(apiErrorMessage(res.status, "Risk assessment"));
       }
     } catch (err) {
       console.error("[hawkeye] client-portal/client-risk threw:", err);

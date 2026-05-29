@@ -24,8 +24,10 @@
 //   the request is rejected with 403 four_eyes_required.
 //   This implements UAE FDL 10/2025 Art.16 in code, not just governance policy.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { requireRole } from "@/lib/server/role-gate";
 import type { ApiKeyRecord } from "@/lib/server/api-keys";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 import { getEntity } from "@/lib/config/entities";
@@ -157,8 +159,14 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
   if (!narrative) {
     return NextResponse.json({ ok: false, error: "narrative required" }, { status: 400, headers: gateHeaders });
   }
-  if (narrative.length > 5000) {
-    return NextResponse.json({ ok: false, error: "narrative exceeds 5000-character limit (goAML schema constraint)" }, { status: 400, headers: gateHeaders });
+  if (narrative.length > 50000) {
+    return NextResponse.json({ ok: false, error: "narrative exceeds 50000-character limit" }, { status: 400, headers: gateHeaders });
+  }
+  if (subjectName.length > 500) {
+    return NextResponse.json({ ok: false, error: "subjectName exceeds 500-character limit" }, { status: 400, headers: gateHeaders });
+  }
+  if (caseId.length > 256) {
+    return NextResponse.json({ ok: false, error: "caseId exceeds 256-character limit" }, { status: 400, headers: gateHeaders });
   }
 
   // ── Reporting entity sanity check ─────────────────────────────────────────
@@ -263,7 +271,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     }
 
     // Store a SAR record for listing via GET /api/sar.
-    const sarId = `sar-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const sarId = `sar-${Date.now()}-${randomBytes(4).toString("hex")}`;
     const record: SarRecord = {
       sarId,
       caseId,
@@ -305,9 +313,9 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       ...(sarReportResult ? { report: sarReportResult } : {}),
     }, { headers: gateHeaders });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[sar] SAR generation failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: "SAR generation failed", detail },
+      { ok: false, error: "SAR generation failed" },
       { status: 500, headers: gateHeaders },
     );
   }
@@ -322,6 +330,10 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  // SAR generation is a regulator-facing action requiring MLRO or CO oversight
+  // (UAE FDL 10/2025 Art.16 + FATF R.26). External API callers do not qualify.
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
   const tenant = tenantIdFromGate(gate);
   return handlePost(req, gate.record, gate.headers, tenant, gate.keyId);
 }

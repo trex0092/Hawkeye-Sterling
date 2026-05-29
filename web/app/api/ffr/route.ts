@@ -26,9 +26,10 @@
 // GET: list all open FFR records for the tenant
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { getJson, setJson, listKeys as _listKeys } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -95,7 +96,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const frozenAt = body.frozenAt ?? new Date().toISOString();
   const { slaDeadline, slaStatus } = computeSlaStatus(frozenAt);
-  const id = `FFR-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const id = `FFR-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   const record: FFRRecord = {
     id,
@@ -118,38 +119,43 @@ export async function POST(req: Request): Promise<NextResponse> {
     tenant,
   };
 
-  await setJson(ffrKey(tenant, id), record);
+  try {
+    await setJson(ffrKey(tenant, id), record);
 
-  // Update index
-  const idx = (await getJson<string[]>(ffrIndexKey(tenant))) ?? [];
-  idx.unshift(id);
-  await setJson(ffrIndexKey(tenant), idx.slice(0, 500));
+    // Update index
+    const idx = (await getJson<string[]>(ffrIndexKey(tenant))) ?? [];
+    idx.unshift(id);
+    await setJson(ffrIndexKey(tenant), idx.slice(0, 500));
 
-  void writeAuditChainEntry({
-    event: "ffr.created",
-    actor: gate.keyId,
-    ffrId: id,
-    caseId: record.caseId,
-    subjectName: record.subjectName,
-    triggerList: record.triggerList,
-    slaStatus,
-    immediateFreeze: record.immediateFreeze,
-  }, tenant).catch(() => undefined);
+    void writeAuditChainEntry({
+      event: "ffr.created",
+      actor: gate.keyId,
+      ffrId: id,
+      caseId: record.caseId,
+      subjectName: record.subjectName,
+      triggerList: record.triggerList,
+      slaStatus,
+      immediateFreeze: record.immediateFreeze,
+    }, tenant).catch(() => undefined);
 
-  const httpStatus = slaStatus === "breached" ? 207 : 201;
-  return NextResponse.json(
-    {
-      ok: true,
-      id,
-      record,
-      slaWarning: slaStatus === "breached"
-        ? "URGENT: SLA BREACHED — 24-hour freeze reporting window has passed. File immediately with FIU. Cabinet Resolution 74/2020 Art.4."
-        : slaStatus === "within"
-        ? `SLA within window — must be submitted to FIU by ${slaDeadline}`
-        : undefined,
-    },
-    { status: httpStatus, headers: gate.headers },
-  );
+    const httpStatus = slaStatus === "breached" ? 207 : 201;
+    return NextResponse.json(
+      {
+        ok: true,
+        id,
+        record,
+        slaWarning: slaStatus === "breached"
+          ? "URGENT: SLA BREACHED — 24-hour freeze reporting window has passed. File immediately with FIU. Cabinet Resolution 74/2020 Art.4."
+          : slaStatus === "within"
+          ? `SLA within window — must be submitted to FIU by ${slaDeadline}`
+          : undefined,
+      },
+      { status: httpStatus, headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[ffr] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to create freeze report" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
@@ -160,23 +166,28 @@ export async function GET(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
 
-  const idx = (await getJson<string[]>(ffrIndexKey(tenant))) ?? [];
-  const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<FFRRecord>(ffrKey(tenant, id)))))
-    .filter((r): r is FFRRecord => r !== null);
+  try {
+    const idx = (await getJson<string[]>(ffrIndexKey(tenant))) ?? [];
+    const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<FFRRecord>(ffrKey(tenant, id)))))
+      .filter((r): r is FFRRecord => r !== null);
 
-  const filtered = (status ? records.filter((r) => r.status === status) : records)
-    .map((r) => ({ ...r, ...computeSlaStatus(r.frozenAt) }));
-  const breached = filtered.filter((r) => r.slaStatus === "breached");
+    const filtered = (status ? records.filter((r) => r.status === status) : records)
+      .map((r) => ({ ...r, ...computeSlaStatus(r.frozenAt) }));
+    const breached = filtered.filter((r) => r.slaStatus === "breached");
 
-  return NextResponse.json(
-    {
-      ok: true,
-      tenant,
-      total: filtered.length,
-      breachedSla: breached.length,
-      records: filtered,
-      regulatoryNote: "Cabinet Resolution 74/2020 Art.4 requires asset freeze reports within 24 hours of designation.",
-    },
-    { headers: gate.headers },
-  );
+    return NextResponse.json(
+      {
+        ok: true,
+        tenant,
+        total: filtered.length,
+        breachedSla: breached.length,
+        records: filtered,
+        regulatoryNote: "Cabinet Resolution 74/2020 Art.4 requires asset freeze reports within 24 hours of designation.",
+      },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[ffr] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load freeze reports" }, { status: 500, headers: gate.headers });
+  }
 }

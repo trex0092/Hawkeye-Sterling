@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import type { CaseRecord } from "@/lib/types";
 import { formatDMY, parseDMY } from "@/lib/utils/dateFormat";
+import { SowVerificationPanel } from "@/components/cdd/SowVerificationPanel";
 
 // ── EDD Checklist types ──────────────────────────────────────────────────────
 interface EddItem { item: string; regulatoryBasis: string; }
@@ -315,7 +317,7 @@ export default function CddReviewPage() {
 
   // EDD File Completeness state
   type EddSubjectType = "individual" | "corporate" | "trust" | "foundation";
-  type EddRiskClass = "medium" | "high" | "critical";
+  type EddRiskClass = "low" | "medium" | "high" | "critical";
   interface EddRequirementItem {
     id: string;
     label: string;
@@ -420,7 +422,7 @@ export default function CddReviewPage() {
       if (!mountedRef.current) return;
       setEddComplResult(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "EDD completeness check failed — please retry";
+      const msg = caughtErrorMessage(err, "EDD completeness check failed — please retry");
       if (mountedRef.current) setEddComplError(msg);
     } finally {
       if (mountedRef.current) setEddComplLoading(false);
@@ -455,7 +457,7 @@ export default function CddReviewPage() {
       }
       setPolicyResult(data);
     } catch (err) {
-      if (mountedRef.current) setPolicyError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setPolicyError(caughtErrorMessage(err, "Network error — please retry"));
     } finally {
       if (mountedRef.current) setPolicyLoading(false);
     }
@@ -493,7 +495,7 @@ export default function CddReviewPage() {
       }
       setExitResult(data);
     } catch (err) {
-      if (mountedRef.current) setExitError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setExitError(caughtErrorMessage(err, "Network error — please retry"));
     } finally {
       if (mountedRef.current) setExitLoading(false);
     }
@@ -534,7 +536,7 @@ export default function CddReviewPage() {
       saveEddChecks({});
       setTimeout(() => eddRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch (err) {
-      if (mountedRef.current) setEddError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setEddError(caughtErrorMessage(err, "Network error — please retry"));
     } finally { if (mountedRef.current) setEddLoading(false); }
   };
 
@@ -704,7 +706,7 @@ export default function CddReviewPage() {
       }
       setAdequacy(data);
     } catch (err) {
-      if (mountedRef.current) setAdequacyError(err instanceof Error ? err.message : "Network error — please retry");
+      if (mountedRef.current) setAdequacyError(caughtErrorMessage(err, "Network error — please retry"));
     } finally { if (mountedRef.current) setAdequacyLoading(false); }
   };
 
@@ -1169,7 +1171,7 @@ export default function CddReviewPage() {
               <div>
                 <label className="block text-10 font-semibold uppercase tracking-wide-3 text-ink-3 mb-1">Risk classification</label>
                 <select value={eddComplRisk} onChange={(e) => setEddComplRisk(e.target.value as EddRiskClass)} className={inputCls}>
-                  {(["medium", "high", "critical"] as const).map((v) => (
+                  {(["low", "medium", "high", "critical"] as const).map((v) => (
                     <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
                   ))}
                 </select>
@@ -1322,6 +1324,20 @@ export default function CddReviewPage() {
           </div>
         )}
       </div>
+
+      {/* ── Section 3.45: SOW / SOF Verification Panel (GAP 10) ── */}
+      {eddComplSubjectName.trim() && (
+        <SowVerificationPanel
+          subjectId={eddComplSubjectName.trim()}
+          riskLevel={eddComplRisk}
+          isPep={eddComplIsPep}
+          onVerificationComplete={() => {
+            // Trigger a re-run of EDD completeness if a result is already showing,
+            // so the hasSourceOfWealth flag can be reviewed in context.
+            if (eddComplResult) void runEddCompleteness();
+          }}
+        />
+      )}
 
       {/* ── Section 3.5: AML Policy Reviewer ── */}
       <div className="mt-6 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">

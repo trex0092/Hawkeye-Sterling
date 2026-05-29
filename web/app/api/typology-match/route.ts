@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -127,9 +128,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     gateHeaders = gate.headers;
     const apiKey = process.env["ANTHROPIC_API_KEY"];
     if (!apiKey) {
-      return NextResponse.json({ ok: true, degraded: true, ...FALLBACK }, { headers: gateHeaders });
+      return NextResponse.json(
+        { ok: true, degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — static fallback served", ...FALLBACK },
+        { status: 206, headers: { ...gateHeaders, Warning: '299 - "AI model unconfigured — static FATF fallback served"' } },
+      );
     }
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     let rawBody: Body & { subject?: { facts?: string; subjectType?: string; transactionType?: string } };
     try {
@@ -214,7 +218,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         errorType: "internal",
         error: "An unexpected error occurred. Please retry or contact support.",
         tool: "typology_match",
-        requestId: Math.random().toString(36).slice(2, 10),
+        requestId: randomBytes(4).toString("hex"),
         latencyMs: Date.now() - t0,
       },
       { status: 500, headers: gateHeaders }

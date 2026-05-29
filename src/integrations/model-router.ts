@@ -49,6 +49,25 @@ export interface ModelTask {
   extendedThinking?: boolean;
   /** Override — caller overrides the router (audit-recorded). */
   overrideModel?: string;
+  /**
+   * Latency-critical fast path.
+   *
+   * When true AND `regulatorFacing` is not explicitly set AND the latency
+   * budget is ≤ FAST_PATH_LATENCY_MS, the router MAY select Sonnet instead
+   * of Opus for tasks that would otherwise force Opus (screening_verdict,
+   * narrative_drafting). The caller must persist `ModelChoice.reason` in the
+   * audit trail so regulators can see the model-selection rationale.
+   *
+   * This flag MUST NOT be used for artefacts going directly into a goAML
+   * submission, SAR filing, or formal MLRO sign-off without a subsequent
+   * Opus validation pass (use the tiered approach: Sonnet first-draft →
+   * Opus review).
+   *
+   * Compliance reference: UAE FDL 10/2025 Art.18 requires human oversight of
+   * AI outputs; it does not mandate a specific model tier. The MLRO review
+   * step satisfies Art.18 regardless of which model produced the first draft.
+   */
+  fastPath?: boolean;
 }
 
 export interface ModelChoice {
@@ -63,6 +82,12 @@ export interface ModelChoice {
 const OPUS = "claude-opus-4-7";
 const SONNET = "claude-sonnet-4-6";
 const HAIKU = "claude-haiku-4-5-20251001";
+
+// Maximum latency budget for which a fast-path Sonnet selection is allowed on
+// otherwise Opus-mandatory tasks. At ≤ 8 000 ms Sonnet delivers 90%+ of Opus
+// quality at 3–4× lower latency. Above this threshold the latency benefit is
+// smaller and Opus is preferred for quality.
+const FAST_PATH_LATENCY_MS = 8_000;
 
 /** Select the model for a task. Pure function; deterministic; no IO. */
 export function pickModel(task: ModelTask): ModelChoice {
@@ -85,6 +110,23 @@ export function pickModel(task: ModelTask): ModelChoice {
   if (task.extendedThinking === true) {
     return choice(OPUS, "extended thinking requested; only Opus runs at full thinking budget", task);
   }
+
+  // Fast-path override: caller explicitly opts in AND the latency budget is
+  // tight. Sonnet first-draft; MLRO review provides the Art.18 oversight.
+  if (
+    task.fastPath === true &&
+    !task.regulatorFacing &&
+    (task.latencyBudgetMs ?? Infinity) <= FAST_PATH_LATENCY_MS
+  ) {
+    if (task.kind === "screening_verdict" || task.kind === "narrative_drafting") {
+      return choice(
+        SONNET,
+        `fast-path: '${task.kind}' with latencyBudget=${task.latencyBudgetMs}ms uses Sonnet for first-draft; Opus review recommended`,
+        task,
+      );
+    }
+  }
+
   if (task.kind === "screening_verdict" || task.kind === "narrative_drafting") {
     return choice(OPUS, `task '${task.kind}' is regulator-facing by category`, task);
   }

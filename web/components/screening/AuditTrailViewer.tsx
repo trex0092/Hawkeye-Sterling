@@ -19,6 +19,7 @@
 // in the rendered output — no opaque view).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AuditEntry {
   sequence: number;
@@ -115,6 +116,7 @@ export function AuditTrailViewer({
   const [verifyResult, setVerifyResult] = useState<VerifyResponse | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -138,7 +140,7 @@ export function AuditTrailViewer({
         const json = await res.json().catch(() => ({})) as ViewResponse;
         if (mountedRef.current) setData(json);
       } catch (e) {
-        if (mountedRef.current) setError(e instanceof Error ? e.message : "Failed to load audit trail.");
+        if (mountedRef.current) setError(caughtErrorMessage(e, "Failed to load audit trail."));
       } finally {
         if (mountedRef.current) setLoading(false);
       }
@@ -180,7 +182,7 @@ export function AuditTrailViewer({
         sequenceGaps: [],
         headConsistent: false,
         head: { sequence: 0, hash: "" },
-        error: e instanceof Error ? e.message : "Verification request failed.",
+        error: caughtErrorMessage(e, "Verification request failed."),
       });
     } finally {
       if (mountedRef.current) setVerifying(false);
@@ -220,18 +222,22 @@ export function AuditTrailViewer({
     });
   };
 
+  const dismissEntry = (seq: number): void => {
+    setDismissed((prev) => new Set(prev).add(seq));
+  };
+
   const verifyBanner = useMemo(() => {
     if (!verifyResult) return null;
     if (verifyResult.error) {
       return (
-        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md">
+        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
           Verification failed: {verifyResult.error}
         </div>
       );
     }
     if (verifyResult.ok) {
       return (
-        <div role="status" className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-12 px-3 py-2 rounded-md">
+        <div role="status" className="bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-12 px-3 py-2 rounded-md">
           Chain verified · {verifyResult.totalVerified}/{verifyResult.totalScanned} entries pass HMAC + link checks · head sequence {verifyResult.head.sequence}.
         </div>
       );
@@ -244,7 +250,7 @@ export function AuditTrailViewer({
       !verifyResult.headConsistent && "head pointer inconsistent",
     ].filter(Boolean);
     return (
-      <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md">
+      <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
         Chain integrity FAILED · {issues.join(" · ")}. Escalate to Engineering Lead per HS-OPS-001 §3.4 (CRITICAL).
       </div>
     );
@@ -361,7 +367,7 @@ export function AuditTrailViewer({
       </div>
 
       {error ? (
-        <div role="alert" className="bg-rose-50 border border-rose-200 text-rose-900 text-12 px-3 py-2 rounded-md mb-3">
+        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md mb-3">
           {error}
         </div>
       ) : null}
@@ -376,7 +382,19 @@ export function AuditTrailViewer({
 
       {data && (data.entries ?? []).length > 0 ? (
         <div className="space-y-1.5">
-          {(data.entries ?? []).filter((e): e is AuditEntry => e != null).map((entry) => {
+          {dismissed.size > 0 && (
+            <div className="text-11 text-ink-3 font-mono flex items-center gap-2 px-1">
+              <span>{dismissed.size} {dismissed.size === 1 ? "entry" : "entries"} hidden from view</span>
+              <button
+                type="button"
+                onClick={() => setDismissed(new Set())}
+                className="text-brand hover:underline"
+              >
+                restore all
+              </button>
+            </div>
+          )}
+          {(data.entries ?? []).filter((e): e is AuditEntry => e != null && !dismissed.has(e.sequence)).map((entry) => {
             const isOpen = expanded.has(entry.sequence);
             return (
               <article
@@ -384,12 +402,13 @@ export function AuditTrailViewer({
                 aria-labelledby={`audit-entry-${entry.sequence}`}
                 className="border border-hair-2 rounded-md overflow-hidden bg-bg-1"
               >
+                <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => toggleExpanded(entry.sequence)}
                   aria-expanded={isOpen}
                   aria-controls={`audit-entry-body-${entry.sequence}`}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
+                  className="flex-1 flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
                 >
                   <span
                     id={`audit-entry-${entry.sequence}`}
@@ -403,6 +422,16 @@ export function AuditTrailViewer({
                   <span className="font-mono text-10 text-ink-2 tabular-nums hidden md:inline">{formatDate(entry.at)}</span>
                   <span aria-hidden="true" className="text-ink-2 text-12">{isOpen ? "−" : "+"}</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => dismissEntry(entry.sequence)}
+                  aria-label={`Dismiss entry #${entry.sequence} from view`}
+                  title="Hide from view (entry remains in the immutable audit chain)"
+                  className="flex-shrink-0 w-8 h-full flex items-center justify-center text-ink-3 hover:text-red-400 hover:bg-red-950/20 transition-colors border-l border-hair-2 px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
+                >
+                  ×
+                </button>
+                </div>
                 {isOpen ? (
                   <div
                     id={`audit-entry-body-${entry.sequence}`}
@@ -423,6 +452,7 @@ export function AuditTrailViewer({
                   </div>
                 ) : null}
               </article>
+
             );
           })}
         </div>
@@ -474,13 +504,13 @@ export function AuditTrailViewer({
 }
 
 const ACTION_TONES: Record<string, string> = {
-  str: "bg-rose-100 text-rose-900 border-rose-200",
-  freeze: "bg-rose-100 text-rose-900 border-rose-200",
-  dispose: "bg-amber-100 text-amber-900 border-amber-200",
-  escalate: "bg-amber-100 text-amber-900 border-amber-200",
-  goaml_submit: "bg-violet-100 text-violet-900 border-violet-200",
-  clear: "bg-emerald-100 text-emerald-900 border-emerald-200",
-  str_read: "bg-sky-100 text-sky-900 border-sky-200",
+  str: "bg-rose-950/30 text-rose-300 border-rose-500/40",
+  freeze: "bg-rose-950/30 text-rose-300 border-rose-500/40",
+  dispose: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  escalate: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  goaml_submit: "bg-violet-950/30 text-violet-300 border-violet-500/40",
+  clear: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
+  str_read: "bg-sky-950/30 text-sky-300 border-sky-500/40",
 };
 
 function ActionBadge({ action }: { action: string }): JSX.Element {

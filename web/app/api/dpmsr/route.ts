@@ -31,9 +31,10 @@
 //   }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { getJson, setJson, listKeys } from "@/lib/server/store";
+import { getJson, setJson, listKeys as _listKeys } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -131,7 +132,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const thresholdType: "single" | "cumulative" | undefined = amountAed >= THRESHOLD_AED_CUMULATIVE ? "cumulative"
     : amountAed >= THRESHOLD_AED_SINGLE ? "single" : undefined;
 
-  const id = `DPMSR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const id = `DPMSR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
   const record: DPMSRRecord = {
     id,
     reportType: body.reportType ?? "threshold_transaction",
@@ -157,10 +158,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     regulatoryReference: "MoE Circular 08/AML/2021 §4 — DPMS threshold transaction reporting. UAE FDL No.10/2025 Art.15.",
   };
 
-  await setJson(dpmsr_key(tenant, id), record);
-  const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
-  idx.unshift(id);
-  await setJson(dpmsr_index_key(tenant), idx.slice(0, 500));
+  try {
+    await setJson(dpmsr_key(tenant, id), record);
+    const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
+    idx.unshift(id);
+    await setJson(dpmsr_index_key(tenant), idx.slice(0, 500));
+  } catch (err) {
+    console.error("[dpmsr] POST store failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save DPMSR record" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "dpmsr.created",
@@ -203,9 +209,14 @@ export async function GET(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
 
-  const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
-  const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<DPMSRRecord>(dpmsr_key(tenant, id))))).filter((r): r is DPMSRRecord => r !== null);
-  const filtered = status ? records.filter((r) => r.status === status) : records;
+  try {
+    const idx = (await getJson<string[]>(dpmsr_index_key(tenant))) ?? [];
+    const records = (await Promise.all(idx.slice(0, 100).map((id) => getJson<DPMSRRecord>(dpmsr_key(tenant, id))))).filter((r): r is DPMSRRecord => r !== null);
+    const filtered = status ? records.filter((r) => r.status === status) : records;
 
-  return NextResponse.json({ ok: true, tenant, total: filtered.length, records: filtered }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, tenant, total: filtered.length, records: filtered }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[dpmsr] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load DPMSR records" }, { status: 500, headers: gate.headers });
+  }
 }

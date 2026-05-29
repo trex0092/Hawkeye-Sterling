@@ -99,7 +99,8 @@ async function handlePost(
   }
 
   const overridden = body.overridden ?? body.autoProposed !== body.mlroDecided;
-  const reviewerId = body.reviewerId ?? tenant ?? "anonymous";
+  // Fix IDOR: never trust caller-supplied reviewerId; always use the authenticated identity.
+  const reviewerId = gate.record?.email ?? gate.keyId;
 
   const record: OutcomeRecord = {
     runId: body.runId,
@@ -121,13 +122,9 @@ async function handlePost(
   } catch (err) {
     console.error("[cases/disposition]", err instanceof Error ? err.message : err);
     return NextResponse.json({
-      ok: true,
-      tenant,
-      caseId: id,
-      recorded: false,
-      overridden,
-      note: "disposition journal unavailable — record not persisted",
-    }, { headers: gate.headers });
+      ok: false,
+      error: "MLRO override could not be recorded. Please retry.",
+    }, { status: 503, headers: gate.headers });
   }
 
   // Cabinet Res 134/2025 Art.19 — MLRO disposition decisions must be on

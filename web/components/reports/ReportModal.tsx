@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AsanaFile {
   endpoint: string;
@@ -88,7 +89,7 @@ export function ReportModal({
         setState({
           status: "error",
           message:
-            err instanceof Error ? err.message : "Report generation failed",
+            caughtErrorMessage(err, "Report generation failed"),
         });
       }
     })();
@@ -132,7 +133,7 @@ export function ReportModal({
           }
           setAsana({
             status: "error",
-            message: json?.error ?? `Asana filing failed (server ${res.status})`,
+            message: json?.error ?? apiErrorMessage(res.status, "Asana filing"),
           });
           return;
         }
@@ -145,7 +146,7 @@ export function ReportModal({
         if (ctl.signal.aborted || !mountedRef.current) return;
         setAsana({
           status: "error",
-          message: err instanceof Error ? err.message : "Asana filing failed",
+          message: caughtErrorMessage(err, "Asana filing failed"),
         });
       }
     })();

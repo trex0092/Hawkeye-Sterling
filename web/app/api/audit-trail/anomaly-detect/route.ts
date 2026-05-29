@@ -46,13 +46,20 @@ export async function POST(req: Request) {
   if (!Array.isArray(body.events) || body.events.length === 0) {
     return NextResponse.json({ ok: true, anomalies: [], riskScore: 0 }, { headers: gate.headers });
   }
+  const MAX_EVENTS = 500;
+  if (body.events.length > MAX_EVENTS) {
+    return NextResponse.json(
+      { ok: false, error: `events array must not exceed ${MAX_EVENTS} items` },
+      { status: 400, headers: gate.headers },
+    );
+  }
   const events = body.events;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: true, ...buildFallback() }, { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -102,9 +109,13 @@ ${JSON.stringify(events, null, 2)}`,
 
     const raw =
       response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const parsed = JSON.parse(
-      raw.replace(/```json\n?|\n?```/g, "").trim(),
-    ) as AnomalyDetectResult;
+    const stripped = raw.replace(/```json\n?|\n?```/g, "").trim();
+    let parsed: AnomalyDetectResult;
+    try {
+      parsed = JSON.parse(stripped) as AnomalyDetectResult;
+    } catch {
+      return NextResponse.json({ ok: false, error: "LLM returned malformed JSON" }, { status: 502, headers: gate.headers });
+    }
 
     return NextResponse.json({
       ok: true,

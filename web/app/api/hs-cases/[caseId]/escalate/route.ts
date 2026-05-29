@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { loadCase, updateCase } from "@/lib/server/hs-case-store";
+import { loadCase, updateCase, appendEscalationHistory, setFilingDeadline } from "@/lib/server/hs-case-store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
@@ -30,10 +30,22 @@ export async function POST(
 
   const reason = typeof body["reason"] === "string" ? body["reason"] : "Escalated to MD for review";
 
-  const updated = await updateCase(tenant, caseId, {
+  let updated = await updateCase(tenant, caseId, {
     status: "escalated",
     notes: existing.notes ? `${existing.notes}\n[ESCALATED] ${reason}` : `[ESCALATED] ${reason}`,
   }, gate.keyId);
+
+  // Record escalation transition in the timeline.
+  updated = await appendEscalationHistory(
+    tenant, caseId,
+    existing.status, "escalated",
+    gate.keyId, reason,
+  ) ?? updated;
+
+  // Set the 48-hour STR filing deadline (UAE FDL 10/2025 Art.17) on first escalation.
+  if (!existing.filingDeadline) {
+    updated = await setFilingDeadline(tenant, caseId) ?? updated;
+  }
 
   void writeAuditChainEntry({
     event: "escalation.triggered",

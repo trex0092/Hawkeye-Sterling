@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface BoardAmlReportResult {
   executiveSummary: string;
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "board-aml-report temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2500,
@@ -91,6 +93,12 @@ Generate a comprehensive quarterly Board AML/CFT report. Return complete BoardAm
     if (!Array.isArray(result.openAuditFindings)) result.openAuditFindings = [];
     if (!Array.isArray(result.upcomingObligations)) result.upcomingObligations = [];
     if (!Array.isArray(result.boardRecommendations)) result.boardRecommendations = [];
+
+    void writeAuditChainEntry(
+      { event: "board_aml_report.generated", actor: gate.keyId, meta: { reportingPeriod: body.reportingPeriod, institutionName: body.institutionName } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

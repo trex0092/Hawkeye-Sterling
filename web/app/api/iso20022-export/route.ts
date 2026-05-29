@@ -33,6 +33,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -188,6 +190,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const xml = generatePacs008Xml(sanitised);
   const filename = `${sanitised.msgId.replace(/[^A-Za-z0-9_-]/g, "_")}.xml`;
+
+  void writeAuditChainEntry(
+    { event: "iso20022.export_generated", actor: gate.keyId, meta: { messageType: "pacs.008.001.11", currency: sanitised.currency, caseId: sanitised.caseId } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return new NextResponse(xml, {
     status: 201,

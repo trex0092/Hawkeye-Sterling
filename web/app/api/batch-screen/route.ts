@@ -11,6 +11,8 @@ import type {
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 
+const _BATCH_CONCURRENCY = 5; // max concurrent rows when using external validators
+
 const KEYWORD_GROUP_WEIGHT: Record<string, number> = {
   "terrorism-financing": 20,
   "proliferation-wmd": 20,
@@ -39,6 +41,7 @@ function scoreToBand(score: number): string {
 }
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { postWebhook } from "@/lib/server/webhook";
 import { getIdempotencyKey, getIdempotent, storeIdempotent } from "@/lib/server/idempotency";
 // Optional cross-validation services (all fail-soft — no env var = no-op).
@@ -48,6 +51,7 @@ import { checkJube } from "@/lib/server/jube-client";           // jube AML
 import { yenteMatch } from "../../../../src/integrations/yente.js"; // opensanctions/yente FtM matching
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
@@ -57,6 +61,18 @@ const quickScreen = _quickScreen as QuickScreenFn;
 
 function batchScreenProjectGid(): string {
   return asanaGids.screening();
+}
+
+// Process up to 5 subjects in parallel to avoid overwhelming downstream APIs
+const CONCURRENCY = 5;
+async function processWithConcurrency<T>(items: T[], fn: (_item: T) => Promise<unknown>) {
+  const results = [];
+  for (let i = 0; i < items.length; i += CONCURRENCY) {
+    const batch = items.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.allSettled(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 export const runtime = "nodejs";
@@ -202,11 +218,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ~1ms/row so 10,000 rows completes in ~10s well within maxDuration.
   const useFastPath = body.rows.length > 500;
 
-  // For small batches (≤500 rows) that use external validators, process rows in
-  // concurrent chunks so multiple external calls overlap. Fast-path (>500 rows)
-  // skips external validators and runs at ~1ms/row so chunking adds no value.
-  const BATCH_CONCURRENCY = 10;
-
   const started = Date.now();
   const results: RowResult[] = [];
 
@@ -302,53 +313,41 @@ export async function POST(req: Request): Promise<NextResponse> {
     return row_result;
   }
 
-  if (useFastPath) {
-    // Fast-path: sequential, ~1ms/row, no external I/O — chunking adds overhead.
-    for (const row of body.rows) {
-      try {
-        results.push(await processRow(row));
-      } catch (err) {
-        console.error("[batch-screen] processRow failed:", err instanceof Error ? err.message : err);
-        results.push({
-          name: row?.name ?? "",
-          topScore: 0,
-          rawScore: 0,
-          severity: "error",
-          hitCount: 0,
-          listCoverage: [],
-          keywordGroups: [],
-          esgCategories: [],
-          durationMs: 0,
-          error: "Screening failed — please retry.",
-        });
-      }
-    }
-  } else {
-    // Small batches with external validators: process in concurrent chunks so
-    // external calls for different rows overlap and reduce total wall-clock time.
-    for (let i = 0; i < body.rows.length; i += BATCH_CONCURRENCY) {
-      const chunk = body.rows.slice(i, i + BATCH_CONCURRENCY);
-      const chunkResults = await Promise.all(
-        chunk.map((row) =>
-          processRow(row).catch((err: unknown) => {
-            console.error("[batch-screen] processRow chunk failed:", err instanceof Error ? err.message : err);
-            return {
-              name: row?.name ?? "",
-              topScore: 0,
-              rawScore: 0,
-              severity: "error" as const,
-              hitCount: 0,
-              listCoverage: [] as string[],
-              keywordGroups: [] as string[],
-              esgCategories: [] as string[],
-              durationMs: 0,
-              error: "Screening failed — please retry.",
-            };
-          })
-        )
+  // Process subjects in parallel with a 5-concurrency limiter and a 30s
+  // per-subject timeout so one slow subject cannot block the entire batch.
+  // The fast-path (>500 rows) skips external validators (~1ms/row) so the
+  // concurrency window still provides ordering without meaningful wait.
+  const settled = await processWithConcurrency(body.rows, (row) =>
+    Promise.race([
+      processRow(row),
+      new Promise<RowResult>((_, reject) =>
+        setTimeout(() => reject(new Error("per-subject timeout")), 30_000)
+      ),
+    ]).catch((err: unknown) => {
+      const isTimeout = err instanceof Error && err.message === "per-subject timeout";
+      console.error(
+        "[batch-screen] processRow failed:",
+        err instanceof Error ? err.message : err,
       );
-      results.push(...chunkResults);
-    }
+      return {
+        name: row?.name ?? "",
+        topScore: 0,
+        rawScore: 0,
+        severity: "error" as const,
+        hitCount: 0,
+        listCoverage: [] as string[],
+        keywordGroups: [] as string[],
+        esgCategories: [] as string[],
+        durationMs: 0,
+        error: isTimeout ? "screening timed out" : "Screening failed — please retry.",
+      } satisfies RowResult;
+    })
+  );
+
+  for (const s of settled) {
+    // processWithConcurrency uses Promise.allSettled; each item is always
+    // fulfilled because the .catch() above converts rejections to RowResult.
+    if (s.status === "fulfilled") results.push(s.value as RowResult);
   }
 
   const summary = {
@@ -432,6 +431,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     } // end egress gate else
   } // end if (elevated.length > 0 && token)
+
+  // Write tamper-evident audit chain entry for this batch screen run.
+  void writeAuditChainEntry({
+    event: "batch.screen_completed",
+    actor: gate.keyId ?? "system",
+    totalSubjects: body.rows.length,
+    criticalHits: results.filter((r) => r.severity === "critical").length,
+    requestedBy: gate.keyId,
+  }, tenantIdFromGate(gate)).catch((e) =>
+    console.warn("[audit] batch screen write failed:", e instanceof Error ? e.message : String(e))
+  );
 
   // Fire webhook for batch completion (elevated subjects only surfaced
   // in newHits so the consumer can page/route without parsing the full list).

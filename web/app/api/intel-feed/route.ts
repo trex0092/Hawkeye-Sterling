@@ -65,6 +65,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const signals: IntelSignal[] = [];
 
+  try {
   // ── 1. Sanctions alerts ──────────────────────────────────────────────────
   if (!allowedTypes || allowedTypes.has("sanctions")) {
     const [sanctionsMeta, sanctionsErr] = await getJson<SanctionsMeta>("hawkeye-sanctions/_meta.json")
@@ -179,4 +180,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     },
     { headers: gate.headers },
   );
+  } catch (err) {
+    console.error("[intel-feed] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load intel feed" }, { status: 500, headers: gate.headers });
+  }
 }

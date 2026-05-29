@@ -5,6 +5,7 @@
 
 declare const process: { env?: Record<string, string | undefined> } | undefined;
 
+import { createHash } from 'node:crypto';
 import type { NormalisedListEntry } from '../brain/watchlist-adapters.js';
 
 export interface OpenSanctionsSearchOptions {
@@ -84,7 +85,7 @@ function normalise(e: OpenSanctionsEntity): NormalisedListEntry {
     : Array.isArray(e.datasets) ? e.datasets : [];
   const publishedAt = typeof props.modifiedAt === 'string' ? props.modifiedAt : undefined;
   const remarks = typeof props.summary === 'string' ? (props.summary as string) : undefined;
-  const rawHash = fnv1a(JSON.stringify(e));
+  const rawHash = sha256hex(JSON.stringify(e));
   return {
     listId: 'opensanctions',
     sourceRef: e.id,
@@ -101,8 +102,4 @@ function normalise(e: OpenSanctionsEntity): NormalisedListEntry {
   };
 }
 
-function fnv1a(input: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) { h ^= input.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
+function sha256hex(s: string): string { return createHash("sha256").update(s, "utf8").digest("hex"); }

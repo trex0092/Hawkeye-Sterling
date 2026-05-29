@@ -48,14 +48,11 @@ interface BlobsModuleShape {
 }
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const a = enc.encode(expected);
-  const b = enc.encode(got);
-  const ab = new Uint8Array(a.length);
-  ab.set(b.slice(0, a.length));
-  return timingSafeEqual(a, ab);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 function credentials(): { siteID?: string; token?: string } {
@@ -90,8 +87,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[import-cfs GET] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
       { status: 503 },
     );
   }
@@ -114,8 +112,9 @@ export async function GET(req: Request): Promise<NextResponse> {
     }
     return NextResponse.json({ ok: true, ran: true, manifest }, { status: 200 });
   } catch (err) {
+    console.error("[import-cfs GET] manifest read failed:", err);
     return NextResponse.json(
-      { ok: false, error: `manifest read failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "manifest read failed — please retry or contact support" },
       { status: 503 },
     );
   }
@@ -134,12 +133,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
-  let mod: BlobsModuleShape;
+  let mod: BlobsModuleShape | null = null;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[import-cfs POST] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
+      { status: 503 },
+    );
+  }
+  if (!mod) {
+    return NextResponse.json(
+      { ok: false, error: "@netlify/blobs returned null" },
       { status: 503 },
     );
   }
@@ -194,8 +200,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     const listing = await cfsStore.list({ prefix: "files/" });
     fileKeys = (listing.blobs ?? []).map((b) => b.key);
   } catch (err) {
+    console.error("[import-cfs POST] cfs store list failed:", err);
     return NextResponse.json(
-      { ok: false, error: `cfs store list failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "cfs store list failed — please retry or contact support" },
       { status: 503 },
     );
   }
@@ -378,11 +385,12 @@ export async function POST(req: Request): Promise<NextResponse> {
           }
         }
       } catch (err) {
+        console.error(`[import-cfs POST] parse failed for file ${key}:`, err);
         perFile.push({
           key,
           format: "unknown",
           entityCount: 0,
-          error: err instanceof Error ? err.message : String(err),
+          error: "file parse failed — check server logs for details",
         });
       }
     }));
@@ -413,12 +421,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       perFile,
     });
   } catch (err) {
+    console.error("[import-cfs POST] index write failed:", err);
     return NextResponse.json(
       {
         ok: false,
         filesProcessed: perFile.length,
         entitiesParsed: allEntities.size,
-        error: `index write failed — ${err instanceof Error ? err.message : String(err)}`,
+        error: "index write failed — please retry or contact support",
         perFile,
       },
       { status: 503 },

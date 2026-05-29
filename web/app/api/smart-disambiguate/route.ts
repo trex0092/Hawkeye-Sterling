@@ -134,7 +134,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (hits.length > 20) {
     return NextResponse.json(
-      { error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
+      { ok: false, error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
       { status: 400, headers: gate.headers }
     );
   }
@@ -192,10 +192,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 6_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      max_tokens: 380, // per-hit JSON ~30 tok × 10 hits + overhead ≈ 350 tok; 380 keeps response under 0.8s
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -227,7 +227,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — ${msg}`);
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: `LLM call failed: ${msg}`, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    console.error("[smart-disambiguate] LLM call failed:", msg);
+    writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — LLM service temporarily unavailable`);
+    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }

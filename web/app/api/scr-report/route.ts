@@ -3,6 +3,7 @@
 // from a standard compliance-report payload. Replaces the old "Subject
 // Screening Dossier" format with the bureau-standard 14-section design.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import type {
@@ -488,7 +489,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
   const regBadges = [
     "RETENTION ACTIVE",
     "CABINET RES. 134/2025 ART. 17 – ONGOING SCREEN",
-    ...(disposition === "prohibited" ? ["CABINET RES. 134/2025 ART. 1S – STR IMMEDIATE-NOTIFY"] : []),
+    ...(disposition === "prohibited" ? ["CABINET RES. 134/2025 ART. 15 – STR IMMEDIATE-NOTIFY"] : []),
   ];
 
   // ── Assemble the full SCR ─────────────────────────────────────────────────
@@ -592,7 +593,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       ],
       ...(pepHits.length > 0 ? { pepHits } : {}),
       adverseMediaCorpora: [
-        { corpus: "Global news (multi-source)", scope: "EN · AR · FR · DE · RU", hits: amTotal },
+        { corpus: "Global news (multi-source)", scope: "EN · TR · AR · DE · FR · ES · RU · PT · IT · ZH · NL · PL · UK · JA · KO", hits: amTotal },
         { corpus: "Regulatory announcements", scope: "UAE · EU · UK · US", hits: 0 },
       ],
       ...(amHits.length > 0 ? { adverseMediaHits: amHits } : {}),
@@ -720,6 +721,32 @@ async function handleScrReport(req: Request): Promise<Response> {
       { status: 400, headers: gateHeaders },
     );
   }
+  if (body.subject.name.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subject.name exceeds 500-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  if (body.subject.id && body.subject.id.length > 256) {
+    return NextResponse.json(
+      { ok: false, error: "subject.id exceeds 256-character limit" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+  // Cap aliases array to prevent DoS via huge alias lists.
+  if (Array.isArray(body.subject.aliases) && body.subject.aliases.length > 50) {
+    body.subject.aliases = body.subject.aliases.slice(0, 50);
+  }
+  // Cap adverseMedia array and article list to prevent DoS via huge payloads.
+  if (body.superBrain?.adverseMedia && Array.isArray(body.superBrain.adverseMedia) && body.superBrain.adverseMedia.length > 500) {
+    body.superBrain.adverseMedia = body.superBrain.adverseMedia.slice(0, 500);
+  }
+  if (body.superBrain?.newsDossier?.articles && Array.isArray(body.superBrain.newsDossier.articles)) {
+    body.superBrain.newsDossier.articles = body.superBrain.newsDossier.articles.slice(0, 200).map((a) => ({
+      ...a,
+      snippet: typeof a.snippet === "string" && a.snippet.length > 500 ? a.snippet.slice(0, 500) : a.snippet,
+    }));
+  }
 
   // BUG-04 fix: ensure result and subject.id are always present
   if (!body.result) {
@@ -795,7 +822,7 @@ async function handleScrReport(req: Request): Promise<Response> {
       tool: "generate_screening_report",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: gateHeaders });
   }

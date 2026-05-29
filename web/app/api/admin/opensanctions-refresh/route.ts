@@ -22,20 +22,18 @@ import {
   refreshOpenSanctionsBlob,
   resolveDatasetList,
 } from "@/lib/intelligence/opensanctions-datasets";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("node:crypto");
-  const enc = new TextEncoder();
-  const a = enc.encode(expected);
-  const b = enc.encode(got);
-  const ab = new Uint8Array(a.length);
-  ab.set(b.slice(0, a.length));
-  return timingSafeEqual(a, ab);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -53,12 +51,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const result = await refreshOpenSanctionsBlob();
+    void writeAuditChainEntry(
+      { event: "admin.opensanctions_refresh", actor: "system", ok: result.ok, at: new Date().toISOString() },
+      "admin",
+    ).catch(() => {});
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (err) {
+    console.error("[admin/opensanctions-refresh] refresh threw:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
-        error: `refresh threw — ${err instanceof Error ? err.message : String(err)}`,
+        error: "opensanctions refresh failed",
         at: new Date().toISOString(),
       },
       { status: 500 },

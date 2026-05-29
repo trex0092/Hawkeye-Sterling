@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Check {
   name: string;
@@ -195,7 +196,7 @@ export default function StatusPage() {
         const r = await fetch("/api/status", { cache: "no-store" });
         if (!r.ok) {
           console.error(`[hawkeye] status HTTP ${r.status}`);
-          if (active) setErr(`HTTP ${r.status}`);
+          if (active) setErr(apiErrorMessage(r.status, "Status check"));
           return;
         }
         const payload = (await r.json()) as StatusPayload;
@@ -205,7 +206,7 @@ export default function StatusPage() {
           const allSvcs = [
             ...payload.checks,
             ...payload.externalChecks,
-            { name: payload.sanctions.name, status: effectiveSanctionsStatus(payload.sanctions) },
+            ...(payload.sanctions ? [{ name: payload.sanctions.name, status: effectiveSanctionsStatus(payload.sanctions) }] : []),
           ];
           for (const svc of allSvcs) {
             const prev = historyRef.current[svc.name] ?? [];
@@ -214,7 +215,7 @@ export default function StatusPage() {
         }
       } catch (e) {
         console.error("[hawkeye] status threw:", e);
-        if (active) setErr(e instanceof Error ? e.message : String(e));
+        if (active) setErr(caughtErrorMessage(e, "Status check failed — please retry"));
       }
     };
     void load();
@@ -718,7 +719,7 @@ function SanctionsRefreshButton() {
         setState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setMsg(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setState("error");
     }
   };
@@ -830,7 +831,7 @@ function ServiceDependencyMap({ checks, externalChecks }: { checks: Check[]; ext
       </div>
       {/* Asana */}
       <div className="flex items-center gap-2 flex-wrap pl-6">
-        <DependencyNode label="Asana" status={find("Asana")} external />
+        <DependencyNode label="Asana" status={find("asana")} external />
         <Arrow />
         <DependencyNode label="19 workflow boards" external />
       </div>
@@ -884,6 +885,7 @@ function SessionActivity({ historyRef, checks, externalChecks, sanctionsName, sa
 }
 
 interface CmResult { envVar: string; name: string; gid: string | null; status: "created" | "already_exists" | "failed"; error?: string }
+type ResetResult = { name: string; deleted: number; created: number; errors: string[] };
 
 function AsanaRebuildSection() {
   const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
@@ -896,6 +898,13 @@ function AsanaRebuildSection() {
   const [cmErr, setCmErr] = useState("");
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const [rebuildState, setRebuildState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [_rebuildResults, setRebuildResults] = useState<ResetResult[]>([]);
+  const [rebuildErr, setRebuildErr] = useState("");
+  const [resetState, setResetState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [_resetResults, setResetResults] = useState<ResetResult[]>([]);
+  const [_resetErr, setResetErr] = useState("");
 
   const createMissing = async () => {
     setCmState("running");
@@ -924,7 +933,7 @@ function AsanaRebuildSection() {
         setCmState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setCmErr(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setCmErr(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setCmState("error");
     }
   };
@@ -962,7 +971,7 @@ function AsanaRebuildSection() {
         setState("error");
       }
     } catch (e) {
-      if (mountedRef.current) setErrMsg(e instanceof Error ? e.message : "Network error");
+      if (mountedRef.current) setErrMsg(caughtErrorMessage(e, "Network error"));
       if (mountedRef.current) setState("error");
     }
   };
@@ -980,6 +989,32 @@ function AsanaRebuildSection() {
     { board: "18 · Regulator Portal Handoff",          envVar: "ASANA_REGULATOR_PROJECT_GID" },
     { board: "19 · Incidents & Grievances",            envVar: "ASANA_INCIDENTS_PROJECT_GID" },
   ];
+
+  const _runRebuild = async () => {
+    setRebuildState("running");
+    setRebuildResults([]);
+    setRebuildErr("");
+    try {
+      const res = await fetch("/api/asana-rebuild-sections", { method: "POST" });
+      const data = await res.json() as { ok: boolean; results?: ResetResult[]; error?: string };
+      if (data.ok) { setRebuildResults(data.results ?? []); setRebuildState("done"); }
+      else { setRebuildErr(data.error ?? "Rebuild failed"); setRebuildState("error"); }
+    } catch (e) { setRebuildErr(e instanceof Error ? e.message : "Network error"); setRebuildState("error"); }
+  };
+
+  const _runFullReset = async () => {
+    setResetState("running");
+    setResetResults([]);
+    setResetErr("");
+    try {
+      const res = await fetch("/api/asana-full-reset", { method: "POST" });
+      const data = await res.json() as { ok: boolean; results?: ResetResult[]; error?: string };
+      if (data.ok || data.results?.length) { setResetResults(data.results ?? []); setResetState("done"); }
+      else { setResetErr(data.error ?? "Reset failed"); setResetState("error"); }
+    } catch (e) { setResetErr(e instanceof Error ? e.message : "Network error"); setResetState("error"); }
+  };
+
+  const _busy = rebuildState === "running" || resetState === "running";
 
   return (
     <div className="mt-8 border border-hair-2 rounded-xl p-5">
@@ -1054,7 +1089,7 @@ function AsanaRebuildSection() {
           onClick={() => setShowEnvRef((v) => !v)}
           className="w-full flex items-center justify-between px-3 py-2 bg-bg-1 hover:bg-bg-panel text-12 font-semibold text-ink-1 transition-colors"
         >
-          <span>Netlify env vars — new boards (add as you create each project in Asana)</span>
+          <span>Netlify env vars — add as you create each project in Asana</span>
           <span className="text-ink-3 text-11">{showEnvRef ? "▲ hide" : "▼ show"}</span>
         </button>
         {showEnvRef && (
@@ -1062,9 +1097,7 @@ function AsanaRebuildSection() {
             {NEW_PROJECTS.map(({ board, envVar }) => (
               <div key={envVar} className="flex items-center justify-between px-3 py-2 bg-bg-panel">
                 <span className="text-12 text-ink-1">{board}</span>
-                <span className="font-mono text-11 text-brand bg-brand-dim/30 px-2 py-0.5 rounded select-all">
-                  {envVar}
-                </span>
+                <span className="font-mono text-11 text-brand bg-brand-dim/30 px-2 py-0.5 rounded select-all">{envVar}</span>
               </div>
             ))}
             <div className="px-3 py-2 bg-bg-1 text-11 text-ink-3">
@@ -1074,10 +1107,9 @@ function AsanaRebuildSection() {
         )}
       </div>
 
-      {state === "error" && (
-        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">
-          {errMsg}
-        </div>
+      {/* ── Results ─────────────────────────────────────────────────────────── */}
+      {rebuildState === "error" && (
+        <div className="bg-red-dim border border-red/30 rounded px-3 py-2 text-12 text-red">{rebuildErr}</div>
       )}
 
       {state === "done" && results.length > 0 && (

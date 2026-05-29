@@ -142,7 +142,7 @@ function abortable<T>(p: Promise<T>, ms = FETCH_TIMEOUT_MS): Promise<T> {
  */
 function extractFromHtml(html: string, url: string): NewsArticle | null {
   const meta = (name: string): string | undefined => {
-    const re = new RegExp(`<meta\\s+(?:[^>]*?(?:name|property)=["']${name}["'][^>]*?content=["']([^"']+)["']|[^>]*?content=["']([^"']+)["'][^>]*?(?:name|property)=["']${name}["'])[^>]*>`, "i");
+    const re = new RegExp(`<meta\\s+(?:[^>]*?(?:name|property)=["']${name}["'][^>]*?content=["']([^"']+)["']|[^>]*?content=["']([^"']+)["'][^>]*?(?:name|property)=["']${name}["'])[^>]*>`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     const m = re.exec(html);
     return m ? (m[1] ?? m[2])?.trim() : undefined;
   };

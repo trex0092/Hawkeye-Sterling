@@ -35,6 +35,16 @@ export const maxDuration = 30;
 interface WireScreenBody {
   mt103Text?: string;
   mt103?: Mt103;
+  travelRule?: {
+    originatorAddress?: string;      // required for cross-border >= USD 1000 (June 2025)
+    originatorDob?: string;          // required for individuals (June 2025)
+    beneficiaryAddress?: string;     // required
+    amount?: number;                 // USD equivalent (if not parseable from MT103)
+    isCrossBorder?: boolean;         // explicit flag; defaults to true if mt103.currency != "AED"
+    legalEntityBic?: string;         // substitute for DOB for legal entities
+    legalEntityLei?: string;         // Legal Entity Identifier
+    legalEntityRegNumber?: string;   // official registration number
+  };
 }
 
 interface PartyResult {
@@ -110,6 +120,33 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Travel Rule June 2025 — FATF Rec 16 updated: address + DOB mandatory for cross-border >= USD 1,000
+  const TRAVEL_RULE_THRESHOLD_USD = 1_000;
+  const amountRaw = typeof mt103.amount === "string"
+    ? parseFloat((mt103.amount as string).replace(",", "."))
+    : Number(mt103.amount ?? 0);
+  const amount = isNaN(amountRaw) ? (body.travelRule?.amount ?? 0) : (body.travelRule?.amount ?? amountRaw);
+  const currency = mt103.currency ?? "";
+  // Treat as cross-border if not AED (UAE domestic)
+  const isCrossBorder = body.travelRule?.isCrossBorder ?? (currency !== "AED" && currency !== "");
+  const travelRuleApplies = isCrossBorder && amount >= TRAVEL_RULE_THRESHOLD_USD;
+
+  const travelRuleViolations: string[] = [];
+  if (travelRuleApplies) {
+    if (!body.travelRule?.originatorAddress) {
+      travelRuleViolations.push("originator-address-required (FATF Rec 16 June 2025)");
+    }
+    // DOB required for individuals; legal entities substitute BIC/LEI/registration number
+    const isLegalEntity = !!(body.travelRule?.legalEntityBic || body.travelRule?.legalEntityLei || body.travelRule?.legalEntityRegNumber);
+    if (!body.travelRule?.originatorDob && !isLegalEntity) {
+      travelRuleViolations.push("originator-dob-required-for-individuals (FATF Rec 16 June 2025)");
+    }
+    if (!body.travelRule?.beneficiaryAddress) {
+      travelRuleViolations.push("beneficiary-address-required (FATF Rec 16 June 2025)");
+    }
+  }
+  const travelRuleCompliant = travelRuleViolations.length === 0;
+
   const candidates = await loadCandidates();
   const ordering = partyToScreen(mt103.ordering ?? {}, candidates);
   const beneficiary = partyToScreen(mt103.beneficiary ?? {}, candidates);
@@ -148,6 +185,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       circularFlow: circular,
       fatfR16Compliant,
       missingInformation: missingInfo,
+      travelRuleApplies,
+      travelRuleCompliant,
+      travelRuleViolations,
+      travelRuleUpdate: "FATF Recommendation 16 (June 2025) — address and DOB now mandatory for cross-border transfers >= USD 1,000",
       riskTier: overall,
       reasonCodes,
       regulationBasis: [

@@ -39,13 +39,13 @@ export async function GET(req: Request): Promise<NextResponse> {
       { headers: gate.headers },
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("[goaml/entities]", message);
+    const rawMessage = err instanceof Error ? err.message : String(err);
+    console.error("[goaml/entities]", rawMessage);
     return NextResponse.json(
       {
         ok: false,
         error: "entities-config-malformed",
-        message,
+        message: "entities-config-malformed",
         hint: "HAWKEYE_ENTITIES is malformed or missing — check JSON syntax in Netlify env vars.",
       },
       { status: 503, headers: gate.headers },

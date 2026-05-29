@@ -15,6 +15,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";
 
 export interface StrCase {
@@ -33,6 +35,8 @@ export interface StrCase {
   notes?: string;
   linkedCaseId?: string;
   assignee?: string;
+  fiuDeadline35Day?: string;    // ISO — 35 calendar days from createdAt
+  fiuDeadlineDay20Alert?: string; // ISO — day 20 milestone (internal investigation deadline)
 }
 
 const STR_KEY_PREFIX = "str-cases/";
@@ -70,7 +74,7 @@ async function saveStrCase(tenantId: string, c: StrCase): Promise<void> {
 function generateStrId(): string {
   const now = new Date();
   const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
-  const rand = Math.random().toString(36).slice(2, 6);
+  const rand = randomBytes(2).toString("hex");
   return `STR-${stamp}-${rand}`;
 }
 
@@ -84,18 +88,30 @@ export async function GET(req: Request): Promise<NextResponse> {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "200", 10) || 200, 500);
   const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10) || 0, 0);
 
-  let cases = await loadAllStrCases(tenant);
+  try {
+    let cases = await loadAllStrCases(tenant);
 
-  if (status) cases = cases.filter((c) => c.status === status);
-  cases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    if (status) cases = cases.filter((c) => c.status === status);
+    cases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-  const total = cases.length;
-  const page = cases.slice(offset, offset + limit);
+    const total = cases.length;
+    const page = cases.slice(offset, offset + limit);
 
-  return NextResponse.json(
-    { ok: true, tenant, cases: page, total, limit, offset },
-    { headers: gate.headers },
-  );
+    const enrichedPage = page.map((c) => {
+      const daysRemaining = c.fiuDeadline35Day
+        ? Math.ceil((Date.parse(c.fiuDeadline35Day) - Date.now()) / 86400000)
+        : null;
+      return { ...c, daysRemaining };
+    });
+
+    return NextResponse.json(
+      { ok: true, tenant, cases: enrichedPage, total, limit, offset },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[str-cases] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load STR cases" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -120,6 +136,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Batch upsert
   if (Array.isArray(body.cases)) {
+    if (body.cases.length > 500) {
+      return NextResponse.json({ ok: false, error: "batch size must not exceed 500 items" }, { status: 413, headers: gate.headers });
+    }
     const now = new Date().toISOString();
     const saved: StrCase[] = [];
     for (const c of body.cases) {
@@ -165,6 +184,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  const isNewCase = !body.id;
+  const caseCreatedAt = body.createdAt ? new Date(body.createdAt) : new Date();
+  const fiuDeadline35Day = isNewCase && !body.fiuDeadline35Day
+    ? new Date(caseCreatedAt.getTime() + 35 * 24 * 60 * 60 * 1000).toISOString()
+    : body.fiuDeadline35Day;
+  const fiuDeadlineDay20Alert = isNewCase && !body.fiuDeadlineDay20Alert
+    ? new Date(caseCreatedAt.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString()
+    : body.fiuDeadlineDay20Alert;
+
   const record: StrCase = {
     subject: body.subject?.trim() || "Unknown Subject",
     status: body.status ?? "draft",
@@ -172,6 +200,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     id: body.id ?? generateStrId(),
     createdAt: body.createdAt ?? now,
     updatedAt: now,
+    ...(fiuDeadline35Day !== undefined ? { fiuDeadline35Day } : {}),
+    ...(fiuDeadlineDay20Alert !== undefined ? { fiuDeadlineDay20Alert } : {}),
   };
   await saveStrCase(tenant, record);
   return NextResponse.json({ ok: true, tenant, case: record }, { status: 201, headers: gate.headers });
@@ -191,6 +221,9 @@ export async function PUT(req: Request): Promise<NextResponse> {
   if (!Array.isArray(body.cases)) {
     return NextResponse.json({ ok: false, error: "body.cases must be an array" }, { status: 400, headers: gate.headers });
   }
+  if (body.cases.length > 500) {
+    return NextResponse.json({ ok: false, error: "batch size must not exceed 500 items" }, { status: 413, headers: gate.headers });
+  }
 
   const now = new Date().toISOString();
   const saved: StrCase[] = [];
@@ -199,5 +232,10 @@ export async function PUT(req: Request): Promise<NextResponse> {
     await saveStrCase(tenant, record);
     saved.push(record);
   }
+  void writeAuditChainEntry(
+    { event: "str_cases.bulk_imported", actor: gate.keyId, meta: { count: saved.length } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, tenant, cases: saved }, { headers: gate.headers });
 }

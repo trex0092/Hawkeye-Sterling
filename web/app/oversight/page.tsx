@@ -9,6 +9,7 @@ import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
 import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
 import { openReportWindow } from "@/lib/reportOpen";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
 // Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
@@ -1058,7 +1059,7 @@ export default function OversightPage() {
       setGapResult(data);
       setGapOpen(true);
     } catch (e) {
-      if (mountedRef.current) setGapError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setGapError(caughtErrorMessage(e, "Gap analysis failed — please retry"));
     } finally {
       if (mountedRef.current) setGapLoading(false);
     }
@@ -1086,7 +1087,7 @@ export default function OversightPage() {
       const data = await res.json().catch(() => ({})) as BoardAmlReportResult & { ok: boolean };
       if (mountedRef.current) setBoardResult(data);
     } catch (e) {
-      if (mountedRef.current) setBoardError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setBoardError(caughtErrorMessage(e, "Board report generation failed — please retry"));
     } finally {
       if (mountedRef.current) setBoardLoading(false);
     }
@@ -1126,7 +1127,7 @@ export default function OversightPage() {
       setPackResult(data);
       setPackExpandedSection("executiveSummary");
     } catch (e) {
-      if (mountedRef.current) setPackError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setPackError(caughtErrorMessage(e, "Board pack generation failed — please retry"));
     } finally {
       if (mountedRef.current) setPackLoading(false);
     }
@@ -1165,7 +1166,7 @@ export default function OversightPage() {
       if (!data.ok) throw new Error(data.error ?? "Gap analysis failed — please retry");
       setQueueGapResult(data.result);
     } catch (e) {
-      if (mountedRef.current) setQueueGapError(e instanceof Error ? e.message : "Gap analysis failed — please retry");
+      if (mountedRef.current) setQueueGapError(caughtErrorMessage(e, "Gap analysis failed — please retry"));
     } finally {
       if (mountedRef.current) setQueueGapLoading(false);
     }
@@ -1196,7 +1197,7 @@ export default function OversightPage() {
       if (!data.ok) throw new Error(data.error ?? "Deadline engine failed — please retry");
       setDeadlineResult(data);
     } catch (e) {
-      if (mountedRef.current) setDeadlineError(e instanceof Error ? e.message : "Deadline engine failed — please retry");
+      if (mountedRef.current) setDeadlineError(caughtErrorMessage(e, "Deadline engine failed — please retry"));
     } finally {
       if (mountedRef.current) setDeadlineLoading(false);
     }

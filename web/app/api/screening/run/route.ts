@@ -25,7 +25,6 @@ import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
-import { quickScreen as brainQuickScreen } from "../../../../../src/brain/quick-screen.js";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 // Bare writer used for one-off adversarial-input audit events that fire
 // BEFORE the per-request ScreeningAuditWriter is constructed. These events
@@ -45,6 +44,25 @@ import type {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+// ── Brain loader — dynamic so a missing dist/ doesn't crash the module ────────
+type BrainScreenFn = (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult;
+let _brainFn: BrainScreenFn | null = null;
+let _brainLoadError: string | null = null;
+
+async function loadBrain(): Promise<BrainScreenFn | null> {
+  if (_brainFn) return _brainFn;
+  if (_brainLoadError) return null;
+  try {
+    const mod = (await import("../../../../../src/brain/quick-screen.js")) as { quickScreen: BrainScreenFn };
+    _brainFn = mod.quickScreen;
+    return _brainFn;
+  } catch (err) {
+    _brainLoadError = err instanceof Error ? err.message : String(err);
+    console.error("[screening/run] Brain module unavailable — rule-based fallback active:", _brainLoadError);
+    return null;
+  }
+}
 
 const SCHEMA_VERSION = "1.0";
 const MAX_CANDIDATES = 5_000;
@@ -97,6 +115,8 @@ function validateRequest(raw: unknown): { ok: true; value: ScreeningRunRequest }
       errors.push({ field: "subject.aliases", message: `aliases must not exceed ${MAX_ALIASES} entries` });
     } else if (!(subject["aliases"] as unknown[]).every((a) => typeof a === "string")) {
       errors.push({ field: "subject.aliases", message: "all aliases must be strings" });
+    } else if ((subject["aliases"] as string[]).some((a) => a.length > 512)) {
+      errors.push({ field: "subject.aliases", message: "each alias must not exceed 512 characters" });
     }
   }
 
@@ -137,9 +157,13 @@ function validateRequest(raw: unknown): { ok: true; value: ScreeningRunRequest }
 // Unique per screening when requestId is omitted.
 
 function buildResultId(subject: QuickScreenSubject, ts: string, requestId?: string): string {
+  // NFKD normalization + strip combining marks prevents homoglyph collisions
+  // (e.g. German ß → ss lowercases differently across locales; Cyrillic
+  // lookalikes would produce distinct IDs masking as the same entity).
+  const normName = subject.name.trim().normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
   const seed = [
     requestId ?? randomUUID(),
-    subject.name.toLowerCase().trim(),
+    normName,
     subject.entityType ?? "",
     ts,
   ].join("|");
@@ -251,10 +275,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
       listsLoaded = candidates.length;
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      console.error("[screening/run] loadCandidates failed", { reqId, detail });
+      console.error("[screening/run] loadCandidates failed", { reqId, detail: err instanceof Error ? err.message : String(err) });
       return NextResponse.json(
-        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", detail, requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
+        { ok: false, error: "corpus_unavailable", message: "Failed to load watchlist corpus", requestId: reqId, degraded: true, latencyMs: Date.now() - t0 },
         { status: 503, headers: responseHeaders },
       );
     }
@@ -278,20 +301,41 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, tenant).catch(() => undefined);
   }
 
+  const brainFn = await loadBrain();
+
   let result: QuickScreenResult;
-  try {
-    result = (brainQuickScreen as (_s: QuickScreenSubject, _c: QuickScreenCandidate[], _o?: QuickScreenOptions) => QuickScreenResult)(
+  if (!brainFn) {
+    // Rule-based fallback: exact/near-exact name matching against candidates.
+    const lowerName = subject.name.toLowerCase();
+    const hits = candidates.filter((c) => {
+      const cn = (c.name ?? "").toLowerCase();
+      return cn === lowerName || cn.includes(lowerName) || lowerName.includes(cn);
+    });
+    result = {
       subject,
-      candidates,
-      options,
-    );
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    console.error("[screening/run] quickScreen threw", { reqId, resultId, detail });
-    return NextResponse.json(
-      { ok: false, error: "screening_failed", message: "Screening engine error", detail, requestId: reqId, resultId, latencyMs: Date.now() - t0 },
-      { status: 500, headers: responseHeaders },
-    );
+      hits: hits.map((c) => ({ ...c, score: 0.95, matchRationale: "Exact name match (rule-based fallback — AI engine unavailable)" })),
+      topScore: hits.length > 0 ? 0.95 : 0,
+      severity: (hits.length > 0 ? "critical" : "clear") as "critical" | "clear",
+      screenedAt: new Date().toISOString(),
+      listsChecked: listsLoaded,
+      listIds: candidates.map((c) => (c as unknown as Record<string, unknown>)["listId"] as string ?? "").filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).sort(),
+      candidatesChecked: candidates.length,
+      durationMs: Date.now() - t0,
+      generatedAt: new Date().toISOString(),
+      degraded: true,
+      screeningMode: "rule-based-fallback" as const,
+      brainUnavailable: _brainLoadError ?? "unknown",
+    } as unknown as QuickScreenResult;
+  } else {
+    try {
+      result = brainFn(subject, candidates, options);
+    } catch (err) {
+      console.error("[screening/run] quickScreen threw", { reqId, resultId, detail: err instanceof Error ? err.message : String(err) });
+      return NextResponse.json(
+        { ok: false, error: "screening_failed", message: "Screening engine error", requestId: reqId, resultId, latencyMs: Date.now() - t0 },
+        { status: 500, headers: responseHeaders },
+      );
+    }
   }
 
   // FDL 10/2025 Art.15 — every screening invocation must be permanently logged.
@@ -393,6 +437,75 @@ export async function POST(req: Request): Promise<NextResponse> {
     result.hits.length,
   ).catch(() => undefined);
 
+  // Auto-create compliance case when hits are found (fire-and-forget).
+  if (result.hits.length > 0) {
+    void (async () => {
+      try {
+        const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        const res = await fetch(`${baseUrl}/api/hs-cases`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+          },
+          body: JSON.stringify({
+            subjectName: subject.name,
+            subjectId: resultId,
+            severity: result.severity,
+            hits: result.hits.map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              matchScore: h.score,
+            })),
+            linkedAuditSeq: undefined,
+            createdBy: gate.keyId,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "");
+          console.warn("[screening/run] auto-case creation failed:", res.status, errBody.slice(0, 200));
+        } else {
+          const caseData = await res.json() as { ok: boolean; case?: { caseId: string }; deduplicated?: boolean };
+          if (caseData.ok && caseData.case?.caseId && !caseData.deduplicated) {
+            void fetch(`${baseUrl}/api/hs-cases/${caseData.case.caseId}/enrich`, {
+              method: "POST",
+              headers: { "x-api-key": process.env["ADMIN_TOKEN"] ?? "" },
+            }).catch((e: unknown) => {
+              console.warn("[screening/run] auto-enrich failed:", e instanceof Error ? e.message : String(e));
+            });
+          }
+          // If UAE lists are stale, queue subject for re-screen after refresh.
+          if (uaeStale) {
+            void fetch(`${baseUrl}/api/rescreen-queue`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+              },
+              body: JSON.stringify({
+                subjectId: resultId,
+                subjectName: subject.name,
+                reason: "Screened while UAE EOCN or LTL list was stale (>36h). Re-screen required after refresh.",
+              }),
+            }).catch(() => undefined);
+          }
+        }
+      } catch (err) {
+        console.warn("[screening/run] auto-case creation error:", err instanceof Error ? err.message : String(err));
+      }
+    })();
+  }
+
+  // Record screening result for bias monitoring (fire-and-forget).
+  void recordScreeningBias(
+    tenant,
+    subject.name,
+    result.topScore,
+    result.severity,
+    result.hits.length,
+  ).catch(() => undefined);
+
   // Confidence calibration note — honest statement about what was and
   // wasn't checked. Never claim higher confidence than supported.
   const confidenceNote =
@@ -404,6 +517,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const negativeEvidence = buildNegativeEvidence(result, listsLoaded);
 
+  // ADD-4: if any mandatory list was stale at screening time, mark result
+  // REQUIRES_REVERIFICATION so operators and downstream consumers know the
+  // screening must be repeated after the next successful list refresh.
+  const requiresReverification = uaeStale;
+
   return NextResponse.json(
     {
       ok: true,
@@ -412,6 +530,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       requestId: reqId,
       ...result,
       provisionalScreening: uaeStale,
+      ...(requiresReverification ? {
+        requiresReverification: true,
+        reverificationReason: "Screened while one or more mandatory lists were stale (>36h). Result must be re-verified after the next successful sanctions list refresh. UAE FDL No.10/2025 Art.15.",
+      } : {}),
       adversarialRisk: adversarialCheck.risk !== "none" ? adversarialCheck.risk : undefined,
       negativeEvidence,
       confidenceNote,

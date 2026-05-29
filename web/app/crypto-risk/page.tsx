@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { analyzeCrypto, type WalletNode } from "@/lib/intelligence/cryptoExposure";
 import { walletAgeScore, mixerExposure, type WalletProfile } from "@/lib/intelligence/cryptoIntel";
 import { activeOnChainProvider } from "@/lib/intelligence/liveAdapters";
@@ -150,15 +151,15 @@ export default function CryptoRiskPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "Crypto risk"));
       }
       const data = await res.json().catch(() => ({})) as WalletRisk;
       if (!mountedRef.current) return;
-      if (!data.ok) setError(data.error ?? `HTTP ${res.status}`);
+      if (!data.ok) setError(data.error ?? apiErrorMessage(res.status, "Crypto risk"));
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] crypto-risk scoring threw:", err);
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Request failed"));
     } finally { if (mountedRef.current) setLoading(false); }
   }
 

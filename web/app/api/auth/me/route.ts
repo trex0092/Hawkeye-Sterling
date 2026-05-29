@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { verifySession, computeRequestFingerprint, SESSION_COOKIE } from "@/lib/server/auth";
-import { loadUsers, ROLE_LABEL } from "../../access/_store";
+import { loadUsers, ROLE_LABEL, updateSessionActivity } from "../../access/_store";
 import { cookies, headers } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -23,6 +23,9 @@ export async function GET(): Promise<NextResponse> {
   if (!user) {
     return NextResponse.json({ ok: false, error: "Session invalidated — please log in again" }, { status: 401 });
   }
+  if (!user.active) {
+    return NextResponse.json({ ok: false, error: "Account deactivated — contact your administrator" }, { status: 403 });
+  }
 
   // Reject sessions issued before the most recent password change. This
   // catches the admin-reset case where the target user's cookie was not
@@ -38,8 +41,9 @@ export async function GET(): Promise<NextResponse> {
       maxAge: 0,
       path: "/",
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: isSecure,
+      partitioned: isSecure,
     });
     return res;
   }
@@ -65,6 +69,8 @@ export async function GET(): Promise<NextResponse> {
   }
 
   const { passwordHash: _h, passwordSalt: _s, pwVersion: _v, lastIpHash: _ip, ...safe } = user;
+  // Bump session lastActive — best-effort, must not block the response.
+  void updateSessionActivity(session.userId).catch(() => {});
   return NextResponse.json({
     ok: true,
     user: {

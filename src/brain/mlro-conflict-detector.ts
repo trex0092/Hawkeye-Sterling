@@ -46,7 +46,7 @@ function normToken(s: string): string {
 
 function uniqueExtract(text: string, rx: RegExp): string[] {
   const out = new Set<string>();
-  const r = new RegExp(rx.source, rx.flags);
+  const r = new RegExp(rx.source, rx.flags); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   let m: RegExpExecArray | null;
   while ((m = r.exec(text)) !== null) out.add(normToken(m[0]));
   return [...out].sort();

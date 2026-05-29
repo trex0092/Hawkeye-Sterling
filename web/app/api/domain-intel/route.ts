@@ -5,6 +5,7 @@
 // Body: { domain: string }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { domainIntel, type DomainIntelResult } from "../../../../src/integrations/webCheck.js";
 import { lookupProviderByDomain, deriveRiskSignals } from "@/lib/intelligence/openBankingTracker";
@@ -202,7 +203,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tool: "domain_intel",
       message,
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...CORS } });
   }

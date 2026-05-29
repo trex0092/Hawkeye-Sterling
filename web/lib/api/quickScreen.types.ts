@@ -52,6 +52,24 @@ export interface QuickScreenCandidate {
 
 export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
 
+export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely';
+
+export interface DisambiguationFactors {
+  nationalityPoints: number;
+  dobPoints: number;
+  aliasPoints: number;
+  genderPoints: number;
+  entityTypePoints: number;
+  contradictionPoints: number;
+}
+
+export interface ClusterSummary {
+  label: string;
+  size: number;
+  primaryName: string;
+  names: string[];
+}
+
 export interface QuickScreenHit {
   listId: string;
   listRef: string;
@@ -69,9 +87,26 @@ export interface QuickScreenHit {
   scores?: Partial<Record<MatchingMethod, number>>;
   disambiguationConfidence?: number;
   recommendation?: 'match' | 'review' | 'dismiss';
+  // Multi-factor disambiguation (sanctions-disambiguation.ts)
+  disambiguationScore?: number;
+  confidenceTier?: ConfidenceTier;
+  disambiguationFactors?: DisambiguationFactors;
+  falsePositiveFlag?: 'likely_false_positive';
+  falsePositiveExplanation?: string;
+  sdnPrograms?: string[];
+  // Look-alike clustering annotations
+  clusterLabel?: string;
+  clusterSize?: number;
   candidateEntityType?: EntityType;
   entityTypeMismatch?: boolean;
   autoResolution?: 'auto-dismissed' | 'flagged';
+  // Source attribution — surfaced in audit trail, UI, and export.
+  // Every hit MUST show where the match came from and why.
+  sourceList?: string;          // exact list ID e.g. "ofac_sdn"
+  sourceLabel?: string;         // human-readable e.g. "OFAC Specially Designated Nationals"
+  listingDate?: string;         // ISO date of designation when available
+  matchReason?: string;         // algorithms fired + discriminators (structured companion to reason)
+  riskCategory?: 'sanctions' | 'pep' | 'adverse_media';
 }
 
 export interface QuickScreenOptions {
@@ -80,6 +115,10 @@ export interface QuickScreenOptions {
   maxHits?: number;
   includeScoreBreakdown?: boolean;
   autoResolveRules?: 'conservative' | 'standard' | 'strict';
+  /** Bypass the in-memory result cache and force a fresh screening run. */
+  forceRefresh?: boolean;
+  /** Run enhanced (deep) screening — always bypasses the cache. */
+  enhanced?: boolean;
 }
 
 export interface QuickScreenResult {
@@ -99,6 +138,11 @@ export interface QuickScreenResult {
   confidenceScore?: number;
   // Per-list breakdown — only present when there are hits.
   listBreakdown?: Record<string, { hits: number; topScore: number; weight: number }>;
+  // Look-alike name clustering: groups of hits >= 95% similar by trigram Jaccard.
+  lookalikeClusters?: ClusterSummary[];
+  // Count of hits auto-classified as "likely_false_positive" by the
+  // multi-factor disambiguation engine.
+  likelyFalsePositiveCount?: number;
   // Populated when the subject matched a tenant-scoped whitelist entry —
   // hits[] is then empty and severity is "clear". Callers can branch on
   // whitelisted !== undefined to render a different UI / verdict.

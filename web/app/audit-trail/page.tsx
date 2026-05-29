@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
 import {
@@ -117,7 +118,7 @@ export default function AuditTrailPage() {
       } else {
         if (!mountedRef.current) return;
         console.error(`[hawkeye] audit-trail/anomaly-detect HTTP ${res.status}`);
-        setError(`Anomaly scan failed (HTTP ${res.status}). Please try again.`);
+        setError(apiErrorMessage(res.status, "Anomaly scan"));
       }
     } catch (err) {
       if (!mountedRef.current) return;
@@ -170,9 +171,11 @@ export default function AuditTrailPage() {
 
   return (
     <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
-      <ModuleFamilyBar suiteName="Audit Trail & Operator Console" modules={[
+      <ModuleFamilyBar suiteName="Security" modules={[
+        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
         { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Operator Console", href: "/operator", icon: "🔭" },
+        { label: "Access Control", href: "/access-control", icon: "🔐" },
+        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
       ]} />
       <div>
         <div className="mb-8">
@@ -249,7 +252,7 @@ export default function AuditTrailPage() {
             <button
               type="button"
               onClick={handleClear}
-              className="text-11 font-semibold px-3 py-1.5 rounded border border-red-200 text-red hover:bg-red-50"
+              className="text-11 font-semibold px-3 py-1.5 rounded border border-red-500/40 text-red hover:bg-red-950/20"
             >
               Clear
             </button>

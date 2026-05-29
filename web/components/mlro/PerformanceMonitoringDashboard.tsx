@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -888,7 +889,7 @@ export function PerformanceMonitoringDashboard() {
       const json = await res.json().catch(() => ({})) as BrierResponse;
       if (mountedRef.current) setBrierData(json);
     } catch (err) {
-      if (mountedRef.current) setBrierError(err instanceof Error ? err.message : "Failed to load calibration data");
+      if (mountedRef.current) setBrierError(caughtErrorMessage(err, "Failed to load calibration data"));
     } finally {
       if (mountedRef.current) setBrierLoading(false);
     }
@@ -906,7 +907,7 @@ export function PerformanceMonitoringDashboard() {
       setModeData(json);
       setModeFetched(true);
     } catch (err) {
-      if (mountedRef.current) setModeError(err instanceof Error ? err.message : "Failed to load mode performance data");
+      if (mountedRef.current) setModeError(caughtErrorMessage(err, "Failed to load mode performance data"));
     } finally {
       if (mountedRef.current) setModeLoading(false);
     }
@@ -924,7 +925,7 @@ export function PerformanceMonitoringDashboard() {
       setFairnessData(json);
       setFairnessFetched(true);
     } catch (err) {
-      if (mountedRef.current) setFairnessError(err instanceof Error ? err.message : "Failed to load fairness data");
+      if (mountedRef.current) setFairnessError(caughtErrorMessage(err, "Failed to load fairness data"));
     } finally {
       if (mountedRef.current) setFairnessLoading(false);
     }
@@ -941,7 +942,7 @@ export function PerformanceMonitoringDashboard() {
       setAlertsData(json);
       setLastRefreshed(new Date());
     } catch (err) {
-      if (mountedRef.current) setAlertsError(err instanceof Error ? err.message : "Failed to load drift alerts");
+      if (mountedRef.current) setAlertsError(caughtErrorMessage(err, "Failed to load drift alerts"));
     } finally {
       if (mountedRef.current) setAlertsLoading(false);
     }

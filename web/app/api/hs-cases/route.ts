@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   createCase,
   listCases,
@@ -23,7 +24,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
@@ -33,36 +34,41 @@ export async function GET(req: Request): Promise<NextResponse> {
   const subjectId   = url.searchParams.get("subjectId");
   const riskCategory = url.searchParams.get("riskCategory") as "LOW"|"MEDIUM"|"HIGH"|"CRITICAL"|null;
 
-  const cases = await listCases(tenant, {
-    ...(status      ? { status }      : {}),
-    ...(severity    ? { severity }    : {}),
-    ...(subjectId   ? { subjectId }   : {}),
-    ...(riskCategory ? { riskCategory } : {}),
-  });
+  try {
+    const cases = await listCases(tenant, {
+      ...(status      ? { status }      : {}),
+      ...(severity    ? { severity }    : {}),
+      ...(subjectId   ? { subjectId }   : {}),
+      ...(riskCategory ? { riskCategory } : {}),
+    });
 
-  // Summary stats for dashboard widgets.
-  const summary = {
-    total:    cases.length,
-    bySeverity: {
-      critical: cases.filter((c) => c.severity === "critical").length,
-      high:     cases.filter((c) => c.severity === "high").length,
-      medium:   cases.filter((c) => c.severity === "medium").length,
-      low:      cases.filter((c) => c.severity === "low").length,
-      clear:    cases.filter((c) => c.severity === "clear").length,
-    },
-    byStatus: cases.reduce((acc, c) => {
-      acc[c.status] = (acc[c.status] ?? 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    slaNearing: cases.filter((c) => {
-      if (c.status === "closed") return false;
-      const remaining = new Date(c.slaDeadline).getTime() - Date.now();
-      return remaining > 0 && remaining < 24 * 60 * 60 * 1000;
-    }).length,
-    slaBreach: cases.filter((c) => c.slaBreach).length,
-  };
+    // Summary stats for dashboard widgets.
+    const summary = {
+      total:    cases.length,
+      bySeverity: {
+        critical: cases.filter((c) => c.severity === "critical").length,
+        high:     cases.filter((c) => c.severity === "high").length,
+        medium:   cases.filter((c) => c.severity === "medium").length,
+        low:      cases.filter((c) => c.severity === "low").length,
+        clear:    cases.filter((c) => c.severity === "clear").length,
+      },
+      byStatus: cases.reduce((acc, c) => {
+        acc[c.status] = (acc[c.status] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      slaNearing: cases.filter((c) => {
+        if (c.status === "closed") return false;
+        const remaining = new Date(c.slaDeadline).getTime() - Date.now();
+        return remaining > 0 && remaining < 24 * 60 * 60 * 1000;
+      }).length,
+      slaBreach: cases.filter((c) => c.slaBreach).length,
+    };
 
-  return NextResponse.json({ ok: true, cases, summary }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, cases, summary }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[hs-cases] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load cases" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -95,62 +101,71 @@ export async function POST(req: Request): Promise<NextResponse> {
   const hitList = Array.isArray(hits) ? (hits as HsCaseHit[]) : [];
   const hitListIds = hitList.map((h) => h.listId ?? "").filter(Boolean);
 
-  // Auto-dedup: if an open case already exists for this subject,
-  // append the audit seq and return the existing case.
-  const existing = await findOpenCaseForSubject(tenant, subjectId);
-  if (existing) {
-    if (typeof linkedAuditSeq === "number") {
-      await appendAuditSeq(tenant, existing.caseId, linkedAuditSeq);
+  try {
+    // Auto-dedup: if an open case already exists for this subject,
+    // append the audit seq and return the existing case.
+    const existing = await findOpenCaseForSubject(tenant, subjectId);
+    if (existing) {
+      if (typeof linkedAuditSeq === "number") {
+        await appendAuditSeq(tenant, existing.caseId, linkedAuditSeq);
+      }
+      return NextResponse.json(
+        { ok: true, case: existing, deduplicated: true },
+        { headers: gate.headers },
+      );
     }
+
+    // Seed breaches on first case creation (ensures 7 pre-populated records exist).
+    void seedBreachesIfEmpty().catch(() => undefined);
+
+    // Categorize.
+    const cat = categorize({
+      severity: normSeverity,
+      hitListIds,
+      isPep: Boolean(isPep),
+      hasStrSarOnRecord: Boolean(hasStrSarOnRecord),
+    });
+
+    const now = new Date().toISOString();
+    const sla = slaDeadline(now, cat.riskCategory);
+
+    const newCase = await createCase(tenant, {
+      subjectName:    subjectName as string,
+      subjectId:      subjectId as string,
+      createdBy:      typeof createdBy === "string" ? createdBy : gate.keyId,
+      status:         "open",
+      severity:       normSeverity,
+      riskCategory:   cat.riskCategory,
+      dueDiligence:   cat.dueDiligence,
+      reviewDueDate:  cat.nextReviewDate,
+      hits:           hitList,
+      enrichmentPending: true,
+      slaDeadline:    sla,
+      fourEyesRequired: cat.riskCategory === "CRITICAL" && hitListIds.some(
+        (id) => ["ofac_sdn", "uae_ltl", "uae_eocn", "un_consolidated"].includes(id),
+      ),
+      seniorMgmtApproval: cat.seniorManagementApproval,
+      autoFreezeRequired: cat.autoFreezeRequired,
+      transactionSuspendRequired: cat.transactionSuspendRequired,
+      provisionalScreening: Boolean(provisionalScreening),
+      overrideReasons: cat.overrideReasons,
+      notes: typeof notes === "string" ? notes : undefined,
+    });
+
+    if (typeof linkedAuditSeq === "number") {
+      await appendAuditSeq(tenant, newCase.caseId, linkedAuditSeq);
+    }
+
+    void writeAuditChainEntry(
+      { event: "case.created", actor: gate.keyId, meta: { caseId: newCase.caseId, subjectName: subjectName as string, severity: normSeverity } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
-      { ok: true, case: existing, deduplicated: true },
-      { headers: gate.headers },
+      { ok: true, case: newCase, categorization: cat },
+      { status: 201, headers: gate.headers },
     );
+  } catch (err) {
+    console.error("[hs-cases] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to create case" }, { status: 500, headers: gate.headers });
   }
-
-  // Seed breaches on first case creation (ensures 7 pre-populated records exist).
-  void seedBreachesIfEmpty().catch(() => undefined);
-
-  // Categorize.
-  const cat = categorize({
-    severity: normSeverity,
-    hitListIds,
-    isPep: Boolean(isPep),
-    hasStrSarOnRecord: Boolean(hasStrSarOnRecord),
-  });
-
-  const now = new Date().toISOString();
-  const sla = slaDeadline(now, cat.riskCategory);
-
-  const newCase = await createCase(tenant, {
-    subjectName:    subjectName as string,
-    subjectId:      subjectId as string,
-    createdBy:      typeof createdBy === "string" ? createdBy : gate.keyId,
-    status:         "open",
-    severity:       normSeverity,
-    riskCategory:   cat.riskCategory,
-    dueDiligence:   cat.dueDiligence,
-    reviewDueDate:  cat.nextReviewDate,
-    hits:           hitList,
-    enrichmentPending: true,
-    slaDeadline:    sla,
-    fourEyesRequired: cat.riskCategory === "CRITICAL" && hitListIds.some(
-      (id) => ["ofac_sdn", "uae_ltl", "uae_eocn", "un_consolidated"].includes(id),
-    ),
-    seniorMgmtApproval: cat.seniorManagementApproval,
-    autoFreezeRequired: cat.autoFreezeRequired,
-    transactionSuspendRequired: cat.transactionSuspendRequired,
-    provisionalScreening: Boolean(provisionalScreening),
-    overrideReasons: cat.overrideReasons,
-    notes: typeof notes === "string" ? notes : undefined,
-  });
-
-  if (typeof linkedAuditSeq === "number") {
-    await appendAuditSeq(tenant, newCase.caseId, linkedAuditSeq);
-  }
-
-  return NextResponse.json(
-    { ok: true, case: newCase, categorization: cat },
-    { status: 201, headers: gate.headers },
-  );
 }

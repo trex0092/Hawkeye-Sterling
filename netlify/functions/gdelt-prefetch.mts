@@ -12,6 +12,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "gdelt-cache";
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
@@ -31,7 +32,11 @@ async function fetchActiveSubjects(): Promise<string[]> {
   const projectId = process.env["MOONDB_PROJECT_ID"];
   const adminKey  = process.env["MOONDB_ADMIN_KEY"];
   if (!projectId || !adminKey) {
-    console.warn("[gdelt-prefetch] MOONDB_PROJECT_ID or MOONDB_ADMIN_KEY not set — skipping DB lookup");
+    console.error(
+      "[gdelt-prefetch] MOONDB_PROJECT_ID or MOONDB_ADMIN_KEY not set — " +
+      "GDELT cache will remain empty, adverse-media calls will incur live GDELT latency. " +
+      "Set both env vars in Netlify to enable per-subject pre-warming.",
+    );
     return [];
   }
 
@@ -214,6 +219,8 @@ export default async function handler(_req: Request): Promise<Response> {
 
   console.info(`[gdelt-prefetch] done — refreshed ${refreshed}/${subjects.length} subjects in ${Date.now() - startedAt}ms`);
 
+  if (errors.length === 0) await writeHeartbeat("gdelt-prefetch");
+
   return new Response(
     JSON.stringify({ ok: errors.length === 0, refreshed, total: subjects.length, errors, durationMs: Date.now() - startedAt }),
     { headers: { "content-type": "application/json" } },
@@ -221,5 +228,7 @@ export default async function handler(_req: Request): Promise<Response> {
 }
 
 export const config: Config = {
-  schedule: "0 */6 * * *",
+  // Every 2h — aligns cache freshness with the adverse-media-rss 30min cadence
+  // while keeping GDELT API costs manageable (12 runs/day vs 48).
+  schedule: "0 */2 * * *",
 };

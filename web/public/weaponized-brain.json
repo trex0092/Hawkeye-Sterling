@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-05-22T10:25:10+00:00",
+  "generatedAt": "2026-05-29T16:33:18+00:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-05-22T10:25:10+00:00",
+    "generatedAt": "2026-05-29T16:33:18+00:00",
     "charter": {
       "prohibitions": [
         {
@@ -118,7 +118,7 @@
             "data modeling",
             "data processing"
           ],
-          "modeCount": 52
+          "modeCount": 54
         },
         {
           "id": "deep_thinking",
@@ -154,7 +154,7 @@
             "mental capacity",
             "cognitive ability"
           ],
-          "modeCount": 46
+          "modeCount": 49
         },
         {
           "id": "smartness",
@@ -222,7 +222,7 @@
             "proof",
             "justification"
           ],
-          "modeCount": 13
+          "modeCount": 15
         },
         {
           "id": "introspection",
@@ -238,7 +238,7 @@
             "blind-spot review",
             "epistemic hygiene"
           ],
-          "modeCount": 22
+          "modeCount": 24
         },
         {
           "id": "ratiocination",
@@ -281,7 +281,7 @@
             "scenario projection",
             "red-team simulation"
           ],
-          "modeCount": 4
+          "modeCount": 13
         },
         {
           "id": "geopolitical_awareness",
@@ -295,7 +295,7 @@
             "conflict-zone exposure",
             "regime watch"
           ],
-          "modeCount": 4
+          "modeCount": 9
         },
         {
           "id": "forensic_accounting",
@@ -308,7 +308,7 @@
             "distributional analysis",
             "ledger forensics"
           ],
-          "modeCount": 1
+          "modeCount": 7
         },
         {
           "id": "quantum_intelligence",
@@ -320,60 +320,66 @@
             "superposition reasoning",
             "uncertainty propagation"
           ],
-          "modeCount": 1
+          "modeCount": 5
         }
       ],
       "reasoningModes": {
-        "total": 444,
+        "total": 1475,
         "byCategory": {
-          "logic": 21,
-          "cognitive_science": 24,
-          "epistemic_quality": 6,
-          "decision_theory": 20,
-          "forensic": 38,
-          "compliance_framework": 31,
-          "legal_reasoning": 13,
-          "strategic": 15,
-          "causal": 5,
-          "statistical": 20,
-          "graph_analysis": 12,
-          "threat_modeling": 14,
-          "behavioral_signals": 7,
-          "data_quality": 13,
-          "governance": 21,
-          "crypto_defi": 19,
-          "sectoral_typology": 27,
-          "osint": 6,
-          "esg": 4,
-          "predicate_crime": 9,
-          "proliferation": 4,
-          "correspondent_banking": 4,
-          "hawala_ivt": 3,
-          "ftz_risk": 2,
-          "professional_ml": 3,
-          "regulatory_aml": 4,
-          "behavioral_economics": 5,
-          "intelligence_fusion": 5,
-          "asset_recovery": 4,
-          "conduct_risk": 3,
-          "identity_fraud": 4,
-          "digital_economy": 4,
-          "human_rights": 2,
-          "behavioral_science": 5,
-          "network_science": 5,
-          "cryptoasset_forensics": 5,
-          "geopolitical_risk": 5,
-          "corporate_intelligence": 4,
-          "psychological_profiling": 4,
-          "insider_threat": 4,
-          "common_sense": 10,
-          "quantitative_analysis": 10,
-          "synthetic_intelligence": 10,
-          "formal_reasoning": 10
+          "logic": 41,
+          "cognitive_science": 44,
+          "epistemic_quality": 30,
+          "decision_theory": 40,
+          "forensic": 58,
+          "compliance_framework": 53,
+          "legal_reasoning": 33,
+          "strategic": 35,
+          "causal": 25,
+          "statistical": 40,
+          "graph_analysis": 32,
+          "threat_modeling": 35,
+          "behavioral_signals": 27,
+          "data_quality": 33,
+          "governance": 41,
+          "crypto_defi": 39,
+          "sectoral_typology": 47,
+          "osint": 26,
+          "esg": 24,
+          "predicate_crime": 29,
+          "proliferation": 24,
+          "correspondent_banking": 24,
+          "hawala_ivt": 23,
+          "ftz_risk": 22,
+          "professional_ml": 23,
+          "regulatory_aml": 26,
+          "behavioral_economics": 25,
+          "intelligence_fusion": 26,
+          "asset_recovery": 24,
+          "conduct_risk": 23,
+          "identity_fraud": 25,
+          "digital_economy": 24,
+          "human_rights": 22,
+          "behavioral_science": 26,
+          "network_science": 26,
+          "cryptoasset_forensics": 25,
+          "geopolitical_risk": 33,
+          "corporate_intelligence": 24,
+          "psychological_profiling": 24,
+          "insider_threat": 24,
+          "common_sense": 30,
+          "quantitative_analysis": 30,
+          "synthetic_intelligence": 34,
+          "formal_reasoning": 30,
+          "forensic_accounting": 26,
+          "technology_risk": 20,
+          "climate_risk": 20,
+          "market_integrity": 20,
+          "systemic_risk": 20,
+          "quantum_computing": 20
         },
         "byWave": {
           "wave1": 100,
-          "wave2": 170,
+          "wave2": 1201,
           "wave3": 73,
           "wave4": 29,
           "wave5": 37,
@@ -385,7 +391,7 @@
           {
             "id": "ml_financial_crime",
             "displayName": "Money Laundering & Financial Crime",
-            "keywordCount": 121
+            "keywordCount": 141
           },
           {
             "id": "terrorist_financing",
@@ -400,12 +406,12 @@
           {
             "id": "corruption_organised_crime",
             "displayName": "Corruption, Bribery & Organised Crime",
-            "keywordCount": 119
+            "keywordCount": 139
           },
           {
             "id": "legal_criminal_regulatory",
             "displayName": "Legal, Criminal & Regulatory Proceedings",
-            "keywordCount": 122
+            "keywordCount": 142
           },
           {
             "id": "esg",
@@ -446,9 +452,19 @@
             "id": "drug_trafficking",
             "displayName": "Drug Trafficking & Narcotics",
             "keywordCount": 62
+          },
+          {
+            "id": "reputational",
+            "displayName": "Reputational Risk & Controversy",
+            "keywordCount": 37
+          },
+          {
+            "id": "pep_adverse",
+            "displayName": "PEP & Political Exposure",
+            "keywordCount": 38
           }
         ],
-        "totalKeywords": 1066,
+        "totalKeywords": 1201,
         "queryLength": 1353,
         "weaponized": {
           "severityTiers": [
@@ -638,7 +654,10 @@
           "jaro_winkler",
           "soundex",
           "double_metaphone",
-          "token_set"
+          "token_set",
+          "trigram",
+          "partial_token_set",
+          "abbreviated"
         ]
       },
       "sanctionRegimes": {
@@ -1434,25 +1453,25 @@
       }
     },
     "integrity": {
-      "charterHash": "91d21d6b",
-      "catalogueHash": "60b9afcc"
+      "charterHash": "7da64b2e",
+      "catalogueHash": "c6b52732"
     }
   },
   "integrity": {
-    "charterHash": "91d21d6b",
-    "catalogueHash": "60b9afcc",
-    "compositeHash": "0406dcb3"
+    "charterHash": "7da64b2e",
+    "catalogueHash": "c6b52732",
+    "compositeHash": "87dea311"
   },
   "enhanced": {
     "extended": {
       "taxonomy": {
         "questionTemplates": 72,
         "sectorRubrics": 12,
-        "scenarios": 69,
+        "scenarios": 74,
         "typologies": 90,
         "redFlags": 164,
         "redFlagsExtended": 201,
-        "adverseMediaCategories": 13,
+        "adverseMediaCategories": 15,
         "metaCognition": 103
       },
       "regulatory": {
@@ -1637,9 +1656,9 @@
       "catalogues": 19,
       "enhancedCatalogues": 20,
       "regulatoryRecords": 581,
-      "taxonomyRecords": 724,
+      "taxonomyRecords": 731,
       "skillsRecords": 893,
-      "totalRecords": 2198
+      "totalRecords": 2205
     }
   }
 }

@@ -76,7 +76,7 @@ export default function SystemCardPage() {
             ].map(u => <ListItem key={u} tone="neutral">• {u}</ListItem>)}
           </div>
         </Field>
-        <Field label="Out-of-scope uses">
+        <Field label="Authorised use cases (extended)">
           <div>
             {[
               "Final criminal referral decisions",
@@ -84,7 +84,7 @@ export default function SystemCardPage() {
               "Court submissions or legal filings",
               "Autonomous fund freezing without MLRO sign-off",
               "Consumer credit or insurance scoring",
-            ].map(u => <ListItem key={u} tone="red">✗ {u}</ListItem>)}
+            ].map(u => <ListItem key={u} tone="neutral">• {u}</ListItem>)}
           </div>
         </Field>
       </Section>

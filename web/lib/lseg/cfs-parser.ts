@@ -197,7 +197,7 @@ function parseWorldCheckJson(payload: unknown, baseId: string): LsegCfsEntity[] 
 // ── XML path (regex-based; permissive, schema-tolerant) ──────────────────────
 
 function xmlBlocks(xml: string, tag: string): string[] {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "g");
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "g"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const out: string[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) {
@@ -207,7 +207,7 @@ function xmlBlocks(xml: string, tag: string): string[] {
 }
 
 function xmlField(block: string, tag: string): string {
-  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "s"));
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "s")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   return m?.[1]?.trim() ?? "";
 }
 

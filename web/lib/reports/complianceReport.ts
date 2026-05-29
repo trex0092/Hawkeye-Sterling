@@ -42,9 +42,22 @@ export interface ReportScreeningResult {
     score: number;
     programs?: string[];
     method: string;
+    matchedAlias?: string;
+    reason?: string;
   }>;
   /** True when the result is a placeholder — no screening was run */
   _unscreened?: boolean;
+}
+
+export interface ReportNewsArticle {
+  title: string;
+  source: string;
+  pubDate: string;
+  link: string;
+  lang?: string;
+  severity?: string;
+  matchedVariant?: string;
+  keywordGroups?: string[];
 }
 
 export interface ReportSuperBrain {
@@ -613,6 +626,7 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   lines.push(`${SUB.slice(0, 3)} SCREENING RESULT MATRIX ${"─".repeat(51)}`);
   lines.push(`Vector              Engine              Score    Result`);
   lines.push(`${"─".repeat(19)}   ${"─".repeat(17)}   ─────    ${"─".repeat(22)}`);
+  const _brainSanctionsScore = sb?.composite?.breakdown?.["quickScreen"] ?? 0;
   for (const v of SCREEN_VECTORS) {
     const hits = r.hits.filter((h) => v.listIdMatch.test(h.listId));
     const maxScore = hits.length > 0 ? Math.max(...hits.map((h) => h.score)) : 0;
@@ -967,7 +981,6 @@ function formatFacts(
       `Adverse-media overlay returned POSITIVE — ${amTotal} keyword hit(s) across ${distinctCats} categor${distinctCats === 1 ? "y" : "ies"}; see findings section for evidence.`,
     );
   }
-  void type;
   return lines;
 }
 

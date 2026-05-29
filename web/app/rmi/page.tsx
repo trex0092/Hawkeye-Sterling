@@ -392,6 +392,9 @@ export default function RmiPage() {
         { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
         { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
         { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
+        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
+        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
+        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
       ]} />
 
       {/* OECD DDG 5-step alignment summary */}
@@ -596,7 +599,7 @@ export default function RmiPage() {
         <table className="w-full text-12">
           <thead className="bg-bg-1 border-b border-hair-2">
             <tr>
-              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags", ""].map((h) => (
+              {["Smelter / Refiner", "Country", "Mineral", "RMAP ID", "RMAP Status", "CAHRA Risk", "Last Audit", "Next Due", "Active", "Flags"].map((h) => (
                 <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">{h}</th>
               ))}
             </tr>

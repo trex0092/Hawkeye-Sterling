@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +48,7 @@ function addDays(iso: string, days: number): string {
 }
 
 function newId(): string {
-  return `cor_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `cor_${Date.now()}_${randomBytes(3).toString("hex")}`;
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
@@ -116,6 +119,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     dueBy: addDays(submittedAt, REVIEW_SLA_DAYS),
   };
   await setJson(`${PREFIX}${record.id}`, record);
+
+  const tenant = tenantIdFromGate(gate);
+  void writeAuditChainEntry(
+    { event: "corrections.submitted", actor: gate.keyId, meta: { id: record.id, subject: body.subjectName } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({
     ok: true,
     id: record.id,

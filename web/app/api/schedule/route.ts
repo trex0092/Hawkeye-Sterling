@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getJson, listKeys, setJson, del } from "@/lib/server/store";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,11 +57,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const keys = await listKeys(PREFIX);
+  let keys: string[];
+  try {
+    keys = await listKeys(PREFIX);
+  } catch (err) {
+    console.error("[schedule] listKeys failed:", err);
+    return NextResponse.json({ ok: false, error: "store unavailable" }, { status: 503 });
+  }
   const out: Schedule[] = [];
   for (const k of keys) {
-    const s = await getJson<Schedule>(k);
-    if (s) out.push(s);
+    try {
+      const s = await getJson<Schedule>(k);
+      if (s) out.push(s);
+    } catch { /* skip malformed entry */ }
   }
   return NextResponse.json({ ok: true, count: out.length, schedules: out }, { headers: gate.headers });
 }
@@ -137,6 +147,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     nextRunAt,
   };
   await setJson(`${PREFIX}${subjectId}`, record);
+
+  const tenant = tenantIdFromGate(gate);
+  void writeAuditChainEntry(
+    { event: "schedule.updated", actor: gate.keyId, meta: { subjectId } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, schedule: record }, { headers: gate.headers });
 }
 

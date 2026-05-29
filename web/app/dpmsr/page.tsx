@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import type { DpmsrObligation, DpmsrTransaction } from "@/app/api/dpmsr-trigger/route";
 
 // DPMSR — Designated Precious Metals and Stones Report
@@ -76,7 +77,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
       });
       const data = await res.json().catch(() => ({})) as { ok: boolean; obligationsFound: number; obligations: DpmsrObligation[]; error?: string };
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? apiErrorMessage(res.status, "DPMSR evaluation")); return; }
       setEvalResult(data);
       if (save && data.obligations.length > 0) { onResult(data.obligations); setTransactions([]); setEvalResult(null); }
     } catch { if (mountedRef.current) setError("Network error"); }

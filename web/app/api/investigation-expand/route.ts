@@ -27,6 +27,10 @@ export async function POST(req: Request) {
   }
   const { subject, knownNodes, knownEdges } = body;
 
+  // Bounds checks prevent DoS via huge payloads and token exhaustion.
+  const safeNodes = Array.isArray(knownNodes) ? knownNodes.slice(0, 50) : [];
+  const safeEdges = Array.isArray(knownEdges) ? knownEdges.slice(0, 100) : [];
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
@@ -36,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
@@ -54,8 +58,8 @@ Limit to 5 entities. Be specific, AML-grounded, and plausible.`,
         messages: [{
           role: "user",
           content: `Subject: ${sanitizeField(subject)}
-Known nodes: ${knownNodes.map((n) => sanitizeField(n)).join(", ")}
-Known edges: ${JSON.stringify(knownEdges)}
+Known nodes: ${safeNodes.map((n) => sanitizeField(n)).join(", ")}
+Known edges: ${JSON.stringify(safeEdges.map((e) => ({ from: sanitizeField(e.from, 200), to: sanitizeField(e.to, 200), label: sanitizeField(e.label, 100) })))}
 
 What additional entities should investigators look for?`,
         }],

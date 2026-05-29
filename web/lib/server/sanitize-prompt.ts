@@ -33,3 +33,26 @@ export function sanitizeText(value: string | undefined | null, maxLength = 5000)
     .trim()
     .slice(0, maxLength);
 }
+
+const INJECTION_PATTERNS =
+  /\b(ignore\s+(all\s+)?previous|disregard\s+(all\s+)?previous|forget\s+(all\s+)?previous|new\s+instructions?|system\s*prompt|you\s+are\s+now\s+a|act\s+as\s+(an?\s+)?)/gi;
+
+/**
+ * Sanitizes narrative/free-text content before sending to the LLM.
+ * Strips Unicode overrides, null bytes, and common prompt-injection phrases.
+ *
+ * NFKD normalization is applied before injection-pattern matching so that
+ * Unicode lookalikes and compatibility characters (e.g. full-width space
+ * U+3000, soft hyphen U+00AD) cannot bypass the pattern regex. Combining
+ * marks stripped post-normalization to neutralize diacritic obfuscation.
+ */
+export function sanitizeLlmInput(value: string | undefined | null, maxLength = 5000): string {
+  if (!value) return "";
+  const normalized = value.normalize("NFKD").replace(/\p{M}/gu, "");
+  return normalized
+    .replace(UNICODE_OVERRIDES, "")
+    .replace(/\x00/g, "")
+    .replace(INJECTION_PATTERNS, "[REDACTED]")
+    .trim()
+    .slice(0, maxLength);
+}

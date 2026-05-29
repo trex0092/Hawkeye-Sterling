@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getStore } from "@netlify/blobs";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const deadlineDate = addBusinessDays(freezeDate, 5);
 
   const newCase: CnmrCase = {
-    id: `cnmr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `cnmr-${Date.now()}-${randomBytes(4).toString("hex")}`,
     createdAt: new Date().toISOString(),
     subjectId: body.subjectId ?? "",
     subjectName: body.subjectName,
@@ -149,6 +151,11 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   }
   cases[idx] = updated;
   await saveCases(tenant, cases);
+
+  void writeAuditChainEntry(
+    { event: "cnmr.case_updated", actor: gate.keyId ?? tenant, caseId: body.id, status: updated.status },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] cnmr write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, case: updated }, { headers: gate.headers });
 }

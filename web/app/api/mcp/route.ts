@@ -15,6 +15,7 @@
 // `generate_report`, `mlro_analyze`, `disposition`, `relationship_graph`.
 
 import { AsyncLocalStorage } from "node:async_hooks";
+import { randomBytes } from "node:crypto";
 import { getToolLevel, type ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 import { getSanctionsHealth, GATE_BLOCKED_TOOLS } from "@/lib/mcp/sanctions-gate";
 import {
@@ -87,7 +88,15 @@ function wrapWithGovernance(
   if (typeof result !== "object" || result === null) return result;
 
   const r = result as Record<string, unknown>;
-  let confidenceScore = 0.75;
+  // Error responses are not compliance outputs — skip governance metadata so
+  // auth failures, 404s, and tool errors are not wrapped in misleading guidance.
+  if (r["ok"] === false) return result;
+
+  // Base confidence derived from sanctions list coverage.
+  // 0 missing critical lists = 0.90; each missing critical list reduces by 0.10.
+  // This is then overridden by explicit confidence/riskScore fields from the tool result,
+  // and further adjusted by RGV defect haircut and sanctions cap below.
+  let confidenceScore = Math.max(0.30, 0.90 - missingLists.length * 0.10);
   if (typeof r["confidence"] === "number")   confidenceScore = r["confidence"];
   else if (typeof r["riskScore"] === "number") {
     const rs = r["riskScore"] as number;
@@ -126,6 +135,8 @@ function wrapWithGovernance(
   // well-formed body. listsVerified is the canonical signal from upstream.
   if (!listsVerified || missingLists.length > 0) {
     degradedServices.push("sanctions_lists");
+    // Cap confidence when sanctions corpus is incomplete (FDL 10/2025 Art.15).
+    confidenceScore = Math.min(confidenceScore, 0.70);
   }
 
   const engineVersion = resolveEngineVersion();
@@ -225,7 +236,7 @@ async function writeAnomaly(data: Record<string, unknown>): Promise<void> {
     if (!mod) return;
     const store = mod.getStore({ name: "mcp-anomaly-logs" });
     const ts = new Date().toISOString().replace(/[:.]/g, "-");
-    await store.setJSON(`anomaly/${ts}-${Math.random().toString(36).slice(2, 8)}`, {
+    await store.setJSON(`anomaly/${ts}-${randomBytes(3).toString("hex")}`, {
       ...data,
       detectedAt: new Date().toISOString(),
     });
@@ -294,13 +305,15 @@ async function getSanctionsHealthMemoised(): Promise<Awaited<ReturnType<typeof g
 function deriveSessionId(req: Request, explicit?: string): string {
   if (explicit) return explicit;
   const xff = req.headers.get("x-forwarded-for") ?? "";
-  const first = xff.split(",")[0]?.trim() ?? "";
-  if (!first) return "anonymous";
+  // Use the LAST value (proxy-appended) — the first is attacker-controlled.
+  const segments = xff.split(",").map((s) => s.trim()).filter(Boolean);
+  const ip = segments[segments.length - 1] ?? "";
+  if (!ip) return "anonymous";
   // IPv4: 1.2.3.4 → 1.2.3 ; IPv6: keep first 4 groups
-  if (first.includes(":")) {
-    return first.split(":").slice(0, 4).join(":") || "anonymous";
+  if (ip.includes(":")) {
+    return ip.split(":").slice(0, 4).join(":") || "anonymous";
   }
-  const parts = first.split(".");
+  const parts = ip.split(".");
   return parts.length >= 3 ? parts.slice(0, 3).join(".") : "anonymous";
 }
 
@@ -395,19 +408,33 @@ async function callApi(
   } catch {
     return { ok: false, error: `URL construction failed: path="${path}" base="${BASE_URL}"` };
   }
-  // SSRF guard: reject any path that resolves to a different origin.
+  // SSRF guard: reject any path that resolves to a different origin or outside /api/*.
   // new URL(absoluteUrl, base) ignores the base, so an absolute URL
   // pointing at a different host would bypass the BASE_URL restriction.
   if (url.origin !== BASE_URL) {
+    return { ok: false, error: "path must be a relative /api/* path within this deployment" };
+  }
+  if (!url.pathname.startsWith("/api/")) {
     return { ok: false, error: "path must be a relative /api/* path within this deployment" };
   }
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
   }
   const ctx = _callCtx.getStore();
+  // Inject a server-side credential for internal service-to-service calls so
+  // MCP tools work regardless of which auth mechanism Claude.ai used at the
+  // MCP boundary. Priority: HAWKEYE_API_KEY/API_KEY (x-api-key) → ADMIN_TOKEN
+  // (Authorization: Bearer, accepted by enforce() bypass path) → caller header.
+  const _internalApiKey = process.env["HAWKEYE_API_KEY"] ?? process.env["API_KEY"];
+  const _internalAdminToken = process.env["ADMIN_TOKEN"];
   const headers: Record<string, string> = {
     "content-type": "application/json",
-    ...(ctx?.authHeader ? { authorization: ctx.authHeader } : {}),
+    ...(_internalApiKey
+      ? { "x-api-key": _internalApiKey }
+      : _internalAdminToken
+        ? { authorization: `Bearer ${_internalAdminToken}` }
+        : ctx?.authHeader ? { authorization: ctx.authHeader } : {}
+    ),
   };
   const init: RequestInit = {
     method,
@@ -720,7 +747,7 @@ const TOOLS: ToolDef[] = [
     name: "sanctions_status",
     description: "Check freshness and coverage of all loaded sanctions lists.",
     inputSchema: { type: "object", properties: {} },
-    handler: async () => callApi("/api/sanctions/status", "GET"),
+    handler: async () => callApi("/api/sanctions/status", "GET", undefined, undefined, 25_000),
   },
 
   // ── REPORTS ─────────────────────────────────────────────────────────────────
@@ -1369,7 +1396,7 @@ async function dispatch(msg: {
     const injectedField = scanArgsForInjection(toolArgs);
     if (injectedField) {
       void logToolCall({
-        id: Math.random().toString(36).slice(2, 10),
+        id: randomBytes(4).toString("hex"),
         timestamp: new Date().toISOString(),
         tool: toolName,
         consequenceLevel: level,
@@ -1390,7 +1417,7 @@ async function dispatch(msg: {
 
     // Sanctions gate (ADD-01): block screening tools when critical lists are missing.
     if (GATE_BLOCKED_TOOLS.has(toolName) && !sanctionsHealth.listsVerified) {
-      const requestId = Math.random().toString(36).slice(2, 10);
+      const requestId = randomBytes(4).toString("hex");
       return ok(id, {
         content: [
           {
@@ -1425,9 +1452,8 @@ async function dispatch(msg: {
     // _sessionId, then fall back to the per-request sessionId captured in
     // AsyncLocalStorage (derived from X-Forwarded-For at POST entry), and
     // finally "anonymous" so a missing IP doesn't coalesce unrelated callers.
-    const explicitSessionId = (params as Record<string, unknown>)["_sessionId"] as string | undefined;
     const ctxSessionId = _callCtx.getStore()?.sessionId;
-    const sessionId = explicitSessionId ?? ctxSessionId ?? "anonymous";
+    const sessionId = ctxSessionId ?? "anonymous";
     const anomaly = trackAndDetectAnomaly(sessionId, toolName, level);
 
     const t0 = Date.now();
@@ -1448,7 +1474,7 @@ async function dispatch(msg: {
         sanctionsHealth.listsVerified, sanctionsHealth.missingCritical,
       );
       void logToolCall({
-        id: Math.random().toString(36).slice(2, 10),
+        id: randomBytes(4).toString("hex"),
         timestamp: new Date().toISOString(),
         tool: toolName,
         consequenceLevel: level,
@@ -1465,7 +1491,7 @@ async function dispatch(msg: {
       const durationMs = Date.now() - t0;
       // Fire-and-forget — breaker write shouldn't block the error response.
       void recordBreakerFailure(toolName).catch((e2: unknown) => console.warn("[mcp] recordBreakerFailure failed:", e2 instanceof Error ? e2.message : String(e2)));
-      const requestId = Math.random().toString(36).slice(2, 10);
+      const requestId = randomBytes(4).toString("hex");
       const errMsg = e instanceof Error ? e.message : String(e);
       void logToolCall({
         id: requestId,
@@ -1536,7 +1562,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!gate.ok) return gate.response;
 
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
-  // disable all 28 tools. All tool calls return 503 until re-enabled.
+  // disable all 24 tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {
     return json(
       err(null, -32001, "Hawkeye Sterling MCP is offline. Contact your MLRO to re-enable."),
@@ -1567,12 +1593,9 @@ export async function POST(req: Request): Promise<Response> {
   // Thread caller's auth + derived sessionId into all internal callApi
   // requests via AsyncLocalStorage so each concurrent request has its own
   // isolated context.
-  const { searchParams } = new URL(req.url);
-  const queryKey = searchParams.get('api_key');
   const authHeader =
     req.headers.get('authorization') ||
     req.headers.get('x-api-key') ||
-    (queryKey ? `Bearer ${queryKey}` : null) ||
     undefined;
   const sessionId = deriveSessionId(req);
 

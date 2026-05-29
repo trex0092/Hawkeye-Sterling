@@ -1,0 +1,25 @@
+# Gitleaks configuration for Hawkeye Sterling.
+# Suppresses known false positives from historical commits in this repo.
+# Gitleaks v8.22.1 — https://github.com/gitleaks/gitleaks
+
+title = "Hawkeye Sterling Gitleaks Config"
+
+[allowlist]
+description = "Known false positives in git history"
+
+# Commits that contain embedded binary assets (WOFF2 font files inlined as
+# base64 in JSON data blobs). These are not credentials — they are font
+# assets that were removed from the working tree in later commits but remain
+# in git history, which gitleaks scans with fetch-depth: 0.
+commits = [
+  "2b464bec5a53f50351ff4264ac8cb7d3bc7efc78",
+  "db1f5837fc3172f47777a0bb0c276f23d667c806",
+]
+
+# Test files use synthetic / placeholder values intentionally.
+paths = [
+  '''src/__tests__/''',
+  '''src/__integration__/''',
+  '''web/lib/server/__tests__/''',
+  '''.env\.example''',
+]

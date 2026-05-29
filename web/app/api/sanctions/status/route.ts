@@ -36,6 +36,15 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import {
+  getSla,
+  computeActiveAlerts,
+  computeCorpusHash,
+  loadIngestMetaStore,
+  loadLastIngestTimestamps,
+  type ListAlert,
+  type LastIngestTimestamps,
+} from "@/lib/server/sanctions-freshness-sla";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +63,16 @@ interface ListReport {
   lastModified: string | null;
   ageHours: number | null;
   status: ListStatus;
+  /** SLA thresholds for this specific list */
+  sla: {
+    warningHours: number;
+    criticalHours: number;
+    minEntities?: number;
+  };
+  /** Alert level derived from staleness + entity count relative to this list's SLA */
+  alertLevel: "ok" | "warning" | "critical";
+  /** Human-readable reason for the current alert level */
+  alertReason: string;
 }
 
 interface ListAdapter {
@@ -117,6 +136,7 @@ const HOUR_MS = 60 * 60 * 1_000;
 
 interface SnapshotShape {
   entities?: unknown[];
+  metadata?: { entityCount?: number; fetchedAt?: string };
   fetchedAt?: number | string;
   lastModified?: string;
   generatedAt?: string;
@@ -209,6 +229,7 @@ async function inspectList(
   const configured =
     adapter.envVar === null ? true : Boolean(process.env[adapter.envVar]);
   const blobKey = snapshotKey(adapter.listId);
+  const sla = getSla(adapter.listId);
 
   if (!store) {
     return {
@@ -222,6 +243,9 @@ async function inspectList(
       lastModified: null,
       ageHours: null,
       status: configured ? "missing" : "unconfigured",
+      sla: { warningHours: sla.warningHours, criticalHours: sla.criticalHours, ...(sla.minEntities !== undefined ? { minEntities: sla.minEntities } : {}) },
+      alertLevel: configured ? "critical" : "ok",
+      alertReason: configured ? "List is missing from blob storage — no snapshot available for screening." : "List is not configured.",
     };
   }
 
@@ -235,9 +259,19 @@ async function inspectList(
 
   const hasEntities =
     snapshot !== null &&
-    Array.isArray(snapshot.entities);
+    (Array.isArray(snapshot.entities) || typeof snapshot.metadata?.entityCount === "number");
   const present = hasEntities;
-  const entityCount = hasEntities ? (snapshot!.entities as unknown[]).length : null;
+  // Prefer metadata.entityCount (written atomically with the blob) over
+  // entities.length (requires loading the full array) so both this route and
+  // the health endpoint agree on the count even when the full entities array
+  // is not loaded or the blob was written without an inline entities field.
+  const entityCount = hasEntities
+    ? (typeof snapshot!.metadata?.entityCount === "number"
+        ? snapshot!.metadata.entityCount
+        : Array.isArray(snapshot!.entities)
+          ? (snapshot!.entities as unknown[]).length
+          : null)
+    : null;
   const fetchedTs = readFetchedAtMs(snapshot);
   const ageHours =
     fetchedTs !== null ? (Date.now() - fetchedTs) / HOUR_MS : null;
@@ -249,6 +283,27 @@ async function inspectList(
   else if (ageHours !== null && ageHours > staleHours) status = "stale";
   else status = "healthy";
 
+  const roundedAgeHours = ageHours !== null ? Math.round(ageHours * 10) / 10 : null;
+
+  // Compute per-list alert using the per-list SLA thresholds (not the
+  // global staleHours override). The global staleHours controls the
+  // legacy `status` field; alertLevel uses the spec-driven per-list SLA.
+  const alertObj = (() => {
+    if (!configured || status === "unconfigured") return { alertLevel: "ok" as const, alertReason: "List is not configured." };
+    if (!present || status === "missing") return { alertLevel: "critical" as const, alertReason: "List is missing from blob storage — no snapshot available for screening." };
+    if (status === "degraded") return { alertLevel: "critical" as const, alertReason: "Blob is present but contains zero entities — likely a parser or upstream feed regression." };
+    if (sla.minEntities !== undefined && entityCount !== null && entityCount < sla.minEntities) {
+      return { alertLevel: "critical" as const, alertReason: `Entity count ${entityCount} is below the minimum expected ${sla.minEntities} — possible truncated download or parser regression.` };
+    }
+    if (roundedAgeHours !== null && roundedAgeHours >= sla.criticalHours) {
+      return { alertLevel: "critical" as const, alertReason: `List is ${roundedAgeHours}h stale — exceeds the ${sla.criticalHours}h critical SLA threshold.` };
+    }
+    if (roundedAgeHours !== null && roundedAgeHours >= sla.warningHours) {
+      return { alertLevel: "warning" as const, alertReason: `List is ${roundedAgeHours}h stale — exceeds the ${sla.warningHours}h warning SLA threshold (critical at ${sla.criticalHours}h).` };
+    }
+    return { alertLevel: "ok" as const, alertReason: "Within SLA thresholds." };
+  })();
+
   return {
     listId: adapter.listId,
     displayName: adapter.displayName,
@@ -258,8 +313,11 @@ async function inspectList(
     present,
     entityCount,
     lastModified: fetchedTs !== null ? new Date(fetchedTs).toISOString() : null,
-    ageHours: ageHours !== null ? Math.round(ageHours * 10) / 10 : null,
+    ageHours: roundedAgeHours,
     status,
+    sla: { warningHours: sla.warningHours, criticalHours: sla.criticalHours, ...(sla.minEntities !== undefined ? { minEntities: sla.minEntities } : {}) },
+    alertLevel: alertObj.alertLevel,
+    alertReason: alertObj.alertReason,
   };
 }
 
@@ -274,8 +332,11 @@ async function handleGet(req: Request): Promise<Response> {
     STALE_HOURS_DEFAULT,
   );
 
-  const store = await loadStore();
-  const lists = await Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours)));
+  const [store, ingestMetaStore] = await Promise.all([loadStore(), loadIngestMetaStore()]);
+  const [lists, lastIngestMeta] = await Promise.all([
+    Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours))),
+    loadLastIngestTimestamps(ingestMetaStore),
+  ]);
 
   const summary = { healthy: 0, stale: 0, missing: 0, unconfigured: 0, degraded: 0 };
   for (const l of lists) summary[l.status]++;
@@ -332,14 +393,38 @@ async function handleGet(req: Request): Promise<Response> {
   }
 
   // Build per-list freshness summary for compliance audit trail
-  const dataFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; status: ListStatus }> = {};
+  const dataFreshness: Record<string, { lastRefreshed: string | null; ageHours: number | null; status: ListStatus; alertLevel: "ok" | "warning" | "critical" }> = {};
   for (const l of lists) {
     dataFreshness[l.listId] = {
       lastRefreshed: l.lastModified,
       ageHours: l.ageHours,
       status: l.status,
+      alertLevel: l.alertLevel,
     };
   }
+
+  // Corpus hash — SHA-256 over all list metadata.
+  // Changes only when entity counts or timestamps actually change, so
+  // callers can cheaply detect genuine updates without re-downloading blobs.
+  const corpusHash = computeCorpusHash(
+    lists.map((l) => ({
+      listId: l.listId,
+      entityCount: l.entityCount,
+      lastModified: l.lastModified,
+    })),
+  );
+
+  // Per-list SLA active alerts (warning + critical only).
+  const activeAlerts: ListAlert[] = computeActiveAlerts(
+    lists.map((l) => ({
+      listId: l.listId,
+      ageHours: l.ageHours,
+      entityCount: l.entityCount,
+      status: l.status,
+      configured: l.configured,
+      present: l.present,
+    })),
+  );
 
   const latencyMs = Date.now() - t0;
   return NextResponse.json(
@@ -350,6 +435,17 @@ async function handleGet(req: Request): Promise<Response> {
       generatedAt: new Date().toISOString(),
       staleThresholdHours: staleHours,
       dataFreshness,
+      // Corpus hash — use this to detect genuine data changes between polls.
+      corpusHash,
+      // Per-list SLA active alerts (warning + critical).
+      activeAlerts,
+      alertSummary: {
+        critical: activeAlerts.filter((a) => a.alertLevel === "critical").length,
+        warning: activeAlerts.filter((a) => a.alertLevel === "warning").length,
+        total: activeAlerts.length,
+      },
+      // Last successful ingest timestamps (per-list and last full run).
+      lastIngest: lastIngestMeta satisfies LastIngestTimestamps | null,
       summary,
       lists,
       env,

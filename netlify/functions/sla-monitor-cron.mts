@@ -30,6 +30,7 @@ import {
   formatSlaAlert,
   type SlaCaseShape,
 } from '../../web/lib/server/sla-monitor.js';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 
 const LABEL = 'sla-monitor';
 
@@ -186,6 +187,8 @@ export default async (): Promise<Response> => {
       approaching: cls.approaching.length,
     });
   }
+
+  await writeHeartbeat(LABEL);
 
   const body = {
     ok: true,

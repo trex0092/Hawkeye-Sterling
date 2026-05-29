@@ -1,0 +1,192 @@
+name: Release
+
+# Release pipeline — Cosign signing for tagged releases.
+# Produces:
+#   - Signed osint-bridge Docker image via Cosign (sigstore transparency log)
+#   - Release SBOM (CycloneDX) attached to the GitHub release
+#
+# SLSA level 2 provenance is generated in release-provenance.yml (separate
+# file) so this workflow can carry a pull_request trigger for the GitHub
+# required-workflow check without conflicting with the SLSA generator's
+# trusted-context requirements.
+#
+# Security gate order: build → scan (Trivy) → sign (Cosign)
+# An image is never signed before it has passed a CVE scan.
+#
+# pull_request trigger: satisfies the GitHub required-workflow check on PRs.
+# Every job gates on startsWith(github.ref, 'refs/tags/v'), so all jobs are
+# skipped on PR runs — GitHub counts all-jobs-skipped as success.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  id-token: write      # required for OIDC-based Cosign + SLSA generator
+  packages: write      # required for ghcr.io image push
+
+jobs:
+  build-and-sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: cd web && npm ci --include=dev --no-audit --no-fund
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Create dist tarball
+        run: |
+          tar -czf hawkeye-sterling-${{ github.ref_name }}.tar.gz \
+            dist/ \
+            web/lib/ \
+            web/app/ \
+            package.json \
+            --exclude='**/node_modules' \
+            --exclude='**/.next'
+
+      - name: Compute SHA-256 hashes
+        id: hash
+        run: |
+          sha256sum hawkeye-sterling-${{ github.ref_name }}.tar.gz > checksums.sha256
+          echo "hashes=$(cat checksums.sha256 | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM for release
+        # Primary: --omit dev (runtime deps only). Fallback: include dev deps if
+        # peer-dep conflict prevents --omit dev (react-debounce-input/React 19).
+        # Both are real SBOMs. If both fail, the release is blocked — no fake fallback.
+        run: |
+          npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
+            > hawkeye-sterling-${{ github.ref_name }}.cdx.json \
+            || npm sbom --sbom-format cyclonedx --sbom-type library \
+              > hawkeye-sterling-${{ github.ref_name }}.cdx.json
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ github.ref_name }}
+          path: |
+            hawkeye-sterling-${{ github.ref_name }}.tar.gz
+            hawkeye-sterling-${{ github.ref_name }}.cdx.json
+            checksums.sha256
+
+      - name: Attach artifacts to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            hawkeye-sterling-${{ github.ref_name }}.tar.gz
+            hawkeye-sterling-${{ github.ref_name }}.cdx.json
+            checksums.sha256
+
+  # SLSA provenance generation — level 2 (signed build provenance)
+  provenance:
+    needs: build-and-sign
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.build-and-sign.outputs.hashes }}"
+      upload-assets: true
+
+  # Trivy CVE scan of the osint-bridge container image BEFORE signing.
+  # An image must pass this scan before Cosign will sign it.
+  # Findings are uploaded to the GitHub Security tab.
+  scan-osint-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-and-sign
+    if: startsWith(github.ref, 'refs/tags/v') && hashFiles('services/osint-bridge/Dockerfile') != ''
+    permissions:
+      security-events: write
+      packages: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image locally for scanning (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: services/osint-bridge
+          push: false
+          load: true
+          tags: osint-bridge:scan-${{ github.ref_name }}
+
+      - name: Trivy container image scan — critical/high CVEs
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: osint-bridge:scan-${{ github.ref_name }}
+          format: 'sarif'
+          output: 'trivy-container.sarif'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+
+      - name: Upload container scan SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-container.sarif
+          category: trivy-container
+
+  # Cosign signing of the osint-bridge Docker image (services/osint-bridge/)
+  # Only runs after Trivy scan passes — never signs an unscanned image.
+  sign-osint-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-and-sign, scan-osint-bridge]
+    if: startsWith(github.ref, 'refs/tags/v') && hashFiles('services/osint-bridge/Dockerfile') != ''
+    permissions:
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push osint-bridge image
+        id: docker-build
+        uses: docker/build-push-action@v7
+        with:
+          context: services/osint-bridge
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/osint-bridge:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/osint-bridge:latest
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image with Cosign (keyless OIDC)
+        run: |
+          cosign sign --yes \
+            ghcr.io/${{ github.repository_owner }}/osint-bridge@${{ steps.docker-build.outputs.digest }}

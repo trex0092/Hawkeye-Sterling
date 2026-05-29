@@ -1,0 +1,114 @@
+# Hawkeye Sterling — OSINT Bridge sidecar deployment.
+#
+# Deploys the Python/FastAPI OSINT microservice that wraps Sherlock, Maigret,
+# theHarvester, and PyOD. It runs as a sidecar within the hawkeye namespace,
+# accessible only to the main Next.js pod via the cluster-internal Service.
+#
+# Auth: X-API-Key validated against OSINT_BRIDGE_API_KEY (ExternalSecret).
+# Port: 8080 (HTTP, cluster-internal only — no Ingress or public LoadBalancer).
+#
+# Image pinning: replace :latest with Cosign-verified digest from the release
+# workflow (e.g. ghcr.io/trex0092/hawkeye-osint-bridge@sha256:<digest>).
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: osint-bridge
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: osint-bridge
+    app.kubernetes.io/component: osint-sidecar
+    app.kubernetes.io/part-of: hawkeye-sterling
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: osint-bridge
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: osint-bridge
+        app.kubernetes.io/component: osint-sidecar
+        app.kubernetes.io/part-of: hawkeye-sterling
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: osint-bridge
+          # REQUIRED: replace this placeholder with the Cosign-verified digest
+          # from the SLSA release workflow artifact before any production deploy.
+          # Example: ghcr.io/trex0092/hawkeye-osint-bridge@sha256:<64-hex-chars>
+          # Using :latest is a supply-chain risk — a compromised registry push can
+          # silently swap the image running in production.
+          image: ghcr.io/trex0092/hawkeye-osint-bridge@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false  # OSINT tools write to /tmp
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: OSINT_BRIDGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hawkeye-secrets
+                  key: OSINT_BRIDGE_API_KEY
+            - name: OSINT_BRIDGE_TIMEOUT_S
+              value: "30"
+            - name: PORT
+              value: "8080"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp-dir
+              mountPath: /tmp
+      volumes:
+        - name: tmp-dir
+          emptyDir:
+            sizeLimit: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: osint-bridge
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: osint-bridge
+    app.kubernetes.io/component: osint-sidecar
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: osint-bridge
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http

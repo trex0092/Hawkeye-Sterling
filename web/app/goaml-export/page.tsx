@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { loadOperatorRole } from "@/lib/data/operator-role";
 import {
   REPORT_CODES,
@@ -67,7 +68,7 @@ interface SubmissionState {
   error?: string;
 }
 
-const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "compliance", "managing_director"]);
+const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "managing_director"]);
 
 export default function GoAmlExportPage() {
   const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");
@@ -175,7 +176,7 @@ export default function GoAmlExportPage() {
       const m = /filename="([^"]+)"/.exec(dispo);
       if (mountedRef.current) setSubmission({ status: "ready", xml, filename: m?.[1] ?? "goaml-export.xml" });
     } catch (err) {
-      if (mountedRef.current) setSubmission({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (mountedRef.current) setSubmission({ status: "error", error: caughtErrorMessage(err) });
     }
   };
 
@@ -239,7 +240,7 @@ export default function GoAmlExportPage() {
                 step === s.id
                   ? "border-brand bg-brand-dim text-brand-deep"
                   : s.id < step
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
                     : "border-hair-2 bg-bg-panel text-ink-2"
               }`}
             >
@@ -248,7 +249,7 @@ export default function GoAmlExportPage() {
               <div className="text-10 text-ink-3">{s.sub}</div>
             </button>
             {i < STEPS.length - 1 && (
-              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-300" : "bg-hair-2"}`} />
+              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-500/40" : "bg-hair-2"}`} />
             )}
           </div>
         ))}
@@ -406,7 +407,7 @@ export default function GoAmlExportPage() {
               proceed.
             </p>
             {issues.length === 0 ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded p-4 text-emerald-700 text-12">
+              <div className="bg-emerald-950/30 border border-emerald-500/40 rounded p-4 text-emerald-300 text-12">
                 ✓ All checks pass. Ready to generate XML.
               </div>
             ) : (
@@ -426,7 +427,7 @@ export default function GoAmlExportPage() {
           <div className="space-y-3">
             <h2 className="text-14 font-semibold text-ink-0 m-0 mb-2">Export</h2>
             {hasErrors(issues) ? (
-              <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700 text-12">
+              <div className="bg-red-950/30 border border-red-500/40 rounded p-4 text-red-300 text-12">
                 Validation has unresolved errors — return to step 4.
               </div>
             ) : (
@@ -449,14 +450,14 @@ export default function GoAmlExportPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded font-semibold"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 rounded font-semibold"
                     >
                       Download {submission.filename}
                     </button>
                   )}
                 </div>
                 {submission.status === "error" && (
-                  <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-12">
+                  <div className="bg-red-950/30 border border-red-500/40 rounded p-3 text-red-300 text-12">
                     {submission.error}
                   </div>
                 )}
@@ -564,8 +565,8 @@ function FieldNumber({ label, value, onChange }: { label: string; value: number 
 
 function IssueRow({ issue }: { issue: ValidationIssue }) {
   const tone = issue.level === "error"
-    ? "border-red-200 bg-red-50 text-red-700"
-    : "border-amber-200 bg-amber-50 text-amber-700";
+    ? "border-red-500/40 bg-red-950/30 text-red-300"
+    : "border-amber-500/40 bg-amber-950/30 text-amber-300";
   return (
     <div className={`text-12 border rounded px-3 py-1.5 ${tone}`}>
       <span className="font-mono text-10 uppercase tracking-wide-3 mr-2">{issue.level}</span>

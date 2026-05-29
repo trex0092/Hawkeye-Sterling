@@ -22,8 +22,9 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { listKeys, getJson } from "@/lib/server/store";
+import { listKeys, getJson, setJson } from "@/lib/server/store";
 import { buildAuditCertificate, type AuditSnapshotInput } from "@/lib/server/audit-certificate";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +43,10 @@ interface CertifyBody {
   caseId?: string;
   trigger?: AuditSnapshotInput["trigger"];
   digest?: Record<string, string | number | boolean>;
+  /** Subject identifier for HMAC binding (e.g. entity name or customer ID). */
+  subjectId?: string;
+  /** Filing-entity name recorded in the regulatory attestation block. */
+  filingEntity?: string;
 }
 
 const VALID_TRIGGERS = new Set([
@@ -77,59 +82,97 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const tenantId = tenantIdFromGate(gate);
 
-  // Walk the persisted audit-log entries and pull the ones tied to this
-  // case. The audit-log key prefix is set by mlro-integration.ts; we
-  // scan a bounded slice (10k recent entries) so the route stays under
-  // the maxDuration ceiling even for chatty tenants.
-  const AUDIT_KEY_PREFIX = "audit/mlro/";
-  const allKeys = await listKeys(AUDIT_KEY_PREFIX);
-  const recentKeys = allKeys.slice(-10_000);
-  const entries: AuditEntry[] = [];
-  for (const key of recentKeys) {
-    const entry = await getJson<AuditEntry>(key);
-    if (!entry || typeof entry.seq !== "number" || !entry.entryHash) continue;
-    if (entry.caseId === caseId || entry.subjectId === caseId) {
-      entries.push(entry);
+  try {
+    // Walk the persisted audit-log entries and pull the ones tied to this
+    // case. The audit-log key prefix is set by mlro-integration.ts; we
+    // scan a bounded slice (10k recent entries) so the route stays under
+    // the maxDuration ceiling even for chatty tenants.
+    const AUDIT_KEY_PREFIX = "audit/mlro/";
+    const allKeys = await listKeys(AUDIT_KEY_PREFIX);
+    const recentKeys = allKeys.slice(-10_000);
+    const entries: AuditEntry[] = [];
+    for (const key of recentKeys) {
+      const entry = await getJson<AuditEntry>(key);
+      if (!entry || typeof entry.seq !== "number" || !entry.entryHash) continue;
+      if (entry.caseId === caseId || entry.subjectId === caseId) {
+        entries.push(entry);
+      }
     }
-  }
 
-  if (entries.length === 0) {
+    if (entries.length === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "no audit entries found for caseId",
+          hint: "Cases must have at least one audit-trail entry before a certificate can be issued. Verify the caseId or check that MLRO actions were recorded.",
+        },
+        { status: 404, headers: gate.headers },
+      );
+    }
+
+    const certificate = buildAuditCertificate({
+      caseId,
+      tenantId,
+      trigger: body.trigger,
+      auditEntries: entries.map((e) => ({
+        seq: e.seq,
+        entryHash: e.entryHash,
+        at: e.at ?? new Date().toISOString(),
+        ...(e.actor ? { actor: e.actor } : {}),
+      })),
+      digest: body.digest ?? {},
+      ...(body.subjectId ? { subjectId: body.subjectId } : {}),
+      ...(body.filingEntity ? { filingEntity: body.filingEntity } : {}),
+    });
+
+    void writeAuditChainEntry(
+      { event: "audit.certificate_issued", actor: gate.keyId, meta: { caseId, trigger: certificate.trigger, serialNumber: certificate.serialNumber } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+    // FDL 10/2025 Art.24 — the act of generating a compliance certificate is
+    // itself a regulated event and must be traceable in the audit trail.
+    const certAuditKey = `audit/mlro/${Date.now()}-cert-${certificate.serialNumber}`;
+    void setJson(certAuditKey, {
+      event: "audit.certificate_generated",
+      caseId,
+      tenantId,
+      serialNumber: certificate.serialNumber,
+      trigger: certificate.trigger,
+      contentHash: certificate.contentHash,
+      snapshotSha256: certificate.snapshotSha256,
+      hmacPresent: certificate.hmacSignature.length > 0,
+      signed: certificate.signed,
+      auditEntryCount: certificate.auditEntryCount,
+      issuedAt: certificate.issuedAt,
+      expiresAt: certificate.expiresAt,
+      actor: gate.keyId ?? "system",
+      at: new Date().toISOString(),
+    }).catch((err: unknown) => {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error(
+        `[audit/certify] certificate audit entry persist failed serial=${certificate.serialNumber} — ${detail}. ` +
+        "Investigate Blobs connectivity.",
+      );
+    });
+
     return NextResponse.json(
       {
-        ok: false,
-        error: "no audit entries found for caseId",
-        hint: "Cases must have at least one audit-trail entry before a certificate can be issued. Verify the caseId or check that MLRO actions were recorded.",
+        ok: true,
+        certificate,
+        regulationBasis: [
+          "UAE PDPL 45/2021 Art.13 (record retention)",
+          "UAE FDL 10/2025 Art.19 (record keeping) + Art.24 (10-year audit chain)",
+          "FATF R.11 (record-keeping)",
+        ],
+        hint: certificate.signed
+          ? "Verify offline: openssl pkeyutl -verify -pubin -inkey hawkeye-pubkey.pem -sigfile <cert>.sig -in <snapshot>.json"
+          : "REPORT_ED25519_PRIVATE_KEY not configured — certificate is unsigned. Configure the key to enable regulator-verifiable signatures.",
       },
-      { status: 404, headers: gate.headers },
+      { headers: gate.headers },
     );
+  } catch (err) {
+    console.error("[audit/certify] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to generate audit certificate" }, { status: 500, headers: gate.headers });
   }
-
-  const certificate = buildAuditCertificate({
-    caseId,
-    tenantId,
-    trigger: body.trigger,
-    auditEntries: entries.map((e) => ({
-      seq: e.seq,
-      entryHash: e.entryHash,
-      at: e.at ?? new Date().toISOString(),
-      ...(e.actor ? { actor: e.actor } : {}),
-    })),
-    digest: body.digest ?? {},
-  });
-
-  return NextResponse.json(
-    {
-      ok: true,
-      certificate,
-      regulationBasis: [
-        "UAE PDPL 45/2021 Art.13 (record retention)",
-        "UAE FDL 10/2025 Art.24 (10-year audit chain)",
-        "FATF R.11 (record-keeping)",
-      ],
-      hint: certificate.signed
-        ? "Verify offline: openssl pkeyutl -verify -pubin -inkey hawkeye-pubkey.pem -sigfile <cert>.sig -in <snapshot>.json"
-        : "REPORT_ED25519_PRIVATE_KEY not configured — certificate is unsigned. Configure the key to enable regulator-verifiable signatures.",
-    },
-    { headers: gate.headers },
-  );
 }

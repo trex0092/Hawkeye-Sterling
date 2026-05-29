@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
@@ -139,7 +140,7 @@ export default function SarQaPage() {
       });
       if (!mountedRef.current) return;
       if (!res.ok) {
-        setAiScoreError(`AI scoring failed (HTTP ${res.status}). Please try again.`);
+        setAiScoreError(apiErrorMessage(res.status, "AI scoring"));
         return;
       }
       const data = await res.json().catch(() => ({})) as { ok: boolean; scores?: QaScore[] };
@@ -155,7 +156,7 @@ export default function SarQaPage() {
       setAiScores(map);
     } catch (err) {
       if (!mountedRef.current) return;
-      setAiScoreError(err instanceof Error ? err.message : "AI scoring failed. Please try again.");
+      setAiScoreError(caughtErrorMessage(err, "AI scoring failed. Please try again."));
     } finally {
       if (mountedRef.current) setAiScoreLoading(false);
     }
@@ -167,7 +168,7 @@ export default function SarQaPage() {
     const entry: QaReview = {
       caseId,
       state,
-      reviewer: "current-mlro",
+
       at: new Date().toISOString(),
       ...(note ? { note } : {}),
       ...(state === "challenged" && reason ? { challengeReason: reason } : {}),

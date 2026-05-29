@@ -381,6 +381,50 @@ export const SCENARIOS: Scenario[] = [
     'Uncut rubies with estimated retail value AED 2.4m declared as "industrial minerals" on customs manifest; buyer is an unregistered dealer; payment made cash-on-delivery; no CITES or origin documentation.',
     undefined,
     ['precious_stones','customs_fraud','provenance_trace','jurisdiction_cascade']),
+
+  // ─── WAVE 13 — forensic, geopolitical, anticipation ──────────────────
+  s('dpms_bri_gold_financing', 'DPMS — BRI-Linked Gold Financing', 'dpms',
+    'UAE-registered gold refinery invoices a Pakistani construction firm for 800 kg of gold bars at 22% below LBMA spot; ' +
+    'declared end-use is "equipment collateral" for a CPEC road project; payment routed via a Lahore correspondent bank ' +
+    'with no SCO (Shanghai Cooperation Organisation) sanctions screening; refinery director holds a concurrent directorship ' +
+    'in the Pakistani firm; no end-user certificate filed with UAE CBUAE.',
+    undefined,
+    ['tbml_under_invoicing','bri_nexus','trade_finance_ml','proliferation_financing','kyc_gap']),
+
+  s('vasp_dprk_mixer_hop', 'VASP — DPRK Lazarus Mixer Hop', 'vasp',
+    'UAE-based VASP receives 14.2 BTC in 6 micro-deposits from wallets flagged in OFAC SDN list (Lazarus Group attribution); ' +
+    'funds pass through a Tornado Cash mixer address, bridge to Ethereum, swap to USDC on a DEX, then off-ramp via ' +
+    'a P2P OTC desk in Dubai accepting cash; total value AED 2.1m; VASP has no on-chain screening tool; ' +
+    'customer KYC shows a Syrian national with no business rationale for crypto holdings at this scale.',
+    undefined,
+    ['dprk_lazarus','mixer_tumbler_detection','onchain_sanctions_screening','state_sponsored_ml_detection','crypto_state_actor_evasion']),
+
+  s('fa_shell_payroll_ghost', 'Forensic — Shell Company Payroll Ghost Scheme', 'corporate',
+    'UAE free-zone trading company processes AED 180k/month in payroll to 22 "employees"; ' +
+    'HR records exist for only 8; remaining 14 names appear on no Emirates ID database cross-check; ' +
+    'all payroll accounts receive transfers and immediately forward funds to a single personal account; ' +
+    'journal entries creating payroll liability are all posted after 11 PM on the last business day of each month; ' +
+    'company has zero inventory and AED 0 in fixed assets despite declared import-export revenue of AED 4.2m/quarter.',
+    undefined,
+    ['ghost_employee','journal_entry_timing','shell_company_financial_signature','duplicate_transaction_detection','placement_layering']),
+
+  s('ge_cbdc_sanctions_bypass', 'Geopolitical — CBDC/mBridge Sanctions Bypass', 'banking',
+    'Iranian oil trading company routes USD 12m in petroleum proceeds via mBridge (multi-CBDC platform) ' +
+    'from an Abu Dhabi bank to a Chinese state bank, converting to e-CNY; ' +
+    'transaction bypasses SWIFT and therefore evades OFAC OFAC screening at correspondent nodes; ' +
+    'declared as "agricultural equipment payment"; end beneficiary is IRGC-affiliated procurement entity ' +
+    'identified in UN Panel of Experts Report S/2024/1041; UAE bank has no mBridge transaction screening protocol.',
+    undefined,
+    ['de_dollarization_cbdc_risk','sanctions_evasion','irgc_linked','tbml_misrepresentation','correspondent_banking_gap']),
+
+  s('an_pre_sanction_crypto_exit', 'Anticipation — Pre-Sanction Crypto Exit Pattern', 'vasp',
+    'Russian national with OFAC exposure (spouse on SDN list) liquidates 340 BTC through a UAE OTC desk ' +
+    'over 72 hours immediately preceding the public announcement of an OFAC designation update; ' +
+    'pattern matches pre-sanction positioning: rapid conversion to AED cash, simultaneous dissolution of ' +
+    'two UAE LLCs, and registration of a new entity in Ras Al Khaimah under a nominee director; ' +
+    'OTC desk conducted no enhanced due diligence despite PEP-adjacent status; no SAR filed.',
+    undefined,
+    ['pre_sanction_positioning_detection','network_restructuring_prediction','crypto_state_actor_evasion','pep_adjacent','sar_gap']),
 ];
 
 export const SCENARIO_BY_ID: Map<string, Scenario> = new Map(

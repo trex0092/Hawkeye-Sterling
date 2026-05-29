@@ -1,9 +1,11 @@
-// GET  /api/alerts          — list all alerts (sorted: critical first)
+// GET  /api/alerts          — list all alerts with AI risk enrichment (smart reranking)
 // POST /api/alerts          — write a new alert (called by cron or tests)
 // DELETE /api/alerts        — dismiss ALL unread (batch)
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   listAlerts,
   writeAlert,
@@ -18,33 +20,83 @@ export const maxDuration = 15;
 
 const SEVERITY_ORDER: Record<DesignationAlert["severity"], number> = { critical: 0, high: 1, medium: 2 };
 
+// ─── AI risk enrichment ───────────────────────────────────────────────────────
+
+interface EnrichedAlert extends DesignationAlert {
+  riskSignals: string[];
+  aiPriorityScore: number;
+}
+
+const SANCTIONS_EVASION_PATTERNS = [
+  { pattern: /offshore|shell|nominee/i, signal: "Possible evasion structure" },
+  { pattern: /crypto|bitcoin|ethereum/i, signal: "Crypto exposure" },
+  { pattern: /iran|dprk|russia|belarus/i, signal: "High-risk jurisdiction nexus" },
+  { pattern: /vessel|ship|maritime/i, signal: "Dark fleet risk" },
+  { pattern: /pep|politically exposed/i, signal: "PEP nexus" },
+  { pattern: /arms|weapons|military/i, signal: "Proliferation financing risk" },
+];
+
+function enrichAlert(alert: DesignationAlert): EnrichedAlert {
+  const searchText = [
+    alert.matchedEntry,
+    alert.listLabel,
+    alert.sourceRef,
+  ].filter(Boolean).join(" ");
+
+  const riskSignals = SANCTIONS_EVASION_PATTERNS
+    .filter(({ pattern }) => pattern.test(searchText))
+    .map(({ signal }) => signal);
+
+  // AI priority score: base severity + freshness + signal count
+  const severityBase = alert.severity === "critical" ? 100 : alert.severity === "high" ? 70 : 40;
+  const ageHours = (Date.now() - new Date(alert.detectedAt).getTime()) / 3_600_000;
+  const freshnessPenalty = Math.min(ageHours * 0.5, 30);
+  const signalBoost = riskSignals.length * 5;
+  const readPenalty = alert.read ? 20 : 0;
+
+  const aiPriorityScore = Math.max(0, Math.min(100,
+    severityBase - freshnessPenalty + signalBoost - readPenalty,
+  ));
+
+  return { ...alert, riskSignals, aiPriorityScore };
+}
+
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   try {
     const all = await listAlerts(false);
-    // Sort: unread critical first, then high, then medium; read last
-    const sorted = [...all].sort((a, b) => {
+    // AI-enriched smart reranking: primary sort by aiPriorityScore, secondary by severity
+    const enriched = all.map(enrichAlert);
+    const sorted = [...enriched].sort((a, b) => {
       if (a.read !== b.read) return a.read ? 1 : -1;
+      if (b.aiPriorityScore !== a.aiPriorityScore) return b.aiPriorityScore - a.aiPriorityScore;
       return SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity];
     });
     const unread = sorted.filter((a) => !a.read);
+    const withEvasionSignals = sorted.filter((a) => a.riskSignals.length > 0).length;
     return NextResponse.json({
       ok: true,
       alerts: sorted,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
+      aiEnrichment: {
+        enabled: true,
+        alertsWithSignals: withEvasionSignals,
+        topSignals: [...new Set(sorted.flatMap((a) => a.riskSignals))].slice(0, 5),
+      },
     }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts GET]", err instanceof Error ? err.message : err);
-    const demos = getDemoAlerts();
+    const demos = getDemoAlerts().map(enrichAlert);
     const unread = demos.filter((a) => !a.read);
     return NextResponse.json({
       ok: true,
       alerts: demos,
       unreadCount: unread.length,
       criticalCount: unread.filter((a) => a.severity === "critical").length,
+      aiEnrichment: { enabled: true, alertsWithSignals: 0, topSignals: [] },
     }, { headers: gate.headers });
   }
 }
@@ -57,13 +109,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: false, error: "ALERTS_CRON_TOKEN not configured" }, { status: 503 });
     }
     const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-    const { timingSafeEqual } = await import("crypto");
-    const enc = new TextEncoder();
-    const expBuf = enc.encode(token);
-    const gotRaw = enc.encode(got);
-    const gotBuf = new Uint8Array(expBuf.length);
-    gotBuf.set(gotRaw.slice(0, expBuf.length));
-    if (got.length !== token.length || !timingSafeEqual(expBuf, gotBuf)) {
+    const { createHmac, timingSafeEqual } = await import("node:crypto");
+    const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+    const ha = createHmac("sha256", COMPARE_KEY).update(token).digest();
+    const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+    if (!timingSafeEqual(ha, hb)) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
     let body: Partial<DesignationAlert>;
@@ -106,6 +156,11 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       if (typeof body.dismissedBy === "string") dismissedBy = body.dismissedBy;
     } catch { /* body optional */ }
     const count = await dismissAllUnread(dismissedBy);
+    const tenantId = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "alerts.dismissed_all", actor: gate.keyId, meta: { count, dismissedBy } },
+      tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, dismissed: count }, { headers: gate.headers });
   } catch (err) {
     console.error("[alerts DELETE]", err instanceof Error ? err.message : err);

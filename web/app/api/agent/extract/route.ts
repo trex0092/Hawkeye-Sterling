@@ -28,6 +28,7 @@
 //     model, usage
 //   }
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
@@ -96,7 +97,7 @@ interface ExtractResult {
 
 function inferEvidenceMeta(schema: Schema, extracted: Record<string, unknown>): ExtractResult["evidenceItem"] {
   const observedAt = new Date().toISOString();
-  const id = `ext_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const id = `ext_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}`;
   switch (schema) {
     case "corporate_registry":
       return {
@@ -173,7 +174,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const schema: Schema = body.schema ?? "free";
+  const VALID_SCHEMAS = new Set<string>(["corporate_registry","court_filing","sanctions_screenshot","kyc_passport","kyc_proof_of_address","press_release","free"]);
+  if (body.schema !== undefined && !VALID_SCHEMAS.has(body.schema)) {
+    return NextResponse.json({ ok: false, error: `schema must be one of: ${[...VALID_SCHEMAS].join(", ")}` }, { status: 400, headers: gateHeaders });
+  }
+  const schema: Schema = (body.schema ?? "free") as Schema;
   const model = body.model ?? DEFAULT_MODEL;
   const mediaType = body.documentMediaType ?? "application/pdf";
 

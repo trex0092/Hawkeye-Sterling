@@ -160,7 +160,7 @@ async function parseQuery(query: string): Promise<ParseResult> {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 25_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
@@ -183,11 +183,12 @@ async function parseQuery(query: string): Promise<ParseResult> {
       reasoning: parsed.reasoning ?? "Parsed by brain",
     };
   } catch (err) {
+    console.error("[nl-search] LLM parse failed:", err instanceof Error ? err.message : String(err));
     return {
       filters: {},
       interpretation: query,
       confidence: 0,
-      reasoning: err instanceof Error ? err.message : "parse failed",
+      reasoning: "parse error — manual filter applied",
     };
   }
 }
@@ -208,6 +209,7 @@ function applyFilters(subjects: SubjectSlim[], filters: ParsedFilters): string[]
     if (filters.hasPep === true && !s.pep) return false;
     if (filters.hasPep === false && s.pep) return false;
 
+    if (filters.pepMinTier && !s.pep) return false;
     if (filters.pepMinTier && s.pep) {
       const tier = s.pep.tier.toLowerCase();
       const minTier = filters.pepMinTier.toLowerCase();

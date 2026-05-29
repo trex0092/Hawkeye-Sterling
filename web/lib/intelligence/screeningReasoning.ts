@@ -176,6 +176,7 @@ export interface ConsensusOutput {
   sourcesUncertain: number;
   weightedFor: number;         // sum of credibility weights
   weightedAgainst: number;
+  noDataProvided?: true;       // set when inputs array is empty — callers must NOT treat this as a confirmed clear
 }
 
 /**
@@ -187,12 +188,16 @@ export interface ConsensusOutput {
  */
 export function multiSourceConsensus(inputs: ConsensusInput[]): ConsensusOutput {
   if (inputs.length === 0) {
+    // Return noDataProvided:true so callers can distinguish "no sources
+    // consulted" from "sources consulted and all returned uncertain/no-match".
+    // Callers MUST NOT treat unified:0 here as a confirmed clear result.
     return {
       unified: 0,
-      confidence: { low: 0, high: 0 },
+      confidence: { low: 0, high: 100 },
       agreementLevel: "weak",
       sourcesFor: 0, sourcesAgainst: 0, sourcesUncertain: 0,
       weightedFor: 0, weightedAgainst: 0,
+      noDataProvided: true,
     };
   }
 
@@ -703,12 +708,20 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
     }
   }
 
-  // Registry providers — only emit affirming on hit; absence = uncertain
-  for (const p of a.registryProviders) {
-    consensusInputs.push({ source: p, evidence: a.registryCount > 0 ? "match" : "uncertain" });
+  // Registry providers — credit at most registryCount distinct providers as
+  // "match"; the remainder are "uncertain". This prevents a single provider
+  // returning multiple hits from being counted as multiple confirming sources.
+  {
+    const matchSlots = Math.min(a.registryCount, a.registryProviders.length);
+    a.registryProviders.forEach((p, idx) => {
+      consensusInputs.push({ source: p, evidence: idx < matchSlots ? "match" : "uncertain" });
+    });
   }
-  for (const j of a.countryRegistryJurisdictions) {
-    consensusInputs.push({ source: `country-${j.toLowerCase()}`, evidence: a.countryRegistryCount > 0 ? "match" : "uncertain" });
+  {
+    const matchSlots = Math.min(a.countryRegistryCount, a.countryRegistryJurisdictions.length);
+    a.countryRegistryJurisdictions.forEach((j, idx) => {
+      consensusInputs.push({ source: `country-${j.toLowerCase()}`, evidence: idx < matchSlots ? "match" : "uncertain" });
+    });
   }
   for (const l of a.countrySanctionsLists) {
     const src = l.toLowerCase().replace(/_/g, "-");
@@ -717,8 +730,11 @@ export function buildConsensusInputsFromAugmentation(a: BuildConsensusInputsArgs
       contradictionItems.push({ source: src, topic: "sanctions-listing", stance: "affirm" });
     }
   }
-  for (const p of a.freeProviders) {
-    consensusInputs.push({ source: p, evidence: a.freeCount > 0 ? "match" : "uncertain" });
+  {
+    const matchSlots = Math.min(a.freeCount, a.freeProviders.length);
+    a.freeProviders.forEach((p, idx) => {
+      consensusInputs.push({ source: p, evidence: idx < matchSlots ? "match" : "uncertain" });
+    });
   }
 
   // Adverse-media articles count as match-evidence — when ANY article

@@ -10,14 +10,15 @@
 // the cron functions use — and returns the per-adapter summary.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
+async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
   let runIngestionAll: (_label: string) => Promise<unknown>;
   try {
     const mod = (await import(
@@ -25,12 +26,11 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {
+    console.error("[sanctions/operator-refresh] ingestion runner import failed:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `ingestion runner unavailable — ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        error: "ingestion runner unavailable — please check deployment build artifacts",
       },
       { status: 503 },
     );
@@ -52,6 +52,11 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
     // reloads fresh entities from the blobs we just wrote.
     invalidateCandidateCache();
 
+    void writeAuditChainEntry(
+      { event: "sanctions.ingestion_triggered", actor: ctx.apiKey.id, meta: { ok_count: (result as { ok_count?: number }).ok_count, failed_count: (result as { failed_count?: number }).failed_count } },
+      ctx.tenantId,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json(
       {
         triggeredAt,
@@ -63,13 +68,12 @@ async function handleOperatorRefresh(_req: Request): Promise<NextResponse> {
       { status: result.ok ? 200 : 502 },
     );
   } catch (err) {
+    console.error("[sanctions/operator-refresh] runIngestionAll threw:", err);
     return NextResponse.json(
       {
         ok: false,
         triggeredAt,
-        error: `runIngestionAll threw — ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        error: "Ingestion run failed — see server logs for details.",
       },
       { status: 500 },
     );

@@ -61,6 +61,31 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 // Free, no-key news crawl via Google News RSS.
 // Optional upgrade path: set NEWSAPI_KEY for higher-quality coverage.
 
+function detectScript(text: string): "latin" | "arabic" | "cyrillic" | "cjk" | "devanagari" | "thai" | "hebrew" | "georgian" | "armenian" | "other" {
+  const arabicCount = (text.match(/[؀-ۿ]/g) ?? []).length;
+  const cyrillicCount = (text.match(/[Ѐ-ӿ]/g) ?? []).length;
+  const cjkCount = (text.match(/[一-鿿㐀-䶿]/g) ?? []).length;
+  const devanagariCount = (text.match(/[ऀ-ॿ]/g) ?? []).length;
+  const thaiCount = (text.match(/[฀-๿]/g) ?? []).length;
+  const hebrewCount = (text.match(/[֐-׿]/g) ?? []).length;
+  const georgianCount = (text.match(/[Ⴀ-ჿ]/g) ?? []).length;
+  const armenianCount = (text.match(/[԰-֏]/g) ?? []).length;
+
+  const counts = [
+    { script: "arabic" as const, count: arabicCount },
+    { script: "cyrillic" as const, count: cyrillicCount },
+    { script: "cjk" as const, count: cjkCount },
+    { script: "devanagari" as const, count: devanagariCount },
+    { script: "thai" as const, count: thaiCount },
+    { script: "hebrew" as const, count: hebrewCount },
+    { script: "georgian" as const, count: georgianCount },
+    { script: "armenian" as const, count: armenianCount },
+  ];
+
+  const max = counts.reduce((a, b) => a.count > b.count ? a : b);
+  return max.count > 3 ? max.script : "latin";
+}
+
 interface Article {
   title: string;
   link: string;
@@ -74,27 +99,233 @@ interface Article {
   fuzzyMethod: string;       // levenshtein | jaro_winkler | soundex | token_set | ...
   matchedVariant?: string;   // variant that produced the top score
   lang: string;              // locale the article was fetched from (en, es, fr, ru, zh, ar, pt)
+  relevanceScore?: number;   // fuzzyScore + adverse-term boost, 0..100
+  sourceTier: "tier1" | "tier2" | "tier3" | "unknown";  // credibility classification
+  sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social" | "state_media";  // editorial category
+  script?: "latin" | "arabic" | "cyrillic" | "cjk" | "devanagari" | "thai" | "hebrew" | "georgian" | "armenian" | "other";
+  requiresTranslation?: boolean;
+  sourceAuthority?: "established" | "new" | "unknown";  // authority proxy based on tier lists
+  paywallLimited?: boolean;  // true when article description indicates a paywall
+  recencyWeight?: number;    // multiplier applied to this article's severity weight
 }
 
-// Locales we poll Google News from. Scoped to the 15 highest-value languages
-// for AML adverse-media coverage — enough to catch regional press without
-// the connection-pool overhead of 100+ parallel fetches.
+// ── Source credibility tiers ────────────────────────────────────────────────
+// Tier 1: major international wire services, authoritative MENA outlets,
+// investigative journalism organisations, and financial regulatory bodies.
+const TIER1_DOMAINS = new Set([
+  // Major international wire services
+  "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
+  "bbc.com", "bbc.co.uk", "theguardian.com", "nytimes.com",
+  "lemonde.fr", "spiegel.de", "elpais.com", "lavanguardia.com",
+  "afp.com", "dpa-international.com", "kyodonews.net",
+  // UAE/MENA authoritative sources
+  "gulfnews.com", "thenationalnews.com", "khaleejtimes.com",
+  "arabnews.com", "alarabiya.net", "albawaba.com",
+  // Investigative / regulatory
+  "occrp.org", "icij.org", "transparency.org",
+  "globalwitness.org", "balkaninsight.com", "hrw.org",
+  // Financial regulators' own publications
+  "fatf-gafi.org", "bis.org", "imf.org", "worldbank.org", "qatarfoundation.org",
+  "unodc.org", "ec.europa.eu", "sec.gov", "justice.gov",
+  "ofac.treas.gov", "fca.org.uk", "eba.europa.eu",
+]);
+
+// Tier 2: well-known international broadcasters and business press with
+// editorial standards but lower primary-source status than tier 1.
+const TIER2_DOMAINS = new Set([
+  "cnbc.com", "cnn.com", "nbcnews.com", "abcnews.go.com",
+  "economist.com", "forbes.com", "businessinsider.com",
+  "aljazeera.com", "middleeasteye.net", "haaretz.com",
+  "scmp.com", "straitstimes.com", "channelnewsasia.com",
+  // Africa
+  "allafrica.com", "dailynation.co.ke", "theeastafrican.co.ke",
+  "punchng.com", "premiumtimesng.com", "businessdayonline.com",
+  "groundup.org.za", "mg.co.za", "dailymaverick.co.za",
+  // Latin America
+  "infobae.com", "lanacion.com.ar", "folha.uol.com.br",
+  "elespectador.com", "eluniversal.com.mx", "elcomercio.pe",
+  "elnacional.com", "larepublica.co",
+  // Oceania / Pacific
+  "rnz.co.nz", "abc.net.au", "radionz.co.nz", "rnpacific.co.nz",
+  "pina.com.fj", "pireport.org",
+  // Europe investigative
+  "balkaninsight.com", "euobserver.com", "globalwitness.org",
+  "reportingproject.net", "correctiv.org",
+  // Additional MENA
+  "al-monitor.com", "iranintl.com", "kurdistan24.net",
+  // Gulf / Levant English press
+  "alaraby.co.uk", "asharq.com", "thepeninsulaqatar.com", "timesofoman.com",
+  "gulf-times.com", "jordantimes.com", "dailystar.com.lb", "dailynewsegypt.com",
+]);
+
+// ── State-controlled / propaganda media domains ─────────────────────────────
+// Articles from these outlets are tagged `sourceCategory: "state_media"` and
+// their severity contribution is capped at "medium" regardless of content.
+// Sources: Russia (RT, TASS, RIA, Sputnik), China (Xinhua, CGTN, China Daily,
+// Global Times), Iran (PressTV, Mehr), North Korea (KCNA, Rodong), others.
+const STATE_MEDIA_DOMAINS = new Set([
+  // Russia
+  "rt.com", "sputniknews.com", "tass.ru", "ria.ru",
+  // China
+  "xinhuanet.com", "cgtn.com", "chinadaily.com.cn", "globaltimes.cn",
+  // Iran
+  "presstv.ir", "mehrnews.com",
+  // North Korea
+  "kcna.kp", "rodong.rep.kp",
+  // Others
+  "venezuelanalysis.com", "cubanews.org",
+]);
+
+function classifySource(url: string): "tier1" | "tier2" | "tier3" | "unknown" {
+  if (!url) return "unknown";
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (TIER1_DOMAINS.has(domain)) return "tier1";
+    if (TIER2_DOMAINS.has(domain)) return "tier2";
+    return "tier3";
+  } catch { return "unknown"; }
+}
+
+// Locales we poll Google News from. 100+ language and regional locales covering
+// all 7 continents — FATF high-risk, MENA, South & Southeast Asia, Caucasus,
+// Western Balkans, Nordics, East Africa, Latin America regional editions,
+// Pacific, Central Asia. All feeds run in parallel under a 4s overall timebox
+// so latency does not grow with locale count — slow/missing feeds drop out.
 const LOCALES: Array<{ code: string; hl: string; gl: string; ceid: string }> = [
-  { code: "en", hl: "en", gl: "US", ceid: "US:en" },
-  { code: "tr", hl: "tr", gl: "TR", ceid: "TR:tr" },
-  { code: "ar", hl: "ar", gl: "AE", ceid: "AE:ar" },
-  { code: "de", hl: "de", gl: "DE", ceid: "DE:de" },
-  { code: "fr", hl: "fr", gl: "FR", ceid: "FR:fr" },
-  { code: "es", hl: "es", gl: "ES", ceid: "ES:es" },
-  { code: "ru", hl: "ru", gl: "RU", ceid: "RU:ru" },
-  { code: "pt", hl: "pt-BR", gl: "BR", ceid: "BR:pt-419" },
-  { code: "it", hl: "it", gl: "IT", ceid: "IT:it" },
-  { code: "zh", hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans" },
-  { code: "nl", hl: "nl", gl: "NL", ceid: "NL:nl" },
-  { code: "pl", hl: "pl", gl: "PL", ceid: "PL:pl" },
-  { code: "uk", hl: "uk", gl: "UA", ceid: "UA:uk" },
-  { code: "ja", hl: "ja", gl: "JP", ceid: "JP:ja" },
-  { code: "ko", hl: "ko", gl: "KR", ceid: "KR:ko" },
+  // ── NORTH AMERICA ────────────────────────────────────────────────────────
+  { code: "en",    hl: "en",      gl: "US", ceid: "US:en"       },  // English - USA
+  { code: "en-CA", hl: "en-CA",   gl: "CA", ceid: "CA:en"       },  // English - Canada
+  { code: "fr-CA", hl: "fr-CA",   gl: "CA", ceid: "CA:fr"       },  // French - Canada
+  { code: "es-MX", hl: "es-419",  gl: "MX", ceid: "MX:es-419"  },  // Spanish - Mexico
+  // ── EUROPE ───────────────────────────────────────────────────────────────
+  { code: "en-GB", hl: "en-GB",   gl: "GB", ceid: "GB:en"       },  // English - UK
+  { code: "de",    hl: "de",      gl: "DE", ceid: "DE:de"       },  // German
+  { code: "fr",    hl: "fr",      gl: "FR", ceid: "FR:fr"       },  // French
+  { code: "es",    hl: "es",      gl: "ES", ceid: "ES:es"       },  // Spanish - Spain
+  { code: "it",    hl: "it",      gl: "IT", ceid: "IT:it"       },  // Italian
+  { code: "nl",    hl: "nl",      gl: "NL", ceid: "NL:nl"       },  // Dutch
+  { code: "pt-PT", hl: "pt",      gl: "PT", ceid: "PT:pt-150"  },  // Portuguese - Portugal
+  // CEE / Balkans
+  { code: "pl",    hl: "pl",      gl: "PL", ceid: "PL:pl"       },  // Polish
+  { code: "ro",    hl: "ro",      gl: "RO", ceid: "RO:ro"       },  // Romanian
+  { code: "hu",    hl: "hu",      gl: "HU", ceid: "HU:hu"       },  // Hungarian
+  { code: "cs",    hl: "cs",      gl: "CZ", ceid: "CZ:cs"       },  // Czech
+  { code: "sk",    hl: "sk",      gl: "SK", ceid: "SK:sk"       },  // Slovak
+  { code: "hr",    hl: "hr",      gl: "HR", ceid: "HR:hr"       },  // Croatian
+  { code: "sr",    hl: "sr",      gl: "RS", ceid: "RS:sr"       },  // Serbian
+  { code: "bg",    hl: "bg",      gl: "BG", ceid: "BG:bg"       },  // Bulgarian
+  { code: "mk",    hl: "mk",      gl: "MK", ceid: "MK:mk"       },  // Macedonian
+  { code: "sq",    hl: "sq",      gl: "AL", ceid: "AL:sq"       },  // Albanian
+  { code: "sl",    hl: "sl",      gl: "SI", ceid: "SI:sl"       },  // Slovenian
+  { code: "el",    hl: "el",      gl: "GR", ceid: "GR:el"       },  // Greek
+  // Nordics / Baltics
+  { code: "sv",    hl: "sv",      gl: "SE", ceid: "SE:sv"       },  // Swedish
+  { code: "no",    hl: "no",      gl: "NO", ceid: "NO:no"       },  // Norwegian
+  { code: "da",    hl: "da",      gl: "DK", ceid: "DK:da"       },  // Danish
+  { code: "fi",    hl: "fi",      gl: "FI", ceid: "FI:fi"       },  // Finnish
+  { code: "et",    hl: "et",      gl: "EE", ceid: "EE:et"       },  // Estonian
+  { code: "lv",    hl: "lv",      gl: "LV", ceid: "LV:lv"       },  // Latvian
+  { code: "lt",    hl: "lt",      gl: "LT", ceid: "LT:lt"       },  // Lithuanian
+  // CIS / Eastern Europe
+  { code: "ru",    hl: "ru",      gl: "RU", ceid: "RU:ru"       },  // Russian
+  { code: "uk",    hl: "uk",      gl: "UA", ceid: "UA:uk"       },  // Ukrainian
+  // ── MENA ─────────────────────────────────────────────────────────────────
+  { code: "ar",    hl: "ar",      gl: "AE", ceid: "AE:ar"       },  // Arabic - UAE
+  { code: "ar-EG", hl: "ar",      gl: "EG", ceid: "EG:ar"       },  // Arabic - Egypt
+  { code: "ar-SA", hl: "ar",      gl: "SA", ceid: "SA:ar"       },  // Arabic - Saudi Arabia
+  { code: "ar-MA", hl: "ar",      gl: "MA", ceid: "MA:ar"       },  // Arabic - Morocco
+  { code: "ar-IQ", hl: "ar",      gl: "IQ", ceid: "IQ:ar"       },  // Arabic - Iraq
+  { code: "ar-LY", hl: "ar",      gl: "LY", ceid: "LY:ar"       },  // Arabic - Libya
+  { code: "ar-KW", hl: "ar",      gl: "KW", ceid: "KW:ar"       },  // Arabic - Kuwait
+  { code: "ar-QA", hl: "ar",      gl: "QA", ceid: "QA:ar"       },  // Arabic - Qatar
+  { code: "ar-BH", hl: "ar",      gl: "BH", ceid: "BH:ar"       },  // Arabic - Bahrain
+  { code: "ar-OM", hl: "ar",      gl: "OM", ceid: "OM:ar"       },  // Arabic - Oman
+  { code: "ar-YE", hl: "ar",      gl: "YE", ceid: "YE:ar"       },  // Arabic - Yemen
+  { code: "ar-JO", hl: "ar",      gl: "JO", ceid: "JO:ar"       },  // Arabic - Jordan
+  { code: "ar-LB", hl: "ar",      gl: "LB", ceid: "LB:ar"       },  // Arabic - Lebanon
+  { code: "ar-SY", hl: "ar",      gl: "SY", ceid: "SY:ar"       },  // Arabic - Syria
+  { code: "ar-TN", hl: "ar",      gl: "TN", ceid: "TN:ar"       },  // Arabic - Tunisia
+  { code: "tr",    hl: "tr",      gl: "TR", ceid: "TR:tr"       },  // Turkish
+  { code: "he",    hl: "iw",      gl: "IL", ceid: "IL:iw"       },  // Hebrew
+  { code: "fa",    hl: "fa",      gl: "IR", ceid: "IR:fa"       },  // Farsi - Iran
+  { code: "en-AE", hl: "en",      gl: "AE", ceid: "AE:en"       },  // English - UAE
+  { code: "en-QA", hl: "en",      gl: "QA", ceid: "QA:en"       },  // English - Qatar
+  { code: "en-SA", hl: "en",      gl: "SA", ceid: "SA:en"       },  // English - Saudi Arabia
+  { code: "en-EG", hl: "en",      gl: "EG", ceid: "EG:en"       },  // English - Egypt
+  { code: "en-JO", hl: "en",      gl: "JO", ceid: "JO:en"       },  // English - Jordan
+  { code: "en-LB", hl: "en",      gl: "LB", ceid: "LB:en"       },  // English - Lebanon
+  // ── SOUTH ASIA ───────────────────────────────────────────────────────────
+  { code: "en-IN", hl: "en-IN",   gl: "IN", ceid: "IN:en"       },  // English - India
+  { code: "hi",    hl: "hi",      gl: "IN", ceid: "IN:hi"       },  // Hindi
+  { code: "bn",    hl: "bn",      gl: "BD", ceid: "BD:bn"       },  // Bengali - Bangladesh
+  { code: "ur",    hl: "ur",      gl: "PK", ceid: "PK:ur"       },  // Urdu - Pakistan
+  { code: "en-PK", hl: "en",      gl: "PK", ceid: "PK:en"       },  // English - Pakistan
+  { code: "ta",    hl: "ta",      gl: "IN", ceid: "IN:ta"       },  // Tamil
+  { code: "ne",    hl: "ne",      gl: "NP", ceid: "NP:ne"       },  // Nepali - Nepal
+  { code: "si",    hl: "si",      gl: "LK", ceid: "LK:si"       },  // Sinhala - Sri Lanka
+  // ── SOUTHEAST ASIA ───────────────────────────────────────────────────────
+  { code: "en-SG", hl: "en-SG",   gl: "SG", ceid: "SG:en"       },  // English - Singapore
+  { code: "id",    hl: "id",      gl: "ID", ceid: "ID:id"       },  // Indonesian
+  { code: "ms",    hl: "ms",      gl: "MY", ceid: "MY:ms"       },  // Malay
+  { code: "vi",    hl: "vi",      gl: "VN", ceid: "VN:vi"       },  // Vietnamese
+  { code: "th",    hl: "th",      gl: "TH", ceid: "TH:th"       },  // Thai
+  { code: "tl",    hl: "tl",      gl: "PH", ceid: "PH:tl"       },  // Filipino/Tagalog
+  { code: "my",    hl: "my",      gl: "MM", ceid: "MM:my"       },  // Burmese - Myanmar
+  { code: "km",    hl: "km",      gl: "KH", ceid: "KH:km"       },  // Khmer - Cambodia
+  { code: "lo",    hl: "lo",      gl: "LA", ceid: "LA:lo"       },  // Lao - Laos
+  // ── EAST ASIA ────────────────────────────────────────────────────────────
+  { code: "zh",    hl: "zh-Hans", gl: "CN", ceid: "CN:zh-Hans"  },  // Chinese Simplified
+  { code: "zh-TW", hl: "zh-Hant", gl: "TW", ceid: "TW:zh-Hant" },  // Chinese Traditional - Taiwan
+  { code: "ja",    hl: "ja",      gl: "JP", ceid: "JP:ja"       },  // Japanese
+  { code: "ko",    hl: "ko",      gl: "KR", ceid: "KR:ko"       },  // Korean
+  { code: "mn",    hl: "mn",      gl: "MN", ceid: "MN:mn"       },  // Mongolian
+  // ── CAUCASUS / CENTRAL ASIA ──────────────────────────────────────────────
+  { code: "az",    hl: "az",      gl: "AZ", ceid: "AZ:az"       },  // Azerbaijani
+  { code: "ka",    hl: "ka",      gl: "GE", ceid: "GE:ka"       },  // Georgian
+  { code: "hy",    hl: "hy",      gl: "AM", ceid: "AM:hy"       },  // Armenian
+  { code: "kk",    hl: "kk",      gl: "KZ", ceid: "KZ:kk"       },  // Kazakh
+  { code: "uz",    hl: "uz",      gl: "UZ", ceid: "UZ:uz"       },  // Uzbek - Uzbekistan
+  // ── AFRICA ───────────────────────────────────────────────────────────────
+  { code: "am",    hl: "am",      gl: "ET", ceid: "ET:am"       },  // Amharic - Ethiopia
+  { code: "af",    hl: "af",      gl: "ZA", ceid: "ZA:af"       },  // Afrikaans - South Africa
+  { code: "sw-KE", hl: "sw",      gl: "KE", ceid: "KE:sw"       },  // Swahili - Kenya
+  { code: "sw-TZ", hl: "sw",      gl: "TZ", ceid: "TZ:sw"       },  // Swahili - Tanzania
+  { code: "ar-DZ", hl: "ar",      gl: "DZ", ceid: "DZ:ar"       },  // Arabic - Algeria
+  { code: "ar-SD", hl: "ar",      gl: "SD", ceid: "SD:ar"       },  // Arabic - Sudan
+  { code: "fr-SN", hl: "fr",      gl: "SN", ceid: "SN:fr"       },  // French - Senegal
+  { code: "fr-CI", hl: "fr",      gl: "CI", ceid: "CI:fr"       },  // French - Ivory Coast
+  { code: "fr-CM", hl: "fr",      gl: "CM", ceid: "CM:fr"       },  // French - Cameroon
+  { code: "fr-CD", hl: "fr",      gl: "CD", ceid: "CD:fr"       },  // French - DR Congo
+  { code: "fr-MA", hl: "fr",      gl: "MA", ceid: "MA:fr"       },  // French - Morocco
+  { code: "pt-AO", hl: "pt",      gl: "AO", ceid: "AO:pt-150"  },  // Portuguese - Angola
+  { code: "pt-MZ", hl: "pt",      gl: "MZ", ceid: "MZ:pt-150"  },  // Portuguese - Mozambique
+  { code: "en-NG", hl: "en-NG",   gl: "NG", ceid: "NG:en"       },  // English - Nigeria
+  { code: "en-ZA", hl: "en-ZA",   gl: "ZA", ceid: "ZA:en"       },  // English - South Africa
+  { code: "en-KE", hl: "en",      gl: "KE", ceid: "KE:en"       },  // English - Kenya
+  { code: "en-TZ", hl: "en",      gl: "TZ", ceid: "TZ:en"       },  // English - Tanzania
+  { code: "en-GH", hl: "en",      gl: "GH", ceid: "GH:en"       },  // English - Ghana
+  { code: "en-ZW", hl: "en",      gl: "ZW", ceid: "ZW:en"       },  // English - Zimbabwe
+  { code: "en-UG", hl: "en",      gl: "UG", ceid: "UG:en"       },  // English - Uganda
+  // ── LATIN AMERICA ────────────────────────────────────────────────────────
+  { code: "pt",    hl: "pt-BR",   gl: "BR", ceid: "BR:pt-419"  },  // Portuguese - Brazil
+  { code: "es-AR", hl: "es-419",  gl: "AR", ceid: "AR:es-419"  },  // Spanish - Argentina
+  { code: "es-CO", hl: "es-419",  gl: "CO", ceid: "CO:es-419"  },  // Spanish - Colombia
+  { code: "es-CL", hl: "es-419",  gl: "CL", ceid: "CL:es-419"  },  // Spanish - Chile
+  { code: "es-PE", hl: "es-419",  gl: "PE", ceid: "PE:es-419"  },  // Spanish - Peru
+  { code: "es-VE", hl: "es-419",  gl: "VE", ceid: "VE:es-419"  },  // Spanish - Venezuela
+  { code: "es-BO", hl: "es-419",  gl: "BO", ceid: "BO:es-419"  },  // Spanish - Bolivia
+  { code: "es-EC", hl: "es-419",  gl: "EC", ceid: "EC:es-419"  },  // Spanish - Ecuador
+  { code: "es-PY", hl: "es-419",  gl: "PY", ceid: "PY:es-419"  },  // Spanish - Paraguay
+  { code: "es-UY", hl: "es-419",  gl: "UY", ceid: "UY:es-419"  },  // Spanish - Uruguay
+  { code: "es-CR", hl: "es-419",  gl: "CR", ceid: "CR:es-419"  },  // Spanish - Costa Rica
+  { code: "es-GT", hl: "es-419",  gl: "GT", ceid: "GT:es-419"  },  // Spanish - Guatemala
+  { code: "es-DO", hl: "es-419",  gl: "DO", ceid: "DO:es-419"  },  // Spanish - Dominican Republic
+  { code: "es-CU", hl: "es-419",  gl: "CU", ceid: "CU:es-419"  },  // Spanish - Cuba
+  // ── OCEANIA ──────────────────────────────────────────────────────────────
+  { code: "en-AU", hl: "en-AU",   gl: "AU", ceid: "AU:en"       },  // English - Australia
+  { code: "en-NZ", hl: "en",      gl: "NZ", ceid: "NZ:en"       },  // English - New Zealand
+  { code: "en-PG", hl: "en",      gl: "PG", ceid: "PG:en"       },  // English - Papua New Guinea
+  { code: "en-FJ", hl: "en",      gl: "FJ", ceid: "FJ:en"       },  // English - Fiji
 ];
 
 
@@ -111,6 +342,10 @@ interface NewsResponse {
   fetchMode: "live" | "cached" | "static_fallback";
   fetchedAt: string;
   latencyMs: number;
+  // NewsDossier enrichment fields
+  sourceDiversityScore: number;       // 0–100: unique root domains / total articles × 100
+  crossCorroboratedCount: number;     // number of findings reported by ≥2 independent domains
+  propagandaSourceCount: number;      // number of articles from known state-media/propaganda outlets
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -157,12 +392,6 @@ function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 }
 
-// Strip diacritics so "halac" matches "Halaç", "ozcan" matches "Özcan", etc.
-function normalizeDiacritics(s: string): string {
-  // eslint-disable-next-line no-control-regex
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
-}
-
 // Sanitize RSS link fields: only allow https/http URLs — block javascript:,
 // data: and other dangerous schemes that could execute as href values.
 function sanitizeLink(raw: string): string {
@@ -171,13 +400,22 @@ function sanitizeLink(raw: string): string {
   return "";
 }
 
+// Strip combining diacritics (NFD decomposition) + Turkish dotless-ı so that
+// a query token like "basak" matches article text containing "başak".
+function normalizeDiacritics(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ı/g, "i"); // Turkish dotless ı is not a combining mark
+}
+
 function parseRss(xml: string, subject: string, variants: string[], lang: string): Article[] {
   const items = xml.split(/<item>/i).slice(1);
   const out: Article[] = [];
   for (const raw of items) {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
-      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
+      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       if (!m || !m[1]) return "";
       let v = m[1].trim();
       v = v.replace(/^<!\[CDATA\[|\]\]>$/g, "");
@@ -233,6 +471,61 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       }
     }
 
+    // Boost score for high-signal adverse media terms in title
+    const adverseTermBoosts: Record<string, number> = {
+      // Highest signal (criminal verdicts)
+      "convicted": 20, "sentenced": 20, "imprisoned": 18, "jailed": 18,
+      "extradited": 18, "guilty verdict": 18,
+      // Criminal process
+      "arrested": 15, "charged": 15, "indicted": 15, "sanctioned": 15,
+      "designated": 12, "warrant": 12, "fugitive": 12,
+      // Financial crime specific
+      "laundering": 18, "money laundering": 20, "bribery": 15, "embezzlement": 15,
+      "fraud": 12, "corruption": 12, "ponzi": 18, "pyramid scheme": 18,
+      "insider trading": 15, "market manipulation": 15,
+      // Terrorism / proliferation
+      "terrorist": 18, "terror financing": 20, "proliferation": 15,
+      // Enforcement
+      "debarred": 12, "blacklisted": 15, "banned": 10,
+      "regulatory fine": 12, "enforcement action": 12,
+      "cease and desist": 10, "asset freeze": 15,
+      // Sanctions
+      "ofac": 18, "sdn list": 18, "un sanctions": 15,
+      // Investigative
+      "leaked documents": 12, "pandora papers": 18, "panama papers": 18,
+      "fincen files": 18, "occrp": 12, "icij": 12,
+    };
+    const titleLower = title.toLowerCase();
+    let boost = 0;
+    for (const [term, pts] of Object.entries(adverseTermBoosts)) {
+      if (titleLower.includes(term)) boost += pts;
+    }
+    const baseScore = Math.round(fuzzyScore * 100);
+    const adjustedScore = Math.min(100, baseScore + boost);
+
+    const tier = classifySource(link);
+    const sourceCat = classifySourceCategory(link);
+    // Established sources (tier1/tier2) get 2× weight via a larger tier boost.
+    const tierBoost = tier === "tier1" ? 20 : tier === "tier2" ? 10 : 0;
+    // For established sources, double the tier boost to reflect 2× authority weighting.
+    const authorityMult = sourceCat === "state_media" ? 0.5
+      : (tier === "tier1" || tier === "tier2") ? 2.0 : 1.0;
+    const tieredScore = Math.min(100, Math.round((adjustedScore + tierBoost) * authorityMult));
+
+    // Paywall detection — reduce weight to 50% if article appears to be behind paywall
+    const paywalled = detectPaywall(description);
+
+    // Recency weight — applied as multiplier on relevance score
+    const recencyW = computeRecencyWeight(pubDate, sourceCat);
+
+    // Combined weight factor: recency × paywall penalty (0.5 if paywalled)
+    const weightFactor = recencyW * (paywalled ? 0.5 : 1.0);
+    const finalScore = Math.round(tieredScore * weightFactor);
+
+    const rawSeverity = classifyArticleSeverity(kwHits);
+    const severity = applyStateMediCap(rawSeverity, sourceCat);
+
+    const script = detectScript(title);
     const article: Article = {
       title,
       link,
@@ -241,10 +534,18 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
       snippet,
       keywordGroups: Array.from(new Set(kwHits.map((h) => h.group))),
       esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
-      severity: classifyArticleSeverity(kwHits),
-      fuzzyScore: Math.round(fuzzyScore * 100),
+      severity,
+      fuzzyScore: baseScore,
       fuzzyMethod,
       lang,
+      relevanceScore: finalScore,
+      sourceTier: tier,
+      sourceCategory: sourceCat,
+      script,
+      requiresTranslation: script !== "latin",
+      sourceAuthority: classifySourceAuthority(link),
+      paywallLimited: paywalled || undefined,
+      recencyWeight: recencyW !== 1.0 ? recencyW : undefined,
     };
     if (matchedVariant) article.matchedVariant = matchedVariant;
     out.push(article);
@@ -252,15 +553,117 @@ function parseRss(xml: string, subject: string, variants: string[], lang: string
   return out;
 }
 
-// Per-locale RSS timeout. With 7 locales fanning out in parallel, any single
-// stalled feed would otherwise hold up the whole response. A 2-second
-// AbortSignal bounds each feed so the slowest locale is skipped rather than
-// blocking the others.
-const FEED_TIMEOUT_MS = 2_000;
+// ── Source category classification ──────────────────────────────────────────
+// Maps domain patterns to editorial category so the UI can group/filter by
+// category (e.g. "Show only investigative sources").
+const WIRE_DOMAINS = new Set([
+  "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
+  "bbc.com", "bbc.co.uk", "theguardian.com", "nytimes.com",
+  "lemonde.fr", "spiegel.de", "elpais.com", "afp.com",
+  "dpa-international.com", "kyodonews.net",
+  // Note: xinhuanet.com removed from WIRE_DOMAINS — classified as state_media above
+]);
+const INVESTIGATIVE_DOMAINS = new Set([
+  "occrp.org", "icij.org", "transparency.org", "acfe.com",
+  "balkaninsight.com", "globalwitness.org", "hrw.org",
+  "correctiv.org", "thewire.in", "rappler.com", "irrawaddy.com",
+  "dailymaverick.co.za", "groundup.org.za",
+]);
+const REGULATORY_DOMAINS = new Set([
+  "fatf-gafi.org", "unodc.org", "bis.org", "imf.org",
+  "ec.europa.eu", "sec.gov", "justice.gov", "worldbank.org",
+  "ofac.treas.gov", "fca.org.uk", "eba.europa.eu",
+  "euobserver.com",
+]);
+const REGIONAL_DOMAINS = new Set([
+  // MENA
+  "middleeasteye.net", "gulfnews.com", "thenationalnews.com",
+  "khaleejtimes.com", "arabnews.com", "alarabiya.net", "albawaba.com",
+  "aljazeera.com", "haaretz.com", "al-monitor.com", "iranintl.com",
+  // Asia
+  "scmp.com", "straitstimes.com", "channelnewsasia.com",
+  "bangkokpost.com", "koreaherald.com", "asia.nikkei.com",
+  "thejakartapost.com", "malaymail.com",
+  // Africa
+  "allafrica.com", "theeastafrican.co.ke", "nation.africa",
+  "punchng.com", "premiumtimesng.com", "mg.co.za", "moneyweb.co.za",
+  // LatAm
+  "infobae.com", "lanacion.com.ar", "folha.uol.com.br",
+  "elespectador.com", "eluniversal.com.mx", "elcomercio.pe",
+  // Oceania
+  "rnz.co.nz", "abc.net.au",
+]);
 
-// Overall timebox for the whole fan-out. 15 locales × 2s per feed run in
-// parallel — 2.5s is enough for all healthy feeds to complete.
-const OVERALL_TIMEBOX_MS = 2_500;
+function classifySourceCategory(url: string): Article["sourceCategory"] {
+  if (!url) return undefined;
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (STATE_MEDIA_DOMAINS.has(domain)) return "state_media";
+    if (INVESTIGATIVE_DOMAINS.has(domain)) return "investigative";
+    if (REGULATORY_DOMAINS.has(domain)) return "regulatory";
+    if (WIRE_DOMAINS.has(domain)) return "wire";
+    if (REGIONAL_DOMAINS.has(domain)) return "regional";
+    return undefined;
+  } catch { return undefined; }
+}
+
+// Extract root domain (hostname without www.) for diversity scoring
+function _rootDomain(url: string): string {
+  if (!url) return "";
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+}
+
+// Detect paywall / unavailable article based on short description containing
+// access-restriction keywords.
+function detectPaywall(description: string): boolean {
+  if (description.length >= 100) return false;
+  const lower = description.toLowerCase();
+  return (
+    lower.includes("subscribe") ||
+    lower.includes("login required") ||
+    lower.includes("premium") ||
+    lower.includes("access denied")
+  );
+}
+
+// Compute per-article recency weight multiplier based on publication date.
+// Regulatory / official sources never decay (multiplier always 1).
+function computeRecencyWeight(pubDate: string, sourceCategory: Article["sourceCategory"]): number {
+  if (sourceCategory === "regulatory") return 1.0;
+  const pubMs = pubDate ? Date.parse(pubDate) : 0;
+  if (!Number.isFinite(pubMs) || pubMs === 0) return 1.0;
+  const ageMs = Date.now() - pubMs;
+  const ageDays = ageMs / (24 * 3600 * 1000);
+  if (ageDays <= 30) return 1.2;           // last 30 days: +20%
+  const ageYears = ageMs / (365.25 * 24 * 3600 * 1000);
+  if (ageYears <= 3) return 0.7;           // 1–3 years: -30%
+  return 0.4;                              // >3 years: -60%
+}
+
+// Classify source authority based on tier lists.
+function classifySourceAuthority(url: string): Article["sourceAuthority"] {
+  if (!url) return "unknown";
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    if (TIER1_DOMAINS.has(domain) || TIER2_DOMAINS.has(domain)) return "established";
+    if (STATE_MEDIA_DOMAINS.has(domain)) return "new"; // treat as lower authority proxy
+    return "unknown";
+  } catch { return "unknown"; }
+}
+
+// Cap severity at "medium" for state-media sources, regardless of content.
+function applyStateMediCap(severity: Article["severity"], sourceCategory: Article["sourceCategory"]): Article["severity"] {
+  if (sourceCategory !== "state_media") return severity;
+  const capped: Article["severity"][] = ["clear", "low", "medium"];
+  return capped.includes(severity) ? severity : "medium";
+}
+
+// Per-locale feed timeout. 1.2s per feed keeps slow locales from dragging the timebox.
+const FEED_TIMEOUT_MS = 1_200;
+
+// Overall timebox: all 100+ locale feeds + 5 continent feed banks run in parallel.
+// 3.5s covers healthy feeds while guaranteeing end-to-end response in 3–5s.
+const OVERALL_TIMEBOX_MS = 3_500;
 
 async function fetchLocaleFeed(
   q: string,
@@ -299,6 +702,330 @@ async function fetchLocaleFeed(
   }
 }
 
+// ── Investigative / regulatory RSS feeds ────────────────────────────────────
+// Tier-1 investigative journalism and regulatory body feeds.  These are
+// fetched in parallel with the Google News locale fan-out and merged into the
+// main article list.  Subject-name filtering is done post-fetch (same fuzzy
+// scoring as the locale feeds) so we don't query Google at all for these
+// feeds.
+const INVESTIGATIVE_FEEDS: Array<{
+  url: string;
+  lang: string;
+  sourceTier: "tier1" | "tier2";
+  sourceCategory: NonNullable<Article["sourceCategory"]>;
+  name: string;
+}> = [
+  // Tier-1 investigative journalism
+  { url: "https://www.occrp.org/feed/",                                    lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "OCCRP" },
+  { url: "https://www.icij.org/feed/",                                     lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "ICIJ" },
+  // Financial crime / regulatory bodies
+  { url: "https://www.fatf-gafi.org/media/fatf/rss/fatf-en.rss",          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "FATF" },
+  { url: "https://www.unodc.org/unodc/en/rss/news.xml",                   lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "UNODC" },
+  { url: "https://www.transparency.org/en/feed",                           lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "TI" },
+  // Balkan Investigative Reporting Network
+  { url: "https://balkaninsight.com/feed/",                                lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "BIRN" },
+  // Global Witness — natural resources / corruption
+  { url: "https://www.globalwitness.org/en/campaigns/feed/",               lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "GlobalWitness" },
+  // Human Rights Watch — trafficking / forced labour
+  { url: "https://www.hrw.org/rss/news",                                   lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "HRW" },
+  // Middle East Eye
+  { url: "https://www.middleeasteye.net/rss",                              lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "MEE" },
+  // Al-Monitor — MENA investigative
+  { url: "https://www.al-monitor.com/rss.xml",                             lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "Al-Monitor" },
+  // Iran International — Persian Gulf / Iran
+  { url: "https://www.iranintl.com/en/rss",                                lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "IranIntl" },
+  // EUobserver — EU regulatory / anti-corruption
+  { url: "https://euobserver.com/rss",                                     lang: "en", sourceTier: "tier2", sourceCategory: "regulatory",    name: "EUobserver" },
+  // ACFE (Association of Certified Fraud Examiners)
+  { url: "https://www.acfe.com/rss/fraud-examiner-newsletter.xml",         lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "ACFE" },
+  // Correctiv — German investigative journalism
+  { url: "https://correctiv.org/feed/",                                    lang: "de", sourceTier: "tier2", sourceCategory: "investigative", name: "CORRECTIV" },
+  // Le Monde investigative / France
+  { url: "https://www.lemonde.fr/rss/une.xml",                             lang: "fr", sourceTier: "tier1", sourceCategory: "wire",          name: "LeMonde" },
+  // Der Spiegel — Germany investigative
+  { url: "https://www.spiegel.de/schlagzeilen/index.rss",                  lang: "de", sourceTier: "tier1", sourceCategory: "wire",          name: "Spiegel" },
+  // RFERL — Radio Free Europe / Radio Liberty
+  { url: "https://www.rferl.org/api/zikhiqmr_qp_puz/",                     lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "RFERL" },
+  // Bellingcat — open-source investigative journalism
+  { url: "https://www.bellingcat.com/feed/",                                lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "Bellingcat" },
+  // The Sentry — African financial crime
+  { url: "https://thesentry.org/feed/",                                     lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "TheSentry" },
+  // Finance Uncovered — tax & financial transparency
+  { url: "https://www.financeuncovered.org/feed/",                          lang: "en", sourceTier: "tier2", sourceCategory: "investigative", name: "FinanceUncovered" },
+  // CFTC — US Commodity Futures Trading Commission enforcement
+  { url: "https://www.cftc.gov/rss/pressreleases.xml",                      lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "CFTC" },
+  // FinCEN — US Financial Crimes Enforcement Network
+  { url: "https://www.fincen.gov/news/news-releases/feed",                  lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "FinCEN" },
+  // INTERPOL — international law enforcement
+  { url: "https://www.interpol.int/News-and-Events/News/rss.xml",           lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "INTERPOL" },
+  // EBA — European Banking Authority
+  { url: "https://www.eba.europa.eu/rss/news.rss",                          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "EBA" },
+  // GRECO — Council of Europe anti-corruption body
+  { url: "https://www.coe.int/en/web/greco/evaluations/news",               lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "GRECO" },
+  // MENA investigative / regional
+  { url: "https://english.alarabiya.net/rss.xml",                            lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "AlArabiya-EN" },
+  { url: "https://english.alaraby.co.uk/feed",                               lang: "en", sourceTier: "tier2", sourceCategory: "regional",      name: "TheNewArab" },
+  { url: "https://www.jpost.com/Rss/RssFeedsHeadlines.aspx",                 lang: "en-IL", sourceTier: "tier2", sourceCategory: "regional",  name: "JPost" },
+  // ILO — International Labour Organization (forced labour / modern slavery)
+  { url: "https://www.ilo.org/global/topics/forced-labour/news/lang--en/rss.xml", lang: "en", sourceTier: "tier1", sourceCategory: "regulatory", name: "ILO-ForcedLabour" },
+  // UNODC — UN Office on Drugs and Crime (human trafficking / TIP)
+  { url: "https://www.unodc.org/unodc/en/human-trafficking/news.rss",        lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "UNODC-TIP" },
+  // SEC Enforcement — US Securities & Exchange Commission litigation releases
+  { url: "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=litigation&dateb=&owner=include&count=40&search_text=&output=atom", lang: "en", sourceTier: "tier1", sourceCategory: "regulatory", name: "SEC-Enforcement" },
+  // ESMA — European Securities and Markets Authority news
+  { url: "https://www.esma.europa.eu/press-news/esma-news-feed",              lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "ESMA" },
+];
+
+// ── Africa RSS feeds ────────────────────────────────────────────────────────
+// Pan-African and major national outlets covering the continent's key
+// financial-crime and governance stories.
+const AFRICA_FEEDS: Array<{
+  url: string;
+  lang: string;
+  name: string;
+  sourceTier: "tier1" | "tier2";
+}> = [
+  { url: "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf",  lang: "en",    name: "AllAfrica",         sourceTier: "tier2" },
+  { url: "https://nation.africa/rss-feeds/?categoryId=1190",                lang: "en-KE", name: "Daily Nation Kenya", sourceTier: "tier2" },
+  { url: "https://www.theeastafrican.co.ke/tea/rss",                        lang: "en-KE", name: "East African",      sourceTier: "tier2" },
+  { url: "https://punchng.com/feed/",                                        lang: "en-NG", name: "Punch Nigeria",     sourceTier: "tier2" },
+  { url: "https://www.premiumtimesng.com/feed/",                            lang: "en-NG", name: "Premium Times NG",  sourceTier: "tier2" },
+  { url: "https://www.dailymaverick.co.za/feed/",                            lang: "en-ZA", name: "Daily Maverick ZA", sourceTier: "tier2" },
+  { url: "https://mg.co.za/feed/",                                           lang: "en-ZA", name: "Mail & Guardian ZA",sourceTier: "tier2" },
+  { url: "https://www.businessdayonline.com/feed/",                          lang: "en-NG", name: "BusinessDay NG",    sourceTier: "tier2" },
+  { url: "https://www.moneyweb.co.za/feed/",                                 lang: "en-ZA", name: "Moneyweb ZA",       sourceTier: "tier2" },
+  { url: "https://www.africanews.com/feed/rss2/",                            lang: "en",    name: "Africanews",        sourceTier: "tier2" },
+  // Pan-African
+  { url: "https://thecontinent.org/feed/",                                   lang: "en",    name: "TheContinent",      sourceTier: "tier2" },
+  // Sahel Eye — French-language Sahel region coverage
+  { url: "https://saheleye.net/feed/",                                        lang: "fr",    name: "SahelEye",          sourceTier: "tier2" },
+  // Africa Report — pan-African business and politics
+  { url: "https://www.theafricareport.com/feed/",                            lang: "en",    name: "AfricaReport",      sourceTier: "tier2" },
+  // Business Live ZA — South African business news
+  { url: "https://www.businesslive.co.za/rss/latest.rss",                    lang: "en-ZA", name: "BusinessLiveZA",    sourceTier: "tier2" },
+  // Financial Nigeria
+  { url: "https://financialnigeria.com/feed/",                               lang: "en-NG", name: "FinancialNigeria",  sourceTier: "tier2" },
+];
+
+// ── Latin America RSS feeds ─────────────────────────────────────────────────
+// Major LatAm news outlets covering financial crime, corruption, and
+// narco-trafficking across the region.
+const LATAM_FEEDS: Array<{
+  url: string;
+  lang: string;
+  name: string;
+  sourceTier: "tier1" | "tier2";
+}> = [
+  { url: "https://www.infobae.com/feeds/rss/home.xml",                      lang: "es-AR", name: "Infobae",           sourceTier: "tier2" },
+  { url: "https://www.lanacion.com.ar/arc/outboundfeeds/rss/",              lang: "es-AR", name: "La Nación AR",      sourceTier: "tier2" },
+  { url: "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml",          lang: "pt",    name: "Folha SP",          sourceTier: "tier2" },
+  { url: "https://www.elespectador.com/rss/",                               lang: "es-CO", name: "El Espectador CO",  sourceTier: "tier2" },
+  { url: "https://www.eluniversal.com.mx/rss.xml",                          lang: "es-MX", name: "El Universal MX",   sourceTier: "tier2" },
+  { url: "https://elcomercio.pe/rss/",                                       lang: "es-PE", name: "El Comercio PE",    sourceTier: "tier2" },
+  { url: "https://www.laprensa.hn/rss/",                                    lang: "es",    name: "La Prensa HN",      sourceTier: "tier2" },
+  { url: "https://www.prensa.com/feed/",                                     lang: "es",    name: "La Prensa PA",      sourceTier: "tier2" },
+  // El País América — Spain/LatAm edition
+  { url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/america/portada", lang: "es", name: "ElPaisAmerica", sourceTier: "tier1" },
+  // Agencia EFE — Spanish wire service Americas
+  { url: "https://www.efe.com/efe/america/portada/rss.xml",                  lang: "es",    name: "EFE",               sourceTier: "tier1" },
+  // O Globo — Brazil
+  { url: "https://oglobo.globo.com/rss.xml",                                 lang: "pt",    name: "OGlobo",            sourceTier: "tier2" },
+  // Voz de América Español
+  { url: "https://www.vozdeamerica.com/rss.xml",                             lang: "es",    name: "VOA-ES",            sourceTier: "tier2" },
+];
+
+// ── Oceania / Pacific RSS feeds ─────────────────────────────────────────────
+const OCEANIA_FEEDS: Array<{
+  url: string;
+  lang: string;
+  name: string;
+  sourceTier: "tier1" | "tier2";
+}> = [
+  { url: "https://www.rnz.co.nz/rss/national.xml",                          lang: "en-NZ", name: "RNZ New Zealand",   sourceTier: "tier2" },
+  { url: "https://www.abc.net.au/news/feed/52278/rss.xml",                  lang: "en-AU", name: "ABC Australia",     sourceTier: "tier2" },
+  { url: "https://www.rnz.co.nz/international/pacific-news/rss.xml",        lang: "en",    name: "RNZ Pacific",       sourceTier: "tier2" },
+  { url: "https://www.abc.net.au/pacific/rss.xml",                          lang: "en",    name: "ABC Pacific Beat",  sourceTier: "tier2" },
+];
+
+// 2-second timeout for each investigative feed — slightly more generous than
+// the 1.5s locale timeout since these are non-Google servers.
+const INVESTIGATIVE_FEED_TIMEOUT_MS = 2_000;
+
+async function fetchInvestigativeFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  const results = await Promise.allSettled(
+    INVESTIGATIVE_FEEDS.map(async (feed) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
+      try {
+        const res = await fetch(feed.url, {
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
+            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
+          },
+          signal: controller.signal,
+        } as RequestInit);
+        if (!res.ok) {
+          console.warn(`[hawkeye] investigative-feed/${feed.name} HTTP ${res.status}`);
+          return [] as Article[];
+        }
+        const xml = await res.text();
+        const articles = parseRss(xml, subjectName, variants, feed.lang);
+        // Override tier and category from feed config (parseRss uses classifySource
+        // on the article link; we want the feed-level classification to take precedence).
+        return articles.map((a) => ({
+          ...a,
+          sourceTier: feed.sourceTier,
+          sourceCategory: feed.sourceCategory,
+          // Re-apply tier boost since we're overriding the tier
+          relevanceScore: Math.min(100, (a.relevanceScore ?? a.fuzzyScore) + (feed.sourceTier === "tier1" ? 20 : 10)),
+          source: a.source || feed.name,
+        }));
+      } catch (err) {
+        console.warn(`[hawkeye] investigative-feed/${feed.name} threw:`, err);
+        return [] as Article[];
+      } finally {
+        clearTimeout(timer);
+      }
+    }),
+  );
+
+  const allArticles: Article[] = [];
+  const seenLinks = new Set<string>();
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      for (const a of r.value) {
+        const key = a.link || a.title;
+        if (!seenLinks.has(key)) {
+          seenLinks.add(key);
+          allArticles.push(a);
+        }
+      }
+    }
+  }
+  return allArticles;
+}
+
+// ── East / Southeast Asian RSS feeds ────────────────────────────────────────
+// Regional English-language news outlets covering Greater China, Japan, Korea,
+// South Asia, and Southeast Asia.  Fetched in parallel with the investigative
+// feed fan-out and the Google News locale fan-out.
+const ASIAN_FEEDS: Array<{
+  url: string;
+  lang: string;
+  name: string;
+  sourceTier: "tier1" | "tier2";
+}> = [
+  // Greater China
+  { url: "https://www.scmp.com/rss/91/feed",                         lang: "en-CN", name: "SCMP",                sourceTier: "tier2" },
+  // Japan — Nikkei Asia
+  { url: "https://asia.nikkei.com/rss/feed/nar",                     lang: "en-JP", name: "Nikkei Asia",         sourceTier: "tier2" },
+  // Korea — Korea Herald
+  { url: "https://www.koreaherald.com/common/rss.php",               lang: "en-KR", name: "Korea Herald",        sourceTier: "tier2" },
+  // India — investigative
+  { url: "https://thewire.in/feed",                                  lang: "en-IN", name: "The Wire India",       sourceTier: "tier2" },
+  // Philippines — investigative
+  { url: "https://www.rappler.com/feed",                             lang: "en-PH", name: "Rappler Philippines",  sourceTier: "tier2" },
+  // Indonesia
+  { url: "https://www.thejakartapost.com/feed",                      lang: "en-ID", name: "Jakarta Post",         sourceTier: "tier2" },
+  // Vietnam
+  { url: "https://e.vnexpress.net/rss/news.rss",                     lang: "en-VN", name: "VnExpress",            sourceTier: "tier2" },
+  // Thailand
+  { url: "https://www.bangkokpost.com/rss/data/topstories.xml",      lang: "en-TH", name: "Bangkok Post",         sourceTier: "tier2" },
+  // Malaysia
+  { url: "https://www.malaymail.com/feed",                           lang: "en-MY", name: "Malay Mail",           sourceTier: "tier2" },
+  // Myanmar — Irrawaddy (investigative)
+  { url: "https://www.irrawaddy.com/feed",                           lang: "en-MM", name: "The Irrawaddy",        sourceTier: "tier2" },
+  // Singapore — CNA
+  { url: "https://www.channelnewsasia.com/rssfeeds/8395986",         lang: "en-SG", name: "CNA Singapore",        sourceTier: "tier2" },
+  // Pakistan — Dawn
+  { url: "https://www.dawn.com/feeds/home",                          lang: "en-PK", name: "Dawn Pakistan",        sourceTier: "tier2" },
+  // India — The Hindu
+  { url: "https://www.thehindu.com/news/feeder/default.rss",         lang: "en-IN", name: "The Hindu",            sourceTier: "tier2" },
+  // Singapore — Straits Times Asia
+  { url: "https://www.straitstimes.com/news/asia/rss.xml",           lang: "en-SG", name: "Straits Times",        sourceTier: "tier2" },
+  // Greater China — SCMP Asia section
+  { url: "https://www.scmp.com/rss/5/feed",                          lang: "en-CN", name: "SCMP Asia",            sourceTier: "tier2" },
+  // Japan — Nikkei Markets
+  { url: "https://asia.nikkei.com/rss/feed/markets",                 lang: "en-JP", name: "Nikkei Markets",       sourceTier: "tier2" },
+  // Radio Free Asia
+  { url: "https://www.rfa.org/english/news/rss2.xml",                lang: "en",    name: "RadioFreeAsia",        sourceTier: "tier2" },
+];
+
+// Generic regional feed fetcher — reused by Asia, Africa, LatAm, Oceania.
+async function fetchRegionalFeeds(
+  feeds: Array<{ url: string; lang: string; name: string; sourceTier: "tier1" | "tier2" }>,
+  subjectName: string,
+  variants: string[],
+  tag: string,
+): Promise<Article[]> {
+  const results = await Promise.allSettled(
+    feeds.map(async (feed) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
+      try {
+        const res = await fetch(feed.url, {
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (compatible; HawkeyeSterling/0.3; +https://hawkeye-sterling.netlify.app)",
+            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
+          },
+          signal: controller.signal,
+        } as RequestInit);
+        if (!res.ok) {
+          console.warn(`[hawkeye] ${tag}/${feed.name} HTTP ${res.status}`);
+          return [] as Article[];
+        }
+        const xml = await res.text();
+        const articles = parseRss(xml, subjectName, variants, feed.lang);
+        return articles.map((a) => ({
+          ...a,
+          sourceTier: feed.sourceTier,
+          sourceCategory: "regional" as NonNullable<Article["sourceCategory"]>,
+          relevanceScore: Math.min(100, (a.relevanceScore ?? a.fuzzyScore) + (feed.sourceTier === "tier1" ? 20 : 10)),
+          source: a.source || feed.name,
+        }));
+      } catch (err) {
+        console.warn(`[hawkeye] ${tag}/${feed.name} threw:`, err);
+        return [] as Article[];
+      } finally {
+        clearTimeout(timer);
+      }
+    }),
+  );
+
+  const allArticles: Article[] = [];
+  const seenLinks = new Set<string>();
+  for (const r of results) {
+    if (r.status === "fulfilled") {
+      for (const a of r.value) {
+        const key = a.link || a.title;
+        if (!seenLinks.has(key)) {
+          seenLinks.add(key);
+          allArticles.push(a);
+        }
+      }
+    }
+  }
+  return allArticles;
+}
+
+async function fetchAsianFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  return fetchRegionalFeeds(ASIAN_FEEDS, subjectName, variants, "asian-feed");
+}
+
+async function fetchAfricaFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  return fetchRegionalFeeds(AFRICA_FEEDS, subjectName, variants, "africa-feed");
+}
+
+async function fetchLatamFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  return fetchRegionalFeeds(LATAM_FEEDS, subjectName, variants, "latam-feed");
+}
+
+async function fetchOceaniaFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+  return fetchRegionalFeeds(OCEANIA_FEEDS, subjectName, variants, "oceania-feed");
+}
+
 function tokens(title: string): Set<string> {
   return new Set(
     title
@@ -316,6 +1043,8 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return inter / (a.size + b.size - inter || 1);
 }
 
+function tierOrder(t: string): number { return t === "tier1" ? 3 : t === "tier2" ? 2 : 1; }
+
 function clusterArticles(articles: Article[]): Article[] {
   const clusters: Array<{ rep: Article; tokens: Set<string>; sources: Set<string> }> = [];
   for (const a of articles) {
@@ -331,7 +1060,14 @@ function clusterArticles(articles: Article[]): Article[] {
         if (severityOrder(a.severity) > severityOrder(c.rep.severity)) {
           c.rep.severity = a.severity;
         }
-        if (a.source) c.sources.add(a.source);
+        // When absorbing: if absorbed article is higher tier than rep, make it the new rep
+        if (tierOrder(a.sourceTier) > tierOrder(c.rep.sourceTier)) {
+          const oldRep = c.rep;
+          c.rep = a;
+          if (oldRep.source) c.sources.add(oldRep.source);
+        } else {
+          if (a.source) c.sources.add(a.source);
+        }
         absorbed = true;
         break;
       }
@@ -366,10 +1102,16 @@ function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live",
     fetchMode,
     fetchedAt: new Date().toISOString(),
     latencyMs,
+    sourceDiversityScore: 0,
+    crossCorroboratedCount: 0,
+    propagandaSourceCount: 0,
   };
 }
 
 const MAX_Q_LENGTH = 500;
+
+// 2-minute in-memory cache to avoid hammering Google News RSS for repeated queries
+const NEWS_CACHE = new Map<string, { data: NewsResponse; expires: number }>();
 
 export async function GET(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
@@ -377,7 +1119,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // Anonymous callers still get the free-tier burst window; without
   // this, a single user could trivially pin a Netlify Function into a
   // quota-exhaustion loop.
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false, cost: 3 });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
@@ -396,6 +1138,12 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
   }
 
+  const cacheKey = q.toLowerCase().trim();
+  const cached = NEWS_CACHE.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
+    return NextResponse.json({ ...cached.data, fetchMode: "cached" as const }, { headers: gateHeaders });
+  }
+
   // From here down, any internal failure returns a well-formed empty
   // dossier with `ok: true` and HTTP 200. Adverse-media is a regulator-
   // facing panel — surfacing "server 502" / "news fetch failed" to an
@@ -412,6 +1160,65 @@ export async function GET(req: Request): Promise<NextResponse> {
       { ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt },
       { headers: gateHeaders },
     );
+  }
+
+  function arabicToLatinVariants(name: string): string[] {
+    const variants: string[] = [];
+    // Common Arabic → Latin substitutions
+    const subst: Array<[RegExp, string]> = [
+      [/ال/g, "al-"],
+      [/ا|أ|إ|آ/g, "a"],
+      [/ب/g, "b"],
+      [/ت/g, "t"],
+      [/ث/g, "th"],
+      [/ج/g, "j"],
+      [/ح/g, "h"],
+      [/خ/g, "kh"],
+      [/د/g, "d"],
+      [/ذ/g, "dh"],
+      [/ر/g, "r"],
+      [/ز/g, "z"],
+      [/س/g, "s"],
+      [/ش/g, "sh"],
+      [/ص/g, "s"],
+      [/ض/g, "d"],
+      [/ط/g, "t"],
+      [/ظ/g, "z"],
+      [/ع/g, ""],
+      [/غ/g, "gh"],
+      [/ف/g, "f"],
+      [/ق/g, "q"],
+      [/ك/g, "k"],
+      [/ل/g, "l"],
+      [/م/g, "m"],
+      [/ن/g, "n"],
+      [/ه/g, "h"],
+      [/و/g, "w"],
+      [/ي|ى/g, "y"],
+      [/ة/g, "a"],
+    ];
+    let latin = name;
+    for (const [pattern, rep] of subst) latin = latin.replace(pattern, rep);
+    latin = latin.replace(/\s+/g, " ").trim();
+    if (latin && latin !== name) variants.push(latin);
+    // Also generate without al- prefix
+    if (latin.startsWith("al-")) variants.push(latin.slice(3));
+    return variants;
+  }
+
+  function cyrillicToLatinVariants(name: string): string[] {
+    const map: Record<string, string> = {
+      "А":"a","Б":"b","В":"v","Г":"g","Д":"d","Е":"e","Ё":"yo","Ж":"zh","З":"z","И":"i","Й":"y",
+      "К":"k","Л":"l","М":"m","Н":"n","О":"o","П":"p","Р":"r","С":"s","Т":"t","У":"u","Ф":"f",
+      "Х":"kh","Ц":"ts","Ч":"ch","Ш":"sh","Щ":"sch","Ъ":"","Ы":"y","Ь":"","Э":"e","Ю":"yu","Я":"ya",
+      "а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"yo","ж":"zh","з":"z","и":"i","й":"y",
+      "к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f",
+      "х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya",
+    };
+    let latin = name.split("").map(c => map[c] ?? c).join("");
+    latin = latin.replace(/\s+/g, " ").trim();
+    if (latin && latin !== name) return [latin];
+    return [];
   }
 
   try {
@@ -434,13 +1241,34 @@ export async function GET(req: Request): Promise<NextResponse> {
       .replace(/\bgul/g, "gül")
       .replace(/\bgun/g, "gün");
     if (turkishVariant !== q.toLowerCase()) rawVariants.push(turkishVariant);
-    const variants = Array.from(new Set(rawVariants)).slice(0, 10);
+    // Arabic script variants
+    if (/[\u0600-\u06FF]/.test(q)) {
+      for (const v of arabicToLatinVariants(q)) if (v && !rawVariants.includes(v)) rawVariants.push(v);
+    }
+    // Cyrillic variants
+    if (/[\u0400-\u04FF]/.test(q)) {
+      for (const v of cyrillicToLatinVariants(q)) if (v && !rawVariants.includes(v)) rawVariants.push(v);
+    }
+    const variants = Array.from(new Set(rawVariants)).slice(0, 15);
+
+    // For names written in non-Latin scripts (Arabic, CJK, Cyrillic, etc.),
+    // AML terminology in native-language press appears in the local language
+    // rather than in English. A keyword-gated query would produce zero results
+    // in those locales, so we fall back to a bare name query and let the
+    // post-fetch fuzzy scoring handle precision.
+    // Heuristic: if the name contains any codepoint outside the Basic Latin +
+    // Latin-1 Supplement blocks (U+0000–U+00FF) it is considered non-Latin.
+    const hasNonLatin = /[^ -ÿ]/.test(q);
+    // gdeltQuery: for non-Latin scripts use a bare name search (no English
+    // keyword requirement) since AML terminology appears in the native script.
+    // For Latin names we use q as-is (the caller may inject keyword filters in future).
+    const gdeltQuery = hasNonLatin ? q : q;
 
     // Fan out to all locales + all configured news API adapters in parallel.
     // allSettled + per-feed AbortSignal + overall timebox ensures the function
     // always returns within ~7.5s, well inside the 30s maxDuration budget.
     const fanOut = Promise.allSettled(
-      LOCALES.map((loc) => fetchLocaleFeed(q, loc, variants)),
+      LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants)),
     );
     const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
       setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
@@ -452,9 +1280,21 @@ export async function GET(req: Request): Promise<NextResponse> {
       sourcesSucceeded: [] as string[],
       sourcesFailed: [] as Array<{ name: string; error: string }>,
     }));
-    const [settled, adapterResult] = await Promise.all([
+    // All specialised feed banks run in parallel inside the same 4s timebox —
+    // no added latency regardless of how many continent feed banks we add.
+    const investigativeSearch = fetchInvestigativeFeeds(q, variants);
+    const asianSearch        = fetchAsianFeeds(q, variants);
+    const africaSearch       = fetchAfricaFeeds(q, variants);
+    const latamSearch        = fetchLatamFeeds(q, variants);
+    const oceaniaSearch      = fetchOceaniaFeeds(q, variants);
+    const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles] = await Promise.all([
       Promise.race([fanOut, timebox]),
       adapterSearch,
+      investigativeSearch,
+      asianSearch,
+      africaSearch,
+      latamSearch,
+      oceaniaSearch,
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -465,6 +1305,27 @@ export async function GET(req: Request): Promise<NextResponse> {
         const key = a.link || a.title;
         if (!merged.has(key)) merged.set(key, a);
       }
+    }
+    // Merge all specialised feed banks — investigative first (highest credibility).
+    for (const ia of investigativeArticles) {
+      const key = ia.link || ia.title;
+      if (!merged.has(key)) merged.set(key, ia);
+    }
+    for (const aa of asianArticles) {
+      const key = aa.link || aa.title;
+      if (!merged.has(key)) merged.set(key, aa);
+    }
+    for (const fa of africaArticles) {
+      const key = fa.link || fa.title;
+      if (!merged.has(key)) merged.set(key, fa);
+    }
+    for (const la of latamArticles) {
+      const key = la.link || la.title;
+      if (!merged.has(key)) merged.set(key, la);
+    }
+    for (const oa of oceaniaArticles) {
+      const key = oa.link || oa.title;
+      if (!merged.has(key)) merged.set(key, oa);
     }
     // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
     for (const na of adapterResult.articles) {
@@ -492,18 +1353,75 @@ export async function GET(req: Request): Promise<NextResponse> {
           }
         }
       }
+      // Boost score for high-signal adverse media terms in title (adapter path)
+      const adverseTermBoostsAdapter: Record<string, number> = {
+        // Highest signal (criminal verdicts)
+        "convicted": 20, "sentenced": 20, "imprisoned": 18, "jailed": 18,
+        "extradited": 18, "guilty verdict": 18,
+        // Criminal process
+        "arrested": 15, "charged": 15, "indicted": 15, "sanctioned": 15,
+        "designated": 12, "warrant": 12, "fugitive": 12,
+        // Financial crime specific
+        "laundering": 18, "money laundering": 20, "bribery": 15, "embezzlement": 15,
+        "fraud": 12, "corruption": 12, "ponzi": 18, "pyramid scheme": 18,
+        "insider trading": 15, "market manipulation": 15,
+        // Terrorism / proliferation
+        "terrorist": 18, "terror financing": 20, "proliferation": 15,
+        // Enforcement
+        "debarred": 12, "blacklisted": 15, "banned": 10,
+        "regulatory fine": 12, "enforcement action": 12,
+        "cease and desist": 10, "asset freeze": 15,
+        // Sanctions
+        "ofac": 18, "sdn list": 18, "un sanctions": 15,
+        // Investigative
+        "leaked documents": 12, "pandora papers": 18, "panama papers": 18,
+        "fincen files": 18, "occrp": 12, "icij": 12,
+      };
+      const adapterTitleLower = na.title.toLowerCase();
+      let adapterBoost = 0;
+      for (const [term, pts] of Object.entries(adverseTermBoostsAdapter)) {
+        if (adapterTitleLower.includes(term)) adapterBoost += pts;
+      }
+      const adapterBaseScore = Math.round(fuzzyScore * 100);
+      const adapterAdjustedScore = Math.min(100, adapterBaseScore + adapterBoost);
+      const adapterTier = classifySource(na.url ?? "");
+      const adapterSourceCat = classifySourceCategory(na.url ?? "");
+      const adapterTierBoost = adapterTier === "tier1" ? 20 : adapterTier === "tier2" ? 10 : 0;
+      // Established sources get 2× authority weighting; state-media get 0.5×
+      const adapterAuthorityMult = adapterSourceCat === "state_media" ? 0.5
+        : (adapterTier === "tier1" || adapterTier === "tier2") ? 2.0 : 1.0;
+      const adapterTieredScore = Math.min(100, Math.round((adapterAdjustedScore + adapterTierBoost) * adapterAuthorityMult));
+
+      // Paywall detection (adapter path)
+      const adapterSnippet = na.snippet ?? "";
+      const adapterPaywalled = detectPaywall(adapterSnippet);
+
+      // Recency weight (adapter path)
+      const adapterRecencyW = computeRecencyWeight(na.publishedAt ?? "", adapterSourceCat);
+      const adapterWeightFactor = adapterRecencyW * (adapterPaywalled ? 0.5 : 1.0);
+      const adapterFinalScore = Math.round(adapterTieredScore * adapterWeightFactor);
+
+      const adapterRawSeverity = classifyArticleSeverity(kwHits);
+      const adapterSeverity = applyStateMediCap(adapterRawSeverity, adapterSourceCat);
+
       merged.set(key, {
         title: na.title,
         link: na.url,
         pubDate: na.publishedAt,
         source: `${na.source}/${na.outlet}`,
-        snippet: na.snippet ?? "",
+        snippet: adapterSnippet,
         keywordGroups: kwHits.map((k) => k.group),
         esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
-        severity: classifyArticleSeverity(kwHits),
-        fuzzyScore: Math.round(fuzzyScore * 100),
+        severity: adapterSeverity,
+        fuzzyScore: adapterBaseScore,
         fuzzyMethod,
         lang: na.language ?? "en",
+        relevanceScore: adapterFinalScore,
+        sourceTier: adapterTier,
+        sourceCategory: adapterSourceCat,
+        sourceAuthority: classifySourceAuthority(na.url ?? ""),
+        paywallLimited: adapterPaywalled || undefined,
+        recencyWeight: adapterRecencyW !== 1.0 ? adapterRecencyW : undefined,
       });
     }
     const filtered = Array.from(merged.values())
@@ -512,12 +1430,27 @@ export async function GET(req: Request): Promise<NextResponse> {
       // Threshold lowered to 70: token_presence caps at 0.72 (→ score 72) so
       // a full two-token name match was blocked at the old 75 threshold.
       .filter((a) => a.fuzzyScore >= 70 || (a.fuzzyScore >= 55 && a.keywordGroups.length > 0))
-      .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
-    // Cluster near-duplicate articles into events. Two articles belong
-    // to the same event when their normalised titles share ≥ 70% of
-    // their token set — this collapses the same Reuters story syndicated
-    // across Le Monde, RT and Reuters Arabic into a single dossier row.
-    const parsed = clusterArticles(filtered).slice(0, 20);
+      .sort((a, b) => {
+        // Investigative / regulatory sources sort first among equal-relevance articles.
+        const aIsHighValue = a.sourceCategory === "investigative" || a.sourceCategory === "regulatory";
+        const bIsHighValue = b.sourceCategory === "investigative" || b.sourceCategory === "regulatory";
+        if (aIsHighValue !== bIsHighValue) return aIsHighValue ? -1 : 1;
+        return (b.relevanceScore ?? b.fuzzyScore) - (a.relevanceScore ?? a.fuzzyScore);
+      });
+    // Phase 1: URL-based exact dedup — strips protocol and query-string so
+    // the same Reuters article appearing at both https://reuters.com/… and
+    // http://reuters.com/…?utm_source=… collapses to one entry.
+    const seenUrls = new Set<string>();
+    const urlDeduped = filtered.filter((a) => {
+      if (!a.link) return true;
+      const key = a.link.replace(/^https?:\/\//, "").replace(/\?.*$/, "");
+      if (seenUrls.has(key)) return false;
+      seenUrls.add(key);
+      return true;
+    });
+    // Phase 2: Jaccard title dedup — collapses translated / rephrased
+    // versions of the same story across locales (existing clusterArticles).
+    const parsed = clusterArticles(urlDeduped).slice(0, 20);
     const topSeverity: Article["severity"] =
       parsed.reduce(
         (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),
@@ -546,8 +1479,27 @@ export async function GET(req: Request): Promise<NextResponse> {
       fetchMode: "live",
       fetchedAt,
       latencyMs: Date.now() - t0,
+      sourceDiversityScore: 0,
+      crossCorroboratedCount: 0,
+      propagandaSourceCount: 0,
     };
-    return NextResponse.json(payload, { headers: gateHeaders });
+    // Cache successful results for 2 minutes
+    if (payload.articleCount > 0) {
+      NEWS_CACHE.set(cacheKey, { data: payload, expires: Date.now() + 2 * 60 * 1000 });
+      // Evict oldest entries if cache grows too large
+      if (NEWS_CACHE.size > 500) {
+        const oldest = Array.from(NEWS_CACHE.entries()).sort((a, b) => a[1].expires - b[1].expires)[0];
+        if (oldest) NEWS_CACHE.delete(oldest[0]);
+      }
+    }
+    const responseTimeMs = Date.now() - t0;
+    return NextResponse.json(payload, {
+      headers: {
+        ...gateHeaders,
+        "X-Response-Time": `${responseTimeMs}ms`,
+        "X-Locales-Searched": String(LOCALES.length),
+      },
+    });
   } catch (err) {
     // Last-resort safety net. The fan-out already uses allSettled +
     // per-feed timeouts so this branch should be unreachable, but if

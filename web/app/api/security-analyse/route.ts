@@ -39,13 +39,13 @@ const SYSTEM_PROMPT = `You are a senior security researcher specialising in AML/
 }`;
 
 export async function POST(req: NextRequest) {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY not configured on this deployment" },
+      { ok: false, error: "ANTHROPIC_API_KEY not configured on this deployment" },
       { status: 503, headers: gate.headers }
     );
   }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400, headers: gate.headers });
   }
 
-  const client = getAnthropicClient(apiKey, 55_000, "security-analyse");
+  const client = getAnthropicClient(apiKey, 4_500, "security-analyse");
 
   try {
     const message = await client.messages.create({

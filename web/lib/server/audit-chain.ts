@@ -16,6 +16,8 @@
 // requires the verifier to surface ALL three classes.
 
 import { createHash, createHmac } from 'node:crypto';
+import { startSpan, SpanStatus } from './tracer';
+import { incrementCounter } from './metrics-store';
 
 // ── Per-tenant key derivation ─────────────────────────────────────────────────
 // Derives a per-tenant HMAC signing key from the root AUDIT_CHAIN_SECRET.
@@ -161,7 +163,11 @@ export function verifyChain(
     }
 
     if (recomputedId === e.id && recomputedSig === e.signature) verified++;
-    prevHash = e.id;
+    // Only advance anchor when entry is fully clean — prevents re-chained entries
+    // after a tamper from silently passing verification.
+    if (e.previousHash === prevHash && recomputedId === e.id) {
+      prevHash = e.id;
+    }
   }
 
   return {
@@ -269,6 +275,7 @@ async function loadAuditStore() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get: (_key: string, _opts?: any) => Promise<unknown>;
       setJSON: (_key: string, _value: unknown) => Promise<void>;
+      set: (_key: string, _data: string) => Promise<void>;
     };
   };
   const siteID = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"];
@@ -294,6 +301,24 @@ async function loadAuditStore() {
  * Returns true on success, false after all retries exhausted (non-throwing).
  */
 export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "default"): Promise<boolean> {
+  const span = startSpan('audit-chain.write', {
+    'aml.tenant': tenantId,
+    'aml.event': String(event.event ?? 'unknown'),
+  });
+  try {
+    const ok = await _writeAuditChainEntry(event, tenantId);
+    if (ok) incrementCounter('hawkeye_audit_chain_entries_total', 1, { tenant: tenantId });
+    return ok;
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): Promise<boolean> {
   const chainSecret = getChainSecret(tenantId);
   if (!chainSecret) {
     console.error(
@@ -307,7 +332,7 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
   // The "default" tenant keeps "chain.json" for backward compatibility.
   // Reserved names ("chain") that would collide with the default blob are
   // rejected to prevent cross-tenant data corruption.
-  if (tenantId !== "default" && tenantId === "chain") {
+  if (tenantId === "chain") {
     console.error("[audit-chain] tenantId 'chain' is reserved and cannot be used as a tenant identifier");
     return false;
   }
@@ -335,7 +360,7 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
         payload,
         at,
       });
-      await store.setJSON(chainFile, chain);
+      await store.set(chainFile, JSON.stringify(chain));
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -348,5 +373,6 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
       }
     }
   }
+  incrementCounter('hawkeye_audit_write_failures_total', 1, { event: String(event.event ?? 'unknown') });
   return false;
 }

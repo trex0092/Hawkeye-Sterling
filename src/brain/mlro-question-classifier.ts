@@ -751,7 +751,7 @@ export function classifyMlroQuestion(question: string): MlroQuestionAnalysis {
     if (topic === 'general_compliance') return; // fallback only
     let score = 0;
     for (const rx of KEYWORD_TOPIC_MAP[topic]) {
-      const m = text.match(new RegExp(rx.source, rx.flags.includes('g') ? rx.flags : `${rx.flags}g`));
+      const m = text.match(new RegExp(rx.source, rx.flags.includes('g') ? rx.flags : `${rx.flags}g`)); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       if (m) score += m.length;
     }
     if (score > 0) scores.set(topic, score);

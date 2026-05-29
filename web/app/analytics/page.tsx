@@ -19,6 +19,7 @@ import {
   hsFindings,
   type CoverData,
 } from "@/lib/reportHtml";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface InsightItem {
   finding: string;
@@ -205,7 +206,7 @@ export default function AnalyticsPage() {
       const opened = Date.parse(c.timeline?.[0]?.timestamp ?? "");
       if (Number.isFinite(opened) && opened < mtdCutoff) continue;
       for (const t of FILING_TYPES) {
-        const re = new RegExp(`\\b${t}\\b`, "i");
+        const re = new RegExp(`\\b${t}\\b`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
         if (re.test(c.meta) || re.test(c.statusLabel ?? "")) {
           counts[t] += 1;
           break;
@@ -306,7 +307,7 @@ export default function AnalyticsPage() {
     } catch (e) {
       if (!mountedRef.current) return;
       console.error("[hawkeye] analytics generateInsights threw:", e);
-      setErr(e instanceof Error ? e.message : "AI insights failed — please retry");
+      setErr(caughtErrorMessage(e, "AI insights failed — please retry"));
     }
     finally { if (mountedRef.current) setInsightsLoading(false); }
   };
@@ -335,7 +336,7 @@ export default function AnalyticsPage() {
     } catch (e) {
       if (!mountedRef.current) return;
       console.error("[hawkeye] analytics runBiasMonitor threw:", e);
-      setErr(e instanceof Error ? e.message : "Bias monitor failed — please retry");
+      setErr(caughtErrorMessage(e, "Bias monitor failed — please retry"));
     }
     finally { if (mountedRef.current) setBiasLoading(false); }
   };
@@ -372,7 +373,7 @@ export default function AnalyticsPage() {
     } catch (e) {
       if (!mountedRef.current) return;
       console.error("[hawkeye] analytics runPredictRisk threw:", e);
-      setErr(e instanceof Error ? e.message : "Risk prediction failed — please retry");
+      setErr(caughtErrorMessage(e, "Risk prediction failed — please retry"));
     }
     finally { if (mountedRef.current) setPredictLoading(false); }
   };

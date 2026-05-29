@@ -15,7 +15,7 @@ export const maxDuration = 15;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getJson, setJson, del, listKeys } from '@/lib/server/store';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { enforce } from '@/lib/server/enforce';
 import { adminAuth } from '@/lib/server/admin-auth';
 import { writeAuditChainEntry } from '@/lib/server/audit-chain';
@@ -38,8 +38,14 @@ export interface ErasureRequest {
   amlExemptionBasis?: string;
 }
 
-function erasureKey(requestId: string): string {
-  return `pdpl/erasure/${requestId}.json`;
+function erasureKey(tenantId: string, requestId: string): string {
+  return `pdpl/erasure/${tenantId}/${requestId}.json`;
+}
+
+// Admin key used by PATCH (adminAuth) where tenantId is not available from gate.
+// Stores a cross-tenant pointer so admin can locate the full record via tenantId.
+function erasureAdminKey(requestId: string): string {
+  return `pdpl/erasure-admin/${requestId}.json`;
 }
 
 export async function POST(req: NextRequest) {
@@ -72,7 +78,10 @@ export async function POST(req: NextRequest) {
     amlExemptionBasis: 'FDL 10/2025 Art.20 — AML records are exempt from erasure for 10-year mandatory retention period. Non-AML discretionary data will be reviewed for erasure.',
   };
 
-  await setJson(erasureKey(requestId), request);
+  const tenantId = tenantIdFromGate(gate);
+  await setJson(erasureKey(tenantId, requestId), request);
+  // Write an admin-accessible pointer so the PATCH handler (adminAuth) can locate the record.
+  await setJson(erasureAdminKey(requestId), { tenantId, requestId });
 
   // PDPL Art.17 right-to-erasure requests are legally significant events —
   // must be on the tamper-evident chain for regulatory accountability.
@@ -85,7 +94,7 @@ export async function POST(req: NextRequest) {
       requestedBy,
       grounds: grounds.slice(0, 256),
     },
-    tenantIdFromGate(gate),
+    tenantId,
   ).catch((err) =>
     console.warn('[pdpl/erasure] audit chain write failed:', err instanceof Error ? err.message : String(err)),
   );
@@ -104,7 +113,7 @@ export async function GET(req: NextRequest) {
 
   const requestId = req.nextUrl.searchParams.get('requestId');
   if (!requestId?.trim()) return NextResponse.json({ ok: false, error: 'requestId query param required' }, { status: 400, headers: gate.headers });
-  const request = await getJson<ErasureRequest>(erasureKey(requestId));
+  const request = await getJson<ErasureRequest>(erasureKey(tenantIdFromGate(gate), requestId));
   if (!request) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404, headers: gate.headers });
   return NextResponse.json({ ok: true, request }, { headers: gate.headers });
 }
@@ -131,7 +140,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'decision must be approved or rejected' }, { status: 400 });
   }
 
-  const request = await getJson<ErasureRequest>(erasureKey(requestId));
+  // Resolve tenantId via the admin pointer written during POST.
+  const adminPointer = await getJson<{ tenantId: string; requestId: string }>(erasureAdminKey(requestId));
+  if (!adminPointer) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404 });
+  const erasureTenantId = adminPointer.tenantId;
+  const request = await getJson<ErasureRequest>(erasureKey(erasureTenantId, requestId));
   if (!request) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404 });
   if (request.status !== 'pending') {
     return NextResponse.json({ ok: false, error: `Erasure request is already ${request.status}` }, { status: 409 });
@@ -143,7 +156,7 @@ export async function PATCH(req: NextRequest) {
     // AML-exempt prefixes (FDL 10/2025 Art.20 10-year retention):
     //   ongoing/subject/, cases/, str-cases/, sar/, audit-trail/, pkyc/subject/
     const discretionaryPrefixes = [
-      `pdpl/consent/${request.subjectId}`,
+      `pdpl/consent/${erasureTenantId}/${request.subjectId}`,
       `feedback/${request.subjectId}`,
       `corrections/${request.subjectId}`,
       `screening-history/${request.subjectId}`,
@@ -167,7 +180,7 @@ export async function PATCH(req: NextRequest) {
     reviewedBy,
     reviewNotes,
   };
-  await setJson(erasureKey(requestId), updated);
+  await setJson(erasureKey(erasureTenantId, requestId), updated);
 
   // PDPL Art.17 erasure decision (approve/reject) must be on the
   // tamper-evident chain — this is a legally binding admin action.

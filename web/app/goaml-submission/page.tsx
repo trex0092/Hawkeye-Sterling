@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { GoAmlXmlResult } from "@/app/api/goaml-xml/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ────────────────────────────────────────────────────────────────────
 //  Types
@@ -61,7 +62,7 @@ const SUSPECTED_OFFENCES = [
 ];
 
 const BLANK_TX = (): TxRow => ({
-  id: `tx-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  id: `tx-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
   date: "",
   amount: "",
   currency: "AED",
@@ -102,7 +103,7 @@ function canAdvance(step: Step, f: FormState): boolean {
   if (step === 1) {
     return (
       f.mlroName.trim().length >= 2 &&
-      f.mlroEmail.trim().includes("@") &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.mlroEmail.trim()) &&
       f.mlroPhone.trim().length >= 5 &&
       f.reportingEntityId.trim().length >= 1
     );
@@ -119,7 +120,14 @@ function canAdvance(step: Step, f: FormState): boolean {
     );
   }
   if (step === 3) {
-    return f.narrativeText.trim().length >= 100;
+    const allAmountsValid = f.transactions.every(
+      (t) => !t.amount.trim() || parseFloat(t.amount) > 0,
+    );
+    return (
+      f.suspectedOffence.trim().length > 0 &&
+      f.narrativeText.trim().length >= 100 &&
+      allAmountsValid
+    );
   }
   return true;
 }
@@ -156,12 +164,14 @@ function Inp({
   onChange,
   placeholder,
   type = "text",
+  required = false,
 }: {
   label: string;
   value: string;
   onChange: (_v: string) => void;
   placeholder?: string;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <FieldWrap label={label}>
@@ -171,6 +181,7 @@ function Inp({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={inputCls}
+        {...(required ? { "aria-required": true } : {})}
       />
     </FieldWrap>
   );
@@ -252,7 +263,7 @@ export default function GoAmlSubmissionPage() {
         })) as { error?: string };
         console.error(`[hawkeye] goaml-xml HTTP ${res.status}: ${j.error ?? '(no error body)'}`);
         if (!mountedRef.current) return;
-        setGen({ status: "error", message: j.error ?? `HTTP ${res.status}` });
+        setGen({ status: "error", message: j.error ?? apiErrorMessage(res.status) });
         return;
       }
       const data = await res.json().catch(() => ({})) as GoAmlXmlResult;
@@ -261,7 +272,7 @@ export default function GoAmlSubmissionPage() {
     } catch (err) {
       if (mountedRef.current) setGen({
         status: "error",
-        message: err instanceof Error ? err.message : String(err),
+        message: caughtErrorMessage(err),
       });
     }
   }, [form]);
@@ -342,7 +353,7 @@ export default function GoAmlSubmissionPage() {
                 step === s.id
                   ? "border-brand bg-brand-dim text-brand-deep"
                   : s.id < step
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
                     : "border-hair-2 bg-bg-panel text-ink-3 cursor-default"
               }`}
             >
@@ -380,6 +391,7 @@ export default function GoAmlSubmissionPage() {
                 value={form.mlroName}
                 onChange={(v) => upd({ mlroName: v })}
                 placeholder="Luisa Fernanda Al-Rashid"
+                required
               />
               <Inp
                 label="MLRO Email"
@@ -387,18 +399,21 @@ export default function GoAmlSubmissionPage() {
                 onChange={(v) => upd({ mlroEmail: v })}
                 placeholder="mlro@entity.ae"
                 type="email"
+                required
               />
               <Inp
                 label="MLRO Phone"
                 value={form.mlroPhone}
                 onChange={(v) => upd({ mlroPhone: v })}
                 placeholder="+971-50-000-0000"
+                required
               />
               <Inp
                 label="Reporting Entity ID (FIU-issued goAML ID)"
                 value={form.reportingEntityId}
                 onChange={(v) => upd({ reportingEntityId: v })}
                 placeholder="AE-DPMS-00123"
+                required
               />
             </div>
             <div className="mt-2">
@@ -444,36 +459,42 @@ export default function GoAmlSubmissionPage() {
                 value={form.subjectName}
                 onChange={(v) => upd({ subjectName: v })}
                 placeholder="Ahmad Mohammed Al-Mansouri"
+                required
               />
               <Inp
                 label="Date of Birth (YYYY-MM-DD)"
                 value={form.subjectDob}
                 onChange={(v) => upd({ subjectDob: v })}
                 placeholder="1985-04-12"
+                required
               />
               <Inp
                 label="Nationality (ISO-2 or full)"
                 value={form.subjectNationality}
                 onChange={(v) => upd({ subjectNationality: v })}
                 placeholder="AE"
+                required
               />
               <Inp
                 label="Passport / Emirates ID Number"
                 value={form.subjectPassport}
                 onChange={(v) => upd({ subjectPassport: v })}
                 placeholder="A12345678"
+                required
               />
               <Inp
                 label="Passport Issuing Country (ISO-2)"
                 value={form.subjectPassportCountry}
                 onChange={(v) => upd({ subjectPassportCountry: v })}
                 placeholder="AE"
+                required
               />
               <Inp
                 label="Country of Residence (ISO-2)"
                 value={form.subjectCountry}
                 onChange={(v) => upd({ subjectCountry: v })}
                 placeholder="AE"
+                required
               />
             </div>
             <Inp
@@ -481,6 +502,7 @@ export default function GoAmlSubmissionPage() {
               value={form.accountNumber}
               onChange={(v) => upd({ accountNumber: v })}
               placeholder="DPMS-2024-00891"
+              required
             />
           </div>
         )}
@@ -516,6 +538,7 @@ export default function GoAmlSubmissionPage() {
                 onChange={(e) => upd({ narrativeText: e.target.value })}
                 rows={10}
                 maxLength={4000}
+                aria-required="true"
                 placeholder="On [DATE], Hawkeye Sterling DPMS identified suspicious activity in account [ACCOUNT_NO] held by [CUSTOMER NAME]. Review of account activity from [START_DATE] to [END_DATE] revealed [DESCRIBE PATTERN]. The activity is inconsistent with the customer's stated business profile. Suspicion crystallised on [DATE] upon MLRO review. This STR is filed pursuant to UAE FDL 10/2025 Art.17 within 48 hours of crystallisation."
                 className={`${inputCls} leading-relaxed`}
               />
@@ -742,7 +765,7 @@ export default function GoAmlSubmissionPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded font-semibold transition"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40 rounded font-semibold transition"
                     >
                       Download XML
                     </button>
@@ -852,7 +875,7 @@ export default function GoAmlSubmissionPage() {
                 </div>
                 {Object.values(checklist).filter(Boolean).length ===
                   gen.result.submissionChecklist.length && (
-                  <div className="mt-3 text-12 font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
+                  <div className="mt-3 text-12 font-semibold text-emerald-300 bg-emerald-950/30 border border-emerald-500/40 rounded px-3 py-2">
                     All checklist items confirmed — ready to file via goAML portal.
                   </div>
                 )}

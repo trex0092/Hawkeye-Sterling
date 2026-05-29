@@ -32,7 +32,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { findSubmittedBySha256, recordSubmittedSha256 } from "@/lib/server/goaml-vault";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,11 +53,11 @@ function expectedSignature(secret: string, payload: string): string {
   return `sha256=${createHmac("sha256", secret).update(payload).digest("hex")}`;
 }
 
+const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 function safeEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(new Uint8Array(ba), new Uint8Array(bb));
+  const ha = createHmac("sha256", COMPARE_KEY).update(a).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(b).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 async function handlePost(req: Request): Promise<NextResponse> {
@@ -83,6 +83,33 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!body?.xml || typeof body.xml !== "string" || body.xml.length === 0) {
     return NextResponse.json({ ok: false, error: "xml required" }, { status: 400, headers: gateHeaders });
   }
+
+  // Pre-flight: validate mandatory goAML fields before sending to FIU.
+  // Operates on the raw XML string — avoids a full XML parser dependency.
+  {
+    const missingFields: string[] = [];
+    const xml = body.xml;
+    if (!/<rentity_id>[^<]+<\/rentity_id>/.test(xml)) missingFields.push("rentity_id");
+    if (!/<action>(new|update)<\/action>/.test(xml)) missingFields.push("action");
+    if (!/<transaction>/.test(xml)) missingFields.push("transactions");
+    // Accept either <first_name>+<last_name> or <firstname>+<surname> (both appear in spec variants)
+    const hasSubjectName =
+      (/<first_name>[^<]+<\/first_name>/.test(xml) && /<last_name>[^<]+<\/last_name>/.test(xml)) ||
+      (/<firstname>[^<]+<\/firstname>/.test(xml) && /<surname>[^<]+<\/surname>/.test(xml));
+    if (!hasSubjectName) missingFields.push("subject.name");
+    if (!/<transaction_location>[^<]+<\/transaction_location>/.test(xml)) missingFields.push("transaction_location");
+    if (!/<t_from_my_client>[01]<\/t_from_my_client>/.test(xml)) missingFields.push("t_from_my_client");
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `goAML submission missing mandatory fields: ${missingFields.join(", ")}. Cannot submit to FIU.`,
+        },
+        { status: 400, headers: gateHeaders },
+      );
+    }
+  }
+
   if (!body.submitter?.id || !body.submitter.signature || !body.authoriser?.id || !body.authoriser.signature) {
     return NextResponse.json({ ok: false, error: "submitter + authoriser id+signature required" }, { status: 400, headers: gateHeaders });
   }
@@ -134,7 +161,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   }
 
   const dryRun = body.mode !== "live";
-  const submissionRef = `hsg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const submissionRef = `hsg-${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
 
   if (dryRun) {
     return NextResponse.json(
@@ -245,8 +272,9 @@ async function handlePost(req: Request): Promise<NextResponse> {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goaml/auto-submit] upstream fetch error:", msg);
     return NextResponse.json(
-      { ok: false, submissionRef, draftSha256, twoEyesVerified, error: `upstream fetch failed: ${msg}` },
+      { ok: false, submissionRef, draftSha256, twoEyesVerified, error: "goAML upstream service unavailable" },
       { status: 502, headers: gateHeaders },
     );
   }

@@ -1,13 +1,47 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+
+// ── World-Check circuit breaker ───────────────────────────────────────────────
+// After 3 consecutive failures within 5 minutes, skip World-Check and go
+// directly to OpenSanctions. Resets automatically after 5 minutes.
+let _wcFailCount = 0;
+let _wcFirstFailAt = 0;
+const WC_FAIL_THRESHOLD = 3;
+const WC_CIRCUIT_RESET_MS = 5 * 60 * 1_000;
+
+function wcCircuitOpen(): boolean {
+  if (_wcFailCount < WC_FAIL_THRESHOLD) return false;
+  if (Date.now() - _wcFirstFailAt > WC_CIRCUIT_RESET_MS) {
+    _wcFailCount = 0;
+    _wcFirstFailAt = 0;
+    return false;
+  }
+  return true;
+}
+
+function recordWcFailure(): void {
+  if (_wcFailCount === 0) _wcFirstFailAt = Date.now();
+  _wcFailCount++;
+  if (_wcFailCount >= WC_FAIL_THRESHOLD) {
+    console.error(`[pep-profile] World-Check circuit OPEN after ${WC_FAIL_THRESHOLD} failures — using OpenSanctions fallback`);
+  }
+}
+
+function recordWcSuccess(): void {
+  _wcFailCount = 0;
+  _wcFirstFailAt = 0;
+}
 export interface PepProfileResult {
   ok: true;
-  pepTier: "tier1" | "tier2" | "tier3" | "rca";
+  pepTier: "tier1" | "tier2" | "tier3" | "tier4" | "rca";
   riskScore: number;
   politicalExposure: {
     current: boolean;
@@ -36,7 +70,7 @@ export interface PepProfileResult {
   summary: string;
 }
 
-const FALLBACK: PepProfileResult = {
+const _FALLBACK: PepProfileResult = {
   ok: true,
   pepTier: "tier1",
   riskScore: 82,
@@ -124,7 +158,7 @@ export async function POST(req: Request) {
   const wcAuth = wcKey
     ? (wcSecret ? `Basic ${Buffer.from(`${wcKey}:${wcSecret}`).toString("base64")}` : `Bearer ${wcKey}`)
     : null;
-  if (wcAuth && body.name?.trim()) {
+  if (wcAuth && body.name?.trim() && !wcCircuitOpen()) {
     try {
       const wcRes = await fetch("https://api-worldcheck.refinitiv.com/v2/cases", {
         method: "POST",
@@ -150,6 +184,7 @@ export async function POST(req: Request) {
             dateOfBirth?: string;
           }>;
         };
+        recordWcSuccess();
         const hits = wcData.results ?? [];
         if (hits.length > 0) {
           pepDataContext = `World-Check Database Hits (${hits.length} match${hits.length > 1 ? "es" : ""}):\n` +
@@ -162,9 +197,11 @@ export async function POST(req: Request) {
           pepDataSource = "worldcheck";
         }
       } else {
+        recordWcFailure();
         pepDataContext = `World-Check Database: query failed (HTTP ${wcRes.status})`;
       }
     } catch (err) {
+      recordWcFailure();
       console.warn("[pep-profile] world-check lookup failed:", err instanceof Error ? err.message : err);
       pepDataContext = "World-Check Database: temporarily unavailable";
     }
@@ -178,9 +215,17 @@ export async function POST(req: Request) {
   // the LLM's tier classification).
   if (pepDataSource === "none" && body.name?.trim()) {
     try {
-      const osUrl = new URL("https://api.opensanctions.org/search/peps");
+      const osUrl = new URL("https://api.opensanctions.org/search/default");
       osUrl.searchParams.set("q", body.name.trim());
       osUrl.searchParams.set("limit", "5");
+      // Broaden coverage: every_politician (300k+ worldwide), eu_meps, gb_hoc_members
+      // plus the base PEP compound dataset and world leaders for complete global PEP coverage.
+      osUrl.searchParams.append("dataset", "every_politician");
+      osUrl.searchParams.append("dataset", "eu_meps");
+      osUrl.searchParams.append("dataset", "gb_hoc_members");
+      osUrl.searchParams.append("dataset", "us_cia_world_leaders");
+      osUrl.searchParams.append("dataset", "un_sc_resolutions");
+      osUrl.searchParams.append("dataset", "peps");
       const osHeaders: Record<string, string> = { accept: "application/json" };
       const osKey = process.env["OPENSANCTIONS_API_KEY"];
       if (osKey) osHeaders["Authorization"] = `Bearer ${osKey}`;
@@ -231,23 +276,40 @@ export async function POST(req: Request) {
 
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({
-    ...FALLBACK,
-    simulationWarning: "ANTHROPIC_API_KEY not configured — this is a simulated template, NOT a real PEP assessment. All names, positions, figures, and flags are illustrative examples only. Obtain a real AI-generated assessment before making any compliance decisions.",
-  }, { status: 200, headers: gate.headers });
+  if (!apiKey) {
+    console.error("[pep-profile] CRITICAL: ANTHROPIC_API_KEY not set — refusing to serve fixture data as a real assessment");
+    return NextResponse.json(
+      { ok: false, error: "AI model not configured — PEP assessment unavailable. Configure ANTHROPIC_API_KEY to enable.", degraded: true },
+      { status: 503, headers: gate.headers },
+    );
+  }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
       system: [
         {
           type: "text",
-          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category); Tier 2 = senior regional/municipal officials, senior party officials, senior executives of SOEs (State-Owned Enterprise officers at board/C-suite level with material government ownership), mid-level international organisation staff; Tier 3 = mid-level officials, lower-ranking officials; RCA = relative or close associate of any PEP. Classify SIE (Senior International Organisation Exposed Person) within Tier 1. Return ONLY valid JSON with this exact structure (no markdown fences):
+          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category). Tier 1 also includes royalty and senior religious/political leaders recognised by these titles or their equivalents: Sheikh, Emir, Sultan, Caliph, Grand Mufti (MENA royalty and senior religious authority); Secretário, Ministro, Senador, Governador (LatAm government); Gouverneur, Sénateur, Directeur général (French-speaking Africa); Mkurugenzi, Waziri, Rais (Swahili East Africa); Olisenator, Gubernator, Prezident (Eastern European variants); and Arabic script titles الأمير (Prince/Emir), الوزير (Minister), الرئيس (President/Chairman), الأمين (Secretary-General); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1.
+
+HIGH-RISK CORRUPTION SECTORS — MANDATORY EDD: The following sectors carry the highest systemic bribery and corruption risk per FATF, GRECO, Transparency International, and UNCAC guidance. When the PEP's position, organisation, or declared business involves any of these sectors, you MUST: (1) flag "high_corruption_risk_sector" explicitly in requiredMeasures, (2) set EDD as mandatory (not discretionary), and (3) apply at minimum "senior_approval" recommendation:
+- Defence procurement and military acquisitions (arms contracts, offset agreements)
+- Oil and gas licensing (exploration blocks, production-sharing agreements, pipeline concessions)
+- Infrastructure mega-projects (roads, ports, airports, dams, power plants — contract values > USD 100M)
+- Mining concessions and extractive industries (mineral rights, artisanal mining licences)
+- Telecoms spectrum auctions and broadcast licensing
+- Government banking and sovereign wealth fund management
+- Public construction and real estate development on state land
+- Pharmaceutical and healthcare procurement by government entities
+
+For PEPs connected to these sectors, include explicit red-flag analysis covering: kickbacks in tender processes, procurement corruption, tender rigging, facilitation payments, government contract fraud, and conflicts of interest arising from the revolving door between public office and private-sector positions.
+
+Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
-  "pepTier": "tier1"|"tier2"|"tier3"|"rca",
+  "pepTier": "tier1"|"tier2"|"tier3"|"tier4"|"rca",
   "riskScore": number (0-100),
   "politicalExposure": {
     "current": boolean,
@@ -300,6 +362,29 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PepProfileResult;
     if (!Array.isArray(result.networkMap)) result.networkMap = [];
     if (!Array.isArray(result.requiredMeasures)) result.requiredMeasures = [];
+
+    // Write pep.rca_identified audit chain entries for every RCA found in the
+    // network map. FATF R.12 requires explicit recording of PEP network
+    // relationships including family members and close associates so that
+    // downstream EDD measures can be traced back to the screening event.
+    const subjectName = sanitizeField(body.name) || "Unknown";
+    for (const node of result.networkMap) {
+      void writeAuditChainEntry(
+        {
+          event: "pep.rca_identified",
+          actor: gate.keyId,
+          subjectId: subjectName,
+          pepId: subjectName,
+          relationship: node.relationship,
+          rcaName: node.name,
+          riskLevel: node.riskLevel,
+        },
+        tenantIdFromGate(gate),
+      ).catch((err: unknown) =>
+        console.warn("[pep-profile] pep.rca_identified audit chain write failed:", err instanceof Error ? err.message : String(err)),
+      );
+    }
+
     const latencyMs = Date.now() - _handlerStart;
     if (latencyMs > 5000) console.warn(`[pep_profile] latencyMs=${latencyMs} exceeds 5000ms`);
     return NextResponse.json(
@@ -316,15 +401,14 @@ Perform a comprehensive PEP risk assessment grounded in the PEP database data ab
     return NextResponse.json({ ok: false, error: "pep-profile temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    console.error("[hawkeye] pep_profile handler exception:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: false,
       errorCode: "HANDLER_EXCEPTION",
       errorType: "internal",
       tool: "pep_profile",
-      message,
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500 , headers: gate && gate.ok ? gate.headers : {} });
   }

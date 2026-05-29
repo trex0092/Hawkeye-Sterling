@@ -147,8 +147,8 @@ function parseLine(line: string): PepRecord | null {
       // present in the source data (FDL 10/2025 Art.24 — 10-year retention).
       id: String(obj["id"] ?? `pep_${createHash("sha256").update([
         String(obj["caption"] ?? ""),
-        arrStr((obj["properties"] as Record<string, unknown> | undefined)?.["name"])[0] ?? "",
-        arrStr((obj["properties"] as Record<string, unknown> | undefined)?.["position"])[0] ?? "",
+        arrStr(props["name"])[0] ?? "",
+        arrStr(props["position"])[0] ?? "",
       ].join("|")).digest("hex").slice(0, 16)}`),
       name,
       aliases: arrStr(props["alias"]),
@@ -156,7 +156,7 @@ function parseLine(line: string): PepRecord | null {
       topics: arrStr(props["topics"]),
       positions: arrStr(props["position"]).concat(arrStr(props["title"])),
       birthDate: arrStr(props["birthDate"])[0],
-      datasets: arrStr(obj["datasets"] as unknown),
+      datasets: arrStr(obj["datasets"]),
     };
   } catch {
     return null;

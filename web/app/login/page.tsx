@@ -252,7 +252,7 @@ export default function LoginPage() {
         >
           Forgotten your password?{" "}
           <a
-            href="mailto:hawkeye.sterling.v2@gmail.com?subject=Password%20Reset%20Request"
+            href="mailto:dpo@hawkeyesterling.com?subject=Password%20Reset%20Request"
             style={{ color: "#e91e8c", textDecoration: "none" }}
           >
             Contact your MLRO

@@ -63,6 +63,23 @@ async function pollOnce(
 }
 
 export default async (_req: Request) => {
+  // Surface missing env vars immediately so the failure mode is visible in
+  // Netlify function logs rather than appearing as silent zero-entity state.
+  if (!process.env.EOCN_FEED_URL) {
+    console.warn(
+      "[eocn-poll] EOCN_FEED_URL not set — running in fixture/demo mode. " +
+      "UAE EOCN entity list will not be populated from a live source. " +
+      "Set EOCN_FEED_URL in Netlify environment variables to enable live polling.",
+    );
+  }
+  if (!process.env.SANCTIONS_CRON_TOKEN) {
+    console.warn(
+      "[eocn-poll] SANCTIONS_CRON_TOKEN not set — POST to /api/eocn-list-updates " +
+      "will be unauthenticated and may be rejected with 401. " +
+      "Set SANCTIONS_CRON_TOKEN in Netlify environment variables.",
+    );
+  }
+
   const base =
     process.env.URL ??
     process.env.DEPLOY_PRIME_URL ??
@@ -131,6 +148,45 @@ export default async (_req: Request) => {
     } catch (hbErr) {
       console.warn("[eocn-poll] heartbeat write failed (non-critical):", hbErr instanceof Error ? hbErr.message : String(hbErr));
     }
+
+    // Also trigger the EOCN + LTL entity list refresh so the canonical
+    // hawkeye-lists/uae_eocn/latest.json blob stays fresh. The announcement
+    // poll (above) and the entity list are independent data sources: eocn-poll
+    // fetches human-readable update announcements while the entity list comes
+    // from the XLSX file on uaeiec.gov.ae. Both need to be refreshed.
+    const adminToken = process.env["ADMIN_TOKEN"];
+    if (adminToken) {
+      try {
+        const refreshRes = await fetch(
+          `${base}/api/admin/trigger-list-refresh?list=uae_eocn,uae_ltl`,
+          {
+            method: "GET",
+            headers: { authorization: `Bearer ${adminToken}` },
+            signal: AbortSignal.timeout(55_000),
+          },
+        );
+        const refreshData = (await refreshRes.json().catch(() => null)) as {
+          ok?: boolean; eocn_rows?: number; ltl_rows?: number; status?: string; error?: string
+        } | null;
+        if (refreshData?.ok) {
+          console.info(
+            `[eocn-poll] entity refresh OK — uae_eocn: ${refreshData.eocn_rows ?? "?"} rows, uae_ltl: ${refreshData.ltl_rows ?? "?"} rows`,
+          );
+        } else {
+          console.error(
+            `[eocn-poll] entity refresh returned non-ok:`,
+            JSON.stringify(refreshData),
+          );
+        }
+      } catch (refreshErr) {
+        console.error(
+          "[eocn-poll] entity refresh call failed:",
+          refreshErr instanceof Error ? refreshErr.message : String(refreshErr),
+        );
+      }
+    } else {
+      console.warn("[eocn-poll] ADMIN_TOKEN not set — skipping entity list refresh trigger");
+    }
   }
 
   // Extract listUpdateCount from the API response.
@@ -141,6 +197,66 @@ export default async (_req: Request) => {
     Array.isArray((result.parsed as { listUpdates?: unknown[] }).listUpdates)
       ? (result.parsed as { listUpdates: unknown[] }).listUpdates.length
       : null;
+
+  // Consecutive failure tracking — BUG 4.
+  // After 2 consecutive run failures: create P1 Asana task + MLRO CRITICAL webhook.
+  const failureCountKey = "hawkeye-eocn/consecutive-failures.json";
+  interface FailureRecord { count: number; firstFailAt: string; lastFailAt: string }
+  const mainStoreForFailures = (() => {
+    const siteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"] ?? "";
+    const blobToken = process.env["NETLIFY_BLOBS_TOKEN"] ?? process.env["NETLIFY_API_TOKEN"] ?? process.env["NETLIFY_AUTH_TOKEN"] ?? "";
+    return siteId && blobToken
+      ? getStore({ name: "hawkeye-sterling", siteID: siteId, token: blobToken, consistency: "strong" })
+      : getStore("hawkeye-sterling");
+  })();
+
+  if (!result?.ok) {
+    // Increment consecutive failure counter.
+    let failRecord: FailureRecord = { count: 1, firstFailAt: new Date().toISOString(), lastFailAt: new Date().toISOString() };
+    try {
+      const prior = await mainStoreForFailures.get(failureCountKey, { type: "json" }) as FailureRecord | null;
+      if (prior) failRecord = { count: (prior.count ?? 0) + 1, firstFailAt: prior.firstFailAt ?? failRecord.firstFailAt, lastFailAt: new Date().toISOString() };
+      await mainStoreForFailures.setJSON(failureCountKey, failRecord);
+    } catch (err) {
+      console.warn("[eocn-poll] failure counter write failed:", err instanceof Error ? err.message : String(err));
+    }
+
+    if (failRecord.count >= 2) {
+      console.error(`[eocn-poll] CRITICAL: ${failRecord.count} consecutive poll failures since ${failRecord.firstFailAt}. UAE EOCN list may be stale.`);
+
+      // Create P1 Asana task.
+      const asanaToken = process.env["ASANA_TOKEN"];
+      if (asanaToken) {
+        const projectGid = "1214148630166524";
+        const assigneeGid = "1213645083721304";
+        const workspaceGid = "1213645083721316";
+        try {
+          await fetch("https://app.asana.com/api/1.0/tasks", {
+            method: "POST",
+            headers: { authorization: `Bearer ${asanaToken}`, "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ data: { name: `[P1 EOCN] ${failRecord.count} consecutive poll failures — UAE sanctions list potentially stale`, notes: `EOCN poll has failed ${failRecord.count} consecutive times.\nFirst failure: ${failRecord.firstFailAt}\nLast failure: ${failRecord.lastFailAt}\nError: ${fetchError ?? "HTTP non-ok"}\n\nUAE EOCN (terrorist designations) list may be stale. Operators must not screen against this list until resolved.\n\nRegulatory basis: UAE Cabinet Decision 10/2019 — EOCN freeze obligations require current list data.`, projects: [projectGid], workspace: workspaceGid, assignee: assigneeGid } }),
+            signal: AbortSignal.timeout(10_000),
+          });
+        } catch (asanaErr) {
+          console.warn("[eocn-poll] P1 Asana task creation failed:", asanaErr instanceof Error ? asanaErr.message : String(asanaErr));
+        }
+      }
+
+      // MLRO CRITICAL webhook.
+      const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ alert: "EOCN_CONSECUTIVE_FAILURES", severity: "CRITICAL", count: failRecord.count, firstFailAt: failRecord.firstFailAt, lastFailAt: failRecord.lastFailAt, at: new Date().toISOString(), source: "eocn-poll" }),
+          signal: AbortSignal.timeout(5_000),
+        }).catch(() => undefined);
+      }
+    }
+  } else {
+    // Clear failure counter on success.
+    mainStoreForFailures.setJSON(failureCountKey, { count: 0, firstFailAt: null, lastFailAt: null }).catch(() => undefined);
+  }
 
   // Zero-row guard: if the API returned 0 rows but prior stored count was > 0,
   // this is a potential data-loss event. The API route's own guard will have

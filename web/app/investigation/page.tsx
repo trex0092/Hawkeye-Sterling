@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import { loadCases } from "@/lib/data/case-store";
 import type { CaseRecord } from "@/lib/types";
 
@@ -142,7 +143,7 @@ export default function InvestigationPage() {
   function addParty() {
     if (!newName.trim()) return;
     setParties((prev) => [...prev, {
-      id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      id: `p-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
       name: newName.trim(),
       kind: newKind,
       relationship: newRel.trim() || PARTY_LABEL[newKind].toLowerCase(),
@@ -185,7 +186,7 @@ export default function InvestigationPage() {
         narrative = d.narrative ?? "";
       } else {
         console.error(`[hawkeye] investigation brain (mlro-advisor) HTTP ${res.status}`);
-        setError(`Brain analysis failed (HTTP ${res.status}). Please try again.`);
+        setError(apiErrorMessage(res.status, "Brain analysis"));
         return;
       }
       const lower = narrative.toLowerCase();
@@ -231,7 +232,7 @@ export default function InvestigationPage() {
       if (!mountedRef.current) return;
       if (!res.ok) {
         console.error(`[hawkeye] investigation/evidence-pack HTTP ${res.status} — pack NOT generated`);
-        setError(`Evidence pack export failed (HTTP ${res.status}). Please try again.`);
+        setError(apiErrorMessage(res.status, "Evidence pack export"));
       } else {
         setPackReady(true);
       }

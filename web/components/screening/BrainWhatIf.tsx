@@ -13,6 +13,7 @@ interface Mutations {
   dropPep: boolean;
   dropSanctions: boolean;
   dropAdverseMedia: boolean;
+  dropAdverseKeywords: boolean;
   dropRedlines: boolean;
   flipJurisdiction: "keep" | "GB" | "US" | "CH"; // low-risk alternatives
 }
@@ -22,6 +23,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
     dropPep: false,
     dropSanctions: false,
     dropAdverseMedia: false,
+    dropAdverseKeywords: false,
     dropRedlines: false,
     flipJurisdiction: "keep",
   });
@@ -36,7 +38,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
     (b.regimesPenalty ?? 0) * (m.flipJurisdiction !== "keep" ? 0 : 1) +
     (b.redlinesPenalty ?? 0) * (m.dropRedlines ? 0 : 1) +
     (b.adverseMediaPenalty ?? 0) * (m.dropAdverseMedia ? 0 : 1) +
-    (b.adverseKeywordPenalty ?? 0) * (m.dropAdverseMedia ? 0 : 1) +
+    (b.adverseKeywordPenalty ?? 0) * (m.dropAdverseKeywords ? 0 : 1) +
     (b.pepPenalty ?? 0) * (m.dropPep ? 0 : 1);
 
   const delta = simulated - actualComposite;
@@ -44,6 +46,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
     !m.dropPep &&
     !m.dropSanctions &&
     !m.dropAdverseMedia &&
+    !m.dropAdverseKeywords &&
     !m.dropRedlines &&
     m.flipJurisdiction === "keep";
 
@@ -96,6 +99,7 @@ export function BrainWhatIf({ result }: { result: SuperBrainResult }) {
         <Toggle k="dropSanctions" label="Drop sanctions hits" />
         <Toggle k="dropPep" label="Drop PEP classification" />
         <Toggle k="dropAdverseMedia" label="Drop adverse-media" />
+        <Toggle k="dropAdverseKeywords" label="Drop adverse keywords" />
         <Toggle k="dropRedlines" label="Drop redlines" />
         <div className="col-span-2 mt-1">
           <span className="text-10 uppercase tracking-wide-3 text-ink-3 mr-2">

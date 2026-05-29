@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface DomainIntelResult {
   ok: boolean;
@@ -58,7 +59,7 @@ export default function DomainIntelPage() {
       });
       const data = await res.json().catch(() => ({})) as DomainIntelResult;
       if (!mountedRef.current) return;
-      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? apiErrorMessage(res.status, "Domain intelligence"));
       else setResult(data);
     } catch (err) {
       console.error("[hawkeye] domain-intel threw:", err);

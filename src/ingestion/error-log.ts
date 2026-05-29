@@ -14,6 +14,8 @@
 // not customer data. Defensive `truncate` keeps any one entry from
 // burning blob quota.
 
+import { randomBytes } from 'node:crypto';
+
 interface BlobsModuleShape {
   getStore: (opts: {
     name: string;
@@ -91,7 +93,7 @@ export async function logIngestError(entry: IngestErrorEntry): Promise<void> {
     // order so `list({prefix: "entry/"})` returns earliest-first; the read
     // route reverses for "most recent first".
     const ts = safe.at.replace(/[:.]/g, '-');
-    const rand = Math.random().toString(36).slice(2, 8);
+    const rand = randomBytes(3).toString("hex");
     await store.setJSON(`entry/${ts}-${rand}`, safe);
   } catch (err) {
     console.error(

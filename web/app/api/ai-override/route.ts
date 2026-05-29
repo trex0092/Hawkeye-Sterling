@@ -4,6 +4,7 @@ export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { requireRole } from "@/lib/server/role-gate";
 import { writeAuditEvent } from "@/lib/audit";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -20,6 +21,12 @@ interface OverrideBody {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  // AI override is a regulated human-oversight action (UAE FDL 10/2025 Art.18).
+  // Only MLRO or CO portal sessions may record an override — external API key
+  // callers do not carry a role and cannot satisfy this gate.
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
 
   let body: OverrideBody;
   try {

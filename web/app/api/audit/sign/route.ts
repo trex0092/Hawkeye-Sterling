@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash, createHmac } from "node:crypto";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { getChainSecret } from "@/lib/server/audit-chain";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
@@ -116,7 +116,7 @@ function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
-async function handleSign(req: Request): Promise<NextResponse> {
+async function handleSign(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let body: SignBody;
   try {
     body = (await req.json()) as SignBody;
@@ -124,8 +124,10 @@ async function handleSign(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
 
-  // Sanitise tenantId: alphanumeric, hyphens, underscores only; max 64 chars.
-  const tenantId = ((body.tenantId ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+  // tenantId is ALWAYS taken from the authenticated context — a caller cannot
+  // write audit entries to a different tenant's chain by supplying a foreign
+  // tenantId in the request body. Body-supplied tenantId is ignored.
+  const tenantId = ctx.tenantId || "default";
 
   const secret = getSigningKey(tenantId);
   if (!secret) {
@@ -270,13 +272,33 @@ async function handleSign(req: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+  // Head hash is id — links the next entry to this one.
+  // Split from the entry write so that a partial failure (entry written, head
+  // not updated) is logged accurately rather than misreporting the entry as
+  // un-persisted.
+  try {
+    await setJson("audit/head.json", { sequence: nextSequence, hash: id });
+  } catch (err) {
+    console.error(
+      "[hawkeye] audit/sign: head pointer write failed — entry IS persisted but chain head NOT advanced (orphaned entry):",
+      err,
+      { sequence: nextSequence, paddedSeq },
+    );
+    return NextResponse.json(
+      { ok: false, error: "Audit entry persisted but chain head could not be updated — manual reconciliation required" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true, entry });
 }
 
-async function handleList(req: Request): Promise<NextResponse> {
-  const url = new URL(req.url);
-  const tenantId = ((url.searchParams.get("tenantId") ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+async function handleList(req: Request, ctx: import("@/lib/server/guard").RequestContext): Promise<NextResponse> {
+  // Tenant isolation: always use the authenticated context tenantId — never
+  // a caller-supplied query param. A caller-supplied ?tenantId= allows any
+  // authenticated key to read another tenant's audit chain (IDOR).
+  const tenantId = ctx.tenantId;
+  void req; // required for the withGuard handler signature
   const listPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
   const keys = await listKeys(listPrefix);
   const sorted = keys.sort(); // lexical sort = sequence order

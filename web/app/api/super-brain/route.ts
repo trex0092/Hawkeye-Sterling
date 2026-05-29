@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 // Import each brain function from its concrete module rather than the
 // index.js barrel. The barrel re-exports 80+ modules (~20k lines of
 // catalogues); pulling it in at the top of a Netlify Function route was
@@ -17,7 +20,7 @@ import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../src/br
 import { variantsOf } from "../../../../src/brain/translit.js";
 import { expandAliases } from "../../../../src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../src/brain/matching.js";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
 import { jurisdictionProfile } from "../../../../src/brain/lib/jurisdictions.js";
@@ -45,6 +48,7 @@ import { enrichSubject as enrichOpenBanking } from "@/lib/intelligence/openBanki
 import { enrichSubject as enrichOpenSanctions } from "@/lib/intelligence/openSanctions";
 import type {
   QuickScreenCandidate,
+  QuickScreenOptions,
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
@@ -52,6 +56,7 @@ import type {
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
   _candidates: QuickScreenCandidate[],
+  _options?: QuickScreenOptions,
 ) => QuickScreenResult;
 const quickScreen = _quickScreen as QuickScreenFn;
 
@@ -144,6 +149,7 @@ const MODULE_WEIGHTS = {
   adverseMediaScoredCap: 40,
   adverseMediaScoredFloorHighSeverity: 8,
   pepMaxFromSalience: 20,
+  adverseKeywordPenaltyCap: 40,
 } as const;
 
 // Static data sources — what the brain consulted to produce its
@@ -175,7 +181,7 @@ const BUILD_SHA =
   "local";
 
 function makeRunId(): string {
-  return `sb_${Math.random().toString(16).slice(2, 10)}`;
+  return `sb_${randomBytes(4).toString("hex")}`;
 }
 
 // ── Result cache (cost reduction) ────────────────────────────────────────────
@@ -215,7 +221,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // blast megabytes of junk into a free-tier endpoint. gateHeaders is
   // threaded through every exit path so clients always see their
   // remaining quota and rate-limit window.
-  const gate = await enforce(req);
+  const gate = await enforce(req, { cost: 10 });
   if (!gate.ok) return gate.response;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
@@ -301,8 +307,16 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // 1 · Quick screen — against the live ingested watchlists (OFAC, UN, EU,
     //     UK, UAE-EOCN/LTL) merged with the static seed corpus as fallback.
-    const liveCandidates = await loadCandidates();
-    const screen = quickScreen(body.subject, liveCandidates);
+    // Use loadCandidatesWithHealth so data-source provenance is embedded in
+    // the super-brain response for audit-trail and MLRO review purposes.
+    const { candidates: liveCandidates, health: corpusHealth } = await loadCandidatesWithHealth();
+    if (!corpusHealth.healthy) {
+      noteDegradation(
+        "candidatesLoader",
+        corpusHealth.degradationNote ?? `Sanctions lists unavailable (source=${corpusHealth.source}; candidates=${corpusHealth.candidateCount})`,
+      );
+    }
+    const screen = quickScreen(body.subject, liveCandidates, { scoreThreshold: 0.82 });
 
     // 2 · PEP classification. Prefer supplied roleText; otherwise fall back
     //     to the known-PEP fixture's synthetic role, which lets recognised
@@ -342,10 +356,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     //      to the composite score per KEYWORD_GROUP_WEIGHT.
     const adverseKeywords = classifyAdverseKeywords(fullText);
     const adverseKeywordGroups = adverseKeywordGroupCounts(adverseKeywords);
-    const adverseKeywordPenalty = adverseKeywordGroups.reduce(
+    // Cap at 40 — same ceiling as the structured adverse-media scorer.
+    // Without the cap, all 16 keyword groups firing yields 180 pts, consuming the
+    // entire composite budget and zeroing out the relative contribution of every
+    // other signal. The breakdown records the raw sum so analysts can see how many
+    // groups fired; the capped value is what enters the formula.
+    const adverseKeywordPenaltyRaw = adverseKeywordGroups.reduce(
       (acc, g) => acc + (KEYWORD_GROUP_WEIGHT[g.group] ?? 0),
       0,
     );
+    const adverseKeywordPenalty = Math.min(adverseKeywordPenaltyRaw, 40);
 
     // 4 · Jurisdiction profile.
     const jurisdiction = resolveJurisdiction(body.subject.jurisdiction);
@@ -513,6 +533,13 @@ export async function POST(req: Request): Promise<NextResponse> {
           pepPenalty,
       ),
     );
+
+    const compositeLabel: "critical" | "high" | "medium" | "low" | "clear" =
+      composite >= 85 ? "critical"
+      : composite >= 65 ? "high"
+      : composite >= 40 ? "medium"
+      : composite >= 15 ? "low"
+      : "clear";
 
     // ── Wave 4 additions ────────────────────────────────────────
     // Richer jurisdiction profile (FATF tier + secrecy + sanctions
@@ -728,7 +755,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // When non-empty, downstream consumers (compliance report, MLRO UI)
       // MUST surface this list. Each entry means a brain module silently
       // degraded — the composite score is missing that signal.
-      ...(degradation.length > 0 ? { degradation } : {}),
+      ...(degradation.length > 0 ? { degraded: true, degradation } : {}),
       ...(intelligence ? { intelligence } : {}),
       ...(openBanking ? { openBanking } : {}),
       ...(openSanctions ? { openSanctions } : {}),
@@ -751,6 +778,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       crossRegimeConflict,
       composite: {
         score: composite,
+        label: compositeLabel,
         breakdown: {
           quickScreen: screen.topScore,
           jurisdictionPenalty,
@@ -758,6 +786,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           redlinesPenalty,
           adverseMediaPenalty,
           adverseMediaScoredPenalty,
+          adverseKeywordPenaltyRaw,
           adverseKeywordPenalty,
           pepPenalty,
         },
@@ -771,6 +800,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       ttlMs: SUPER_BRAIN_CACHE_TTL_MS,
       result: responseBody as unknown as Record<string, unknown>,
     }).catch(() => { /* cache write failures are silent */ });
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "super_brain.cached", actor: gate.keyId, meta: { subjectId: body.subject.name, cacheKey } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json(responseBody, { headers: gateHeaders });
   } catch (err) {

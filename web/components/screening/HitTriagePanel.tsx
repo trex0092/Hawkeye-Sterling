@@ -11,6 +11,7 @@
 // Positive — auto-creates the ongoing-monitoring task.
 
 import React, { useEffect, useMemo, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 export interface TriageHit {
   id: string;                       // unique within this screening
@@ -278,7 +279,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                 } catch (err) {
                   setWhitelistFeedback({
                     ok: false,
-                    message: `Network error: ${err instanceof Error ? err.message : String(err)}`,
+                    message: caughtErrorMessage(err, "Network error"),
                   });
                 } finally {
                   setWhitelistBusy(false);

@@ -50,6 +50,9 @@ export const FACULTIES: Faculty[] = [
       'reciprocal_edge_pattern', 'triadic_closure',
       'chain_hopping_velocity', 'peel_chain', 'change_address_heuristic',
       'dempster_shafer', 'bayesian_update_cascade', 'multi_source_consistency',
+      // Wave 14
+      'da.dynamic_rba_recalculation',
+      'da.synthetic_redteam_generator',
     ],
   },
   {
@@ -92,6 +95,10 @@ export const FACULTIES: Faculty[] = [
       'conflict_mineral_typology', 'carbon_fraud_pattern',
       'stylometry', 'gaslighting_detection', 'obfuscation_pattern',
       'code_word_detection', 'minimisation_pattern',
+      // Wave 14
+      'int.cross_case_typology_miner',
+      'int.semantic_context_disambiguation',
+      'int.shap_score_explainer',
     ],
   },
   {
@@ -158,6 +165,9 @@ export const FACULTIES: Faculty[] = [
       'policy_vs_rule', 'de_minimis', 'proportionality_test',
       'stare_decisis', 'analogical_precedent', 'gray_zone_resolution',
       'adversarial_collaboration', 'burden_of_proof',
+      // Wave 14
+      'arg.adversarial_counterfactual_explainer',
+      'arg.jurisdiction_str_conflict_resolver',
     ],
   },
   {
@@ -178,6 +188,9 @@ export const FACULTIES: Faculty[] = [
       'mental_accounting',
       'counter_evidence_weighting', 'false_flag_check',
       'completeness_audit',
+      // Wave 14
+      'intr.mlro_cognitive_load_monitor',
+      'intr.false_positive_drift_detector',
     ],
   },
   {
@@ -231,6 +244,16 @@ export const FACULTIES: Faculty[] = [
       'gr.geopolitical_recalibration_trigger',
       'si.adversarial_simulation',
       'si.counterfactual_reasoning',
+      'an.regulatory_change_impact_assessment',
+      'an.network_restructuring_prediction',
+      'an.pre_sanction_positioning_detection',
+      'an.seasonal_ml_pattern_forecasting',
+      'an.typology_evolution_tracker',
+      'qi.markov_chain_risk_projection',
+      // Wave 14
+      'an.temporal_threat_forecast',
+      'an.cahra_route_reactivation_forecast',
+      'an.pep_role_transition_forecast',
     ],
   },
   {
@@ -247,6 +270,11 @@ export const FACULTIES: Faculty[] = [
       'gr.state_sponsored_ml_detection',
       'gr.geopolitical_recalibration_trigger',
       'gr.conflict_zone_nexus_mapping',
+      'ga.dual_use_goods_proliferation_financing',
+      'ga.de_dollarization_cbdc_risk',
+      'ga.bri_project_nexus_assessment',
+      'ga.crypto_state_actor_evasion',
+      'an.pre_sanction_positioning_detection',
     ],
   },
   {
@@ -260,6 +288,12 @@ export const FACULTIES: Faculty[] = [
     ],
     modes: [
       'qa.benford_law_analysis',
+      'fa.journal_entry_timing_analysis',
+      'fa.round_dollar_clustering',
+      'fa.duplicate_transaction_detection',
+      'fa.shell_company_financial_signature',
+      'fa.transfer_pricing_manipulation',
+      'fa.revenue_recognition_anomaly',
     ],
   },
   {
@@ -273,6 +307,10 @@ export const FACULTIES: Faculty[] = [
     ],
     modes: [
       'si.belief_propagation',
+      'qi.bayesian_network_fusion',
+      'qi.ensemble_uncertainty_quantification',
+      'qi.markov_chain_risk_projection',
+      'qi.entropy_anomaly_detection',
     ],
   },
 ];

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -231,7 +232,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) return { ...localFallback(draft), error: `HTTP ${res.status}` };
+    if (!res.ok) return { ...localFallback(draft), error: apiErrorMessage(res.status, "Screening") };
     const json = await res.json().catch(() => ({})) as QuickScreenResponse;
     if (json.ok) {
       return {
@@ -246,7 +247,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
     const err = "error" in json ? json.error : "unknown error";
     return { ...localFallback(draft), error: err };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = caughtErrorMessage(err, "Screening failed");
     return { ...localFallback(draft), error: msg };
   }
 }
@@ -556,8 +557,8 @@ export default function OnboardingWizardPage() {
     return (
       <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
         <ModuleHero eyebrow="Onboarding Wizard" title="Subject" titleEm="onboarded." />
-        <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-6 text-center">
-          <div className="text-14 font-semibold text-emerald-700 mb-2">
+        <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-lg p-6 text-center">
+          <div className="text-14 font-semibold text-emerald-300 mb-2">
             ✓ Onboarding complete and signed off by MLRO
           </div>
           <div className="text-12 text-ink-2 mb-4">
@@ -605,7 +606,7 @@ export default function OnboardingWizardPage() {
                 step === s.id
                   ? "border-brand bg-brand-dim text-brand-deep"
                   : s.id < step
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
                     : "border-hair-2 bg-bg-panel text-ink-2"
               }`}
             >
@@ -616,7 +617,7 @@ export default function OnboardingWizardPage() {
               <div className="text-10 text-ink-3">{s.sub}</div>
             </button>
             {i < STEPS.length - 1 && (
-              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-300" : "bg-hair-2"}`} />
+              <div className={`h-px w-3 ${s.id < step ? "bg-emerald-500/40" : "bg-hair-2"}`} />
             )}
           </div>
         ))}
@@ -689,7 +690,7 @@ export default function OnboardingWizardPage() {
               <div className="text-10 font-mono text-ink-3 mt-1">
                 source: {screening.source === "api" ? "live /api/quick-screen" : "local fallback"}
                 {screening.error && (
-                  <span className="ml-2 text-amber-700">· {screening.error.message}</span>
+                  <span className="ml-2 text-amber-300">· {screening.error.message}</span>
                 )}
               </div>
             )}
@@ -701,15 +702,15 @@ export default function OnboardingWizardPage() {
                 {draft.screeningHits && draft.screeningHits.length > 0 ? (
                   <div className="mt-2 space-y-1">
                     {draft.screeningHits.map((h, i) => (
-                      <div key={i} className="text-12 bg-red-50 border border-red-200 rounded p-2">
-                        <span className="font-mono text-10 uppercase text-red-700">{h.listId}</span>
+                      <div key={i} className="text-12 bg-red-950/30 border border-red-500/40 rounded p-2">
+                        <span className="font-mono text-10 uppercase text-red-300">{h.listId}</span>
                         <span className="ml-2 text-ink-0">{h.candidateName}</span>
-                        <span className="ml-2 font-mono tabular-nums text-red-700">{Math.round(h.score * 100)}%</span>
+                        <span className="ml-2 font-mono tabular-nums text-red-300">{Math.round(h.score * 100)}%</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-2 text-12 bg-emerald-50 border border-emerald-200 rounded p-2 text-emerald-700">
+                  <div className="mt-2 text-12 bg-emerald-950/30 border border-emerald-500/40 rounded p-2 text-emerald-300">
                     Clear · no list match above 85%
                   </div>
                 )}
@@ -771,8 +772,8 @@ export default function OnboardingWizardPage() {
               const setAa = (patch: Partial<AdaptiveAnswers>) =>
                 setDraft((prev) => ({ ...prev, adaptiveAnswers: { ...(prev.adaptiveAnswers ?? {}), ...patch } }));
               return (
-                <div className="mt-4 border border-amber-300 rounded-lg p-4 bg-amber-50 space-y-3">
-                  <div className="text-11 font-mono uppercase text-amber-700 font-semibold tracking-wide-2">
+                <div className="mt-4 border border-amber-500/40 rounded-lg p-4 bg-amber-950/20 space-y-3">
+                  <div className="text-11 font-mono uppercase text-amber-300 font-semibold tracking-wide-2">
                     ⚠ Enhanced Due Diligence questions — triggered by screening result
                   </div>
 
@@ -814,7 +815,7 @@ export default function OnboardingWizardPage() {
 
                   {isVasp && (
                     <>
-                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">VASP-specific questions (FDL 10/2025 Art.28)</div>
+                      <div className="text-11 font-mono uppercase text-amber-300 font-semibold mt-2">VASP-specific questions (FDL 10/2025 Art.28)</div>
                       <Field
                         label="VASP licence number"
                         value={aa.cryptoVaspLicence ?? ""}
@@ -832,7 +833,7 @@ export default function OnboardingWizardPage() {
 
                   {isCahra && (
                     <>
-                      <div className="text-11 font-mono uppercase text-amber-700 font-semibold mt-2">CAHRA jurisdiction (Cabinet Decision 74/2020)</div>
+                      <div className="text-11 font-mono uppercase text-amber-300 font-semibold mt-2">CAHRA jurisdiction (Cabinet Decision 74/2020)</div>
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -879,10 +880,10 @@ export default function OnboardingWizardPage() {
                     <span
                       className={`font-mono text-13 font-semibold ${
                         tierInfo.tier === "tier-1"
-                          ? "text-red-700"
+                          ? "text-red-300"
                           : tierInfo.tier === "tier-2"
-                            ? "text-orange-700"
-                            : "text-emerald-700"
+                            ? "text-orange-300"
+                            : "text-emerald-300"
                       }`}
                     >
                       {tierInfo.tier.toUpperCase()}
@@ -895,7 +896,7 @@ export default function OnboardingWizardPage() {
                       {tierInfo.factors.map((f) => (
                         <span
                           key={f.id}
-                          className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-50 text-amber-700 border-amber-300"
+                          className="inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 bg-amber-950/30 text-amber-300 border-amber-500/40"
                           title={f.anchor ? `Anchor: ${f.anchor}` : undefined}
                         >
                           +{f.points} · {f.id.replace(/_/g, " ")}
@@ -912,9 +913,9 @@ export default function OnboardingWizardPage() {
                             key={h.list}
                             className={`inline-flex items-center px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${
                               h.classification === "black"
-                                ? "bg-red-100 text-red-700 border-red-300"
+                                ? "bg-red-950/30 text-red-300 border-red-500/40"
                                 : h.classification === "grey"
-                                  ? "bg-amber-50 text-amber-700 border-amber-300"
+                                  ? "bg-amber-950/30 text-amber-300 border-amber-500/40"
                                   : "bg-bg-2 text-ink-1 border-hair-2"
                             }`}
                             title={`${h.label}${h.stale ? " — list snapshot is stale; refresh feed" : ""}`}
@@ -950,7 +951,7 @@ export default function OnboardingWizardPage() {
               </>
             )}
             {draft.riskTier && (
-              <div className="mt-2 text-11 text-emerald-700 font-mono">
+              <div className="mt-2 text-11 text-emerald-300 font-mono">
                 ✓ Tier {draft.riskTier} {draft.manualOverride ? "(manual override)" : "accepted"} — proceed to MLRO sign-off
               </div>
             )}
@@ -972,7 +973,7 @@ export default function OnboardingWizardPage() {
                     <span className={`text-10 font-mono font-semibold px-1.5 py-0.5 rounded border ${
                       checkedRequired === required.length
                         ? "text-green border-green/40 bg-green-dim"
-                        : "text-amber-700 border-amber-300 bg-amber-50"
+                        : "text-amber-300 border-amber-500/40 bg-amber-950/30"
                     }`}>
                       {checkedRequired}/{required.length} required
                     </span>
@@ -1009,8 +1010,8 @@ export default function OnboardingWizardPage() {
 
             {/* Show adaptive EDD answers as read-only context */}
             {draft.adaptiveAnswers && (Object.values(draft.adaptiveAnswers) as (string | boolean | undefined)[]).some(Boolean) && (
-              <div className="mt-3 border border-amber-200 rounded p-3 bg-amber-50 text-12">
-                <div className="text-10 font-mono uppercase text-amber-700 mb-2">EDD answers from step 3</div>
+              <div className="mt-3 border border-amber-500/40 rounded p-3 bg-amber-950/20 text-12">
+                <div className="text-10 font-mono uppercase text-amber-300 mb-2">EDD answers from step 3</div>
                 {draft.adaptiveAnswers.eddJustification && (
                   <div className="mb-1"><span className="text-ink-3">EDD justification:</span> {draft.adaptiveAnswers.eddJustification}</div>
                 )}
@@ -1064,7 +1065,7 @@ export default function OnboardingWizardPage() {
                 </button>
               </div>
               {advisor.error && (
-                <div className="text-11 text-amber-700 mb-1">{advisor.error}</div>
+                <div className="text-11 text-amber-300 mb-1">{advisor.error}</div>
               )}
               {!draft.advisorNarrative && !advisor.inFlight && (
                 <div className="text-11 text-ink-3">
@@ -1261,7 +1262,7 @@ function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectPro
                         removeChip(id, e as unknown as React.MouseEvent);
                       }
                     }}
-                    className="text-brand-deep hover:text-red-700 cursor-pointer leading-none"
+                    className="text-brand-deep hover:text-red-400 cursor-pointer leading-none"
                   >
                     ×
                   </span>

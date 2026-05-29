@@ -535,7 +535,7 @@ const codeWordDetectionApply = async (ctx: BrainContext): Promise<Finding> => {
   for (const ws of codeWordSets) {
     for (const term of ws.terms) {
       // Require word boundaries to reduce false positives
-      const re = new RegExp(`\\b${term}\\b`, 'i');
+      const re = new RegExp(`\\b${term}\\b`, 'i'); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       if (re.test(blob)) matched.push(`${ws.label}:"${term}"`);
     }
   }
@@ -569,7 +569,7 @@ const hedgingLanguageApply = async (ctx: BrainContext): Promise<Finding> => {
   let hedgeCount = 0;
   const matchedTerms: string[] = [];
   for (const term of hedgeTerms) {
-    const count = (blob.match(new RegExp(term, 'gi')) ?? []).length;
+    const count = (blob.match(new RegExp(term, 'gi')) ?? []).length; // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     if (count > 0) { hedgeCount += count; matchedTerms.push(`"${term}"×${count}`); }
   }
 

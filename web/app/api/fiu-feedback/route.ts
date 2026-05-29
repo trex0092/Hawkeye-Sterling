@@ -5,6 +5,8 @@ import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface FiuFeedbackResult {
   feedbackType:
     | "acknowledgement"
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "fiu-feedback temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 700,
@@ -70,6 +72,10 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as FiuFeedbackResult;
     if (!Array.isArray(parsed.keyPoints)) parsed.keyPoints = [];
     if (!Array.isArray(parsed.requiredActions)) parsed.requiredActions = [];
+    void writeAuditChainEntry(
+      { event: "fiu_feedback.submitted", actor: gate.keyId, meta: { fiuRef: body.fiuRef, originalStrRef: body.originalStrRef } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

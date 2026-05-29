@@ -10,6 +10,8 @@ import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { randomBytes } from "node:crypto";
+import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
+import { cookies } from "next/headers";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
   "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
@@ -31,9 +33,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const { userId, newRole, reason, assignedBy } = body;
-  if (!userId || !newRole || !reason || !assignedBy) {
-    return NextResponse.json({ ok: false, error: "userId, newRole, reason and assignedBy are required" }, { status: 400 , headers: gate.headers });
+  const { userId, newRole, reason } = body;
+  // FDL 10/2025 Art.20: assignedBy MUST be derived from the authenticated
+  // gate identity — never from caller-supplied body to prevent IDOR / non-repudiation bypass.
+  const assignedBy = gate.record?.email ?? gate.keyId;
+  if (!userId || !newRole || !reason) {
+    return NextResponse.json({ ok: false, error: "userId, newRole and reason are required" }, { status: 400 , headers: gate.headers });
   }
 
   if (!(newRole in ROLE_MODULES)) {
@@ -46,6 +51,33 @@ export async function POST(req: Request) {
   type LockResult =
     | { kind: 'error'; status: number; message: string }
     | { kind: 'ok'; updatedUser: AccessUser; oldRole: UserRole; users: AccessUser[] };
+
+  // Privilege guard: every caller must have a known role (from session or API
+  // key record) and may not assign a role with power >= their own.
+  // API-key-only callers without a recorded role are rejected — anonymous
+  // elevation is not permitted.
+  const ROLE_POWER: Record<string, number> = {
+    logistics: 1, trading: 1, accounts: 1,
+    compliance: 2, management: 3, mlro: 3,
+  };
+  const jar = await cookies();
+  const sessionToken = jar.get(SESSION_COOKIE)?.value ?? "";
+  const session = verifySession(sessionToken);
+  const callerRole = session?.role ?? gate.record?.role ?? null;
+  if (!callerRole) {
+    return NextResponse.json(
+      { ok: false, error: "Role assignment requires an authenticated identity with a known role" },
+      { status: 403, headers: gate.headers },
+    );
+  }
+  const callerPower = ROLE_POWER[callerRole] ?? 0;
+  const newRolePower = ROLE_POWER[newRole] ?? 0;
+  if (newRolePower >= callerPower) {
+    return NextResponse.json(
+      { ok: false, error: "Cannot assign a role with equal or higher privilege than your own" },
+      { status: 403, headers: gate.headers },
+    );
+  }
 
   const lockResult = await withUsersLock<LockResult>(async () => {
     const loadedUsers = await loadUsers();
@@ -113,7 +145,7 @@ export async function POST(req: Request) {
     const safeReason = sanitizeText(reason, 500);
     const safeAssignedBy = sanitizeField(assignedBy, 100);
     try {
-      const client = getAnthropicClient(apiKey, 55_000);
+      const client = getAnthropicClient(apiKey, 4_500);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1024,

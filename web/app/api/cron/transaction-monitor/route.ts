@@ -10,17 +10,35 @@
 
 import { NextResponse } from "next/server";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
+
+function safeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
+}
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { TxnFlagRecord } from "@/app/api/transaction-anomaly/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const BASE_URL =
-  process.env["URL"] ??
-  process.env["DEPLOY_PRIME_URL"] ??
-  process.env["NEXT_PUBLIC_APP_URL"] ??
-  "https://hawkeye-sterling.netlify.app";
+function safeAppBase(): string {
+  const candidates = [
+    process.env["URL"],
+    process.env["DEPLOY_PRIME_URL"],
+    process.env["NEXT_PUBLIC_APP_URL"],
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== "http:" && u.protocol !== "https:") continue;
+      if (u.username || u.password) continue;
+      if (u.pathname !== "/" && u.pathname !== "") continue;
+      return `${u.protocol}//${u.host}`;
+    } catch { /* skip invalid */ }
+  }
+  return "https://hawkeye-sterling.netlify.app";
+}
 
 interface TypologyResult {
   primaryTypology?: {
@@ -41,7 +59,7 @@ async function runTypologyMatch(record: TxnFlagRecord): Promise<TypologyResult |
   ].join("; ");
 
   try {
-    const res = await fetch(`${BASE_URL}/api/typology-match`, {
+    const res = await fetch(`${safeAppBase()}/api/typology-match`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -89,7 +107,7 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
     }],
   }];
 
-  await fetch(`${BASE_URL}/api/cases`, {
+  await fetch(`${safeAppBase()}/api/cases`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -101,18 +119,16 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const cronSecret = process.env["CRON_SECRET"] ?? process.env["ONGOING_RUN_TOKEN"] ?? "";
+  const cronSecret = process.env["CRON_SECRET"] ?? "";
   if (!cronSecret) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(cronSecret);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  if (got.length !== cronSecret.length || !timingSafeEqual(expBuf, gotBuf)) {
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(cronSecret).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  if (!timingSafeEqual(ha, hb)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -137,7 +153,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
 
       // Mark processed regardless — even if we didn't open a case
-      await setJson(`hawkeye-txn-flags/${record.tenantId}/${record.flagId}.json`, {
+      await setJson(`hawkeye-txn-flags/${safeSegment(record.tenantId)}/${safeSegment(record.flagId)}.json`, {
         ...record,
         processed: true,
         processedAt: new Date().toISOString(),
@@ -149,5 +165,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  void writeAuditChainEntry(
+    { event: "txn_monitor.cron_run", actor: "cron", meta: { total: results.total, casesOpened: results.casesOpened, errors: results.errors } },
+    "system",
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, ...results, at: new Date().toISOString() });
 }

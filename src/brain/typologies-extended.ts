@@ -41,3 +41,6 @@ export const TYPOLOGIES_EXTENDED: Typology[] = [
   { id: 'governance_schema_drift' as never, displayName: 'Governance — schema drift', describes: 'Feed schema drift causes mis-binding.', redFlagIds: ['rfx_dq_schema_drift'], reasoningModes: ['schema_drift_detection'], doctrines: [] },
   { id: 'governance_freshness_breach' as never, displayName: 'Governance — freshness breach', describes: 'Sanctions feed freshness SLA breached.', redFlagIds: ['rfx_dq_freshness_breach'], reasoningModes: ['freshness_sla_breach'], doctrines: [] },
 ];
+
+// Import and re-export NAML NRA 2024 UAE-specific typologies
+export { NAML_NRA_2024_TYPOLOGIES } from "./naml-nra-2024-typologies.js";

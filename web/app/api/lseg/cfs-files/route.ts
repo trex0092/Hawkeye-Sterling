@@ -54,11 +54,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   let mod: BlobsModuleShape;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
-        error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "@netlify/blobs unavailable — check NETLIFY_BLOBS_CONTEXT environment configuration",
       },
       { status: 503, headers: gate.headers },
     );
@@ -93,11 +93,11 @@ export async function GET(req: Request): Promise<NextResponse> {
         return { bucket, lastPolled: v ?? null };
       }),
     );
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
-        error: `checkpoint list failed — ${err instanceof Error ? err.message : String(err)}`,
+        error: "LSEG checkpoint list failed — service temporarily unavailable",
       },
       { status: 503, headers: gate.headers },
     );

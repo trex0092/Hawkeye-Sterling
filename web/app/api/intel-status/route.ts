@@ -216,6 +216,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const { enforce } = await import("@/lib/server/enforce");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  try {
   // Resolve `configured` per provider
   const providers = PROVIDER_CATALOG.map((p) => {
     const allSet = p.tier === "free-toggle"
@@ -285,4 +286,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       },
     },
   );
+  } catch (err) {
+    console.error("[intel-status] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load intel status" }, { status: 500, headers: gate.headers });
+  }
 }

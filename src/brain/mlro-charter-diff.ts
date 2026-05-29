@@ -125,7 +125,7 @@ export function charterDiff(text: string): CharterDiff {
   for (const p of PROBES) {
     let matched: RegExpExecArray | null = null;
     for (const rx of p.patterns) {
-      const r = new RegExp(rx.source, rx.flags);
+      const r = new RegExp(rx.source, rx.flags); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       const m = r.exec(text);
       if (m) { matched = m; break; }
     }

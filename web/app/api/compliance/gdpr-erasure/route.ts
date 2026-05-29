@@ -19,7 +19,8 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
 import { redactPdplObject } from "../../../../../src/brain/pdpl-guard.js";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +73,32 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!body?.caseId || !body?.requesterEmail) {
     return NextResponse.json(
       { ok: false, error: "caseId + requesterEmail required" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
+  // Validate caseId to prevent path traversal in blob keys.
+  const SAFE_CASE_ID_RE = /^[a-zA-Z0-9_\-:.]+$/;
+  if (!SAFE_CASE_ID_RE.test(body.caseId) || body.caseId.length > 256) {
+    return NextResponse.json(
+      { ok: false, error: "invalid caseId format — must match [a-zA-Z0-9_\\-:.] and be at most 256 chars" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
+  // Validate email format.
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!EMAIL_RE.test(body.requesterEmail) || body.requesterEmail.length > 320) {
+    return NextResponse.json(
+      { ok: false, error: "requesterEmail must be a valid email address (max 320 chars)" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
+
+  // Cap reason field.
+  if (body.reason && body.reason.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "reason exceeds 2000-character limit" },
       { status: 400, headers: gateHeaders },
     );
   }
@@ -132,7 +159,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   }
 
   const caseShaAfter = createHash("sha256").update(JSON.stringify(safe)).digest("hex");
-  const receiptId = `er_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const receiptId = `er_${Date.now().toString(36)}_${randomBytes(4).toString("hex")}`;
   const receipt: ErasureReceipt = {
     receiptId,
     caseId: body.caseId,
@@ -157,6 +184,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
   } catch {
     // best-effort
   }
+
+  // FDL 10/2025 Art.24: GDPR erasure requests are compliance events and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "gdpr.erasure_request", receiptId, subjectId: body.caseId, actor: gate.keyId },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, receipt }, { headers: gateHeaders });
 }

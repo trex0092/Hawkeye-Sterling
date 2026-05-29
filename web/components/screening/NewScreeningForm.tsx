@@ -173,7 +173,7 @@ export function NewScreeningForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.entityType, form.dob]);
 
-  const valid = form.name.trim().length >= 2;
+  const valid = form.name.trim().length >= 3;
 
   const patch = (p: Partial<ScreeningFormData>) =>
     setForm((f) => ({ ...f, ...p }));

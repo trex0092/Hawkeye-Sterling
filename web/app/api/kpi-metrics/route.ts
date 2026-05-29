@@ -97,7 +97,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   // Screening estimate: count audit entries from last 7 days
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const _sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   // Use total key count as proxy (keys are zero-padded sequential ints)
   const totalAuditEntries = auditKeys.length;
   // Very rough weekly estimate based on total entries and uptime

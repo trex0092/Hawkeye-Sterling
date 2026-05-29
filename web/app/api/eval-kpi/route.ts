@@ -36,7 +36,7 @@ export async function GET(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   try {
-    const raw = await fs.readFile(SNAPSHOT_PATH, "utf8");
+    const raw = await fs.readFile(SNAPSHOT_PATH, "utf8"); // nosemgrep: detect-non-literal-fs -- safe: SNAPSHOT_PATH is a compile-time constant derived from process.cwd(), not user input
     const snap = JSON.parse(raw);
     return NextResponse.json({ ok: true, snapshot: snap }, { headers: { ...gate.headers, ...CORS } });
   } catch (err) {

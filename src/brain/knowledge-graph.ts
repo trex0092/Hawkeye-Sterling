@@ -70,22 +70,27 @@ export function buildTopicGraph(topic: MlroTopic): KgGraph {
 
   for (const d of probe.doctrineHints) {
     const doc = DOCTRINES.find((x) => x.id === d);
+    // Extract optional fields into locals first; under
+    // exactOptionalPropertyTypes the narrow on `doc?.authority` does NOT
+    // propagate to `doc` so `doc.authority` in the true branch fails.
+    const docDetail = doc?.authority;
     nodes.set(nk('doctrine', d), {
       kind: 'doctrine',
       id: d,
       label: doc?.title ?? d,
-      ...(doc?.authority !== undefined ? { detail: doc.authority } : {}),
+      ...(docDetail !== undefined ? { detail: docDetail } : {}),
     });
     edges.push({ from: center, to: nk('doctrine', d), weight: 0.9 });
   }
 
   for (const fid of probe.fatfRecHints) {
     const f = FATF_RECOMMENDATIONS.find((r) => r.id === fid);
+    const fatfDetail = f?.citation;
     nodes.set(nk('fatf', fid), {
       kind: 'fatf',
       id: fid,
       label: f ? `R.${f.num} ${f.title}` : fid,
-      ...(f?.citation !== undefined ? { detail: f.citation } : {}),
+      ...(fatfDetail !== undefined ? { detail: fatfDetail } : {}),
     });
     edges.push({ from: center, to: nk('fatf', fid), weight: 0.9 });
   }
@@ -102,11 +107,14 @@ export function buildTopicGraph(topic: MlroTopic): KgGraph {
 
   for (const t of probe.typologies) {
     const ty = TYPOLOGIES.find((x) => x.id === t);
+    // Typology fields are `displayName` and `describes` (not name / family);
+    // both are required string properties so direct access is safe.
+    const typDetail = ty?.describes;
     nodes.set(nk('typology', t), {
       kind: 'typology',
       id: t,
       label: ty?.displayName ?? t,
-      ...(ty?.describes !== undefined ? { detail: ty.describes } : {}),
+      ...(typDetail !== undefined ? { detail: typDetail } : {}),
     });
     edges.push({ from: center, to: nk('typology', t), weight: 0.8 });
   }

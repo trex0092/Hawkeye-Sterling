@@ -166,7 +166,7 @@ ${metrics.regulatoryChanges?.join("\n") ?? "None noted"}
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 85_000, "board-pack-auto");
+    const anthropic = getAnthropicClient(apiKey, 4_500, "board-pack-auto");
     const prompt = `You are a senior UAE AML/CFT compliance advisor preparing a board-level AML report for a DPMS (gold/precious metals dealer). Write a professional, compliance-grade board AML report using the data below.
 
 ${dataContext}
@@ -231,7 +231,7 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
   } catch (err) {
     console.error("[board-pack-auto] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Report generation failed — please retry or contact support." },
+      { ok: false, error: "Report generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }

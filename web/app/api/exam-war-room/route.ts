@@ -246,7 +246,7 @@ Base your analysis on the ${examinerBody}'s known examination priorities and the
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-    const anthropic = getAnthropicClient(apiKey, 85_000, "exam-war-room");
+    const anthropic = getAnthropicClient(apiKey, 4_500, "exam-war-room");
     const prompt = `You are a specialist UAE AML examination preparation consultant with deep knowledge of ${examinerBody} examination methodology and UAE FDL 10/2025 requirements.
 
 ENTITY CONTEXT:
@@ -301,7 +301,7 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
   } catch (err) {
     console.error("[exam-war-room] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "War room generation failed — please retry or contact support." },
+      { ok: false, error: "War room generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }

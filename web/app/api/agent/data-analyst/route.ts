@@ -34,7 +34,7 @@ const ENV_ID   = "env_01SnGQiAwuVGmipniSynFmkx";
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 export async function POST(req: Request) {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   const context = body.context ? sanitizeText(String(body.context), 8000) : null;
   const timeoutMs = typeof body.timeoutMs === "number" ? Math.min(body.timeoutMs, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS;
 
-  const client = getAnthropicClient(apiKey, 55_000, "agent/data-analyst");
+  const client = getAnthropicClient(apiKey, 4_500, "agent/data-analyst");
   const beta = client.beta;
 
   try {
@@ -106,22 +106,25 @@ export async function POST(req: Request) {
         // renders the hint below the raw error so the MLRO knows which
         // dashboard / vault / config to touch instead of seeing only
         // cryptic platform-side phrasing.
+        console.error("[agent/data-analyst] session.error:", ev.error.message);
+        beta.sessions.archive(sessionId).catch(() => {});
         const { describeAgentError } = await import("@/lib/server/agent-error-hints");
         const translated = describeAgentError(ev.error.message);
         return NextResponse.json(
           translated
             ? {
                 ok: false,
-                error: ev.error.message,
+                error: "data analysis service unavailable",
                 hint: translated.hint,
                 hintCategory: translated.category,
               }
-            : { ok: false, error: ev.error.message },
+            : { ok: false, error: "data analysis service unavailable" },
           { status: 502, headers: gate.headers },
         );
       }
 
       if (ev.type === "session.deleted") {
+        beta.sessions.archive(sessionId).catch(() => {});
         return NextResponse.json(
           { ok: false, error: "Session was deleted unexpectedly" },
           { status: 502, headers: gate.headers },
@@ -143,7 +146,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[agent/data-analyst]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "Internal error" },
+      { ok: false, error: "data analysis service unavailable" },
       { status: 500, headers: gate.headers },
     );
   }

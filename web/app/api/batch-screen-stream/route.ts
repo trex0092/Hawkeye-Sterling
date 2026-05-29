@@ -3,10 +3,10 @@
 // so the operator sees a live progress bar instead of waiting for the full
 // batch to complete. Each row result is emitted as soon as it finishes.
 //
-// SSE event format (text/event-stream):
-//   data: {"type":"progress","index":0,"total":5,"result":{...}}\n\n
-//   data: {"type":"complete","summary":{...}}\n\n
-//   data: {"type":"error","error":"..."}\n\n
+// NDJSON format (application/x-ndjson):
+//   {"type":"progress","index":0,"total":5,"result":{...}}\n
+//   {"type":"error","error":"..."}\n
+//   {"done":true,"total":N,"failed":M}\n
 
 import { quickScreen as _quickScreen } from "../../../../src/brain/quick-screen.js";
 import type {
@@ -119,21 +119,21 @@ export async function POST(req: Request): Promise<Response> {
   } catch {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "invalid JSON" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
+      { status: 400, headers: { "content-type": "application/x-ndjson", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
   if (!Array.isArray(body?.rows) || body.rows.length === 0) {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "rows must be a non-empty array" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
+      { status: 400, headers: { "content-type": "application/x-ndjson", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
   if (body.rows.length > 500) {
     return new Response(
       `data: ${JSON.stringify({ type: "error", error: "batch size exceeds 500-row limit" })}\n\n`,
-      { status: 400, headers: { "content-type": "text/event-stream", ...CORS_HEADERS, ...gateHeaders } },
+      { status: 400, headers: { "content-type": "application/x-ndjson", ...CORS_HEADERS, ...gateHeaders } },
     );
   }
 
@@ -142,21 +142,25 @@ export async function POST(req: Request): Promise<Response> {
   const encoder = new TextEncoder();
   const seenNames = new Map<string, number>();
 
+  // Process up to 5 subjects in parallel to avoid overwhelming downstream APIs
+  const STREAM_CONCURRENCY = 5;
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // Emit one NDJSON line per event (newline-delimited JSON).
       const send = (data: unknown) => {
         try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
         } catch {
           // Client disconnected; ignore enqueue errors.
         }
       };
 
       const allResults: RowResult[] = [];
-      const started = Date.now();
+      const _started = Date.now();
 
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i]!;
+      // Process one row and emit a result line as soon as it finishes.
+      async function processAndEmit(row: BatchRow, i: number): Promise<void> {
         try {
           if (!row?.name?.trim()) {
             const result: RowResult = {
@@ -167,7 +171,7 @@ export async function POST(req: Request): Promise<Response> {
             };
             allResults.push(result);
             send({ type: "progress", index: i, total: rows.length, result });
-            continue;
+            return;
           }
 
           const t0 = Date.now();
@@ -259,26 +263,42 @@ export async function POST(req: Request): Promise<Response> {
         }
       }
 
-      const summary = {
-        total: allResults.length,
-        critical: allResults.filter((r) => r.severity === "critical").length,
-        high: allResults.filter((r) => r.severity === "high").length,
-        medium: allResults.filter((r) => r.severity === "medium").length,
-        low: allResults.filter((r) => r.severity === "low").length,
-        clear: allResults.filter((r) => r.severity === "clear").length,
-        errors: allResults.filter((r) => !!r.error).length,
-        duplicates: allResults.filter((r) => r.isDuplicate).length,
-        totalDurationMs: Date.now() - started,
-      };
+      // Fan out up to STREAM_CONCURRENCY subjects at a time; each result is
+      // streamed as a JSON line as soon as it completes (not in order).
+      for (let i = 0; i < rows.length; i += STREAM_CONCURRENCY) {
+        const batch = rows.slice(i, i + STREAM_CONCURRENCY);
+        await Promise.all(
+          batch.map((row, offset) =>
+            Promise.race([
+              processAndEmit(row, i + offset),
+              new Promise<void>((_, reject) =>
+                setTimeout(() => reject(new Error("per-subject timeout")), 30_000)
+              ),
+            ]).catch((err: unknown) => {
+              console.error("[batch-screen-stream] subject timed out or failed:", err instanceof Error ? err.message : err);
+              const result: RowResult = {
+                name: row?.name ?? "",
+                topScore: 0, severity: "error", hitCount: 0,
+                listCoverage: [], keywordGroups: [], esgCategories: [], durationMs: 0,
+                error: "screening timed out",
+              };
+              allResults.push(result);
+              send({ type: "progress", index: i + offset, total: rows.length, result });
+            })
+          )
+        );
+      }
 
-      send({ type: "complete", summary });
+      const failed = allResults.filter((r) => !!r.error).length;
+      // Final NDJSON line closes the stream with totals.
+      send({ done: true, total: allResults.length, failed });
       controller.close();
     },
   });
 
   return new Response(stream, {
     headers: {
-      "content-type": "text/event-stream",
+      "content-type": "application/x-ndjson",
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
       "x-accel-buffering": "no",

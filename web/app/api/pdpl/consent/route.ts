@@ -36,8 +36,8 @@ export interface ConsentRecord {
   legalReference: string;
 }
 
-function consentKey(subjectId: string): string {
-  return `pdpl/consent/${subjectId}.json`;
+function consentKey(tenantId: string, subjectId: string): string {
+  return `pdpl/consent/${tenantId}/${subjectId}.json`;
 }
 
 export async function POST(req: NextRequest) {
@@ -91,7 +91,12 @@ export async function POST(req: NextRequest) {
       : 'UAE PDPL FDL 45/2021 Art.6(a)',
   };
 
-  await setJson(consentKey(trimmedSubjectId), record);
+  try {
+    await setJson(consentKey(tenantIdFromGate(gate), trimmedSubjectId), record);
+  } catch (err) {
+    console.error('[pdpl/consent] POST setJson failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to record consent' }, { status: 500, headers: gate.headers });
+  }
 
   // PDPL Art.6 — recording of lawful basis for processing PII is a
   // compliance-significant event; must be on the tamper-evident chain.
@@ -123,10 +128,15 @@ export async function GET(req: NextRequest) {
   if (subjectId.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(subjectId)) {
     return NextResponse.json({ ok: false, error: 'subjectId must be alphanumeric/._-: and max 128 chars' }, { status: 400, headers: gate.headers });
   }
-  const record = await getJson<ConsentRecord>(consentKey(subjectId));
-  if (!record) {
-    return NextResponse.json({ ok: false, error: 'No consent record found for this subject' }, { status: 404, headers: gate.headers });
+  try {
+    const record = await getJson<ConsentRecord>(consentKey(tenantIdFromGate(gate), subjectId));
+    if (!record) {
+      return NextResponse.json({ ok: false, error: 'No consent record found for this subject' }, { status: 404, headers: gate.headers });
+    }
+    const isExpired = record.expiresAt ? new Date(record.expiresAt) <= new Date() : false;
+    return NextResponse.json({ ok: true, record, expired: isExpired }, { headers: gate.headers });
+  } catch (err) {
+    console.error('[pdpl/consent] GET failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to retrieve consent record' }, { status: 500, headers: gate.headers });
   }
-  const isExpired = record.expiresAt ? new Date(record.expiresAt) <= new Date() : false;
-  return NextResponse.json({ ok: true, record, expired: isExpired }, { headers: gate.headers });
 }

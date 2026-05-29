@@ -94,10 +94,22 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const sinceParam = url.searchParams.get("since");
   const untilParam = url.searchParams.get("until");
-  const since = sinceParam ? Date.parse(sinceParam) : Number.NEGATIVE_INFINITY;
-  const until = untilParam ? Date.parse(untilParam) : Number.POSITIVE_INFINITY;
+  const sinceParsed = sinceParam ? Date.parse(sinceParam) : NaN;
+  const untilParsed = untilParam ? Date.parse(untilParam) : NaN;
+  if (sinceParam && !Number.isFinite(sinceParsed)) {
+    return NextResponse.json({ ok: false, error: "Invalid 'since' date — use ISO 8601 format (e.g. 2025-01-01T00:00:00Z)" }, { status: 400, headers: gateHeaders });
+  }
+  if (untilParam && !Number.isFinite(untilParsed)) {
+    return NextResponse.json({ ok: false, error: "Invalid 'until' date — use ISO 8601 format (e.g. 2025-12-31T23:59:59Z)" }, { status: 400, headers: gateHeaders });
+  }
+  const since = Number.isFinite(sinceParsed) ? sinceParsed : Number.NEGATIVE_INFINITY;
+  const until = Number.isFinite(untilParsed) ? untilParsed : Number.POSITIVE_INFINITY;
 
-  await hydrateJournalFromBlobs();
+  try {
+    await hydrateJournalFromBlobs();
+  } catch (err) {
+    console.warn("[mlro/brier] hydration failed, using in-process journal:", err instanceof Error ? err.message : err);
+  }
 
   const all = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);

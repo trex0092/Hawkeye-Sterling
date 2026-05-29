@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { AdverseMediaLiveResult } from "@/app/api/adverse-media-live/route";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Live Adverse Media Monitor — FDL 10/2025 Art.10 (ongoing CDD monitoring)
 // and Art.19 (10-year lookback). Uses GDELT Project API (free, no key).
@@ -22,6 +23,7 @@ const RATING_STYLES: Record<
   medium: { badge: "bg-amber-dim text-amber border-amber/40", label: "MEDIUM" },
   low: { badge: "bg-blue-dim text-blue border-blue/40", label: "LOW" },
   clear: { badge: "bg-green-dim text-green border-green/40", label: "CLEAR" },
+  unknown: { badge: "bg-ink-dim text-ink-2 border-hair-2", label: "MANUAL REVIEW" },
 };
 
 const TONE_COLOR = (tone: number): string => {
@@ -97,7 +99,7 @@ function RegulatoryFeedPanel() {
       const res = await fetch("/api/regulatory-feed");
       if (!res.ok) {
         console.error(`[hawkeye] adverse-media-live regulatory-feed HTTP ${res.status}`);
-        if (mountedRef.current) setFeedError(`Regulatory feed unavailable (HTTP ${res.status}) — retrying automatically`);
+        if (mountedRef.current) setFeedError(apiErrorMessage(res.status, "Regulatory feed"));
         return;
       }
       const data = await res.json().catch(() => ({})) as {
@@ -335,13 +337,13 @@ export default function AdverseMediaLivePage() {
             jurisdiction: params.jurisdiction || undefined,
           }),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(apiErrorMessage(res.status));
         const data = await res.json().catch(() => ({})) as AdverseMediaLiveResult;
         if (!mountedRefPage.current) return;
         setResult(data);
         setLastSearched(params);
       } catch (e) {
-        if (mountedRefPage.current) setError(e instanceof Error ? e.message : "Search failed");
+        if (mountedRefPage.current) setError(caughtErrorMessage(e, "Search failed"));
       } finally {
         if (mountedRefPage.current) setLoading(false);
       }

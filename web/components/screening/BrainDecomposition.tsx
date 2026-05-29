@@ -51,7 +51,7 @@ export function BrainDecomposition({ result }: { result: SuperBrainResult }) {
         <>
           <div className="flex h-3 rounded-sm overflow-hidden bg-bg-2">
             {entries.map(([k, v]) => {
-              const pct = (v / Math.max(total, composite, 1)) * 100;
+              const pct = (v / Math.max(composite, 1)) * 100;
               return (
                 <div
                   key={k}

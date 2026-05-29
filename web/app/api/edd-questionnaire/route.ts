@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface EddQuestion {
   id: string;
@@ -132,45 +134,17 @@ export async function POST(req: Request) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     const fallback = { ...FALLBACK, ...(sbContext ? { eddLevel: sbContext.eddLevel, eddBasis: `${sbContext.eddLevel.toUpperCase()} EDD — screening signals: ${sbContext.riskSignals.join("; ") || "none"}` } : {}) };
+    void writeAuditChainEntry(
+      { event: "edd_questionnaire.submitted", actor: gate.keyId, meta: { subjectId: sanitizeField(customerType, 100), eddLevel: fallback.eddLevel, degraded: true } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, degraded: true, ...fallback }, { headers: gate.headers });
   }
 
-  const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
-
-Generate a comprehensive, regulatory-grade EDD questionnaire specific to the customer profile provided. Questions must be:
-- Actionable and specific (not generic)
-- Grounded in UAE/FATF regulatory obligations
-- Organised by category (Identity & Ownership, Source of Funds, Source of Wealth, Business Purpose, PEP Declarations, Sanctions & Restrictions, Trade Finance / Supply Chain, Transaction Patterns, Adverse Media)
-- Each question includes: the question itself, why it's asked (rationale), regulatory basis, whether mandatory, and optional follow-up prompt
-
-Respond ONLY with valid JSON — no markdown fences, no explanation:
-{
-  "eddLevel": "standard"|"enhanced"|"intensive",
-  "eddBasis": "<one-sentence basis for this EDD level>",
-  "totalQuestions": <number>,
-  "mandatoryCount": <number>,
-  "categories": ["<category>"],
-  "questions": [
-    {
-      "id": "<n>",
-      "category": "<category>",
-      "question": "<full question text>",
-      "rationale": "<why this is asked — AML grounding>",
-      "regulatoryBasis": "<UAE/FATF citation>",
-      "mandatory": <true|false>,
-      "followUp": "<optional follow-up prompt>"
-    }
-  ],
-  "documentationRequired": ["<document>"],
-  "seniorApprovalRequired": <true|false>,
-  "reviewFrequency": "<e.g. annual / quarterly>",
-  "regulatoryBasis": "<full citation list>"
-}
-
-Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
+  const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.\n\nGenerate a comprehensive, regulatory-grade EDD questionnaire specific to the customer profile provided. Questions must be:\n- Actionable and specific (not generic)\n- Grounded in UAE/FATF regulatory obligations\n- Organised by category (Identity & Ownership, Source of Funds, Source of Wealth, Business Purpose, PEP Declarations, Sanctions & Restrictions, Trade Finance / Supply Chain, Transaction Patterns, Adverse Media)\n- Each question includes: the question itself, why it's asked (rationale), regulatory basis, whether mandatory, and optional follow-up prompt\n\nRespond ONLY with valid JSON — no markdown fences, no explanation:\n{\n  "eddLevel": "standard"|"enhanced"|"intensive",\n  "eddBasis": "<one-sentence basis for this EDD level>",\n  "totalQuestions": <number>,\n  "mandatoryCount": <number>,\n  "categories": ["<category>"],\n  "questions": [\n    {\n      "id": "<n>",\n      "category": "<category>",\n      "question": "<full question text>",\n      "rationale": "<why this is asked — AML grounding>",\n      "regulatoryBasis": "<UAE/FATF citation>",\n      "mandatory": <true|false>,\n      "followUp": "<optional follow-up prompt>"\n    }\n  ],\n  "documentationRequired": ["<document>"],\n  "seniorApprovalRequired": <true|false>,\n  "reviewFrequency": "<e.g. annual / quarterly>",\n  "regulatoryBasis": "<full citation list>"\n}\n\nGenerate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
@@ -190,6 +164,10 @@ Generate the EDD questionnaire. ${sbContext?.eddLevel === "intensive" ? "This su
     const result = JSON.parse(cleaned) as EddQuestionnaire;
     if (!Array.isArray(result.categories)) result.categories = [];
     if (!Array.isArray(result.documentationRequired)) result.documentationRequired = [];
+    void writeAuditChainEntry(
+      { event: "edd_questionnaire.submitted", actor: gate.keyId, meta: { subjectId: sanitizeField(customerType, 100), eddLevel: result.eddLevel } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

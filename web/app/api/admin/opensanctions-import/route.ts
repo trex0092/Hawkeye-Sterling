@@ -31,14 +31,11 @@ const STORE_NAME = "hawkeye-opensanctions";
 const BLOB_KEY = "sanctions.json";
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("node:crypto");
-  const enc = new TextEncoder();
-  const a = enc.encode(expected);
-  const b = enc.encode(got);
-  const ab = new Uint8Array(a.length);
-  ab.set(b.slice(0, a.length));
-  return timingSafeEqual(a, ab);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 interface OpenSanctionsRecord {
@@ -65,8 +62,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     text = await req.text();
   } catch (err) {
+    console.error("[opensanctions-import] failed to read request body:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `failed to read request body: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "invalid request body" },
       { status: 400 },
     );
   }
@@ -81,8 +79,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     records = JSON.parse(text) as OpenSanctionsRecord[];
   } catch (err) {
+    console.error("[opensanctions-import] body is not valid JSON:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `body is not valid JSON: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "invalid request body" },
       { status: 400 },
     );
   }
@@ -105,8 +104,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     mod = await import("@netlify/blobs");
   } catch (err) {
+    console.error("[opensanctions-import] @netlify/blobs unavailable:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "blob store unavailable" },
       { status: 503 },
     );
   }
@@ -148,8 +148,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       hint: "Adapter will pick up the new dataset on next cold-start or after evicting the per-Lambda cache (typically <15 min idle).",
     });
   } catch (err) {
+    console.error("[opensanctions-import] Blobs write failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `Blobs write failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "import failed" },
       { status: 503 },
     );
   }

@@ -8,122 +8,332 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
-export interface CountryRiskDimensions {
-  amlRisk: number;
-  baselScore: number;
-  cpiScore: number;
-  politicalRisk: number;
-  sanctionsRisk: number;
-  tfRisk: number;
-}
+import { isCahra, getCountryRisk } from "@/lib/server/high-risk-countries";
 
-export interface SanctionsProfile {
-  ofac: boolean;
-  eu: boolean;
-  un: boolean;
-  uk: boolean;
-  details: string[];
-}
-
-export interface RegulatoryObligation {
-  obligation: string;
-  regulation: string;
-}
+// ── Public API response shape ─────────────────────────────────────────────────
 
 export interface CountryRiskResult {
+  ok: true;
+  countryCode: string;
+  countryName: string;
+  riskScore: number;                       // 0-100 composite
+  riskLevel: "low" | "medium" | "high" | "critical";
+  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant" | "member" | "grey_list" | "black_list" | "non_member";
+  cahraListed: boolean;
+  activeSanctionsRegimes: string[];        // e.g. ["US OFAC", "EU", "UN SC"]
+  corruptionIndex?: number;               // TI CPI 0-100 (higher = cleaner)
+  fragilityIndex?: number;               // FSI raw score 0-120 (higher = more fragile)
+  riskDimensions: Record<string, number>; // per-dimension additive scores
+  geopoliticalFlags: string[];            // e.g. ["recurring_grey_list","high_risk_neighbors"]
+  recommendation: "standard_dd" | "enhanced_dd" | "senior_approval" | "prohibited";
+  // Legacy display fields (optional, returned by LLM)
+  country?: string;
+  overallRisk?: "low" | "medium" | "high" | "critical";
+  dimensions?: { amlRisk: number; baselScore: number; cpiScore: number; politicalRisk: number; sanctionsRisk: number; tfRisk: number };
+  sanctionsProfile?: { ofac: boolean; eu: boolean; un: boolean; uk: boolean; details: string[] };
+  keyRisks?: string[];
+  recentDevelopments?: string[];
+  regulatoryObligations?: Array<{ obligation: string; regulation: string }>;
+  summary?: string;
+}
+
+// Legacy interface retained for backward compat (used by static fallback helper)
+interface _LegacyCountryRiskResult {
   ok: true;
   country: string;
   overallRisk: "low" | "medium" | "high" | "critical";
   riskScore: number;
-  dimensions: CountryRiskDimensions;
+  dimensions: {
+    amlRisk: number;
+    baselScore: number;
+    cpiScore: number;
+    politicalRisk: number;
+    sanctionsRisk: number;
+    tfRisk: number;
+  };
   fatfStatus: "member" | "grey_list" | "black_list" | "non_member";
-  sanctionsProfile: SanctionsProfile;
+  sanctionsProfile: {
+    ofac: boolean;
+    eu: boolean;
+    un: boolean;
+    uk: boolean;
+    details: string[];
+  };
   keyRisks: string[];
   recentDevelopments: string[];
-  regulatoryObligations: RegulatoryObligation[];
+  regulatoryObligations: Array<{ obligation: string; regulation: string }>;
   recommendation: "standard_dd" | "enhanced_dd" | "senior_approval" | "prohibited";
   summary: string;
 }
 
-// ── Static FATF jurisdiction dataset ─────────────────────────────────────────
+// ── CPI / FSI static lookup table ─────────────────────────────────────────────
+// 50 highest-risk jurisdictions — TI CPI 2023, Fund for Peace FSI 2023.
+// CPI: 0-100, higher = cleaner. FSI: 0-120, higher = more fragile.
+// FSI alert tier: Very High >90, High 80-90, Elevated 70-80.
+
+interface CpiiFsiEntry {
+  cpi: number;   // Transparency International CPI (0-100, higher=cleaner)
+  fsi: number;   // Fund for Peace FSI raw score (0-120, higher=more fragile)
+}
+
+const CPI_FSI_DATA: Record<string, CpiiFsiEntry> = {
+  // FATF blacklist
+  IR:  { cpi: 24, fsi: 90.5 },
+  KP:  { cpi: 11, fsi: 94.1 },
+  MM:  { cpi: 23, fsi: 96.2 },
+  // Active conflict / CAHRA
+  AF:  { cpi: 20, fsi: 103.5 },
+  SS:  { cpi: 13, fsi: 110.6 },
+  SO:  { cpi: 11, fsi: 113.0 },
+  YE:  { cpi: 16, fsi: 104.7 },
+  SY:  { cpi: 13, fsi: 105.6 },
+  SD:  { cpi: 22, fsi: 101.5 },
+  CD:  { cpi: 22, fsi: 107.3 },
+  CF:  { cpi: 24, fsi: 108.0 },
+  LY:  { cpi: 18, fsi: 95.4 },
+  ML:  { cpi: 31, fsi: 96.3 },
+  BF:  { cpi: 36, fsi: 93.1 },
+  SO2: { cpi: 11, fsi: 113.0 }, // alias guard
+  HT:  { cpi: 17, fsi: 100.5 },
+  // FATF greylist
+  AL:  { cpi: 37, fsi: 56.3 },
+  BB:  { cpi: 65, fsi: 40.2 },
+  BJ:  { cpi: 43, fsi: 73.0 },
+  CM:  { cpi: 27, fsi: 82.4 },
+  GH:  { cpi: 43, fsi: 68.7 },
+  JM:  { cpi: 44, fsi: 63.8 },
+  JO:  { cpi: 46, fsi: 72.0 },
+  KE:  { cpi: 31, fsi: 85.6 },
+  MA:  { cpi: 38, fsi: 68.9 },
+  MZ:  { cpi: 26, fsi: 88.2 },
+  NA:  { cpi: 49, fsi: 62.1 },
+  NI:  { cpi: 21, fsi: 74.4 },
+  NG:  { cpi: 25, fsi: 93.4 },
+  PK:  { cpi: 29, fsi: 97.2 },
+  PA:  { cpi: 34, fsi: 56.4 },
+  PH:  { cpi: 34, fsi: 70.6 },
+  SN:  { cpi: 43, fsi: 71.5 },
+  TN:  { cpi: 40, fsi: 68.1 },
+  TZ:  { cpi: 36, fsi: 74.9 },
+  UG:  { cpi: 27, fsi: 83.6 },
+  VN:  { cpi: 41, fsi: 56.7 },
+  // Elevated-risk / sanctions
+  BY:  { cpi: 42, fsi: 68.2 },
+  CU:  { cpi: 47, fsi: 63.4 },
+  IQ:  { cpi: 23, fsi: 99.2 },
+  LB:  { cpi: 24, fsi: 90.8 },
+  RU:  { cpi: 26, fsi: 70.3 },
+  VE:  { cpi: 13, fsi: 89.7 },
+  ZW:  { cpi: 24, fsi: 79.8 },
+  // Financial secrecy / offshore
+  JE:  { cpi: 72, fsi: 31.0 },
+  VG:  { cpi: 47, fsi: 36.5 },
+  KY:  { cpi: 55, fsi: 35.8 },
+  PA2: { cpi: 34, fsi: 56.4 },  // Panama duplicate guard
+  // Other high-profile
+  TR:  { cpi: 34, fsi: 68.3 },
+  AE:  { cpi: 68, fsi: 45.2 },
+};
+
+// ── FATF historical data ─────────────────────────────────────────────────────
+// Countries that have appeared on the FATF grey list multiple times.
+const RECURRING_GREY_LIST = new Set<string>([
+  "PK",  // Pakistan — multiple stints (2008-2010, 2012-2015, 2018-2022)
+  "TN",  // Tunisia — (2017-2019, 2022-present)
+  "TR",  // Turkey — (2021-2024)
+  "HT",  // Haiti — (2010-2014, 2022-present)
+  "NG",  // Nigeria — (2019, 2023-present)
+  "AF",  // Afghanistan — recurring
+  "MM",  // Myanmar — grey/black history
+  "SY",  // Syria — recurring
+  "YE",  // Yemen — recurring
+  "PA",  // Panama — (2014-2016, 2023-present)
+  "PH",  // Philippines — (2000-2005, 2021-2023)
+  "AL",  // Albania — (2020-present)
+  "BB",  // Barbados — recurring
+  "JM",  // Jamaica — recurring
+]);
+
+// ── Neighbor risk map ─────────────────────────────────────────────────────────
+// ISO2 → ISO2[] high-risk neighbors (blacklist + greylist + elevated).
+// Only countries whose ≥3 neighbors are high-risk are pre-calculated.
+const HIGH_RISK_NEIGHBOR_COUNTRIES = new Set<string>([
+  "TR",  // Borders SY, IQ, IR, GE(elevated)
+  "JO",  // Borders SY, IQ, territory considerations
+  "IQ",  // Borders SY, IR, TR
+  "EG",  // Borders LY, SD, proximity
+  "TN",  // Borders LY, AL proximity
+  "GH",  // Borders BF, NG, CI
+  "NG",  // Borders CM, BF, NE
+  "CM",  // Borders NG, CF, CD, SS
+  "ET",  // Borders SS, SO, SD, ER
+  "KE",  // Borders SO, SS, ET
+  "TZ",  // Borders MZ, CD, UG
+  "UG",  // Borders CD, SS, KE
+  "SD",  // Borders SS, CF, LY, ET
+  "NE",  // Borders ML, BF, NG, LY
+  "ML",  // Borders BF, NE, MR
+  "IN",  // Borders PK, MM, AF(proximity)
+  "CN",  // Borders MM, AF, KP (proximity)
+  "VN",  // Borders MM proximity
+  "PH",  // Regional — sea borders
+]);
+
+// ── CAHRA UAE registry ────────────────────────────────────────────────────────
+// UAE-specific CAHRA register for DPMS / gold sector purposes.
+// Per UAE MoEI guidance and FATF Recommendation 10.
+const UAE_CAHRA = new Set<string>([
+  "AF",  // Afghanistan
+  "BF",  // Burkina Faso
+  "CF",  // Central African Republic
+  "CD",  // DR Congo
+  "ER",  // Eritrea
+  "ET",  // Ethiopia
+  "IQ",  // Iraq
+  "LY",  // Libya
+  "ML",  // Mali
+  "MZ",  // Mozambique
+  "MM",  // Myanmar
+  "NE",  // Niger
+  "NG",  // Nigeria (northern regions)
+  "SD",  // Sudan
+  "SO",  // Somalia
+  "SS",  // South Sudan
+  "SY",  // Syria
+  "YE",  // Yemen
+]);
+
+// ── Financial secrecy jurisdictions ──────────────────────────────────────────
+// Offshore centres with FSI (Tax Justice Network Financial Secrecy Index) > 60
+// or well-known secrecy-haven status.
+const FINANCIAL_SECRECY_JURISDICTIONS = new Set<string>([
+  "JE",  // Jersey
+  "VG",  // British Virgin Islands
+  "KY",  // Cayman Islands
+  "PA",  // Panama (Mossack Fonseca)
+  "LB",  // Lebanon (banking secrecy history)
+  "LI",  // Liechtenstein
+  "MC",  // Monaco
+  "AD",  // Andorra
+  "MV",  // Maldives
+  "WS",  // Samoa
+  "VU",  // Vanuatu
+]);
+
+// ── Active sanctions regime data ─────────────────────────────────────────────
+// Static mapping of ISO-2 → active sanctions programs.
+// Programs: "US OFAC", "EU", "UN SC", "UK OFSI", "AU DFAT", "CA OSFI"
+type SanctionProgram = "US OFAC" | "EU" | "UN SC" | "UK OFSI" | "AU DFAT" | "CA OSFI";
+
+const ACTIVE_SANCTIONS: Record<string, SanctionProgram[]> = {
+  IR:  ["US OFAC", "EU", "UN SC", "UK OFSI", "AU DFAT", "CA OSFI"],
+  KP:  ["US OFAC", "EU", "UN SC", "UK OFSI", "AU DFAT", "CA OSFI"],
+  MM:  ["US OFAC", "EU", "UK OFSI", "AU DFAT", "CA OSFI"],
+  SY:  ["US OFAC", "EU", "UN SC", "UK OFSI"],
+  RU:  ["US OFAC", "EU", "UK OFSI", "AU DFAT", "CA OSFI"],
+  BY:  ["US OFAC", "EU", "UK OFSI", "AU DFAT", "CA OSFI"],
+  CU:  ["US OFAC"],
+  VE:  ["US OFAC", "EU"],
+  LB:  ["US OFAC"],
+  SD:  ["US OFAC", "UN SC"],
+  SS:  ["US OFAC", "EU", "UN SC"],
+  CF:  ["EU", "UN SC"],
+  CD:  ["US OFAC", "EU", "UN SC"],
+  ML:  ["EU", "UN SC"],
+  LY:  ["US OFAC", "EU", "UN SC", "UK OFSI"],
+  YE:  ["US OFAC", "EU", "UN SC"],
+  SO:  ["UN SC"],
+  IQ:  ["US OFAC", "UN SC"],
+  ZW:  ["US OFAC", "EU", "UK OFSI"],
+  HT:  ["US OFAC"],
+  NI:  ["US OFAC"],
+  AF:  ["US OFAC", "EU", "UN SC"],
+  KE:  [],
+  NG:  [],
+  PK:  [],
+};
+
+// ── Static dataset ────────────────────────────────────────────────────────────
 // Covers all FATF grey/black list jurisdictions + GCC/UAE + major global
 // economies. Updated to reflect FATF February 2026 plenary outcomes.
-// Served when the AI analysis is unavailable (no API key or API failure).
 
 interface StaticCountryEntry {
   iso2: string;
   iso3: string;
   name: string;
-  fatfStatus: "member" | "grey_list" | "black_list" | "non_member";
-  cpiScore: number;          // Transparency International CPI 0-100 (higher = cleaner)
-  sanctionsRegime: string;   // e.g. "OFAC SDN, EU, UN"
+  fatfStatus: "blacklist" | "greylist" | "monitored" | "compliant" | "member";
   dpmsRiskTier: "low" | "medium" | "high" | "critical";
   lastUpdated: string;
 }
 
 const STATIC_COUNTRY_DATASET: StaticCountryEntry[] = [
-  // FATF Black list (High-risk jurisdictions — Call for Action) — Feb 2026
-  { iso2: "IR", iso3: "IRN", name: "Iran",              fatfStatus: "black_list", cpiScore: 24, sanctionsRegime: "OFAC SDN, EU, UN, UK",     dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "KP", iso3: "PRK", name: "North Korea",       fatfStatus: "black_list", cpiScore: 11, sanctionsRegime: "OFAC SDN, EU, UN, UK",     dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "MM", iso3: "MMR", name: "Myanmar",           fatfStatus: "black_list", cpiScore: 23, sanctionsRegime: "OFAC SDN, EU, UK",         dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  // FATF Grey list (Jurisdictions under Increased Monitoring) — Feb 2026
-  { iso2: "AF", iso3: "AFG", name: "Afghanistan",       fatfStatus: "grey_list", cpiScore: 20, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "AL", iso3: "ALB", name: "Albania",           fatfStatus: "grey_list", cpiScore: 37, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "BB", iso3: "BRB", name: "Barbados",          fatfStatus: "grey_list", cpiScore: 65, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "BF", iso3: "BFA", name: "Burkina Faso",      fatfStatus: "grey_list", cpiScore: 36, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "CM", iso3: "CMR", name: "Cameroon",          fatfStatus: "grey_list", cpiScore: 27, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "CF", iso3: "CAF", name: "Central African Rep.", fatfStatus: "grey_list", cpiScore: 24, sanctionsRegime: "EU, UN",                  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "CD", iso3: "COD", name: "DR Congo",          fatfStatus: "grey_list", cpiScore: 22, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "GI", iso3: "GIB", name: "Gibraltar",         fatfStatus: "grey_list", cpiScore: 72, sanctionsRegime: "UK",                         dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "HT", iso3: "HTI", name: "Haiti",             fatfStatus: "grey_list", cpiScore: 17, sanctionsRegime: "OFAC SDN",                   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "JM", iso3: "JAM", name: "Jamaica",           fatfStatus: "grey_list", cpiScore: 44, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "JO", iso3: "JOR", name: "Jordan",            fatfStatus: "grey_list", cpiScore: 46, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "ML", iso3: "MLI", name: "Mali",              fatfStatus: "grey_list", cpiScore: 31, sanctionsRegime: "EU, UN",                     dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "MZ", iso3: "MOZ", name: "Mozambique",        fatfStatus: "grey_list", cpiScore: 26, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "NA", iso3: "NAM", name: "Namibia",           fatfStatus: "grey_list", cpiScore: 49, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "NI", iso3: "NIC", name: "Nicaragua",         fatfStatus: "grey_list", cpiScore: 21, sanctionsRegime: "OFAC SDN",                   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "NG", iso3: "NGA", name: "Nigeria",           fatfStatus: "grey_list", cpiScore: 25, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "PK", iso3: "PAK", name: "Pakistan",          fatfStatus: "grey_list", cpiScore: 29, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "PA", iso3: "PAN", name: "Panama",            fatfStatus: "grey_list", cpiScore: 34, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "PH", iso3: "PHL", name: "Philippines",       fatfStatus: "grey_list", cpiScore: 34, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "SS", iso3: "SSD", name: "South Sudan",       fatfStatus: "grey_list", cpiScore: 13, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "SY", iso3: "SYR", name: "Syria",             fatfStatus: "grey_list", cpiScore: 13, sanctionsRegime: "OFAC SDN, EU, UN, UK",     dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "TZ", iso3: "TZA", name: "Tanzania",          fatfStatus: "grey_list", cpiScore: 36, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  // Turkey removed from FATF grey list at June 2024 plenary. Remains EU AML high-risk 3rd country.
-  { iso2: "TR", iso3: "TUR", name: "Turkey",            fatfStatus: "member",    cpiScore: 34, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2024-06-28" },
-  { iso2: "UG", iso3: "UGA", name: "Uganda",            fatfStatus: "grey_list", cpiScore: 27, sanctionsRegime: "None",                       dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
-  { iso2: "VN", iso3: "VNM", name: "Vietnam",           fatfStatus: "grey_list", cpiScore: 41, sanctionsRegime: "None",                       dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "YE", iso3: "YEM", name: "Yemen",             fatfStatus: "grey_list", cpiScore: 16, sanctionsRegime: "OFAC SDN, EU, UN",          dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  // UAE and GCC
-  { iso2: "AE", iso3: "ARE", name: "United Arab Emirates", fatfStatus: "member", cpiScore: 68, sanctionsRegime: "None",                    dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "SA", iso3: "SAU", name: "Saudi Arabia",      fatfStatus: "member", cpiScore: 52, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "KW", iso3: "KWT", name: "Kuwait",            fatfStatus: "member", cpiScore: 48, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "QA", iso3: "QAT", name: "Qatar",             fatfStatus: "member", cpiScore: 56, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "BH", iso3: "BHR", name: "Bahrain",           fatfStatus: "member", cpiScore: 45, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "OM", iso3: "OMN", name: "Oman",              fatfStatus: "member", cpiScore: 52, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  // Key FATF members
-  { iso2: "RU", iso3: "RUS", name: "Russia",            fatfStatus: "member", cpiScore: 26, sanctionsRegime: "OFAC SDN, EU, UK",              dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "US", iso3: "USA", name: "United States",     fatfStatus: "member", cpiScore: 69, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "GB", iso3: "GBR", name: "United Kingdom",    fatfStatus: "member", cpiScore: 73, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "DE", iso3: "DEU", name: "Germany",           fatfStatus: "member", cpiScore: 78, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "FR", iso3: "FRA", name: "France",            fatfStatus: "member", cpiScore: 71, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "CN", iso3: "CHN", name: "China",             fatfStatus: "member", cpiScore: 45, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "IN", iso3: "IND", name: "India",             fatfStatus: "member", cpiScore: 40, sanctionsRegime: "None",                          dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
-  { iso2: "CH", iso3: "CHE", name: "Switzerland",       fatfStatus: "member", cpiScore: 82, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "SG", iso3: "SGP", name: "Singapore",         fatfStatus: "member", cpiScore: 83, sanctionsRegime: "None",                          dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
-  { iso2: "LB", iso3: "LBN", name: "Lebanon",           fatfStatus: "non_member", cpiScore: 24, sanctionsRegime: "OFAC SDN",                  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "VE", iso3: "VEN", name: "Venezuela",         fatfStatus: "non_member", cpiScore: 13, sanctionsRegime: "OFAC SDN, EU",             dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
-  { iso2: "CU", iso3: "CUB", name: "Cuba",              fatfStatus: "non_member", cpiScore: 47, sanctionsRegime: "OFAC SDN",                  dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  // FATF Blacklist — Feb 2026
+  { iso2: "IR", iso3: "IRN", name: "Iran",              fatfStatus: "blacklist",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "KP", iso3: "PRK", name: "North Korea",       fatfStatus: "blacklist",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "MM", iso3: "MMR", name: "Myanmar",           fatfStatus: "blacklist",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  // FATF Greylist — May 2026
+  { iso2: "AF", iso3: "AFG", name: "Afghanistan",       fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "AL", iso3: "ALB", name: "Albania",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "AE", iso3: "ARE", name: "United Arab Emirates", fatfStatus: "member",   dpmsRiskTier: "medium",  lastUpdated: "2026-05-01" },
+  { iso2: "BB", iso3: "BRB", name: "Barbados",          fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "BF", iso3: "BFA", name: "Burkina Faso",      fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "BJ", iso3: "BEN", name: "Benin",             fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "CM", iso3: "CMR", name: "Cameroon",          fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "CF", iso3: "CAF", name: "Central African Republic", fatfStatus: "greylist", dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "CD", iso3: "COD", name: "DR Congo",          fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "GH", iso3: "GHA", name: "Ghana",             fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "GI", iso3: "GIB", name: "Gibraltar",         fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "HT", iso3: "HTI", name: "Haiti",             fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "JM", iso3: "JAM", name: "Jamaica",           fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "JO", iso3: "JOR", name: "Jordan",            fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "KE", iso3: "KEN", name: "Kenya",             fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "LY", iso3: "LBY", name: "Libya",             fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-05-01" },
+  { iso2: "ML", iso3: "MLI", name: "Mali",              fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "MA", iso3: "MAR", name: "Morocco",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "MZ", iso3: "MOZ", name: "Mozambique",        fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "NA", iso3: "NAM", name: "Namibia",           fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "NI", iso3: "NIC", name: "Nicaragua",         fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "NG", iso3: "NGA", name: "Nigeria",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "PK", iso3: "PAK", name: "Pakistan",          fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "PA", iso3: "PAN", name: "Panama",            fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "PH", iso3: "PHL", name: "Philippines",       fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "SN", iso3: "SEN", name: "Senegal",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "SO", iso3: "SOM", name: "Somalia",           fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-05-01" },
+  { iso2: "SS", iso3: "SSD", name: "South Sudan",       fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "SY", iso3: "SYR", name: "Syria",             fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "TN", iso3: "TUN", name: "Tunisia",           fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-05-01" },
+  { iso2: "TZ", iso3: "TZA", name: "Tanzania",          fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "UG", iso3: "UGA", name: "Uganda",            fatfStatus: "greylist",   dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  { iso2: "VN", iso3: "VNM", name: "Vietnam",           fatfStatus: "greylist",   dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "YE", iso3: "YEM", name: "Yemen",             fatfStatus: "greylist",   dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  // Monitored / Elevated
+  { iso2: "TR", iso3: "TUR", name: "Turkey",            fatfStatus: "monitored",  dpmsRiskTier: "high",     lastUpdated: "2024-06-28" },
+  { iso2: "BY", iso3: "BLR", name: "Belarus",           fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "IQ", iso3: "IRQ", name: "Iraq",              fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "RU", iso3: "RUS", name: "Russia",            fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "SD", iso3: "SDN", name: "Sudan",             fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "ZW", iso3: "ZWE", name: "Zimbabwe",          fatfStatus: "monitored",  dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
+  // GCC
+  { iso2: "SA", iso3: "SAU", name: "Saudi Arabia",      fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "KW", iso3: "KWT", name: "Kuwait",            fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "QA", iso3: "QAT", name: "Qatar",             fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "BH", iso3: "BHR", name: "Bahrain",           fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "OM", iso3: "OMN", name: "Oman",              fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  // Key economies
+  { iso2: "US", iso3: "USA", name: "United States",     fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "GB", iso3: "GBR", name: "United Kingdom",    fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "DE", iso3: "DEU", name: "Germany",           fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "FR", iso3: "FRA", name: "France",            fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "CN", iso3: "CHN", name: "China",             fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "IN", iso3: "IND", name: "India",             fatfStatus: "compliant",  dpmsRiskTier: "medium",   lastUpdated: "2026-02-14" },
+  { iso2: "CH", iso3: "CHE", name: "Switzerland",       fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "SG", iso3: "SGP", name: "Singapore",         fatfStatus: "compliant",  dpmsRiskTier: "low",      lastUpdated: "2026-02-14" },
+  { iso2: "LB", iso3: "LBN", name: "Lebanon",           fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "VE", iso3: "VEN", name: "Venezuela",         fatfStatus: "monitored",  dpmsRiskTier: "critical", lastUpdated: "2026-02-14" },
+  { iso2: "CU", iso3: "CUB", name: "Cuba",              fatfStatus: "monitored",  dpmsRiskTier: "high",     lastUpdated: "2026-02-14" },
 ];
 
-// Common short-forms that don't match the canonical `name` field. Audit C-03:
-// the auditor called country_risk with "UAE" and got nothing back from the
-// static dataset (canonical name is "United Arab Emirates"), so every
-// invocation hit the LLM. On a cold start the LLM exceeded the 10s timeout
-// and the deepest catch block surfaced "Real-time analysis temporarily
-// unavailable" instead of the cached static profile. Keep this list short
-// and unambiguous — common short-forms only, never substring matches that
-// could collide between countries.
+// ── Country aliases ───────────────────────────────────────────────────────────
 const COUNTRY_ALIASES: Record<string, string> = {
   "uae": "AE",
   "u.a.e.": "AE",
@@ -144,6 +354,17 @@ const COUNTRY_ALIASES: Record<string, string> = {
   "south korea": "KR",
   "ksa": "SA",
   "kingdom of saudi arabia": "SA",
+  "dprk": "KP",
+  "burma": "MM",
+  "russia": "RU",
+  "russian federation": "RU",
+  "bvi": "VG",
+  "british virgin islands": "VG",
+  "cayman": "KY",
+  "cayman islands": "KY",
+  "jersey": "JE",
+  "turkiye": "TR",
+  "turkey": "TR",
 };
 
 function lookupStaticCountry(country: string): StaticCountryEntry | undefined {
@@ -159,118 +380,158 @@ function lookupStaticCountry(country: string): StaticCountryEntry | undefined {
   );
 }
 
+// ── Multi-dimensional scoring engine ─────────────────────────────────────────
+
+function buildRiskDimensions(iso2: string, entry: StaticCountryEntry): {
+  dimensions: Record<string, number>;
+  geopoliticalFlags: string[];
+} {
+  const iso = iso2.toUpperCase();
+  const dimensions: Record<string, number> = {};
+  const geopoliticalFlags: string[] = [];
+
+  // 1. FATF compliance dimension
+  const fatfScore =
+    entry.fatfStatus === "blacklist"  ? 50 :
+    entry.fatfStatus === "greylist"   ? 30 :
+    entry.fatfStatus === "monitored"  ? 15 : 0;
+  if (fatfScore > 0) dimensions.fatf = fatfScore;
+
+  // 2. CPI dimension
+  const cpiData = CPI_FSI_DATA[iso];
+  if (cpiData) {
+    const cpiScore =
+      cpiData.cpi < 20  ? 30 :
+      cpiData.cpi < 40  ? 20 :
+      cpiData.cpi < 50  ? 10 : 0;
+    if (cpiScore > 0) dimensions.corruption = cpiScore;
+  }
+
+  // 3. FSI dimension
+  if (cpiData) {
+    const fsiScore =
+      cpiData.fsi >= 90 ? 30 :
+      cpiData.fsi >= 80 ? 20 :
+      cpiData.fsi >= 70 ? 10 : 0;
+    if (fsiScore > 0) dimensions.fragility = fsiScore;
+  }
+
+  // 4. Political stability / conflict zone
+  const isConflictZone = new Set(["AF", "SY", "YE", "SS", "SO", "LY", "ML", "CF", "CD", "MM", "IQ", "SD"]).has(iso);
+  const isPostConflict = new Set(["IQ", "LB", "ET", "NE", "BF"]).has(iso);
+  if (isConflictZone) {
+    dimensions.political = 25;
+    geopoliticalFlags.push("conflict_zone");
+  } else if (isPostConflict) {
+    dimensions.political = 15;
+    geopoliticalFlags.push("post_conflict");
+  }
+
+  // 5. Financial secrecy
+  if (FINANCIAL_SECRECY_JURISDICTIONS.has(iso)) {
+    dimensions.financial_secrecy = 15;
+    geopoliticalFlags.push("financial_secrecy_jurisdiction");
+  }
+
+  // 6. UAE CAHRA
+  if (UAE_CAHRA.has(iso)) {
+    dimensions.cahra = 40;
+    geopoliticalFlags.push("uae_cahra_listed");
+  }
+
+  // 7. Active sanctions dimension — score based on number of regimes
+  const sanctions = ACTIVE_SANCTIONS[iso] ?? [];
+  if (sanctions.length >= 4) {
+    dimensions.sanctions = 30;
+  } else if (sanctions.length >= 2) {
+    dimensions.sanctions = 20;
+  } else if (sanctions.length === 1) {
+    dimensions.sanctions = 10;
+  }
+
+  // 8. Recurring grey list flag
+  if (RECURRING_GREY_LIST.has(iso)) {
+    dimensions.recurring_fatf = 10;
+    geopoliticalFlags.push("recurring_grey_list");
+  }
+
+  // 9. High-risk neighbors flag
+  if (HIGH_RISK_NEIGHBOR_COUNTRIES.has(iso)) {
+    dimensions.neighbor_risk = 10;
+    geopoliticalFlags.push("high_risk_neighbors");
+  }
+
+  return { dimensions, geopoliticalFlags };
+}
+
+function computeCompositeScore(dimensions: Record<string, number>): number {
+  const raw = Object.values(dimensions).reduce((sum, v) => sum + v, 0);
+  return Math.min(100, raw);
+}
+
+function scoreToLevel(score: number): "low" | "medium" | "high" | "critical" {
+  if (score >= 75) return "critical";
+  if (score >= 55) return "high";
+  if (score >= 30) return "medium";
+  return "low";
+}
+
+function levelToRecommendation(
+  level: "low" | "medium" | "high" | "critical",
+  fatfStatus: string,
+  sanctionsCount: number,
+): "standard_dd" | "enhanced_dd" | "senior_approval" | "prohibited" {
+  if (level === "critical" || fatfStatus === "blacklist" || fatfStatus === "black_list" || sanctionsCount >= 4) return "prohibited";
+  if (level === "high" || sanctionsCount >= 2) return "senior_approval";
+  if (level === "medium" || fatfStatus === "greylist" || fatfStatus === "grey_list" || fatfStatus === "monitored") return "enhanced_dd";
+  return "standard_dd";
+}
+
 function staticEntryToResult(entry: StaticCountryEntry): CountryRiskResult {
-  const riskScore =
-    entry.dpmsRiskTier === "critical" ? 90 :
-    entry.dpmsRiskTier === "high" ? 72 :
-    entry.dpmsRiskTier === "medium" ? 50 : 25;
-  const overallRisk =
-    entry.dpmsRiskTier === "critical" ? "critical" :
-    entry.dpmsRiskTier === "high" ? "high" :
-    entry.dpmsRiskTier === "medium" ? "medium" : "low";
-  const hasSanctions = entry.sanctionsRegime !== "None" && entry.sanctionsRegime !== "";
+  const iso = entry.iso2.toUpperCase();
+  const { dimensions, geopoliticalFlags } = buildRiskDimensions(iso, entry);
+
+  const cpiData = CPI_FSI_DATA[iso];
+  const activeSanctions = ACTIVE_SANCTIONS[iso] ?? [];
+  const cahraListed = UAE_CAHRA.has(iso) || isCahra(iso);
+
+  const riskScore = computeCompositeScore(dimensions);
+  const riskLevel = scoreToLevel(riskScore);
+  const recommendation = levelToRecommendation(riskLevel, entry.fatfStatus, activeSanctions.length);
+
+  // Normalize fatfStatus to underscore-separated format for API consumers.
+  const fatfStatus: CountryRiskResult["fatfStatus"] =
+    entry.fatfStatus === "blacklist" ? "black_list" :
+    entry.fatfStatus === "greylist"  ? "grey_list"  :
+    entry.fatfStatus as CountryRiskResult["fatfStatus"];
+
   return {
     ok: true,
-    country: entry.name,
-    overallRisk,
+    countryCode: iso,
+    countryName: entry.name,
+    country: entry.name,       // legacy alias
+    overallRisk: riskLevel,    // legacy alias
     riskScore,
-    dimensions: {
-      amlRisk: riskScore,
-      baselScore: Math.max(0, 100 - entry.cpiScore),
-      cpiScore: Math.max(0, 100 - entry.cpiScore),
-      politicalRisk: entry.dpmsRiskTier === "critical" ? 80 : entry.dpmsRiskTier === "high" ? 65 : 35,
-      sanctionsRisk: hasSanctions ? (entry.fatfStatus === "black_list" ? 95 : 70) : 5,
-      tfRisk: entry.dpmsRiskTier === "critical" ? 80 : entry.dpmsRiskTier === "high" ? 55 : 25,
-    },
-    fatfStatus: entry.fatfStatus,
-    sanctionsProfile: {
-      ofac: entry.sanctionsRegime.includes("OFAC"),
-      eu: entry.sanctionsRegime.includes("EU"),
-      un: entry.sanctionsRegime.includes("UN"),
-      uk: entry.sanctionsRegime.includes("UK"),
-      details: entry.sanctionsRegime !== "None" ? [entry.sanctionsRegime] : [],
-    },
-    keyRisks: [
-      entry.fatfStatus === "black_list"
-        ? "FATF Black List — high-risk jurisdiction subject to a call for action"
-        : entry.fatfStatus === "grey_list"
-          ? "FATF Grey List — jurisdiction under increased monitoring"
-          : "FATF member in good standing",
-      ...(hasSanctions ? [`Sanctions regime: ${entry.sanctionsRegime}`] : []),
-    ],
-    recentDevelopments: [`FATF status as of February 2026 plenary: ${entry.fatfStatus.replace("_", " ")}`],
-    regulatoryObligations: [
-      entry.fatfStatus === "black_list" || entry.fatfStatus === "grey_list"
-        ? { obligation: "Enhanced Due Diligence required", regulation: "FDL 10/2025 Art.14 — FATF Rec. 19" }
-        : { obligation: "Standard Customer Due Diligence applies", regulation: "FDL 10/2025 Art.12" },
-    ],
-    recommendation:
-      entry.dpmsRiskTier === "critical" ? "prohibited" :
-      entry.dpmsRiskTier === "high" ? "senior_approval" :
-      entry.dpmsRiskTier === "medium" ? "enhanced_dd" : "standard_dd",
-    summary: `Static risk profile for ${entry.name} (iso2: ${entry.iso2}). ` +
-      `FATF status: ${entry.fatfStatus.replace("_", " ")}. ` +
-      `DPMS risk tier: ${entry.dpmsRiskTier}. ` +
-      `Sanctions: ${entry.sanctionsRegime}. ` +
-      `Source: static_fallback — run with ANTHROPIC_API_KEY for live AI analysis.`,
+    riskLevel,
+    fatfStatus,
+    cahraListed,
+    activeSanctionsRegimes: activeSanctions,
+    corruptionIndex: cpiData?.cpi,
+    fragilityIndex: cpiData?.fsi,
+    riskDimensions: dimensions,
+    geopoliticalFlags,
+    recommendation,
   };
 }
 
-const FALLBACK: CountryRiskResult = {
-  ok: true,
-  country: "United Arab Emirates",
-  overallRisk: "medium",
-  riskScore: 42,
-  dimensions: {
-    amlRisk: 38,
-    baselScore: 44,
-    cpiScore: 35,
-    politicalRisk: 25,
-    sanctionsRisk: 10,
-    tfRisk: 40,
-  },
-  fatfStatus: "member",
-  sanctionsProfile: {
-    ofac: false,
-    eu: false,
-    un: false,
-    uk: false,
-    details: [],
-  },
-  keyRisks: [
-    "FATF grey-list exit monitoring — UAE removed from grey list in Feb 2024 but remains under enhanced scrutiny",
-    "High volume of cash-intensive gold and real estate transactions creating ML/TF exposure",
-    "Free zone proliferation increases corporate opacity and beneficial ownership complexity",
-    "Proximity to high-risk jurisdictions (Iran, Afghanistan) creates correspondent banking risk",
-  ],
-  recentDevelopments: [
-    "Feb 2024: UAE removed from FATF grey list following significant AML/CFT reforms",
-    "2025: FDL 10/2025 enacted — updated AML/CFT framework for DNFBPs and FIs",
-    "Ongoing: CBUAE strengthening supervisory capacity and onsite inspection frequency",
-    "Q1 2025: UAE-FATF bilateral engagement on continued technical assistance",
-  ],
-  regulatoryObligations: [
-    {
-      obligation: "Enhanced Due Diligence required for all customers",
-      regulation: "UAE FDL 10/2025 Art.14 — EDD for high-risk jurisdictions",
-    },
-    {
-      obligation: "Senior management sign-off on new business relationships",
-      regulation: "CBUAE AML Standards §6.4 — governance accountability",
-    },
-    {
-      obligation: "Quarterly monitoring and periodic CDD refresh",
-      regulation: "CBUAE AML Standards §5.2 — ongoing monitoring",
-    },
-  ],
-  recommendation: "enhanced_dd",
-  summary:
-    "The UAE presents a medium risk profile following its removal from the FATF grey list in February 2024. Significant regulatory reforms under FDL 10/2025 have strengthened the AML/CFT framework. However, structural vulnerabilities persist including gold/real estate sector exposure, free zone opacity, and regional proximity risks. Enhanced Due Diligence with senior oversight is recommended for UAE-based counterparties.",
+// ── Fallback result (UAE) ─────────────────────────────────────────────────────
+// UAE was removed from the FATF grey list in February 2024; status reverts to member.
+const UAE_ENTRY: StaticCountryEntry = {
+  iso2: "AE", iso3: "ARE", name: "United Arab Emirates",
+  fatfStatus: "member", dpmsRiskTier: "medium", lastUpdated: "2026-05-01",
 };
 
 // GET /api/country-risk?country=XX
-// Quick static lookup — returns cached risk profile without LLM call.
-// Use POST for full AI-powered real-time analysis.
 export async function GET(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
@@ -289,7 +550,29 @@ export async function GET(req: Request) {
       { headers: gate.headers },
     );
   }
-  // Not in static dataset — prompt caller to use POST for full AI assessment
+  // Also try getCountryRisk from high-risk-countries.ts for broader coverage
+  const hrEntry = getCountryRisk(country);
+  if (hrEntry) {
+    // Build a synthetic StaticCountryEntry from the high-risk entry
+    const synth: StaticCountryEntry = {
+      iso2: hrEntry.iso2,
+      iso3: hrEntry.iso2 + "X",
+      name: hrEntry.name,
+      fatfStatus:
+        hrEntry.tier === "blacklist" ? "blacklist" :
+        hrEntry.tier === "greylist"  ? "greylist"  :
+        hrEntry.tier === "elevated"  ? "monitored" : "compliant",
+      dpmsRiskTier:
+        hrEntry.tier === "blacklist" ? "critical" :
+        hrEntry.tier === "greylist"  ? "high"     :
+        hrEntry.tier === "elevated"  ? "medium"   : "low",
+      lastUpdated: "2026-05-01",
+    };
+    return NextResponse.json(
+      { ...staticEntryToResult(synth), source: "static_cache" },
+      { headers: gate.headers },
+    );
+  }
   return NextResponse.json(
     {
       ok: false,
@@ -300,6 +583,7 @@ export async function GET(req: Request) {
   );
 }
 
+// ── POST — full AI-powered assessment ────────────────────────────────────────
 export async function POST(req: Request) {
   const t0 = Date.now();
   const gate = await enforce(req);
@@ -308,17 +592,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const country = (body.country ?? "").trim();
   if (!country) {
-    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "country is required" }, { status: 400, headers: gate.headers });
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
-    // Try static dataset first, then fall back to UAE template
     const staticEntry = lookupStaticCountry(country);
     if (staticEntry) {
       return NextResponse.json(
@@ -328,8 +611,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(
       {
-        ...FALLBACK,
-        country: country || FALLBACK.country,
+        ...staticEntryToResult(UAE_ENTRY),
+        countryName: country || UAE_ENTRY.name,
         source: "static_fallback",
         simulationWarning: "ANTHROPIC_API_KEY not configured — this is a simulated template for UAE, NOT a real country risk assessment. All scores and risk ratings are illustrative examples only. Obtain a real AI-generated assessment before making any compliance decisions.",
       },
@@ -343,9 +626,14 @@ export async function POST(req: Request) {
       ? "Provide analysis with context for each dimension, regulatory obligations, and 3-5 recent developments."
       : "Provide a concise but complete analysis covering all required fields.";
 
-  // Netlify edge gateway has a 26s inactivity timeout. Keep both modes well
-  // under that ceiling: Haiku at ≤1800 tokens reliably responds in 8-15s.
   const sdkTimeoutMs = 4_500;
+
+  // Build the static context to inject into the prompt
+  const staticEntry = lookupStaticCountry(country);
+  const staticContext = staticEntry
+    ? `\n\nStaticContext (pre-computed, authoritative — use as baseline):
+${JSON.stringify(staticEntryToResult(staticEntry), null, 2)}`
+    : "";
 
   try {
     const client = getAnthropicClient(apiKey, sdkTimeoutMs);
@@ -355,67 +643,48 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a Country Risk Intelligence expert specialising in AML/CFT, sanctions, and financial crime compliance. Your knowledge covers:
+          text: `You are a Country Risk Intelligence expert specialising in AML/CFT, sanctions, and financial crime compliance.
 
-- Basel AML Index (annual country risk scoring 0-10, converted to 0-100 for output)
-- Transparency International Corruption Perceptions Index (CPI, 0-100 where 100 = very clean)
-- FATF grey list and black list — authoritative source: https://www.fatf-gafi.org/en/topics/high-risk-and-other-monitored-jurisdictions.html (updated at each FATF plenary, typically February, June, October)
-- KnowYourCountry.com country risk ratings — covers 250 jurisdictions with AML/CFT risk colour-coding (High/Medium-High/Medium/Low)
-- OFAC country-level sanctions and Specially Designated Nationals lists
-- EU high-risk third countries (4AMLD/6AMLD lists) — authoritative source: https://finance.ec.europa.eu/financial-crime/anti-money-laundering-and-countering-financing-terrorism_en
-- UN Security Council sanctions regimes
-- UK OFSI sanctions designations
-- Political stability and governance indicators (World Bank, Freedom House, EIU)
-- ML/TF risk indicators including cash economy size, narcotics trafficking, terrorist financing typologies
-- Regulatory obligations triggered by country risk under FATF Recommendations R.10, R.12, R.13, R.19
-- FATF Mutual Evaluation Reports (MERs) — country-specific AML/CFT effectiveness assessments at https://www.fatf-gafi.org/en/publications/Mutualevaluations.html
+Your analysis must produce a multi-dimensional country risk score using the following exact schema.
 
-For riskScore: 0-100 where 0=no risk, 100=maximum risk.
-For dimensions (all 0-100, higher = more risk):
-- amlRisk: overall AML risk based on Basel AML Index and typology analysis
-- baselScore: Basel AML Index score converted to 0-100 (Basel publishes 0-10, multiply by 10)
-- cpiScore: Inverted CPI (100 - TI CPI score) so higher = more corrupt = more risk
-- politicalRisk: political instability, conflict, governance deficit (0-100)
-- sanctionsRisk: degree of sanctions exposure (0=no sanctions, 100=comprehensive sanctions)
-- tfRisk: terrorist financing risk including proximity to conflict zones, extremist financing typologies
+## Scoring dimensions (additive, capped at 100 total):
+- fatf: FATF compliance — blacklist +50, greylist +30, monitored +15, compliant 0
+- corruption: CPI (Transparency International) — CPI<20 →+30, CPI 20-40 →+20, CPI 40-50 →+10
+- fragility: FSI (Fund for Peace) — Very High (>=90) →+30, High (80-89) →+20, Elevated (70-79) →+10
+- political: conflict zone →+25, post-conflict →+15
+- financial_secrecy: offshore/secrecy haven (FSI Tax Justice >60) →+15
+- cahra: UAE CAHRA listed →+40
+- sanctions: >=4 programs →+30, 2-3 programs →+20, 1 program →+10
+- recurring_fatf: recurring FATF grey list history →+10
+- neighbor_risk: borders 3+ high-risk jurisdictions →+10
 
-fatfStatus options: "member" (FATF member in good standing), "grey_list" (increased monitoring), "black_list" (call for action — Iran, North Korea, Myanmar), "non_member" (not a FATF member but assessed)
+## fatfStatus values: "blacklist" | "greylist" | "monitored" | "compliant"
 
-recommendation logic:
-- standard_dd: riskScore < 35 and no sanctions and FATF member
-- enhanced_dd: riskScore 35-65 or grey_list
-- senior_approval: riskScore 66-85 or significant sanctions
-- prohibited: riskScore > 85 or black_list or comprehensive OFAC/UN sanctions
+## activeSanctionsRegimes: enumerate from ["US OFAC", "EU", "UN SC", "UK OFSI", "AU DFAT", "CA OSFI"]
+
+## recommendation logic:
+- prohibited: riskScore>=75 OR fatfStatus=blacklist OR sanctionsRegimes>=4
+- senior_approval: riskScore>=55 OR sanctionsRegimes>=2
+- enhanced_dd: riskScore>=30 OR fatfStatus=greylist OR fatfStatus=monitored
+- standard_dd: otherwise
 
 ${detailInstruction}
 
 Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
-  "country": "string (full official name)",
-  "overallRisk": "low"|"medium"|"high"|"critical",
+  "countryCode": "ISO2",
+  "countryName": "string",
   "riskScore": number,
-  "dimensions": {
-    "amlRisk": number,
-    "baselScore": number,
-    "cpiScore": number,
-    "politicalRisk": number,
-    "sanctionsRisk": number,
-    "tfRisk": number
-  },
-  "fatfStatus": "member"|"grey_list"|"black_list"|"non_member",
-  "sanctionsProfile": {
-    "ofac": boolean,
-    "eu": boolean,
-    "un": boolean,
-    "uk": boolean,
-    "details": ["string"]
-  },
-  "keyRisks": ["string"],
-  "recentDevelopments": ["string"],
-  "regulatoryObligations": [{"obligation": "string", "regulation": "string"}],
-  "recommendation": "standard_dd"|"enhanced_dd"|"senior_approval"|"prohibited",
-  "summary": "string"
+  "riskLevel": "low"|"medium"|"high"|"critical",
+  "fatfStatus": "blacklist"|"greylist"|"monitored"|"compliant",
+  "cahraListed": boolean,
+  "activeSanctionsRegimes": ["string"],
+  "corruptionIndex": number,
+  "fragilityIndex": number,
+  "riskDimensions": { "fatf": number, "corruption": number, ... },
+  "geopoliticalFlags": ["string"],
+  "recommendation": "standard_dd"|"enhanced_dd"|"senior_approval"|"prohibited"
 }`,
           cache_control: { type: "ephemeral" },
         },
@@ -425,17 +694,14 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
           role: "user",
           content: `Analyse country risk for: ${sanitizeField(country, 100)}
 
-Analysis depth: ${depth}
+Analysis depth: ${depth}${staticContext}
 
-Provide a complete country risk intelligence assessment covering AML/CFT risk, FATF status, sanctions exposure (OFAC, EU, UN, UK), political stability, TF risk, and all regulatory obligations that would apply to a UAE-based DNFBP (gold trader/refinery) engaging with counterparties in or from this country.`,
+Provide a complete country risk intelligence assessment covering AML/CFT risk, FATF status, sanctions exposure (US OFAC, EU, UN SC, UK OFSI, AU DFAT, CA OSFI), political stability, UAE CAHRA listing, and all geopolitical risk factors that would apply to a UAE-based DNFBP (gold trader/refinery) engaging with counterparties in or from this country.`,
         },
       ],
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    // Defensive JSON extraction — strip code-fences and find the first
-    // top-level {...} object. Claude occasionally wraps JSON in prose
-    // even when instructed not to; pulling the JSON out beats failing.
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : cleaned;
@@ -445,33 +711,31 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     } catch (parseErr) {
       console.warn("[country-risk] JSON parse failed:", parseErr instanceof Error ? parseErr.message : parseErr, "raw:", cleaned.slice(0, 200));
       return NextResponse.json(
-        {
-          ok: false,
-          error: "Country-risk analysis returned invalid data. Retry, or escalate if persistent.",
-        },
+        { ok: false, error: "Country-risk analysis returned invalid data. Retry, or escalate if persistent." },
         { status: 502, headers: gate.headers },
       );
     }
-    // Normalize arrays — LLM occasionally returns null instead of [].
-    if (!Array.isArray(result.keyRisks)) result.keyRisks = [];
-    if (!Array.isArray(result.recentDevelopments)) result.recentDevelopments = [];
-    if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    // Normalize arrays
+    if (!Array.isArray(result.activeSanctionsRegimes)) result.activeSanctionsRegimes = [];
+    if (!Array.isArray(result.geopoliticalFlags)) result.geopoliticalFlags = [];
+    if (!result.riskDimensions || typeof result.riskDimensions !== "object") result.riskDimensions = {};
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
     return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    console.warn("[country-risk] LLM call failed:", detail);
-    // Serve static fallback on LLM failure so tool never returns empty
-    const staticEntry = lookupStaticCountry(country);
-    if (staticEntry) {
+    console.error("[country-risk] LLM call failed:", err);
+    const isTimeout = detail.includes("timeout");
+    const isRateLimit = detail.includes("rate");
+    const staticFallback = lookupStaticCountry(country);
+    if (staticFallback) {
       console.warn(`[country-risk] serving static_fallback for ${country} after LLM failure`);
       return NextResponse.json(
         {
-          ...staticEntryToResult(staticEntry),
+          ...staticEntryToResult(staticFallback),
           source: "static_fallback",
           degraded: true,
-          degradedReason: detail.includes("timeout") ? "LLM timeout" : detail.includes("rate") ? "LLM rate limit" : "LLM unavailable",
+          degradedReason: isTimeout ? "LLM timeout" : isRateLimit ? "LLM rate limit" : "LLM unavailable",
           latencyMs: Date.now() - t0,
         },
         { status: 200, headers: gate.headers },
@@ -480,7 +744,11 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     return NextResponse.json(
       {
         ok: false,
-        error: detail.includes("timeout") ? "Country-risk analysis timed out. Try again or use a shorter analysis depth." : detail.includes("rate") ? "Country-risk temporarily rate-limited. Wait 60s and retry." : "Real-time country-risk analysis temporarily unavailable. Please retry.",
+        error: isTimeout
+          ? "Country-risk analysis timed out. Try again or use a shorter analysis depth."
+          : isRateLimit
+            ? "Country-risk temporarily rate-limited. Wait 60s and retry."
+            : "Real-time country-risk analysis temporarily unavailable. Please retry.",
         latencyMs: Date.now() - t0,
       },
       { status: 503, headers: gate.headers },

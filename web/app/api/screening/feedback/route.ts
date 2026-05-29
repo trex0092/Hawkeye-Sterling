@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { submitFeedback, listFeedback, stats, type Verdict } from "@/lib/server/feedback";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +38,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: gate.headers },
     );
   }
+  // Length caps prevent storage exhaustion.
+  const MAX_ID = 256, MAX_NAME = 512, MAX_REASON = 2000, MAX_ANALYST = 200;
+  if (subjectId.length > MAX_ID || listId.length > MAX_ID || listRef.length > MAX_ID ||
+      candidateName.length > MAX_NAME || analyst.length > MAX_ANALYST ||
+      (reason && reason.length > MAX_REASON)) {
+    return NextResponse.json(
+      { ok: false, error: "one or more fields exceed maximum length" },
+      { status: 400, headers: gate.headers },
+    );
+  }
   if (!["false_positive", "true_match", "needs_review"].includes(verdict)) {
     return NextResponse.json(
       { ok: false, error: "verdict must be false_positive | true_match | needs_review" },
@@ -52,6 +64,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     reason,
     analyst,
   });
+  void writeAuditChainEntry(
+    { event: "screening.feedback.submitted", actor: gate.keyId, meta: { subjectId, verdict } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({ ok: true, record }, { status: 201, headers: gate.headers });
 }
 

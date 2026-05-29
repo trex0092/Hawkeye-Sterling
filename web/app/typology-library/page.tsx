@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // FIU 2025 DPMS typology coverage matrix types (mirrors /api/fiu-typology-check)
 interface FiuTypologyEntry {
@@ -131,7 +132,7 @@ function FiuDpmsSection() {
     try {
       const res = await fetch("/api/fiu-typology-check");
       if (!res.ok) {
-        if (mountedRef.current) setError(`Failed to load coverage matrix (HTTP ${res.status})`);
+        if (mountedRef.current) setError(apiErrorMessage(res.status, "Coverage matrix load"));
         return;
       }
       const json = await res.json().catch(() => ({})) as FiuCoverageResponse;
@@ -228,6 +229,28 @@ function FiuDpmsSection() {
 // Module 38 — Typology Library
 // Comprehensive AML/CFT typology search engine powered by Claude.
 
+// FATF category filters — maps to the ML/TF/PF category field in the static library
+const FATF_CATEGORY_FILTERS = [
+  { key: "all-fatf", label: "All", fatfCategory: undefined as string | undefined },
+  { key: "ml", label: "ML — Money Laundering", fatfCategory: "ML" },
+  { key: "tf", label: "TF — Terrorist Financing", fatfCategory: "TF" },
+  { key: "pf", label: "PF — Proliferation Financing", fatfCategory: "PF" },
+] as const;
+
+type FatfFilterKey = (typeof FATF_CATEGORY_FILTERS)[number]["key"];
+
+// Risk level filters
+const RISK_FILTERS = [
+  { key: "all-risk", label: "All Risk Levels", riskLevel: undefined as string | undefined },
+  { key: "critical", label: "Critical", riskLevel: "critical" },
+  { key: "high", label: "High", riskLevel: "high" },
+  { key: "medium", label: "Medium", riskLevel: "medium" },
+  { key: "low", label: "Low", riskLevel: "low" },
+] as const;
+
+type RiskFilterKey = (typeof RISK_FILTERS)[number]["key"];
+
+// Sector-based filters (legacy — kept for AI augmentation path)
 const FILTER_CATEGORIES = [
   { key: "all", label: "All" },
   { key: "trade", label: "Trade" },
@@ -321,7 +344,7 @@ function DeepDiveModal({
       });
       if (!res.ok) {
         console.error("[hawkeye] typology-library detail fetch HTTP", res.status);
-        if (mountedRef.current) setDetailError(`Could not load typology detail (HTTP ${res.status}).`);
+        if (mountedRef.current) setDetailError(apiErrorMessage(res.status, "Typology detail load"));
       } else {
         const json = await res.json().catch(() => ({})) as TypologyDetailResult;
         if (!mountedRef.current) return;
@@ -329,7 +352,7 @@ function DeepDiveModal({
       }
     } catch (err) {
       console.error("[hawkeye] typology-library detail fetch threw:", err);
-      if (mountedRef.current) setDetailError(`Network error — ${err instanceof Error ? err.message : String(err)}.`);
+      if (mountedRef.current) setDetailError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) { setLoading(false); setFetched(true); }
     }
@@ -602,6 +625,8 @@ function TypologyCard({
 export default function TypologyLibraryPage() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [activeFatfFilter, setActiveFatfFilter] = useState<FatfFilterKey>("all-fatf");
+  const [activeRiskFilter, setActiveRiskFilter] = useState<RiskFilterKey>("all-risk");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -609,9 +634,20 @@ export default function TypologyLibraryPage() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const handleSearch = async (overrideQuery?: string, overrideFilter?: FilterKey) => {
+  const handleSearch = async (
+    overrideQuery?: string,
+    overrideFilter?: FilterKey,
+    overrideFatf?: FatfFilterKey,
+    overrideRisk?: RiskFilterKey,
+  ) => {
     const q = overrideQuery ?? query;
     const f = overrideFilter ?? activeFilter;
+    const fatf = overrideFatf ?? activeFatfFilter;
+    const risk = overrideRisk ?? activeRiskFilter;
+
+    const fatfEntry = FATF_CATEGORY_FILTERS.find((c) => c.key === fatf);
+    const riskEntry = RISK_FILTERS.find((r) => r.key === risk);
+
     setLoading(true);
     setSearchError(null);
     try {
@@ -619,8 +655,12 @@ export default function TypologyLibraryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: q || `Show ${f === "all" ? "most common" : f} typologies`,
-          filters: { sector: CATEGORY_SECTOR_MAP[f] },
+          query: q || `Show ${fatf !== "all-fatf" ? fatf.toUpperCase() : f === "all" ? "most common" : f} typologies`,
+          filters: {
+            sector: CATEGORY_SECTOR_MAP[f],
+            category: fatfEntry?.fatfCategory,
+            riskLevel: riskEntry?.riskLevel,
+          },
         }),
         signal: AbortSignal.timeout(45_000),
       });
@@ -634,9 +674,7 @@ export default function TypologyLibraryPage() {
         if (mountedRef.current) setSearchError(
           res.status === 503
             ? "Typology-library AI service unavailable — set ANTHROPIC_API_KEY or retry in a moment."
-            : isHtml
-              ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout.`
-              : `Search failed (HTTP ${res.status}).`,
+            : apiErrorMessage(res.status, "Search"),
         );
         return;
       }
@@ -653,7 +691,7 @@ export default function TypologyLibraryPage() {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
       if (mountedRef.current) setSearchError(isTimeout
         ? "Typology search timed out after 45s — please retry or use a tighter query."
-        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
+        : caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -662,6 +700,16 @@ export default function TypologyLibraryPage() {
   const handleFilterClick = (key: FilterKey) => {
     setActiveFilter(key);
     void handleSearch(undefined, key);
+  };
+
+  const handleFatfFilterClick = (key: FatfFilterKey) => {
+    setActiveFatfFilter(key);
+    void handleSearch(undefined, undefined, key);
+  };
+
+  const handleRiskFilterClick = (key: RiskFilterKey) => {
+    setActiveRiskFilter(key);
+    void handleSearch(undefined, undefined, undefined, key);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -713,22 +761,79 @@ export default function TypologyLibraryPage() {
         </div>
       </div>
 
-      {/* Filter Chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {FILTER_CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            type="button"
-            onClick={() => handleFilterClick(cat.key)}
-            className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
-              activeFilter === cat.key
-                ? "bg-brand text-white border-brand"
-                : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+      {/* FATF Category Filters */}
+      <div className="mb-3">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">FATF Category</div>
+        <div className="flex flex-wrap gap-2">
+          {FATF_CATEGORY_FILTERS.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => handleFatfFilterClick(cat.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeFatfFilter === cat.key
+                  ? cat.key === "ml"
+                    ? "bg-brand text-white border-brand"
+                    : cat.key === "tf"
+                      ? "bg-red text-white border-red"
+                      : cat.key === "pf"
+                        ? "bg-orange text-white border-orange"
+                        : "bg-brand text-white border-brand"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Risk Level Filters */}
+      <div className="mb-3">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Risk Level</div>
+        <div className="flex flex-wrap gap-2">
+          {RISK_FILTERS.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => handleRiskFilterClick(r.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeRiskFilter === r.key
+                  ? r.key === "critical"
+                    ? "bg-red text-white border-red"
+                    : r.key === "high"
+                      ? "bg-orange text-white border-orange"
+                      : r.key === "medium"
+                        ? "bg-amber text-white border-amber"
+                        : "bg-green text-white border-green"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sector Filter Chips */}
+      <div className="mb-6">
+        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Sector</div>
+        <div className="flex flex-wrap gap-2">
+          {FILTER_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => handleFilterClick(cat.key)}
+              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
+                activeFilter === cat.key
+                  ? "bg-brand text-white border-brand"
+                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Results */}

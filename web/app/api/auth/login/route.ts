@@ -3,11 +3,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual } from "node:crypto";
-import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypto";
+const RECOVERY_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, setJson, del } from "@/lib/server/store";
+import { incrementCounter } from "@/lib/server/metrics-store";
 
 // ── Brute-force protection ────────────────────────────────────────────────────
 // Two independent guards — per-username AND per-IP — to block both targeted
@@ -49,7 +51,7 @@ async function checkRateLimit(
   prefix: string,
   key: string,
   maxFailures: number,
-): Promise<{ allowed: boolean; retryAfterSec?: number }> {
+): Promise<{ allowed: boolean; retryAfterSec?: number; lockoutWriteFailed?: boolean }> {
   const now = Date.now();
   const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
   if (!rec) return { allowed: true };
@@ -62,13 +64,19 @@ async function checkRateLimit(
   }
   if (rec.count >= maxFailures) {
     const lockUntil = now + WINDOW_MS;
-    await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil }).catch((err) => {
-      // Lockout write failure is safety-critical: if this fails, the lockout
-      // isn't persisted and the attacker can retry. Log prominently so the
-      // on-call team can investigate the blob store.
-      console.warn("[auth/login] CRITICAL: lockout write failed — brute-force protection degraded:", err instanceof Error ? err.message : String(err));
-    });
-    return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
+    let lockoutWriteFailed = false;
+    try {
+      await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil });
+    } catch (err) {
+      // Lockout write failure is safety-critical: the lockout won't be
+      // persisted across Lambda instances. Signal the caller to return 503
+      // rather than quietly allowing the request — failing open on a lockout
+      // write error would let an attacker brute-force if the blob store is
+      // temporarily degraded.
+      console.error("[auth/login] CRITICAL: lockout write failed — returning 503 to caller:", err instanceof Error ? err.message : String(err));
+      lockoutWriteFailed = true;
+    }
+    return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000), lockoutWriteFailed };
   }
   return { allowed: true };
 }
@@ -128,6 +136,10 @@ export async function POST(req: Request) {
   // Per-IP check first — cheapest signal; catches credential-spraying.
   const ipRl = await checkRateLimit(IP_LOCK_PREFIX, iKey, IP_MAX_FAILURES);
   if (!ipRl.allowed) {
+    if (ipRl.lockoutWriteFailed) {
+      incrementCounter('hawkeye_auth_failures_total', 1, { reason: 'lockout_write_failed' });
+      return NextResponse.json({ ok: false, error: "Service temporarily unavailable" }, { status: 503 });
+    }
     console.warn("[auth/login] ip-rate-limited", { iKey, retryAfterSec: ipRl.retryAfterSec });
     return NextResponse.json(
       { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: ipRl.retryAfterSec },
@@ -138,7 +150,11 @@ export async function POST(req: Request) {
   // Per-username check — catches targeted single-account attacks.
   const userRl = await checkRateLimit(USER_LOCK_PREFIX, uKey, USER_MAX_FAILURES);
   if (!userRl.allowed) {
-    console.warn("[auth/login] rate-limited", { uKey, ip, retryAfterSec: userRl.retryAfterSec });
+    if (userRl.lockoutWriteFailed) {
+      incrementCounter('hawkeye_auth_failures_total', 1, { reason: 'lockout_write_failed' });
+      return NextResponse.json({ ok: false, error: "Service temporarily unavailable" }, { status: 503 });
+    }
+    console.warn("[auth/login] rate-limited", { uKey, ipHash: iKey, retryAfterSec: userRl.retryAfterSec });
     return NextResponse.json(
       { ok: false, error: "Too many failed login attempts. Try again later.", retryAfterSec: userRl.retryAfterSec },
       { status: 429, headers: { "retry-after": String(userRl.retryAfterSec ?? 900) } },
@@ -155,10 +171,16 @@ export async function POST(req: Request) {
     users = await loadUsers();
   } catch (err) {
     console.error("[auth/login] loadUsers failed — login unavailable", {
-      ip,
+      ipHash: iKey,
       reason: err instanceof Error ? err.message : String(err),
     });
     await new Promise((r) => setTimeout(r, 400));
+    // Increment both counters on failure.
+    await Promise.all([
+      recordFailure(USER_LOCK_PREFIX, uKey),
+      recordFailure(IP_LOCK_PREFIX, iKey),
+    ]);
+    console.warn("[auth/login] failed attempt", { uKey, ipHash: iKey, userFound: false });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
   // Active-user lookup for normal authentication.
@@ -182,10 +204,18 @@ export async function POST(req: Request) {
 
     if (
       luisaRecord &&
+      // Deny the recovery path if it has already been used — the operator must
+      // use their re-hashed password. recoveryUsed prevents LUISA_INITIAL_PASSWORD
+      // from acting as a permanent backdoor after the first recovery ceremony.
+      !luisaRecord.recoveryUsed &&
       username.toLowerCase() === "luisa" &&
       recoveryPassword &&
       recoveryPassword.length >= 8 &&
-      (() => { const a = Buffer.from(password); const b = Buffer.from(recoveryPassword.trim()); return a.length === b.length && timingSafeEqual(a, b); })()
+      (() => {
+        const ha = createHmac("sha256", RECOVERY_COMPARE_KEY).update(password).digest();
+        const hb = createHmac("sha256", RECOVERY_COMPARE_KEY).update(recoveryPassword.trim()).digest();
+        return timingSafeEqual(ha, hb);
+      })()
     ) {
       const newSalt = generateSalt();
       const newHash = hashPassword(password, newSalt);
@@ -198,14 +228,14 @@ export async function POST(req: Request) {
         await saveUsers(
           freshUsers.map((u) =>
             u.id === luisaRecord.id
-              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: savedPwVersion, active: true }
+              ? { ...u, passwordHash: newHash, passwordSalt: newSalt, pwVersion: savedPwVersion, active: true, recoveryUsed: true }
               : u,
           ),
         );
       }).catch((err: unknown) => {
         console.warn("[auth/login] recovery hash update failed:", err instanceof Error ? err.message : String(err));
       });
-      console.warn("[auth/login] luisa recovery login succeeded — hash and active flag updated");
+      console.warn("[auth/login] luisa recovery login succeeded — hash updated and recoveryUsed flagged (recovery path now permanently disabled)");
       // Must use the NEW pwVersion so the issued session token matches Blobs.
       // Using the stale luisaRecord.pwVersion causes /api/auth/me to see a
       // version mismatch and immediately invalidate the just-issued session.
@@ -218,7 +248,7 @@ export async function POST(req: Request) {
         recordFailure(USER_LOCK_PREFIX, uKey),
         recordFailure(IP_LOCK_PREFIX, iKey),
       ]);
-      console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
+      console.warn("[auth/login] failed attempt", { uKey, ipHash: iKey, userFound: !!user });
       return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
     }
   }
@@ -258,9 +288,10 @@ export async function POST(req: Request) {
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge: SESSION_TTL_S,
     path: "/",
+    partitioned: isSecure,
   });
 
   // Persist last-login timestamp and IP hash for next-login geo-velocity check.
@@ -277,6 +308,22 @@ export async function POST(req: Request) {
     );
   }).catch((err) =>
     console.warn("[auth/login] lastLogin persist failed:", err instanceof Error ? err.message : String(err)),
+  );
+
+  // Record session for the Session Monitor (fire-and-forget; must not block login response).
+  const now = new Date().toISOString();
+  void appendSession({
+    id: `sess_${randomBytes(6).toString("hex")}`,
+    userId: user.id,
+    userName: user.name ?? user.username ?? user.id,
+    role: user.role,
+    ipDisplay: maskIp(ip),
+    userAgent: (req.headers.get("user-agent") ?? "").slice(0, 120),
+    started: now,
+    lastActive: now,
+    active: true,
+  }).catch((err) =>
+    console.warn("[auth/login] session record failed:", err instanceof Error ? err.message : String(err)),
   );
 
   return res;

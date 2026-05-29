@@ -52,7 +52,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     items: [
       { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
       { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
-      { label: "🔒 Audit Trail & Operator Console", href: "/audit-trail", hint: "Immutable HMAC audit chain + AI anomaly scan · MCP activity log · kill switch" },
       { label: "🏛️ Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
       { label: "📑 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
@@ -61,7 +60,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
-      { label: "🔐 Access Control", href: "/access-control", hint: "User management · permission matrix · session monitor · audit log" },
+      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
+      { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
     ],
   },
   {
@@ -78,6 +78,22 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     ],
   },
   {
+    // Employee-facing approval tracker
+    title: "Approvals",
+    items: [
+      { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
+    ],
+  },
+  {
+    // Leadership: board-level posture, KRI tracking, incident response
+    title: "Leadership & Risk Posture",
+    items: [
+      { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "14 key risk indicators · live green/amber/red bands · board-pack export" },
+      { label: "🏛️ Board Dashboard", href: "/board-dashboard", hint: "Executive posture view — case backlog · KRI summary · AI health · compliance calendar" },
+      { label: "🕵️ Analyst UEBA", href: "/analyst-behavior", hint: "User & Entity Behavior Analytics — insider-threat signals · export spikes · off-hours access · override rates" },
+    ],
+  },
+  {
     // Analytics, AI brain internals, investigation tools, system health
     title: "Intelligence",
     items: [
@@ -85,9 +101,11 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
       { label: "🌍 Country & Geopolitical Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · live risk events · portfolio impact" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
+      { label: "🧠 Brain Intelligence Hub", href: "/brain-intelligence", hint: "Wave 14 XAI decomposer · threat forecast · typology heatmap · counterfactual explainer · responsible AI" },
       { label: "🔧 AI Reasoning Workbench", href: "/workbench", hint: "Multi-mode AI reasoning · counterfactual · steelman · brain manifest" },
       { label: "📡 Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
       { label: "🥷 Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
+      { label: "🛡️ Security Audit", href: "/security-audit", hint: "AI code analyser · OWASP checklist · free scan tools" },
       { label: "💚 Status", href: "/status", hint: "Live endpoint & watchlist health" },
       { label: "📘 API Docs", href: "/api-docs", hint: "OpenAPI reference" },
     ],

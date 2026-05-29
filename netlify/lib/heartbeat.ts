@@ -15,3 +15,21 @@ export async function writeHeartbeat(label: string): Promise<void> {
     console.warn(`[${label}] heartbeat write failed (non-critical):`, err instanceof Error ? err.message : String(err));
   }
 }
+
+// Fire ALERT_WEBHOOK_URL when a scheduled function encounters a fatal error.
+// Best-effort: network failures are swallowed so the caller can still return
+// its error response without an additional unhandled rejection.
+export async function fireAlert(label: string, error: string, severity: "critical" | "high" = "high"): Promise<void> {
+  const url = process.env["ALERT_WEBHOOK_URL"];
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ event: "cron_failure", source: label, error, severity, at: new Date().toISOString() }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch {
+    // non-critical — alert delivery failure must not mask the original error
+  }
+}

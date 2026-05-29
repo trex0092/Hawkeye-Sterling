@@ -26,9 +26,10 @@
 // Auth: ADMIN_TOKEN (operator must verify identity OOB before invoking).
 
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -138,7 +139,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const erasureId = `erase_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const erasureId = `erase_${Date.now()}_${randomBytes(3).toString("hex")}`;
   const prefixes = [
     "ongoing/subject/",
     "ongoing/last/",
@@ -193,21 +194,33 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
   if (!body.dryRun) {
     await setJson(`${ERASURE_LOG_PREFIX}${erasureId}`, logEntry);
+    void writeAuditChainEntry({
+      event: "pdpl.erasure",
+      actor: requesterEmail,
+      erasureId,
+      ...(subjectId ? { subjectId } : {}),
+      keysAnonymised: keysAffected.length,
+      legalBasis: logEntry.legalBasis,
+      holdExpiresAt: logEntry.holdExpiresAt,
+    }).catch((err: unknown) => {
+      console.warn("[pdpl/erase] audit chain write failed:", err instanceof Error ? err.message : String(err));
+    });
   }
 
+  // Strip internal blob key paths from the response — return only the count.
+  const { keysAffected: _keysAffected, ...publicLogEntry } = logEntry;
   return NextResponse.json({
     ok: true,
     regulation: "UAE PDPL Art.39 / FDL 10/2025 Art.24",
     erasureId,
     dryRun: Boolean(body.dryRun),
     keysAnonymised: keysAffected.length,
-    keysAffected,
     totalScanned,
     holdExpiresAt: logEntry.holdExpiresAt,
     holdDays: ERASURE_LEGAL_HOLD_DAYS,
     hint: body.dryRun
       ? "Dry run — no records modified. Re-run with dryRun: false to perform erasure."
       : `Records anonymised. Audit hash anchors retained for ${ERASURE_LEGAL_HOLD_DAYS} days for AML retention; purge cron then hard-deletes.`,
-    log: logEntry,
+    log: publicLogEntry,
   });
 }

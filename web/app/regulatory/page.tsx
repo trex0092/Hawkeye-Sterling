@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { RegulatorySourcesSection } from "@/components/regulatory/RegulatorySourcesSection";
 import type { CalendarEvent, RegCalendarLiveResult } from "@/app/api/regulatory-calendar-live/route";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -878,6 +879,20 @@ export default function RegulatoryPage() {
   // Library filter state
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [_liveItems, setLiveItems] = useState<LiveItem[]>([]);
+  const [_liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
+  useEffect(() => {
+    setLiveStatus("loading");
+    fetch("/api/regulatory-feed")
+      .then((r) => r.json())
+      .then((data) => {
+        setLiveItems(data.items ?? []);
+        setFetchedAt(data.fetchedAt ?? null);
+        setLiveStatus("ok");
+      })
+      .catch(() => setLiveStatus("error"));
+  }, []);
 
   // Auto-refresh timer ref
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -897,7 +912,7 @@ export default function RegulatoryPage() {
         })),
       }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: { ok: boolean; classified?: Array<{ urgency: FeedUrgency; reason: string }> }) => {
         if (data.ok && data.classified) {
           setFeedItems((prev) =>
@@ -1090,6 +1105,8 @@ export default function RegulatoryPage() {
           {filtered.length === 0 && (
             <div className="text-12 text-ink-2 py-8 text-center">No entries match.</div>
           )}
+
+          <RegulatorySourcesSection />
         </div>
       </div>
     </ModuleLayout>

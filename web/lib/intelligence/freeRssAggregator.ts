@@ -1601,8 +1601,12 @@ const FREE_RSS_FEEDS: RssFeed[] = [
   { source: "insightcrime-gangs", outlet: "insightcrime.org/gangs", url: "https://insightcrime.org/category/criminal-networks/feed/" },
   { source: "inl-us-state", outlet: "state.gov/inl", url: "https://www.state.gov/rss-feed/inl/" },
   { source: "unodc-drugs", outlet: "unodc.org/drugs", url: "https://www.unodc.org/rss/frontpage_en.xml" },
+  // UNODC Drug Trafficking dedicated feed — narcotics intelligence (INVESTIGATIVE_FEEDS)
+  { source: "unodc-drug-trafficking", outlet: "unodc.org", url: "https://www.unodc.org/unodc/en/drug-trafficking/news.rss" },
   { source: "emcdda-drugs", outlet: "emcdda.europa.eu/drugs", url: "https://www.emcdda.europa.eu/rss-feeds/news_en" },
   { source: "incb-press", outlet: "incb.org", url: "https://www.incb.org/incb/en/news-and-events/news/rss.xml" },
+  // INCB dedicated news feed — precursor chemicals, narcotics scheduling (INVESTIGATIVE_FEEDS)
+  { source: "incb-news", outlet: "incb.org", url: "https://www.incb.org/incb/en/news/rss.xml" },
   { source: "mexico-organized-crime", outlet: "ocdajournal.com", url: "https://ocdajournal.com/feed/" },
   { source: "plaza-publica-gt", outlet: "plazapublica.com.gt", url: "https://www.plazapublica.com.gt/feed/" },
   { source: "verdad-abierta-co", outlet: "verdadabierta.com", url: "https://verdadabierta.com/feed/" },

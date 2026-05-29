@@ -45,6 +45,17 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 413, headers: { ...gate.headers, ...CORS } }
     );
   }
+  // Hard length cap — this route is called on every keystroke (debounced
+  // by the UI) so a 50 KB paste would otherwise re-run the classifier
+  // regex pack on every debounce tick. 2000 chars matches the advisor
+  // gate; beyond that the operator should send to the advisor and get
+  // a proper "too_long" rejection.
+  if (body.question.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "question exceeds 2000 characters" },
+      { status: 413, headers: CORS },
+    );
+  }
   return NextResponse.json(
     { ok: true, analysis: classifyMlroQuestion(body.question) },
     { headers: { ...gate.headers, ...CORS } }

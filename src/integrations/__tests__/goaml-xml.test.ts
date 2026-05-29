@@ -103,7 +103,7 @@ describe('goaml-xml — serialiseGoamlXml', () => {
     }));
     expect(xml).toContain('<transaction>');
     expect(xml).toContain('<transactionnumber>TX-0001</transactionnumber>');
-    expect(xml).toContain('<amount_local>51000</amount_local>');
+    expect(xml).toContain('<amount_local>51000.00</amount_local>');
     expect(xml).toContain('<transmode_code>cash</transmode_code>');
   });
 

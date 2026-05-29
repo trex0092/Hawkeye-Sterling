@@ -160,6 +160,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "informal money transfer", "informal funds transfer",
       "cryptocurrency otc laundering", "otc desk laundering",
       "fiat off-ramp laundering", "crypto off-ramp fraud",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "غسيل أموال", "غسل الأموال", "جريمة مالية",
+      // French
+      "blanchiment", "blanchiment d'argent", "blanchiment de capitaux",
+      // Spanish
+      "lavado", "lavado de dinero", "lavado de activos",
+      // Russian
+      "отмывание", "отмывание денег", "финансовые преступления",
+      // German
+      "Geldwäsche", "Geldwäscherei", "Wirtschaftskriminalität",
+      // Turkish
+      "kara para aklama", "para aklama", "mali suç",
+      // Chinese
+      "洗钱", "洗钱罪", "金融犯罪",
+      // Indonesian
+      "pencucian uang", "money laundering", "kejahatan keuangan",
+      // Hindi
+      "मनी लॉन्ड्रिंग", "धन शोधन", "वित्तीय अपराध",
     ],
   },
   {
@@ -187,6 +206,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "corrupt practices", "secret commission",
       "regulatory capture", "revolving door corruption",
       "undue advantage", "improper benefit",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "رشوة", "فساد", "اختلاس", "احتيال",
+      // French
+      "fraude", "corruption", "détournement", "pot-de-vin",
+      // Spanish
+      "fraude", "corrupción", "soborno", "malversación",
+      // Russian
+      "мошенничество", "коррупция", "взятка", "хищение",
+      // German
+      "Betrug", "Korruption", "Bestechung", "Veruntreuung",
+      // Turkish
+      "yolsuzluk", "rüşvet", "zimmet", "dolandırıcılık",
+      // Chinese
+      "腐败", "贿赂", "贪污", "欺诈",
+      // Indonesian
+      "korupsi", "suap", "penipuan", "penggelapan",
+      // Hindi
+      "भ्रष्टाचार", "रिश्वत", "घोटाला", "धोखाधड़ी",
     ],
   },
   {
@@ -255,6 +293,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "counter-terrorism financing compliance failure",
       "terrorist property", "terrorist funds",
       "terrorist transaction", "suspicious terrorism transaction",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "تمويل الإرهاب", "إرهاب", "إرهابي", "منظمة إرهابية",
+      // French
+      "terrorisme", "financement du terrorisme", "terroriste", "cellule terroriste",
+      // Spanish
+      "terrorismo", "financiación del terrorismo", "terrorista", "célula terrorista",
+      // Russian
+      "терроризм", "финансирование терроризма", "террорист", "террористическая ячейка",
+      // German
+      "Terrorismus", "Terrorismusfinanzierung", "Terrorist", "Terrorzelle",
+      // Turkish
+      "terörizm", "terör finansmanı", "terörist", "terör örgütü",
+      // Chinese
+      "恐怖主义", "恐怖主义融资", "恐怖分子", "恐怖组织",
+      // Indonesian
+      "terorisme", "pendanaan terorisme", "teroris", "jaringan teroris",
+      // Hindi
+      "आतंकवाद", "आतंकवाद वित्तपोषण", "आतंकवादी",
     ],
   },
   {
@@ -312,6 +369,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "nuclear suppliers group violation", "nsg violation",
       "australia group violation",
       "wassenaar arrangement violation",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "مدرج على قوائم العقوبات", "أسلحة دمار شامل", "انتشار الأسلحة",
+      // French
+      "sanctionné", "armes de destruction massive", "prolifération",
+      // Spanish
+      "sancionado", "armas de destrucción masiva", "proliferación",
+      // Russian
+      "под санкциями", "оружие массового поражения", "распространение",
+      // German
+      "unter Sanktionen", "Massenvernichtungswaffen", "Proliferation",
+      // Turkish
+      "yaptırım listesi", "kitle imha silahları", "nükleer yayılma",
+      // Chinese
+      "受制裁", "大规模杀伤性武器", "扩散",
+      // Indonesian
+      "dikenai sanksi", "senjata pemusnah massal", "proliferasi",
+      // Hindi
+      "प्रतिबंध", "सामूहिक विनाश के हथियार",
       // Export control — US and multilateral regimes
       "itar violation", "ear violation", "ear99 diversion",
       "commerce control list violation", "ccl violation",
@@ -389,6 +465,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "gold in luggage", "gold in their luggage", "gold in his luggage",
       "undeclared gold", "unreported gold", "undisclosed gold",
       "customs with gold", "airport with gold", "border with gold",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "جريمة منظمة", "تهريب المخدرات", "عصابة إجرامية",
+      // French
+      "crime organisé", "trafic de drogues", "organisation criminelle",
+      // Spanish
+      "crimen organizado", "tráfico de drogas", "banda criminal",
+      // Russian
+      "организованная преступность", "наркоторговля", "преступная группировка",
+      // German
+      "organisierte Kriminalität", "Drogenhandel", "kriminelle Organisation",
+      // Turkish
+      "organize suç", "uyuşturucu kaçakçılığı", "suç örgütü",
+      // Chinese
+      "有组织犯罪", "贩毒", "犯罪集团",
+      // Indonesian
+      "kejahatan terorganisir", "perdagangan narkoba", "sindikat kriminal",
+      // Hindi
+      "संगठित अपराध", "मादक पदार्थ तस्करी", "अपराधी गिरोह",
     ],
   },
   {
@@ -414,6 +509,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "escort fraud", "escort scam",
       "child marriage",
       "underage exploitation",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "الاتجار بالبشر", "العبودية الحديثة", "استغلال جنسي",
+      // French
+      "traite des êtres humains", "esclavage moderne", "exploitation sexuelle",
+      // Spanish
+      "trata de personas", "esclavitud moderna", "explotación sexual",
+      // Russian
+      "торговля людьми", "современное рабство", "сексуальная эксплуатация",
+      // German
+      "Menschenhandel", "moderne Sklaverei", "sexuelle Ausbeutung",
+      // Turkish
+      "insan ticareti", "modern kölelik", "cinsel istismar",
+      // Chinese
+      "人口贩卖", "现代奴隶制", "性剥削",
+      // Indonesian
+      "perdagangan manusia", "perbudakan modern", "eksploitasi seksual",
+      // Hindi
+      "मानव तस्करी", "आधुनिक दासता", "यौन शोषण",
     ],
   },
   {
@@ -502,6 +616,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "social security fraud",
       // Payroll / employee fraud
       "payroll fraud", "ghost employee",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "احتيال", "تزوير", "سرقة الهوية", "مخطط احتيال",
+      // French
+      "fraude", "escroquerie", "falsification", "usurpation d'identité",
+      // Spanish
+      "fraude", "estafa", "falsificación", "robo de identidad",
+      // Russian
+      "мошенничество", "подделка", "кража личных данных", "схема мошенничества",
+      // German
+      "Betrug", "Urkundenfälschung", "Identitätsdiebstahl", "Betrugssystem",
+      // Turkish
+      "dolandırıcılık", "sahtekarlık", "kimlik hırsızlığı", "sahtecilik",
+      // Chinese
+      "欺诈", "伪造", "身份盗窃", "诈骗",
+      // Indonesian
+      "penipuan", "pemalsuan", "pencurian identitas", "penipuan skema",
+      // Hindi
+      "धोखाधड़ी", "जालसाजी", "पहचान चोरी",
     ],
   },
   {
@@ -789,6 +922,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "north korea sanctions evasion",
       "russian sanctions evasion", "russia sanctions violation",
       "belarus sanctions",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "عقوبات", "محظور", "قائمة العقوبات", "تجميد الأصول",
+      // French
+      "sanctions", "sanctionné", "interdit", "gel des avoirs",
+      // Spanish
+      "sanciones", "sancionado", "prohibido", "congelación de activos",
+      // Russian
+      "санкции", "под санкциями", "запрет", "заморозка активов",
+      // German
+      "Sanktionen", "unter Sanktionen", "verboten", "Einfrieren von Vermögen",
+      // Turkish
+      "yaptırımlar", "yasaklı", "yaptırım listesi", "varlık dondurma",
+      // Chinese
+      "制裁", "受制裁", "禁止", "冻结资产",
+      // Indonesian
+      "sanksi", "dikenai sanksi", "dilarang", "pembekuan aset",
+      // Hindi
+      "प्रतिबंध", "प्रतिबंधित", "संपत्ति जब्त",
     ],
   },
   {
@@ -914,6 +1066,25 @@ export const ADVERSE_KEYWORDS: AdverseKeywordRule[] = [
       "tantalum smuggling", "tin smuggling", "tungsten smuggling",
       "coltan smuggling", "coltan conflict", "illegal cobalt",
       "rare earth smuggling", "rare earth fraud",
+      // ── Multilingual equivalents ────────────────────────────────────────────
+      // Arabic
+      "جريمة بيئية", "تعدين غير قانوني", "تهريب الأخشاب",
+      // French
+      "crime environnemental", "exploitation minière illégale", "trafic de bois",
+      // Spanish
+      "delito ambiental", "minería ilegal", "tráfico de madera",
+      // Russian
+      "экологическое преступление", "незаконная добыча", "незаконная вырубка",
+      // German
+      "Umweltkriminalität", "illegaler Bergbau", "illegaler Holzeinschlag",
+      // Turkish
+      "çevre suçu", "yasadışı madencilik", "yasadışı ağaç kesimi",
+      // Chinese
+      "环境犯罪", "非法采矿", "非法伐木",
+      // Indonesian
+      "kejahatan lingkungan", "penambangan ilegal", "penebangan ilegal",
+      // Hindi
+      "पर्यावरण अपराध", "अवैध खनन", "अवैध वनकटाई",
     ],
   },
   // AI-misuse / algorithmic-harm floor, informed by Hartono et al., "The Dual

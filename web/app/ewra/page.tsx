@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EwraBoardReportResult } from "@/app/api/ewra-report/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
 import { openReportWindow } from "@/lib/reportOpen";
 
@@ -225,14 +226,14 @@ export default function EwraPage() {
       });
       const raw = await res.text();
       if (!res.ok) {
-        let msg = `Request failed (HTTP ${res.status}) — please retry`;
+        let msg = apiErrorMessage(res.status, "Request");
         try { const b = JSON.parse(raw) as { error?: string }; if (b.error) msg = b.error; } catch { /* ignore */ }
         if (mountedRef.current) setThreatError(msg);
         return;
       }
       const data = JSON.parse(raw) as { ok: boolean; error?: string } & ThreatIntelResult;
       if (!mountedRef.current) return;
-      if (!data.ok) { setThreatError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!data.ok) { setThreatError(data.error ?? apiErrorMessage(res.status)); return; }
       setThreatIntel(data);
       setThreatOpen(true);
     } catch {
@@ -277,9 +278,7 @@ export default function EwraPage() {
         setBoardError(
           res.status === 503
             ? "Board-report service temporarily unavailable. Set ANTHROPIC_API_KEY on the deployment, or retry in a moment."
-            : isHtml
-              ? `Board-report server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry.`
-              : `Board-report failed (HTTP ${res.status}). Please retry.`,
+            : apiErrorMessage(res.status, "Board-report"),
         );
         return;
       }
@@ -295,7 +294,7 @@ export default function EwraPage() {
       const isTimeout = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError");
       setBoardError(isTimeout
         ? "Board-report timed out after 60s — please retry."
-        : `Network error — ${err instanceof Error ? err.message : String(err)}.`);
+        : caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setBoardLoading(false);
     }

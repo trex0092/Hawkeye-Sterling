@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Subject } from "@/lib/types";
 import type { QuickScreenResult } from "@/lib/api/quickScreen.types";
 import type { SuperBrainResult } from "@/lib/hooks/useSuperBrain";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ function NameVariantSection({ subject, screen }: { subject: Subject; screen: Qui
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -266,7 +267,7 @@ function NetworkExpansionSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -371,7 +372,7 @@ function TransactionOverlaySection({ subject }: { subject: Subject }) {
       setResult(roll);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -456,7 +457,7 @@ function AdversarialRedTeamSection({ subject, screen: _screen }: { subject: Subj
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -534,7 +535,7 @@ function GeoRiskSection({ subject }: { subject: Subject }) {
       setEvents(data.events ?? []);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -618,7 +619,7 @@ function CorporateRegistrySection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -776,7 +777,7 @@ function DocumentIntelSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -990,7 +991,7 @@ function PepNetworkSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1080,7 +1081,7 @@ function DispositionPredictorSection({ subject, screen, superBrain }: { subject:
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1156,7 +1157,7 @@ function DarkWebBreachSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1235,7 +1236,7 @@ function VesselAircraftSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1295,7 +1296,7 @@ function RealEstateSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1374,7 +1375,7 @@ function SanctionsNarrativeSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1452,7 +1453,7 @@ function CrossCasePatternSection({ subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }
@@ -1695,7 +1696,7 @@ function IndustryTypologySection({ subject: _subject }: { subject: Subject }) {
       setResult(data);
       setStatus("done");
     } catch (e) {
-      if (mountedRef.current) setError(e instanceof Error ? e.message : "Unknown error");
+      if (mountedRef.current) setError(caughtErrorMessage(e, "Unknown error"));
       if (mountedRef.current) setStatus("error");
     }
   }

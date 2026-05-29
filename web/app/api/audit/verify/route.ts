@@ -67,12 +67,19 @@ function entryInWindow(
 }
 
 async function handleGet(req: Request): Promise<Response> {
-  const gate = await enforce(req);
+  // requireAuth: true — audit verification is a sensitive MLRO operation.
+  // Without authentication, any caller could enumerate the audit chain.
+  // FDL 10/2025 Art.24: audit records must only be accessible to authorised persons.
+  const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
-  // Sanitise tenantId: alphanumeric, hyphens, underscores only; max 64 chars.
-  const tenantId = ((url.searchParams.get("tenantId") ?? "default").replace(/[^a-zA-Z0-9_-]/g, "") || "default").slice(0, 64);
+  // Tenant isolation: derive tenantId from the authenticated key identity,
+  // not from a caller-supplied query param. A query-param approach allows any
+  // authenticated caller to read another tenant's audit chain (IDOR).
+  // The email field of the API key record is the stable per-tenant identifier.
+  const authenticatedTenantId = gate.record?.email ?? "default";
+  const tenantId = (authenticatedTenantId.replace(/[^a-zA-Z0-9_@.-]/g, "_") || "default").slice(0, 64);
 
   // Use the same derived key as the sign route (getChainSecret derives
   // HMAC-SHA256(root, "hawkeye-audit-chain-v1:<tenantId>") to avoid using
@@ -93,8 +100,12 @@ async function handleGet(req: Request): Promise<Response> {
     url.searchParams.get("screening_id") ?? url.searchParams.get("target");
   const sinceRaw = url.searchParams.get("since");
   const untilRaw = url.searchParams.get("until");
-  const since = sinceRaw ? Date.parse(sinceRaw) : null;
-  const until = untilRaw ? Date.parse(untilRaw) : null;
+  // Date.parse returns NaN for invalid input, not null. Guard with isFinite so
+  // invalid date strings don't silently produce NaN comparisons downstream.
+  const sinceParsed = sinceRaw ? Date.parse(sinceRaw) : NaN;
+  const untilParsed = untilRaw ? Date.parse(untilRaw) : NaN;
+  const since = Number.isFinite(sinceParsed) ? sinceParsed : null;
+  const until = Number.isFinite(untilParsed) ? untilParsed : null;
   const maxRaw = Number.parseInt(url.searchParams.get("max") ?? "", 10);
   const max = Number.isFinite(maxRaw) && maxRaw > 0 ? maxRaw : DEFAULT_MAX;
 
@@ -103,7 +114,16 @@ async function handleGet(req: Request): Promise<Response> {
   const entryPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
   const headKey = tenantId === "default" ? "audit/head.json" : `audit/${tenantId}/head.json`;
 
-  const allKeys = (await listKeys(entryPrefix)).sort();
+  let allKeys: string[];
+  try {
+    allKeys = (await listKeys(entryPrefix)).sort();
+  } catch (err) {
+    console.error("[audit/verify] listKeys failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, error: "Audit store temporarily unavailable — please retry" },
+      { status: 503, headers: gate.headers },
+    );
+  }
   const brokenLinks: VerificationFault[] = [];
   const invalidIds: VerificationFault[] = [];
   const invalidSignatures: VerificationFault[] = [];
@@ -113,12 +133,20 @@ async function handleGet(req: Request): Promise<Response> {
   let prevSequence = 0;
   let scanned = 0;
   let verified = 0;
+  let earliestAt: string | null = null;
+  let latestAt: string | null = null;
 
   for (const key of allKeys) {
     if (scanned >= max) break;
     const e = await getJson<AuditEntry>(key);
     if (!e) continue;
     scanned++;
+
+    // Track date range across all scanned entries.
+    if (e.at) {
+      if (earliestAt === null || e.at < earliestAt) earliestAt = e.at;
+      if (latestAt === null || e.at > latestAt) latestAt = e.at;
+    }
 
     // Sequence contiguity is a chain-wide check — applied even when
     // a target filter is in effect, because gaps anywhere break the
@@ -192,6 +220,11 @@ async function handleGet(req: Request): Promise<Response> {
       ok,
       totalScanned: scanned,
       totalVerified: verified,
+      entryCount: scanned,
+      dateRange: {
+        earliest: earliestAt,
+        latest: latestAt,
+      },
       brokenLinks,
       invalidIds,
       invalidSignatures,

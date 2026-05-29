@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
 import { ModeGrid } from "@/components/workbench/ModeGrid";
@@ -57,11 +58,11 @@ interface BrainResult {
 }
 
 const SEVERITY_COLOUR: Record<string, string> = {
-  critical: "bg-red-100 text-red-800 border-red-300",
-  high:     "bg-orange-100 text-orange-700 border-orange-300",
-  medium:   "bg-yellow-100 text-yellow-700 border-yellow-300",
-  low:      "bg-green-100 text-green-700 border-green-300",
-  clear:    "bg-emerald-50 text-emerald-700 border-emerald-300",
+  critical: "bg-red-950/30 text-red-300 border-red-500/40",
+  high:     "bg-orange-950/30 text-orange-300 border-orange-500/40",
+  medium:   "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  low:      "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
+  clear:    "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
 };
 
 type TabKey = "screening" | "manifest";
@@ -201,14 +202,14 @@ export default function WorkbenchPage() {
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
         console.error(`[hawkeye] workbench brain HTTP ${res.status}: ${data.error ?? '(no error)'}`);
-        setBrainError(data.error ?? `HTTP ${res.status}`);
+        setBrainError(data.error ?? apiErrorMessage(res.status));
       } else {
         setBrainResult(data);
       }
     } catch (err) {
       if (ac.signal.aborted) return;
       console.error("[hawkeye] workbench brain threw:", err);
-      if (mountedRef.current) setBrainError(err instanceof Error ? err.message : "Network error");
+      if (mountedRef.current) setBrainError(caughtErrorMessage(err, "Network error"));
     } finally {
       if (mountedRef.current) setIsRunning(false);
       window.requestAnimationFrame(() => {
@@ -366,7 +367,7 @@ export default function WorkbenchPage() {
               {(brainResult || brainError || runResult) && (
                 <div id="pipeline-run-result" className="my-6 space-y-4">
                   {brainError && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-13 text-red-700">
+                    <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-5 text-13 text-red-300">
                       <span className="font-semibold">Super-brain error:</span> {brainError}
                     </div>
                   )}
@@ -440,7 +441,7 @@ export default function WorkbenchPage() {
                       {brainResult.pep && brainResult.pep.salience > 0 && (
                         <div className="mb-4">
                           <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2">PEP</div>
-                          <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 text-12 text-amber-800">
+                          <div className="bg-amber-950/30 border border-amber-500/40 rounded px-3 py-2 text-12 text-amber-300">
                             {brainResult.pep.type.replace(/_/g, " ")} · Tier {brainResult.pep.tier} · Salience{" "}
                             {Math.round(brainResult.pep.salience * 100)}%
                           </div>
@@ -450,7 +451,7 @@ export default function WorkbenchPage() {
                       {brainResult.jurisdiction && (
                         <div className="mb-4">
                           <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-2">Jurisdiction</div>
-                          <div className={`rounded px-3 py-2 text-12 border ${brainResult.jurisdiction.cahra ? "bg-red-50 border-red-200 text-red-800" : "bg-bg-1 border-hair-1 text-ink-0"}`}>
+                          <div className={`rounded px-3 py-2 text-12 border ${brainResult.jurisdiction.cahra ? "bg-red-950/30 border-red-500/40 text-red-300" : "bg-bg-1 border-hair-1 text-ink-0"}`}>
                             {brainResult.jurisdiction.name} ({brainResult.jurisdiction.iso2})
                             {brainResult.jurisdiction.cahra && " · CAHRA"}
                             {brainResult.jurisdiction.regimes.length > 0 && (
@@ -472,7 +473,7 @@ export default function WorkbenchPage() {
                             {brainResult.adverseKeywordGroups.map((g) => (
                               <span
                                 key={g.group}
-                                className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-700 rounded px-2 py-0.5 text-11 font-medium"
+                                className="inline-flex items-center gap-1 bg-red-950/30 border border-red-500/40 text-red-300 rounded px-2 py-0.5 text-11 font-medium"
                               >
                                 {g.label}
                                 <span className="font-bold">{g.count}</span>
@@ -501,7 +502,7 @@ export default function WorkbenchPage() {
 
                       {brainResult.redlines.fired.length > 0 && (
                         <div className="mb-2">
-                          <div className="text-11 font-semibold tracking-wide-4 uppercase text-red-600 mb-2">
+                          <div className="text-11 font-semibold tracking-wide-4 uppercase text-red-400 mb-2">
                             Redlines fired ({brainResult.redlines.fired.length})
                           </div>
                           <div className="flex flex-wrap gap-1.5">

@@ -54,7 +54,6 @@ async function fetchProtectedList(apiKey: string, endpoint: string): Promise<Nor
         'User-Agent': 'Hawkeye-Sterling-AML/2.0',
       },
     });
-    clearTimeout(tid);
     if (!res.ok) throw new Error(`HTTP ${res.status} from FinCEN endpoint`);
     const data = (await res.json()) as { subjects?: Array<Record<string, unknown>> };
     const subjects = data.subjects ?? [];

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { SupplyChainRiskResult } from "@/app/api/supply-chain/risk/route";
 import type { SupplyChainMapResult } from "@/app/api/supply-chain/map/route";
@@ -12,6 +13,64 @@ import type { SupplyChainMapResult } from "@/app/api/supply-chain/map/route";
 interface Supplier {
   name: string;
   country: string;
+}
+
+interface RmapStatus {
+  rmapStatus: string;
+  cid?: string;
+  lastAuditDate?: string;
+  facilityName?: string;
+}
+
+// ──────────────────────────────────────────────
+// RMAP helpers
+// ──────────────────────────────────────────────
+async function fetchRmapStatus(facilityName: string): Promise<RmapStatus | null> {
+  try {
+    const res = await fetch(`/api/rmap?q=${encodeURIComponent(facilityName)}`);
+    const data = (await res.json()) as { ok?: boolean; smelters?: RmapStatus[] };
+    if (data.ok && data.smelters && data.smelters.length > 0) return data.smelters[0] ?? null;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function RmapBadge({ status }: { status: RmapStatus | null | "loading" | "not_found" }) {
+  if (status === "loading") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-mono bg-bg-2 border border-hair text-ink-3 animate-pulse">
+        Looking up RMAP…
+      </span>
+    );
+  }
+  if (status === "not_found" || status === null) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-10 font-semibold bg-red/10 text-red border border-red/30">
+        Not Found
+      </span>
+    );
+  }
+  const { rmapStatus, cid, lastAuditDate } = status;
+  const badgeCls =
+    rmapStatus === "conformant"
+      ? "bg-green-dim text-green border border-green/30"
+      : rmapStatus === "active_placement" || rmapStatus === "active"
+      ? "bg-amber/10 text-amber border border-amber/30"
+      : "bg-red/10 text-red border border-red/30";
+  const label =
+    rmapStatus === "conformant"
+      ? "RMAP Conformant"
+      : rmapStatus === "active_placement" || rmapStatus === "active"
+      ? "RMAP Active"
+      : "Non-Conformant";
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-10 font-semibold ${badgeCls}`}>
+      {label}
+      {cid && <span className="font-mono opacity-70">{cid}</span>}
+      {lastAuditDate && <span className="font-mono opacity-60 text-9">· {lastAuditDate}</span>}
+    </span>
+  );
 }
 
 const RISK_COLORS: Record<string, string> = {
@@ -119,11 +178,17 @@ function SupplierList({
 }) {
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
+  const [rmapStatuses, setRmapStatuses] = useState<Record<number, RmapStatus | "loading" | "not_found">>({});
   const add = () => {
     if (name.trim() && country.trim()) {
       onChange([...suppliers, { name: name.trim(), country: country.trim() }]);
       setName(""); setCountry("");
     }
+  };
+  const lookupRmap = async (index: number, supplierName: string) => {
+    setRmapStatuses((prev: Record<number, RmapStatus | "loading" | "not_found">) => ({ ...prev, [index]: "loading" }));
+    const result = await fetchRmapStatus(supplierName);
+    setRmapStatuses((prev: Record<number, RmapStatus | "loading" | "not_found">) => ({ ...prev, [index]: result ?? "not_found" }));
   };
   return (
     <div>
@@ -156,9 +221,21 @@ function SupplierList({
       {suppliers.length > 0 && (
         <div className="flex flex-col gap-1">
           {suppliers.map((s, i) => (
-            <div key={i} className="flex items-center gap-2 bg-bg-2 border border-hair rounded px-3 py-1.5">
+            <div key={i} className="flex items-center gap-2 bg-bg-2 border border-hair rounded px-3 py-1.5 flex-wrap">
               <span className="text-12 font-medium text-ink-0 flex-1">{s.name}</span>
               <span className="text-11 text-ink-3 font-mono">{s.country}</span>
+              {rmapStatuses[i] !== undefined && (
+                <RmapBadge status={rmapStatuses[i] === "not_found" ? "not_found" : (rmapStatuses[i] as RmapStatus | "loading")} />
+              )}
+              <button
+                type="button"
+                onClick={() => { void lookupRmap(i, s.name); }}
+                disabled={rmapStatuses[i] === "loading"}
+                title="Look up RMAP certification status"
+                className="text-10 font-semibold px-2 py-0.5 rounded border border-brand/40 bg-brand/5 text-brand hover:bg-brand/15 disabled:opacity-50 whitespace-nowrap transition-colors"
+              >
+                RMAP Lookup
+              </button>
               <button type="button" onClick={() => onChange(suppliers.filter((_, j) => j !== i))} className="text-ink-3 hover:text-red text-11">×</button>
             </div>
           ))}
@@ -200,6 +277,70 @@ function GeographicMap({ countryRiskSummary }: { countryRiskSummary: SupplyChain
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// RMAP Smelter Lookup panel (standalone)
+// ──────────────────────────────────────────────
+function RmapLookupPanel() {
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<RmapStatus | "loading" | "not_found" | null>(null);
+
+  const lookup = async () => {
+    if (!query.trim()) return;
+    setStatus("loading");
+    const result = await fetchRmapStatus(query.trim());
+    setStatus(result ?? "not_found");
+  };
+
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+      <h3 className="text-13 font-semibold text-ink-0 mb-1">RMAP Smelter Lookup</h3>
+      <p className="text-11 text-ink-3 mb-3">
+        Search for a smelter or refiner by name to check their RMI RMAP certification status, Conformant ID (CID), and last audit date.
+      </p>
+      <div className="flex gap-2 mb-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void lookup(); } }}
+          placeholder="e.g. Valcambi, Rand Refinery, Perth Mint"
+          className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+        />
+        <button
+          type="button"
+          onClick={() => { void lookup(); }}
+          disabled={!query.trim() || status === "loading"}
+          className="px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40 transition-colors whitespace-nowrap"
+        >
+          {status === "loading" ? "Looking up…" : "Look Up RMAP"}
+        </button>
+      </div>
+      {status !== null && status !== "loading" && (
+        <div className="mt-2">
+          {status === "not_found" ? (
+            <div className="flex items-center gap-2">
+              <RmapBadge status="not_found" />
+              <span className="text-11 text-ink-2">No matching smelter found in the RMAP database for &quot;{query}&quot;.</span>
+            </div>
+          ) : (
+            <div className="bg-bg-1 border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-1.5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-13 font-semibold text-ink-0">{status.facilityName ?? query}</span>
+                <RmapBadge status={status} />
+              </div>
+              {status.cid && (
+                <div className="text-11 text-ink-2 font-mono">CID: {status.cid}</div>
+              )}
+              {status.lastAuditDate && (
+                <div className="text-11 text-ink-3">Last audit: {status.lastAuditDate}</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -249,6 +390,8 @@ export default function SupplyChainPage() {
           body: JSON.stringify({ company, suppliers }),
         }),
       ]);
+      if (!riskRes.ok) throw new Error(apiErrorMessage(riskRes.status, "Supply chain risk"));
+      if (!mapRes.ok) throw new Error(apiErrorMessage(mapRes.status, "Supply chain map"));
       const [riskData, mapData] = await Promise.all([
         riskRes.json() as Promise<SupplyChainRiskResult>,
         mapRes.json() as Promise<SupplyChainMapResult>,
@@ -256,7 +399,7 @@ export default function SupplyChainPage() {
       setResult(riskData);
       setMapResult(mapData);
     } catch (e) {
-      setError(String(e));
+      setError(caughtErrorMessage(e, "Supply chain analysis failed — please retry"));
     } finally {
       setLoading(false);
     }
@@ -281,6 +424,9 @@ export default function SupplyChainPage() {
         { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
         { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
         { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
+        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
+        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
+        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
       ]} />
 
       {/* ── Input form ── */}
@@ -574,6 +720,11 @@ export default function SupplyChainPage() {
           </div>
         </div>
       )}
+
+      {/* ── RMAP Smelter Lookup ── */}
+      <div className="mt-6">
+        <RmapLookupPanel />
+      </div>
     </ModuleLayout>
   );
 }

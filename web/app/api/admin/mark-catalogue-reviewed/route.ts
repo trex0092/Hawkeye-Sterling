@@ -12,6 +12,7 @@
 // that happened earlier today before this endpoint existed).
 
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,14 +31,11 @@ interface BlobsModuleShape {
 }
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const a = enc.encode(expected);
-  const b = enc.encode(got);
-  const ab = new Uint8Array(a.length);
-  ab.set(b.slice(0, a.length));
-  return timingSafeEqual(a, ab);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 function credentials(): { siteID?: string; token?: string } {
@@ -68,17 +66,25 @@ export async function POST(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const today = new Date().toISOString().slice(0, 10);
   const requestedDate = url.searchParams.get("date") ?? "";
-  const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate);
+  const isValidDateFormat = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate);
+  const isValidDate = isValidDateFormat && Number.isFinite(Date.parse(requestedDate));
   const date = isValidDate ? requestedDate : today;
   const reviewer = url.searchParams.get("reviewer")?.slice(0, 200) ?? "anonymous";
   const note = url.searchParams.get("note")?.slice(0, 1_000) ?? "";
 
-  let mod: BlobsModuleShape;
+  let mod: BlobsModuleShape | null = null;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobsModuleShape;
   } catch (err) {
+    console.error("[mark-catalogue-reviewed] @netlify/blobs unavailable:", err);
     return NextResponse.json(
-      { ok: false, error: `@netlify/blobs unavailable — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "@netlify/blobs unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables" },
+      { status: 503 },
+    );
+  }
+  if (!mod) {
+    return NextResponse.json(
+      { ok: false, error: "@netlify/blobs returned null" },
       { status: 503 },
     );
   }
@@ -104,11 +110,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     const ts = entry.recordedAt.replace(/[:.]/g, "-");
     await store.setJSON(`catalogue-review-history/${ts}.json`, entry);
   } catch (err) {
+    console.error("[mark-catalogue-reviewed] blob write failed:", err);
     return NextResponse.json(
-      { ok: false, error: `blob write failed — ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "blob write failed — please retry or contact support" },
       { status: 503 },
     );
   }
+
+  // FDL 10/2025: governance actions must appear on the tamper-evident audit chain.
+  void writeAuditChainEntry({
+    event: "admin.catalogue_reviewed",
+    actor: reviewer,
+    reviewedAt: entry.reviewedAt,
+    recordedAt: entry.recordedAt,
+    note: note || undefined,
+  }, "admin").catch((err) =>
+    console.warn("[mark-catalogue-reviewed] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({
     ok: true,

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface OwnershipNode {
   lei: string;
@@ -78,14 +79,14 @@ export default function GleifPage() {
       const res = await fetch(`/api/gleif?lei=${encodeURIComponent(lei.trim())}&depth=${depth}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `LEI lookup failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "LEI lookup"));
       }
       const data = await res.json().catch(() => ({})) as GleifResult;
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "LEI not found");
       else setLeiResult(data);
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Request failed"));
     } finally { if (mountedRef.current) setLoading(false); }
   }
 
@@ -96,14 +97,14 @@ export default function GleifPage() {
       const res = await fetch(`/api/gleif?q=${encodeURIComponent(query.trim())}&limit=20`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `GLEIF search failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "GLEIF search"));
       }
       const data = await res.json().catch(() => ({})) as { ok: boolean; results: SearchResult[]; error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) setError(data.error ?? "Search failed");
       else setSearchResults(Array.isArray(data.results) ? data.results : []);
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Request failed"));
     } finally { if (mountedRef.current) setLoading(false); }
   }
 

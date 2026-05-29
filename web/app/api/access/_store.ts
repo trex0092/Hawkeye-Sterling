@@ -45,6 +45,11 @@ export interface AccessUser {
   /** SHA-256 prefix of the most recent login IP — used for geo-velocity
    *  detection between sessions. Never stores the raw IP. */
   lastIpHash?: string;
+  /** Set to true after a successful LUISA_INITIAL_PASSWORD recovery login.
+   *  Once set, the recovery path is permanently disabled — the operator must
+   *  use their re-hashed password for all future logins. Prevents the master
+   *  recovery env var from acting as a persistent backdoor. */
+  recoveryUsed?: boolean;
 }
 
 export interface PermissionLogEntry {
@@ -75,6 +80,32 @@ export const ROLE_MODULES: Record<UserRole, string[]> = {
 
 const USERS_BLOB_KEY = "users/all.v1.json";
 const PERMLOGS_BLOB_KEY = "permlogs/all.v1.json";
+const SESSIONS_BLOB_KEY = "sessions/all.v1.json";
+const MAX_SESSIONS = 500;
+
+export interface AccessSession {
+  id: string;
+  userId: string;
+  userName: string;
+  role: UserRole;
+  ipDisplay: string;   // first two octets kept, last two masked ("10.0.x.x")
+  userAgent: string;
+  started: string;     // ISO-8601
+  lastActive: string;  // ISO-8601
+  active: boolean;
+}
+
+/** Mask IP for display — keep first two octets, replace remaining with "x". */
+export function maskIp(raw: string): string {
+  if (!raw || raw === "unknown") return "—";
+  // IPv4
+  const v4 = raw.match(/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+  if (v4) return `${v4[1]}.${v4[2]}.x.x`;
+  // IPv6 — show first group only
+  const v6 = raw.split(":");
+  if (v6.length >= 2) return `${v6[0]}:x:…`;
+  return "—";
+}
 
 // ── Default seed account ──────────────────────────────────────────────────────
 // Called only when the blob store has no users yet (first deploy).
@@ -179,5 +210,61 @@ export async function appendPermissionLog(entry: PermissionLogEntry): Promise<vo
     // Cap at 10,000 entries — oldest entries are dropped when over limit.
     const updated = [...current, entry].slice(-10_000);
     await setJson(PERMLOGS_BLOB_KEY, updated);
+  });
+}
+
+// ── Session store helpers ─────────────────────────────────────────────────────
+
+export async function loadSessions(): Promise<AccessSession[]> {
+  const persisted = await getJson<AccessSession[]>(SESSIONS_BLOB_KEY);
+  return Array.isArray(persisted) ? persisted : [];
+}
+
+export async function saveSessions(sessions: AccessSession[]): Promise<void> {
+  await setJson(SESSIONS_BLOB_KEY, sessions);
+}
+
+export async function appendSession(s: AccessSession): Promise<void> {
+  return withKeyLock(SESSIONS_BLOB_KEY, async () => {
+    const current = await loadSessions();
+    const updated = [...current, s].slice(-MAX_SESSIONS);
+    await setJson(SESSIONS_BLOB_KEY, updated);
+  });
+}
+
+export async function markSessionInactive(id: string): Promise<void> {
+  return withKeyLock(SESSIONS_BLOB_KEY, async () => {
+    const current = await loadSessions();
+    await setJson(
+      SESSIONS_BLOB_KEY,
+      current.map((s) => (s.id === id ? { ...s, active: false } : s)),
+    );
+  });
+}
+
+export async function updateSessionActivity(userId: string): Promise<void> {
+  return withKeyLock(SESSIONS_BLOB_KEY, async () => {
+    const current = await loadSessions();
+    const now = new Date().toISOString();
+    // Bump lastActive on the most recent active session for this user.
+    let bumped = false;
+    const updated = current.map((s) => {
+      if (!bumped && s.userId === userId && s.active) {
+        bumped = true;
+        return { ...s, lastActive: now };
+      }
+      return s;
+    });
+    if (bumped) await setJson(SESSIONS_BLOB_KEY, updated);
+  });
+}
+
+export async function deactivateUserSessions(userId: string): Promise<void> {
+  return withKeyLock(SESSIONS_BLOB_KEY, async () => {
+    const current = await loadSessions();
+    await setJson(
+      SESSIONS_BLOB_KEY,
+      current.map((s) => (s.userId === userId ? { ...s, active: false } : s)),
+    );
   });
 }

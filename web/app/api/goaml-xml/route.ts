@@ -14,7 +14,9 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-import { validateGoamlXmlStructure } from "@/lib/goaml-xsd-validator";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { validateGoamlXmlStructure, getGoamlSchemaVersion } from "@/lib/goaml-xsd-validator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +65,14 @@ interface GoAmlXmlInput {
   narrativeText: string;
   transactions: Transaction[];
   suspectedOffence: string;
+  // Optional: subject country of birth (alternative to nationality for pre-flight)
+  subjectCountryOfBirth?: string;
+  // MLRO decision date (ISO YYYY-MM-DD) — required for goAML filing
+  decisionDate?: string;
+  // Action code: "initial" (1) or "supplementary" (2). Defaults to "initial".
+  actionCode?: "initial" | "supplementary";
+  // CBUAE registration number override (falls back to env CBUAE_REGISTRATION_NUMBER)
+  cbuaeRegistrationNumber?: string;
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -92,6 +102,118 @@ function splitMlroName(full: string): { first: string; last: string } {
 }
 
 // ────────────────────────────────────────────────────────────────────
+//  Environment variable resolution
+// ────────────────────────────────────────────────────────────────────
+
+interface EnvResolution {
+  reportingEntityCode: string;
+  cbuaeRegistrationNumber: string;
+  mlroEmail: string;
+  missingVars: string[];
+}
+
+function resolveEnvVars(body: GoAmlXmlInput): EnvResolution {
+  const missingVars: string[] = [];
+
+  // REPORTING_ENTITY_CODE: body override → env var → error
+  const reportingEntityCode =
+    body.reportingEntityId?.trim() ||
+    process.env["REPORTING_ENTITY_CODE"]?.trim() ||
+    "";
+  if (!reportingEntityCode) {
+    missingVars.push("REPORTING_ENTITY_CODE");
+  }
+
+  // CBUAE_REGISTRATION_NUMBER: body override → env var → error
+  const cbuaeRegistrationNumber =
+    body.cbuaeRegistrationNumber?.trim() ||
+    process.env["CBUAE_REGISTRATION_NUMBER"]?.trim() ||
+    "";
+  if (!cbuaeRegistrationNumber) {
+    missingVars.push("CBUAE_REGISTRATION_NUMBER");
+  }
+
+  // MLRO_EMAIL: body → env var → error
+  const mlroEmail =
+    body.mlroEmail?.trim() ||
+    process.env["MLRO_EMAIL"]?.trim() ||
+    "";
+  if (!mlroEmail || !mlroEmail.includes("@")) {
+    missingVars.push("MLRO_EMAIL");
+  }
+
+  return { reportingEntityCode, cbuaeRegistrationNumber, mlroEmail, missingVars };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Pre-flight validation (Task 3)
+// ────────────────────────────────────────────────────────────────────
+
+interface PreflightError {
+  field: string;
+  message: string;
+}
+
+function preflightValidate(b: GoAmlXmlInput, resolvedMlroEmail: string): PreflightError[] {
+  const errs: PreflightError[] = [];
+
+  // Subject must have name AND (nationality OR country_of_birth)
+  if (!b.subjectName?.trim()) {
+    errs.push({ field: "subjectName", message: "Subject name is required." });
+  }
+  if (!b.subjectNationality?.trim() && !b.subjectCountryOfBirth?.trim()) {
+    errs.push({
+      field: "subjectNationality",
+      message: "Subject must have at least a nationality or country_of_birth.",
+    });
+  }
+
+  // At least 1 transaction with amount > 0, date, currency, type
+  if (!b.transactions || b.transactions.length === 0) {
+    errs.push({
+      field: "transactions",
+      message: "At least one transaction with amount, date, currency, and type is required.",
+    });
+  } else {
+    const validTx = b.transactions.filter(
+      (tx) =>
+        tx.amount > 0 &&
+        tx.date &&
+        YYYY_MM_DD.test(tx.date) &&
+        tx.currency?.trim() &&
+        tx.type?.trim(),
+    );
+    if (validTx.length === 0) {
+      errs.push({
+        field: "transactions[0]",
+        message:
+          "At least one transaction must have: amount > 0, date (YYYY-MM-DD), currency, and type.",
+      });
+    }
+  }
+
+  // Narrative minimum 200 characters
+  const narrative = b.narrativeText?.trim() ?? "";
+  if (narrative.length < 200) {
+    errs.push({
+      field: "narrativeText",
+      message: `Narrative must be at least 200 characters (current: ${narrative.length}). Describe who, what, when, where, and why.`,
+    });
+  }
+
+  // MLRO email must be configured
+  if (!resolvedMlroEmail || !resolvedMlroEmail.includes("@")) {
+    errs.push({
+      field: "mlroEmail",
+      message:
+        "MLRO email is required. Set the MLRO_EMAIL environment variable or supply mlroEmail in the request body.",
+    });
+  }
+
+  return errs;
+}
+
+// ────────────────────────────────────────────────────────────────────
 //  Validation
 // ────────────────────────────────────────────────────────────────────
 
@@ -105,7 +227,9 @@ function validate(b: GoAmlXmlInput): {
   if (!b.mlroName?.trim()) errors.push("MLRO name is required.");
   if (!b.mlroEmail?.trim() || !b.mlroEmail.includes("@")) errors.push("MLRO email must be a valid email address.");
   if (!b.mlroPhone?.trim()) errors.push("MLRO phone is required.");
-  if (!b.reportingEntityId?.trim()) errors.push("Reporting Entity ID is required.");
+  if (!b.reportingEntityId?.trim() && !process.env["REPORTING_ENTITY_CODE"]?.trim()) {
+    errors.push("Reporting Entity ID is required (set REPORTING_ENTITY_CODE env var or supply reportingEntityId).");
+  }
 
   if (!b.subjectName?.trim()) {
     errors.push("Subject name is required.");
@@ -119,7 +243,7 @@ function validate(b: GoAmlXmlInput): {
     errors.push("Subject date of birth must be in YYYY-MM-DD format.");
   } else {
     const dob = Date.parse(b.subjectDob.trim());
-    if (Number.isNaN(dob)) {
+    if (!Number.isFinite(dob)) {
       errors.push("Subject date of birth is not a valid date.");
     } else if (dob > Date.now()) {
       errors.push("Subject date of birth cannot be in the future.");
@@ -139,7 +263,7 @@ function validate(b: GoAmlXmlInput): {
   } else if (narrative.length < 100) {
     errors.push("Narrative must be at least 100 characters — describe who, what, when, where, why.");
   } else if (narrative.length < 200) {
-    warnings.push("Narratives under 200 characters are routinely returned by UAE FIU reviewers as insufficient.");
+    errors.push("Narrative must be at least 200 characters — UAE FIU reviewers routinely reject shorter narratives as insufficient.");
   }
   if (narrative.length > 4000) {
     errors.push("Narrative exceeds the 4,000-character goAML <reason> field cap.");
@@ -147,6 +271,15 @@ function validate(b: GoAmlXmlInput): {
 
   if (!b.suspectedOffence?.trim()) {
     warnings.push("Suspected offence not specified — recommended for complete STR filing.");
+  }
+
+  // decision_date validation
+  if (b.decisionDate) {
+    if (!YYYY_MM_DD.test(b.decisionDate.trim())) {
+      errors.push("decisionDate must be in YYYY-MM-DD format.");
+    }
+  } else {
+    warnings.push("decisionDate (MLRO decision date) not provided — will default to today. Set explicitly for accurate goAML filing.");
   }
 
   if (!b.transactions || b.transactions.length === 0) {
@@ -177,9 +310,23 @@ function validate(b: GoAmlXmlInput): {
 //  XML serialisation
 // ────────────────────────────────────────────────────────────────────
 
-function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): string {
+function buildXml(
+  b: GoAmlXmlInput,
+  reportRef: string,
+  submissionDate: string,
+  resolvedEntityCode: string,
+  resolvedCbuaeRegNumber: string,
+  resolvedMlroEmail: string,
+): string {
   const { first: mlroFirst, last: mlroLast } = splitMlroName(b.mlroName.trim());
   const { first: subjectFirst, last: subjectLast } = splitName(b.subjectName.trim());
+
+  // action_code: Initial=1, Supplementary=2 (UAE FIU goAML Technical Guide v3.1)
+  const actionCodeValue = b.actionCode === "supplementary" ? "2" : "1";
+  const actionCodeLabel = b.actionCode === "supplementary" ? "supplementary" : "new";
+
+  // decision_date: MLRO decision date; defaults to today if not provided
+  const decisionDate = b.decisionDate?.trim() || submissionDate;
 
   const txLines = (b.transactions ?? [])
     .map((tx, i) => {
@@ -188,10 +335,13 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
       const txType = escXml(tx.type?.trim() || "cash");
       const desc = escXml(tx.description?.trim() || "");
       return `      <transaction>
+        <transactionnumber>${escXml(txNum)}</transactionnumber>
         <transaction_number>${escXml(txNum)}</transaction_number>
         <transaction_date>${escXml(tx.date)}</transaction_date>
         <teller>1</teller>
         <transmode_code>C</transmode_code>
+        <transaction_location>UAE</transaction_location>
+        <t_from_my_client>1</t_from_my_client>
         <amount_local>${tx.amount.toFixed(2)}</amount_local>
         <transaction_type>${txType}</transaction_type>
         <currency_amount>
@@ -204,14 +354,21 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Report xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <rentity_id>${escXml(b.reportingEntityId.trim())}</rentity_id>
+  <rentity_id>${escXml(resolvedEntityCode)}</rentity_id>
   <rentity_branch>HQ</rentity_branch>
   <submission_code>E</submission_code>
   <report_code>STR</report_code>
+  <action>${actionCodeLabel}</action>
+  <action_code>${actionCodeValue}</action_code>
+  <filing_institution>${escXml(resolvedCbuaeRegNumber)}</filing_institution>
+  <internal_reference>${escXml(reportRef)}</internal_reference>
   <submission_date>${escXml(submissionDate)}</submission_date>
+  <decision_date>${escXml(decisionDate)}</decision_date>
   <currency_code_local>AED</currency_code_local>
   <reporting_person>
     <title>Mr</title>
+    <first_name>${escXml(mlroFirst)}</first_name>
+    <last_name>${escXml(mlroLast)}</last_name>
     <firstname>${escXml(mlroFirst)}</firstname>
     <surname>${escXml(mlroLast)}</surname>
     <positions>
@@ -225,7 +382,7 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
         <tph_number>${escXml(b.mlroPhone.trim())}</tph_number>
       </phone>
     </phones>
-    <email>${escXml(b.mlroEmail.trim())}</email>
+    <email>${escXml(resolvedMlroEmail)}</email>
   </reporting_person>
   <location>UAE</location>
   <report>
@@ -235,6 +392,7 @@ function buildXml(b: GoAmlXmlInput, reportRef: string, submissionDate: string): 
     <report_subject_id>1</report_subject_id>
     <report_subjects>
       <subject>
+        <subjectid>1</subjectid>
         <subject_id>1</subject_id>
         <subject_type>P</subject_type>
         <role>S</role>
@@ -281,10 +439,17 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
   <rentity_branch>HQ</rentity_branch>
   <submission_code>E</submission_code>
   <report_code>STR</report_code>
+  <action>new</action>
+  <action_code>1</action_code>
+  <filing_institution>[REPLACE_BEFORE_FILING:CBUAE_REGISTRATION_NUMBER]</filing_institution>
+  <internal_reference>${reportRef}</internal_reference>
   <submission_date>${submissionDate}</submission_date>
+  <decision_date>[REPLACE_BEFORE_FILING:YYYY-MM-DD]</decision_date>
   <currency_code_local>AED</currency_code_local>
   <reporting_person>
     <title>Mr</title>
+    <first_name>[REPLACE_BEFORE_FILING:MLRO_FIRSTNAME]</first_name>
+    <last_name>[REPLACE_BEFORE_FILING:MLRO_LASTNAME]</last_name>
     <firstname>[REPLACE_BEFORE_FILING:MLRO_FIRSTNAME]</firstname>
     <surname>[REPLACE_BEFORE_FILING:MLRO_LASTNAME]</surname>
     <positions>
@@ -308,6 +473,7 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
     <report_subject_id>1</report_subject_id>
     <report_subjects>
       <subject>
+        <subjectid>1</subjectid>
         <subject_id>1</subject_id>
         <subject_type>P</subject_type>
         <role>S</role>
@@ -337,10 +503,13 @@ function buildFallbackXml(reportRef: string, submissionDate: string): string {
     </involved_accounts>
     <transactions>
       <transaction>
+        <transactionnumber>${reportRef}-TXN-1</transactionnumber>
         <transaction_number>${reportRef}-TXN-1</transaction_number>
         <transaction_date>[REPLACE_BEFORE_FILING:YYYY-MM-DD]</transaction_date>
         <teller>1</teller>
         <transmode_code>C</transmode_code>
+        <transaction_location>UAE</transaction_location>
+        <t_from_my_client>1</t_from_my_client>
         <amount_local>[REPLACE_BEFORE_FILING:AMOUNT]</amount_local>
         <transaction_type>[REPLACE_BEFORE_FILING:TX_TYPE]</transaction_type>
         <currency_amount>
@@ -365,10 +534,13 @@ const SUBMISSION_CHECKLIST = [
   "XML file has been downloaded and saved to the case file with date-stamp.",
   "Draft has been validated and no critical errors remain before portal submission.",
   "Filing is within the 48-hour deadline mandated by UAE FDL 10/2025 Art.17.",
+  "CBUAE registration number (filing_institution) has been verified against the goAML portal.",
+  "decision_date reflects the date the MLRO formally decided to file the STR.",
+  "action_code is set to 1 (Initial) or 2 (Supplementary) as appropriate.",
 ];
 
 export async function POST(req: Request): Promise<Response> {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { cost: 2 });
   if (!gate.ok) return gate.response;
 
   let body: GoAmlXmlInput;
@@ -383,6 +555,46 @@ export async function POST(req: Request): Promise<Response> {
   const ts = now.toISOString().replace(/[^0-9]/g, "").slice(0, 14);
   const reportRef = `UAE-STR-${now.getUTCFullYear()}-${ts}`;
 
+  // ── TASK 2: Resolve env vars and check required ones are present ──
+  const { reportingEntityCode, cbuaeRegistrationNumber, mlroEmail, missingVars } =
+    resolveEnvVars(body ?? ({} as GoAmlXmlInput));
+
+  if (missingVars.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "missing_required_env_vars",
+        message:
+          "Cannot generate goAML XML: required environment variables are not configured. " +
+          "Set the following variables in your deployment environment before filing:",
+        missingVars,
+        hint: {
+          REPORTING_ENTITY_CODE: "Your UAE FIU-assigned goAML reporting entity ID (e.g. UAE-DPMS-00123)",
+          CBUAE_REGISTRATION_NUMBER: "Your CBUAE registration number as it appears on your licence",
+          MLRO_EMAIL: "The MLRO email address registered with the UAE FIU goAML portal",
+        },
+      },
+      { status: 400, headers: gate.headers },
+    );
+  }
+
+  // ── TASK 3: Pre-flight validation before XML generation ──────────
+  const preflightErrors = preflightValidate(body ?? ({} as GoAmlXmlInput), mlroEmail);
+  if (preflightErrors.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "preflight_validation_failed",
+        message:
+          "goAML XML generation blocked: the submission data does not meet minimum UAE FIU filing requirements. " +
+          "Resolve all field errors before retrying.",
+        fieldErrors: preflightErrors,
+        regulatoryBasis: "UAE FDL 10/2025 Art.17; UAE FIU goAML Technical Guide v3.1; FATF R.20",
+      },
+      { status: 422, headers: gate.headers },
+    );
+  }
+
   const { errors, warnings } = validate(body ?? ({} as GoAmlXmlInput));
 
   let xml: string;
@@ -394,12 +606,27 @@ export async function POST(req: Request): Promise<Response> {
     degradedReason = `validation produced ${errors.length} error(s) — placeholder XML emitted; do NOT submit until fixed`;
   } else {
     try {
-      xml = buildXml(body, reportRef, submissionDate);
+      xml = buildXml(body, reportRef, submissionDate, reportingEntityCode, cbuaeRegistrationNumber, mlroEmail);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[goaml-xml] serialise error", msg);
+      console.error("[goaml-xml] serialise error", err instanceof Error ? err.message : String(err));
       xml = buildFallbackXml(reportRef, submissionDate);
-      degradedReason = `XML serialisation failed (${msg}) — placeholder XML emitted; do NOT submit until fixed`;
+      degradedReason = "XML serialisation failed — placeholder XML emitted; do NOT submit until fixed";
+    }
+  }
+
+  // XSD structural validation — only run against successfully built XML (not fallback/degraded).
+  if (!degradedReason) {
+    const xsdErrors = validateGoamlXmlStructure(xml);
+    const xsdErrorsOnly = xsdErrors.filter(e => e.severity === 'error');
+    if (xsdErrorsOnly.length > 0) {
+      return NextResponse.json({
+        ok: false,
+        error: 'GOAML_XSD_INVALID',
+        message: 'Generated XML fails structural validation. Correct the envelope data before filing.',
+        errors: xsdErrors,
+        errorCount: xsdErrorsOnly.length,
+        warningCount: xsdErrors.filter(e => e.severity === 'warning').length,
+      }, { status: 422, headers: gate.headers });
     }
   }
 
@@ -429,8 +656,17 @@ export async function POST(req: Request): Promise<Response> {
     ...(degradedReason ? { degraded: true as const, degradedReason } : {}),
   };
 
+  void writeAuditChainEntry(
+    { event: "goaml.xml_generated", actor: gate.keyId, meta: { reportRef, subjectName: body.subjectName } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json(result, {
     status: 200,
-    headers: { "cache-control": "no-store" },
+    headers: {
+      ...gate.headers,
+      "cache-control": "no-store",
+      "x-goaml-schema-version": getGoamlSchemaVersion(),
+    },
   });
 }

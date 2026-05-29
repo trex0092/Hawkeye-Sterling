@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,28 +140,151 @@ const MATRIX: Record<UserRole, Record<string, AccessLevel>> = {
   },
 };
 
-// Demo sessions
-interface Session {
+interface AccessSession {
   id: string;
   userId: string;
   userName: string;
-  ip: string;
+  role: string;
+  ipDisplay: string;
+  userAgent: string;
   started: string;
   lastActive: string;
   active: boolean;
 }
 
-const DEMO_SESSIONS: Session[] = [
-  {
-    id: "sess-001",
-    userId: "usr-001",
-    userName: "Luisa Fernanda",
-    ip: "10.0.1.42",
-    started: "2025-04-30T07:50:00Z",
-    lastActive: "2025-04-30T09:15:22Z",
-    active: true,
-  },
-];
+function SessionMonitorTab() {
+  const [sessions, setSessions] = useState<AccessSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  const fetchSessions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/access/sessions");
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("Authentication required — please refresh the page.");
+        throw new Error(apiErrorMessage(res.status));
+      }
+      const data = await res.json() as { ok: boolean; sessions?: AccessSession[]; error?: string };
+      if (!data.ok) throw new Error(data.error ?? "Failed to load sessions");
+      setSessions(data.sessions ?? []);
+    } catch (e) {
+      setError(caughtErrorMessage(e, "Network error"));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void fetchSessions(); }, [fetchSessions]);
+
+  const revokeSession = async (id: string, userName: string) => {
+    if (!confirm(`Revoke all sessions for ${userName}? This will immediately sign them out.`)) return;
+    setRevoking(id);
+    try {
+      const res = await fetch(`/api/access/sessions?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(apiErrorMessage(res.status));
+      void fetchSessions();
+    } catch (e) {
+      alert(caughtErrorMessage(e, "Revoke failed"));
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const active = sessions.filter((s) => s.active);
+  const inactive = sessions.filter((s) => !s.active);
+
+  if (loading) return <p className="text-12 text-ink-3 py-6 text-center">Loading sessions…</p>;
+  if (error) return <p role="alert" aria-live="assertive" className="text-12 text-red py-4">{error}</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-14 font-semibold text-ink-0">
+          {active.length} active session{active.length !== 1 ? "s" : ""}
+          {inactive.length > 0 && (
+            <span className="ml-2 text-11 text-ink-3 font-normal">· {inactive.length} inactive</span>
+          )}
+        </h2>
+        <button
+          onClick={() => void fetchSessions()}
+          disabled={loading}
+          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
+        >
+          ↻
+        </button>
+      </div>
+
+      {sessions.length === 0 ? (
+        <div className="rounded-lg border border-hair-2 bg-bg-2 px-5 py-8 text-center">
+          <p className="text-12 text-ink-3">No sessions recorded yet.</p>
+          <p className="text-11 text-ink-4 mt-1">Sessions are created on login and tracked here automatically.</p>
+        </div>
+      ) : (
+        <div className="border border-hair-2 rounded-md overflow-hidden">
+          <table className="w-full text-12">
+            <thead>
+              <tr className="border-b border-hair bg-bg-2">
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">User</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Role</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">IP</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Started</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Last Active</th>
+                <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Status</th>
+                <th className="px-4 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((s, i) => (
+                <tr key={s.id} className={`border-b border-hair last:border-0 ${i % 2 === 0 ? "" : "bg-bg-2/30"}`}>
+                  <td className="px-4 py-2.5">
+                    <div className="font-semibold text-ink-0">{s.userName}</div>
+                    <div className="text-10 font-mono text-ink-4 truncate max-w-[180px]" title={s.id}>{s.id}</div>
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-ink-2 text-11">{s.role}</td>
+                  <td className="px-4 py-2.5 font-mono text-ink-2">{s.ipDisplay}</td>
+                  <td className="px-4 py-2.5 text-ink-2">{fmtDate(s.started)}</td>
+                  <td className="px-4 py-2.5 text-ink-2">{fmtDate(s.lastActive)}</td>
+                  <td className="px-4 py-2.5">
+                    {s.active ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-9 font-bold uppercase bg-green-dim text-green border border-green/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                        active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-9 font-bold uppercase bg-bg-2 text-ink-3 border border-hair">
+                        inactive
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    {s.active && (
+                      <button
+                        onClick={() => void revokeSession(s.id, s.userName)}
+                        disabled={revoking === s.id}
+                        className="px-2 py-1 text-10 font-mono border border-red/40 rounded text-red bg-red-dim hover:bg-red-dim/70 transition-colors disabled:opacity-50"
+                      >
+                        {revoking === s.id ? "…" : "Revoke"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {sessions.length > 0 && (
+        <p className="text-10 text-ink-4 mt-3">
+          IPs are partially masked for privacy. Revoking a session invalidates all active tokens for that user.
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -233,7 +358,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       const data = await resp.json().catch(() => ({})) as { ok: boolean; error?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok) {
-        setPwMsg({ ok: false, text: data.error ?? `HTTP ${resp.status}` });
+        setPwMsg({ ok: false, text: data.error ?? apiErrorMessage(resp.status) });
       } else {
         setPwMsg({ ok: true, text: "Credentials updated successfully." });
         setNewPassword("");
@@ -262,7 +387,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         }),
       });
       const data = await resp.json().catch(() => ({})) as RoleRecommendation & { ok?: boolean };
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (!resp.ok) throw new Error(apiErrorMessage(resp.status));
       if (mountedRef.current) setAiResult(data);
     } catch {
       if (mountedRef.current) setAiError("AI recommendation unavailable.");
@@ -285,14 +410,13 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
           userId: user.id,
           newRole: selectedRole,
           reason: reason.trim(),
-          assignedBy: "Luisa Fernanda",
         }),
       });
       const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; impactAssessment?: string; error?: string };
       if (!mountedRef.current) return;
       if (!resp.ok || !data.ok || !data.user) {
         console.error("[hawkeye] access-control role-change rejected:", data);
-        setRoleError(data.error ?? `HTTP ${resp.status}`);
+        setRoleError(data.error ?? apiErrorMessage(resp.status));
       } else {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
@@ -513,7 +637,6 @@ export default function AccessControlPage() {
   const [activeTab, setActiveTab] = useState<Tab>("👥 Users");
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [log, setLog] = useState<PermissionLogEntry[]>([]);
-  const [sessions, setSessions] = useState<Session[]>(DEMO_SESSIONS);
   const [selectedUser, setSelectedUser] = useState<AccessUser | null>(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -522,8 +645,8 @@ export default function AccessControlPage() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
-  const [revokeError, setRevokeError] = useState<string | null>(null);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [_revokeError, _setRevokeError] = useState<string | null>(null);
+  const [_revokingId, _setRevokingId] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -602,7 +725,7 @@ export default function AccessControlPage() {
       });
       const data = await resp.json().catch(() => ({})) as { ok: boolean; user?: AccessUser; error?: string; initialPassword?: string };
       if (!mountedRef.current) return;
-      if (!resp.ok || !data.ok) { setAddError(data.error ?? `HTTP ${resp.status}`); return; }
+      if (!resp.ok || !data.ok) { setAddError(data.error ?? apiErrorMessage(resp.status)); return; }
       if (data.user) {
         setUsers((prev) => [...prev, data.user!]);
         setNewUserCreds({ username: data.user!.username ?? "", password: data.initialPassword ?? "" });
@@ -617,38 +740,23 @@ export default function AccessControlPage() {
     }
   };
 
-  const handleRevokeSession = async (session: Session) => {
-    setRevokeError(null);
-    setRevokingId(session.id);
-    try {
-      await fetch("/api/access/revoke-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.userId, reason: "Manual session revocation by administrator." }),
-      });
-      if (!mountedRef.current) return;
-      setSessions((prev) => prev.map((s) => (s.id === session.id ? { ...s, active: false } : s)));
-      setUsers((prev) => prev.map((u) => (u.id === session.userId ? { ...u, active: false } : u)));
-      void fetchLog();
-    } catch (err) {
-      console.error("[hawkeye] access-control session-revoke threw — UI optimistic update may diverge from server:", err);
-      if (mountedRef.current) setRevokeError("Network error — session could not be revoked. Please try again.");
-    } finally {
-      if (mountedRef.current) setRevokingId(null);
-    }
-  };
-
   // KPIs
   const totalUsers = users.length;
-  const activeSessions = sessions.filter((s) => s.active).length;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const roleChangesThisWeek = log.filter(
     (e) => e.action === "role_assigned" && new Date(e.timestamp) >= weekAgo,
   ).length;
+  const totalAuditEvents = log.length;
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
+      <ModuleFamilyBar suiteName="Security" modules={[
+        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+        { label: "Access Control", href: "/access-control", icon: "🔐" },
+        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+      ]} />
       <ModuleHero
 
         eyebrow="Module 34 · Governance"
@@ -656,7 +764,7 @@ export default function AccessControlPage() {
         titleEm="permissions."
         kpis={[
           { value: String(totalUsers), label: "Total users" },
-          { value: String(activeSessions), label: "Active sessions" },
+          { value: String(totalAuditEvents), label: "Permission events" },
           { value: String(roleChangesThisWeek), label: "Role changes this week" },
           { value: String(ALL_MODULES.length), label: "Modules protected" },
         ]}
@@ -906,64 +1014,7 @@ export default function AccessControlPage() {
       )}
 
       {/* ── Tab 3: Session Monitor ───────────────────────────────────────────── */}
-      {activeTab === "👁️ Session Monitor" && (
-        <div>
-          <div className="mb-4">
-            <h2 className="text-14 font-semibold text-ink-0 mb-1">Active sessions</h2>
-            <p className="text-12 text-ink-2">
-              {sessions.filter((s) => s.active).length} active of {sessions.length} total sessions.
-            </p>
-          </div>
-          {revokeError && (
-            <div className="mb-3 text-12 px-3 py-2 rounded border bg-red-dim text-red border-red/20">
-              {revokeError}
-            </div>
-          )}
-          <div className="flex flex-col gap-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className={`border rounded-md p-4 flex items-center gap-4 ${
-                  session.active ? "border-hair-2 bg-bg-panel" : "border-hair bg-bg-2 opacity-50"
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                    session.active ? "bg-green" : "bg-red"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-ink-0 text-13">{session.userName}</span>
-                    <span className="text-10 font-mono text-ink-2 bg-bg-2 px-1.5 py-0.5 rounded">
-                      {session.ip}
-                    </span>
-                    {session.active ? (
-                      <span className="text-10 font-mono text-green uppercase tracking-wide">live</span>
-                    ) : (
-                      <span className="text-10 font-mono text-red uppercase tracking-wide">revoked</span>
-                    )}
-                  </div>
-                  <div className="flex gap-4 mt-1 text-11 text-ink-2 flex-wrap">
-                    <span>Started {fmtDate(session.started)}</span>
-                    <span>Last active {fmtDate(session.lastActive)}</span>
-                    <span className="font-mono text-ink-3">{session.id}</span>
-                  </div>
-                </div>
-                {session.active && (
-                  <button
-                    onClick={() => void handleRevokeSession(session)}
-                    disabled={revokingId === session.id}
-                    className="flex-shrink-0 px-3 py-1.5 rounded border border-red text-red text-11 font-mono font-semibold hover:bg-red-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {revokingId === session.id ? "Revoking…" : "Revoke"}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {activeTab === "👁️ Session Monitor" && <SessionMonitorTab />}
 
       {/* ── Tab 4: Audit Log ─────────────────────────────────────────────────── */}
       {activeTab === "📋 Audit Log" && (

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import {
   buildComplianceReport,
@@ -177,6 +178,34 @@ function renderHtmlReport(text: string, input: ReportInput): string {
 
 
 
+  // ── Adverse-media findings — full evidence block for the PDF ───
+  // The .txt has emitted this for several PRs already (hit volume,
+  // categories with counts, keyword groups, top keywords, per-hit
+  // evidence with offsets, news dossier with article links). The
+  // PDF render historically only showed the chip overlay above and
+  // dropped everything else. Operator can't take that to a regulator
+  // — every adverse-media disposition needs the EVIDENCE in the
+  // file, not a category badge. Rebuilt below.
+  const amScored = sb?.adverseMediaScored ?? null;
+  const amTotalHits =
+    amScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  const _amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
+  const amCategoriesTripped =
+    amScored?.categoriesTripped && amScored.categoriesTripped.length > 0
+      ? amScored.categoriesTripped
+      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
+  const amVectorScore =
+    amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
+  const _amTopKeywords = amScored?.topKeywords ?? [];
+  const newsArticles = (
+    sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string; keywordGroups?: string[] }>; articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier?.articles ?? [];
+  const _newsDossierMeta = (
+    sb as { newsDossier?: { articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier;
+
   // Recommendation
   let rec = "";
   if (sev === "critical") {
@@ -247,15 +276,6 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     "OECD Due Diligence Guidance — Gold Supplement",
   ];
 
-  const amScored = sb?.adverseMediaScored ?? null;
-  const amTotalHits = amScored?.total
-    ?? ((sb?.adverseKeywordGroups ?? []).reduce((acc, g) => acc + g.count, 0) + (sb?.adverseMedia?.length ?? 0));
-  const amCategoriesTripped =
-    amScored?.categoriesTripped?.length
-      ? amScored.categoriesTripped
-      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
-  const amVectorScore = amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
-  const newsArticles = (sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string }> } } | null | undefined)?.newsDossier?.articles ?? [];
 
   // ── extra CSS (scr-* classes) ──────────────────────────────────────
   const extraCss = `<style>
@@ -796,6 +816,21 @@ async function handleComplianceReport(req: Request): Promise<Response> {
     });
   }
 
+  // Structured JSON sidecar — same provenance and hashes as the text
+  // version. Lets machine consumers (Asana automation, MAS bridges,
+  // regulator portals) consume the report without parsing the prose.
+  if (format === "json") {
+    const structured = buildComplianceReportStructured(body);
+    return NextResponse.json(structured, {
+      status: 200,
+      headers: {
+        ...gateHeaders,
+        "content-disposition": `attachment; filename="hawkeye-report-${safeFilenameSegment(body.subject.id)}.json"`,
+        "cache-control": "no-store",
+      },
+    });
+  }
+
   if (format === "html" || format === "pdf") {
     const html = renderHtmlReport(report, body);
     return new Response(html, {
@@ -832,7 +867,7 @@ async function handleComplianceReport(req: Request): Promise<Response> {
       tool: "compliance_report",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: gateHeaders });
   }

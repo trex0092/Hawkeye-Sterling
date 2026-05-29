@@ -8,6 +8,7 @@
 // Body: { query: string; mode?: "multi-agent" | "single"; context?: {q,a}[] }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { askComplianceQuestion } from "../../../../src/integrations/complianceRag.js";
 import {
@@ -99,7 +100,7 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
   const ctl = new AbortController();
   const killTimer = setTimeout(() => ctl.abort(), HAIKU_TIMEOUT_MS);
   try {
-    const client = getAnthropicClient(apiKey, 115_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const upstream = await client.messages.create({
         model: HAIKU_MODEL,
         max_tokens: 700,
@@ -108,11 +109,11 @@ async function runHaikuQuick(question: string, contextPairs: HaikuPair[], apiKey
       });
     const answer = upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
     return { ok: true, answer, elapsedMs: Date.now() - startedAt };
-  } catch (err) {
+  } catch (_err) {
     const aborted = ctl.signal.aborted;
     return {
       ok: false,
-      error: aborted ? `Quick budget exceeded (>${Math.round(HAIKU_TIMEOUT_MS / 1000)} s)` : (err instanceof Error ? err.message : String(err)),
+      error: aborted ? `Quick budget exceeded (>${Math.round(HAIKU_TIMEOUT_MS / 1000)} s)` : "LLM request failed",
       elapsedMs: Date.now() - startedAt,
     };
   } finally {
@@ -237,6 +238,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       a: sanitizeText(p.a, 2000),
     }));
   }
+  body.query = gateResult.question;
 
   // FAST PATH — Balanced depth (the default) routes through the same
   // Haiku 4.5 single-pass path that the MLRO Advisor "Quick" mode uses.
@@ -336,14 +338,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   const enrichedQuestion = `${preamble}${body.query.trim()}`.slice(0, 3500);
   const detectedJurisdiction = detectJurisdiction(body.query);
 
-  // 'balanced' mode skips the 25 s executor stage and runs the advisor only,
-  // so the round-trip fits comfortably inside the Netlify function timeout.
-  // 'deep' mode runs the full executor → advisor pipeline (multi_perspective)
-  // for higher answer quality at the cost of latency. Caller opts in via the
-  // `depth` field; we still cap budgetMs below to stay inside maxDuration.
+  // Use 'speed' mode (Sonnet executor only) for the fallback so the response
+  // reliably fits within Netlify's ~26 s edge ceiling. The RAG call above is
+  // also capped at 4 s, leaving ~18 s for the advisor. 'deep' opts in to the
+  // full multi_perspective pipeline, but is also capped for the same reason.
   const wantsDeep = body.depth === "deep";
-  const advisorMode: "balanced" | "multi_perspective" = wantsDeep ? "multi_perspective" : "balanced";
-  const advisorBudgetMs = wantsDeep ? 95_000 : 50_000;
+  const advisorMode: "speed" | "multi_perspective" = wantsDeep ? "multi_perspective" : "speed";
+  const advisorBudgetMs = wantsDeep ? 17_000 : 18_000;
 
   const advisorReq: MlroAdvisorRequest = {
     question: enrichedQuestion,
@@ -367,17 +368,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   try {
-    // Netlify's edge layer enforces a ~26 s "inactivity timeout" on
-    // synchronous functions independent of route-level maxDuration.
-    // We HARD-CAP both balanced and deep modes at 22 s so the platform
-    // always sees JSON before its timeout fires — the alternative is
-    // an HTML 504 page the client cannot parse. Deep mode therefore
-    // returns its best-effort partial reasoning trail when it cannot
-    // finish; the response.partial flag tells the UI to render the
-    // partial answer with a "budget exceeded" notice. To re-enable
-    // longer-budget deep reasoning, port this route to a Netlify
-    // background function (15-minute timeout) and remove the cap.
-    const safeBudgetMs = Math.min(advisorBudgetMs, 22_000);
+    const safeBudgetMs = advisorBudgetMs;
     const advisorResult = await invokeMlroAdvisor(advisorReq, { apiKey, budgetMs: safeBudgetMs });
 
     if (!advisorResult.ok) {
@@ -456,7 +447,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tool: "compliance_qa",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(4).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: { ...CORS } });
   }

@@ -1,0 +1,83 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-default-deny
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-ingress
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from ingress controller only
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hawkeye-sterling-egress
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Egress
+  egress:
+    # DNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # HTTPS to external APIs. Required egress destinations (for documentation —
+    # Kubernetes NetworkPolicy cannot filter by FQDN; use a service mesh or
+    # egress gateway such as Calico GlobalNetworkPolicy, Cilium FQDN policy, or
+    # Istio ServiceEntry for FQDN-level enforcement in production):
+    #   api.anthropic.com         — Claude LLM calls
+    #   <id>.upstash.io           — Upstash Redis rate limiting
+    #   api.netlify.com           — Netlify Blobs audit chain
+    #   *.me-south-1.amazonaws.com — S3 WORM audit backup (UAE residency)
+    #   goaml.uae.gov             — UAE FIU goAML STR/SAR filing
+    #   <moondb-endpoint>         — MoonDB primary database
+    # Restrict to named CIDR blocks using ipBlock rules once service IPs are known.
+    - ports:
+        - protocol: TCP
+          port: 443
+    # Allow egress to osint-bridge sidecar within namespace
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: osint-bridge
+      ports:
+        - protocol: TCP
+          port: 8080

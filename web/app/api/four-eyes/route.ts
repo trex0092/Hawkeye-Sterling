@@ -15,11 +15,13 @@
 
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { requireRole } from "@/lib/server/role-gate";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 // enforce is provided by withGuard; no direct import needed here.
 import type { FourEyesAction, FourEyesItem, FourEyesStatus } from "@/lib/types";
+import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -35,6 +37,9 @@ const ALLOWED_ACTIONS: ReadonlySet<FourEyesAction> = new Set([
 const ALLOWED_STATUSES: ReadonlySet<FourEyesStatus> = new Set([
   "pending", "approved", "rejected", "expired",
 ]);
+// Virtual status values that map to multiple concrete statuses.
+const VIRTUAL_STATUS_ALL = "all";
+const VIRTUAL_STATUS_COMPLETED = "completed";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -91,25 +96,44 @@ async function generateApprovalSummary(
 
 const OVERDUE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 h
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
-  // Default to pending queue; caller can override with ?status=approved|rejected|expired
+  // ?status= accepts concrete values (pending|approved|rejected|expired) plus
+  // virtual values: "all" (every item) and "completed" (approved + rejected).
   const wantStatus = url.searchParams.get("status")?.trim() ?? "pending";
   const wantCaseId = url.searchParams.get("caseId")?.trim();
+
+  // Pagination: ?page=1&pageSize=50 (1-based; pageSize capped at 200).
+  const pageRaw = parseInt(url.searchParams.get("page") ?? "1", 10);
+  const pageSizeRaw = parseInt(url.searchParams.get("pageSize") ?? "50", 10);
+  const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+  const pageSize = Number.isFinite(pageSizeRaw) && pageSizeRaw >= 1
+    ? Math.min(pageSizeRaw, 200)
+    : 50;
+
   let keys: string[];
   try {
     keys = await listKeys("four-eyes/");
   } catch (err) {
     console.warn("[hawkeye] four-eyes GET listKeys failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: true, pending: [], total: 0, items: [] }, { headers: {} });
+    return NextResponse.json({ ok: false, error: "Four-eyes store temporarily unavailable — please retry" }, { status: 503 });
   }
   const loaded = await Promise.all(
     keys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
   );
   let items = loaded.filter((s): s is FourEyesItem => s !== null);
-  if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
+  // Tenant isolation: only return items belonging to this tenant.
+  // Items without tenantId are pre-multi-tenant legacy; shown to all for backward compat.
+  items = items.filter((i) => !i.tenantId || i.tenantId === ctx.tenantId);
+
+  if (wantStatus === VIRTUAL_STATUS_ALL) {
+    // no status filter — return everything
+  } else if (wantStatus === VIRTUAL_STATUS_COMPLETED) {
+    items = items.filter((i) => i.status === "approved" || i.status === "rejected");
+  } else if (ALLOWED_STATUSES.has(wantStatus as FourEyesStatus)) {
     items = items.filter((i) => i.status === wantStatus);
   }
+
   if (wantCaseId) {
     items = items.filter(
       (i) => i.caseId === wantCaseId || i.subjectId === wantCaseId,
@@ -127,13 +151,24 @@ async function handleGet(req: Request): Promise<NextResponse> {
       : i;
   });
 
+  const totalCount = enriched.length;
+  const offset = (page - 1) * pageSize;
+  const pageItems = enriched.slice(offset, offset + pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
   return NextResponse.json(
-    { ok: true, pending: enriched, total: enriched.length, items: enriched },
+    {
+      ok: true,
+      pending: pageItems,
+      total: totalCount,
+      items: pageItems,
+      pagination: { page, pageSize, totalCount, totalPages },
+    },
     { headers: {} },
   );
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   // Auth is already enforced by withGuard — no second enforce() call needed.
   let raw: unknown;
   try { raw = await req.json(); } catch {
@@ -168,7 +203,8 @@ async function handlePost(req: Request): Promise<NextResponse> {
     existingKeys.map((k) => getJson<FourEyesItem>(k).catch(() => null)),
   )).filter((i): i is FourEyesItem => i !== null);
   const alreadySubmitted = existingItems.some(
-    (i) => i.subjectId === subjectId && i.initiatedBy === initiatedBy && i.status === "pending",
+    (i) => (!i.tenantId || i.tenantId === ctx.tenantId) &&
+      i.subjectId === subjectId && i.initiatedBy === initiatedBy && i.status === "pending",
   );
   if (alreadySubmitted) {
     return NextResponse.json(
@@ -186,9 +222,10 @@ async function handlePost(req: Request): Promise<NextResponse> {
   // Capture actor alias if provided (for external API compat).
   const actorAlias = stringField(raw["actor"]);
 
-  const id = `fe-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const id = `fe-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const item: FourEyesItem = {
     id,
+    tenantId: ctx.tenantId,
     subjectId,
     ...(explicitCaseId ? { caseId: explicitCaseId } : {}),
     subjectName,
@@ -227,6 +264,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
   void writeAuditChainEntry({
     event: "four_eyes.enqueued",
     actor: initiatedBy,
+    actorEmail: ctx.apiKey.email,
     caseId: enrichedItem.caseId ?? enrichedItem.subjectId,
     itemId: id,
     subjectName: enrichedItem.subjectName,
@@ -322,6 +360,11 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
 }
 
 async function handlePatch(req: Request, ctx: RequestContext): Promise<NextResponse> {
+  // Four-eyes approval/rejection requires MLRO or CO portal session.
+  // External API key callers cannot approve regulator-facing decisions (FDL 10/2025 Art.16).
+  const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
+  if (roleBlock) return roleBlock;
+
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 , headers: {} });
@@ -379,11 +422,24 @@ async function handlePatch(req: Request, ctx: RequestContext): Promise<NextRespo
   return NextResponse.json({ ok: true, item: updated, ...(asanaTaskUrl ? { asanaTaskUrl } : {}) });
 }
 
-async function handleDelete(req: Request): Promise<NextResponse> {
+async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = safeId(url.searchParams.get("id"));
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  const existing = await getJson<FourEyesItem>(`four-eyes/${id}`);
+  if (!existing) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
+  const actor = ctx.apiKey.name || ctx.apiKey.email || ctx.apiKey.id;
   await del(`four-eyes/${id}`);
+  void writeAuditChainEntry({
+    event: "four_eyes.deleted",
+    actor,
+    itemId: id,
+    subjectName: existing.subjectName,
+    fourEyesAction: existing.action,
+    priorStatus: existing.status,
+  }).catch((err: unknown) => {
+    console.warn("[four-eyes] delete audit write failed:", err instanceof Error ? err.message : String(err));
+  });
   return NextResponse.json({ ok: true });
 }
 

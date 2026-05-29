@@ -13,6 +13,7 @@
 // roles are entered manually by the operator, per project memory. The
 // withGuard auth gate is the hard line.
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { getJson, setJson } from "@/lib/server/store";
@@ -24,6 +25,7 @@ import {
   validateEntryId,
   type WhitelistEntry,
 } from "@/lib/server/whitelist";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,9 +82,28 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
       { status: 400 },
     );
   }
+  if (subjectName.length > 500) {
+    return NextResponse.json(
+      { ok: false, error: "subjectName exceeds 500-character limit" },
+      { status: 400 },
+    );
+  }
   if (!reason) {
     return NextResponse.json(
       { ok: false, error: "reason required (audit-trail justification for the whitelist)" },
+      { status: 400 },
+    );
+  }
+  if (reason.length > 2000) {
+    return NextResponse.json(
+      { ok: false, error: "reason exceeds 2000-character limit" },
+      { status: 400 },
+    );
+  }
+  const rawSubjectId = str(raw["subjectId"]);
+  if (rawSubjectId !== undefined && rawSubjectId.length > 256) {
+    return NextResponse.json(
+      { ok: false, error: "subjectId exceeds 256-character limit" },
       { status: 400 },
     );
   }
@@ -95,7 +116,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
 
   const id =
     str(raw["id"]) ??
-    `wl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    `wl-${Date.now()}-${randomBytes(4).toString("hex")}`;
   if (!validateEntryId(id)) {
     return NextResponse.json(
       { ok: false, error: "id must match [a-zA-Z0-9_-.:] and be 1-128 chars" },
@@ -112,7 +133,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     approverRole: (approverRoleRaw as WhitelistEntry["approverRole"]) ?? "co",
     approvedAt: new Date().toISOString(),
     reason,
-    ...(str(raw["subjectId"]) ? { subjectId: str(raw["subjectId"])! } : {}),
+    ...(rawSubjectId ? { subjectId: rawSubjectId } : {}),
     ...(str(raw["jurisdiction"])
       ? { jurisdiction: str(raw["jurisdiction"])!.toUpperCase() }
       : {}),
@@ -128,6 +149,12 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     subjectName: entry.subjectName,
     reason: entry.reason,
   });
+
+  // FDL 10/2025 Art.24: whitelist additions are AML decisions and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "whitelist.entry_added", subjectId: entry.id, subjectName: entry.subjectName, reason: entry.reason, actor: entry.approvedBy },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, entry });
 }
@@ -151,6 +178,13 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     action: "remove",
     entryId: id,
   });
+
+  // FDL 10/2025 Art.24: whitelist removals are AML decisions and must be in the tamper-evident chain.
+  void writeAuditChainEntry(
+    { event: "whitelist.entry_removed", subjectId: id, actor: ctx.tenantId },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true });
 }
 

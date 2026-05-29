@@ -26,7 +26,7 @@
 //   audit/head.json → { sequence, hash }      (latest pointer)
 
 import { NextResponse } from "next/server";
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys } from "@/lib/server/store";
 import { getChainSecret } from "@/lib/server/audit-chain";
@@ -233,16 +233,18 @@ function buildCognitiveDepthSidecar(
     first_action_at: entries[0]?.at ?? null,
     last_action_at: entries.at(-1)?.at ?? null,
     retention_deadline: entries[0]
-      ? new Date(
-          Date.parse(entries[0].at) + 10 * 365.25 * 24 * 60 * 60 * 1000,
-        ).toISOString()
+      ? (() => {
+          const firstAt = Date.parse(entries[0]?.at ?? "");
+          const base = Number.isFinite(firstAt) ? firstAt : Date.now();
+          return new Date(base + 10 * 365.25 * 24 * 60 * 60 * 1000).toISOString();
+        })()
       : null,
   };
 }
 
 // ─── GET handler ─────────────────────────────────────────────────────────────
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request): Promise<NextResponse | Response> {
   const _handlerStart = Date.now();
   let gateHeaders: Record<string, string> = {};
   try {
@@ -278,14 +280,37 @@ async function handleGet(req: Request): Promise<NextResponse> {
     const invalidCount = validationResults.filter((r) => r.valid === false).length;
 
     if (format === "pdf") {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "PDF export is not yet implemented. Use format=json to retrieve the full audit chain.",
-          totalEntries: entries.length,
+      const exportedAt = new Date().toISOString();
+      const { generateAuditPdf } = await import("@/lib/server/audit-pdf");
+      const pdfEntries = validationResults.map((r) => {
+        const entry = recent.find((e) => e.id === r.id);
+        return {
+          sequence: entry?.sequence,
+          id: r.id,
+          at: entry?.at ?? "",
+          actor: entry?.actor,
+          action: entry?.action,
+          target: entry?.target,
+          valid: r.valid,
+        };
+      });
+      const pdfBytes = await generateAuditPdf({
+        entries: pdfEntries,
+        exportedAt,
+        totalEntries: entries.length,
+        chainValid: allValid,
+        secretConfigured: secretPresent,
+        invalidCount,
+      });
+      return new Response(Buffer.from(pdfBytes), {
+        status: 200,
+        headers: {
+          ...gateHeaders,
+          "content-type": "application/pdf",
+          "content-disposition": `attachment; filename="hawkeye-audit-trail-${exportedAt.slice(0,10)}.pdf"`,
+          "x-hawkeye-format": "audit-export-pdf",
         },
-        { status: 501, headers: gateHeaders },
-      );
+      });
     }
 
     const latencyMs = Date.now() - _handlerStart;
@@ -405,7 +430,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
       tool: "audit_trail",
       error: "An unexpected error occurred. Please retry or contact support.",
       retryAfterSeconds: null,
-      requestId: Math.random().toString(36).slice(2, 10),
+      requestId: randomBytes(5).toString("hex"),
       latencyMs: Date.now() - _handlerStart,
     }, { status: 500, headers: gateHeaders });
   }
@@ -478,9 +503,15 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   // Optionally cross-check each entry_id against the store so the caller
   // knows whether the referenced entries actually exist.
-  const allEntries = await loadAllEntries();
-  const storedIds = new Set(allEntries.map((e) => e.id));
-  const unknownIds = body.entry_ids.filter((id) => !storedIds.has(id));
+  let unknownIds: string[] = [];
+  try {
+    const allEntries = await loadAllEntries();
+    const storedIds = new Set(allEntries.map((e) => e.id));
+    unknownIds = body.entry_ids.filter((id) => !storedIds.has(id));
+  } catch (err) {
+    console.warn("[audit/view] POST loadAllEntries failed:", err instanceof Error ? err.message : err);
+    // Non-fatal — return verification result without cross-check
+  }
 
   return NextResponse.json(
     {

@@ -175,12 +175,12 @@ export default function HeatmapPage() {
                     : "—";
               const fatfTone =
                 r.fatf === "call_for_action"
-                  ? "text-red-700"
+                  ? "text-red-400"
                   : r.fatf === "increased_monitoring"
-                    ? "text-amber-700"
+                    ? "text-amber-400"
                     : "text-ink-3";
               const euFlag = r.eu === "high_risk_third_country" ? "High-risk 3rd" : "—";
-              const euTone = r.eu === "high_risk_third_country" ? "text-orange-700" : "text-ink-3";
+              const euTone = r.eu === "high_risk_third_country" ? "text-orange-400" : "text-ink-3";
               return (
                 <tr key={r.iso2} className="border-t border-hair-2 hover:bg-bg-1">
                   <td className="px-3 py-1.5 font-mono text-11 text-ink-2">{r.iso2}</td>

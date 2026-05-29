@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
   ModuleHeader,
@@ -31,10 +32,8 @@ import { RowActions } from "@/components/shared/RowActions";
 import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
-  saveOperatorRole,
   canPerform,
   ROLE_LABEL,
-  ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";
@@ -98,21 +97,72 @@ interface CaseRow {
   amountAed: string;
   status: string;
   openedAt: string;
+  fiuDeadline35Day?: string;
+  fiuDeadlineDay20Alert?: string;
+}
+
+// ── FIU countdown helpers ────────────────────────────────────────────────────
+function calcDaysRemaining(deadline?: string): number | null {
+  if (!deadline) return null;
+  const ms = new Date(deadline).getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function fiuBarColor(days: number): string {
+  if (days <= 7) return "bg-red";
+  if (days <= 15) return "bg-amber";
+  return "bg-green";
+}
+
+function FiuCountdownBar({ fiuDeadline35Day, fiuDeadlineDay20Alert }: { fiuDeadline35Day?: string; fiuDeadlineDay20Alert?: string }) {
+  if (!fiuDeadline35Day) return null;
+  const days = calcDaysRemaining(fiuDeadline35Day);
+  if (days === null) return null;
+  const overdue = days < 0;
+  const pct = Math.min(100, Math.max(0, ((35 - days) / 35) * 100));
+  const barColor = overdue ? "bg-red" : fiuBarColor(days);
+  const day20Passed = fiuDeadlineDay20Alert ? calcDaysRemaining(fiuDeadlineDay20Alert) !== null && (calcDaysRemaining(fiuDeadlineDay20Alert) ?? 1) <= 0 : false;
+
+  return (
+    <div className="px-3 pb-2 pt-0.5">
+      {/* Progress track */}
+      <div className="relative h-1.5 bg-bg-2 rounded-full overflow-hidden">
+        <div
+          className={`absolute left-0 top-0 h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+        {/* Day-20 milestone marker at 20/35 ≈ 57.1% */}
+        <div
+          className="absolute top-0 h-full w-px bg-amber/70"
+          style={{ left: `${(20 / 35) * 100}%` }}
+          title="Day 20 investigation deadline"
+        />
+      </div>
+      {/* Labels */}
+      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+        {overdue ? (
+          <span className="text-10 font-bold text-red uppercase tracking-wide">
+            OVERDUE — {Math.abs(days)} day{Math.abs(days) !== 1 ? "s" : ""} past FIU deadline
+          </span>
+        ) : (
+          <span className={`text-10 font-mono ${days <= 7 ? "text-red font-semibold" : days <= 15 ? "text-amber" : "text-ink-3"}`}>
+            {days} day{days !== 1 ? "s" : ""} to FIU deadline
+          </span>
+        )}
+        {day20Passed && (
+          <span className="text-10 font-semibold text-amber">· Day 20 investigation deadline passed</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function AccessDeniedScreen({
   role,
-  onRoleChange,
 }: {
   role: OperatorRole;
-  onRoleChange: (_r: OperatorRole) => void;
+  onRoleChange?: (_r: OperatorRole) => void;
 }) {
-  const elevate = (r: OperatorRole) => {
-    saveOperatorRole(r);
-    window.dispatchEvent(new Event("hawkeye:operator-role-updated"));
-    onRoleChange(r);
-  };
-
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -127,20 +177,8 @@ function AccessDeniedScreen({
             risks tipping-off the subject under investigation.
           </p>
           <div className="bg-red/10 border border-red/30 rounded-lg px-4 py-3 text-13 text-red font-medium mb-5">
-            Your current role is <strong>{ROLE_LABEL[role]}</strong>. Switch
-            to CO or MLRO to proceed.
-          </div>
-          <div className="flex justify-center gap-2 mb-5">
-            {ALL_ROLES.filter((r) => canPerform(r, "str_read")).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => elevate(r)}
-                className="px-4 py-1.5 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand hover:text-white transition-colors"
-              >
-                Switch to {ROLE_LABEL[r]}
-              </button>
-            ))}
+            Your current role is <strong>{ROLE_LABEL[role]}</strong>. Contact
+            your administrator to request CO or MLRO access.
           </div>
           <p className="text-11 text-ink-3">
             This access attempt has been logged to the immutable audit chain.
@@ -165,17 +203,13 @@ export default function StrCasesPage() {
     // The server enforces str_read >= co — a 403 back here for analyst
     // is expected and harmless; the denied attempt is still visible in
     // the chain via the 403 status code being returned.
-    const operatorName =
-      typeof window !== "undefined"
-        ? (window.localStorage.getItem("hawkeye.operator") ?? undefined)
-        : undefined;
     fetch("/api/audit/sign", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         action: "str_read",
         target: "str-cases-page",
-        actor: { role: r, name: operatorName },
+        actor: { role: r },
         body: { at: new Date().toISOString() },
       }),
     }).catch((err: unknown) => {
@@ -194,19 +228,29 @@ export default function StrCasesPage() {
   const [editCaseDraft, setEditCaseDraft] = useState({ title: "", subject: "", status: "" });
   useEffect(() => {
     if (!canPerform(role, "str_read")) return;
-    setCases(
-      loadCases()
-        .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
-        .map((c) => ({
-      id: c.id,
-      title: c.subject,
-      reportKind: c.meta?.split(" · ")[0] ?? "STR",
-      subject: c.subject,
-      amountAed: "",
-      status: c.statusLabel,
-      openedAt: c.opened,
-        })),
-    );
+    const rows = loadCases()
+      .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
+      .map((c) => ({
+        id: c.id,
+        title: c.subject,
+        reportKind: c.meta?.split(" · ")[0] ?? "STR",
+        subject: c.subject,
+        amountAed: "",
+        status: c.statusLabel,
+        openedAt: c.opened,
+        fiuDeadline35Day: (c as unknown as { fiuDeadline35Day?: string }).fiuDeadline35Day,
+        fiuDeadlineDay20Alert: (c as unknown as { fiuDeadlineDay20Alert?: string }).fiuDeadlineDay20Alert,
+      }));
+    // Sort ascending by days remaining — closest deadline first; no deadline goes last
+    rows.sort((a, b) => {
+      const da = calcDaysRemaining(a.fiuDeadline35Day);
+      const db = calcDaysRemaining(b.fiuDeadline35Day);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+    setCases(rows);
   }, [role]);
 
   const [status, setStatus] = useState("Draft");
@@ -329,7 +373,7 @@ export default function StrCasesPage() {
       const data = await res.json().catch(() => ({})) as { ok: boolean; briefing: MlroBriefing };
       if (data.ok) setBriefing(data.briefing);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Briefing generation failed — please retry";
+      const msg = caughtErrorMessage(err, "Briefing generation failed — please retry");
       setBriefingError(msg);
     } finally { setBriefingLoading(false); }
   };
@@ -362,7 +406,7 @@ export default function StrCasesPage() {
       setPatternResult(data);
       setPatternExpanded(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Pattern detection failed — please retry";
+      const msg = caughtErrorMessage(err, "Pattern detection failed — please retry");
       setPatternError(msg);
     } finally { setPatternLoading(false); }
   };
@@ -399,7 +443,7 @@ export default function StrCasesPage() {
       setTriageResult(data);
       setTriageExpanded(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Triage failed — please retry";
+      const msg = caughtErrorMessage(err, "Triage failed — please retry");
       setTriageError(msg);
     } finally { setTriageLoading(false); }
   };
@@ -435,7 +479,7 @@ export default function StrCasesPage() {
       if (!data.ok) throw new Error(data.error ?? "SAR scoring failed — please retry");
       setSarResult(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "SAR scoring failed — please retry";
+      const msg = caughtErrorMessage(err, "SAR scoring failed — please retry");
       setSarError(msg);
     } finally { setSarLoading(false); }
   };
@@ -518,19 +562,28 @@ export default function StrCasesPage() {
         // Re-read from the authoritative store so the in-page list reflects
         // what was actually persisted (guards against silent quota failures
         // where appendCase wrote nothing but the local variable still exists).
-        setCases(
-          loadCases()
-            .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
-            .map((c) => ({
-              id: c.id,
-              title: c.subject,
-              reportKind: c.meta?.split(" · ")[0] ?? "STR",
-              subject: c.subject,
-              amountAed: "",
-              status: c.statusLabel,
-              openedAt: c.opened,
-            })),
-        );
+        const refreshed = loadCases()
+          .filter((c) => c.meta?.startsWith("STR") || c.meta?.startsWith("SAR"))
+          .map((c) => ({
+            id: c.id,
+            title: c.subject,
+            reportKind: c.meta?.split(" · ")[0] ?? "STR",
+            subject: c.subject,
+            amountAed: "",
+            status: c.statusLabel,
+            openedAt: c.opened,
+            fiuDeadline35Day: (c as unknown as { fiuDeadline35Day?: string }).fiuDeadline35Day,
+            fiuDeadlineDay20Alert: (c as unknown as { fiuDeadlineDay20Alert?: string }).fiuDeadlineDay20Alert,
+          }));
+        refreshed.sort((a, b) => {
+          const da = calcDaysRemaining(a.fiuDeadline35Day);
+          const db = calcDaysRemaining(b.fiuDeadline35Day);
+          if (da === null && db === null) return 0;
+          if (da === null) return 1;
+          if (db === null) return -1;
+          return da - db;
+        });
+        setCases(refreshed);
         clear();
       } else {
         flashFor("error", "Filing failed check Asana token");
@@ -552,7 +605,7 @@ export default function StrCasesPage() {
         </div>
       </ModuleLayout>
     );
-  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} onRoleChange={setRole} />;
+  if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
 
   return (
     <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
@@ -1060,11 +1113,19 @@ export default function StrCasesPage() {
                         </td>
                       </tr>
                     ) : (
+                    <>
                     <tr
                       key={c.id}
-                      className="border-b border-hair last:border-0 hover:bg-bg-1"
+                      className={`border-b ${c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-950/20" : "border-hair last:border-0"} hover:bg-bg-1`}
                     >
-                      <td className="px-3 py-2 text-ink-0">{c.title}</td>
+                      <td className="px-3 py-2 text-ink-0">
+                        <div className="flex items-center gap-1.5">
+                          {c.fiuDeadline35Day && (calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 && (
+                            <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-bold bg-red text-white uppercase">OVERDUE</span>
+                          )}
+                          {c.title}
+                        </div>
+                      </td>
                       <td className="px-3 py-2 font-mono text-ink-2">
                         {c.reportKind}
                       </td>
@@ -1116,6 +1177,14 @@ export default function StrCasesPage() {
                         </div>
                       </td>
                     </tr>
+                    {c.fiuDeadline35Day && (
+                      <tr key={`${c.id}-fiu`} className={`${(calcDaysRemaining(c.fiuDeadline35Day) ?? 1) < 0 ? "border-l-4 border-l-red-500 bg-red-950/20" : ""} border-b border-hair last:border-0`}>
+                        <td colSpan={7} className="p-0">
+                          <FiuCountdownBar fiuDeadline35Day={c.fiuDeadline35Day} fiuDeadlineDay20Alert={c.fiuDeadlineDay20Alert} />
+                        </td>
+                      </tr>
+                    )}
+                    </>
                     )
                   ))}
                 </tbody>

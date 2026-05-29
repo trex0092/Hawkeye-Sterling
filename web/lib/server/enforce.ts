@@ -17,17 +17,25 @@
 
 import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
+import { getJson } from "./store";
 import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
 import { log } from "./logger";
+import { startSpan, SpanStatus } from "./tracer";
+import { incrementCounter } from "./metrics-store";
 
 // Memoized HMAC key for IP anonymization. Derived once per deployment from
 // SESSION_SECRET so that the same IP always produces the same hash within a
 // deployment but cannot be reversed via a rainbow table of 4B IPv4 addresses.
 // Falls back to a fixed dev string when SESSION_SECRET is absent so that dev
 // behaviour is explicit rather than silently using bare SHA-256.
+// HMAC normalization key for constant-time token comparisons (ADMIN_TOKEN,
+// SANCTIONS_CRON_TOKEN). Produces fixed 32-byte digests so timingSafeEqual
+// never short-circuits on byte-length mismatch — avoids leaking token length.
+const ENFORCE_COMPARE_KEY = Buffer.from("hawkeye-enforce-token-v1", "utf8");
+
 let _anonIpKey: string | undefined;
 function anonIpKey(): string {
   if (_anonIpKey) return _anonIpKey;
@@ -64,6 +72,7 @@ function logAuthFailure(
     method: req.method,
     ...extra,
   });
+  incrementCounter('hawkeye_auth_failures_total', 1, { reason: reason.split(':')[0] ?? reason });
 }
 
 export interface EnforcementAllow {
@@ -79,7 +88,25 @@ export type EnforcementResult = EnforcementAllow | { ok: false; response: NextRe
 
 export async function enforce(
   req: Request,
-  opts: { requireAuth?: boolean; requireJsonBody?: boolean } = {},
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number; maxBodyBytes?: number } = {},
+): Promise<EnforcementResult> {
+  const route = new URL(req.url).pathname;
+  const span = startSpan('enforce.auth', { 'http.route': route, 'http.method': req.method });
+  try {
+    return await _enforce(req, opts, span);
+  } catch (err) {
+    span.setStatus({ code: SpanStatus.ERROR });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    throw err;
+  } finally {
+    span.end();
+  }
+}
+
+async function _enforce(
+  req: Request,
+  opts: { requireAuth?: boolean; requireJsonBody?: boolean; cost?: number; maxBodyBytes?: number },
+  span: ReturnType<typeof startSpan>,
 ): Promise<EnforcementResult> {
   // Per-property defaulting so callers can override one option without
   // accidentally clearing the other. The previous all-or-nothing default
@@ -88,9 +115,14 @@ export async function enforce(
   // tripped exactly that footgun. Always merge defaults at the property level.
   const requireAuth = opts.requireAuth ?? true;
   const requireJsonBody = opts.requireJsonBody ?? true;
+  const cost = opts.cost ?? 1;
+  // 1 MiB default. Override with a larger value only for routes that legitimately
+  // accept documents (e.g. trade-finance, EOCN ingest). Netlify's reverse proxy
+  // strips content-length so this check is enforced on direct/k8s callers only
+  // — it is defence-in-depth, not the sole body-size gate.
+  const maxBodyBytes = opts.maxBodyBytes ?? 1_048_576;
 
-  // Content-Type guard — for JSON-body methods, callers must declare
-  // application/json so the handler can safely call req.json().
+  // Content-Type + body-size guard — for JSON-body methods.
   // Skip GET/HEAD/DELETE/OPTIONS which have no body by convention.
   // Set requireJsonBody: false to bypass (e.g. multipart upload routes).
   const bodyMethod = ["POST", "PUT", "PATCH"].includes(req.method);
@@ -102,13 +134,24 @@ export async function enforce(
     // POST requests, even body-less ones — relying on transfer-encoding alone
     // produces false 415s for legitimate body-less POSTs from the UI.
     const cl = req.headers.get("content-length");
-    const hasBody = cl !== null && parseInt(cl, 10) > 0;
+    const clNum = cl !== null ? parseInt(cl, 10) : -1;
+    const hasBody = clNum > 0;
     if (hasBody && !ct.toLowerCase().includes("application/json")) {
       return {
         ok: false,
         response: NextResponse.json(
           { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
           { status: 415 },
+        ),
+      };
+    }
+    if (hasBody && clNum > maxBodyBytes) {
+      logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+          { status: 413 },
         ),
       };
     }
@@ -122,10 +165,9 @@ export async function enforce(
   // limits without consuming monthly quota.
   const adminToken = process.env["ADMIN_TOKEN"];
   const adminMatch = adminToken && plaintext !== null && (() => {
-    const enc = new TextEncoder();
-    const a = enc.encode(adminToken);
-    const b = enc.encode(plaintext);
-    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+    const ha = createHmac("sha256", ENFORCE_COMPARE_KEY).update(adminToken).digest();
+    const hb = createHmac("sha256", ENFORCE_COMPARE_KEY).update(plaintext).digest();
+    return timingSafeEqual(ha, hb);
   })();
   if (adminMatch) {
     const rl = await consumeRateLimit("portal_admin", "enterprise");
@@ -144,13 +186,12 @@ export async function enforce(
 
   // Cron bypass: SANCTIONS_CRON_TOKEN allows internal scheduled functions
   // (health-monitor, sanctions-daily-report, refresh-lists) to call protected
-  // API routes without consuming an API key quota. Same constant-time compare.
+  // API routes without consuming an API key quota. Same HMAC-normalised compare.
   const cronToken = process.env["SANCTIONS_CRON_TOKEN"];
   const cronMatch = cronToken && plaintext !== null && (() => {
-    const enc = new TextEncoder();
-    const a = enc.encode(cronToken);
-    const b = enc.encode(plaintext);
-    return a.byteLength === b.byteLength && timingSafeEqual(a, b);
+    const ha = createHmac("sha256", ENFORCE_COMPARE_KEY).update(cronToken).digest();
+    const hb = createHmac("sha256", ENFORCE_COMPARE_KEY).update(plaintext).digest();
+    return timingSafeEqual(ha, hb);
   })();
   if (cronMatch) {
     const rl = await consumeRateLimit("cron_internal", "enterprise");
@@ -211,8 +252,11 @@ export async function enforce(
       };
     }
     keyId = v.payload.sub;
-    tierId = v.payload.tier;
-    const rl = await consumeRateLimit(keyId, tierId);
+    // Look up live record to get current tier — don't trust JWT-embedded tier claim.
+    // A JWT holder whose tier was downgraded must get the new (lower) rate limits.
+    const liveRecord = await getJson<ApiKeyRecord>(`keys/${keyId}`).catch(() => null);
+    tierId = liveRecord?.tier ?? v.payload.tier ?? "free";
+    const rl = await consumeRateLimit(keyId, tierId, cost);
     if (!rl.allowed) {
       return {
         ok: false,
@@ -280,7 +324,7 @@ export async function enforce(
     keyId = `anon_${createHmac("sha256", anonIpKey()).update(ip).digest("hex").slice(0, 12)}`;
   }
 
-  const rl = await consumeRateLimit(keyId, tierId);
+  const rl = await consumeRateLimit(keyId, tierId, cost);
   if (!rl.allowed) {
     return {
       ok: false,
@@ -291,6 +335,9 @@ export async function enforce(
     };
   }
 
+  span.setAttribute('auth.keyId', keyId);
+  span.setAttribute('auth.tier', tierId);
+  span.setAttribute('auth.outcome', 'allow');
   return {
     ok: true,
     tier: rl.tier,

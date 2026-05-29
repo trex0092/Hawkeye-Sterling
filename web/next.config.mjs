@@ -1,7 +1,78 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+// Patch fs.promises with a concurrency semaphore + EMFILE retry.
+// The output:standalone trace phase opens ~3000 node_modules files concurrently
+// via readFile, spiking fds from ~245 to ~3246 (past the 4096 hard limit on
+// Netlify build agents). Semaphore caps concurrent fd-acquiring calls at 500.
+// Guard: preload-graceful-fs.cjs (via --require) runs earlier and sets
+// fs.__emfilePatched; skip here to avoid double-patching and shared semaphore state.
+;(function patchFsPromises() {
+  const fs = require("fs");
+  if (fs.__emfilePatched) return;
+  fs.__emfilePatched = true;
+
+  const MAX_CONCURRENT_FD = 500;
+  let active = 0;
+  const waiting = [];
+
+  function acquire() {
+    return new Promise(resolve => {
+      if (active < MAX_CONCURRENT_FD) { active++; resolve(); }
+      else waiting.push(resolve);
+    });
+  }
+
+  function release() {
+    if (waiting.length > 0) {
+      waiting.shift()();
+    } else {
+      active--;
+    }
+  }
+
+  const MAX_RETRIES = 20;
+  const FD_METHODS = new Set(["readFile", "writeFile", "appendFile", "copyFile"]);
+  const METHODS = ["open", "writeFile", "readFile", "appendFile", "copyFile",
+                   "rename", "mkdir", "readdir", "stat", "lstat", "access"];
+
+  for (const method of METHODS) {
+    const orig = fs.promises[method];
+    if (typeof orig !== "function") continue;
+    const limited = FD_METHODS.has(method);
+
+    fs.promises[method] = async function emfileRetry(...args) {
+      if (limited) await acquire();
+      try {
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            return await orig.apply(this, args);
+          } catch (err) {
+            if ((err.code === "EMFILE" || err.code === "ENFILE") && attempt < MAX_RETRIES) {
+              await new Promise(r => setTimeout(r, 50 * (attempt + 1)));
+              continue;
+            }
+            throw err;
+          }
+        }
+      } finally {
+        if (limited) release();
+      }
+    };
+  }
+
+  // Also patch callback-based API via graceful-fs if available.
+  try {
+    const gfs = require("graceful-fs");
+    gfs.gracefulify(fs);
+  } catch {
+    // graceful-fs unavailable — rely on ulimit and the promises patch above
+  }
+})();
 
 // Capture the deployed git SHA at build time. Netlify provides `COMMIT_REF`;
 // other CI providers expose it under different names. Without this, runtime
@@ -20,6 +91,19 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // EMFILE mitigation for Netlify build agents (fd hard limit ~4096).
+  // cpus:1 — serialises page generation to 1 worker (default = os.cpus()-1 = 3).
+  // workerThreads:false — switches workers from worker_threads (which SHARE the
+  // parent process fd table) to child_process (isolated fd tables). With
+  // worker_threads, any fds leaked across 133 page generations accumulate in the
+  // parent's table, exhausting the limit before manifest writes. child_process
+  // workers are reaped by the OS on exit, releasing all their fds regardless of
+  // leaks, so the parent always has headroom to write pages-manifest.json.
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
+  },
+
   // Don't disclose the framework + version to attackers. Removes the default
   // `x-powered-by: Next.js` response header. Zero functional impact.
   poweredByHeader: false,
@@ -36,21 +120,11 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  eslint: {
-    // Previously set ignoreDuringBuilds: true because react-hooks/rules-of-hooks
-    // hit a stack overflow analysing MlroAdvisorPage. Re-probing 2026-05-18:
-    // `next lint` completes (warnings only, no stack overflow), full
-    // `next build` exits 0. Flag removed so lint errors fail the deploy.
-    // If the stack overflow returns, restore the flag and split
-    // web/app/mlro-advisor/page.tsx (1398+ lines).
-    ignoreDuringBuilds: false,
-  },
-
   // NOTE: Next.js `async headers()` was tried in PR #496 but @netlify/plugin-nextjs
   // 5.7.2 silently ignores it for SSR + Lambda responses (verified empirically:
   // headers landed on /manifest.webmanifest from netlify.toml, but NOT on /login
   // or /api/health). Security headers for dynamic surfaces are now set in
-  // web/middleware.ts via applySecurityHeaders().
+  // web/proxy.ts via applySecurityHeaders().
 
   async redirects() {
     return [
@@ -66,7 +140,7 @@ const nextConfig = {
   // entries. Verified empirically that @netlify/plugin-nextjs does not
   // honour Next rewrites for dot-prefix paths in production — /.well-known/
   // calls returned 404 while the underlying /api/well-known/ routes worked.
-  // The rewrite is now done in web/middleware.ts (early-return NextResponse
+  // The rewrite is now done in web/proxy.ts (early-return NextResponse
   // .rewrite) which the plugin DOES honour.
 
   // @netlify/blobs is imported dynamically inside ../dist/src/ingestion/blobs-store.js.
@@ -111,15 +185,32 @@ const nextConfig = {
       }
     }
 
-    // AsyncLocalStorage.snapshot() was added in Node.js 22.3.0.
-    // Next.js 15.5 compiled runtimes (app-page, app-route) capture
-    //   let eV = globalThis.AsyncLocalStorage
-    // at module load time and call eV.snapshot() per request.
+    // AsyncLocalStorage.snapshot() polyfill — BannerPlugin injection.
     //
-    // We patch ALL THREE known locations for the AsyncLocalStorage class
-    // because require('async_hooks') vs require('node:async_hooks') may be
-    // separate module-cache entries on some Lambda Node.js builds, and both
-    // differ from the globalThis copy set by node-environment-baseline.js.
+    // WHY: AsyncLocalStorage.snapshot() was added in Node.js 22.3.0. Next.js 15.5
+    // compiled runtimes (app-page, app-route) capture `let eV = globalThis.AsyncLocalStorage`
+    // at module load time and call `eV.snapshot()` per request. On Lambda/Netlify builds
+    // that ship a Node.js version < 22.3.0, this throws at runtime with no useful error.
+    //
+    // WHY THREE LOCATIONS: require('async_hooks') and require('node:async_hooks') can be
+    // separate module-cache entries on some Lambda Node.js builds (depends on how the
+    // resolver is initialised). Both may differ from the globalThis copy set by
+    // node-environment-baseline.js. Patching all three guarantees the polyfill is present
+    // regardless of which path Next.js or a dependency uses to obtain the class.
+    //
+    // WHY BANNER (not a polyfill module): The banner is injected as raw JS at the top of
+    // every compiled server entry, before any module evaluation. A runtime polyfill module
+    // would be too late — ALS is captured at module-load time, not at request time.
+    //
+    // WHEN CAN THIS BE REMOVED: When the minimum deployed Node.js version is >= 22.3.0
+    // across all Netlify function runtimes AND all k8s node pools. Check with
+    //   node -e "const {AsyncLocalStorage}=require('async_hooks');console.log(typeof AsyncLocalStorage.snapshot)"
+    // on each target environment. If it prints "function" everywhere, remove this block
+    // and the corresponding step in scripts/build.sh (patch-als.cjs).
+    //
+    // NOTE: The minified banner string has no source map. Stack traces from within it will
+    // show as anonymous code. This is acceptable — the polyfill only runs if snapshot() is
+    // absent; errors inside it indicate a Node.js environment regression, not app code.
     if (isServer && nextRuntime !== "edge") {
       config.plugins.push(
         new webpack.BannerPlugin({

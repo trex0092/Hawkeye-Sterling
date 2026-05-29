@@ -14,18 +14,23 @@ export async function POST(
   const deny = adminAuth(req);
   if (deny) return deny;
 
-  const { id } = await params;
-  const ok = await revokeKey(id);
-  if (!ok) {
-    return NextResponse.json({ ok: false, error: "unknown key" }, { status: 404 });
+  try {
+    const { id } = await params;
+    const ok = await revokeKey(id);
+    if (!ok) {
+      return NextResponse.json({ ok: false, error: "unknown key" }, { status: 404 });
+    }
+    void writeAuditChainEntry(
+      { event: "api_key.revoked", actor: "admin", keyId: id },
+      "admin",
+    ).catch((err) =>
+      console.warn("[keys/revoke] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+    return NextResponse.json({ ok: true, id, revoked: true });
+  } catch (err) {
+    console.error("[keys/revoke] failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to revoke key" }, { status: 500 });
   }
-  void writeAuditChainEntry(
-    { event: "api_key.revoked", actor: "admin", keyId: id },
-    "admin",
-  ).catch((err) =>
-    console.warn("[keys/revoke] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
-  return NextResponse.json({ ok: true, id, revoked: true });
 }
 
 export async function DELETE(
@@ -35,13 +40,18 @@ export async function DELETE(
   const deny = adminAuth(req);
   if (deny) return deny;
 
-  const { id } = await params;
-  await deleteKey(id);
-  void writeAuditChainEntry(
-    { event: "api_key.deleted", actor: "admin", keyId: id },
-    "admin",
-  ).catch((err) =>
-    console.warn("[keys/delete] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
-  return NextResponse.json({ ok: true, id, deleted: true });
+  try {
+    const { id } = await params;
+    await deleteKey(id);
+    void writeAuditChainEntry(
+      { event: "api_key.deleted", actor: "admin", keyId: id },
+      "admin",
+    ).catch((err) =>
+      console.warn("[keys/delete] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+    return NextResponse.json({ ok: true, id, deleted: true });
+  } catch (err) {
+    console.error("[keys/delete] failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to delete key" }, { status: 500 });
+  }
 }

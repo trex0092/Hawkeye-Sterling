@@ -23,14 +23,16 @@ export default defineConfig({
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],
-    // Rewrite `.js` imports to resolve against `.ts` sources.
     alias: [
+      // Rewrite `.js` imports to resolve against `.ts` sources.
       { find: /^(\.{1,2}\/.*)\.js$/, replacement: '$1' },
       // Provide a lightweight NextResponse shim so web/lib tests that import
       // validate.ts (which uses next/server) run without the Next.js runtime.
       { find: 'next/server', replacement: path.resolve(__dirname, 'src/__mocks__/next-server.ts') },
       // Resolve Next.js path alias `@/` → web/ so src/__tests__ can import web API routes.
       { find: /^@\/(.*)$/, replacement: path.resolve(__dirname, 'web/$1') },
+      // Resolve @brain/* → src/brain/* (strips trailing .js extension for NodeNext compat).
+      { find: /^@brain\/(.+?)(?:\.js)?$/, replacement: path.resolve(__dirname, 'src/brain/$1') },
     ],
   },
 });

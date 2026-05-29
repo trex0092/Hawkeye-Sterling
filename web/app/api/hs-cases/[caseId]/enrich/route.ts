@@ -83,7 +83,7 @@ export async function POST(
   const now     = new Date().toISOString();
 
   let enrichResult: { verdict: string; confidence: string; reasoning: string } | null = null;
-  let lastError = "";
+  let _lastError = "";
 
   // Try once, retry once on failure.
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -91,8 +91,8 @@ export async function POST(
       enrichResult = await runEnrichment(baseUrl, apiKey, existing);
       break;
     } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      console.warn(`[hs-cases/enrich] attempt ${attempt} failed:`, lastError);
+      _lastError = err instanceof Error ? err.message : String(err);
+      console.warn(`[hs-cases/enrich] attempt ${attempt} failed:`, err);
     }
   }
 
@@ -102,12 +102,12 @@ export async function POST(
       actor: gate.keyId,
       caseId,
       subjectName: existing.subjectName,
-      error: lastError.slice(0, 200),
+      error: "enrichment service unavailable",
       attempts: 2,
     }, tenant).catch(() => undefined);
 
     return NextResponse.json(
-      { ok: false, error: "enrichment_failed", detail: lastError.slice(0, 200) },
+      { ok: false, error: "enrichment_failed", detail: "enrichment service unavailable — please retry" },
       { status: 502, headers: gate.headers },
     );
   }

@@ -15,7 +15,7 @@
 // but the response includes a `canaryWarning` so ops can investigate.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { FourEyesItem } from "@/lib/types";
@@ -147,7 +147,17 @@ async function reportToAsana(
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-async function handleComplete(req: Request): Promise<NextResponse> {
+async function handleComplete(req: Request, ctx: RequestContext): Promise<NextResponse> {
+  // Actor identity comes from the authenticated context — body-supplied "operator"
+  // is ignored to prevent impersonation and self-approval bypass.
+  const operator = ctx.apiKey.name || ctx.apiKey.email || ctx.apiKey.id;
+  if (!operator) {
+    return NextResponse.json(
+      { ok: false, error: "operator identity could not be resolved from auth context" },
+      { status: 403 },
+    );
+  }
+
   // Content-Type check — this endpoint is JSON-only.
   const ct = req.headers.get("content-type") ?? "";
   if (!ct.toLowerCase().includes("application/json")) {
@@ -169,12 +179,10 @@ async function handleComplete(req: Request): Promise<NextResponse> {
   const body = raw as Record<string, unknown>;
 
   const id = safeId(body["id"]);
-  const operator = str(body["operator"]);
   const decision = str(body["decision"]);
   const rejectionReason = str(body["rejectionReason"]);
 
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
-  if (!operator) return NextResponse.json({ ok: false, error: "operator required" }, { status: 400 });
   if (decision !== "approve" && decision !== "reject") {
     return NextResponse.json(
       { ok: false, error: "decision must be 'approve' or 'reject'" },
@@ -228,7 +236,7 @@ async function handleComplete(req: Request): Promise<NextResponse> {
     initiatedBy: updated.initiatedBy,
     completionRoute: "/api/four-eyes/complete",
     ...(decision === "reject" && rejectionReason ? { rejectionReason } : {}),
-  });
+  }).catch((e) => console.warn("[four-eyes/complete] background task failed:", e instanceof Error ? e.message : String(e)));
 
   // Asana — best-effort.
   const asanaTaskUrl = await reportToAsana(updated, decision, operator).catch(() => null);

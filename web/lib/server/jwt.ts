@@ -15,6 +15,7 @@
 //     revocation; existing JWTs expire within JWT_TTL_SEC.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { incrementCounter } from "./metrics-store";
 
 const ALG = "HS256" as const;
 const DEFAULT_TTL_SEC = 600;
@@ -37,6 +38,23 @@ function getSecret(): string {
   if (!raw || raw.length < 32) {
     throw new Error("JWT_SIGNING_SECRET unset or shorter than 32 bytes");
   }
+  return raw;
+}
+
+/**
+ * Zero-downtime secret rotation — dual-secret overlap window.
+ *
+ * Rotation procedure (10-minute window = DEFAULT_TTL_SEC):
+ *   1. Set JWT_SIGNING_SECRET_PREV = current JWT_SIGNING_SECRET
+ *   2. Deploy new JWT_SIGNING_SECRET
+ *   3. Existing tokens signed with the old key continue to verify via _PREV
+ *   4. After 600s (all old tokens expired), remove JWT_SIGNING_SECRET_PREV
+ *
+ * Returns undefined when no previous secret is configured.
+ */
+function getPrevSecret(): string | undefined {
+  const raw = process.env["JWT_SIGNING_SECRET_PREV"];
+  if (!raw || raw.length < 32) return undefined;
   return raw;
 }
 
@@ -82,7 +100,13 @@ export interface JwtVerifyResult {
   payload?: JwtPayload;
 }
 
-export function verifyJwt(token: string): JwtVerifyResult {
+/**
+ * Verify a JWT against the primary signing secret.
+ * Falls back to JWT_SIGNING_SECRET_PREV during rotation overlap window.
+ * Returns a degraded result with usedPrevKey=true when the prev-key path succeeds
+ * so callers can log a rotation-in-progress signal.
+ */
+export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: boolean } {
   let secret: string;
   try { secret = getSecret(); } catch { return { ok: false, reason: "no_secret" }; }
   const parts = token.split(".");
@@ -95,12 +119,20 @@ export function verifyJwt(token: string): JwtVerifyResult {
   // Pin alg server-side — refuse `none` and any non-HS256 forgery.
   if (header.alg !== ALG) return { ok: false, reason: "alg_mismatch" };
 
-  const expected = sign(headerB64, payloadB64, secret);
-  const aBuf = Buffer.from(sig, "utf8");
-  const bBuf = Buffer.from(expected, "utf8");
-  const a = new Uint8Array(aBuf.buffer, aBuf.byteOffset, aBuf.byteLength);
-  const b = new Uint8Array(bBuf.buffer, bBuf.byteOffset, bBuf.byteLength);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+  function tryVerify(signingSecret: string): boolean {
+    const expected = sign(headerB64, payloadB64, signingSecret);
+    const aBuf = Buffer.from(sig, "utf8");
+    const bBuf = Buffer.from(expected, "utf8");
+    const a = new Uint8Array(aBuf.buffer, aBuf.byteOffset, aBuf.byteLength);
+    const b = new Uint8Array(bBuf.buffer, bBuf.byteOffset, bBuf.byteLength);
+    return a.length === b.length && timingSafeEqual(a, b);
+  }
+
+  const primaryOk = tryVerify(secret);
+  const prevSecret = primaryOk ? undefined : getPrevSecret();
+  const usedPrevKey = !primaryOk && prevSecret !== undefined && tryVerify(prevSecret);
+
+  if (!primaryOk && !usedPrevKey) {
     return { ok: false, reason: "bad_signature" };
   }
 
@@ -113,7 +145,12 @@ export function verifyJwt(token: string): JwtVerifyResult {
     return { ok: false, reason: "expired", payload };
   }
 
-  return { ok: true, payload };
+  if (usedPrevKey) {
+    console.warn("[jwt] token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC");
+    incrementCounter('hawkeye_jwt_signed_with_prev_key_total');
+  }
+
+  return { ok: true, payload, ...(usedPrevKey ? { usedPrevKey: true } : {}) };
 }
 
 export function extractBearer(req: Request): string | null {

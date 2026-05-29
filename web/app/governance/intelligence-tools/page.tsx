@@ -7,6 +7,7 @@
 // runs client-side.
 
 import { useMemo, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/ownershipChain";
 import { analyzeCrypto, type WalletNode } from "@/lib/intelligence/cryptoExposure";
@@ -58,7 +59,7 @@ export default function IntelligenceToolsPage() {
       const graph = JSON.parse(ownershipJson) as OwnershipGraph;
       return walkOwnershipChain(graph);
     } catch (err) {
-      return { error: err instanceof Error ? err.message : "Invalid JSON" };
+      return { error: caughtErrorMessage(err, "Invalid JSON") };
     }
   }, [ownershipJson]);
 
@@ -68,7 +69,7 @@ export default function IntelligenceToolsPage() {
       const wallets = JSON.parse(walletsJson) as WalletNode[];
       return analyzeCrypto(wallets);
     } catch (err) {
-      return { error: err instanceof Error ? err.message : "Invalid JSON" };
+      return { error: caughtErrorMessage(err, "Invalid JSON") };
     }
   }, [walletsJson]);
 
@@ -78,7 +79,7 @@ export default function IntelligenceToolsPage() {
       const telemetry = JSON.parse(telemetryJson) as IdentityTelemetry[];
       return { ok: true as const, clusters: detectSyntheticClusters(telemetry) };
     } catch (err) {
-      return { error: err instanceof Error ? err.message : "Invalid JSON" };
+      return { error: caughtErrorMessage(err, "Invalid JSON") };
     }
   }, [telemetryJson]);
 

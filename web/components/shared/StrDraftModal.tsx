@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 export interface StrDraftPayload {
   question: string;
@@ -169,7 +170,7 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
       URL.revokeObjectURL(url);
       onClose();
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Draft failed");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Draft failed"));
     } finally {
       if (mountedRef.current) setPosting(false);
     }

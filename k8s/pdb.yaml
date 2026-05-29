@@ -1,0 +1,18 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: hawkeye-sterling
+  namespace: hawkeye-sterling
+  labels:
+    app.kubernetes.io/name: hawkeye-sterling
+    app.kubernetes.io/component: web
+spec:
+  # Guarantee at least 1 pod remains available during node drains and cluster
+  # maintenance windows. With replicas: 2 this allows rolling upgrades (1 pod
+  # at a time) while preventing total service outage during voluntary disruptions.
+  # Increase minAvailable to 2 if replicas >= 3 in production.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hawkeye-sterling
+      app.kubernetes.io/component: web

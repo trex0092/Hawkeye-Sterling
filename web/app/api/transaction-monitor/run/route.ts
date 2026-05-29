@@ -8,6 +8,7 @@ import {
 } from "../../../../../src/brain/streaming-anomaly.js";
 import { analyseBenford, type BenfordRisk } from "../../../../../src/brain/benford.js";
 import { asanaGids } from "@/lib/server/asanaConfig";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,16 +80,16 @@ function detectStructuring(txs: Transaction[]): number {
   // STRUCTURING_WINDOW_HOURS each 80–99% of the DPMS threshold.
   const sorted = [...txs]
     .filter((t) => t.amount >= DPMS_CASH_THRESHOLD_AED * 0.8 && t.amount < DPMS_CASH_THRESHOLD_AED)
-    .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+    .sort((a, b) => (Number.isFinite(Date.parse(a.occurredAt)) ? Date.parse(a.occurredAt) : 0) - (Number.isFinite(Date.parse(b.occurredAt)) ? Date.parse(b.occurredAt) : 0));
   let hits = 0;
   let i = 0;
   while (i < sorted.length) {
     let cluster = 1;
     let j = i + 1;
     for (; j < sorted.length; j++) {
-      const deltaH =
-        (Date.parse(sorted[j]!.occurredAt) - Date.parse(sorted[i]!.occurredAt)) /
-        (1000 * 60 * 60);
+      const tj = Date.parse(sorted[j]!.occurredAt);
+      const ti = Date.parse(sorted[i]!.occurredAt);
+      const deltaH = (Number.isFinite(tj) && Number.isFinite(ti)) ? (tj - ti) / (1000 * 60 * 60) : Infinity;
       if (deltaH > STRUCTURING_WINDOW_HOURS) break;
       cluster++;
     }
@@ -159,13 +160,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "service unavailable" }, { status: 503 });
   }
   const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  if (got.length !== expected.length || !timingSafeEqual(expBuf, gotBuf)) {
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  if (!timingSafeEqual(ha, hb)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -186,7 +185,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     }),
   );
 
-  for (const { s, txs } of perSubjectTxs) {
+  for (const { s, txs: rawTxs } of perSubjectTxs) {
+    // Reject transactions with invalid amounts — must be a positive finite number.
+    const txs = rawTxs.filter((t) => {
+      if (typeof t.amount !== "number" || !Number.isFinite(t.amount) || t.amount <= 0) {
+        console.warn(`[tm-run] skipping transaction ${t.id} for subject ${s.id}: invalid amount ${t.amount}`);
+        return false;
+      }
+      return true;
+    });
     const structuringAlerts = detectStructuring(txs);
     const smurfingAlerts = detectSmurfing(txs, s);
     const anomalies = detectAnomalies(txs);
@@ -207,7 +214,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const amounts = txs.map((t) => t.amount);
       const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
       const std = Math.max(1, Math.sqrt(amounts.map((a) => (a - mean) ** 2).reduce((a, b) => a + b, 0) / amounts.length));
-      const sorted = [...txs].sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+      const sorted = [...txs].sort((a, b) => (Number.isFinite(Date.parse(a.occurredAt)) ? Date.parse(a.occurredAt) : 0) - (Number.isFinite(Date.parse(b.occurredAt)) ? Date.parse(b.occurredAt) : 0));
       for (const tx of sorted) {
         const features = extractFeatures({
           amountUsd: tx.amount / 3.67, // AED → USD approx
@@ -242,6 +249,28 @@ export async function POST(req: Request): Promise<NextResponse> {
                 : anomalies > 0
                   ? { rule: "anomaly", detail: `${anomalies} z-score > 3 outlier(s)` }
                   : null;
+    // Write to audit chain when anomalies are detected for a subject so a
+    // regulator can verify the monitoring loop flagged the activity in real time.
+    if (subjectAlerts > 0 || benfordRisk === 'suspicious') {
+      void writeAuditChainEntry({
+        event: "tm.anomaly_detected",
+        actor: "cron_internal",
+        subjectId: s.id,
+        subjectName: s.name,
+        anomalyType: top?.rule ?? "composite",
+        structuringAlerts,
+        smurfingAlerts,
+        anomalies,
+        streamingAnomalies,
+        heldTransactions,
+        thresholdBreaches,
+        benfordRisk: benfordRisk !== 'insufficient-data' ? benfordRisk : undefined,
+        totalAlertCount: subjectAlerts,
+        txCount: txs.length,
+        runAt: new Date().toISOString(),
+      }).catch((err) => console.warn("[tm-run] audit chain write failed:", err instanceof Error ? err.message : String(err)));
+    }
+
     rolls.push({
       subjectId: s.id,
       subjectName: s.name,

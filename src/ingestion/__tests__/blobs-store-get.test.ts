@@ -62,6 +62,7 @@ describe('getBlobsStore — with mocked @netlify/blobs module', () => {
   let mockGetStore: ReturnType<typeof vi.fn>;
   let mockDataStore: { get: ReturnType<typeof vi.fn>; setJSON: ReturnType<typeof vi.fn> };
   let mockReportStore: { get: ReturnType<typeof vi.fn>; setJSON: ReturnType<typeof vi.fn> };
+  let mockIngestMetaStore: { get: ReturnType<typeof vi.fn>; setJSON: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.resetModules();
@@ -74,12 +75,18 @@ describe('getBlobsStore — with mocked @netlify/blobs module', () => {
       get: vi.fn().mockResolvedValue(null),
       setJSON: vi.fn().mockResolvedValue(undefined),
     };
+    mockIngestMetaStore = {
+      get: vi.fn().mockResolvedValue(null),
+      setJSON: vi.fn().mockResolvedValue(undefined),
+    };
 
     let callCount = 0;
     mockGetStore = vi.fn().mockImplementation(() => {
       callCount++;
-      // First call is data store, second is reports store
-      return callCount === 1 ? mockDataStore : mockReportStore;
+      // First call is data store, second is reports store, third is ingest-meta store
+      if (callCount === 1) return mockDataStore;
+      if (callCount === 2) return mockReportStore;
+      return mockIngestMetaStore;
     });
 
     vi.doMock('@netlify/blobs', () => ({ getStore: mockGetStore }));
@@ -92,9 +99,10 @@ describe('getBlobsStore — with mocked @netlify/blobs module', () => {
   it('creates data and report stores with correct names', async () => {
     const { getBlobsStore } = await import('../blobs-store.js');
     await getBlobsStore();
-    expect(mockGetStore).toHaveBeenCalledTimes(2);
+    expect(mockGetStore).toHaveBeenCalledTimes(3);
     expect(mockGetStore).toHaveBeenCalledWith(expect.objectContaining({ name: 'hawkeye-lists' }));
     expect(mockGetStore).toHaveBeenCalledWith(expect.objectContaining({ name: 'hawkeye-list-reports' }));
+    expect(mockGetStore).toHaveBeenCalledWith(expect.objectContaining({ name: 'hawkeye-list-ingest-meta' }));
   });
 
   it('passes explicit credentials when NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN are set', async () => {
@@ -170,8 +178,8 @@ describe('getBlobsStore — with mocked @netlify/blobs module', () => {
     const { getBlobsStore } = await import('../blobs-store.js');
     await getBlobsStore();
     await getBlobsStore();
-    // getStore called exactly twice (once for data, once for reports) — not 4 times
-    expect(mockGetStore).toHaveBeenCalledTimes(2);
+    // getStore called exactly 3 times (data, reports, ingest-meta) — not 6 times
+    expect(mockGetStore).toHaveBeenCalledTimes(3);
   });
 
   it('putDataset refuses empty overwrite when prior data store has entities', async () => {

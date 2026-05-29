@@ -24,6 +24,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface MiceQuadrant {
   score: number;
@@ -195,7 +197,7 @@ export async function POST(req: Request) {
   const previousProfile = mode === "monitor" ? await loadProfile(employeeId) : null;
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000, "insider-threat");
+    const client = getAnthropicClient(apiKey, 4_500, "insider-threat");
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
@@ -320,6 +322,12 @@ Perform a comprehensive insider threat assessment using the MICE model and CERT 
     void saveProfile(updatedProfile).catch((err) =>
       console.error("[insider-threat] saveProfile failed — risk history not persisted:", err instanceof Error ? err.message : err)
     );
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "insider_threat.profile_saved", actor: gate.keyId, meta: { employeeId } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json({
       ...result,

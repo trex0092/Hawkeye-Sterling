@@ -56,7 +56,7 @@ const SOURCE_BADGE: Record<string, string> = {
   RMI:        "bg-green-dim text-green",
   "EOCN UAE": "bg-red-dim text-red",
   "UAE Cabinet": "bg-red-dim text-red",
-  "UAE PDPL": "bg-violet-dim text-violet",
+  "UAE PDPL":    "bg-violet-dim text-violet",
   "UAE Digital": "bg-blue-dim text-blue",
   "MoET / DPMS": "bg-violet-dim text-violet",
   "Mining":      "bg-amber-dim text-amber",

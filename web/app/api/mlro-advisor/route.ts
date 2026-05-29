@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import {
   invokeMlroAdvisor,
   type MlroAdvisorRequest,
@@ -10,6 +12,10 @@ import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 import { scoreAdvisorAnswer } from "../../../../src/integrations/qualityGates.js";
 import { verifyCitations } from "@/lib/server/citation-verifier";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { streamToString } from "@/lib/server/llm-streaming";
+import { pickModel } from "../../../../src/integrations/model-router.js";
+import { LatencyBudget } from "@/lib/server/latency-budget";
 import {
   retrieveForQuestion,
   runPreGenerationRouter,
@@ -62,6 +68,178 @@ if (typeof process !== "undefined" && !guardHost[REJECTION_GUARD_KEY]) {
 
 interface ContextPair { q: string; a: string }
 
+// ── Structured MLRO decision framework ───────────────────────────────────────
+// Deterministic pre-processing: derives boolean signal flags from the
+// superBrain snapshot and maps them to a preliminary MLRO decision before
+// the LLM call, so the model is anchored on a concrete recommendation.
+
+type MlroDecision = "freeze" | "escalate" | "edd" | "monitor" | "clear";
+
+interface MlroDecisionFramework {
+  hasConfirmedSanctionsHit: boolean;
+  hasPepTier1: boolean;
+  hasHighAdverseMedia: boolean;
+  hasRedlineViolations: boolean;
+  mlroDecision: MlroDecision;
+  requiresFourEyes: boolean;
+  recommendedTimeline: {
+    suspicionFormedAt: string;
+    sarDeadlineAt: string;
+    escalationDeadlineAt: string | null;
+  };
+  decisionConfidence: number;
+  confidenceReason: string;
+}
+
+const HIGH_AM_SEVERITY_LABELS = ["critical", "high"];
+
+function computeMlroDecisionFramework(sb: Body["superBrain"] | undefined): MlroDecisionFramework {
+  // Signal computation
+  const hits = sb?.screen?.hits ?? [];
+  const hasConfirmedSanctionsHit = hits.some(
+    (h) => (h.score ?? 0) >= 0.85 && (h.disambiguationConfidence ?? 0) >= 75,
+  );
+
+  const pepTier = sb?.pep?.tier ?? "";
+  const hasPepTier1 = ["tier_1", "tier1", "1"].includes(pepTier.toLowerCase().trim());
+
+  const amGroups = sb?.adverseKeywordGroups ?? [];
+  const amCats = sb?.adverseMediaScored?.categoriesTripped ?? [];
+  const hasHighAdverseMedia =
+    amGroups.some((g) => HIGH_AM_SEVERITY_LABELS.some((sev) => (g.label ?? "").toLowerCase().includes(sev))) ||
+    amCats.some((c) => HIGH_AM_SEVERITY_LABELS.some((sev) => c.toLowerCase().includes(sev)));
+
+  const hasRedlineViolations = (sb?.redlines?.fired ?? []).length > 0;
+
+  // Decision ladder (most severe wins)
+  let mlroDecision: MlroDecision;
+  if (hasConfirmedSanctionsHit) {
+    mlroDecision = "freeze";
+  } else if (hasPepTier1 || hasRedlineViolations) {
+    mlroDecision = "escalate";
+  } else if (hasHighAdverseMedia) {
+    mlroDecision = "edd";
+  } else if ((sb?.composite?.score ?? 0) >= 50 || (sb?.pep?.salience ?? 0) > 0) {
+    mlroDecision = "monitor";
+  } else {
+    mlroDecision = "clear";
+  }
+
+  // Four-eyes: required when decision is FREEZE or ESCALATE (STR territory)
+  const requiresFourEyes = mlroDecision === "freeze" || mlroDecision === "escalate";
+
+  // Escalation timeline
+  const now = new Date();
+  const plus48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+  const plus2h  = new Date(now.getTime() +  2 * 60 * 60 * 1000);
+  const recommendedTimeline = {
+    suspicionFormedAt: now.toISOString(),
+    sarDeadlineAt:     plus48h.toISOString(),
+    escalationDeadlineAt: mlroDecision === "freeze" ? plus2h.toISOString() : null,
+  };
+
+  // Confidence scoring: each confirmed signal adds weight; multiple signals
+  // increase certainty. Low evidence → low confidence.
+  const signalCount = [
+    hasConfirmedSanctionsHit,
+    hasPepTier1,
+    hasHighAdverseMedia,
+    hasRedlineViolations,
+  ].filter(Boolean).length;
+
+  let decisionConfidence: number;
+  let confidenceReason: string;
+
+  if (!sb) {
+    decisionConfidence = 30;
+    confidenceReason = "No superBrain snapshot supplied; decision based on question text only.";
+  } else if (hasConfirmedSanctionsHit && signalCount >= 2) {
+    decisionConfidence = 97;
+    confidenceReason = "Confirmed sanctions hit (score ≥0.85, disambiguation ≥75%) corroborated by additional signals.";
+  } else if (hasConfirmedSanctionsHit) {
+    decisionConfidence = 92;
+    confidenceReason = "Confirmed sanctions hit (score ≥0.85, disambiguation ≥75%).";
+  } else if (signalCount >= 3) {
+    decisionConfidence = 85;
+    confidenceReason = "Multiple corroborating high-risk signals (PEP Tier 1, adverse media, redlines).";
+  } else if (signalCount === 2) {
+    decisionConfidence = 72;
+    confidenceReason = "Two corroborating risk signals detected.";
+  } else if (signalCount === 1) {
+    decisionConfidence = 58;
+    confidenceReason = "Single risk signal present; additional investigation recommended before final decision.";
+  } else {
+    decisionConfidence = 42;
+    confidenceReason = "No high-severity signals detected; decision based on composite risk score.";
+  }
+
+  return {
+    hasConfirmedSanctionsHit,
+    hasPepTier1,
+    hasHighAdverseMedia,
+    hasRedlineViolations,
+    mlroDecision,
+    requiresFourEyes,
+    recommendedTimeline,
+    decisionConfidence,
+    confidenceReason,
+  };
+}
+
+// UAE regulatory citations by action type — injected verbatim into the system
+// prompt so every LLM response is anchored to the correct legal references.
+const UAE_REGULATORY_CITATIONS = `
+UAE REGULATORY CITATIONS — cite these for every applicable action:
+
+FREEZE (Asset Freezing):
+  • FDL No.10/2025 Art.24 — immediate asset freeze obligation upon confirmed sanctions match
+  • Cabinet Decision 74/2023 — UAE National AML/CFT Action Plan, freeze execution procedures
+  • goAML mandatory STR submission within 24 hours of freeze decision
+
+STR / Suspicious Transaction Report:
+  • FDL No.10/2025 Art.17 — 48-hour STR submission deadline from suspicion formation
+  • CBUAE AML/CFT Standard 4 — STR content, goAML XML format, confidentiality obligations
+  • goAML XML format required for all electronic STR filings to NAMLCFTC/FIU
+
+EDD (Enhanced Due Diligence):
+  • FDL No.10/2025 Art.7 — EDD triggers, source-of-wealth documentation requirements
+  • CBUAE AML/CFT Standard 3 — CDD/EDD procedures, ongoing monitoring frequency
+
+PEP Monitoring:
+  • FATF Recommendation 12 — PEP identification, enhanced scrutiny, senior management approval
+  • FDL No.10/2025 Art.32 — PEP definition under UAE law, enhanced monitoring obligations
+
+Ongoing Monitoring:
+  • FDL No.10/2025 Art.14 — transaction monitoring, record-keeping (5-year minimum)
+  • CBUAE AML/CFT Standard 4 — risk-based monitoring thresholds and escalation triggers
+
+Four-Eyes Principle (FREEZE / STR):
+  • UAE law requires two authorised signatories for freeze execution and STR filing
+  • CR 134/2025 Art.18 — MLRO human review and dual-authorisation requirement
+`.trim();
+
+// Builds a decision framework preamble for the LLM system prompt so the
+// model is anchored on the deterministic pre-computed recommendation.
+function buildDecisionFrameworkPreamble(fw: MlroDecisionFramework): string {
+  const lines = [
+    "PRELIMINARY MLRO DECISION FRAMEWORK (deterministic pre-analysis — ground your response on these signals):",
+    `  · Confirmed sanctions hit:  ${fw.hasConfirmedSanctionsHit ? "YES" : "no"}`,
+    `  · PEP Tier 1 (head of state/govt): ${fw.hasPepTier1 ? "YES" : "no"}`,
+    `  · High/critical adverse media:     ${fw.hasHighAdverseMedia ? "YES" : "no"}`,
+    `  · Redline violations fired:        ${fw.hasRedlineViolations ? "YES" : "no"}`,
+    `  · Suggested preliminary decision:  ${fw.mlroDecision.toUpperCase()}`,
+    `  · Requires four-eyes (dual authorisation): ${fw.requiresFourEyes ? "YES — two authorised signatories required" : "no"}`,
+    `  · Decision confidence: ${fw.decisionConfidence}/100 — ${fw.confidenceReason}`,
+    `  · Suspicion formed at: ${fw.recommendedTimeline.suspicionFormedAt}`,
+    `  · STR deadline (48h):  ${fw.recommendedTimeline.sarDeadlineAt}`,
+    fw.recommendedTimeline.escalationDeadlineAt
+      ? `  · Freeze escalation deadline (2h): ${fw.recommendedTimeline.escalationDeadlineAt}`
+      : "",
+    "",
+  ].filter((l) => l !== "  · ").join("\n");
+  return lines + "\n";
+}
+
 interface Body {
   question: string;
   subjectName: string;
@@ -90,6 +268,22 @@ interface Body {
   /** Convenience alias: when the screening panel has a caseId open,
    *  pass it through. Used as sessionKey when sessionKey isn't set. */
   caseId?: string;
+  // Optional enriched screening context fields
+  riskClassification?: "low" | "medium" | "high" | "very_high";
+  customerStatus?: "new_onboarding" | "existing" | "exit";
+  subjectDateOfBirth?: string;
+  subjectNationality?: string;
+  subjectIdNumber?: string;
+  matchConfidence?: "EXACT" | "STRONG" | "POSSIBLE" | "WEAK" | "NO_MATCH";
+  predicateCategory?: string;
+  transactionAmount?: number | null;
+  transactionCurrency?: string;
+  transactionDate?: string;
+  priorEddPerformed?: boolean | null;
+  priorStrFiled?: boolean | null;
+  observedRedFlags?: string[];
+  commodityType?: string;
+  originCountry?: string;
   /** Optional super-brain snapshot from the screening panel. When
    *  present, the advisor is briefed with the subject's actual
    *  composite/sanctions/PEP/AM/redlines/typology posture so the
@@ -113,23 +307,25 @@ interface Body {
 // than producing textbook guidance. Empty string when no snapshot.
 function buildSubjectPreamble(sb?: Body["superBrain"]): string {
   if (!sb) return "";
+  const sf = (v: string | undefined | null, max = 80) => sanitizeField(v ?? "?", max);
   const lines: string[] = [];
   lines.push("SUBJECT POSTURE (what the brain has computed about THIS subject — reason against these signals, not generic guidance):");
   if (sb.composite?.score != null) {
     lines.push(`  · Composite risk: ${sb.composite.score}/100`);
   }
   if (sb.jurisdiction) {
+    const regimes = (sb.jurisdiction.regimes ?? []).slice(0, 4).map((r) => sf(r, 40)).join(", ");
     lines.push(
-      `  · Jurisdiction: ${sb.jurisdiction.name ?? "?"} (${sb.jurisdiction.iso2 ?? "?"})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${sb.jurisdiction.regimes?.length ? ` · regimes: ${sb.jurisdiction.regimes.slice(0, 4).join(", ")}` : ""}`,
+      `  · Jurisdiction: ${sf(sb.jurisdiction.name)} (${sf(sb.jurisdiction.iso2, 10)})${sb.jurisdiction.cahra ? " · CAHRA" : ""}${regimes ? ` · regimes: ${regimes}` : ""}`,
     );
   }
   if (sb.pep?.salience && sb.pep.salience > 0) {
-    lines.push(`  · PEP: ${(sb.pep.tier ?? "").replace(/^tier_/, "tier ").replace(/_/g, " ")} (${sb.pep.type?.replace(/_/g, " ") ?? "?"}, salience ${Math.round(sb.pep.salience * 100)}%)`);
+    lines.push(`  · PEP: ${sf(sb.pep.tier).replace(/^tier_/, "tier ").replace(/_/g, " ")} (${sf(sb.pep.type).replace(/_/g, " ")}, salience ${Math.round(sb.pep.salience * 100)}%)`);
   } else {
     lines.push(`  · PEP: not classified`);
   }
   const amTotal = sb.adverseMediaScored?.total ?? 0;
-  const amCats = sb.adverseMediaScored?.categoriesTripped ?? [];
+  const amCats = (sb.adverseMediaScored?.categoriesTripped ?? []).map((c) => sf(c, 40));
   if (amTotal > 0 || (sb.adverseKeywordGroups?.length ?? 0) > 0) {
     lines.push(
       `  · Adverse media: ${amTotal} hit(s)${amCats.length ? ` across ${amCats.join(", ")}` : ""}${sb.adverseMediaScored?.compositeScore != null ? ` · vector score ${Math.round(sb.adverseMediaScored.compositeScore)}/100` : ""}`,
@@ -139,12 +335,13 @@ function buildSubjectPreamble(sb?: Body["superBrain"]): string {
   }
   const redlinesFired = sb.redlines?.fired ?? [];
   if (redlinesFired.length > 0) {
-    const labels = redlinesFired.slice(0, 5).map((r) => r.label ?? r.id ?? "redline").join(", ");
-    lines.push(`  · Redlines fired: ${labels}${sb.redlines?.action ? ` → ${sb.redlines.action}` : ""}`);
+    const labels = redlinesFired.slice(0, 5).map((r) => sf(r.label ?? r.id, 60)).join(", ");
+    const action = sb.redlines?.action ? ` → ${sf(sb.redlines.action, 60)}` : "";
+    lines.push(`  · Redlines fired: ${labels}${action}`);
   }
   const typHits = sb.typologies?.hits ?? [];
   if (typHits.length > 0) {
-    const t = typHits.slice(0, 4).map((h) => h.name ?? h.id ?? "doctrine").join(", ");
+    const t = typHits.slice(0, 4).map((h) => sf(h.name ?? h.id, 60)).join(", ");
     lines.push(`  · Typology fingerprints: ${t}${typHits.length > 4 ? "…" : ""}`);
   }
   lines.push("");
@@ -200,11 +397,12 @@ async function callGroqAdvisor(
     "You are a senior AML/CFT compliance officer and MLRO advisor specialising in UAE regulatory law",
     "(FDL No.10/2025, Cabinet Resolution 134/2025, FATF Recommendations 1-40).",
     "You provide concise, authoritative, citation-grounded compliance guidance.",
-    `Current subject under review: ${subjectName}.`,
+    `Current subject under review: ${sanitizeField(subjectName, 200)}.`,
     "Guidelines: cite specific UAE laws, FATF Recs, and Cabinet Resolutions; aim for 300-500 words;",
     "flag when EDD / STR reporting obligations apply; note that final decisions require human MLRO",
     "review per CR 134/2025 Art.18.",
-  ].join(" ");
+    UAE_REGULATORY_CITATIONS,
+  ].join("\n");
   try {
     const res = await fetch(GROQ_URL, {
       method: "POST",
@@ -222,7 +420,8 @@ async function callGroqAdvisor(
     } as RequestInit);
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      return { ok: false, error: `Groq API ${res.status}: ${errText.slice(0, 200)}` };
+      console.error(`[mlro-advisor] Groq API ${res.status}:`, errText.slice(0, 500));
+      return { ok: false, error: "LLM provider returned an error" };
     }
     const data = await res.json().catch(() => ({})) as Record<string, unknown>;
     const content = (data["choices"] as Array<{ message: { content: string } }>)?.[0]?.message?.content ?? "";
@@ -230,7 +429,8 @@ async function callGroqAdvisor(
     return { ok: true, narrative: content, complianceReview: { verdict: "approved" }, _provider: "groq", _model: GROQ_MODEL };
   } catch (err) {
     const isAbort = err instanceof Error && err.name === "AbortError";
-    return { ok: false, error: isAbort ? "Groq timed out" : String(err).slice(0, 200) };
+    console.error("[mlro-advisor] Groq call failed:", err);
+    return { ok: false, error: isAbort ? "Groq timed out" : "Groq service temporarily unavailable" };
   } finally {
     clearTimeout(timer);
   }
@@ -238,8 +438,10 @@ async function callGroqAdvisor(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  const budget = new LatencyBudget("mlro-advisor");
+  budget.phase("auth");
   const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  if (!gate.ok) { budget.finish(); return gate.response; }
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
   // Tenant id (defaults to "portal" for ADMIN_TOKEN portal calls,
   // keyId per API key otherwise) drives every per-tenant lookup
@@ -400,13 +602,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const preamble = buildContextPreamble(mergedContext);
   const subjectPreamble = buildSubjectPreamble(body.superBrain);
 
-  // Order: session continuity → subject posture → case precedent →
-  // regulatory updates → jurisdiction directive → classifier
-  // anchors → question. Tier-2 blocks sit between subject posture
-  // (concrete) and topic anchors (general) so the model anchors on
-  // operator-specific context before drifting to framework-level
-  // guidance.
-  let enrichedQuestion = `${preamble}${subjectPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
+  // ── Structured MLRO decision framework (deterministic pre-processing) ────
+  // Computed BEFORE the LLM call so the model is anchored on the
+  // deterministic recommendation derived from signal flags.
+  const mlroFramework = computeMlroDecisionFramework(body.superBrain);
+  const decisionFrameworkPreamble = buildDecisionFrameworkPreamble(mlroFramework);
+
+  // Order: session continuity → subject posture → decision framework →
+  // case precedent → regulatory updates → jurisdiction directive →
+  // classifier anchors → question. Decision framework sits immediately
+  // after subject posture so the model sees the deterministic
+  // recommendation before broader context.
+  let enrichedQuestion = `${preamble}${subjectPreamble}${decisionFrameworkPreamble}${casePrecedent}${regulatoryUpdates}${jurisdictionDirective}${analysis.enrichedPreamble}\n\n${body.question.trim()}`.slice(0, 4500);
 
   // Layer 3 — opt-in structured-output mode. Appends the 8-section
   // schema instruction so the model emits a single JSON object instead
@@ -464,6 +671,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         ],
       },
       evidenceIds,
+      ...(body.riskClassification && { riskClassification: body.riskClassification }),
+      ...(body.customerStatus && { customerStatus: body.customerStatus }),
+      ...(body.subjectDateOfBirth && { subjectDateOfBirth: body.subjectDateOfBirth }),
+      ...(body.subjectNationality && { subjectNationality: body.subjectNationality }),
+      ...(body.subjectIdNumber && { subjectIdNumber: body.subjectIdNumber }),
+      ...(body.matchConfidence && { matchConfidence: body.matchConfidence }),
+      ...(body.typologyIds?.length && { typologyIds: body.typologyIds }),
+      ...(body.predicateCategory && { predicateCategory: body.predicateCategory }),
+      ...(body.transactionAmount != null && { transactionAmount: body.transactionAmount }),
+      ...(body.transactionCurrency && { transactionCurrency: body.transactionCurrency }),
+      ...(body.transactionDate && { transactionDate: body.transactionDate }),
+      ...(body.priorEddPerformed != null && { priorEddPerformed: body.priorEddPerformed }),
+      ...(body.priorStrFiled != null && { priorStrFiled: body.priorStrFiled }),
+      ...(body.observedRedFlags?.length && { observedRedFlags: body.observedRedFlags }),
+      ...(body.commodityType && { commodityType: body.commodityType }),
+      ...(body.originCountry && { originCountry: body.originCountry }),
     },
   };
 
@@ -497,6 +720,149 @@ export async function POST(req: Request): Promise<NextResponse> {
         return null;
       });
 
+  // ── Speed-mode fast path ────────────────────────────────────────────────
+  // When mode === "speed" AND Claude is available (not Groq), bypass the
+  // full multi-step brain pipeline and call Sonnet directly via streamToString().
+  // The deterministic decision framework already ran above; we pass the full
+  // enrichedQuestion (which includes the framework preamble) as the user message.
+  // All quality gates (citation verifier, hallucination gate, audit chain) still
+  // fire on the result, preserving all compliance invariants.
+  // Recorded in response as fastPath: true for audit trail (FDL Art.18).
+  const speedFastPath = !useGroq && apiKey && (body.mode ?? "multi_perspective") === "speed";
+
+  if (speedFastPath) {
+    budget.phase("llm-sonnet-speed");
+    const modelChoice = pickModel({
+      kind: "summarisation",
+      fastPath: true,
+      latencyBudgetMs: budgetMs,
+      costSensitivity: "balanced",
+      inputTokens: Math.ceil(enrichedQuestion.length / 4),
+    });
+    let speedResult: { ok: boolean; narrative?: string; partial?: boolean; error?: string; complianceReview?: Record<string, unknown>; _provider?: string; _model?: string };
+    try {
+      const sr = await streamToString({
+        apiKey,
+        params: {
+          model: modelChoice.model,
+          max_tokens: 1024,
+          system: [
+            "You are a UAE-licensed MLRO compliance advisor. Provide a concise, citation-grounded advisory.",
+            "Output 250-400 words. Cite specific UAE laws (FDL No.10/2025, Cabinet Resolution 134/2025).",
+            "Lead with the recommended action (FREEZE / ESCALATE / EDD / MONITOR / CLEAR).",
+            "Never fabricate citations or regulatory references.",
+            "End with: 'This advisory requires human MLRO review per CR 134/2025 Art.18.'",
+            UAE_REGULATORY_CITATIONS,
+          ].join("\n"),
+          messages: [{ role: "user", content: enrichedQuestion.slice(0, 3500) }],
+        },
+        timeoutMs: Math.min(budgetMs, 8_000),
+        route: "mlro-advisor-speed",
+      });
+      speedResult = {
+        ok: true,
+        narrative: sr.text || undefined,
+        partial: sr.partial,
+        complianceReview: { verdict: "approved" },
+        _provider: "anthropic",
+        _model: sr.model,
+      };
+    } catch (err) {
+      speedResult = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    budget.phase("post-processing");
+
+    if (!speedResult.ok || !speedResult.narrative) {
+      // Fall through to full pipeline on speed-path failure.
+      console.warn("[mlro-advisor] speed fast-path failed, falling through to full pipeline:", speedResult.error);
+    } else {
+      // Quality gates on speed result (identical to main path).
+      const probeWrap = extractAndStripProbe(speedResult.narrative, "escalate");
+      if (probeWrap) speedResult.narrative = probeWrap.cleanAnswer;
+
+      const advisorScore = scoreAdvisorAnswer(speedResult.narrative, "approved");
+      const citationReport = verifyCitations(speedResult.narrative);
+      const suggestedFollowUps = analysis.suggestedFollowUps?.slice(0, 3) ?? [];
+
+      const audit = await appendAuditEntry({
+        userId: tenant ?? "anonymous",
+        mode: "speed",
+        questionText: body.question,
+        modelVersions: { sonnet: speedResult._model ?? modelChoice.model, opus: "claude-opus-4-7" },
+        charterVersionHash: "advisor-v1",
+        directivesInvoked: [],
+        doctrinesApplied: [],
+        retrievedSources: retrieval.persistedSources,
+        reasoningTrace: [],
+        finalAnswer: null,
+      }).catch(() => ({ seq: 0, entryHash: "" }));
+
+      void writeAuditChainEntry(
+        { event: "mlro.advisor_call", actor: gate.keyId, meta: { seq: audit.seq, tenant: tenant ?? "anonymous", fastPath: true } },
+        tenant ?? "anonymous",
+      ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+      if (speedResult.narrative) {
+        const evidenceFragments = retrieval.persistedSources.map((s) =>
+          [s.articleRef ?? '', s.text ?? ''].filter(Boolean).join(': ').slice(0, 500),
+        );
+        void checkHallucination(speedResult.narrative, evidenceFragments, {
+          route: 'mlro-advisor-speed',
+          tenantId: tenant ?? 'default',
+          actor: gate.keyId,
+        }).catch(() => undefined);
+      }
+
+      budget.finish();
+      return NextResponse.json(
+        {
+          ...speedResult,
+          ok: true,
+          fastPath: true,
+          modelChoice: modelChoice.reason,
+          regulatoryContext: null,
+          detectedJurisdiction: detectedJurisdiction ?? null,
+          questionAnalysis: analysis,
+          advisorScore,
+          citationReport,
+          suggestedFollowUps,
+          contextFlags: {
+            sessionKey,
+            sessionTurnsLoaded: persistedTurns.length,
+            jurisdictionComparison: jurisdictionDirective.length > 0,
+            casePrecedentApplied: casePrecedent.length > 0,
+            regulatoryUpdatesApplied: regulatoryUpdates.length > 0,
+          },
+          retrievedSources: retrieval.persistedSources.map((s) => ({
+            class: s.class,
+            classLabel: s.classLabel,
+            sourceId: s.sourceId,
+            articleRef: s.articleRef,
+            version: s.version,
+          })),
+          structured: null,
+          structuredFallback: null,
+          ...(probeWrap ? { probeOutcome: { innocent: probeWrap.outcome.innocent, adversarial: probeWrap.outcome.adversarial, survived: probeWrap.outcome.survived, bothEmitted: probeWrap.bothEmitted } } : {}),
+          auditEntrySeq: audit.seq,
+          latencyMs: Date.now() - t0,
+          mlroDecision: mlroFramework.mlroDecision,
+          requiresFourEyes: mlroFramework.requiresFourEyes,
+          recommendedTimeline: mlroFramework.recommendedTimeline,
+          decisionConfidence: mlroFramework.decisionConfidence,
+          confidenceReason: mlroFramework.confidenceReason,
+          mlroSignals: {
+            hasConfirmedSanctionsHit: mlroFramework.hasConfirmedSanctionsHit,
+            hasPepTier1: mlroFramework.hasPepTier1,
+            hasHighAdverseMedia: mlroFramework.hasHighAdverseMedia,
+            hasRedlineViolations: mlroFramework.hasRedlineViolations,
+          },
+        },
+        { headers: gateHeaders },
+      );
+    }
+  }
+
+  budget.phase("llm-full-pipeline");
   try {
     const [result, ragResult] = await Promise.all([
       useGroq
@@ -677,6 +1043,27 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(postGen?.validation ? { validation: postGen.validation } : {}),
     }).catch(() => ({ seq: 0, entryHash: "" }));
 
+    void writeAuditChainEntry(
+      { event: "mlro.advisor_call", actor: gate.keyId, meta: { seq: audit.seq, tenant: tenant ?? "anonymous" } },
+      tenant ?? "anonymous",
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+    // Post-response hallucination gate (fire-and-forget). Evidence is the
+    // citation excerpts retrieved by the RAG pipeline before generation.
+    if (result.narrative) {
+      const evidenceFragments = retrieval.persistedSources.map((s) =>
+        [s.articleRef ?? '', s.text ?? ''].filter(Boolean).join(': ').slice(0, 500),
+      );
+      void checkHallucination(result.narrative, evidenceFragments, {
+        route: 'mlro-advisor',
+        tenantId: tenant ?? 'default',
+        actor: gate.keyId,
+      }).catch((err: unknown) =>
+        console.warn('[mlro-advisor] hallucination check failed:', err instanceof Error ? err.message : String(err)),
+      );
+    }
+
+    budget.finish();
     return NextResponse.json(
       {
         ...result,
@@ -727,6 +1114,18 @@ export async function POST(req: Request): Promise<NextResponse> {
           : {}),
         auditEntrySeq: audit.seq,
         latencyMs: Date.now() - t0,
+        // ── Structured MLRO decision framework ──────────────────────────────
+        mlroDecision: mlroFramework.mlroDecision,
+        requiresFourEyes: mlroFramework.requiresFourEyes,
+        recommendedTimeline: mlroFramework.recommendedTimeline,
+        decisionConfidence: mlroFramework.decisionConfidence,
+        confidenceReason: mlroFramework.confidenceReason,
+        mlroSignals: {
+          hasConfirmedSanctionsHit: mlroFramework.hasConfirmedSanctionsHit,
+          hasPepTier1: mlroFramework.hasPepTier1,
+          hasHighAdverseMedia: mlroFramework.hasHighAdverseMedia,
+          hasRedlineViolations: mlroFramework.hasRedlineViolations,
+        },
       },
       { headers: gateHeaders },
     );

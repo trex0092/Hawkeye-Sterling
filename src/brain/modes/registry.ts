@@ -110,6 +110,10 @@ import { WAVE4_BATCH_B_APPLIES } from './wave4-batch-b.js';
 import { WAVE4_BATCH_C_APPLIES } from './wave4-batch-c.js';
 import { WAVE4_BATCH_D_APPLIES } from './wave4-batch-d.js';
 
+// Wave-13 — forensic accounting, quantum intelligence, anticipation, geopolitical awareness.
+import { WAVE13_APPLIES } from './wave13.js';
+import { WAVE14_APPLIES } from './wave14-applies.js';
+
 export type ModeApply = (ctx: BrainContext) => Promise<Finding>;
 
 const WAVE3_MODE_APPLIES: Record<string, ModeApply> = {
@@ -248,6 +252,8 @@ export const MODE_OVERRIDES: Record<string, ModeApply> = {
   ...WAVE4_BATCH_B_APPLIES,
   ...WAVE4_BATCH_C_APPLIES,
   ...WAVE4_BATCH_D_APPLIES,
+  ...WAVE13_APPLIES,
+  ...WAVE14_APPLIES,
 };
 
 /** Register (or replace) a real apply() for a mode at runtime. */

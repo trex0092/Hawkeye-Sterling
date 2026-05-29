@@ -60,19 +60,93 @@ export async function searchNewsApi(opts: SearchOptions): Promise<AdverseMediaAr
   });
 }
 
-/** GDELT DOC API — no key required; free tier. */
+/** GDELT DOC API — no key required; free tier.
+ *
+ * Runs 5 parallel GDELT queries: one English default plus four native-script
+ * multilingual queries (Arabic, Russian/Cyrillic, Spanish/Portuguese, CJK).
+ * All fire simultaneously via Promise.allSettled — zero added latency versus
+ * a single query. Results are deduplicated by URL and merged.
+ */
 export async function searchGdelt(opts: SearchOptions): Promise<AdverseMediaArticle[]> {
   const fetchImpl = opts.fetchImpl ?? fetch;
-  const q = opts.subjectName ? `"${opts.subjectName.replace(/"/g, '')}" AND (${ADVERSE_MEDIA_QUERY})` : ADVERSE_MEDIA_QUERY;
-  const url = new URL('https://api.gdeltproject.org/api/v2/doc/doc');
-  url.searchParams.set('query', q);
-  url.searchParams.set('mode', 'artlist');
-  url.searchParams.set('format', 'json');
-  url.searchParams.set('maxrecords', String(Math.min(opts.limit ?? 25, 250)));
-  const res = await fetchImpl(url.toString());
-  if (!res.ok) throw new Error(`GDELT HTTP ${res.status}`);
-  const json = (await res.json()) as { articles?: Array<{ title?: string; url?: string; seendate?: string; language?: string; domain?: string; sourcecountry?: string }> };
-  return (json.articles ?? []).map((a) => {
+  const maxRecords = String(Math.min(opts.limit ?? 25, 250));
+  const GDELT_BASE = 'https://api.gdeltproject.org/api/v2/doc/doc';
+  const TIMEOUT_MS = 4_000;
+
+  const subject = opts.subjectName ? opts.subjectName.replace(/"/g, '') : '';
+
+  // Build a GDELT query string for the given keyword OR-list
+  function buildQuery(keywords: string): string {
+    return subject ? `"${subject}" AND (${keywords})` : keywords;
+  }
+
+  // Multilingual native-script keyword groups — each targets a distinct
+  // non-English corpus that the English ADVERSE_MEDIA_QUERY misses entirely.
+  const MULTILINGUAL_QUERIES = [
+    // Arabic (MENA, Gulf, North Africa)
+    buildQuery(
+      'اعتقال OR "غسيل أموال" OR غسيل OR فساد OR احتيال OR رشوة OR تهريب OR عقوبات OR تحقيق OR "تمويل الإرهاب"'
+    ),
+    // Russian/Cyrillic (Russia, Ukraine, Central Asia)
+    buildQuery(
+      'арест OR коррупция OR отмывание OR "отмывание денег" OR мошенничество OR взятка OR контрабанда OR санкции OR следствие OR "уголовное дело"'
+    ),
+    // Spanish & Portuguese (LatAm, Iberian press)
+    buildQuery(
+      '"lavado de dinero" OR "lavagem de dinheiro" OR corrupción OR corrupção OR fraude OR detenido OR preso OR tráfico OR blanqueo OR lavagem OR malversación OR "desvio de verbas" OR soborno OR suborno OR sanciones OR sanções OR narcotráfico OR contrabando'
+    ),
+    // CJK — Chinese, Japanese, Korean
+    buildQuery(
+      '洗钱 OR 腐败 OR 欺诈 OR 逮捕 OR 走私 OR 贿赂 OR 制裁 OR マネーロンダリング OR 汚職 OR 詐欺 OR 密輸 OR 자금세탁 OR 부패 OR 사기 OR 체포 OR 밀수 OR 제재'
+    ),
+  ];
+
+  type GdeltRaw = { title?: string; url?: string; seendate?: string; language?: string; domain?: string; sourcecountry?: string };
+
+  async function fetchGdeltQuery(query: string): Promise<GdeltRaw[]> {
+    const url = new URL(GDELT_BASE);
+    url.searchParams.set('query', query);
+    url.searchParams.set('mode', 'artlist');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('maxrecords', maxRecords);
+    url.searchParams.set('timespan', '10y');
+    const res = await fetchImpl(url.toString(), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (!res.ok) throw new Error(`GDELT HTTP ${res.status}`);
+    const json = (await res.json()) as { articles?: GdeltRaw[] };
+    return json.articles ?? [];
+  }
+
+  // Default English query (original behaviour)
+  const defaultQuery = buildQuery(ADVERSE_MEDIA_QUERY);
+
+  // Fire all 5 queries in parallel
+  const settled = await Promise.allSettled([
+    fetchGdeltQuery(defaultQuery),
+    ...MULTILINGUAL_QUERIES.map((q) => fetchGdeltQuery(q)),
+  ]);
+
+  // Merge and deduplicate by URL
+  const seenUrls = new Set<string>();
+  const merged: GdeltRaw[] = [];
+  for (const result of settled) {
+    if (result.status !== 'fulfilled') continue;
+    for (const a of result.value) {
+      const key = (a.url ?? '').toLowerCase();
+      if (!key || seenUrls.has(key)) continue;
+      seenUrls.add(key);
+      merged.push(a);
+    }
+  }
+
+  if (merged.length === 0 && settled.every((r) => r.status === 'rejected')) {
+    // All queries failed — re-throw the first error so the caller can surface it
+    const first = settled[0];
+    throw (first as PromiseRejectedResult).reason instanceof Error
+      ? (first as PromiseRejectedResult).reason
+      : new Error('All GDELT multilingual queries failed');
+  }
+
+  return merged.map((a) => {
     const rawDomain = a.domain;
     return {
       source: 'gdelt' as const,
@@ -113,7 +187,7 @@ export async function searchGoogleCse(
     url.searchParams.set('num', String(Math.min(10, want - (start - 1))));
     url.searchParams.set('start', String(start));
     if (opts.dateRestrict) url.searchParams.set('dateRestrict', opts.dateRestrict);
-    const res = await fetchImpl(url.toString());
+    const res = await fetchImpl(url.toString(), { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) {
       // 429 = quota exhausted; 400 = bad query — return what we have.
       if (out.length > 0) break;
@@ -163,7 +237,7 @@ export async function searchRss(feedUrl: string, opts: SearchOptions = {}): Prom
   const items: Array<{ title: string; link: string; pubDate?: string; description?: string }> = [];
   const itemRx = /<item[\s>][^]*?<\/item>/gi;
   const extract = (block: string, tag: string): string | undefined => {
-    const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block);
+    const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(block); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     if (!m) return undefined;
     return (m[1] ?? '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
   };

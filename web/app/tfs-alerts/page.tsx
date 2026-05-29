@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
@@ -448,6 +449,10 @@ export default function TFSAlertsPage() {
       if (!mountedRef.current) return;
 
       if (!searchRes.ok) {
+        if (searchRes.status === 401) {
+          setErrorMsg("Authentication required — please refresh the page.");
+          return;
+        }
         let err: { error?: string } = {};
         try { err = (await searchRes.json()) as { error?: string }; } catch { /* non-JSON error body */ }
         if (err.error === "GMAIL_REFRESH_FAILED") {
@@ -463,7 +468,7 @@ export default function TFSAlertsPage() {
         } else if (err.error === "GMAIL_NOT_CONFIGURED") {
           setGmailReAuthNeeded(true);
           setErrorMsg(
-            "Gmail is not configured. Ensure GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET are set in Netlify, then click \"Re-authorize Gmail\" below.",
+            "Email integration is not configured — contact your system administrator to complete the Gmail OAuth setup.",
           );
         } else if (err.error === "NETWORK_TIMEOUT") {
           setErrorMsg("Search timed out. Please try again.");
@@ -582,7 +587,7 @@ export default function TFSAlertsPage() {
       );
     } catch (err) {
       if (!mountedRef.current) return;
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = caughtErrorMessage(err);
       if (msg.includes("fetch") || msg.includes("network")) {
         setErrorMsg("Search timed out. Please try again.");
       } else {
@@ -597,12 +602,13 @@ export default function TFSAlertsPage() {
 
   const handleStatusChange = useCallback(
     (id: string, status: TFSAlertStatus, extra?: Partial<TFSAlert>) => {
-      const current = loadAlerts();
-      const idx = current.findIndex((a) => a.id === id);
-      if (idx < 0) return;
-      current[idx] = { ...current[idx]!, status, ...extra };
-      saveAlerts(current);
-      setAlerts([...current]);
+      setAlerts((prev) => {
+        const idx = prev.findIndex((a) => a.id === id);
+        if (idx < 0) return prev;
+        const updated = prev.map((a, i) => i === idx ? { ...a, status, ...extra } : a);
+        saveAlerts(updated);
+        return updated;
+      });
     },
     [],
   );
@@ -723,6 +729,7 @@ export default function TFSAlertsPage() {
         ]}
         intro={
           <>
+            EOCN Notification Alert System — UAE Local Terrorist List &amp; UN Consolidated List.
             Monitors Gmail for TFS alert emails from the UAE Executive Office for Control &amp;
             Non-Proliferation (EOCN) and creates Asana compliance tasks automatically.
           </>
@@ -731,6 +738,7 @@ export default function TFSAlertsPage() {
       <ModuleFamilyBar suiteName="Sanctions Alerts & Name Match" modules={[
         { label: "TFS Alerts", href: "/tfs-alerts", icon: "🚨" },
         { label: "CNMR", href: "/cnmr", icon: "📝" },
+        { label: "PNMR Queue", href: "/pnmr", icon: "📋" },
       ]} />
 
       {/* ── Subscription status row ──────────────────────────────────────────── */}
@@ -739,10 +747,17 @@ export default function TFSAlertsPage() {
           <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">
             Subscription Status:
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green text-11 font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-green shrink-0" />
-            ACTIVE
-          </span>
+          {gmailReAuthNeeded ? (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-dim text-red text-11 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-red shrink-0" />
+              DISCONNECTED
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-dim text-green text-11 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-green shrink-0" />
+              ACTIVE
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">Source:</span>
@@ -860,12 +875,7 @@ export default function TFSAlertsPage() {
             </div>
             {!process.env["NEXT_PUBLIC_GMAIL_CONFIGURED"] && (
               <div className="mt-3 text-11 text-orange bg-orange-dim px-3 py-2 rounded inline-block">
-                Note: Set <span className="font-mono">GMAIL_REFRESH_TOKEN</span>,{" "}
-                <span className="font-mono">GMAIL_CLIENT_ID</span>, and{" "}
-                <span className="font-mono">GMAIL_CLIENT_SECRET</span> in Netlify environment
-                variables to enable live email monitoring. Also set{" "}
-                <span className="font-mono">NEXT_PUBLIC_GMAIL_CONFIGURED=true</span> to hide this
-                notice.
+                Email integration is not configured — contact your system administrator to complete the Gmail OAuth setup.
               </div>
             )}
           </div>

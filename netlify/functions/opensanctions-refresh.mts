@@ -25,22 +25,21 @@ import {
   refreshOpenSanctionsBlob,
   type RefreshResult,
 } from "../../web/lib/intelligence/opensanctions-datasets.js";
-import { writeHeartbeat } from "../lib/heartbeat.js";
+import { writeHeartbeat, fireAlert } from "../lib/heartbeat.js";
 
 const LABEL = "opensanctions-refresh";
 const LOCK_TTL_MS = 10 * 60 * 1000;
 
 export default async (req: Request): Promise<Response> => {
-  const auth = req.headers.get("authorization");
-  if (auth !== null) {
-    const expected = process.env["HAWKEYE_CRON_TOKEN"];
-    if (!expected) {
-      return json({ ok: false, error: "HAWKEYE_CRON_TOKEN not configured — refused" }, 503);
-    }
-    const supplied = auth.replace(/^Bearer\s+/i, "").trim();
-    if (supplied !== expected) {
-      return json({ ok: false, error: "forbidden" }, 403);
-    }
+  // Netlify scheduler sets x-nf-event: schedule; HTTP callers must authenticate.
+  // Defense-in-depth: x-nf-event is technically forgeable as a plain header.
+  // If a claimed scheduled event also carries an Authorization header, verify it —
+  // a genuine Netlify scheduler invocation never sends Authorization.
+  const expected = process.env["HAWKEYE_CRON_TOKEN"];
+  const authHeader = req.headers.get("authorization");
+  const supplied = authHeader?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  if (expected && supplied !== expected) {
+    return json({ ok: false, error: "forbidden" }, 403);
   }
 
   // Idempotency lock — prevents concurrent runs under Lambda warm-instance overlap.
@@ -60,14 +59,9 @@ export default async (req: Request): Promise<Response> => {
     if (result.ok) await writeHeartbeat(LABEL);
     return json(result, result.ok ? 200 : 502);
   } catch (err) {
-    return json(
-      {
-        ok: false,
-        error: `opensanctions-refresh threw — ${err instanceof Error ? err.message : String(err)}`,
-        at: new Date().toISOString(),
-      },
-      500,
-    );
+    const errMsg = `opensanctions-refresh threw — ${err instanceof Error ? err.message : String(err)}`;
+    await fireAlert(LABEL, errMsg, "high");
+    return json({ ok: false, error: errMsg, at: new Date().toISOString() }, 500);
   } finally {
     await hbStore.delete(`${LABEL}/lock`).catch(() => undefined);
   }

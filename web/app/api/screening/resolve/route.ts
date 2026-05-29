@@ -168,6 +168,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!["positive", "possible", "false", "unspecified"].includes(resolution)) {
     return respond(400, { ok: false, resolution, auditId: "", error: "resolution must be positive | possible | false | unspecified" }, origin);
   }
+  // Length caps prevent storage exhaustion in audit chain.
+  if (subjectId.length > 256 || subjectName.length > 512 || hitId.length > 256 ||
+      (typeof reason === "string" && reason.length > 4000) ||
+      (typeof evidenceReviewed === "string" && evidenceReviewed.length > 4000)) {
+    return respond(400, { ok: false, resolution, auditId: "", error: "one or more fields exceed maximum length" }, origin);
+  }
 
   // J-06 / G-05 — on false-positive dispositions, validate the structured
   // reason code (and the free-text reason when reasonCode === "FP_06"). A

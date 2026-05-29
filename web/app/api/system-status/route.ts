@@ -47,7 +47,7 @@ interface SanctionsListInfo {
   blobKey: string;
 }
 
-async function timedCheck<T>(
+async function _timedCheck<T>(
   name: string,
   fn: () => Promise<T>,
   fallback: T,
@@ -57,10 +57,11 @@ async function timedCheck<T>(
     const result = await fn();
     return { result, latencyMs: Date.now() - start };
   } catch (err) {
+    console.error(`[system-status] timedCheck(${name}) failed:`, err);
     return {
       result: fallback,
       latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
+      error: "component check failed",
     };
   }
 }
@@ -88,7 +89,7 @@ const SANCTIONS_LISTS: Array<{ id: string; displayName: string }> = [
 ];
 
 const STALE_THRESHOLD_HOURS = 36;
-const CRITICAL_STALE_HOURS = 72;
+const _CRITICAL_STALE_HOURS = 72;
 
 type BlobsModule = {
   getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
@@ -157,7 +158,8 @@ async function checkBrainModules(): Promise<ComponentCheck> {
       note: `quickScreen=${qsOk ? "ok" : "MISSING"} redlines=${rlOk ? "ok" : "MISSING"}`,
     };
   } catch (err) {
-    return { name: "brain", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkBrainModules failed:", err instanceof Error ? err.message : String(err));
+    return { name: "brain", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -179,7 +181,8 @@ async function checkAuditChain(): Promise<ComponentCheck> {
       note: `chain length ${head.sequence} entries, HMAC active`,
     };
   } catch (err) {
-    return { name: "auditChain", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkAuditChain failed:", err instanceof Error ? err.message : String(err));
+    return { name: "auditChain", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -198,7 +201,8 @@ async function checkStorage(): Promise<ComponentCheck> {
       note: "Netlify Blobs connected",
     };
   } catch (err) {
-    return { name: "storage", status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error("[system-status] checkStorage failed:", err instanceof Error ? err.message : String(err));
+    return { name: "storage", status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 
@@ -212,7 +216,8 @@ async function checkExternalService(name: string, url: string, timeoutMs = 5_000
     const status: ComponentStatus = res?.ok ? "operational" : res ? "degraded" : "down";
     return { name, status, latencyMs: Date.now() - start, note: res ? `HTTP ${res.status}` : "timeout or network error" };
   } catch (err) {
-    return { name, status: "down", latencyMs: Date.now() - start, note: err instanceof Error ? err.message : String(err) };
+    console.error(`[system-status] checkExternalService(${name}) failed:`, err instanceof Error ? err.message : String(err));
+    return { name, status: "down", latencyMs: Date.now() - start, note: "component probe failed" };
   }
 }
 

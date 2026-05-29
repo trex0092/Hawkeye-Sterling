@@ -68,6 +68,14 @@ interface EddRequirement {
   guidance: string;
 }
 
+interface SowVerificationStatus {
+  required: boolean;
+  sowPresent: boolean;
+  sofPresent: boolean;
+  compliant: boolean;
+  regulation: string;
+}
+
 interface EddCompletenessResult {
   caseId: string;
   subjectName: string;
@@ -80,6 +88,7 @@ interface EddCompletenessResult {
   recommendations: string[];
   aiGapAnalysis?: string;
   assessedAt: string;
+  sowVerificationStatus?: SowVerificationStatus;
 }
 
 function buildRequirements(file: EddFile): EddRequirement[] {
@@ -247,6 +256,29 @@ export async function POST(req: Request): Promise<NextResponse> {
     .filter((r) => r.mandatory && !r.present)
     .map((r) => `[${r.regulatoryBasis}] ${r.label}: ${r.guidance}`);
 
+  // MOE Circular 6/2025 + CBUAE Rulebook §6.4: SOW/SOF verification is
+  // mandatory and must be verified (not just present) for high/critical risk.
+  const sowRequired = eddFile.isPep || eddFile.riskClassification === 'high' || eddFile.riskClassification === 'critical';
+  // Only add SOW gap if not already captured in reqs-based missing list
+  // (reqs marks source_of_wealth mandatory for high/critical but NOT for PEP with medium risk)
+  const sowAlreadyInReqs = reqs.some((r) => r.id === 'source_of_wealth' && r.mandatory && !r.present);
+  if (sowRequired && !eddFile.hasSourceOfWealth && !sowAlreadyInReqs) {
+    missing.push("[MOE Circular 6/2025 §4.2 + CBUAE §6.4 — mandatory for PEP/high-risk] Source of Wealth verification: Verified source of wealth documentation required for PEP or high/critical risk subjects");
+  }
+  // Only add SOF gap if not already captured (reqs always marks it mandatory)
+  const sofAlreadyInReqs = reqs.some((r) => r.id === 'source_of_funds' && r.mandatory && !r.present);
+  if (!eddFile.hasSourceOfFunds && !sofAlreadyInReqs) {
+    missing.push("[CBUAE Rulebook §6.4 — mandatory for all EDD cases] Source of Funds documentation: Documentary evidence of funds origin required for all EDD cases");
+  }
+
+  const sowVerificationStatus = {
+    required: sowRequired,
+    sowPresent: eddFile.hasSourceOfWealth ?? false,
+    sofPresent: eddFile.hasSourceOfFunds ?? false,
+    compliant: sowRequired ? (!!eddFile.hasSourceOfWealth && !!eddFile.hasSourceOfFunds) : !!eddFile.hasSourceOfFunds,
+    regulation: "MOE Circular 6/2025 + CBUAE Rulebook §6.4",
+  };
+
   const recommendations: string[] = [];
   if (missing.length > 0) {
     recommendations.push(`Obtain ${missing.length} missing mandatory document(s) before relationship approval`);
@@ -283,7 +315,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (generateNarrative && missing.length > 0) {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
-      const anthropic = getAnthropicClient(apiKey, 25_000, "edd-completeness");
+      const anthropic = getAnthropicClient(apiKey, 4_500, "edd-completeness");
       const prompt = `You are a UAE AML compliance officer reviewing an EDD file. The file has the following gaps:
 
 Subject: ${sanitizeField(eddFile.subjectName, 300) || "Unknown"}
@@ -308,5 +340,5 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
     }
   }
 
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  return NextResponse.json({ ok: true, ...result, sowVerificationStatus }, { headers: gate.headers });
 }

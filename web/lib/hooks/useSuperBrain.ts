@@ -250,8 +250,11 @@ export function useSuperBrain(
   opts: { roleText?: string; adverseMediaText?: string } = {},
 ): SuperBrainState {
   const [state, setState] = useState<SuperBrainState>({ status: "idle" });
+  const textFingerprint = opts.adverseMediaText
+    ? opts.adverseMediaText.length.toString() + opts.adverseMediaText.slice(0, 50)
+    : "";
   const key = subject
-    ? [subject.name, subject.jurisdiction ?? "", subject.entityType ?? "", opts.roleText ?? "", opts.adverseMediaText ?? ""].join("|")
+    ? [subject.name, subject.jurisdiction ?? "", subject.entityType ?? "", opts.roleText ?? "", textFingerprint].join("|")
     : "";
 
   useEffect(() => {

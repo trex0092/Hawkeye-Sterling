@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
@@ -982,7 +983,7 @@ export default function ShipmentsPage() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [releasedIds, setReleasedIds] = useState<string[]>([]);
+  const [releasedIds, _setReleasedIds] = useState<string[]>([]);
   const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
   const [tbml, setTbml] = useState<ShipmentTbml | null>(null);
   const [tbmlLoading, setTbmlLoading] = useState(false);
@@ -1091,7 +1092,7 @@ export default function ShipmentsPage() {
       if (!mountedRef.current) return;
       setTbml(data);
     } catch (err) {
-      if (mountedRef.current) setTbmlError(err instanceof Error ? err.message : "TBML scan failed — please retry");
+      if (mountedRef.current) setTbmlError(caughtErrorMessage(err, "TBML scan failed — please retry"));
     } finally {
       if (mountedRef.current) setTbmlLoading(false);
     }
@@ -1441,46 +1442,6 @@ export default function ShipmentsPage() {
               </div>
             </div>
 
-            {/* Release authority bar */}
-            {detail.status !== "delivered" && (
-              <div className={`rounded-lg px-4 py-3 border flex items-center justify-between gap-4 ${
-                detail.flags.length > 0
-                  ? "bg-red-dim border-red/30"
-                  : detail.rggStep < 4
-                  ? "bg-amber-dim border-amber/30"
-                  : "bg-green-dim border-green/30"
-              }`}>
-                <div>
-                  <div className={`text-12 font-semibold ${detail.flags.length > 0 ? "text-red" : detail.rggStep < 4 ? "text-amber" : "text-green"}`}>
-                    {detail.flags.length > 0
-                      ? "Release blocked — compliance hold"
-                      : detail.rggStep < 4
-                      ? "Release pending — DD steps outstanding"
-                      : "Eligible for release — MLRO sign-off required"}
-                  </div>
-                  <div className="text-11 text-ink-2 mt-0.5">
-                    {detail.flags.length > 0
-                      ? detail.flags.join(" · ")
-                      : `OECD steps ${detail.rggStep}/5 complete · Agent: ${detail.transportationAgent} · ETA ${detail.eta}`}
-                  </div>
-                </div>
-                {detail.flags.length === 0 && detail.rggStep >= 4 && (
-                  <button
-                    type="button"
-                    className="shrink-0 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
-                    onClick={() => setReleasedIds((prev) => prev.includes(detail.id) ? prev : [...prev, detail.id])}
-                  >
-                    Authorise release
-                  </button>
-                )}
-              </div>
-            )}
-            {detail.status === "delivered" && (
-              <div className="rounded-lg px-4 py-3 border border-hair-2 bg-bg-1 flex items-center gap-3">
-                <span className="font-mono text-10 text-green font-semibold uppercase bg-green-dim px-2 py-0.5 rounded">Settled</span>
-                <span className="text-12 text-ink-2">All 5 OECD RGG steps completed · Proceeds transferred</span>
-              </div>
-            )}
           </div>
         )}
       </div>

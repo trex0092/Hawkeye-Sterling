@@ -5,6 +5,8 @@ import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface StaffAlertResult {
   credibilityScore: number;
   urgencyLevel: "critical" | "high" | "medium" | "low";
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json({ ok: false, error: "staff-alert temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 700,
@@ -70,6 +72,10 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as StaffAlertResult;
     if (!Array.isArray(parsed.verificationSteps)) parsed.verificationSteps = [];
     if (!Array.isArray(parsed.mlroActions)) parsed.mlroActions = [];
+    void writeAuditChainEntry(
+      { event: "staff_alert.sent", actor: gate.keyId, meta: { alertType: sanitizeField(body.alertSource, 200), urgencyLevel: parsed.urgencyLevel } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

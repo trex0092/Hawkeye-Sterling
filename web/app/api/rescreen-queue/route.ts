@@ -31,7 +31,7 @@ function prefix(tenant: string): string {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
@@ -73,7 +73,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     status: "pending",
   };
 
-  await setJson(key(tenant, subjectId as string), item);
+  try {
+    await setJson(key(tenant, subjectId as string), item);
+  } catch (err) {
+    console.error("[rescreen-queue] POST setJson failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to queue subject for re-screening" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "rescreen.queued",

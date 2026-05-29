@@ -194,7 +194,7 @@ export function normalizeArabicRomanisation(input: string): string {
 
   // Abd prefix clusters
   for (const [variant, canonical] of Object.entries(LATIN_ABD_CLUSTER)) {
-    const re = new RegExp(`\\b${variant}\\b`, 'gi');
+    const re = new RegExp(`\\b${variant}\\b`, 'gi'); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
     s = s.replace(re, canonical);
   }
 

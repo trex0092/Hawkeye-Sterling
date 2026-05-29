@@ -43,12 +43,10 @@ async function fetchPage(url: string): Promise<InterpolPage | null> {
       signal: ctrl.signal,
       headers: { 'Accept': 'application/json', 'User-Agent': 'Hawkeye-Sterling-AML/2.0' },
     });
-    clearTimeout(tid);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json() as InterpolPage;
-  } catch (err) {
+  } finally {
     clearTimeout(tid);
-    throw err;
   }
 }
 

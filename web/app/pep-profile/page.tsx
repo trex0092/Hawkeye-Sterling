@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PepProfileResult } from "@/app/api/pep-profile/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Module 36 — PEP Profile Builder
 // Comprehensive Politically Exposed Person risk assessment per FATF R.12/R.13,
@@ -12,6 +13,7 @@ const TIER_CONFIG = {
   tier1: { label: "Tier 1 PEP", color: "text-red", bg: "bg-red/10 border-red/30", dot: "bg-red" },
   tier2: { label: "Tier 2 PEP", color: "text-amber", bg: "bg-amber/10 border-amber/30", dot: "bg-amber" },
   tier3: { label: "Tier 3 PEP", color: "text-blue", bg: "bg-blue/10 border-blue/30", dot: "bg-blue" },
+  tier4: { label: "Tier 4 PEP — SOE Executive", color: "text-orange", bg: "bg-orange/10 border-orange/30", dot: "bg-orange" },
   rca: { label: "RCA", color: "text-ink-2", bg: "bg-bg-2 border-hair-2", dot: "bg-ink-3" },
 } as const;
 
@@ -86,10 +88,9 @@ export default function PepProfilePage() {
         }),
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] pep-profile HTTP ${res.status}`);
         if (!mountedRef.current) return;
-        setError(`Request failed (HTTP ${res.status})${body ? ` — ${body}` : ""} — please try again.`);
+        setError(apiErrorMessage(res.status, "Request"));
         return;
       }
       const data = await res.json().catch(() => ({})) as PepProfileResult;

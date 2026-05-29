@@ -1,12 +1,14 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
 import { SubjectDetailPanel } from "@/components/screening/SubjectDetailPanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScreeningReasoningPanel, type ScreeningReasoning } from "@/components/screening/ScreeningReasoningPanel";
 import { HitTriagePanel, type TriageHit, type Resolution } from "@/components/screening/HitTriagePanel";
 import {
@@ -20,7 +22,6 @@ import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
-import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
 import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
@@ -29,6 +30,7 @@ import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { pushBellEvent } from "@/lib/bell-events";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 import { ComtradePanel } from "@/components/tbml/ComtradePanel";
+import { WorldwideNewsFeed } from "@/components/screening/WorldwideNewsFeed";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
 
@@ -54,76 +56,6 @@ const RESCREEN_SEV_STYLE: Record<NewHit["severity"], string> = {
   low:      "bg-amber-dim text-amber border border-amber/30",
 };
 
-// ── Adverse Media types ───────────────────────────────────────────────────────
-
-type AdverseRiskTier = "clear" | "low" | "medium" | "high" | "critical" | "unknown";
-
-interface AdverseMediaFinding {
-  itemId: string;
-  title: string;
-  source: string;
-  published: string;
-  url?: string;
-  severity: "critical" | "high" | "medium" | "low" | "clear";
-  categories: string[];
-  keywords: string[];
-  fatfRecommendations: string[];
-  fatfPredicates: string[];
-  reasoningModes: string[];
-  narrative: string;
-  relevanceScore: number;
-  isSarCandidate: boolean;
-}
-
-interface AdverseMediaVerdict {
-  subject: string;
-  riskTier: AdverseRiskTier;
-  riskDetail: string;
-  totalItems: number;
-  adverseItems: number;
-  criticalCount: number;
-  highCount: number;
-  mediumCount: number;
-  lowCount: number;
-  sarRecommended: boolean;
-  sarBasis: string;
-  confidenceTier: "high" | "medium" | "low";
-  confidenceBasis: string;
-  counterfactual: string;
-  investigationLines: string[];
-  findings: AdverseMediaFinding[];
-  fatfRecommendations: string[];
-  categoryBreakdown: Array<{ categoryId: string; displayName: string; count: number; severity: string }>;
-  analysedAt: string;
-  modesCited: string[];
-}
-
-interface AdverseMediaApiResponse {
-  ok: boolean;
-  totalCount?: number;
-  adverseCount?: number;
-  highRelevanceCount?: number;
-  verdict?: AdverseMediaVerdict;
-  error?: string;
-}
-
-const ADVERSE_TIER_STYLE: Record<AdverseRiskTier, string> = {
-  critical: "bg-red-dim text-red border border-red/30",
-  high:     "bg-red-dim text-red border border-red/30",
-  medium:   "bg-amber-dim text-amber border border-amber/30",
-  low:      "bg-amber-dim text-amber border border-amber/30",
-  clear:    "bg-green-dim text-green border border-green/30",
-  // Live feed unavailable — explicit degraded state, never treat as clear.
-  unknown:  "bg-amber-dim text-amber border border-amber/40",
-};
-
-const ADVERSE_SEV_STYLE: Record<string, string> = {
-  critical: "bg-red-dim text-red",
-  high:     "bg-red-dim text-red",
-  medium:   "bg-amber-dim text-amber",
-  low:      "bg-amber-dim text-amber",
-  clear:    "bg-green-dim text-green",
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -579,6 +511,7 @@ export default function ScreeningPage() {
   const [rescreenLoading, setRescreenLoading] = useState(false);
   const [rescreenResult, setRescreenResult] = useState<BulkRescreenResult | null>(null);
   const [rescreenError, setRescreenError] = useState<string | null>(null);
+  const [refreshMsg, setRefreshMsg] = useState<{ text: string; type: "ok" | "error" } | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -596,16 +529,9 @@ export default function ScreeningPage() {
   // quality caveat inline with the screen outcome.
   const [listHealthWarnings, setListHealthWarnings] = useState<string[]>([]);
 
-  // Adverse Media state
-  const [amSubject, setAmSubject] = useState("");
-  const [amDateFrom, setAmDateFrom] = useState("");
-  const [amLoading, setAmLoading] = useState(false);
-  const [amResult, setAmResult] = useState<AdverseMediaApiResponse | null>(null);
-  const [amError, setAmError] = useState<string | null>(null);
-  const [amExpanded, setAmExpanded] = useState<string | null>(null);
-
   // Bulk import + saved searches + bulk actions + columns + minRisk
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [appliedSearchId, setAppliedSearchId] = useState<string | null>(null);
   const [minRisk, setMinRisk] = useState<number>(0);
   const [selectedRowIds, setSelectedRowIds] = useState<ReadonlySet<string>>(new Set());
@@ -680,6 +606,29 @@ export default function ScreeningPage() {
       setSelectedId(subjects[0]!.id);
     }
   }, [hydrated, selectedId, subjects]);
+
+  // Restore per-subject list health warnings from the subject object when
+  // the selected subject changes — ensures warnings survive page reload.
+  useEffect(() => {
+    const sel = subjects.find((s) => s.id === selectedId);
+    setListHealthWarnings(sel?.listHealthWarnings ?? []);
+  }, [selectedId, subjects]);
+
+  useEffect(() => {
+    const loaded = loadSubjects();
+    setSubjects(loaded);
+    setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+    } catch {
+      /* quota / disabled storage — just skip */
+    }
+  }, [subjects, hydrated]);
 
   const deferredQuery = useDeferredValue(query);
 
@@ -917,7 +866,12 @@ export default function ScreeningPage() {
   // weekly MLRO pack go out without a server round-trip.
   const exportFilteredCsv = useCallback(() => {
     const header = ["id", "name", "country", "entityType", "riskScore", "severity", "status", "cddPosture", "lists", "snoozedUntil"];
-    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // CSV injection prevention: strip control chars, prepend ' to formula-trigger chars.
+    const escape = (v: unknown) => {
+      const raw = String(v ?? "").replace(/\x00/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, " ");
+      const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     const rows = filtered.map((s) => [
       s.id, s.name, s.country, s.entityType, s.riskScore, s.mostSerious, s.status, s.cddPosture,
       s.listCoverage.join("|"), s.snoozedUntil ?? "",
@@ -963,6 +917,9 @@ export default function ScreeningPage() {
     // Mark the subject as pending so the table shows a "Screening…" badge.
     if (screen) {
       setPendingIds((prev) => new Set([...prev, subject.id]));
+      // Capture subject.id before the async IIFE — prevents stale-closure
+      // bugs when multiple subjects are added in rapid succession.
+      const capturedSubjectId = subject.id;
       void (async () => {
         try {
           // Forward entityType + jurisdiction so the brain's matching
@@ -1043,6 +1000,14 @@ export default function ScreeningPage() {
           }
           if (res.ok && res.data?.screeningWarnings?.length) {
             setListHealthWarnings(res.data.screeningWarnings);
+            // Persist warnings to the subject so they survive page reload.
+            setSubjects((prev) =>
+              prev.map((s) =>
+                s.id === capturedSubjectId
+                  ? { ...s, listHealthWarnings: res.data!.screeningWarnings }
+                  : s,
+              ),
+            );
           }
           if (res.ok && res.data?.ok && res.data.reasoning) {
             setLatestReasoning({ subjectName: subject.name, reasoning: res.data.reasoning });
@@ -1089,7 +1054,7 @@ export default function ScreeningPage() {
                 });
               }
             }
-            setLatestTriage({ subjectId: subject.id, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
+            setLatestTriage({ subjectId: capturedSubjectId, subjectName: subject.name, hits: triageHits, commonNameExpansion: res.data.commonNameExpansion });
             setTriageResolutions({});
           }
           if (res.ok && res.data?.ok && res.data.topScore !== undefined) {
@@ -1129,7 +1094,7 @@ export default function ScreeningPage() {
             const nextCoverage = Array.from(coverage);
             setSubjects((prev) =>
               prev.map((s) =>
-                s.id === subject.id
+                s.id === capturedSubjectId
                   ? {
                       ...s,
                       riskScore: res.data!.topScore ?? 0,
@@ -1149,11 +1114,11 @@ export default function ScreeningPage() {
               const sev = (res.data.topScore ?? 0) >= 80 ? "critical" : (res.data.topScore ?? 0) >= 60 ? "high" : "medium";
               const listId = sev === "critical" ? "ofac_sdn" : sev === "high" ? "un_1267" : "eu_consolidated";
               pushBellEvent({
-                id: `screen-${subject.id}-${Date.now()}`,
+                id: `screen-${capturedSubjectId}-${Date.now()}`,
                 listId,
                 listLabel: `Screening hit · ${res.data.severity ?? sev.toUpperCase()}`,
                 matchedEntry: subject.name,
-                sourceRef: subject.id,
+                sourceRef: capturedSubjectId,
                 severity: sev,
                 detectedAt: new Date().toISOString(),
                 firedRedlineId: sev === "critical" ? "rl_ofac_sdn_confirmed" : undefined,
@@ -1165,7 +1130,7 @@ export default function ScreeningPage() {
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
                 action: "screening_completed",
-                target: `${subject.name} (${subject.id})`,
+                target: `${subject.name} (${capturedSubjectId})`,
                 actor: { role: "analyst" },
                 body: { topScore: res.data.topScore, severity: res.data.severity },
               }),
@@ -1175,18 +1140,18 @@ export default function ScreeningPage() {
             // add to errorIds so the table can show an error badge.
             setSubjects((prev) =>
               prev.map((s) =>
-                s.id === subject.id
+                s.id === capturedSubjectId
                   ? { ...s, mostSerious: "screening-error" }
                   : s,
               ),
             );
-            setErrorIds((prev) => new Set([...prev, subject.id]));
+            setErrorIds((prev) => new Set([...prev, capturedSubjectId]));
           }
         } finally {
           // Always clear the pending indicator regardless of success/failure.
           setPendingIds((prev) => {
             const next = new Set(prev);
-            next.delete(subject.id);
+            next.delete(capturedSubjectId);
             return next;
           });
         }
@@ -1219,6 +1184,9 @@ export default function ScreeningPage() {
             s.id === subject.id
               ? {
                   ...s,
+                  // Adverse media risk lifts the displayed score so the queue
+                  // reflects the composite risk — not just sanctions-list hits.
+                  riskScore: Math.max(s.riskScore, score),
                   adverseMedia: {
                     source: "Taranis AI",
                     score,
@@ -1235,6 +1203,8 @@ export default function ScreeningPage() {
           "adverse-media.auto-run",
           `${subject.name} - ${tier}${sar ? " (SAR R.20)" : ""}`,
         );
+      }).catch((err: unknown) => {
+        console.warn("[hawkeye] adverse-media auto-run failed:", err instanceof Error ? err.message : String(err));
       });
     }
 
@@ -1269,63 +1239,6 @@ export default function ScreeningPage() {
           body: { id: subject.id, name: subject.name },
         }),
       }).then((r) => { if (!r.ok) console.warn("[audit-sign] ongoing_enrolled failed", r.status, r.error); });
-    }
-  };
-
-  const searchAdverseMedia = async () => {
-    if (!amSubject.trim()) return;
-    setAmLoading(true); setAmError(null); setAmResult(null);
-    // 30s ceiling — Taranis cold-starts can stretch past 15s on Netlify
-    // Lambda but anything beyond half a minute is a dead pipeline; fail
-    // fast so the operator sees a clear error instead of a perma-spinner.
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 30_000);
-    try {
-      const body: Record<string, unknown> = { subject: amSubject.trim(), limit: 50 };
-      if (amDateFrom) body.dateFrom = amDateFrom;
-      const res = await fetch("/api/adverse-media", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-        signal: ctl.signal,
-      });
-      // Read as text first so a non-JSON 502 / HTML error page doesn't
-      // crash the JSON parser and mask the real status code.
-      const raw = await res.text().catch((err: unknown) => {
-        console.warn("[hawkeye] screening adverse-media res.text() failed:", err);
-        return "";
-      });
-      let data: AdverseMediaApiResponse | null = null;
-      if (raw) {
-        try { data = JSON.parse(raw) as AdverseMediaApiResponse; }
-        catch (err) {
-          console.error(`[hawkeye] screening adverse-media non-JSON HTTP ${res.status} — first 200 chars: ${raw.slice(0, 200)}`, err);
-        }
-      }
-      if (!res.ok) {
-        if (mountedRef.current) setAmError(data?.error ?? `Search failed - server ${res.status}`);
-        return;
-      }
-      if (!data) {
-        if (mountedRef.current) setAmError("Search failed - empty response");
-        return;
-      }
-      if (!mountedRef.current) return;
-      if (!data.ok) {
-        setAmError(data.error ?? "Search failed");
-      } else {
-        setAmResult(data);
-      }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      if (err instanceof Error && err.name === "AbortError") {
-        setAmError("Search failed - request timed out");
-      } else {
-        setAmError(err instanceof Error ? err.message : "Request failed");
-      }
-    } finally {
-      clearTimeout(timer);
-      if (mountedRef.current) setAmLoading(false);
     }
   };
 
@@ -1392,7 +1305,7 @@ export default function ScreeningPage() {
         writeAuditEvent("analyst", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
       }
     } catch (err) {
-      if (mountedRef.current) setRescreenError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setRescreenError(caughtErrorMessage(err, "Request failed"));
     } finally {
       if (mountedRef.current) setRescreenLoading(false);
     }
@@ -1410,8 +1323,6 @@ export default function ScreeningPage() {
     queueSubjects.length > 0
       ? Math.round(queueSubjects.reduce((sum, s) => sum + s.riskScore, 0) / queueSubjects.length)
       : 0;
-
-  const amVerdict = amResult?.verdict;
 
   // Keyboard shortcuts. Compliance teams live in the keyboard.
   useKeyboardShortcuts({
@@ -1472,6 +1383,12 @@ export default function ScreeningPage() {
           {/* ── Intelligence Sources ──────────────────────────────────────── */}
           <IntelligenceSourcesPanel />
 
+          {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
+          <EocnSlaWidget />
+
+          {/* ── Worldwide AML News Feed ───────────────────────────────────── */}
+          <WorldwideNewsFeed />
+
           {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
           <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">
             <div className="flex items-center gap-3 flex-wrap">
@@ -1496,12 +1413,12 @@ export default function ScreeningPage() {
                       const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
                       const okCount = data?.ok_count ?? 0;
                       const failedCount = data?.failed_count ?? 0;
-                      alert(`Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`);
+                      setRefreshMsg({ text: `Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`, type: "ok" });
                     } else {
-                      alert(`Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`);
+                      setRefreshMsg({ text: `Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`, type: "error" });
                     }
                   } catch (err) {
-                    alert(`Sanctions refresh could not be reached — check your connection and try again. (${err instanceof Error ? err.message : "Network error"})`);
+                    setRefreshMsg({ text: caughtErrorMessage(err, "Sanctions refresh could not be reached — check your connection and try again."), type: "error" });
                   }
                 }}
                 className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber/10 transition-colors"
@@ -1519,6 +1436,24 @@ export default function ScreeningPage() {
                 </button>
               )}
             </div>
+
+            {refreshMsg && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={`mt-2 text-sm p-2 rounded border ${refreshMsg.type === "ok" ? "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" : "bg-red-950/30 text-red-300 border-red-500/40"}`}
+              >
+                {refreshMsg.text}
+                <button
+                  type="button"
+                  onClick={() => setRefreshMsg(null)}
+                  className="ml-2 text-xs opacity-60 hover:opacity-100"
+                  aria-label="Dismiss notification"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             {rescreenLoading && (
               <div className="mt-3 flex items-center gap-2 text-12 text-ink-2">
@@ -1787,6 +1722,60 @@ export default function ScreeningPage() {
           />
         </main>
 
+        {/* Mobile "View Detail" floating button — only shown when a subject is selected */}
+        {selected && !formOpen && (
+          <button
+            className="fixed bottom-4 right-4 z-50 lg:hidden rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg"
+            onClick={() => setMobileDetailOpen(true)}
+            aria-label="View subject detail"
+          >
+            View Detail
+          </button>
+        )}
+
+        {/* Mobile full-screen overlay for detail panel */}
+        {mobileDetailOpen && selected && !formOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-bg lg:hidden" role="dialog" aria-modal="true" aria-label="Subject detail">
+            <div className="flex items-center justify-between border-b border-hair-2 px-4 py-3">
+              <span className="text-sm font-semibold">{selected.name}</span>
+              <button
+                className="text-sm text-fg-muted underline"
+                onClick={() => setMobileDetailOpen(false)}
+                aria-label="Close detail panel"
+              >
+                Close
+              </button>
+            </div>
+            {(() => {
+              const triageForMobile = latestTriage && latestTriage.subjectId === selected.id
+                ? (latestTriage.hits ?? []).map((h) => ({
+                    hitId: h.id,
+                    matchedName: h.name,
+                    sourceList: h.sourceList,
+                    matchStrength: h.matchStrength,
+                    type: h.type,
+                    citizenship: h.citizenship,
+                    dob: h.dob,
+                    listRef: h.listRef,
+                    resolution: triageResolutions[h.id] ?? "unspecified" as const,
+                    resolvedAt: triageResolutions[h.id] ? new Date().toISOString() : undefined,
+                  }))
+                : undefined;
+              return (
+                <ErrorBoundary>
+                  <SubjectDetailPanel
+                    subject={selected}
+                    onUpdate={handleUpdateSubject}
+                    allSubjects={subjects}
+                    onSelectSubject={(id) => { setSelectedId(id); setMobileDetailOpen(false); }}
+                    triageResolutions={triageForMobile}
+                  />
+                </ErrorBoundary>
+              );
+            })()}
+          </div>
+        )}
+
         <div className="hidden lg:block">
           {(() => {
             if (compareIds.size === 2) {
@@ -1808,7 +1797,7 @@ export default function ScreeningPage() {
               // Build triage-resolutions payload for the report PDF —
               // only when the latest triage matches the selected subject.
               const triageForReport = latestTriage && latestTriage.subjectId === selected.id
-                ? latestTriage.hits.map((h) => ({
+                ? (latestTriage.hits ?? []).map((h) => ({
                     hitId: h.id,
                     matchedName: h.name,
                     sourceList: h.sourceList,
@@ -1822,13 +1811,15 @@ export default function ScreeningPage() {
                   }))
                 : undefined;
               return (
-                <SubjectDetailPanel
-                  subject={selected}
-                  onUpdate={handleUpdateSubject}
-                  allSubjects={subjects}
-                  onSelectSubject={setSelectedId}
-                  triageResolutions={triageForReport}
-                />
+                <ErrorBoundary>
+                  <SubjectDetailPanel
+                    subject={selected}
+                    onUpdate={handleUpdateSubject}
+                    allSubjects={subjects}
+                    onSelectSubject={setSelectedId}
+                    triageResolutions={triageForReport}
+                  />
+                </ErrorBoundary>
               );
             }
             return (
@@ -1887,233 +1878,6 @@ export default function ScreeningPage() {
           setBulkImportOpen(false);
         }}
       />
-
-      {false && (
-        <main className="max-w-5xl mx-auto px-10 py-8">
-          <div className="mb-6">
-            <h2 className="text-32 font-display font-normal text-ink-0 leading-tight">
-              Adverse Media <em className="italic text-brand">intelligence.</em>
-            </h2>
-            <p className="text-13 text-ink-2 mt-1">
-              Weaponized MLRO pipeline — Taranis AI feed → 1 066-keyword taxonomy → FATF predicate mapping → SAR trigger (R.20)
-            </p>
-          </div>
-
-          <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 mb-6">
-            <div className="flex gap-3 flex-wrap">
-              <input
-                className="flex-1 min-w-48 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0"
-                placeholder="Subject name — individual, company, or vessel"
-                value={amSubject}
-                onChange={(e) => setAmSubject(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void searchAdverseMedia()}
-              />
-              <IsoDateInput
-                className="px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 text-ink-2 focus:outline-none focus:border-brand"
-                value={amDateFrom}
-                onChange={setAmDateFrom}
-                title="From date (optional)"
-              />
-              <button
-                type="button"
-                onClick={() => { void searchAdverseMedia(); }}
-                disabled={amLoading || !amSubject.trim()}
-                className="px-4 py-1.5 rounded bg-green-dim text-green text-12 font-semibold border border-green/40 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green/20 transition-colors"
-              >
-                {amLoading ? "⌕…" : "⌕"}
-              </button>
-            </div>
-          </div>
-
-          {amLoading && (
-            <div className="flex items-center gap-2 text-13 text-ink-2 py-6 justify-center">
-              <span className="animate-pulse font-mono text-brand">●</span>
-              Adverse media pipeline running…
-            </div>
-          )}
-
-          {amError && (
-            <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red mb-4">
-              <span className="font-semibold">Error:</span> {amError}
-            </div>
-          )}
-
-          {amVerdict && (() => {
-            // Defensive defaults — the analyser can return a partial verdict
-            // when the upstream feed is degraded (e.g. Taranis returned 0
-            // items). Normalise everything so the UI doesn't crash on
-            // missing arrays / undefined counters.
-            const v = amVerdict!;
-            const findings = v.findings ?? [];
-            const fatfRecs = v.fatfRecommendations ?? [];
-            const investigations = v.investigationLines ?? [];
-            const breakdown = v.categoryBreakdown ?? [];
-            const modes = v.modesCited ?? [];
-            const tierStyle = ADVERSE_TIER_STYLE[v.riskTier] ?? "bg-bg-2 text-ink-2";
-            return (
-            <div className="space-y-4">
-              <div className={`border-2 rounded-xl p-5 ${v.riskTier === "critical" || v.riskTier === "high" ? "border-red/40" : v.riskTier === "medium" ? "border-amber/40" : "border-hair-2"}`}>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-16 font-semibold text-ink-0">{v.subject}</h3>
-                    <p className="text-12 text-ink-2 mt-0.5">{v.riskDetail}</p>
-                  </div>
-                  <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${tierStyle}`}>
-                    {v.riskTier}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                  {[
-                    { label: "Total", value: v.totalItems ?? 0 },
-                    { label: "Adverse", value: v.adverseItems ?? 0 },
-                    { label: "Critical", value: v.criticalCount ?? 0 },
-                    { label: "High", value: v.highCount ?? 0 },
-                    { label: "Medium", value: v.mediumCount ?? 0 },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="bg-bg-1 border border-hair-2 rounded p-2 text-center">
-                      <div className="text-18 font-mono font-semibold text-ink-0">{value}</div>
-                      <div className="text-10 text-ink-3 uppercase tracking-wide-3">{label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {v.sarRecommended && (
-                  <div className="bg-red-dim border border-red/30 rounded-lg p-3 mb-3">
-                    <span className="text-12 font-bold text-red uppercase">SAR RECOMMENDED (FATF R.20)</span>
-                    <p className="text-11 text-red/80 mt-1 leading-relaxed">{v.sarBasis}</p>
-                  </div>
-                )}
-
-                {fatfRecs.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {fatfRecs.map((r) => (
-                      <span key={r} className="text-11 bg-brand-dim text-brand border border-brand/30 px-2 py-0.5 rounded font-mono">{r}</span>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-11 text-ink-3">
-                  Confidence: <span className="font-semibold text-ink-1">{(v.confidenceTier ?? "low").toUpperCase()}</span> {v.confidenceBasis ? `- ${v.confidenceBasis}` : ""}
-                </p>
-              </div>
-
-              {investigations.length > 0 && (
-                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
-                  <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Investigation Actions</div>
-                  <ol className="space-y-1.5">
-                    {investigations.map((line, i) => (
-                      <li key={line} className="flex gap-2 text-12 text-ink-1">
-                        <span className="text-ink-3 font-mono text-11 flex-shrink-0">{i + 1}.</span>
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {breakdown.length > 0 && (
-                <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
-                  <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-3">Category Breakdown</div>
-                  <div className="space-y-2">
-                    {breakdown.map((c) => (
-                      <div key={c.categoryId} className="flex items-center justify-between text-12">
-                        <span className="text-ink-1">{c.displayName}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-10 px-1.5 py-0.5 rounded font-semibold ${ADVERSE_SEV_STYLE[c.severity] ?? "bg-bg-2 text-ink-3"}`}>{c.severity}</span>
-                          <span className="text-11 font-bold text-ink-2 w-4 text-right">{c.count}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {v.counterfactual && (
-                <div className="bg-amber-dim border border-amber/30 rounded-xl p-4">
-                  <p className="text-11 font-semibold text-amber mb-1">Counterfactual Assessment</p>
-                  <p className="text-11 text-amber/80 leading-relaxed">{v.counterfactual}</p>
-                </div>
-              )}
-
-              {findings.length > 0 && (
-                <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-                  <div className="px-5 py-3 border-b border-hair-2">
-                    <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-                      Adverse Findings ({findings.length})
-                    </div>
-                  </div>
-                  <div className="divide-y divide-hair">
-                    {findings.map((f) => {
-                      const fatfPredicates = f.fatfPredicates ?? [];
-                      const categories = f.categories ?? [];
-                      const fatfRecsItem = f.fatfRecommendations ?? [];
-                      const keywords = f.keywords ?? [];
-                      const sevStyle = ADVERSE_SEV_STYLE[f.severity] ?? "bg-bg-2 text-ink-2";
-                      return (
-                      <div key={f.itemId} className="p-4">
-                        <button
-                          type="button"
-                          className="w-full text-left flex items-start gap-3"
-                          onClick={() => setAmExpanded(amExpanded === f.itemId ? null : f.itemId)}
-                        >
-                          <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${f.severity === "critical" || f.severity === "high" ? "bg-red" : f.severity === "medium" || f.severity === "low" ? "bg-amber" : "bg-green"}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className={`text-10 font-bold px-1.5 py-px rounded ${sevStyle}`}>{(f.severity ?? "low").toUpperCase()}</span>
-                              {f.isSarCandidate && <span className="text-10 bg-red-dim text-red border border-red/30 px-1.5 py-px rounded font-bold">SAR</span>}
-                              <span className="text-11 text-ink-3">{f.source ?? "—"} · {(f.published ?? "").slice(0, 10) || "—"}</span>
-                            </div>
-                            <p className="text-12 font-medium text-ink-0 leading-snug">{f.title ?? "(untitled)"}</p>
-                            <p className="text-11 text-ink-2 mt-0.5 leading-relaxed">{f.narrative ?? ""}</p>
-                          </div>
-                          <span className="text-ink-3 text-11 flex-shrink-0">{amExpanded === f.itemId ? "▲" : "▼"}</span>
-                        </button>
-
-                        {amExpanded === f.itemId && (
-                          <div className="mt-3 pl-5 space-y-2 border-l-2 border-hair-2">
-                            {fatfPredicates.length > 0 && (
-                              <div>
-                                <p className="text-11 text-ink-3 font-semibold mb-1">FATF Predicates</p>
-                                <ul className="space-y-0.5">
-                                  {fatfPredicates.map((p) => <li key={p} className="text-11 text-ink-2">{p}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                            <div className="flex flex-wrap gap-1">
-                              {categories.map((c) => <span key={c} className="text-10 bg-bg-1 text-ink-2 border border-hair-2 px-1.5 py-px rounded">{c}</span>)}
-                              {fatfRecsItem.map((r) => <span key={r} className="text-10 bg-brand-dim text-brand border border-brand/30 px-1.5 py-px rounded font-mono">{r}</span>)}
-                            </div>
-                            {keywords.length > 0 && (
-                              <p className="text-11 text-ink-3">Keywords: {keywords.slice(0, 6).map((k) => `"${k}"`).join(", ")}</p>
-                            )}
-                            {f.url && /^https?:\/\//i.test(f.url) && (
-                              <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-11 text-brand hover:underline break-all">{f.url}</a>
-                            )}
-                            <p className="text-11 text-ink-3">Relevance: {Math.round((f.relevanceScore ?? 0) * 100)}%</p>
-                          </div>
-                        )}
-                      </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {modes.length > 0 && (
-                <p className="text-11 text-ink-3">Modes cited: {modes.join(", ")}</p>
-              )}
-            </div>
-            );
-          })()}
-
-          {amResult?.ok && !amVerdict && !amLoading && (
-            <div className="border border-hair-2 rounded-xl p-8 text-center text-12 text-ink-3">
-              No adverse media found for <span className="font-medium text-ink-1">{amSubject}</span>
-            </div>
-          )}
-        </main>
-      )}
     </>
   );
 }
@@ -2194,6 +1958,121 @@ const INTEL_SOURCES = [
     ],
   },
 ];
+
+// ── EOCN SLA types (mirrored from server for client-side use) ─────────────────
+
+interface EocnSlaRecordClient {
+  id: string;
+  type: "EOCN_FREEZE_24H" | "EOCN_PNMR_5BD" | "EOCN_CUSTOMER_VERIFY_10BD";
+  subjectName: string;
+  listId: string;
+  status: "active" | "breached" | "completed" | "cancelled";
+  dueAt: string;
+  hoursRemaining: number;
+  pctElapsed: number;
+  statusColor: "green" | "amber" | "red";
+  pnmrId?: string;
+}
+
+const SLA_TYPE_LABELS: Record<EocnSlaRecordClient["type"], string> = {
+  EOCN_FREEZE_24H: "Freeze Window (24h)",
+  EOCN_PNMR_5BD: "PNMR Filing (5BD)",
+  EOCN_CUSTOMER_VERIFY_10BD: "Customer Verify (10BD)",
+};
+
+const SLA_COLOR_CLASSES: Record<"green" | "amber" | "red", string> = {
+  green: "bg-green-dim text-green border-green/30",
+  amber: "bg-amber-dim text-amber border-amber/30",
+  red:   "bg-red-dim text-red border-red/30",
+};
+
+const SLA_BAR_CLASSES: Record<"green" | "amber" | "red", string> = {
+  green: "bg-green",
+  amber: "bg-amber",
+  red:   "bg-red",
+};
+
+function EocnSlaWidget() {
+  const [records, setRecords] = useState<EocnSlaRecordClient[]>([]);
+  const [open, setOpen] = useState(true);
+
+  const fetchRecords = useCallback(async () => {
+    try {
+      const res = await fetchJson<{ ok: boolean; records: EocnSlaRecordClient[] }>("/api/eocn-sla");
+      if (res.ok && res.data?.ok && res.data.records) {
+        setRecords(res.data.records.filter((r) => r.status === "active" || r.status === "breached"));
+      }
+    } catch {
+      // silent — widget is non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchRecords();
+    const id = setInterval(() => { void fetchRecords(); }, 30_000);
+    return () => clearInterval(id);
+  }, [fetchRecords]);
+
+  if (records.length === 0) return null;
+
+  return (
+    <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-11 font-semibold text-ink-0">⏱ Active EOCN SLA Timers</span>
+          <span className="text-10 text-red font-medium">{records.length} active</span>
+          <span className="text-10 text-ink-3">— Cabinet Decision 74/2020 obligations</span>
+        </div>
+        <span className="text-10 text-ink-3">{open ? "▴ hide" : "▾ show"}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 border-t border-hair-2">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {records.map((r) => {
+              const hrs = r.hoursRemaining;
+              const breached = r.status === "breached" || hrs <= 0;
+              const timeLabel = breached
+                ? "BREACHED"
+                : hrs < 1
+                ? `${Math.round(hrs * 60)}m remaining`
+                : hrs < 48
+                ? `${Math.round(hrs)}h remaining`
+                : `${Math.round(hrs / 24)}d remaining`;
+
+              return (
+                <div
+                  key={r.id}
+                  className={`rounded-lg border px-3 py-2.5 ${SLA_COLOR_CLASSES[r.statusColor]}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-11 font-semibold">{SLA_TYPE_LABELS[r.type]}</span>
+                    <span className={`text-10 font-bold ${breached ? "text-red" : ""}`}>
+                      {timeLabel}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden mb-1.5">
+                    <div
+                      className={`h-full rounded-full transition-all ${SLA_BAR_CLASSES[r.statusColor]}`}
+                      style={{ width: `${r.pctElapsed}%` }}
+                    />
+                  </div>
+                  <div className="text-10 text-ink-2 truncate">
+                    {r.subjectName}
+                    <span className="ml-1 opacity-60">· {r.listId}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function IntelligenceSourcesPanel() {
   const [open, setOpen] = useState(false);

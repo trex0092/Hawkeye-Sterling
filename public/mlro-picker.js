@@ -393,11 +393,22 @@
     var on = ($('#dr-redact') || {}).checked;
     if (!on || !text) return text;
     return text
+      // Email addresses
       .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, function (s) { return s.replace(/(?<=.).(?=[^@]*@)/g, '*'); })
+      // Phone numbers
       .replace(/\+?\d[\d\s\-()]{6,}\d/g, function (s) { return s.slice(0,3) + '*'.repeat(Math.max(3, s.length - 5)) + s.slice(-2); })
+      // IBAN
       .replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b/g, function (s) { return s.slice(0,4) + '*'.repeat(Math.max(3, s.length - 8)) + s.slice(-4); })
+      // Ethereum address (0x...)
       .replace(/\b0x[a-fA-F0-9]{40}\b/g, function (s) { return s.slice(0,6) + '*'.repeat(Math.max(3, s.length - 10)) + s.slice(-4); })
-      .replace(/\b784[- ]?\d{4}[- ]?\d{7}[- ]?\d\b/g, '784-****-*******-*');
+      // UAE National ID
+      .replace(/\b784[- ]?\d{4}[- ]?\d{7}[- ]?\d\b/g, '784-****-*******-*')
+      // Passport numbers (common formats: 1-2 letters + 6-9 digits)
+      .replace(/\b[A-Z]{1,2}\d{6,9}\b/g, function (s) { return s.slice(0,2) + '*'.repeat(Math.max(3, s.length - 3)) + s.slice(-1); })
+      // Credit/debit card numbers (13-19 digits, optionally space/dash separated)
+      .replace(/\b(?:\d{4}[- ]?){3}\d{4,7}\b/g, function (s) { var d = s.replace(/[^0-9]/g,''); return '****-****-****-' + d.slice(-4); })
+      // Bitcoin addresses (P2PKH: 1..., P2SH: 3..., Bech32: bc1...)
+      .replace(/\b(1[A-HJ-NP-Za-km-z1-9]{25,34}|3[A-HJ-NP-Za-km-z1-9]{25,34}|bc1[a-z0-9]{25,87})\b/g, function (s) { return s.slice(0,6) + '*'.repeat(Math.max(3, s.length - 10)) + s.slice(-4); });
   }
 
   function downloadBlob(content, mime, filename) {

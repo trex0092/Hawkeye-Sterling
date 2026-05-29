@@ -40,9 +40,9 @@ interface Panel {
 }
 
 const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
-  ready:   { label: "✓ Ready",   cls: "bg-emerald-50 text-emerald-700 border-emerald-300" },
-  partial: { label: "⚠ Partial", cls: "bg-yellow-50 text-yellow-700 border-yellow-300" },
-  missing: { label: "✗ Missing", cls: "bg-red-50 text-red-700 border-red-300" },
+  ready:   { label: "✓ Ready",   cls: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40" },
+  partial: { label: "⚠ Partial", cls: "bg-amber-950/30 text-amber-300 border-amber-500/40" },
+  missing: { label: "✗ Missing", cls: "bg-red-950/30 text-red-300 border-red-500/40" },
 };
 
 function safeParse<T>(key: string): T | null {
@@ -168,7 +168,7 @@ function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => voi
   const baseBtn =
     "inline-flex items-center justify-center w-7 h-7 rounded border font-mono text-12 leading-none transition";
   const addEditCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-brand hover:border-brand bg-bg-1`;
-  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-700 hover:border-red-300 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
+  const deleteCls = `${baseBtn} border-hair-2 text-ink-2 hover:text-red-400 hover:border-red-500/60 bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-ink-2 disabled:hover:border-hair-2`;
   const handleClear = () => {
     if (panel.appendOnly) return;
     if (panel.storageKeys.length === 0) return;

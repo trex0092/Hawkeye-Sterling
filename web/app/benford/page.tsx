@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 type BenfordRisk = "clean" | "marginal" | "suspicious" | "insufficient-data";
 
@@ -103,14 +104,13 @@ export default function BenfordPage() {
       });
       const body = await res.json().catch(() => ({})) as { ok: boolean; error?: string } & BenfordInterpretation;
       if (!res.ok) {
-        throw new Error(body.error ?? `AI interpretation failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "AI interpretation"));
       }
       const data = body;
       if (!mountedRef.current) return;
       if (data.ok) setAiInterp(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "AI interpretation failed — please retry";
-      if (mountedRef.current) setInterpError(msg);
+      if (mountedRef.current) setInterpError(caughtErrorMessage(err, "AI interpretation failed — please retry"));
     } finally { if (mountedRef.current) setInterpLoading(false); }
   };
 
@@ -136,11 +136,11 @@ export default function BenfordPage() {
       const data = await res.json().catch(() => ({})) as BenfordResult & { error?: string };
       if (!res.ok) {
         if (!mountedRef.current) return;
-        throw new Error(data.error ?? `Analysis failed (HTTP ${res.status}) — please retry`);
+        throw new Error(data.error ?? apiErrorMessage(res.status, "Benford analysis"));
       }
       if (!mountedRef.current) return;
       setResult(data);
-    } catch (e) { if (mountedRef.current) setError(e instanceof Error ? e.message : "Request failed"); }
+    } catch (e) { if (mountedRef.current) setError(caughtErrorMessage(e, "Request failed")); }
     finally { if (mountedRef.current) setLoading(false); }
   }
 

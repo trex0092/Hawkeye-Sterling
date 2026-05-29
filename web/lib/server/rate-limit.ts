@@ -17,38 +17,46 @@
 
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";
+import { incrementCounter } from "./metrics-store";
 
 // ── Upstash Redis path ────────────────────────────────────────────────────────
+//
+// Latency optimisation: use the Upstash /pipeline endpoint to batch all INCR +
+// EXPIRE commands into a SINGLE HTTP round-trip instead of two sequential
+// requests.  The previous implementation called INCR and then (conditionally)
+// EXPIRE as separate fetches, adding ~40-80 ms per rate-limit check.
+//
+// Pipeline payload format per Upstash docs:
+//   POST /pipeline  body: [["INCR","key"],["EXPIRE","key","ttl"]]
+// Response:           [{"result":N},{"result":1}]
 
-async function redisIncr(key: string, ttlSeconds: number): Promise<number | null> {
+async function redisPipeline(
+  commands: Array<readonly [string, ...string[]]>,
+): Promise<Array<number | null>> {
   const url = process.env["UPSTASH_REDIS_REST_URL"];
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
-  if (!url || !token) return null;
+  if (!url || !token) return commands.map(() => null);
   try {
-    // INCR key — atomic increment
-    const incrRes = await fetch(`${url}/incr/${encodeURIComponent(key)}`, {
+    const res = await fetch(`${url}/pipeline`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(commands),
     });
-    if (!incrRes.ok) return null;
-    const incrBody = await incrRes.json() as { result?: number };
-    const count = incrBody.result ?? 0;
-    // Only set TTL on first write (count === 1) to avoid resetting the window
-    if (count === 1) {
-      await fetch(`${url}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => undefined);
-    }
-    return count;
+    if (!res.ok) return commands.map(() => null);
+    const results = await res.json() as Array<{ result?: number }>;
+    return results.map((r) => (typeof r?.result === "number" ? r.result : null));
   } catch {
-    return null;
+    return commands.map(() => null);
   }
 }
 
 async function consumeRedis(
   keyId: string,
   tier: TierDefinition,
+  cost = 1,
 ): Promise<RateLimitResult | null> {
   const nowSec = Math.floor(Date.now() / 1000);
   const secWindow = Math.floor(nowSec);
@@ -56,10 +64,18 @@ async function consumeRedis(
   const secKey = `rl:${keyId}:s:${secWindow}`;
   const minKey = `rl:${keyId}:m:${minWindow}`;
 
-  const [secCount, minCount] = await Promise.all([
-    redisIncr(secKey, 2),
-    redisIncr(minKey, 62),
-  ]);
+  // Build a single pipeline: INCRBY secKey cost, EXPIRE secKey 2,
+  //                           INCRBY minKey cost, EXPIRE minKey 62
+  // All four commands go in one HTTP call — saves one full round-trip (~40-80 ms).
+  const pipeline: Array<readonly [string, ...string[]]> = [
+    ["INCRBY", secKey, String(cost)],
+    ["EXPIRE",  secKey, "2"],
+    ["INCRBY", minKey, String(cost)],
+    ["EXPIRE",  minKey, "62"],
+  ];
+  const pipelineResult = await redisPipeline(pipeline);
+  const secCount = pipelineResult[0] ?? null;
+  const minCount = pipelineResult[2] ?? null;
   if (secCount === null || minCount === null) return null; // Redis unavailable
 
   const secAllowed = secCount <= tier.rateLimitPerSecond;
@@ -120,12 +136,32 @@ function bucketStart(now: number, widthMs: number): number {
 export async function consumeRateLimit(
   keyId: string,
   tierId: string,
+  cost = 1,
 ): Promise<RateLimitResult> {
   const tier = tierFor(tierId);
+  // Clamp cost to a positive integer so a misconfigured caller can't
+  // zero-out the counter or overflow it.
+  const effectiveCost = Math.max(1, Math.floor(cost));
 
   // Prefer Redis atomic enforcement when configured.
-  const redisResult = await consumeRedis(keyId, tier);
+  const redisResult = await consumeRedis(keyId, tier, effectiveCost);
   if (redisResult !== null) return redisResult;
+
+  // When RATE_LIMIT_STRICT=true and Redis is unavailable, refuse the request
+  // rather than falling back to blob-based soft enforcement (which is vulnerable
+  // to read-modify-write races under concurrent Lambda invocations).
+  if (process.env["RATE_LIMIT_STRICT"] === "true") {
+    console.error("[rate-limit] RATE_LIMIT_STRICT=true but Redis unavailable — returning 503 to prevent soft-limit bypass");
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'strict_redis_unavailable' });
+    return {
+      allowed: false,
+      retryAfterSec: 5,
+      remainingSecond: 0,
+      remainingMinute: 0,
+      tier,
+    };
+  }
+
   const now = Date.now();
   const storageKey = `${PREFIX}${keyId}`;
   const prior = (await getJson<LimitState>(storageKey)) ?? {
@@ -142,10 +178,11 @@ export async function consumeRateLimit(
     prior.minute = { startMs: minuteStart, count: 0 };
   }
 
-  const nextSecond = prior.second.count + 1;
-  const nextMinute = prior.minute.count + 1;
+  const nextSecond = prior.second.count + effectiveCost;
+  const nextMinute = prior.minute.count + effectiveCost;
 
   if (nextSecond > tier.rateLimitPerSecond) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'second' });
     return {
       allowed: false,
       retryAfterSec: 1,
@@ -155,6 +192,7 @@ export async function consumeRateLimit(
     };
   }
   if (nextMinute > tier.rateLimitPerMinute) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'minute' });
     return {
       allowed: false,
       retryAfterSec: Math.max(1, Math.ceil((minuteStart + 60_000 - now) / 1_000)),
@@ -168,18 +206,27 @@ export async function consumeRateLimit(
   prior.minute.count = nextMinute;
   await setJson(storageKey, prior);
 
-  // Post-write read-back: detect concurrent increments. If the stored value
-  // jumped further than our write (another Lambda incremented concurrently),
-  // log it so operators know the soft-limit is being exercised. The check
-  // is best-effort — a second concurrent read could mask the discrepancy.
-  // For hard enforcement, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.
+  // Post-write read-back: detect concurrent increments from other Lambda instances.
+  // If the stored value jumped further than our own write, another Lambda raced
+  // us. Rather than silently allowing the request (previous behaviour), treat
+  // it as a limit-exceeded so the rate limit is conservatively enforced even
+  // under concurrent soft-enforcement. For strict atomic enforcement configure
+  // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (the primary Redis path).
   const readBack = await getJson<LimitState>(storageKey).catch(() => null);
   if (readBack && readBack.second.count > nextSecond + 1) {
     console.warn(
       `[rate-limit] concurrent write detected for key=${keyId}: ` +
       `expected count=${nextSecond}, stored count=${readBack.second.count} ` +
-      `— rate limit is soft-enforced (blob CAS unavailable)`,
+      `— treating as limit exceeded (blob CAS unavailable; use Redis for atomic enforcement)`,
     );
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'concurrent_write' });
+    return {
+      allowed: false,
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - readBack.minute.count),
+      tier,
+    };
   }
 
   return {
@@ -192,12 +239,21 @@ export async function consumeRateLimit(
 }
 
 export function rateLimitHeaders(r: RateLimitResult): Record<string, string> {
+  // x-ratelimit-reset: Unix timestamp (seconds) when the most-constrained
+  // window resets. Clients use this to schedule the next retry precisely.
+  const resetTimestamp = Math.floor(Date.now() / 1000) + (r.allowed ? 0 : r.retryAfterSec);
   return {
     "x-ratelimit-tier": r.tier.id,
+    // Per-minute window (the primary capacity window)
+    "x-ratelimit-limit": String(r.tier.rateLimitPerMinute),
+    "x-ratelimit-remaining": String(r.remainingMinute),
+    "x-ratelimit-reset": String(resetTimestamp),
+    // Granular windows for clients that want sub-minute visibility
     "x-ratelimit-limit-minute": String(r.tier.rateLimitPerMinute),
     "x-ratelimit-remaining-minute": String(r.remainingMinute),
     "x-ratelimit-limit-second": String(r.tier.rateLimitPerSecond),
     "x-ratelimit-remaining-second": String(r.remainingSecond),
+    // Retry-After on 429 responses (RFC 7231 §7.1.3)
     ...(r.allowed ? {} : { "retry-after": String(r.retryAfterSec) }),
   };
 }

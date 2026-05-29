@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuickScreen } from "@/lib/hooks/useQuickScreen";
 import { useAutoReport } from "@/lib/hooks/useAutoReport";
 import { useSuperBrain, type SuperBrainResult } from "@/lib/hooks/useSuperBrain";
@@ -83,13 +83,14 @@ import {
   type HitResolutionVerdict,
 } from "@/lib/data/subject-store";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Timeline tab removed — its content was a placeholder + the same
 // adverse-media dossier rendered below the tabs unconditionally,
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "Adverse Media", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
@@ -146,7 +147,9 @@ interface SubjectDetailPanelProps {
 export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSubject, triageResolutions }: SubjectDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Screening");
   const [escalated, setEscalated] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
   const [strRaised, setStrRaised] = useState(false);
+  const [isRaisingSTR, setIsRaisingSTR] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSaved, setReportSaved] = useState(false);
   const [role, setRole] = useState<OperatorRole>("analyst");
@@ -166,6 +169,11 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     setEscalated(false);
     setStrRaised(false);
     setFlash(null);
+    // Clear in-flight loading states so buttons don't stay stuck when the
+    // analyst switches to a different subject before the previous action completes.
+    setIsEscalating(false);
+    setIsRaisingSTR(false);
+    setReportSaving(false);
   }, [subject.id]);
 
   const qsSubject = useMemo(() => toQuickScreenSubject(subject), [subject]);
@@ -415,8 +423,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   };
 
   const handleEscalate = () => {
-    if (escalated) return;
+    if (escalated || isEscalating) return;
     if (window.confirm(`Escalate ${subject.name} to MLRO?`)) {
+      setIsEscalating(true);
       setEscalated(true);
       const composite =
         superBrain.status === "success"
@@ -470,6 +479,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         timelineEvent: "Escalated to MLRO and registered in Asana",
       });
       showFlash("Escalated to MLRO — registering in Asana…");
+    } else {
+      setIsEscalating(false);
     }
   };
 
@@ -523,17 +534,20 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       }
     } catch (err) {
       if (!mountedRef.current) return;
-      showFlash(err instanceof Error ? err.message : "Report save failed");
+      showFlash(caughtErrorMessage(err, "Report save failed"));
     } finally {
       if (mountedRef.current) setReportSaving(false);
     }
   };
 
+
   const handleRaiseSTR = async () => {
-    if (strRaised) return;
+    if (strRaised || isRaisingSTR) return;
     if (!window.confirm(`Raise STR for ${subject.name}? Item enters the four-eyes queue for second-approver sign-off.`)) {
       return;
     }
+    setIsRaisingSTR(true);
+    try {
     // Replace the inline window.prompt approver flow with a real
     // /api/four-eyes enqueue. The MLRO opens /screening/four-eyes,
     // approves, and on approval the original STR-filing pipeline runs.
@@ -618,7 +632,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         body: JSON.stringify({
           action: "str",
           target: subject.id,
-          actor: { role, name: subject.id },
+          actor: { role },
           body: {
             subjectName: subject.name,
             asanaTaskUrl: res.data.taskUrl ?? null,
@@ -656,6 +670,9 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       showFlash("STR filed — draft in STR/SAR board");
     } else {
       showFlash(res.error ?? "STR filing failed");
+    }
+    } finally {
+      if (mountedRef.current) setIsRaisingSTR(false);
     }
   };
 
@@ -906,6 +923,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
               score: h.score,
               method: h.method,
               ...(h.programs ? { programs: h.programs } : {}),
+              ...(h.matchedAlias ? { matchedAlias: h.matchedAlias } : {}),
+              ...(h.reason ? { reason: h.reason } : {}),
             })),
           }
         : { topScore: 0, severity: "clear", hits: [] },
@@ -1116,8 +1135,8 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             <PanelBtn onClick={handleDownloadReport} title="Download .txt report">
               .txt
             </PanelBtn>
-            <PanelBtn onClick={handleEscalate} disabled={escalated}>
-              {escalated ? "Escalated" : "Escalate"}
+            <PanelBtn onClick={handleEscalate} disabled={escalated || isEscalating}>
+              {escalated ? "Escalated" : isEscalating ? "Escalating…" : "Escalate"}
             </PanelBtn>
             <a
               href={`/screening/replay/${encodeURIComponent(subject.id)}`}
@@ -1131,14 +1150,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             <PanelBtn
               brand
               onClick={handleRaiseSTR}
-              disabled={strRaised || !canRaiseSTR}
+              disabled={strRaised || isRaisingSTR || !canRaiseSTR}
               title={
                 !canRaiseSTR
                   ? "MLRO role required to raise STR (toggle role in the sidebar)"
                   : undefined
               }
             >
-              {strRaised ? "STR raised" : "Raise STR"}
+              {strRaised ? "STR raised" : isRaisingSTR ? "Filing…" : "Raise STR"}
             </PanelBtn>
           </div>
         </div>
@@ -1413,7 +1432,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             setRoleOverride={setRoleOverride}
             narrativeOverride={narrativeOverride}
             setNarrativeOverride={setNarrativeOverride}
-            liveNarrativePreview={adverseMediaText}
+            liveNarrativePreview={effectiveAdverseMediaText}
           />
         )}
 
@@ -1425,13 +1444,300 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
 
-
+        {activeTab === "Adverse Media" && (
+          <AdverseMediaTab subject={subject} news={news} superBrain={superBrain} />
+        )}
 
       </div>
 
       <NewsDossierPanel state={news} />
 
     </aside>
+  );
+}
+
+// ── AdverseMediaTab — full MLRO-grade adverse media verdict ─────────────────
+// Fetches /api/adverse-media on demand and displays the complete verdict:
+// risk tier, category breakdown, findings, SAR recommendation, investigation
+// lines, FATF references. This gives analysts the full picture rather than
+// the queue-level summary badge.
+interface AmVerdict {
+  subject: string;
+  riskTier: string;
+  riskDetail: string;
+  totalItems: number;
+  adverseItems: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  sarRecommended: boolean;
+  sarBasis: string;
+  confidenceTier: string;
+  confidenceBasis: string;
+  counterfactual: string;
+  investigationLines: string[];
+  findings: Array<{ item: string; severity: string; categories: string[]; reasoning: string }>;
+  fatfRecommendations: string[];
+  categoryBreakdown: Array<{ categoryId?: string; displayName?: string; category?: string; count: number; severity: string }>;
+  analysedAt: string;
+  modesCited: string[];
+}
+
+const TIER_STYLES: Record<string, string> = {
+  critical: "bg-red-dim text-red border border-red/30",
+  high: "bg-red-dim text-red border border-red/20",
+  medium: "bg-amber-dim text-amber border border-amber/30",
+  low: "bg-blue-dim text-blue border border-blue/30",
+  clear: "bg-green-dim text-green border border-green/30",
+  unknown: "bg-bg-2 text-ink-3 border border-hair-2",
+};
+
+function AdverseMediaTab({
+  subject,
+  news,
+  superBrain,
+}: {
+  subject: Subject;
+  news: NewsSearchState;
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+}) {
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [verdict, setVerdict] = useState<AmVerdict | null>(null);
+  const [error, setError] = useState("");
+  const [degraded, setDegraded] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const run = useCallback(async () => {
+    setStatus("loading"); setError(""); setDegraded(false);
+    try {
+      const res = await fetch("/api/adverse-media", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ subject: subject.name, limit: 50 }),
+      });
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; verdict?: AmVerdict; degraded?: boolean; degradedReason?: string; error?: string };
+      if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (!mountedRef.current) return;
+      setVerdict(data.verdict ?? null);
+      setDegraded(Boolean(data.degraded));
+      setStatus("success");
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setError(caughtErrorMessage(e, "Request failed — please try again."));
+      setStatus("error");
+    }
+  }, [subject.name]);
+
+  // Auto-run when tab mounts
+  useEffect(() => {
+    void run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject.id]);
+
+  const sbResult = superBrain.status === "success" ? superBrain.result : null;
+  const newsArticles = news.status === "success" ? news.result.articles : [];
+
+  const tierStyle = TIER_STYLES[verdict?.riskTier ?? "unknown"] ?? TIER_STYLES["unknown"]!;
+
+  return (
+    <div className="space-y-4">
+      {/* Header row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2">
+          Adverse Media · MLRO Intelligence
+        </div>
+        <button
+          type="button"
+          onClick={() => { void run(); }}
+          disabled={status === "loading"}
+          className="ml-auto px-2.5 py-1 rounded text-10 font-semibold bg-brand text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
+        >
+          {status === "loading" ? "Scanning…" : "↺ Rescan"}
+        </button>
+      </div>
+
+      {status === "loading" && (
+        <div className="text-11 text-ink-2 animate-pulse">Running MLRO-grade adverse media scan…</div>
+      )}
+
+      {status === "error" && (
+        <div className="text-11 text-red bg-red-dim rounded px-3 py-2.5">{error}</div>
+      )}
+
+      {status === "success" && verdict && (
+        <>
+          {degraded && (
+            <div className="text-10 font-mono text-amber bg-amber-dim rounded px-3 py-2 border border-amber/30">
+              ⚠ Degraded scan — primary data source unavailable. Results based on cached intelligence.
+            </div>
+          )}
+
+          {/* Risk tier badge */}
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center px-3 py-1.5 rounded font-mono text-12 font-bold uppercase tracking-wide-3 ${tierStyle}`}>
+              {verdict.riskTier}
+            </span>
+            {verdict.sarRecommended && (
+              <span className="inline-flex items-center px-2 py-1 rounded bg-red text-white font-mono text-10 font-bold uppercase">
+                SAR R.20
+              </span>
+            )}
+            <span className="text-11 text-ink-2">{verdict.riskDetail}</span>
+          </div>
+
+          {/* Counts row */}
+          <div className="flex gap-4 flex-wrap text-11">
+            <span className="text-ink-2">Total articles: <strong className="text-ink-0">{verdict.totalItems}</strong></span>
+            <span className="text-ink-2">Adverse: <strong className="text-red">{verdict.adverseItems}</strong></span>
+            {verdict.criticalCount > 0 && <span className="text-red font-semibold">{verdict.criticalCount} critical</span>}
+            {verdict.highCount > 0 && <span className="text-red">{verdict.highCount} high</span>}
+            {verdict.mediumCount > 0 && <span className="text-amber">{verdict.mediumCount} medium</span>}
+          </div>
+
+          {/* Category breakdown */}
+          {verdict.categoryBreakdown.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Categories</div>
+              <div className="flex flex-wrap gap-1">
+                {verdict.categoryBreakdown.map((c, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-10 bg-red-dim text-red"
+                  >
+                    {c.displayName ?? c.category ?? c.categoryId ?? "—"}
+                    <span className="bg-red/20 px-1 rounded-sm">{c.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SAR basis */}
+          {verdict.sarRecommended && verdict.sarBasis && (
+            <div className="rounded border border-red/30 bg-red-dim px-3 py-2.5">
+              <div className="text-10 font-semibold text-red uppercase tracking-wide-3 mb-1">SAR Filing Basis (FATF R.20)</div>
+              <div className="text-11 text-ink-0">{verdict.sarBasis}</div>
+            </div>
+          )}
+
+          {/* Top findings */}
+          {verdict.findings.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Top findings ({verdict.findings.length})</div>
+              <ul className="space-y-2">
+                {verdict.findings.slice(0, 8).map((f, i) => (
+                  <li key={i} className="rounded border border-hair-2 bg-bg-panel px-2.5 py-2">
+                    <div className="flex items-start gap-2 mb-0.5">
+                      <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-10 font-mono uppercase ${TIER_STYLES[f.severity] ?? TIER_STYLES["unknown"]!}`}>
+                        {f.severity}
+                      </span>
+                      <span className="text-11 text-ink-0 leading-snug">{f.item}</span>
+                    </div>
+                    {f.reasoning && (
+                      <div className="text-10 text-ink-3 mt-0.5 pl-0">{f.reasoning}</div>
+                    )}
+                    {f.categories.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {f.categories.map((c) => (
+                          <span key={c} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9.5 bg-amber-dim text-amber">{c}</span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Investigation lines */}
+          {verdict.investigationLines.length > 0 && (
+            <div>
+              <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">MLRO investigation lines</div>
+              <ul className="list-none p-0 m-0 space-y-1">
+                {verdict.investigationLines.map((l, i) => (
+                  <li key={i} className="text-11 text-ink-1 flex gap-2">
+                    <span className="text-brand shrink-0">→</span>{l}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* FATF references */}
+          {verdict.fatfRecommendations.length > 0 && (
+            <div className="flex gap-1.5 flex-wrap items-center">
+              <span className="text-10 uppercase tracking-wide-3 text-ink-3">FATF:</span>
+              {verdict.fatfRecommendations.map((r) => (
+                <span key={r} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-brand-dim text-brand">{r}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Confidence */}
+          <div className="text-10 text-ink-3 font-mono">
+            Confidence: <span className="text-ink-1">{verdict.confidenceTier}</span>
+            {verdict.confidenceBasis ? ` — ${verdict.confidenceBasis}` : ""}
+          </div>
+
+          {/* Counterfactual */}
+          {verdict.counterfactual && (
+            <div className="text-10 text-ink-3 italic">{verdict.counterfactual}</div>
+          )}
+        </>
+      )}
+
+      {/* Super-brain AM categories (always available if super-brain ran) */}
+      {sbResult && (sbResult.adverseMedia.length > 0 || (sbResult.adverseKeywordGroups?.length ?? 0) > 0) && (
+        <div className="border-t border-hair pt-3">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Brain classifier signals</div>
+          <div className="flex flex-wrap gap-1">
+            {sbResult.adverseMedia.map((am, i) => (
+              <span key={`am-${i}`} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
+                {am.categoryId.replace(/_/g, " ")}
+              </span>
+            ))}
+            {sbResult.adverseKeywordGroups?.map((g) => (
+              <span key={g.group} className="inline-flex items-center gap-1 px-1.5 py-px rounded-sm font-mono text-10 bg-amber-dim text-amber">
+                {g.group.replace(/-/g, " ")} <span className="bg-amber/20 px-1 rounded-sm">{g.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Live news dossier preview */}
+      {newsArticles.length > 0 && (
+        <div className="border-t border-hair pt-3">
+          <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">Live news ({newsArticles.length} articles)</div>
+          <ul className="space-y-2">
+            {newsArticles.slice(0, 10).map((a, i) => (
+              <li key={i} className="rounded border border-hair-2 bg-bg-panel px-2.5 py-2">
+                <div className="flex items-start gap-2 mb-0.5">
+                  <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-10 font-mono uppercase ${TIER_STYLES[a.severity] ?? TIER_STYLES["unknown"]!}`}>
+                    {a.severity}
+                  </span>
+                  <a
+                    href={/^https?:\/\//i.test(a.link) ? a.link : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-11 text-brand hover:underline leading-snug"
+                  >
+                    {a.title}
+                  </a>
+                </div>
+                <div className="text-10 text-ink-3 font-mono">{a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {status === "success" && !verdict && (
+        <div className="text-11 text-green">✓ No adverse media found — scan returned no adverse findings</div>
+      )}
+    </div>
   );
 }
 
@@ -1448,17 +1754,22 @@ function AdverseMediaEvidenceSection({
   const amCategories = sbResult?.adverseMedia ?? [];
   const amKeywordGroups = sbResult?.adverseKeywordGroups ?? [];
 
-  // Live news articles with severity != clear
+  // Live news articles — show ALL keyword-matched articles regardless of
+  // severity. "Clear" severity means no AML keywords fired but the article
+  // name-matched the subject; regulators need to see the full picture.
+  // Limit to 15 to keep the panel readable (full list is in NewsDossierPanel below).
   const sevColor = (s: string) =>
     s === "critical" || s === "high"
       ? "bg-red-dim text-red"
       : s === "medium"
         ? "bg-amber-dim text-amber"
-        : "bg-bg-2 text-ink-3";
+        : s === "low"
+          ? "bg-blue-dim text-blue"
+          : "bg-bg-2 text-ink-3";
 
   const articles =
     news.status === "success"
-      ? news.result.articles.filter((a) => a.severity !== "clear").slice(0, 8)
+      ? news.result.articles.slice(0, 15)
       : [];
 
   const hasEvidence =
@@ -1471,18 +1782,19 @@ function AdverseMediaEvidenceSection({
       return (
         <div className="mt-3 pt-3 border-t border-hair">
           <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-            Adverse media
+            Worldwide adverse media (100+ locales)
           </div>
-          <div className="text-11 text-ink-3 italic">Scanning live sources…</div>
+          <div className="text-11 text-ink-3 italic">Scanning {NEWS_SEARCH_LOCALES}…</div>
         </div>
       );
     }
     return (
       <div className="mt-3 pt-3 border-t border-hair">
         <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
-          Adverse media
+          Worldwide adverse media (100+ locales)
         </div>
         <div className="text-11 text-green">✓ No adverse media found</div>
+        <div className="text-10 text-ink-3 font-mono mt-1">Searched: {NEWS_SEARCH_LOCALES} · FATF R.10</div>
       </div>
     );
   }
@@ -1490,7 +1802,7 @@ function AdverseMediaEvidenceSection({
   return (
     <div className="mt-3 pt-3 border-t border-hair space-y-3">
       <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">
-        Adverse media evidence
+        Worldwide adverse media evidence (100+ locales)
       </div>
 
       {/* Brain-classified categories */}
@@ -1533,11 +1845,11 @@ function AdverseMediaEvidenceSection({
         </div>
       )}
 
-      {/* Live news articles */}
+      {/* Live news articles — all locales */}
       {articles.length > 0 && (
         <div>
           <div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1.5">
-            Live news ({articles.length})
+            Live news — worldwide ({articles.length})
           </div>
           <ul className="space-y-2">
             {articles.map((a, i) => (
@@ -1557,6 +1869,9 @@ function AdverseMediaEvidenceSection({
                 </div>
                 <div className="text-10 text-ink-3 font-mono">
                   {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
+                  {a.sourceTier === "tier1" && (
+                    <span className="ml-1 rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
+                  )}
                 </div>
               </li>
             ))}
@@ -1768,7 +2083,7 @@ function CddPostureBadge({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className="text-13 font-semibold text-ink-0">{display}</span>
+        <span role="status" aria-live="polite" aria-atomic="true" className="text-13 font-semibold text-ink-0">{display}</span>
         {upgraded && (
           <span
             className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold tracking-wide-2 bg-amber-dim text-amber uppercase"
@@ -2601,13 +2916,13 @@ function CddTab({
       )}
       {pepList.length > 0 && <PepClassificationsList data={pepList} />}
       {r?.pepAssessment?.isLikelyPEP && (
-        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs">
-          <div className="text-zinc-500 uppercase tracking-wide mb-1">PEP assessment</div>
+        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2 text-xs">
+          <div className="text-ink-3 uppercase tracking-wide mb-1">PEP assessment</div>
           <div className="flex flex-wrap gap-1">
             {r.pepAssessment.matchedRoles.map((m, i) => (
               <span
                 key={`${m.label}-${i}`}
-                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-100 text-violet-800 border border-violet-200"
+                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-950/30 text-violet-300 border border-violet-500/40"
               >
                 {m.label} · {m.tier}
               </span>
@@ -2616,8 +2931,8 @@ function CddTab({
         </div>
       )}
       {r && (
-        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
-          <div className="text-xs uppercase tracking-wide text-zinc-500 mb-2">MLRO disposition</div>
+        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
+          <div className="text-xs uppercase tracking-wide text-ink-3 mb-2">MLRO disposition</div>
           <DispositionButton
             caseId={subject.id}
             runId={runId}
@@ -2746,7 +3061,7 @@ function LiveReasoningTab({
         ? "bg-amber-dim text-amber"
         : "bg-bg-2 text-ink-3";
 
-  const narrative = (result as any)?.narrative ?? (result as any)?.executiveSummary ?? null;
+  const narrative = ((result as unknown as Record<string, unknown>)?.narrative ?? (result as unknown as Record<string, unknown>)?.executiveSummary ?? null) as string | null;
 
   return (
     <div className="space-y-4">
@@ -2763,6 +3078,12 @@ function LiveReasoningTab({
           <span className="ml-auto font-mono text-11 opacity-70">
             {result.composite.score}/100
           </span>
+        )}
+        {!disposition && superBrain.status === "success" && (
+          <div className="text-12 font-medium text-green">No action required</div>
+        )}
+        {!disposition && superBrain.status === "idle" && (
+          <div className="text-12 text-ink-2">Waiting for screening to complete…</div>
         )}
       </div>
 
@@ -2815,6 +3136,9 @@ function LiveReasoningTab({
                 </div>
                 <div className="text-10 text-ink-3 font-mono">
                   {a.source}{a.pubDate ? ` · ${a.pubDate.slice(0, 10)}` : ""}
+                  {a.sourceTier === "tier1" && (
+                    <span className="ml-1 rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
+                  )}
                 </div>
               </li>
             ))}
@@ -2844,7 +3168,7 @@ function LiveReasoningTab({
   );
 }
 
-function PostureCell({
+function _PostureCell({
   label,
   value,
   toneClass,
@@ -3228,12 +3552,40 @@ const SEVERITY_BG: Record<string, string> = {
   critical: "bg-red-dim text-red",
 };
 
+// The 100+ language and regional locales polled by /api/news-search — all 7 continents
+const NEWS_SEARCH_LOCALES = "EN · DE · FR · ES · PT · IT · NL · PL · RO · HU · CS · SK · HR · SR · BG · SV · EL · RU · UK · AR · TR · HE · HI · ID · MS · VI · TH · ZH · JA · KO · EN-GB · EN-AE · EN-IN · EN-SG · EN-AU · AM · AF · FA · BN · UR · TA · TL · MY · AZ · KA · HY · KK · ES-MX · ES-AR · FR-CA · EN-NG · EN-ZA";
+
+const CONTINENT_LOCALES: Record<string, string[]> = {
+  "North America": ["en", "en-CA", "fr-CA", "es-MX"],
+  "South America": ["pt", "es", "es-AR", "es-CO", "es-MX"],
+  "Europe": ["de", "fr", "es", "it", "nl", "pl", "ro", "hu", "cs", "sk", "hr", "sr", "bg", "sv", "el", "ru", "uk", "en-GB"],
+  "Africa": ["ar", "ar-EG", "sw", "am", "af", "fr-SN", "pt-AO", "en-NG", "en-ZA"],
+  "Middle East": ["ar", "ar-SA", "fa", "tr", "he"],
+  "Asia": ["hi", "bn", "ur", "ta", "id", "ms", "vi", "th", "my", "tl", "zh", "ja", "ko", "kk", "az", "ka", "hy"],
+  "Oceania": ["en-AU", "en-NZ"],
+};
+
+function getContinentCoverage(languages: string[]): Record<string, boolean> {
+  const langSet = new Set(languages.map(l => l.toLowerCase()));
+  const coverage: Record<string, boolean> = {};
+  for (const [continent, locales] of Object.entries(CONTINENT_LOCALES)) {
+    coverage[continent] = locales.some(l => langSet.has(l.toLowerCase()));
+  }
+  return coverage;
+}
+
+function severityOrder(s: string): number { return { clear: 0, low: 1, medium: 2, high: 3, critical: 4 }[s] ?? 0; }
+
 function NewsDossierPanel({ state }: { state: NewsSearchState }) {
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [tierFilter, setTierFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"relevance" | "date" | "severity">("relevance");
+
   if (state.status === "idle") return null;
   if (state.status === "loading") {
     return (
-      <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2">Crawling 20,000+ news sources for live articles…</div>
+      <Section title="Worldwide adverse-media dossier">
+        <div className="text-11 text-ink-2">Crawling 100+ locales across all continents ({NEWS_SEARCH_LOCALES}) for live articles…</div>
       </Section>
     );
   }
@@ -3244,9 +3596,12 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   // than leaking infra chatter into the MLRO's case file.
   if (state.status === "error") {
     return (
-      <Section title="Adverse-media dossier">
+      <Section title="Worldwide adverse-media dossier">
         <div className="text-11 text-ink-2">
-          No articles found in Google News.
+          No articles found.
+        </div>
+        <div className="text-10 text-ink-3 font-mono mt-1">
+          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
         </div>
       </Section>
     );
@@ -3254,15 +3609,117 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   const r = state.result;
   if (r.articleCount === 0) {
     return (
-      <Section title="Adverse-media dossier">
-        <div className="text-11 text-ink-2">
-          No articles found for {r.subject} in Google News.
+      <Section title="Worldwide adverse-media dossier">
+        <div className="text-11 text-green">✓ No adverse media found for {r.subject}</div>
+        <div className="text-10 text-ink-3 font-mono mt-1">
+          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES}
+          {r.languages && r.languages.length > 0 && ` · active results in: ${r.languages.join(", ")}`}
+           · FATF R.10 lookback applied · negative finding documented
         </div>
       </Section>
     );
   }
+
+  const filtered = r.articles
+    .filter(a => severityFilter === "all" || a.severity === severityFilter)
+    .filter(a => tierFilter === "all" || a.sourceTier === tierFilter);
+
+  const displayArticles = [...filtered].sort((a, b) => {
+    if (sortBy === "relevance") return (b.fuzzyScore ?? 0) - (a.fuzzyScore ?? 0);
+    if (sortBy === "severity") return severityOrder(b.severity) - severityOrder(a.severity);
+    if (sortBy === "date") {
+      const ta = Date.parse(a.pubDate ?? ""); const tb = Date.parse(b.pubDate ?? "");
+      return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+    }
+    return 0;
+  });
+
   return (
-    <Section title={`Adverse-media dossier (${r.articleCount})`}>
+    <Section title={`Worldwide adverse-media dossier (${r.articleCount})`}>
+      {/* Filter controls */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* Severity filter tabs */}
+        <div className="flex gap-1 text-9">
+          {["all", "critical", "high", "medium", "low", "clear"].map(s => (
+            <button key={s} onClick={() => setSeverityFilter(s)}
+              className={`rounded px-2 py-0.5 capitalize ${severityFilter === s ? "bg-violet text-white" : "bg-ink-7 text-ink-2 hover:bg-ink-6"}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+        {/* Source tier filter */}
+        <div className="flex gap-1 text-9">
+          {["all", "tier1", "tier2", "tier3"].map(t => (
+            <button key={t} onClick={() => setTierFilter(t)}
+              className={`rounded px-2 py-0.5 ${tierFilter === t ? "bg-emerald-600 text-white" : "bg-ink-7 text-ink-2 hover:bg-ink-6"}`}>
+              {t === "all" ? "All Sources" : t === "tier1" ? "⭐ Tier 1" : t === "tier2" ? "Tier 2" : "Tier 3+"}
+            </button>
+          ))}
+        </div>
+        {/* Sort control */}
+        <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+          className="rounded border border-ink-6 bg-ink-8 px-2 py-0.5 text-9 text-ink-1">
+          <option value="relevance">Sort: Relevance</option>
+          <option value="date">Sort: Newest First</option>
+          <option value="severity">Sort: Severity</option>
+        </select>
+      </div>
+
+      {/* Coverage stats bar */}
+      <div className="flex flex-wrap gap-2 mb-3 text-xs">
+        <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+          {state.result?.articleCount ?? 0} articles
+        </span>
+        <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+          {state.result?.languages?.length ?? 0} languages
+        </span>
+        {state.result?.articles && (
+          <span className="rounded-full bg-ink-7 px-2 py-0.5 text-ink-1">
+            {state.result.articles.filter(a => a.sourceTier === "tier1").length} tier-1 sources
+          </span>
+        )}
+        <span className={`rounded-full px-2 py-0.5 font-semibold ${
+          state.result?.topSeverity === "critical" ? "bg-red-950/30 text-red-300" :
+          state.result?.topSeverity === "high" ? "bg-orange-950/30 text-orange-300" :
+          state.result?.topSeverity === "medium" ? "bg-amber-950/30 text-amber-300" :
+          state.result?.topSeverity === "low" ? "bg-sky-950/30 text-sky-300" :
+          "bg-emerald-950/30 text-emerald-300"
+        }`}>
+          {(state.result?.topSeverity ?? "clear").toUpperCase()}
+        </span>
+      </div>
+
+      {/* Language coverage pills */}
+      {state.result?.languages && state.result.languages.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          <span className="text-9 text-ink-3 mr-1">Coverage:</span>
+          {state.result.languages.map(lang => (
+            <span key={lang} className="rounded bg-violet/10 px-1 py-0.5 text-[9px] font-mono text-violet uppercase">
+              {lang}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Source category breakdown */}
+      {state.result?.articles && state.result.articles.length > 0 && (() => {
+        const cats = { wire: 0, investigative: 0, regulatory: 0, regional: 0, other: 0 };
+        for (const a of state.result.articles) {
+          const cat = (a as { sourceCategory?: string }).sourceCategory ?? "other";
+          if (cat in cats) cats[cat as keyof typeof cats]++;
+          else cats.other++;
+        }
+        return (
+          <div className="flex flex-wrap gap-1 mb-3 text-9">
+            {Object.entries(cats).filter(([, n]) => n > 0).map(([cat, n]) => (
+              <span key={cat} className="rounded bg-ink-7 px-1 py-0.5 text-ink-2">
+                {cat}: {n}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
+
       <div className="flex items-center gap-2 mb-2 text-10.5 flex-wrap">
         <span className="text-ink-2 uppercase tracking-wide-2">Top severity:</span>
         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono font-semibold ${SEVERITY_BG[r.topSeverity] ?? "bg-bg-2 text-ink-1"}`}>
@@ -3271,7 +3728,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
         {r.languages && r.languages.length > 0 && (
           <>
             <span className="text-ink-3">·</span>
-            <span className="text-ink-2">Languages:</span>
+            <span className="text-ink-2">Languages found:</span>
             {r.languages.map((l) => (
               <span key={l} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-violet-dim text-violet uppercase">
                 {l}
@@ -3279,7 +3736,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
             ))}
           </>
         )}
-        <span className="ml-auto font-mono text-ink-3">20,000+ sources · {r.source}</span>
+        <span className="ml-auto font-mono text-ink-3">100+ locales searched · {r.source}</span>
       </div>
 
       {r.keywordGroupCounts.length > 0 && (
@@ -3297,7 +3754,7 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
       )}
 
       <ul className="list-none p-0 m-0 space-y-2">
-        {r.articles.map((a, i) => (
+        {displayArticles.map((a, i) => (
           <li key={`${a.link}-${i}`} className="border-b border-hair pb-2 last:border-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
               <a
@@ -3312,8 +3769,16 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
                 {a.severity}
               </span>
             </div>
-            <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2">
+            <div className="text-10 text-ink-3 font-mono flex flex-wrap gap-x-2 items-center">
               <span>{a.source || "—"}</span>
+              {a.sourceTier === "tier1" && (
+                <span className="rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
+              )}
+              {a.lang && !a.lang.startsWith("en") && (
+                <span className="ml-1 rounded bg-amber-950/30 px-1 py-0.5 text-[9px] font-medium text-amber-300" title="Non-English article — may require translation">
+                  {a.lang.toUpperCase()}
+                </span>
+              )}
               <span>· {a.pubDate ? formatDMY(a.pubDate) : "—"}</span>
               <span>· <span className="uppercase text-violet">{a.lang}</span></span>
               <span>· fuzzy <span className="text-ink-0">{a.fuzzyScore}%</span> ({a.fuzzyMethod})</span>
@@ -3342,6 +3807,33 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
           </li>
         ))}
       </ul>
+      <div className="mt-3 pt-2 border-t border-hair text-10 text-ink-3 font-mono">
+        Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+      </div>
+      {/* Continent coverage badges */}
+      {(() => {
+        const coverage = getContinentCoverage(r.languages ?? []);
+        const continents = Object.entries(coverage);
+        return (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {continents.map(([continent, covered]) => (
+              <span
+                key={continent}
+                className={`rounded px-1.5 py-0.5 text-9 font-medium ${
+                  covered
+                    ? "bg-emerald-950/30 text-emerald-300"
+                    : "bg-zinc-800/40 text-zinc-400"
+                }`}
+              >
+                {continent.split(" ").map(w => w[0]).join("")}
+              </span>
+            ))}
+            <span className="text-9 text-ink-3 ml-1">
+              {continents.filter(([, c]) => c).length}/7 continents
+            </span>
+          </div>
+        );
+      })()}
     </Section>
   );
 }

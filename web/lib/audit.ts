@@ -1,7 +1,15 @@
 // Tamper-evident audit-trail utility.
 // Uses a djb2-based rolling hash chain: each entry's hash covers its own
 // content plus the previous entry's hash, so any tampering breaks the chain.
-// All data lives in localStorage under a versioned key.
+//
+// Storage strategy (two-tier for compliance):
+//   1. localStorage — fast, synchronous, available offline. Primary for UI.
+//   2. Server-side HMAC chain (via POST /api/audit/client-event) — durable,
+//      tamper-evident, regulator-accessible. Required by FDL 10/2025 Art.24.
+//
+// writeAuditEvent() writes to localStorage immediately (synchronous) and
+// then fires a fire-and-forget POST to persist server-side. The server write
+// is non-blocking so UI callers never wait for it.
 
 export interface AuditEntry {
   id: string;
@@ -23,6 +31,12 @@ function djb2(s: string): string {
   return Math.abs(h).toString(16).padStart(8, "0");
 }
 
+function randomHex6(): string {
+  const arr = new Uint8Array(3);
+  globalThis.crypto.getRandomValues(arr);
+  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function chainHash(partial: Omit<AuditEntry, "hash">, prevHash: string): string {
   const payload = [prevHash, partial.id, partial.timestamp, partial.actor, partial.action, partial.target].join("|");
   return `hs:${djb2(payload)}`;
@@ -39,13 +53,31 @@ export function loadAuditEntries(): AuditEntry[] {
   }
 }
 
+// Fire-and-forget server-side persistence. Errors are logged but never throw
+// to the caller — the primary localStorage write has already succeeded.
+function persistToServer(actor: string, action: string, target: string): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/audit/client-event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ actor, action, target }),
+    keepalive: true,
+  }).then((r) => {
+    if (!r.ok) {
+      console.warn("[hawkeye] server audit persist returned", r.status, "— localStorage copy still intact");
+    }
+  }).catch((err: unknown) => {
+    console.warn("[hawkeye] server audit persist failed (network) — localStorage copy still intact:", err);
+  });
+}
+
 export function writeAuditEvent(
   actor: string,
   action: string,
   target: string,
 ): AuditEntry {
   const partial: Omit<AuditEntry, "hash"> = {
-    id: `ae-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `ae-${Date.now()}-${randomHex6()}`,
     timestamp: new Date().toISOString(),
     actor,
     action,
@@ -69,6 +101,9 @@ export function writeAuditEvent(
       entry,
     );
   }
+  // Persist to server-side HMAC chain (fire-and-forget) so the event survives
+  // browser cache clears and is accessible to regulators per FDL 10/2025 Art.24.
+  persistToServer(actor, action, target);
   return entry;
 }
 
@@ -95,7 +130,7 @@ function csvCell(v: string): string {
 export function exportAuditCsv(entries: AuditEntry[]): string {
   const header = "id,timestamp,actor,action,target,hash";
   const rows = entries.map((e) =>
-    [e.id, e.timestamp, csvCell(e.actor), csvCell(e.action), csvCell(e.target), e.hash].join(","),
+    [csvCell(e.id), csvCell(e.timestamp), csvCell(e.actor), csvCell(e.action), csvCell(e.target), csvCell(e.hash)].join(","),
   );
   return [header, ...rows].join("\n");
 }

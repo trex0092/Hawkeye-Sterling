@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Hit {
   listId?: string;
@@ -55,16 +56,17 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
           })),
         }),
       });
-      const data = await res.json().catch(() => ({})) as { ok: boolean; case?: { caseId: string }; error?: string };
-      if (!data.ok) {
-        setError(data.error ?? "Failed to open case");
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Open case"));
+      const data = await res.json().catch(() => null) as { ok: boolean; case?: { caseId: string }; error?: string } | null;
+      if (!data?.ok) {
+        setError(data?.error ?? "Failed to open case");
       } else {
         const caseId = data.case?.caseId ?? "opened";
         setOpened(caseId);
         onCaseOpened?.(caseId);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(caughtErrorMessage(e, "Network error"));
     } finally {
       setOpening(false);
     }

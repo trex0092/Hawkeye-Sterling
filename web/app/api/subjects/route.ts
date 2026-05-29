@@ -5,24 +5,29 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listSubjects, upsertSubject, reviewDueSoon, type SubjectProfile } from "@/lib/server/subject-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const subjects = await listSubjects(tenant);
+  try {
+    const subjects = await listSubjects(tenant);
+    const reviewDue = subjects.filter((s) => reviewDueSoon(s));
+    const overdue   = subjects.filter((s) => s.nextReviewDate && new Date(s.nextReviewDate) < new Date());
 
-  const reviewDue = subjects.filter((s) => reviewDueSoon(s));
-  const overdue   = subjects.filter((s) => s.nextReviewDate && new Date(s.nextReviewDate) < new Date());
-
-  return NextResponse.json(
-    { ok: true, subjects, reviewDueSoon: reviewDue.length, overdue: overdue.length },
-    { headers: gate.headers },
-  );
+    return NextResponse.json(
+      { ok: true, subjects, reviewDueSoon: reviewDue.length, overdue: overdue.length },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[subjects] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load subjects" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -50,18 +55,28 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "nextReviewDate required (ISO)" }, { status: 400, headers: gate.headers });
   }
 
-  const profile = await upsertSubject(tenant, subjectId as string, {
-    subjectId: subjectId as string,
-    subjectName: subjectName as string,
-    currentRiskCategory: currentRiskCategory as SubjectProfile["currentRiskCategory"],
-    dueDiligence: (typeof dueDiligence === "string" ? dueDiligence : "CDD") as SubjectProfile["dueDiligence"],
-    nextReviewDate: nextReviewDate as string,
-    activeCaseId: typeof activeCaseId === "string" ? activeCaseId : undefined,
-    lastScreenedAt: typeof lastScreenedAt === "string" ? lastScreenedAt : undefined,
-    isPep: Boolean(isPep),
-    hasStrSarOnRecord: Boolean(hasStrSarOnRecord),
-    notes: typeof notes === "string" ? notes : undefined,
-  });
+  try {
+    const profile = await upsertSubject(tenant, subjectId as string, {
+      subjectId: subjectId as string,
+      subjectName: subjectName as string,
+      currentRiskCategory: currentRiskCategory as SubjectProfile["currentRiskCategory"],
+      dueDiligence: (typeof dueDiligence === "string" ? dueDiligence : "CDD") as SubjectProfile["dueDiligence"],
+      nextReviewDate: nextReviewDate as string,
+      activeCaseId: typeof activeCaseId === "string" ? activeCaseId : undefined,
+      lastScreenedAt: typeof lastScreenedAt === "string" ? lastScreenedAt : undefined,
+      isPep: Boolean(isPep),
+      hasStrSarOnRecord: Boolean(hasStrSarOnRecord),
+      notes: typeof notes === "string" ? notes : undefined,
+    });
 
-  return NextResponse.json({ ok: true, subject: profile }, { status: 201, headers: gate.headers });
+    void writeAuditChainEntry(
+      { event: "subjects.upserted", actor: gate.keyId, meta: { id: profile.subjectId, name: profile.subjectName } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+    return NextResponse.json({ ok: true, subject: profile }, { status: 201, headers: gate.headers });
+  } catch (err) {
+    console.error("[subjects] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save subject" }, { status: 500, headers: gate.headers });
+  }
 }

@@ -117,7 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       const degraded = {
         subject,
         riskTier: "unknown" as const,
-        riskDetail: `Adverse media unavailable — neither Taranis nor live GDELT/Claude path is reachable (${detail}). Manual MLRO review required.`,
+        riskDetail: "Adverse media unavailable — both primary and fallback data sources are unreachable. Manual MLRO review required.",
         totalItems: 0,
         adverseItems: 0,
         criticalCount: 0,
@@ -127,7 +127,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         sarRecommended: false,
         sarBasis: "Cannot determine — adverse-media pipeline unavailable",
         confidenceTier: "low" as const,
-        confidenceBasis: detail,
+        confidenceBasis: "Data sources unavailable — manual review required",
         counterfactual: "Restore Taranis or set ANTHROPIC_API_KEY and re-run",
         investigationLines: ["Perform manual adverse-media search via Google, Reuters, Bloomberg"],
         findings: [],
@@ -169,6 +169,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("[adverse-media] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 
+  const llmDisabled = process.env["LLM_ADVERSE_MEDIA_DISABLED"];
+  const llmScreeningDisabled = llmDisabled === "1" || llmDisabled?.toLowerCase() === "true";
+
   return NextResponse.json(
     {
       ok: true,
@@ -181,6 +184,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Compliance disclosure: AI-generated content (FDL 10/2025 Art.22)
       aiGenerated: true,
       aiModel: "keyword-classifier+mlro-analyser",
+      // Degraded flag when LLM screening is intentionally disabled — callers
+      // must distinguish this from a genuine clean-screen result.
+      ...(llmScreeningDisabled ? {
+        degraded: true,
+        degradedReason: "adverse_media_llm_disabled",
+        degradedNote: "LLM_ADVERSE_MEDIA_DISABLED=true — adverse media LLM enrichment is not running. Results may be incomplete.",
+      } : {}),
     },
     { status: 200, headers: { ...CORS, ...gateHeaders } },
   );
@@ -263,6 +273,14 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   // When no Anthropic key is configured, run the deterministic 737-keyword
   // classifier directly on the (possibly empty) cached articles.
   if (!apiKey) {
+    const taranisItems = items.slice(0, 10).map(gdeltToTaranisItem);
+    const verdict = analyseAdverseMediaItems(subject, taranisItems);
+    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
+  }
+
+  // When no Anthropic key is configured, run the deterministic 737-keyword
+  // classifier directly on the (possibly empty) cached articles.
+  if (!apiKey) {
     const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);
     return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
@@ -274,7 +292,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   const articleBlock =
     items.length > 0
       ? items
-          .slice(0, 50)
+          .slice(0, 10)
           .map((a, i) => {
             const date = _parseSeen(a.seendate);
             const tone = (a.tone ?? 0).toFixed(1);
@@ -285,10 +303,10 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           .join("\n")
       : "No articles found in GDELT 10-year corpus for this subject.";
 
-  const client = getAnthropicClient(apiKey, 25_000);
+  const client = getAnthropicClient(apiKey, 6_000);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 800,
+    max_tokens: 500, // 10 articles × ~40 tok/finding + summary ≈ 450 tok; 500 keeps response in <1.5s on Haiku
     system: [
       {
         type: "text",
@@ -345,7 +363,7 @@ Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
         role: "user",
         content: `Analyse adverse media for subject: "${subject}"
 GDELT lookback anchored to: ${now.slice(0, 10)}
-Live articles retrieved from GDELT (${items.length} total):
+Live articles retrieved from GDELT (showing top ${Math.min(items.length, 10)} of ${items.length} total):
 ${articleBlock}`,
       },
     ],

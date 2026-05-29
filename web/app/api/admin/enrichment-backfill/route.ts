@@ -29,8 +29,9 @@ async function handleBackfill(_req: Request): Promise<NextResponse> {
   try {
     keys = await listKeys(JOB_PREFIX);
   } catch (err) {
+    console.error("[enrichment-backfill] failed to list enrichment job keys:", err);
     return NextResponse.json(
-      { ok: false, error: "failed to list enrichment job keys", detail: err instanceof Error ? err.message : String(err) },
+      { ok: false, error: "failed to list enrichment job keys — please retry or contact support" },
       { status: 500 },
     );
   }
@@ -48,7 +49,8 @@ async function handleBackfill(_req: Request): Promise<NextResponse> {
       try {
         raw = await store.get(key);
       } catch (err) {
-        errors.push(`read ${key}: ${err instanceof Error ? err.message : String(err)}`);
+        console.warn(`[enrichment-backfill] read failed for key ${key}:`, err);
+        errors.push(`read ${key}: store read failed`);
         return;
       }
       if (!raw) { skipped++; return; }

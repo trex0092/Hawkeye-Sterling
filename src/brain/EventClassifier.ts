@@ -351,7 +351,7 @@ export function classifyEvents(text: string): ClassifiedEvent[] {
     const matchedTokens: string[] = [];
 
     for (const pattern of signal.patterns) {
-      const matches = text.match(new RegExp(pattern.source, pattern.flags)) ?? [];
+      const matches = text.match(new RegExp(pattern.source, pattern.flags)) ?? []; // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       matchedTokens.push(...matches.slice(0, 3));
     }
 

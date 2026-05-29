@@ -18,7 +18,9 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { appendAuditEntry } from "@/lib/server/mlro-integration";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +77,11 @@ export async function POST(req: Request): Promise<Response> {
     ],
     finalAnswer: null,
   }).catch(() => ({ seq: 0, entryHash: "" }));
+
+  void writeAuditChainEntry(
+    { event: "onboarding.step.transition", actor: gate.keyId, meta: { userId, fromStep, toStep } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     { ok: true, seq: audit.seq, entryHash: audit.entryHash },

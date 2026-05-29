@@ -9,7 +9,7 @@
 //   - Signer identity and timestamp
 //   - Schema version for forward compatibility
 
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 // ── Key registry (in-memory; production should use KMS) ───────────────────────
 
@@ -178,7 +178,9 @@ export function verifyArtefact<T>(artefact: SignedArtefact<T>): VerificationResu
 
   // Re-derive signature
   const expectedSignature = hmacSha256Hex(keyRaw, envelope.contentHash);
-  const signatureMatches = expectedSignature === envelope.signature;
+  const sigA = Buffer.from(expectedSignature, 'utf8');
+  const sigB = Buffer.from(envelope.signature, 'utf8');
+  const signatureMatches = sigA.length === sigB.length && timingSafeEqual(sigA, sigB);
   if (!signatureMatches) errors.push(`Signature mismatch — envelope may have been tampered`);
 
   return {

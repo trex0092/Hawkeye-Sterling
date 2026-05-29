@@ -11,7 +11,7 @@ describe('audit chain — append + verify', () => {
     expect(v.ok).toBe(true);
     const entries = c.list();
     expect(entries).toHaveLength(3);
-    expect(entries[0]!.prevHash).toMatch(/^0{8}$/);
+    expect(entries[0]!.prevHash).toMatch(/^0{64}$/);
     expect(entries[1]!.prevHash).toBe(entries[0]!.entryHash);
     expect(entries[2]!.prevHash).toBe(entries[1]!.entryHash);
   });

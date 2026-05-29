@@ -28,8 +28,11 @@ export async function POST(req: Request) {
   if (!userId || !newPassword) {
     return NextResponse.json({ ok: false, error: "userId and newPassword are required" }, { status: 400 });
   }
-  if (newPassword.length < 8) {
-    return NextResponse.json({ ok: false, error: "Password must be at least 8 characters" }, { status: 400 });
+  if (newPassword.trim().length < 8) {
+    return NextResponse.json({ ok: false, error: "Password must be at least 8 non-whitespace characters" }, { status: 400 });
+  }
+  if (newPassword.length > 1024) {
+    return NextResponse.json({ ok: false, error: "Password too long" }, { status: 400 });
   }
   if (newPassword.length > 1024) {
     return NextResponse.json({ ok: false, error: "Password too long" }, { status: 400 });
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
 
     const target = users[idx]!;
     const targetPower = ROLE_POWER[target.role] ?? 0;
-    if (targetPower > callerPower) { privilegeViolation = true; return; }
+    if (targetPower >= callerPower && target.id !== session.userId) { privilegeViolation = true; return; }
 
     const salt = generateSalt();
     const hash = hashPassword(newPassword, salt);

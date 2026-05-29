@@ -3,6 +3,37 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { EsgRiskResult, EsgRating, MlRiskLevel } from "@/app/api/esg-risk/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// History helpers (localStorage)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HISTORY_KEY = "hawkeye.esg.history";
+
+interface HistoryEntry {
+  entity: string;
+  score: number;
+  rating: EsgRating;
+  mlRisk: MlRiskLevel;
+  ratedAt: string;
+}
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+  } catch { return []; }
+}
+
+function saveHistory(entries: HistoryEntry[]): void {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 20))); } catch { /* noop */ }
+}
+
+function appendHistory(entry: HistoryEntry): void {
+  const existing = loadHistory();
+  saveHistory([entry, ...existing]);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -135,6 +166,197 @@ function DimensionCard({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sector benchmark bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SectorBenchmarkBar({
+  entityScore,
+  sectorAvg,
+  entityVsAvg,
+  percentile,
+}: {
+  entityScore: number;
+  sectorAvg: number;
+  entityVsAvg: string;
+  percentile: number;
+}) {
+  const compColor = entityVsAvg === "above" ? "text-green" : entityVsAvg === "below" ? "text-red" : "text-amber";
+  const compLabel = entityVsAvg === "above" ? "Above sector average" : entityVsAvg === "below" ? "Below sector average" : "At sector average";
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-16">📊</span>
+        <h3 className="text-13 font-semibold text-ink-0">Sector Benchmark</h3>
+        <span className={`ml-auto text-11 font-semibold ${compColor}`}>{compLabel} · {percentile}th percentile</span>
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <span className="text-10 text-ink-3 w-24 shrink-0">This entity</span>
+          <div className="flex-1 h-2.5 bg-bg-2 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${scoreColor(entityScore)}`} style={{ width: `${entityScore}%` }} />
+          </div>
+          <span className={`text-11 font-mono font-semibold w-8 text-right ${scoreTextColor(entityScore)}`}>{entityScore}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-10 text-ink-3 w-24 shrink-0">Sector avg</span>
+          <div className="flex-1 h-2.5 bg-bg-2 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-ink-3" style={{ width: `${sectorAvg}%` }} />
+          </div>
+          <span className="text-11 font-mono font-semibold w-8 text-right text-ink-3">{sectorAvg}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATF typology bridge
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FatfTypologyBridge({ typologies }: { typologies: EsgRiskResult["fatfTypologies"] }) {
+  if (!typologies.length) return null;
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-16">⚖️</span>
+        <h3 className="text-13 font-semibold text-ink-0">FATF Typology Bridge</h3>
+        <span className="text-11 text-ink-3">ESG failures mapped to ML predicate offences</span>
+      </div>
+      <div className="space-y-3">
+        {typologies.map((t, i) => (
+          <div key={i} className="flex gap-3 items-start border-b border-hair last:border-b-0 pb-3 last:pb-0">
+            <span className="text-amber font-mono text-10 shrink-0 pt-0.5">{t.fatfRef}</span>
+            <div>
+              <div className="text-12 font-semibold text-ink-0 mb-0.5">{t.typology}</div>
+              <div className="text-11 text-ink-2">{t.recommendation}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UN SDG violations
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SDG_COLORS: Record<number, string> = {
+  1: "bg-red/15 text-red", 2: "bg-amber/15 text-amber", 3: "bg-green/15 text-green",
+  4: "bg-red/15 text-red", 5: "bg-orange/15 text-orange", 6: "bg-blue/15 text-blue",
+  7: "bg-amber/15 text-amber", 8: "bg-red/15 text-red", 9: "bg-orange/15 text-orange",
+  10: "bg-red/15 text-red", 11: "bg-amber/15 text-amber", 12: "bg-amber/15 text-amber",
+  13: "bg-green/15 text-green", 14: "bg-blue/15 text-blue", 15: "bg-green/15 text-green",
+  16: "bg-blue/15 text-blue", 17: "bg-blue/15 text-blue",
+};
+
+function SdgViolationsPanel({ violations }: { violations: EsgRiskResult["sdgViolations"] }) {
+  if (!violations.length) return null;
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-16">🌐</span>
+        <h3 className="text-13 font-semibold text-ink-0">UN SDG Violations</h3>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {violations.map((v, i) => (
+          <div key={i} className={`rounded-lg px-3 py-2 ${SDG_COLORS[v.sdgNumber] ?? "bg-bg-2 text-ink-2"}`}>
+            <div className="text-11 font-bold">SDG {v.sdgNumber}</div>
+            <div className="text-10 font-semibold">{v.sdgName}</div>
+            <div className="text-9 mt-0.5 opacity-80">{v.concern}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Supply chain propagation
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SC_RISK_CLS: Record<string, string> = {
+  low: "bg-green/10 text-green border-green/20",
+  medium: "bg-amber/10 text-amber border-amber/20",
+  high: "bg-red/10 text-red border-red/20",
+};
+
+function SupplyChainPanel({ risks }: { risks: EsgRiskResult["supplyChainRisks"] }) {
+  if (!risks.length) return null;
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-16">🔗</span>
+        <h3 className="text-13 font-semibold text-ink-0">Supply Chain ESG</h3>
+        <span className="text-11 text-ink-3">Upstream risk propagation</span>
+      </div>
+      <div className="space-y-2">
+        {risks.map((r, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <span className={`text-10 font-semibold px-2 py-0.5 rounded border capitalize shrink-0 ${SC_RISK_CLS[r.riskLevel] ?? SC_RISK_CLS.medium}`}>
+              {r.riskLevel}
+            </span>
+            <div>
+              <span className="text-12 font-medium text-ink-0">{r.country}</span>
+              <span className="text-11 text-ink-3 ml-2">{r.concern}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Historical trend
+// ─────────────────────────────────────────────────────────────────────────────
+
+function HistoryPanel({ history }: { history: HistoryEntry[] }) {
+  if (!history.length) return null;
+  const ML_DOT: Record<MlRiskLevel, string> = { low: "bg-green", medium: "bg-amber", high: "bg-red" };
+  return (
+    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-16">📈</span>
+        <h3 className="text-13 font-semibold text-ink-0">Rating History</h3>
+        <span className="text-11 text-ink-3">Last {history.length} assessment{history.length !== 1 ? "s" : ""}</span>
+      </div>
+      <div className="space-y-1.5">
+        {history.map((h, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className={`text-11 font-mono font-bold w-10 ${scoreTextColor(h.score)}`}>{h.score}</span>
+            <div className="flex-1 h-1.5 bg-bg-2 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${scoreColor(h.score)}`} style={{ width: `${h.score}%` }} />
+            </div>
+            <span className={`text-9 font-bold w-8 ${scoreTextColor(h.score)}`}>{h.rating}</span>
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ML_DOT[h.mlRisk]}`} />
+            <span className="text-10 text-ink-2 truncate max-w-28">{h.entity}</span>
+            <span className="text-9 text-ink-3 shrink-0">{new Date(h.ratedAt).toLocaleDateString("en-GB")}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV import parser
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseCsvRow(line: string): string[] {
+  const result: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (const ch of line) {
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === "," && !inQ) { result.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 function AccordionItem({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -216,9 +438,14 @@ export default function EsgRiskPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EsgRiskResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const [csvQueue, setCsvQueue] = useState<string[] | null>(null); // entity names pending batch run
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => { setHistory(loadHistory()); }, []);
 
   const setField = <K extends keyof FormData>(key: K, val: FormData[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -259,7 +486,7 @@ export default function EsgRiskPage() {
       if (!res.ok || isHtml) {
         const detail = isHtml
           ? `Server returned HTML (HTTP ${res.status}) — likely a Netlify 502 / function timeout. Please retry; if it persists, set ANTHROPIC_API_KEY in the deployment.`
-          : raw.slice(0, 240) || `HTTP ${res.status}`;
+          : raw.slice(0, 240) || apiErrorMessage(res.status, "ESG scorer");
         setError(`ESG scorer unavailable: ${detail}`);
         return;
       }
@@ -267,11 +494,13 @@ export default function EsgRiskPage() {
       try { data = JSON.parse(raw) as EsgRiskResult; }
       catch { setError("ESG scorer returned a malformed response. Please retry."); return; }
       setResult(data);
+      appendHistory({ entity: form.entity.trim(), score: data.overallEsgScore, rating: data.esgRating, mlRisk: data.mlRiskOverlay.overallMlRisk, ratedAt: new Date().toISOString() });
+      setHistory(loadHistory());
     } catch (e) {
       const isTimeout = e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError");
       if (mountedRef.current) setError(isTimeout
         ? "ESG scorer timed out after 60s — please retry."
-        : `Request failed: ${e instanceof Error ? e.message : String(e)}`);
+        : caughtErrorMessage(e, "Request failed — please retry"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -291,8 +520,39 @@ export default function EsgRiskPage() {
         intro="AI-powered ESG scoring with money laundering risk overlay — maps environmental, social, and governance failures to financial crime exposure under FATF, UAE FDL, and international ESG frameworks."
       />
 
+      {/* CSV import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={(e) => {
+          setCsvError(null);
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const text = ev.target?.result as string;
+            const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+            if (!lines.length) { setCsvError("CSV file is empty."); return; }
+            // Expect header row: entityName,sector,jurisdiction,...
+            const header = parseCsvRow(lines[0]!.toLowerCase());
+            const nameIdx = header.indexOf("entityname") !== -1 ? header.indexOf("entityname") : header.indexOf("entity");
+            if (nameIdx === -1) { setCsvError("CSV must have an 'entityName' column."); return; }
+            const names = lines.slice(1).map((l) => parseCsvRow(l)[nameIdx]?.trim()).filter(Boolean) as string[];
+            if (!names.length) { setCsvError("No entity rows found in CSV."); return; }
+            setCsvQueue(names);
+            // Pre-fill first entity from CSV
+            setField("entity", names[0]!);
+          };
+          reader.readAsText(file);
+          // Reset so same file can be re-imported
+          e.target.value = "";
+        }}
+      />
+
       {/* Quick-action buttons */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <button
           type="button"
           onClick={() => {
@@ -328,14 +588,15 @@ export default function EsgRiskPage() {
               const data = await res.json().catch(() => ({})) as { answer?: string; message?: string; error?: string };
               if (!res.ok) {
                 if (!mountedRef.current) return;
-                throw new Error(data.error ?? `AI suggest failed (HTTP ${res.status}) — please retry`);
+                throw new Error(data.error ?? apiErrorMessage(res.status, "AI suggest"));
               }
               if (!mountedRef.current) return;
               const text = data.answer ?? data.message ?? "";
               const jsonMatch = text.match(/\{[\s\S]*\}/);
               if (!jsonMatch) return;
               const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | number>;
-              if (parsed.entity) setField("entity", String(parsed.entity));
+              const entityVal = parsed.entityName ?? parsed.entity;
+              if (entityVal) setField("entity", String(entityVal));
               if (parsed.sector) setField("sector", String(parsed.sector).toLowerCase());
               if (parsed.jurisdiction) setField("jurisdiction", String(parsed.jurisdiction).toUpperCase());
               if (parsed.employeeCount) setField("employeeCount", String(parsed.employeeCount));
@@ -343,7 +604,7 @@ export default function EsgRiskPage() {
               if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
               if (parsed.notes) setField("notes", String(parsed.notes));
             } catch (err) {
-              if (mountedRef.current) setError(err instanceof Error ? err.message : "AI suggest failed — please retry");
+              if (mountedRef.current) setError(caughtErrorMessage(err, "AI suggest failed — please retry"));
             }
           }}
           disabled={loading}
@@ -352,7 +613,38 @@ export default function EsgRiskPage() {
         >
           ✨ AI
         </button>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="px-4 py-2 rounded-lg border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 whitespace-nowrap transition-colors"
+          title="Import entities from CSV (entityName column required)"
+        >
+          📥 CSV Import
+        </button>
+        {result && (
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="px-4 py-2 rounded-lg border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 whitespace-nowrap transition-colors"
+            title="Export ESG report to PDF via browser print"
+          >
+            📄 Export PDF
+          </button>
+        )}
       </div>
+
+      {/* CSV queue banner */}
+      {csvQueue && csvQueue.length > 0 && (
+        <div className="mb-4 px-4 py-2.5 bg-brand/10 border border-brand/30 rounded-lg flex items-center justify-between gap-3">
+          <span className="text-12 text-ink-0">
+            CSV imported · <strong>{csvQueue.length}</strong> entit{csvQueue.length === 1 ? "y" : "ies"} queued — run score for each in sequence
+          </span>
+          <button type="button" onClick={() => setCsvQueue(null)} className="text-10 text-ink-3 hover:text-ink-0">✕</button>
+        </div>
+      )}
+      {csvError && (
+        <div className="mb-4 px-3 py-2 bg-red/10 border border-red/20 rounded text-12 text-red">{csvError}</div>
+      )}
 
       {/* Input Form */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
@@ -605,6 +897,25 @@ export default function EsgRiskPage() {
             </div>
           )}
 
+          {/* Sector Benchmark */}
+          {result.sectorBenchmark && (
+            <SectorBenchmarkBar
+              entityScore={result.overallEsgScore}
+              sectorAvg={result.sectorBenchmark.sectorAvgScore}
+              entityVsAvg={result.sectorBenchmark.entityVsAvg}
+              percentile={result.sectorBenchmark.percentile}
+            />
+          )}
+
+          {/* FATF Typology Bridge */}
+          <FatfTypologyBridge typologies={result.fatfTypologies ?? []} />
+
+          {/* UN SDG Violations */}
+          <SdgViolationsPanel violations={result.sdgViolations ?? []} />
+
+          {/* Supply Chain ESG */}
+          <SupplyChainPanel risks={result.supplyChainRisks ?? []} />
+
           {/* Recommendation */}
           <div className="bg-amber/5 border border-amber/20 rounded-lg p-5">
             <div className="text-11 font-semibold text-amber mb-1">Recommendation</div>
@@ -618,6 +929,9 @@ export default function EsgRiskPage() {
           </div>
         </div>
       )}
+      {/* Rating history (session + localStorage) */}
+      <HistoryPanel history={history} />
+
     </ModuleLayout>
   );
 }

@@ -10,6 +10,7 @@
 // bias-signal detection over time.
 
 import { useState, useRef, useEffect } from "react";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 const DISPOSITION_CODES = [
   { code: "D00_no_match", label: "D00 — No match" },
@@ -93,8 +94,9 @@ export function DispositionButton({
       };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
-        setErrorText(data.error ?? `HTTP ${res.status}`);
-        onSubmit?.({ ok: false, error: data.error ?? `HTTP ${res.status}` });
+        const msg = data.error ?? apiErrorMessage(res.status, "Disposition");
+        setErrorText(msg);
+        onSubmit?.({ ok: false, error: msg });
         return;
       }
       setDoneText(
@@ -108,7 +110,7 @@ export function DispositionButton({
       });
       setTimeout(() => { if (mountedRef.current) setOpen(false); }, 1500);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = caughtErrorMessage(err);
       if (mountedRef.current) setErrorText(msg);
       onSubmit?.({ ok: false, error: msg });
     } finally {
@@ -122,7 +124,7 @@ export function DispositionButton({
         type="button"
         disabled
         title="MLRO sign-off required — only users with the MLRO role may record dispositions"
-        className="rounded-md border border-zinc-300 bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-400 cursor-not-allowed"
+        className="rounded-md border border-hair-2 bg-bg-panel px-3 py-1.5 text-xs font-medium text-ink-3 cursor-not-allowed"
       >
         MLRO sign-off required
       </button>
@@ -142,31 +144,31 @@ export function DispositionButton({
   }
 
   return (
-    <div className="rounded-md border border-zinc-300 bg-white p-3 shadow-sm">
+    <div className="rounded-md border border-hair-2 bg-bg-panel p-3 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">MLRO disposition</div>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-800"
+          className="text-xs text-ink-3 hover:text-ink-0"
           disabled={busy}
         >
           ✕
         </button>
       </div>
 
-      <div className="mt-2 text-[11px] text-zinc-500">
+      <div className="mt-2 text-[11px] text-ink-3">
         Auto-proposed:{" "}
         <span className="font-mono">{autoProposed}</span> · confidence{" "}
         <span className="tabular-nums">{(autoConfidence * 100).toFixed(0)}%</span>
       </div>
 
       <label className="mt-2 block text-xs">
-        <span className="text-zinc-700">MLRO decision</span>
+        <span className="text-ink-2">MLRO decision</span>
         <select
           value={chosen}
           onChange={(e) => setChosen(e.target.value as DispositionCode)}
-          className="mt-1 w-full rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
+          className="mt-1 w-full rounded border border-hair-2 bg-bg-base px-2 py-1 text-xs text-ink-0"
           disabled={busy}
         >
           {DISPOSITION_CODES.map((d) => (
@@ -179,13 +181,13 @@ export function DispositionButton({
 
       {overridden && (
         <label className="mt-2 block text-xs">
-          <span className="text-zinc-700">Override reason</span>
+          <span className="text-ink-2">Override reason</span>
           <textarea
             value={overrideReason}
             onChange={(e) => setOverrideReason(e.target.value)}
             placeholder="One-line rationale (charter P9 — explicit calibration trail)"
             rows={2}
-            className="mt-1 w-full rounded border border-zinc-300 bg-white px-2 py-1 text-xs"
+            className="mt-1 w-full rounded border border-hair-2 bg-bg-base px-2 py-1 text-xs text-ink-0"
             disabled={busy}
           />
         </label>
@@ -200,8 +202,8 @@ export function DispositionButton({
         >
           {busy ? "Recording…" : overridden ? "Confirm override" : "Confirm"}
         </button>
-        {errorText && <span className="text-xs text-red-600">{errorText}</span>}
-        {doneText && <span className="text-xs text-emerald-600">{doneText}</span>}
+        {errorText && <span className="text-xs text-red-400">{errorText}</span>}
+        {doneText && <span className="text-xs text-emerald-400">{doneText}</span>}
       </div>
     </div>
   );

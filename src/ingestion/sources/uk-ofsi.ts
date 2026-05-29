@@ -24,7 +24,12 @@ export const ukOfsiAdapter: SourceAdapter = {
     const rawChecksum = await sha256Hex(csv);
     const fetchedAt = Date.now();
     const rows = parseCsv(csv);
-    if (rows.length === 0) return { entities: [], rawChecksum };
+    if (rows.length === 0) {
+      throw new Error(
+        `[uk_ofsi] CSV downloaded from ${SOURCE_URL} is empty — ` +
+        `OFSI may have changed the file location or the download failed.`,
+      );
+    }
     // 2022format OFSI CSV puts the header on row 2 (row 1 is a "Last updated"
     // metadata line). Detect header by looking for recognised column names
     // in the first 3 rows.
@@ -46,10 +51,11 @@ export const ukOfsiAdapter: SourceAdapter = {
     const iDob = idx('dob');
     const iNat = idx('nationality');
     if (iName6 < 0 && iName1 < 0) {
-      // Couldn't find any name column — emit empty rather than garbage.
-      // The ingest-error log surfaces the cause via the parser's
-      // upstream signal (headers don't include "Name 6" / "Name 1").
-      return { entities: [], rawChecksum };
+      throw new Error(
+        `[uk_ofsi] Could not find any name column ("Name 6" or "Name 1") in the CSV ` +
+        `(header row ${headerRow}, detected: ${header.slice(0, 8).join(', ')}) — ` +
+        `the OFSI schema may have changed. Check ${SOURCE_URL}.`,
+      );
     }
     const entities: NormalisedEntity[] = [];
     const byGroup = new Map<string, NormalisedEntity>();

@@ -35,10 +35,13 @@
 //   }
 
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson, del } from "@/lib/server/store";
+import { assertSafeWebhookUrl } from "@/lib/server/webhook";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,8 +86,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   catch { return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400, headers: gate.headers }); }
 
   const url = body.url?.trim();
-  if (!url || !url.startsWith("https://")) {
-    return NextResponse.json({ ok: false, error: "url must be a valid HTTPS endpoint" }, { status: 400, headers: gate.headers });
+  if (!url) {
+    return NextResponse.json({ ok: false, error: "url is required" }, { status: 400, headers: gate.headers });
+  }
+  try {
+    assertSafeWebhookUrl(url);
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "invalid url" }, { status: 400, headers: gate.headers });
   }
 
   const events = Array.isArray(body.events) ? body.events.filter((e): e is string => ALLOWED_EVENTS.has(e)) : ["all"];
@@ -92,7 +100,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: `events must include at least one of: ${[...ALLOWED_EVENTS].join(", ")}` }, { status: 400, headers: gate.headers });
   }
 
-  const id = `wh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `wh-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const reg: WebhookRegistration = {
     id,
     url,
@@ -146,10 +154,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, error: "id query parameter required" }, { status: 400, headers: gate.headers });
+  const SAFE_ID_RE = /^[a-zA-Z0-9_\-.]+$/;
+  if (id.length > 128 || !SAFE_ID_RE.test(id)) {
+    return NextResponse.json({ ok: false, error: "id must be alphanumeric/._- and ≤128 chars" }, { status: 400, headers: gate.headers });
+  }
 
   await del(webhookKey(tenant, id));
   const idx = (await getJson<string[]>(webhookIndexKey(tenant))) ?? [];
   await setJson(webhookIndexKey(tenant), idx.filter((i) => i !== id));
+
+  void writeAuditChainEntry(
+    { event: "webhook.deleted", actor: gate.keyId, meta: { id } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({ ok: true, id, deleted: true }, { headers: gate.headers });
 }

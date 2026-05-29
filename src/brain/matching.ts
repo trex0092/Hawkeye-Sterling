@@ -66,7 +66,8 @@ export type MatchingMethod =
   | 'trigram'
   | 'partial_token_set'
   | 'fuzzball_token_sort'
-  | 'fuzzball_partial';
+  | 'fuzzball_partial'
+  | 'abbreviated';
 
 export interface MatchScore {
   method: MatchingMethod;
@@ -92,6 +93,9 @@ export function matchExact(a: string, b: string): MatchScore {
 }
 
 // ---------- Levenshtein
+// Damerau-Levenshtein (Optimal String Alignment) — extends standard Levenshtein
+// with transposition of adjacent characters. Critical for AML: OCR errors and
+// manual-entry typos frequently swap adjacent letters ("Muhammda" → "Muhammad").
 export function levenshteinDistance(a: string, b: string): number {
   const s = normalise(a);
   const t = normalise(b);
@@ -99,22 +103,28 @@ export function levenshteinDistance(a: string, b: string): number {
   const n = t.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  const prev = new Array<number>(n + 1);
-  for (let j = 0; j <= n; j++) prev[j] = j;
-  const curr = new Array<number>(n + 1);
+  // Use a flat (m+1)*(n+1) Int32Array to avoid jagged-array non-null assertions.
+  const w = n + 1;
+  const d = new Int32Array((m + 1) * w);
+  for (let i = 0; i <= m; i++) d[i * w] = i;
+  for (let j = 0; j <= n; j++) d[j] = j;
+  // All cells are set before they are read; cast to number is safe.
+  const cell = (idx: number): number => d[idx] as number;
   for (let i = 1; i <= m; i++) {
-    curr[0] = i;
     for (let j = 1; j <= n; j++) {
-      const cost = s.charCodeAt(i - 1) === t.charCodeAt(j - 1) ? 0 : 1;
-      curr[j] = Math.min(
-        (curr[j - 1] as number) + 1,
-        (prev[j] as number) + 1,
-        (prev[j - 1] as number) + cost,
+      const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+      d[i * w + j] = Math.min(
+        cell((i - 1) * w + j) + 1,            // deletion
+        cell(i * w + (j - 1)) + 1,            // insertion
+        cell((i - 1) * w + (j - 1)) + cost,   // substitution
       );
+      // Transposition of two adjacent characters (OSA extension).
+      if (i > 1 && j > 1 && s[i - 1] === t[j - 2] && s[i - 2] === t[j - 1]) {
+        d[i * w + j] = Math.min(cell(i * w + j), cell((i - 2) * w + (j - 2)) + cost);
+      }
     }
-    for (let j = 0; j <= n; j++) prev[j] = curr[j] as number;
   }
-  return prev[n] as number;
+  return cell(m * w + n);
 }
 
 export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchScore {
@@ -411,6 +421,34 @@ export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): Ma
   return { method: 'partial_token_set', score, threshold, pass: score >= threshold };
 }
 
+// ---------- abbreviated name matching
+// Handles initial-based abbreviations ("M. Hassan" ↔ "Mohammed Hassan",
+// "J.K. Rowling" ↔ "Joanne Kathleen Rowling"). A single-character token is
+// treated as an initial and matches the first letter of any token in the
+// counterpart name. Multi-character tokens require exact token equality.
+export function matchAbbreviated(a: string, b: string, threshold = 0.85): MatchScore {
+  const ta = normalise(a).split(' ').filter(Boolean);
+  const tb = normalise(b).split(' ').filter(Boolean);
+  if (ta.length === 0 || tb.length === 0) {
+    return { method: 'abbreviated', score: 0, threshold, pass: false };
+  }
+  // Only fire when one side is meaningfully shorter and contains at least one initial.
+  const [abbr, full] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  const hasInitial = abbr.some((tok) => tok.length === 1);
+  // If neither side has single-letter tokens the partial-token-set matcher
+  // is already sufficient; skip to avoid spurious matches.
+  if (!hasInitial) {
+    return { method: 'abbreviated', score: 0, threshold, pass: false };
+  }
+  let matched = 0;
+  for (const tok of abbr) {
+    if (full.includes(tok)) { matched++; continue; }
+    if (tok.length === 1 && full.some((ft) => ft.charAt(0) === tok)) { matched++; }
+  }
+  const score = matched / abbr.length;
+  return { method: 'abbreviated', score, threshold, pass: score >= threshold };
+}
+
 // ---------- token-set (order-insensitive)
 export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore {
   const tokensA = new Set(normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
@@ -559,10 +597,14 @@ const ROMAN_FAMILIES: Record<string, string> = {
   muhammed: 'muhammad', muhamad: 'muhammad', mouhamed: 'muhammad',
   // Ahmad/Ahmed variants
   ahmed: 'ahmad', ahmet: 'ahmad', ahmad: 'ahmad',
+  // Arabic consonant-skeleton transliterations (vowel marks stripped)
+  mhmd: 'muhammad', ahmd: 'ahmad', hsn: 'hassan',
+  // Cyrillic й → и + combining breve → и → extra 'i'; collapse double-i endings
+  dmitrii: 'dmitri',
   // Hussein/Hassan variants
   husain: 'hussein', husayn: 'hussein', hussain: 'hussein',
   hossein: 'hussein', hosein: 'hussein',
-  hassan: 'hasan', hasson: 'hasan', hassen: 'hasan',
+  hasan: 'hassan', hasson: 'hassan', hassen: 'hassan',
   // Yusuf variants
   yousef: 'yusuf', youssef: 'yusuf', yousuf: 'yusuf',
   yusoff: 'yusuf', yosef: 'yusuf', yusup: 'yusuf',
@@ -630,16 +672,42 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Faisal variants
   faysal: 'faisal', fayssal: 'faisal', feissal: 'faisal',
   // Zaid/Zayd variants
-  zayd: 'zaid', zayed: 'zaid',
+  zayd: 'zayed', zaid: 'zayed',
 };
 const MATCHER_PARTICLES: Set<string> = new Set([
   // Arabic particles
   'al', 'el', 'bin', 'ben', 'bint', 'abu', 'ibn', 'bou', 'bo',
   // North/West African patronymics
   'ould', 'wuld', 'ag', 'ait',
+  // South-Asian connective particle (Urdu/Hindi: "ul" in "Saif ul Islam")
+  'ul',
   // European particles (relevant for EU sanctions lists)
   'de', 'van', 'von', 'der', 'den', 'la', 'le', 'du', 'di',
 ]);
+
+// Characters that do not decompose via NFD Unicode normalisation, mapped
+// to their closest ASCII / multi-char Latin equivalent. Covers Turkish (ı),
+// German (ß), Polish/Czech (ł), Nordic (æ, ø, þ, ð), and others.
+const SPECIAL_CHAR_MAP: Record<string, string> = {
+  'ı': 'i', 'ß': 'ss', 'ł': 'l', 'Ł': 'l',
+  'æ': 'ae', 'Æ': 'ae', 'ø': 'o', 'Ø': 'o',
+  'þ': 'th', 'Þ': 'th', 'ð': 'd', 'Ð': 'd',
+  'đ': 'd', 'Đ': 'd', 'ħ': 'h', 'Ħ': 'h',
+  'ŋ': 'n', 'Ŋ': 'n', 'œ': 'oe', 'Œ': 'oe',
+  'ĸ': 'k', 'ŉ': 'n', 'ĳ': 'ij', 'Ĳ': 'ij',
+};
+
+// Arabic harakat (vowel diacritics) and orthographic marks that survive NFD
+// decomposition. Removing them before letter-mapping prevents them becoming
+// spurious spaces and breaking "مُحَمَّد" → "muhammad" (was "m h m d").
+const ARABIC_DIACRITICS_RE = /[ؐ-ًؚ-ٟـ]/gu;
+
+// Lam-alef ligatures (Arabic Presentation Forms-A) → expand to component letters
+// so that ARABIC_LETTER_MAP can handle each character independently.
+const LAM_ALEF_MAP: Record<string, string> = {
+  'ﻵ': 'لأ', 'ﻶ': 'لأ', 'ﻷ': 'لإ', 'ﻸ': 'لإ',
+  'ﻹ': 'لا', 'ﻺ': 'لا', 'ﻻ': 'لا', 'ﻼ': 'لا',
+};
 
 // Normalise a name for comparison: lowercase, strip diacritics,
 // transliterate Arabic/Cyrillic to Latin, collapse Arabic-name family
@@ -648,30 +716,39 @@ const MATCHER_PARTICLES: Set<string> = new Set([
 export function normaliseForMatch(input: string): string {
   if (!input) return '';
   let s = input.toLowerCase();
+  // Expand lam-alef ligatures (Arabic Presentation Forms-A) so each component
+  // letter can be handled by ARABIC_LETTER_MAP individually.
+  s = s.replace(/./gu, (ch) => LAM_ALEF_MAP[ch] ?? ch);
   // Strip Arabic tashkeel (harakat diacritics), shadda, sukun, tatweel/kashida,
-  // and Arabic extended signs — all are invisible in handwritten/printed names
-  // but cause character-level mismatch when one source includes them and another
-  // doesn't (common when mixing OFAC/UN data with UAE EOCN/LTL data).
-  s = s.replace(/[ؐ-ًؚ-ٰٟـ]/g, '');
-  // Normalize alef variants (alef with hamza above/below, alef with madda) → bare alef.
-  // Phonetically distinct in grammar but AML lists are inconsistent about which to use.
-  s = s.replace(/[آأإ]/g, 'ا'); // أ إ آ → ا
-  // Normalize final-ya / alef maqsura → ya (ى → ي)
+  // and Arabic extended signs.
+  s = s.replace(ARABIC_DIACRITICS_RE, '');
+  // Normalize alef variants (alef with hamza above/below, alef with madda).
+  s = s.replace(/[آأإ]/g, 'ا');
+  // Normalize final-ya / alef maqsura.
   s = s.replace(/ى/g, 'ي');
-  // Normalize taa marbutah → ha (ة → ه) — relevant for female name suffixes
+  // Normalize taa marbutah.
   s = s.replace(/ة/g, 'ه');
-  // NFD + strip Latin combining diacritics (accents, umlauts, etc.)
-  // Also map Turkish dotless-i (ı U+0131) which NFD does not decompose.
+  // NFD + strip Latin combining diacritics.
   s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-  s = s.replace(/ı/g, 'i').replace(/İ/g, 'i'); // Turkish: ı→i, İ→i
-  // Transliterate Arabic/Cyrillic to Latin
+  // Map chars that NFD does not decompose (ı, ß, ł, ø, etc.) to ASCII equivalents.
+  s = s.replace(/./gu, (ch) => SPECIAL_CHAR_MAP[ch] ?? ch);
+  // Transliterate Arabic/Cyrillic to Latin.
   s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
+
+  // 6. Map Cyrillic letters.
   s = s.replace(/./gu, (ch) => CYRILLIC_LETTER_MAP[ch] ?? ch);
+
+  // 7. Strip everything non-alphabetic, collapse spaces.
   s = s.replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // 8. Drop particles, apply family-spelling normalisation.
+  // Guard: if every token is a particle (e.g. a single lam-alef ligature "la"),
+  // keep all tokens rather than returning an empty string.
   const tokens = s.split(' ').filter(Boolean);
+  const nonParticle = tokens.filter((t) => !MATCHER_PARTICLES.has(t));
+  const base = nonParticle.length > 0 ? nonParticle : tokens;
   const out: string[] = [];
-  for (const t of tokens) {
-    if (MATCHER_PARTICLES.has(t)) continue;
+  for (const t of base) {
     out.push(ROMAN_FAMILIES[t] ?? t);
   }
   return out.join(' ').trim();
@@ -694,6 +771,7 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchTokenSortRatio(subject, candidate),
     matchPartialRatio(subject, candidate),
     matchInitials(subject, candidate),
+    matchAbbreviated(subject, candidate),
   ];
 
   const subjectNorm = normaliseForMatch(subject);

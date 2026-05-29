@@ -37,6 +37,60 @@ async function withDeadline<T>(ms: number, label: string, fn: () => Promise<T>, 
   }
 }
 
+// ─── Intelligence aggregator ─────────────────────────────────────────────────
+
+interface CasesIntelligence {
+  riskDistribution: Record<string, number>;
+  topTypologies: Array<{ typology: string; count: number }>;
+  networkComplexityAvg: number;
+  activeEvasionIndicators: string[];
+  totalActive: number;
+  totalHighRisk: number;
+}
+
+function buildCasesIntelligence(cases: import("@/lib/types").CaseRecord[]): CasesIntelligence {
+  const riskDistribution: Record<string, number> = {};
+  const typologyCounts: Record<string, number> = {};
+  const evasionKeywords = ["layering", "structuring", "smurfing", "shell", "nominee", "offshore", "round-trip", "phantom"];
+  const evasionSet = new Set<string>();
+  let complexitySum = 0;
+  let totalHighRisk = 0;
+
+  for (const c of cases) {
+    const status = c.status ?? "active";
+    riskDistribution[status] = (riskDistribution[status] ?? 0) + 1;
+
+    if (c.badge) typologyCounts[c.badge] = (typologyCounts[c.badge] ?? 0) + 1;
+
+    const evidenceCount = c.evidence?.length ?? 0;
+    const categoryCount = new Set(c.evidence?.map((e) => e.category) ?? []).size;
+    complexitySum += Math.min(evidenceCount * 5 + categoryCount * 10, 100);
+
+    // Use badge and statusLabel as severity proxy — reported/escalated = high risk
+    if (c.status === "reported" || c.statusLabel?.toLowerCase().includes("critical")) totalHighRisk++;
+
+    const allText = [c.meta ?? "", c.statusDetail ?? "", ...(c.evidence?.map((e) => [e.title, e.meta, e.detail].join(" ")) ?? [])]
+      .join(" ").toLowerCase();
+    for (const kw of evasionKeywords) {
+      if (allText.includes(kw)) evasionSet.add(kw);
+    }
+  }
+
+  const topTypologies = Object.entries(typologyCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([typology, count]) => ({ typology, count }));
+
+  return {
+    riskDistribution,
+    topTypologies,
+    networkComplexityAvg: cases.length > 0 ? Math.round(complexitySum / cases.length) : 0,
+    activeEvasionIndicators: [...evasionSet],
+    totalActive: riskDistribution["active"] ?? 0,
+    totalHighRisk,
+  };
+}
+
 // GET  /api/cases
 //   → { cases: CaseRecord[] } from the server vault. Empty array on a
 //     fresh deployment (no migration; the client's localStorage is the
@@ -62,8 +116,9 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const authHeader = req.headers.get("authorization") ?? "";
   const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (rawToken && !rawToken.startsWith("hks_live_")) {
-    const regClaims = verifyRegulatorToken(rawToken);
-    if (regClaims) {
+    const regResult = await verifyRegulatorToken(rawToken);
+    if (regResult.ok) {
+      const regClaims = regResult.claims;
       // Determine tenant from scope (first tenant: entry, or "portal" default).
       const tenantEntry = regClaims.scope.find((s) => s.startsWith("tenant:"));
       const tenant = tenantEntry ? tenantEntry.slice(7) : "portal";
@@ -131,8 +186,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const totalCount = cases.length;
   const page = cases.slice(offset, offset + limit);
 
+  // Intelligence summary — lightweight aggregation for dashboard widgets
+  const intelligence = buildCasesIntelligence(cases);
+
   return NextResponse.json(
-    { ok: true, tenant, cases: page, totalCount, limit, offset },
+    { ok: true, tenant, cases: page, totalCount, limit, offset, intelligence },
     { headers: gate.headers },
   );
 }
@@ -179,6 +237,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
     c.id && CASE_ID_RE.test(c.id) ? c : { ...c, id: generateCaseId() },
   );
   const merged = await mergeCases(tenant, stamped);
+
+  void writeAuditChainEntry(
+    { event: "cases.bulk_saved", actor: gate.keyId, meta: { count: merged.length } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json(
     { ok: true, tenant, cases: merged },
     { headers: gate.headers },

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       // 4500 tokens covers up to 5 country profiles concisely; 6000 routinely
@@ -101,9 +101,10 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
     const results = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as CountryRiskResult[];
     // Normalize arrays in each country result — LLM may return null instead of [].
     for (const r of Array.isArray(results) ? results : []) {
-      if (!Array.isArray(r.keyRisks)) r.keyRisks = [];
-      if (!Array.isArray(r.recentDevelopments)) r.recentDevelopments = [];
-      if (!Array.isArray(r.regulatoryObligations)) r.regulatoryObligations = [];
+      const rr = r as unknown as Record<string, unknown>;
+      if (!Array.isArray(rr["keyRisks"])) rr["keyRisks"] = [];
+      if (!Array.isArray(rr["recentDevelopments"])) rr["recentDevelopments"] = [];
+      if (!Array.isArray(rr["regulatoryObligations"])) rr["regulatoryObligations"] = [];
     }
     return NextResponse.json({
       ok: true,
@@ -124,25 +125,15 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
 function buildFallback(country: string): CountryRiskResult {
   return {
     ok: true,
-    country,
-    overallRisk: "medium",
+    countryCode: country,
+    countryName: country,
     riskScore: 50,
-    dimensions: {
-      amlRisk: 50,
-      baselScore: 50,
-      cpiScore: 50,
-      politicalRisk: 50,
-      sanctionsRisk: 20,
-      tfRisk: 45,
-    },
-    fatfStatus: "non_member",
-    sanctionsProfile: { ofac: false, eu: false, un: false, uk: false, details: [] },
-    keyRisks: ["Risk data unavailable — API key not configured"],
-    recentDevelopments: ["No live data available"],
-    regulatoryObligations: [
-      { obligation: "Enhanced Due Diligence", regulation: "FATF Recommendation 19" },
-    ],
+    riskLevel: "medium",
+    fatfStatus: "compliant",
+    cahraListed: false,
+    activeSanctionsRegimes: [],
+    riskDimensions: { aml: 50, sanctions: 20, tf: 45, corruption: 50, political: 50 },
+    geopoliticalFlags: ["fallback_data"],
     recommendation: "enhanced_dd",
-    summary: `Fallback data for ${country}. Configure ANTHROPIC_API_KEY for live AI-powered analysis.`,
   };
 }

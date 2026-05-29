@@ -1,6 +1,6 @@
 // GET /api/audit-trail
 //
-// Reads the tamper-evident FNV-1a audit chain from Netlify Blobs and
+// Reads the tamper-evident SHA-256 audit chain from Netlify Blobs and
 // returns paginated entries. Written by the audit-chain-probe scheduled
 // function (netlify/functions/audit-chain-probe.mts) which runs hourly
 // and verifies the chain hashes.
@@ -17,6 +17,7 @@
 // Response:
 //   { ok, totalEntries, page, pageSize, entries, tamperMarker? }
 
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { verifyRegulatorToken } from "@/lib/server/regulator-jwt";
@@ -41,17 +42,12 @@ interface TamperMarker {
   totalEntries: number;
 }
 
-function fnv1a(input: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
-}
-
+// SHA-256 chain hash — matches the algorithm used by src/brain/audit-chain.ts.
+// FNV-1a was previously used here but is non-cryptographic (32-bit, trivially
+// collisable). SHA-256 is required for compliance-grade tamper evidence.
 function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
-  return fnv1a(`${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`);
+  const input = `${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`;
+  return createHash("sha256").update(input, "utf8").digest("hex");
 }
 
 interface BlobStoreI {
@@ -127,8 +123,9 @@ async function handleGet(req: Request, responseHeaders: Record<string, string> =
     }
     chain = raw;
   } catch (err) {
+    console.error("[audit-trail] chain read failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `chain read failed: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "audit chain temporarily unavailable" },
       { status: 500, headers: responseHeaders },
     );
   }
@@ -176,10 +173,10 @@ async function handleGet(req: Request, responseHeaders: Record<string, string> =
     pageSize,
     entries: annotated,
     ...(tamperMarker ? { tamperMarker } : {}),
-  }, { headers: responseHeaders });
+  }, { headers: { ...responseHeaders, "x-audit-hasher": "sha256" } });
 }
 
-export const GET = (req: Request) => {
+export const GET = async (req: Request) => {
   // Regulator read-only path: accept Ed25519-signed regulator JWT.
   // A tenant-scoped token grants read access to the audit trail.
   // Scope check: audit trail is tenant-wide; case-only scoped tokens are denied
@@ -187,14 +184,15 @@ export const GET = (req: Request) => {
   const authHeader = req.headers.get("authorization") ?? "";
   const rawToken = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (rawToken && !rawToken.startsWith("hks_live_")) {
-    const regClaims = verifyRegulatorToken(rawToken);
-    if (regClaims) {
+    const regResult = await verifyRegulatorToken(rawToken);
+    if (regResult.ok) {
+      const regClaims = regResult.claims;
       const hasTenantScope = regClaims.scope.some((s) => s.startsWith("tenant:"));
       if (!hasTenantScope) {
-        return Promise.resolve(NextResponse.json(
+        return NextResponse.json(
           { ok: false, error: "scope_denied", hint: "Audit trail requires a tenant-scoped regulator token." },
           { status: 403 },
-        ));
+        );
       }
       // Token valid and has tenant scope — allow read.
       return handleGet(req);

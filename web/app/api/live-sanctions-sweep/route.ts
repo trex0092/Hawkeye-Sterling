@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { loadAllCases } from "@/lib/server/case-vault";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -113,7 +114,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let triage: unknown[] = [];
 
   if (apiKey && filteredMatches.length > 0) {
-    const client = getAnthropicClient(apiKey, 55_000, "live-sanctions-sweep");
+    const client = getAnthropicClient(apiKey, 4_500, "live-sanctions-sweep");
     try {
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
@@ -145,6 +146,11 @@ Triage and recommend actions.`,
       triage = Array.isArray(parsed.triage) ? parsed.triage : [];
     } catch { /* triage is non-blocking */ }
   }
+
+  void writeAuditChainEntry(
+    { event: "live_sanctions_sweep.run", actor: gate.keyId, meta: { designationsScreened: body.designations.length, casesInBase: allCases.length, matchesFound: filteredMatches.length, sweepReason: body.sweepReason ?? "delta_sweep" } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({
     ok: true,

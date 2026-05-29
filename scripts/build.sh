@@ -17,6 +17,19 @@
 #   6. next build          → produces the Next.js 15 SSR bundle
 
 set -euo pipefail
+# Trap any command failure and print its exit code + the failing command so
+# the Netlify build log pinpoints exactly which step returned non-zero.
+trap 'echo ">>> HS-BUILD-FAILED: exit_code=$? line=$LINENO cmd=$BASH_COMMAND"' ERR
+
+# Raise the open-file-descriptor limit. Next.js 16 + webpack opens hundreds
+# of files concurrently during static page generation; Netlify build agents
+# default to 1024 which causes EMFILE failures on repos with 130+ routes.
+# 65535 is the standard Linux per-user ulimit hard limit (RLIMIT_NOFILE_MAX
+# on most distros). Falls back to lower values if the hard limit is stricter
+# (container-constrained environments may lock the hard limit at 4096).
+# experimental.cpus=1 in next.config.mjs further reduces concurrent fd usage.
+ulimit -n 65535 2>/dev/null || ulimit -n 8192 2>/dev/null || ulimit -n 4096 2>/dev/null || true
+echo ">>> HS-ULIMIT: open-files limit = $(ulimit -n)"
 
 step() {
   echo ">>> HS-STEP: $*"
@@ -43,7 +56,7 @@ echo ">>> HS-STEP-3 ok (exit $?)"
 
 step "4 cd web && npm ci"
 cd web
-npm ci --include=dev
+npm ci --include=dev --no-audit --no-fund
 echo ">>> HS-STEP-4 ok (exit $?)"
 
 step "4b patch-als"
@@ -59,10 +72,29 @@ rm -rf .next
 echo ">>> HS-STEP-5 ok (exit $?)"
 
 step "6 next build"
+# --require the preload script before Next.js starts so graceful-fs patches
+# fs.open() before webpack caches any unpatched references. This is needed
+# on Netlify agents and containers where the fd hard limit is ≤ 4096:
+# 604 routes × compiled chunks exhaust the limit during manifest writes.
+PRELOAD_SCRIPT="$(cd .. && pwd)/scripts/preload-graceful-fs.cjs"
+if [ -f "$PRELOAD_SCRIPT" ]; then
+  echo ">>> HS-STEP-6 preloading graceful-fs via $PRELOAD_SCRIPT"
+  GRACEFUL_FS_REQUIRE="--require $PRELOAD_SCRIPT"
+else
+  echo ">>> HS-STEP-6 preload script not found, proceeding without graceful-fs"
+  GRACEFUL_FS_REQUIRE=""
+fi
+# Heap cap kept at 4096 to match netlify.toml. Must stay BELOW the build
+# container's RAM — over-allocating to 8192 made V8 defer GC past the
+# container's memory ceiling, so the kernel OOM-killed `next build` before
+# GC ran, which Netlify reported as the generic "exit code 2". The webpack
+# compile completes in <3 min using well under 4 GB (verified locally under
+# the same ulimit -n 4096 as the Netlify agent), so 4096 is ample and leaves
+# headroom for the OS + webpack workers + @netlify/plugin-nextjs.
 APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \
   NEXT_PUBLIC_COMMIT_SHA="${COMMIT_REF:-}" \
-  npm run build
-echo ">>> HS-STEP-6 ok (exit $?)"
+  NODE_OPTIONS="--max-old-space-size=4096 ${GRACEFUL_FS_REQUIRE}" \
+  npm run build && echo ">>> HS-STEP-6 ok (exit 0)" || { ec=$?; echo ">>> HS-STEP-6 FAILED (exit $ec)"; exit $ec; }
 
 echo ">>> HS-STEP-DONE"

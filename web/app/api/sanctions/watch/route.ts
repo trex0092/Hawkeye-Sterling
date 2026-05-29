@@ -61,14 +61,11 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 }
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  return timingSafeEqual(expBuf, gotBuf);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -110,10 +107,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     ) as { getBlobsStore: typeof getBlobsStore };
     getBlobsStore = blobsMod.getBlobsStore;
   } catch (err) {
+    console.error("[sanctions/watch] ingestion module import failed:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `ingestion module unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion module unavailable — please check deployment build artifacts",
       },
       { status: 503 },
     );
@@ -124,10 +122,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     store = await getBlobsStore();
   } catch (err) {
     // Netlify Blobs not bound on this site (NETLIFY_SITE_ID / context missing).
+    console.error("[sanctions/watch] blob store unavailable:", err);
     return NextResponse.json(
       {
         ok: false,
-        error: `blob store unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "blob store unavailable — check NETLIFY_SITE_ID and NETLIFY_BLOBS_TOKEN environment variables",
       },
       { status: 503 },
     );
@@ -157,12 +156,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       try {
         await store.putDataset(adapter.id, entities, report);
       } catch (writeErr) {
-        report.errors.push(
-          `blob write failed: ${writeErr instanceof Error ? writeErr.message : String(writeErr)}`,
-        );
+        console.error(`[sanctions/watch] blob write failed for adapter ${adapter.id}:`, writeErr);
+        report.errors.push("blob write failed — check storage configuration");
       }
     } catch (err) {
-      report.errors.push(err instanceof Error ? err.message : String(err));
+      console.error(`[sanctions/watch] adapter ${adapter.id} fetch failed:`, err);
+      report.errors.push("adapter fetch failed — check source URL and network connectivity");
       report.durationMs = Date.now() - started;
     }
     return report;
@@ -181,7 +180,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           checksum: "",
           fetchedAt: Date.now(),
           durationMs: 0,
-          errors: [r.reason instanceof Error ? r.reason.message : String(r.reason)],
+          errors: ["adapter failed — see server logs for details"],
         },
   );
 

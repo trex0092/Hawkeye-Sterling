@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
 
 export const runtime = "nodejs";
@@ -255,5 +257,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const existing = await loadState(tenant);
   const updated: MoeSurveyState = { ...existing, ...body, tenant, updatedAt: new Date().toISOString() };
   await saveState(tenant, updated);
+
+  void writeAuditChainEntry(
+    { event: "moe_survey.response_saved", actor: gate.keyId, meta: { surveyId: tenant } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, survey: updated }, { headers: gate.headers });
 }

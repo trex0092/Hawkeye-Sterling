@@ -44,7 +44,7 @@ export interface ReasoningDiff {
 const CITATION_RX = /\b(?:FDL\s+(?:No\.\s*)?\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|Cabinet\s+(?:Decision|Resolution|Res\.?|Rel)\s+(?:No\.\s*)?\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|CR\s+\d+\/\d+(?:\s+Art\.\s*\d+(?:-\d+)?)?|FATF\s+R\.\s*\d+|UN\s+\d{3,4}|UNSCR\s+\d+|OFAC|UK\s+OFSI|EOCN|LBMA\s+RGG|OECD\s+DDG)\b/gi;
 
 function extractCitations(text: string): Set<string> {
-  const rx = new RegExp(CITATION_RX.source, CITATION_RX.flags);
+  const rx = new RegExp(CITATION_RX.source, CITATION_RX.flags); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const out = new Set<string>();
   let m: RegExpExecArray | null;
   while ((m = rx.exec(text)) !== null) out.add(m[0].toUpperCase().replace(/\s+/g, ' ').trim());

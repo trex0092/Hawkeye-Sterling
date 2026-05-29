@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface DashboardData {
   hsCases?: {
@@ -59,7 +60,7 @@ export function HsCasesDashboard() {
           const json = (await dashRes.json()) as DashboardData;
           if (!cancelled) { setData(json); setError(null); }
         } else {
-          if (!cancelled) setError(`${dashRes.status}`);
+          if (!cancelled) setError(apiErrorMessage(dashRes.status, "Dashboard"));
         }
         if (subRes.ok) {
           const sjson = (await subRes.json()) as SubjectsData;

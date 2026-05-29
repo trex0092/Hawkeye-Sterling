@@ -62,10 +62,10 @@ that scopes it and a bound set of reasoning modes it draws on.
 ### Reasoning modes (wave 1 + 2 + 3 expansion)
 
 Reasoning modes are registered with stable IDs, named categories, bound
-faculties, and a callable `apply(ctx)`. Most modes ship as stubs in Phase 1 —
-real algorithms land mode-by-mode. **Five modes ship with production logic
-already** (Benford's Law χ² test, Shannon entropy, transaction velocity,
-source-triangulation scoring, completeness audit).
+faculties, and a callable `apply(ctx)`. **100+ modes ship with production logic**
+(Benford's Law χ² test, Shannon entropy, transaction velocity, source-triangulation
+scoring, completeness audit, TBML pattern detection, crypto chain analysis,
+behavioral economics triggers, and many more).
 
 | Category | Count |
 |---|---|

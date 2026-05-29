@@ -10,6 +10,9 @@ import { randomBytes } from "node:crypto";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
+import { incrementCounter } from "@/lib/server/metrics-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -507,13 +510,14 @@ export async function POST(req: Request) {
   let keyFactors: string[];
   let nextSteps: string[];
   let regulatoryBasis: string;
+  let isDegraded = false;
 
   if (apiKey) {
     try {
-      const client = getAnthropicClient(apiKey, 20_000);
+      const client = getAnthropicClient(apiKey, 6_000);
       const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 280, // JSON fields sum to ~220 tok; 280 keeps generation under 0.6s on Haiku
         system: buildSystemBlocks(learningCtx),
         messages: [{ role: "user", content: buildUserMessage(body) }],
       });
@@ -534,8 +538,10 @@ export async function POST(req: Request) {
       keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
       nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
       regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
-    } catch {
-      // Fallback to rule-based
+    } catch (llmErr) {
+      // Fallback to rule-based — surface degraded flag so callers know
+      console.warn("[ai-decision] LLM call failed — falling back to rule-based:", llmErr instanceof Error ? llmErr.message : String(llmErr));
+      incrementCounter('hawkeye_llm_fallback_total', 1, { route: 'ai-decision' });
       decision = deriveRuleBasedDecision(body);
       confidence = 65;
       urgency = decision === "str" ? "critical" : decision === "escalate" ? "high" : decision === "edd" ? "medium" : "low";
@@ -543,6 +549,7 @@ export async function POST(req: Request) {
       keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
       nextSteps = defaultNextSteps(decision);
       regulatoryBasis = "FDL 10/2025 Art.20";
+      isDegraded = true;
     }
   } else {
     decision = deriveRuleBasedDecision(body);
@@ -552,6 +559,7 @@ export async function POST(req: Request) {
     keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
     nextSteps = defaultNextSteps(decision);
     regulatoryBasis = "FDL 10/2025 Art.20";
+    isDegraded = true;
   }
 
   // Auto-create Asana task (fire in parallel with response)
@@ -609,6 +617,7 @@ export async function POST(req: Request) {
           ...(asana.taskGid ? { asanaTaskGid: asana.taskGid } : {}),
         }),
     ...(fourEyesWarning ? { fourEyesWarning: true } : {}),
+    ...(isDegraded ? { degraded: true } : {}),
   };
 
   const latencyMs = Date.now() - t0;
@@ -622,6 +631,41 @@ export async function POST(req: Request) {
       await recordDecision(driftTenant, responseBody.decision, responseBody.confidence, body.riskScore ?? 0);
     } catch { /* non-critical */ }
   })();
+
+  // Prometheus screening decisions counter.
+  incrementCounter('hawkeye_screening_decisions_total', 1, { verdict: responseBody.decision });
+
+  // Audit chain entry for AI decision (FDL 10/2025 Art.18 — fire-and-forget).
+  void writeAuditChainEntry(
+    {
+      event: 'ai_decision.generated',
+      actor: gate.keyId,
+      meta: {
+        decisionId,
+        decision,
+        confidence,
+        urgency,
+        isDegraded,
+      },
+    },
+    tenantIdFromGate(gate),
+  ).catch((err: unknown) =>
+    console.warn('[ai-decision] audit chain write failed:', err instanceof Error ? err.message : String(err)),
+  );
+
+  // Post-response hallucination check (fire-and-forget — writes to audit chain on detection).
+  const evidenceFragments = [
+    ...responseBody.keyFactors,
+    ...(body.adverseMedia ? [body.adverseMedia] : []),
+    ...body.sanctionsHits.map((h) => `${h.list}: score ${h.score}${h.details ? ` — ${h.details}` : ""}`),
+  ];
+  void checkHallucination(responseBody.rationale, evidenceFragments, {
+    route: 'ai-decision',
+    tenantId: tenantIdFromGate(gate),
+    actor: gate.keyId,
+  }).catch((err: unknown) =>
+    console.warn('[ai-decision] hallucination check failed:', err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json({ ...responseBody, latencyMs }, { status: 200 , headers: gate.headers });
 }

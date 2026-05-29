@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+
+const BULK_RESCREEN_MODEL = "claude-haiku-4-5-20251001";
 export interface BulkRescreenSubject {
   id: string;
   name: string;
@@ -113,6 +115,13 @@ export async function POST(req: Request) {
       { status: 400, headers: gate.headers },
     );
   }
+  const MAX_BULK_SUBJECTS = 200;
+  if (subjects.length > MAX_BULK_SUBJECTS) {
+    return NextResponse.json(
+      { ok: false, error: `subjects array must not exceed ${MAX_BULK_SUBJECTS} items` },
+      { status: 413, headers: gate.headers },
+    );
+  }
 
   const listVersion = body.listVersion ?? "latest";
 
@@ -120,7 +129,7 @@ export async function POST(req: Request) {
   if (!apiKey) return NextResponse.json(buildFallback(subjects), { headers: gate.headers });
 
   try {
-    const client = getAnthropicClient(apiKey, 55_000);
+    const client = getAnthropicClient(apiKey, 4_500);
 
     // Slim the payload to keep tokens reasonable — names and nationalities
     // are the only differentiators the engine needs for a realistic simulation.
@@ -139,7 +148,7 @@ ${subjectLines}
 Simulate a full portfolio re-screen against the new list version. Generate realistic new hits and clearances. Return JSON only.`;
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: BULK_RESCREEN_MODEL,
       max_tokens: 700,
       system: [
         {
@@ -163,6 +172,7 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     ) as BulkRescreenResult;
     if (!Array.isArray(result.newHits)) result.newHits = [];
     if (!Array.isArray(result.cleared)) result.cleared = [];
+    if (typeof result.summary !== "string") result.summary = "";
     // Enforce rescreened count equals actual subject count regardless of
     // what the model returns — prevents confusing UX.
     result.rescreened = subjects.length;

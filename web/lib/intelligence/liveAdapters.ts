@@ -112,7 +112,12 @@ export const LIVE_OPENSANCTIONS_ADAPTER: CorporateRegistryAdapter = {
       const json = (await res.json()) as {
         responses?: { q1?: { results?: Array<Record<string, unknown>> } };
       };
-      const results = json.responses?.q1?.results ?? [];
+      const rawResults = json.responses?.q1?.results;
+      if (!Array.isArray(rawResults)) {
+        console.error("[opensanctions] Unexpected response shape — schema drift detected:", JSON.stringify(json).slice(0, 200));
+        return [];
+      }
+      const results = rawResults;
       return results
         .map((r) => {
           const props = (r["properties"] ?? {}) as Record<string, string[]>;
@@ -244,7 +249,7 @@ function ellipticAdapter(): OnChainAdapter {
         const r = (await res.json()) as { risk_score?: number; cluster_name?: string };
         return {
           address,
-          riskScore: Math.round((r.risk_score ?? 0) * 10),
+          riskScore: Math.round((r.risk_score ?? 0) * 100),
           ...(r.cluster_name ? { cluster: r.cluster_name } : {}),
           exposureSummary: "Elliptic baseline analysis",
         };

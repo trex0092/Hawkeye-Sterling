@@ -42,9 +42,12 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  if (newPassword.length < 8) {
+  if (currentPassword.length > 1024 || newPassword.length > 1024) {
+    return NextResponse.json({ ok: false, error: "Password too long" }, { status: 400 });
+  }
+  if (newPassword.trim().length < 8) {
     return NextResponse.json(
-      { ok: false, error: "New password must be at least 8 characters" },
+      { ok: false, error: "New password must be at least 8 non-whitespace characters" },
       { status: 400 },
     );
   }
@@ -78,9 +81,9 @@ export async function POST(req: Request) {
     return { status: 'saved' };
   });
 
-  if (changeResult.status === 'not_found') return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
-  if (changeResult.status === 'no_password') return NextResponse.json({ ok: false, error: "Account has no password set — contact your MLRO" }, { status: 400 });
-  if (changeResult.status === 'wrong_password') return NextResponse.json({ ok: false, error: "Current password is incorrect" }, { status: 403 });
+  if (changeResult.status === 'not_found' || changeResult.status === 'no_password' || changeResult.status === 'wrong_password') {
+    return NextResponse.json({ ok: false, error: "Current password is incorrect or account not found" }, { status: 403 });
+  }
 
   // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
   void writeAuditChainEntry({
@@ -102,7 +105,7 @@ export async function POST(req: Request) {
     maxAge: 0,
     path: "/",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: isSecure,
   });
   return res;

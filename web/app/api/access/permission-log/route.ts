@@ -2,15 +2,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { loadPermissionLog, appendPermissionLog, type PermissionLogEntry } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export async function GET(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
-  const log = await loadPermissionLog();
-  return NextResponse.json({ ok: true, log });
+  try {
+    const log = await loadPermissionLog();
+    return NextResponse.json({ ok: true, log });
+  } catch (err) {
+    console.error("[access/permission-log] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load permission log" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -38,9 +45,9 @@ export async function POST(req: Request) {
   }
 
   const entry: PermissionLogEntry = {
-    id: `log-${String(Date.now()).slice(-6)}`,
+    id: `log-${randomBytes(4).toString("hex")}`,
     timestamp: new Date().toISOString(),
-    actor: body.actor,
+    actor: "admin",
     action: body.action as PermissionLogEntry["action"],
     targetUserId: body.targetUserId,
     targetUserName: body.targetUserName,
@@ -49,6 +56,15 @@ export async function POST(req: Request) {
     reason: body.reason,
   };
 
-  await appendPermissionLog(entry);
-  return NextResponse.json({ ok: true, entry }, { status: 201 });
+  try {
+    await appendPermissionLog(entry);
+    void writeAuditChainEntry(
+      { event: "access.permission_log.created", actor: "portal_admin", meta: { action: entry.action, targetUserId: entry.targetUserId } },
+      "admin",
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json({ ok: true, entry }, { status: 201 });
+  } catch (err) {
+    console.error("[access/permission-log] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save permission log entry" }, { status: 500 });
+  }
 }

@@ -23,14 +23,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
-  if (got.length !== expected.length) return false;
-  const { timingSafeEqual } = await import("crypto");
-  const enc = new TextEncoder();
-  const expBuf = enc.encode(expected);
-  const gotRaw = enc.encode(got);
-  const gotBuf = new Uint8Array(expBuf.length);
-  gotBuf.set(gotRaw.slice(0, expBuf.length));
-  return timingSafeEqual(expBuf, gotBuf);
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
+  const ha = createHmac("sha256", COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
+  return timingSafeEqual(ha, hb);
 }
 
 interface ListReport {
@@ -48,15 +45,29 @@ async function readListRowCount(listId: string): Promise<number> {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const expected = process.env["ADMIN_TOKEN"];
-  if (!expected) {
+  const adminToken = process.env["ADMIN_TOKEN"];
+  const apiKey = process.env["HAWKEYE_API_KEY"] ?? process.env["API_KEY"];
+
+  if (!adminToken && !apiKey) {
     return NextResponse.json(
-      { ok: false, error: "service unavailable — ADMIN_TOKEN not set" },
+      { ok: false, error: "service unavailable — no auth token configured" },
       { status: 503 },
     );
   }
-  const got = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!got || !(await timingSafeTokenCheck(got, expected))) {
+
+  const got =
+    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+    req.headers.get("x-api-key") ??
+    "";
+
+  if (!got) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  const adminOk  = adminToken ? await timingSafeTokenCheck(got, adminToken) : false;
+  const apiKeyOk = apiKey     ? await timingSafeTokenCheck(got, apiKey)     : false;
+
+  if (!adminOk && !apiKeyOk) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
@@ -67,10 +78,11 @@ export async function GET(req: Request): Promise<NextResponse> {
     )) as { runIngestionAll: typeof runIngestionAll };
     runIngestionAll = mod.runIngestionAll;
   } catch (err) {
+    console.error("[trigger-list-refresh] failed to load ingestion runner:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
-        error: `ingestion runner unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion service unavailable",
       },
       { status: 503 },
     );
@@ -137,6 +149,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       { status: 200 },
     );
   } catch (err) {
+    console.error("[trigger-list-refresh] runIngestionAll threw:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       {
         ok: false,
@@ -144,7 +157,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ltl_rows: 0,
         timestamp: triggeredAt,
         status: "error",
-        error: `runIngestionAll threw — ${err instanceof Error ? err.message : String(err)}`,
+        error: "ingestion service unavailable",
       },
       { status: 500 },
     );

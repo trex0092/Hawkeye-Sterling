@@ -311,8 +311,14 @@ export class AuditLedger {
       lastHash: string;
     };
     ledger.entries = parsed.entries;
-    ledger.sequence = parsed.entries.length;
+    ledger.sequence = parsed.entries.length > 0
+      ? Math.max(...parsed.entries.map(e => e.sequenceNumber))
+      : 0;
     ledger.lastHash = parsed.lastHash;
+    const integrity = ledger.verify();
+    if (!integrity.ok) {
+      console.error('[AuditLedger] fromJSON: chain integrity failed', integrity.errors);
+    }
     return ledger;
   }
 }

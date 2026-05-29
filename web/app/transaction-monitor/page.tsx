@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { pushBellEvent } from "@/lib/bell-events";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import {
@@ -71,7 +72,7 @@ interface StructuringResult {
   error?: string;
 }
 
-const THRESHOLD_AED = 55_000;
+const THRESHOLD_AED = Number(process.env["NEXT_PUBLIC_CTR_THRESHOLD_AED"] ?? 55_000);
 const STORAGE_KEY = "hawkeye.transaction-monitor.v1";
 
 // Shape a logged transaction into the compliance-report payload so
@@ -229,7 +230,7 @@ export default function TransactionMonitorPage() {
       if (!mountedRef.current) return;
       if (data.ok) setExplanations((prev) => ({ ...prev, [t.id]: data }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Explanation failed — please retry";
+      const msg = caughtErrorMessage(err, "Explanation failed — please retry");
       if (mountedRef.current) setExplainErrors((prev) => ({ ...prev, [t.id]: msg }));
     } finally { if (mountedRef.current) setExplaining((prev) => ({ ...prev, [t.id]: false })); }
   };
@@ -279,7 +280,7 @@ export default function TransactionMonitorPage() {
       setTypologyTags(tagMap);
       setTagSummary({ text: data.summary, highRiskCount: data.highRiskCount });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Typology tagging failed — please retry";
+      const msg = caughtErrorMessage(err, "Typology tagging failed — please retry");
       if (mountedRef.current) setTagError(msg);
     } finally { if (mountedRef.current) setTagging(false); }
   };
@@ -394,7 +395,7 @@ export default function TransactionMonitorPage() {
       if (!data.ok) throw new Error(data.error ?? "Analysis failed — please retry");
       setStructuringResult(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Structuring analysis failed — please retry";
+      const msg = caughtErrorMessage(err, "Structuring analysis failed — please retry");
       if (mountedRef.current) setStructuringError(msg);
     } finally {
       if (mountedRef.current) setStructuringLoading(false);

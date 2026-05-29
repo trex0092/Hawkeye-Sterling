@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { OwnershipResult } from "@/app/api/ownership/route";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/ownershipChain";
 
 // Module 37 — Corporate Ownership Explorer
@@ -68,7 +69,7 @@ export default function OwnershipPage() {
       if (!res.ok) {
         console.error(`[hawkeye] ownership HTTP ${res.status}`);
         if (!mountedRef.current) return;
-        setError(`Request failed — HTTP ${res.status}`);
+        setError(apiErrorMessage(res.status, "Ownership analysis"));
         return;
       }
       const data = await res.json().catch(() => ({})) as OwnershipResult;

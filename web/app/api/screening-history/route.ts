@@ -5,7 +5,7 @@
 // blob count doesn't grow without bound.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { del, getJson, listKeys, setJson } from "@/lib/server/store";
 import type { ScreeningHistoryEntry } from "@/lib/types";
 
@@ -35,12 +35,22 @@ function safeId(v: string | null): string | null {
   return v;
 }
 
-async function handleGet(req: Request): Promise<NextResponse> {
+async function handleGet(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const url = new URL(req.url);
   const subjectId = safeId(url.searchParams.get("subjectId")?.trim() ?? null);
   if (!subjectId) {
     return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
   }
+
+  // Tenant isolation: verify the subjectId belongs to this tenant before
+  // returning history. Prevents authenticated callers from enumerating
+  // any other tenant's screening data by guessing subjectIds.
+  interface EnrolledSubject { tenantId?: string }
+  const enrolled = await getJson<EnrolledSubject>(`ongoing/subject/${subjectId}`);
+  if (!enrolled || enrolled.tenantId !== ctx.tenantId) {
+    return NextResponse.json({ ok: false, error: "subject not found" }, { status: 404 });
+  }
+
   const prefix = `screening-history/${subjectId}/`;
   // Audit DR-10: previously a blob read failure produced the same empty
   // entries array as a legitimate "no prior screenings" state. MLROs
@@ -61,7 +71,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
   });
 }
 
-async function handlePost(req: Request): Promise<NextResponse> {
+async function handlePost(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let raw: unknown;
   try { raw = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
@@ -73,6 +83,14 @@ async function handlePost(req: Request): Promise<NextResponse> {
   if (!subjectId) {
     return NextResponse.json({ ok: false, error: "subjectId required" }, { status: 400 });
   }
+
+  // Tenant isolation: only write history for subjects enrolled under this tenant.
+  interface EnrolledSubject { tenantId?: string }
+  const enrolled = await getJson<EnrolledSubject>(`ongoing/subject/${subjectId}`);
+  if (!enrolled || enrolled.tenantId !== ctx.tenantId) {
+    return NextResponse.json({ ok: false, error: "subject not found" }, { status: 404 });
+  }
+
   const topScore = typeof raw["topScore"] === "number" ? raw["topScore"] : 0;
   const severityRaw = stringField(raw["severity"]) ?? "clear";
   const allowedSev = new Set(["clear", "low", "medium", "high", "critical"]);

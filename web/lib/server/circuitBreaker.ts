@@ -12,6 +12,8 @@
 // won't cause an outage, just slightly faster trip / reset behaviour.
 
 interface BreakerState { failures: number; openedAt: number | null }
+import { setGauge } from "./metrics-store";
+
 const breakers = new Map<string, BreakerState>();
 const hydrated = new Set<string>();
 const THRESHOLD = 5;
@@ -72,6 +74,7 @@ export function isBreakerOpen(key: string): boolean {
 
 export function recordSuccess(key: string): void {
   hydrate(key);
+  setGauge('hawkeye_circuit_breaker_open', 0, { service: key });
   const s = breakers.get(key) ?? { failures: 0, openedAt: null };
   s.failures = 0; s.openedAt = null;
   breakers.set(key, s);
@@ -82,7 +85,13 @@ export function recordFailure(key: string): void {
   hydrate(key);
   const s = breakers.get(key) ?? { failures: 0, openedAt: null };
   s.failures++;
-  if (s.failures >= THRESHOLD) s.openedAt = Date.now();
+  // Only stamp openedAt on the closed→open transition. Re-stamping on every
+  // subsequent failure would extend the RESET_MS window indefinitely, preventing
+  // recovery when a service fails intermittently above the threshold.
+  if (s.failures >= THRESHOLD && s.openedAt === null) {
+    s.openedAt = Date.now();
+    setGauge('hawkeye_circuit_breaker_open', 1, { service: key });
+  }
   breakers.set(key, s);
   persist(key, s);
 }

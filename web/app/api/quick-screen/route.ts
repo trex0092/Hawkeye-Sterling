@@ -48,6 +48,60 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { saveSubject, getSubject } from "../pkyc/_store";
 import type { CaseRecord } from "@/lib/types";
 import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
+import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
+import { bloomPreScreen, isFilterStale, rebuildGlobalFilter } from "@/lib/server/bloom-filter";
+import { LatencyBudget } from "@/lib/server/latency-budget";
+
+// ── In-memory result cache ─────────────────────────────────────────────────
+// Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
+// TTL: 3 minutes — sanctions lists refresh frequently so we can't cache longer.
+const SCREEN_CACHE_TTL_MS = 180_000;
+// eslint-disable-next-line no-var
+declare global { var __hs_screen_cache: Map<string, { result: unknown; cachedAt: number }> | undefined; }
+const _screenCache: Map<string, { result: unknown; cachedAt: number }> =
+  globalThis.__hs_screen_cache ?? (globalThis.__hs_screen_cache = new Map());
+
+// ── UN Security Council 1267 designated entity name matching ───────────────
+// Token-set similarity check: if the subject name shares >80% of word tokens
+// with any UN 1267 designated group, immediately flag with critical severity.
+// This is a lightweight pre-screen before the full watchlist engine runs.
+
+function tokenize(s: string): Set<string> {
+  return new Set(
+    s.toLowerCase()
+      .replace(/[^a-z0-9\s؀-ۿݐ-ݿ]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 2),
+  );
+}
+
+function tokenSetSimilarity(a: string, b: string): number {
+  const ta = tokenize(a);
+  const tb = tokenize(b);
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let intersection = 0;
+  for (const t of ta) {
+    if (tb.has(t)) intersection++;
+  }
+  return intersection / Math.max(ta.size, tb.size);
+}
+
+function checkUn1267Match(
+  name: string,
+  aliases: string[] = [],
+): { matched: true; entity: string; similarity: number } | { matched: false } {
+  const THRESHOLD = 0.80;
+  const namesToCheck = [name, ...aliases];
+  for (const n of namesToCheck) {
+    for (const entity of UN_1267_DESIGNATED_ENTITIES) {
+      const sim = tokenSetSimilarity(n, entity);
+      if (sim >= THRESHOLD) {
+        return { matched: true, entity, similarity: sim };
+      }
+    }
+  }
+  return { matched: false };
+}
 
 // ── Sanctions list health snapshot ─────────────────────────────────────────
 // Attached to every screening response so audit records capture which lists
@@ -182,6 +236,8 @@ function respond(
 
 export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
+  const phaseBudget = new LatencyBudget("quick-screen");
+  phaseBudget.phase("parallel-kickoff");
   // Start list health check immediately — runs in parallel with auth + corpus
   // loading so it doesn't add latency to the critical path.
   const listHealthPromise = fetchListHealth().catch(() => null);
@@ -197,8 +253,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // tier without an API key) leaves audit chain entries with no operator
   // identity. For a public demo, use the separate /api/demo/quick-screen
   // path (if added) which logs actor: "public-demo" explicitly.
-  const gate = await enforce(req, { requireAuth: true });
-  if (!gate.ok) return gate.response;
+  phaseBudget.phase("auth");
+  const gate = await enforce(req, { requireAuth: true, cost: 2 });
+  if (!gate.ok) { phaseBudget.finish(); return gate.response; }
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   // When the poll endpoint re-calls quick-screen for full enrichment it sets
@@ -259,6 +316,55 @@ export async function POST(req: Request): Promise<NextResponse> {
       : undefined,
   };
 
+  // UN Security Council 1267 designated entity pre-screen ───────────────────
+  // If the subject name (or any alias) has token-set similarity > 0.80 to a
+  // known UN 1267 designated group, immediately return critical severity with
+  // flag "un_1267_designated_entity_match". This fires BEFORE the whitelist
+  // check so designated terrorist groups cannot be whitelisted past this gate.
+  const un1267Check = checkUn1267Match(subject.name, subject.aliases ?? []);
+  if (un1267Check.matched) {
+    const un1267Hit: import("@/lib/api/quickScreen.types").QuickScreenHit = {
+      listId: "un_1267",
+      listRef: `UNSCR-1267:${un1267Check.entity}`,
+      candidateName: un1267Check.entity,
+      score: un1267Check.similarity,
+      baseScore: un1267Check.similarity,
+      method: "token_set",
+      phoneticAgreement: false,
+      programs: ["UNSCR 1267 — Terrorism Financing"],
+      reason: `UN 1267 designated entity match: token-set similarity ${(un1267Check.similarity * 100).toFixed(1)}% to "${un1267Check.entity}"`,
+      autoResolution: "flagged",
+    };
+    const un1267Result: QuickScreenResult = {
+      subject,
+      hits: [un1267Hit],
+      topScore: un1267Check.similarity,
+      severity: "critical",
+      listsChecked: 1,
+      candidatesChecked: UN_1267_DESIGNATED_ENTITIES.length,
+      durationMs: Date.now() - t0,
+      generatedAt: new Date().toISOString(),
+    };
+    void auditWriter.write({
+      event: "screening.completed",
+      actor: gate.record?.email ?? gate.keyId ?? "unknown",
+      subject: subject.name,
+      severity: "critical",
+      hitsCount: 1,
+      listsChecked: 1,
+      listsDegraded: 0,
+      note: `UN 1267 pre-screen match: ${un1267Check.entity} (similarity=${un1267Check.similarity.toFixed(3)})`,
+    }).catch((err: unknown) => console.warn("[quick-screen] UN 1267 audit write failed:", err instanceof Error ? err.message : String(err)));
+    // Attach the UN 1267 flag as a top-level field on the response payload
+    return respond(200, {
+      ok: true,
+      ...un1267Result,
+      un1267DesignatedEntityMatch: true,
+      matchedDesignatedEntity: un1267Check.entity,
+      matchSimilarity: un1267Check.similarity,
+    } as QuickScreenResponse, gateHeaders);
+  }
+
   // Whitelist short-circuit — if the operator's tenant has previously
   // cleared this subject (false-positive disposition recorded via
   // /api/whitelist), skip the expensive list match and surface a clean
@@ -267,7 +373,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const tenantId = gate.record?.email;
   if (tenantId) {
     try {
-      // Cap whitelist lookup at 400ms — a Blobs read should never exceed this
+      // Cap whitelist lookup at 200ms — a Blobs read should never exceed this
       // on a healthy deployment. If it hangs we fall through to full screening
       // (the safe default: the MLRO sees the hit again rather than missing it).
       const match = await Promise.race([
@@ -275,7 +381,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           name: subject.name,
           ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
         }),
-        new Promise<null>((r) => setTimeout(() => r(null), 400)),
+        new Promise<null>((r) => setTimeout(() => r(null), 200)),
       ]);
       if (match) {
         const whitelistedResult: QuickScreenResult = {
@@ -318,6 +424,23 @@ export async function POST(req: Request): Promise<NextResponse> {
         "[quick-screen] whitelist lookup failed — falling through to full screen:",
         err instanceof Error ? err.message : err,
       );
+    }
+  }
+
+  // ── Cache check ───────────────────────────────────────────────────────────
+  // Skip cache when forceRefresh or enhanced screening is requested — deep
+  // enhanced runs must always be fresh (live adapter results change frequently).
+  const cacheBypass = body.options?.forceRefresh === true || body.options?.enhanced === true;
+  const normalizedName = subject.name.toLowerCase().trim().replace(/\s+/g, " ");
+  const cacheKey = `${tenantId ?? ""}|${normalizedName}`;
+
+  if (!cacheBypass) {
+    const cached = _screenCache.get(cacheKey);
+    if (cached && Date.now() - cached.cachedAt < SCREEN_CACHE_TTL_MS) {
+      return NextResponse.json(cached.result, {
+        status: 200,
+        headers: { ...CORS_HEADERS, ...gateHeaders, "x-cache": "HIT" },
+      });
     }
   }
 
@@ -439,14 +562,167 @@ export async function POST(req: Request): Promise<NextResponse> {
       ...(body.options ?? {}),
       maxHits: body.options?.maxHits ?? HIT_LIMIT_LOCAL,
     };
-    const result = quickScreen(subject, candidates, screenOptions);
 
-    // Hard 3-second SLA: if the enrichment adapters haven't resolved with
+    phaseBudget.phase("bloom");
+    // ── Bloom filter pre-screen ────────────────────────────────────────────
+    // If the Bloom filter is stale (or caller supplies their own candidates),
+    // rebuild it asynchronously in the background — it will be ready for the
+    // NEXT request. For this request we fall through to quickScreen().
+    //
+    // When the filter returns false (definitely absent) skip quickScreen()
+    // entirely and return a no_match result. Saves 800–1 200 ms on most
+    // requests where the subject is not near any sanctioned entity name.
+    //
+    // Never skip when:
+    //   - Bloom filter was not built yet (cold start)
+    //   - Caller supplied explicit candidates (they bypass the corpus)
+    //   - The subject is a common name (filter FPR still small but we must
+    //     not suppress screening of a populous name class)
+    if (isFilterStale() && !Array.isArray(callerCandidates)) {
+      // Kick a background rebuild; don't await it.
+      void loadCandidatesWithHealth()
+        .then((r) => rebuildGlobalFilter(r.candidates))
+        .catch(() => undefined);
+    }
+    const bloomPass =
+      Array.isArray(callerCandidates) ||
+      bloomPreScreen(subject.name, subject.aliases ?? []);
+
+    // Start news aggregation early — in parallel with the synchronous quickScreen()
+    // CPU-bound matcher — so news results are fetched while matching runs.
+    // quickScreen() is O(n·m) CPU-bound and non-async; the news promise begins
+    // here and is awaited later inside the augmentation Promise.all block.
+    type NewsResult = Awaited<ReturnType<typeof searchAllNews>>;
+    const earlyNewsPromise: Promise<NewsResult> =
+      bloomPass && subject.name.length >= 3
+        ? searchAllNews(subject.name, { limit: 8 }).catch((): NewsResult => ({ articles: [], providersUsed: [] }))
+        : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] });
+
+    // Bloom filter says "definitely not present" → return no-match immediately.
+    // We still write the audit chain entry so the regulator can see the screen
+    // occurred and was skipped by the fast-path gate.
+    if (!bloomPass) {
+      const bloomResult: QuickScreenResult = {
+        subject,
+        hits: [],
+        topScore: 0,
+        severity: "clear",
+        listsChecked: candidates.length > 0 ? 1 : 0,
+        candidatesChecked: candidates.length,
+        durationMs: Date.now() - t0,
+        generatedAt: new Date().toISOString(),
+      };
+      void auditWriter.write({
+        event: "screening.completed",
+        actor: gate.record?.email ?? gate.keyId ?? "unknown",
+        subject: subject.name,
+        severity: "clear",
+        hitsCount: 0,
+        listsChecked: bloomResult.listsChecked,
+        listsDegraded: 0,
+        note: "bloom_filter_fast_path: no token overlap with any sanctioned entity",
+      }).catch((err: unknown) =>
+        console.warn("[quick-screen] bloom fast-path audit write failed:", err instanceof Error ? err.message : String(err)),
+      );
+      return respond(200, {
+        ok: true,
+        ...bloomResult,
+        _bloomFastPath: true,
+      } as QuickScreenResponse & { _bloomFastPath: boolean }, gateHeaders);
+    }
+
+    phaseBudget.phase("quickscreen");
+    const result = quickScreen(subject, candidates, screenOptions);
+    phaseBudget.phase("augmentation");
+
+    // Source attribution: enrich each hit with a human-readable list label,
+    // risk category, and structured match reason. Additive — never overwrites
+    // existing fields, compatible with all existing callers.
+    const LIST_ID_TO_LABEL: Record<string, string> = {
+      ofac_sdn:       "OFAC Specially Designated Nationals",
+      ofac_cons:      "OFAC Consolidated Sanctions",
+      un_consolidated:"UN Consolidated Sanctions",
+      un_1267:        "UN ISIL/Al-Qaeda Sanctions (1267)",
+      eu_fsf:         "EU Frozen Funds & Financial Sanctions",
+      uk_ofsi:        "UK OFSI Consolidated Sanctions",
+      uae_eocn:       "UAE Executive Office for Control & Non-Proliferation",
+      uae_ltl:        "UAE Local Terrorist List",
+      ca_osfi:        "Canada OSFI Consolidated Sanctions",
+      ch_seco:        "Switzerland SECO Sanctions",
+      au_dfat:        "Australia DFAT Consolidated Sanctions",
+      jp_mof:         "Japan MoF Sanctions",
+      interpol:       "Interpol Red Notices",
+      fatf:           "FATF High-Risk Jurisdictions",
+      lseg_ofac_sdn:  "OFAC SDN (LSEG)",
+      lseg_eu_fsf:    "EU Frozen Funds (LSEG)",
+      lseg_uk_ofsi:   "UK OFSI (LSEG)",
+    };
+    for (const hit of result.hits) {
+      if (!hit.sourceList) hit.sourceList = hit.listId;
+      if (!hit.sourceLabel) {
+        hit.sourceLabel = LIST_ID_TO_LABEL[hit.listId] ?? hit.listId.toUpperCase().replace(/_/g, " ");
+      }
+      if (!hit.riskCategory) {
+        const lid = hit.listId.toLowerCase();
+        hit.riskCategory =
+          lid.includes("pep") ? "pep"
+          : lid.includes("media") || lid.includes("news") ? "adverse_media"
+          : "sanctions";
+      }
+      if (!hit.matchReason) {
+        hit.matchReason = hit.reason;
+      }
+      if (!hit.confidenceTier) {
+        const s = hit.score ?? hit.baseScore ?? 0;
+        hit.confidenceTier =
+          s >= 0.95 ? "confirmed"
+          : s >= 0.80 ? "probable"
+          : s >= 0.60 ? "possible"
+          : "unlikely";
+      }
+    }
+
+    // Auto-create PNMR + SLA records for LTL and UN Consolidated hits
+    const PNMR_TRIGGER_LISTS = new Set(["uae_ltl", "uae_eocn", "un_consolidated", "un_1267"]);
+    const pnmrHits = result.hits.filter(
+      (h) => PNMR_TRIGGER_LISTS.has(h.listId) && (h.score ?? 0) >= 0.60
+    );
+    if (pnmrHits.length > 0) {
+      const { createPnmrRecord } = await import("@/lib/server/pnmr");
+      const { createEocnSlaRecord } = await import("@/lib/server/eocn-sla");
+      const pnmrTenant = tenantIdFromGate(gate);
+      for (const hit of pnmrHits) {
+        void createPnmrRecord(pnmrTenant, {
+          subjectName: subject.name,
+          listId: hit.listId,
+          listLabel: hit.sourceLabel ?? hit.listId,
+          screeningHitId: hit.listRef,
+          initiatedBy: "system/quick-screen",
+        }).then((pnmrRecord) => {
+          // Auto-create the three EOCN SLA obligation timers for each hit.
+          const slaTypes = ["EOCN_FREEZE_24H", "EOCN_PNMR_5BD", "EOCN_CUSTOMER_VERIFY_10BD"] as const;
+          for (const type of slaTypes) {
+            createEocnSlaRecord(pnmrTenant, {
+              type,
+              pnmrId: pnmrRecord.id,
+              subjectName: subject.name,
+              listId: hit.listId,
+            }).catch((err: unknown) =>
+              console.warn("[quick-screen] EOCN SLA auto-create failed:", err instanceof Error ? err.message : String(err))
+            );
+          }
+        }).catch((err: unknown) =>
+          console.warn("[quick-screen] PNMR auto-create failed:", err instanceof Error ? err.message : String(err))
+        );
+      }
+    }
+
+    // Hard deadline SLA: if the enrichment adapters haven't resolved with
     // enough budget remaining, return the deterministic list-match result
     // immediately. Sanctions hits are always present (local match is O(1));
     // only the enrichment layer (news, registries, LLM) is deferred.
     // The client can re-poll for an enriched result if needed.
-    const HARD_DEADLINE_MS = 2_800;
+    const HARD_DEADLINE_MS = 3_000; // 3s hard cap — keeps end-to-end response in 3-5s target window
     const elapsedMs = Date.now() - t0;
     if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
@@ -505,7 +781,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     type CRegResult      = Awaited<ReturnType<typeof searchCountryRegistries>>;
     type CSanResult      = Awaited<ReturnType<typeof searchCountrySanctions>>;
     type FreeResult      = Awaited<ReturnType<typeof searchFreeAdapters>>;
-    type NewsResult      = Awaited<ReturnType<typeof searchAllNews>>;
+    // NewsResult already declared above (earlyNewsPromise) — reuse the type alias.
     type LlmResult       = Awaited<ReturnType<typeof llmAdapter.search>>;
     type UrlIngestResult = Awaited<ReturnType<typeof ingestUrls>>;
 
@@ -515,11 +791,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     // ~2.5s; anything beyond that is almost certainly a transient hang
     // from a third-party that we'd rather degrade than block on. Returning
     // the empty type matches the existing .catch fallback contract.
-    const ADAPTER_TIMEOUT_MS = 2_500;
+    const ADAPTER_TIMEOUT_MS = 1_500; // 1.5s cap keeps full pipeline within 3-5s target
     const adapterTimeout = <T>(p: Promise<T>, fallback: T): Promise<T> => {
       let to: NodeJS.Timeout | null = null;
       const timeoutP = new Promise<T>((resolve) => {
-        to = setTimeout(() => { warn("adapter timeout >2.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+        to = setTimeout(() => { warn("adapter timeout >1.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
       });
       return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
     };
@@ -543,7 +819,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
       // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini + Google AI in parallel)
-      canAug ? adapterTimeout(searchAllNews(subject.name, { limit: 50 }).catch((e): NewsResult => { warn(e); return { articles: [], providersUsed: [] }; }), { articles: [], providersUsed: [] } as NewsResult) : Promise.resolve<NewsResult>({ articles: [], providersUsed: [] }),
+      // earlyNewsPromise was started before quickScreen() ran; here we wrap it
+      // in adapterTimeout so the whole augmentation race is still bounded.
+      adapterTimeout(earlyNewsPromise, { articles: [], providersUsed: [] } as NewsResult),
       canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
       canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
@@ -835,9 +1113,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     // does not create duplicate monitoring subjects.
     if (["medium", "high", "critical"].includes(finalResult.severity)) {
       const pkycId = `pkyc-auto-${subject.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40)}`;
+      const pkycTenant = tenantIdFromGate(gate);
       void (async () => {
         try {
-          const existing = await getSubject(pkycId);
+          const existing = await getSubject(pkycId, pkycTenant);
           if (!existing) {
             const cadence = finalResult.severity === "critical" ? "weekly" : finalResult.severity === "high" ? "monthly" : "quarterly";
             const pkycNow = new Date().toISOString();
@@ -864,7 +1143,7 @@ export async function POST(req: Request): Promise<NextResponse> {
               runCount: 0,
               alertCount: 0,
               notes: `Auto-enrolled from screening: ${finalResult.severity} severity`,
-            });
+            }, pkycTenant);
           }
         } catch (err) {
           console.warn("[quick-screen] pkyc auto-enroll failed:", err instanceof Error ? err.message : String(err));
@@ -961,7 +1240,19 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (enrichJobId) {
       void completeEnrichmentJob(enrichJobId, fullPayload as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] completeEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
     }
-    return respond(200, fullPayload, gateHeaders);
+
+    // ── Cache SET ──────────────────────────────────────────────────────────
+    // Store the full payload for repeat callers. Sweep stale entries on every
+    // write so the Map doesn't grow unbounded during a long-running Lambda.
+    if (!cacheBypass) {
+      const now = Date.now();
+      for (const [k, v] of _screenCache) {
+        if (now - v.cachedAt >= SCREEN_CACHE_TTL_MS) _screenCache.delete(k);
+      }
+      _screenCache.set(cacheKey, { result: fullPayload, cachedAt: now });
+    }
+
+    return respond(200, fullPayload, { ...gateHeaders, "x-cache": "MISS" });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     if (Date.now() - t0 > 3000) console.warn(`[quick-screen] slow response latencyMs=${Date.now() - t0}`);

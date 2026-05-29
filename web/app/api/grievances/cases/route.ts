@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -82,25 +83,37 @@ export async function POST(req: Request) {
     const newNum = String(lastNum + 1).padStart(3, "0");
     const newId = `FG-WB-${year}-${newNum}`;
 
+    const PRIVILEGED_ROLES = new Set(["compliance", "management", "mlro"]);
+    const isPrivileged = PRIVILEGED_ROLES.has(gate.record?.role ?? "");
+
     const newCase: GrievanceCase = {
       id: newId,
       receivedAt: new Date().toISOString(),
       channel: body.channel,
       category: body.category,
       categoryVariant: body.categoryVariant ?? "ops",
-      stage: body.stage ?? "Investigation",
-      stageStatus: body.stageStatus ?? "open",
-      slaPct: body.slaPct ?? 0,
+      stage: isPrivileged ? (body.stage ?? "Investigation") : "Investigation",
+      stageStatus: isPrivileged ? (body.stageStatus ?? "open") : "open",
+      slaPct: isPrivileged ? (body.slaPct ?? 0) : 0,
       slaVariant: body.slaVariant ?? "ok",
-      owner: body.owner ?? "MLRO",
+      owner: isPrivileged ? (body.owner ?? "MLRO") : "MLRO",
     };
 
     await store.set("cases.json", JSON.stringify([newCase, ...existing]));
+    void writeAuditChainEntry({
+      event: "grievance.case_created",
+      actor: gate.keyId,
+      caseId: newId,
+      channel: newCase.channel,
+      category: newCase.category,
+    }).catch((err: unknown) => {
+      console.warn("[grievances/cases] audit chain write failed:", err instanceof Error ? err.message : String(err));
+    });
     return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });
   } catch (err) {
     console.error("[grievances/cases] store error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Store temporarily unavailable — please retry." },
+      { ok: false, error: "Store temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers }
     );
   }

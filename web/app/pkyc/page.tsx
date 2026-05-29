@@ -7,6 +7,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 const BAND_CLS: Record<string, string> = {
   clear:    "text-green  border-green/40  bg-green-dim",
@@ -64,6 +65,7 @@ export default function PKycPage() {
   const [subjects, setSubjects] = useState<PKycSubject[]>([]);
   const [stats, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
@@ -82,13 +84,14 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC load failed (HTTP ${res.status})`);
       let data: { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       try {
-        data = await res.json().catch(() => ({})) as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
+        data = await res.json() as { ok: boolean; subjects?: PKycSubject[]; stats?: PKycStats };
       } catch {
         throw new Error("pKYC returned a malformed response — please retry");
       }
       if (data.ok && mountedRef.current) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
     } catch (err) {
       console.error("[hawkeye] pkyc load failed:", err);
+      if (mountedRef.current) setLoadError(caughtErrorMessage(err, "Failed to load pKYC subjects — please try again."));
     } finally { if (mountedRef.current) setLoading(false); }
   }, [mountedRef]);
 
@@ -101,14 +104,14 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`pKYC run failed (HTTP ${res.status}) — please retry`);
       let data: { ran?: number; changed?: number; errors?: number };
       try {
-        data = await res.json().catch(() => ({})) as { ran?: number; changed?: number; errors?: number };
+        data = await res.json() as { ran?: number; changed?: number; errors?: number };
       } catch {
         throw new Error("pKYC run returned a malformed response — please retry");
       }
       setRunResult(`Ran ${data.ran ?? 0} subjects · ${data.changed ?? 0} changes · ${data.errors ?? 0} errors`);
       void load();
     } catch (err) {
-      setRunResult(`Run failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Run failed: ${caughtErrorMessage(err)}`);
     } finally {
       setRunning(false);
     }
@@ -127,7 +130,7 @@ export default function PKycPage() {
       setRunResult(r ? `${r.name}: ${r.band?.toUpperCase()} (${r.composite}/100) · ${r.changed ? "⚡ CHANGED" : "no change"}` : "done");
       void load();
     } catch (err) {
-      setRunResult(`Force run failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Force run failed: ${caughtErrorMessage(err)}`);
     }
   }
 
@@ -138,7 +141,7 @@ export default function PKycPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       void load();
     } catch (err) {
-      setRunResult(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Delete failed: ${caughtErrorMessage(err)}`);
     }
   }
 
@@ -163,7 +166,7 @@ export default function PKycPage() {
       setForm({ name: "", entityType: "individual", jurisdiction: "", dob: "", cadence: "monthly", notes: "", mlro: "" });
       void load();
     } catch (err) {
-      setRunResult(`Enroll failed: ${err instanceof Error ? err.message : String(err)}`);
+      setRunResult(`Enroll failed: ${caughtErrorMessage(err)}`);
     } finally {
       setEnrolling(false);
     }
@@ -249,9 +252,14 @@ export default function PKycPage() {
       </div>
 
       {/* Subject table / empty state */}
+      {loadError && (
+        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-950/20 px-4 py-3 text-13 text-red-300 mb-4">
+          {loadError}
+        </div>
+      )}
       {loading ? (
         <p className="text-ink-2 text-13 py-8 text-center">Loading…</p>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && !loadError ? (
         <div className="py-16 text-center text-ink-2 text-13">
           No subjects enrolled. Click “+ Enroll Subject” to begin perpetual monitoring.
         </div>

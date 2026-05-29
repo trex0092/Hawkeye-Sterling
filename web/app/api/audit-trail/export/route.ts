@@ -1,21 +1,25 @@
 // GET /api/audit-trail/export
 //
-// Exports audit trail entries as JSON or CSV within an optional date range.
+// Exports audit trail entries as JSON, CSV, or JSONL within an optional date range.
 //
 // Query params:
-//   from    (ISO date, inclusive) — filter entries on or after this date
-//   to      (ISO date, inclusive) — filter entries on or before this date
-//   format  (json|csv, default json) — output format
-//   limit   (integer, default 5000, max 10000) — max entries per page
-//   offset  (integer, default 0) — entries to skip (for pagination)
+//   from     (ISO date, inclusive) — filter entries on or after this date
+//   to       (ISO date, inclusive) — filter entries on or before this date
+//   format   (json|csv|jsonl, default json) — output format
+//   limit    (integer, default 5000, max 10000) — max entries per page
+//   offset   (integer, default 0) — entries to skip (for pagination)
+//   manifest (true) — include SHA-256 hash of export content as X-Export-SHA256
+//                     header and as a trailing manifest comment/record
 //
 // Response:
-//   JSON: { ok, format, count, total, truncated, from, to, entries, exportedAt }
-//   CSV:  text/csv with columns seq,event,subject,actor,severity,hitsCount,
-//         listsChecked,enrichmentPending,caseId,asanaTaskId,at
+//   JSON:  { ok, format, count, total, truncated, from, to, entries, exportedAt }
+//   CSV:   text/csv with columns seq,event,subject,actor,severity,hitsCount,
+//          listsChecked,enrichmentPending,caseId,asanaTaskId,at
+//   JSONL: application/x-ndjson — one JSON record per line (Splunk/ELK compatible)
 //
 // Auth: withGuard (API key required)
 
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
 
@@ -103,7 +107,11 @@ async function handleGet(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const fromParam = url.searchParams.get("from") ?? null;
   const toParam = url.searchParams.get("to") ?? null;
-  const format = url.searchParams.get("format") === "csv" ? "csv" : "json";
+  const rawFormat = url.searchParams.get("format");
+  const format: "json" | "csv" | "jsonl" =
+    rawFormat === "csv" ? "csv" : rawFormat === "jsonl" ? "jsonl" : "json";
+
+  const includeManifest = url.searchParams.get("manifest") === "true";
 
   const rawLimit = parseInt(url.searchParams.get("limit") ?? "", 10);
   const rawOffset = parseInt(url.searchParams.get("offset") ?? "0", 10);
@@ -145,8 +153,9 @@ async function handleGet(req: Request): Promise<Response> {
       chain = raw;
     }
   } catch (err) {
+    console.error("[audit-trail/export] chain read failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { ok: false, error: `chain read failed: ${err instanceof Error ? err.message : String(err)}` },
+      { ok: false, error: "audit chain temporarily unavailable" },
       { status: 500 },
     );
   }
@@ -170,18 +179,47 @@ async function handleGet(req: Request): Promise<Response> {
 
   const exportedAt = new Date().toISOString();
   const dateStamp = exportedAt.slice(0, 10);
-  const filename = `hawkeye-audit-${dateStamp}.${format}`;
-  const disposition = `attachment; filename="${filename}"`;
+
+  function buildManifestHeaders(content: string): Record<string, string> {
+    if (!includeManifest) return {};
+    const hash = createHash("sha256").update(content).digest("hex");
+    return { "x-export-sha256": hash };
+  }
 
   if (format === "csv") {
     const csv = entriesToCsv(page);
-    return new Response(csv, {
+    // Append manifest as a trailing comment line when requested.
+    const exportContent = includeManifest
+      ? csv + "\n# sha256:" + createHash("sha256").update(csv).digest("hex")
+      : csv;
+    const filename = `hawkeye-audit-${dateStamp}.csv`;
+    return new Response(exportContent, {
       status: 200,
       headers: {
         "content-type": "text/csv; charset=utf-8",
-        "content-disposition": disposition,
+        "content-disposition": `attachment; filename="${filename}"`,
         "x-total-count": String(total),
         "x-truncated": String(truncated),
+        ...buildManifestHeaders(csv),
+      },
+    });
+  }
+
+  if (format === "jsonl") {
+    const jsonl = page.map((e) => JSON.stringify(e)).join("\n");
+    // Append manifest as a trailing JSONL record when requested.
+    const exportContent = includeManifest
+      ? jsonl + "\n" + JSON.stringify({ _manifest: true, sha256: createHash("sha256").update(jsonl).digest("hex"), exportedAt })
+      : jsonl;
+    const filename = `hawkeye-audit-${dateStamp}.jsonl`;
+    return new Response(exportContent, {
+      status: 200,
+      headers: {
+        "content-type": "application/x-ndjson",
+        "content-disposition": `attachment; filename="${filename}"`,
+        "x-total-count": String(total),
+        "x-truncated": String(truncated),
+        ...buildManifestHeaders(jsonl),
       },
     });
   }
@@ -201,13 +239,15 @@ async function handleGet(req: Request): Promise<Response> {
     exportedAt,
   });
 
+  const filename = `hawkeye-audit-${dateStamp}.json`;
   return new Response(body, {
     status: 200,
     headers: {
       "content-type": "application/json",
-      "content-disposition": disposition,
+      "content-disposition": `attachment; filename="${filename}"`,
       "x-total-count": String(total),
       "x-truncated": String(truncated),
+      ...buildManifestHeaders(body),
     },
   });
 }

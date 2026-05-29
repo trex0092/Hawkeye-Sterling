@@ -2,7 +2,7 @@
 // scrypt options: N=65536 (2^16), r=8, p=1 — ~200ms on modern hardware, GPU-resistant.
 // Session signing:  HMAC-SHA256 over base64url(payload) using SESSION_SECRET env var
 
-import { scryptSync, timingSafeEqual, createHmac, createHash, randomBytes } from "node:crypto";
+import { scryptSync, timingSafeEqual, createHmac, randomBytes } from "node:crypto";
 
 const SESSION_COOKIE = "hs_session";
 const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
@@ -44,6 +44,11 @@ interface SessionPayload {
   /** 16-char SHA-256 prefix of login IP + User-Agent — used to detect
    *  mid-session IP changes that may indicate session token theft. */
   fpHash?: string;
+  /** Tenant identifier for multi-tenant deployments. Absent on sessions
+   *  issued before this field was added; treat as "default" for single-tenant
+   *  compatibility. Enables audit-chain and blob-key isolation per tenant
+   *  without an extra API-key record lookup on each request. */
+  tenantId?: string;
 }
 
 function getSecret(): string {
@@ -66,11 +71,19 @@ function getSecret(): string {
   );
 }
 
-export function issueSession(userId: string, username: string, role: string, pwVersion = 0, fpHash = ""): string {
+export function issueSession(
+  userId: string,
+  username: string,
+  role: string,
+  pwVersion = 0,
+  fpHash = "",
+  tenantId?: string,
+): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: SessionPayload = {
     userId, username, role, iat: now, exp: now + SESSION_TTL_S, pwv: pwVersion,
     ...(fpHash ? { fpHash } : {}),
+    ...(tenantId && tenantId !== "default" ? { tenantId } : {}),
   };
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
@@ -81,8 +94,13 @@ export function issueSession(userId: string, username: string, role: string, pwV
  *  Embeds in the session token at login; compared on each /api/auth/me
  *  call to detect possible session token theft via IP change. */
 export function computeRequestFingerprint(ip: string, userAgent: string): string {
-  return createHash("sha256").update(`${ip}:${userAgent}`).digest("hex").slice(0, 16);
+  return createHmac("sha256", getSecret())
+    .update(`${ip}:${userAgent}`)
+    .digest("hex")
+    .slice(0, 16);
 }
+
+const SESSION_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 
 export function verifySession(token: string): SessionPayload | null {
   const dot = token.lastIndexOf(".");
@@ -90,16 +108,11 @@ export function verifySession(token: string): SessionPayload | null {
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
   const expected = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
-  // constant-time compare — pad to avoid length-based timing side-channel
-  const expBuf = Buffer.from(expected, "utf8");
-  const sigRaw = Buffer.from(sig, "utf8");
-  const sigBuf = sigRaw.length === expBuf.length
-    ? sigRaw
-    : Buffer.concat([
-        new Uint8Array(sigRaw.buffer, sigRaw.byteOffset, Math.min(sigRaw.length, expBuf.length)),
-        new Uint8Array(Math.max(0, expBuf.length - sigRaw.length)),
-      ]);
-  if (!timingSafeEqual(new Uint8Array(expBuf), new Uint8Array(sigBuf)) || sigRaw.length !== expBuf.length) return null;
+  // Normalise both values to fixed-length HMAC digests before constant-time
+  // comparison — eliminates the padded-buffer length oracle entirely.
+  const ha = createHmac("sha256", SESSION_COMPARE_KEY).update(expected).digest();
+  const hb = createHmac("sha256", SESSION_COMPARE_KEY).update(sig).digest();
+  if (!timingSafeEqual(ha, hb)) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as SessionPayload;
     // RFC 7519 §4.1.4: token is valid only if exp is strictly after now.
@@ -108,6 +121,11 @@ export function verifySession(token: string): SessionPayload | null {
   } catch {
     return null;
   }
+}
+
+/** Extract tenantId from a verified session payload; returns "default" when absent. */
+export function tenantIdFromSession(payload: ReturnType<typeof verifySession>): string {
+  return (payload as SessionPayload | null)?.tenantId ?? "default";
 }
 
 export { SESSION_COOKIE, SESSION_TTL_S };

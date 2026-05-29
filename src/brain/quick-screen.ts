@@ -5,6 +5,13 @@
 // callers own candidate acquisition (DB, file, API) and pass the rows in.
 
 import { matchEnsemble, type MatchingMethod } from './matching.js';
+import {
+  enrichHitWithDisambiguation,
+  clusterLookalikes,
+  type ConfidenceTier,
+  type DisambiguationFactors,
+  type ClusterSummary,
+} from './sanctions-disambiguation.js';
 
 export type EntityType = 'individual' | 'organisation' | 'vessel' | 'aircraft' | 'other';
 
@@ -80,6 +87,32 @@ export interface QuickScreenHit {
   // Derived from discriminator signals (DOB, nationality, ID, phonetics).
   disambiguationConfidence?: number;
   recommendation?: 'match' | 'review' | 'dismiss';
+  // ── Multi-factor disambiguation (sanctions-disambiguation.ts) ──────────────
+  // Multi-factor score (0-100): explicit additive point values for each
+  // confirming / contradicting demographic signal. Distinct from the
+  // legacy `disambiguationConfidence` (phonetic + ID-only) — this score
+  // also incorporates alias overlap, entity type, and gender.
+  disambiguationScore?: number;
+  // Actionable confidence tier derived from disambiguationScore:
+  //   "confirmed"  (85-100) — definitive match, recommend freeze
+  //   "probable"   (65-84)  — MLRO manual review, 48h hold
+  //   "possible"   (45-64)  — enhanced due diligence required
+  //   "unlikely"   (0-44)   — log and clear, no adverse action
+  confidenceTier?: ConfidenceTier;
+  // Structured factor breakdown for audit transparency.
+  disambiguationFactors?: DisambiguationFactors;
+  // Set to "likely_false_positive" when name similarity > 0.85 AND
+  // contradiction score > 50 (different DOB + different nationality).
+  falsePositiveFlag?: 'likely_false_positive';
+  // Human-readable explanation of the FP determination.
+  falsePositiveExplanation?: string;
+  // SDN programme codes from OFAC hits (e.g. "UKRAINE-EO13685", "IRAN", "DPRK").
+  // Helps analysts assess whether the hit is relevant to their customer.
+  sdnPrograms?: string[];
+  // Look-alike clustering (populated by clusterLookalikes post-processing).
+  // Hits with the same clusterLabel are near-duplicate listings.
+  clusterLabel?: string;
+  clusterSize?: number;
   // Entity-type transparency — always present so callers can distinguish
   // a direct personal designation from an entity-association hit.
   candidateEntityType?: EntityType;
@@ -525,6 +558,19 @@ export function quickScreen(
         }
         hit.scores = scoreMap;
       }
+      // ── Multi-factor disambiguation enrichment ────────────────────────────
+      // Compute the explicit additive disambiguation score (0-100), confidence
+      // tier, factor breakdown, false-positive flag, and SDN program context.
+      // Runs after all score adjustments are finalised so baseScore is stable.
+      const enriched = enrichHitWithDisambiguation(hit, subject, cand);
+      Object.assign(hit, {
+        disambiguationScore: enriched.disambiguationScore,
+        confidenceTier: enriched.confidenceTier,
+        disambiguationFactors: enriched.disambiguationFactors,
+        ...(enriched.falsePositiveFlag ? { falsePositiveFlag: enriched.falsePositiveFlag } : {}),
+        ...(enriched.falsePositiveExplanation ? { falsePositiveExplanation: enriched.falsePositiveExplanation } : {}),
+        ...(enriched.sdnPrograms ? { sdnPrograms: enriched.sdnPrograms } : {}),
+      });
       hits.push(hit);
     }
   }
@@ -618,9 +664,28 @@ export function quickScreen(
     }
   }
 
+  // ── Look-alike name clustering ─────────────────────────────────────────────
+  // Group hits whose candidateNames are >= 95% similar (trigram Jaccard) so
+  // the analyst sees "N variants of the same listing" rather than confusing
+  // near-duplicates. Only runs when there are >= 2 hits.
+  let finalHits: QuickScreenHit[] = clipped;
+  let lookalikeClusters: ClusterSummary[] | undefined;
+  if (clipped.length >= 2) {
+    const clustered = clusterLookalikes(clipped);
+    finalHits = clustered.hits as QuickScreenHit[];
+    if (clustered.clusters.length > 0) {
+      lookalikeClusters = clustered.clusters;
+    }
+  }
+
+  // Count hits auto-flagged as likely false positives.
+  const likelyFalsePositiveCount = finalHits.filter(
+    (h) => (h as QuickScreenHit & { falsePositiveFlag?: string }).falsePositiveFlag === 'likely_false_positive',
+  ).length;
+
   return {
     subject,
-    hits: clipped,
+    hits: finalHits,
     topScore,
     severity,
     listsChecked: listsSeen.size,
@@ -632,6 +697,8 @@ export function quickScreen(
     ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
     ...(confidenceScore !== undefined ? { confidenceScore } : {}),
     ...(clipped.length > 0 ? { listBreakdown } : {}),
+    ...(lookalikeClusters ? { lookalikeClusters } : {}),
+    ...(likelyFalsePositiveCount > 0 ? { likelyFalsePositiveCount } : {}),
   };
 }
 

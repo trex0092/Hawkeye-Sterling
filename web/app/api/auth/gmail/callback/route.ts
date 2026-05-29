@@ -58,6 +58,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (Date.now() > stored.expiresAt) {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_expired`);
     }
+    // Consume the nonce — if the delete fails, abort to prevent replay.
+    await del(OAUTH_STATE_KEY);
   } catch {
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_check_failed`);
   }
@@ -87,7 +89,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=${reason}`);
     }
   } catch (err) {
-    const reason = encodeURIComponent(err instanceof Error ? err.message : "token_exchange_failed");
+    console.error("[gmail/callback] token exchange failed:", err);
+    const reason = encodeURIComponent("token_exchange_failed");
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=${reason}`);
   }
 

@@ -10,6 +10,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { enforce } from "@/lib/server/enforce";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ async function triggerRefresh(): Promise<void> {
     const result = await mod.runIngestionAll("admin-ui-trigger");
     outcome = { ok: true, result };
   } catch (err) {
-    outcome = { ok: false, message: err instanceof Error ? err.message : String(err) };
+    outcome = { ok: false, message: caughtErrorMessage(err, "Ingestion failed") };
   }
   // Redirects are at the TOP LEVEL — outside any try/catch.
   if (!outcome.ok) {

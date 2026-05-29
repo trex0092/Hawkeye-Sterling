@@ -291,6 +291,8 @@ export async function refreshOpenSanctionsBlob(): Promise<RefreshResult> {
   };
   if (siteID) storeOpts.siteID = siteID;
   if (token) storeOpts.token = token;
+  // E-05: write key must align with the reader in web/lib/intelligence/openSanctions.ts.
+  // Store: "hawkeye-opensanctions", key: "sanctions.json", metadata.writtenAt used for freshness check.
   const store = blobsMod.getStore(storeOpts);
   await store.set("sanctions.json", JSON.stringify(consolidated), {
     metadata: {

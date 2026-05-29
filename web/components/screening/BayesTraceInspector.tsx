@@ -37,10 +37,10 @@ function fmt(n: number | undefined, digits = 3): string {
 
 function cls(weight: number | undefined): string {
   if (weight === undefined) return "";
-  if (weight >= 0.85) return "bg-emerald-50";
-  if (weight >= 0.5) return "bg-amber-50";
-  if (weight >= 0.2) return "bg-orange-50";
-  return "bg-red-50";
+  if (weight >= 0.85) return "bg-emerald-950/20";
+  if (weight >= 0.5) return "bg-amber-950/20";
+  if (weight >= 0.2) return "bg-orange-950/20";
+  return "bg-red-950/20";
 }
 
 export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
@@ -48,10 +48,10 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
   if (!trace || trace.steps.length === 0) return null;
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+    <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500">Bayesian trace</div>
+          <div className="text-xs uppercase tracking-wide text-ink-3">Bayesian trace</div>
           <div className="text-sm">
             <span className="opacity-60">prior </span>
             <span className="font-mono tabular-nums">{fmt(trace.prior)}</span>
@@ -63,7 +63,7 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
         <button
           type="button"
           onClick={() => setExpanded((x) => !x)}
-          className="text-xs underline text-zinc-600 hover:text-zinc-900"
+          className="text-xs underline text-ink-2 hover:text-ink-0"
         >
           {expanded ? "hide steps" : "show steps"}
         </button>
@@ -72,8 +72,8 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
       {expanded && (
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[620px] border-collapse text-[11px]">
-            <thead className="text-zinc-500">
-              <tr className="border-b border-zinc-200">
+            <thead className="text-ink-3">
+              <tr className="border-b border-hair-2">
                 <th className="px-2 py-1 text-left">#</th>
                 <th className="px-2 py-1 text-left">evidence</th>
                 <th className="px-2 py-1 text-right">rawLR</th>
@@ -86,9 +86,9 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
             </thead>
             <tbody>
               {trace.steps.map((s, i) => (
-                <tr key={s.evidenceId} className={`border-b border-zinc-100 ${cls(s.effectiveWeight)}`}>
-                  <td className="px-2 py-1 text-zinc-500 tabular-nums">{i + 1}</td>
-                  <td className="px-2 py-1 font-mono text-[10px] text-zinc-700">{s.evidenceId}</td>
+                <tr key={s.evidenceId} className={`border-b border-hair ${cls(s.effectiveWeight)}`}>
+                  <td className="px-2 py-1 text-ink-3 tabular-nums">{i + 1}</td>
+                  <td className="px-2 py-1 font-mono text-[10px] text-ink-1">{s.evidenceId}</td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums">{fmt(s.rawLR, 2)}</td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums">{fmt(s.effectiveWeight, 2)}</td>
                   <td className="px-2 py-1 text-right font-mono tabular-nums font-semibold">{fmt(s.weightedLR ?? s.lr, 2)}</td>
@@ -99,7 +99,7 @@ export function BayesTraceInspector({ trace }: Props): JSX.Element | null {
               ))}
             </tbody>
           </table>
-          <div className="mt-1 text-[10px] text-zinc-400">
+          <div className="mt-1 text-[10px] text-ink-3">
             Row tint = evidence quality (green ≥ 0.85, amber ≥ 0.5, orange ≥ 0.2, red &lt; 0.2). weightedLR = rawLR ^ weight (Charter P6).
           </div>
         </div>

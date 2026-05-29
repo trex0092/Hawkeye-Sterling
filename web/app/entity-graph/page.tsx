@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import type { EntityGraphResult } from "@/app/api/entity-graph/route";
 import type { LeiLookupResult } from "@/app/api/lei-lookup/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Shared style constants ─────────────────────────────────────────────────
 
@@ -348,7 +349,7 @@ function LeiPanel({ record }: { record: LeiLookupResult }) {
               <span className="text-10 uppercase tracking-wide-2 bg-brand-dim text-brand rounded px-1.5 py-px font-mono">
                 Direct Parent
               </span>
-              <span className="font-medium text-ink-0">{record.directParent.legalName}</span>
+              <span className="font-medium text-ink-0">{record.directParent.name}</span>
               <span className="font-mono text-10 text-ink-3">{record.directParent.lei}</span>
             </div>
           )}
@@ -357,7 +358,7 @@ function LeiPanel({ record }: { record: LeiLookupResult }) {
               <span className="text-10 uppercase tracking-wide-2 bg-amber-dim text-amber rounded px-1.5 py-px font-mono">
                 Ultimate Parent
               </span>
-              <span className="font-medium text-ink-0">{record.ultimateParent.legalName}</span>
+              <span className="font-medium text-ink-0">{record.ultimateParent.name}</span>
               <span className="font-mono text-10 text-ink-3">{record.ultimateParent.lei}</span>
             </div>
           )}
@@ -404,17 +405,17 @@ export default function EntityGraphPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "Entity graph"));
       }
       const data = await res.json().catch(() => ({})) as EntityGraphResult & { error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) {
-        setError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
+        setError((data as unknown as { error?: string }).error ?? apiErrorMessage(res.status, "Entity graph"));
       } else {
         setResult(data);
       }
     } catch (err) {
-      if (mountedRef.current) setError(err instanceof Error ? err.message : "Request failed — check network connection");
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Request failed — check network connection"));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -435,17 +436,17 @@ export default function EntityGraphPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Request failed (HTTP ${res.status}) — please retry`);
+        throw new Error(body.error ?? apiErrorMessage(res.status, "LEI lookup"));
       }
       const data = await res.json().catch(() => ({})) as LeiLookupResult & { error?: string };
       if (!mountedRef.current) return;
       if (!data.ok) {
-        setLeiError((data as unknown as { error?: string }).error ?? `HTTP ${res.status}`);
+        setLeiError((data as unknown as { error?: string }).error ?? apiErrorMessage(res.status, "LEI lookup"));
       } else {
         setLeiResult(data);
       }
     } catch (err) {
-      if (mountedRef.current) setLeiError(err instanceof Error ? err.message : "Request failed");
+      if (mountedRef.current) setLeiError(caughtErrorMessage(err, "Request failed"));
     } finally {
       if (mountedRef.current) setLeiLoading(false);
     }

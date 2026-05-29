@@ -9,12 +9,16 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import type { TFSAlert } from "@/lib/data/tfs-alert-store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
-const STORE_KEY = "hawkeye-tfs-alerts/v1.json";
+function tfsAlertsKey(tenantId: string): string {
+  return `hawkeye-tfs-alerts/v1/${tenantId}.json`;
+}
 
-async function loadServerAlerts(): Promise<TFSAlert[]> {
+async function loadServerAlerts(tenantId: string): Promise<TFSAlert[]> {
   try {
-    const raw = await getJson<{ alerts: TFSAlert[] }>(STORE_KEY);
+    const raw = await getJson<{ alerts: TFSAlert[] }>(tfsAlertsKey(tenantId));
     return raw?.alerts ?? [];
   } catch (err) {
     console.warn("[tfs-alerts] failed to load server alerts — returning empty:", err instanceof Error ? err.message : String(err));
@@ -46,7 +50,7 @@ function mergeAlerts(server: TFSAlert[], client: TFSAlert[]): TFSAlert[] {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const alerts = await loadServerAlerts();
+  const alerts = await loadServerAlerts(tenantIdFromGate(gate));
   return NextResponse.json({ ok: true, alerts }, { headers: gate.headers });
 }
 
@@ -56,9 +60,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const body = (await req.json()) as { alerts?: TFSAlert[] };
     const clientAlerts = Array.isArray(body.alerts) ? body.alerts : [];
-    const serverAlerts = await loadServerAlerts();
+    const tenant = tenantIdFromGate(gate);
+    const serverAlerts = await loadServerAlerts(tenant);
     const merged = mergeAlerts(serverAlerts, clientAlerts);
-    await setJson(STORE_KEY, { alerts: merged });
+    await setJson(tfsAlertsKey(tenant), { alerts: merged });
+
+    void writeAuditChainEntry(
+      { event: "tfs_alerts.merged", actor: gate.keyId, meta: { count: merged.length } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json({ ok: true, alerts: merged }, { headers: gate.headers });
   } catch (err) {
     console.error("[tfs-alerts] POST failed:", err);

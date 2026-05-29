@@ -25,6 +25,19 @@ export async function POST(req: Request) {
   if (!body?.subject || !body?.jurisdiction) {
     return NextResponse.json({ ok: false, error: "subject and jurisdiction are required" }, { status: 400, headers: gate.headers });
   }
+  if (!body?.narrative || typeof body.narrative !== "string") {
+    return NextResponse.json({ ok: false, error: "narrative is required" }, { status: 400, headers: gate.headers });
+  }
+  if (typeof body.composite !== "number" || body.composite < 0 || body.composite > 100) {
+    return NextResponse.json({ ok: false, error: "composite must be a number between 0 and 100" }, { status: 400, headers: gate.headers });
+  }
+  if (!Array.isArray(body.transactions)) {
+    return NextResponse.json({ ok: false, error: "transactions must be an array" }, { status: 400, headers: gate.headers });
+  }
+
+  if (!body?.subject || !body?.jurisdiction) {
+    return NextResponse.json({ ok: false, error: "subject and jurisdiction are required" }, { status: 400, headers: gate.headers });
+  }
   if (!Array.isArray(body.transactions)) {
     return NextResponse.json({ ok: false, error: "transactions must be an array" }, { status: 400, headers: gate.headers });
   }
@@ -57,10 +70,10 @@ export async function POST(req: Request) {
   };
 
   const details = [
-    { k: "SUBJECT",              v: body.subject },
-    { k: "JURISDICTION",         v: body.jurisdiction.toUpperCase() },
+    { k: "SUBJECT",              v: escHtml(body.subject) },
+    { k: "JURISDICTION",         v: escHtml(body.jurisdiction.toUpperCase()) },
     { k: "COMPOSITE RISK SCORE", v: `${body.composite} / 100` },
-    { k: "DATE PREPARED",        v: dateStr },
+    { k: "DATE PREPARED",        v: escHtml(dateStr) },
     { k: "REPORTING OFFICER",    v: "L. Fernanda — CO/MLRO" },
   ];
 

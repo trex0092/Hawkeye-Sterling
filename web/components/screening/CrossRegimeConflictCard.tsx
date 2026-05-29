@@ -44,18 +44,18 @@ interface Props {
 }
 
 const HIT_STYLES: Record<RegimeStatus["hit"], string> = {
-  designated: "bg-red-100 text-red-800 border-red-300",
-  partial_match: "bg-amber-100 text-amber-800 border-amber-300",
-  unknown: "bg-zinc-100 text-zinc-700 border-zinc-300",
-  delisted: "bg-blue-100 text-blue-800 border-blue-300",
-  not_designated: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  designated: "bg-red-950/30 text-red-300 border-red-500/40",
+  partial_match: "bg-amber-950/30 text-amber-300 border-amber-500/40",
+  unknown: "bg-zinc-800/40 text-zinc-300 border-zinc-600/40",
+  delisted: "bg-sky-950/30 text-sky-300 border-sky-500/40",
+  not_designated: "bg-emerald-950/30 text-emerald-300 border-emerald-500/40",
 };
 
 const ACTION_STYLES: Record<CrossRegimeConflictReport["recommendedAction"], string> = {
   freeze: "bg-red-600 text-white",
   block: "bg-red-500 text-white",
   escalate: "bg-orange-500 text-white",
-  review: "bg-amber-400 text-zinc-900",
+  review: "bg-amber-500/30 text-amber-300",
   proceed_with_scope_declaration: "bg-emerald-500 text-white",
 };
 
@@ -69,7 +69,7 @@ export function CrossRegimeConflictCard({ data }: Props): JSX.Element | null {
   }
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+    <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs uppercase tracking-wide text-zinc-500">Cross-regime conflict</div>
         <span
@@ -83,22 +83,22 @@ export function CrossRegimeConflictCard({ data }: Props): JSX.Element | null {
 
       <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
         {data.unanimousDesignated && (
-          <span className="rounded border border-red-300 bg-red-100 px-1.5 py-0.5 text-red-700">
+          <span className="rounded border border-red-500/40 bg-red-950/30 px-1.5 py-0.5 text-red-300">
             ⚠ unanimous designation — freeze within 24h
           </span>
         )}
         {data.split && (
-          <span className="rounded border border-orange-300 bg-orange-100 px-1.5 py-0.5 text-orange-700">
+          <span className="rounded border border-orange-500/40 bg-orange-950/30 px-1.5 py-0.5 text-orange-300">
             ⚖ regimes split — most-restrictive rule applies
           </span>
         )}
         {data.partialMatchRegimes.length > 0 && (
-          <span className="rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-amber-700">
+          <span className="rounded border border-amber-500/40 bg-amber-950/30 px-1.5 py-0.5 text-amber-300">
             partial: {data.partialMatchRegimes.join(", ")}
           </span>
         )}
         {data.staleRegimes.length > 0 && (
-          <span className="rounded border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-zinc-600">
+          <span className="rounded border border-zinc-600/40 bg-zinc-800/40 px-1.5 py-0.5 text-zinc-300">
             stale snapshot: {data.staleRegimes.join(", ")}
           </span>
         )}
@@ -120,7 +120,7 @@ export function CrossRegimeConflictCard({ data }: Props): JSX.Element | null {
       )}
 
       {data.rationale.length > 0 && (
-        <ul className="mt-2 list-disc pl-4 text-xs text-zinc-700">
+        <ul className="mt-2 list-disc pl-4 text-xs text-ink-2">
           {data.rationale.map((r, i) => (
             <li key={i}>{r}</li>
           ))}

@@ -60,7 +60,7 @@ async function classifyTransaction(
     .filter(Boolean)
     .join("\n");
 
-  const client = getAnthropicClient(apiKey, 55_000);
+  const client = getAnthropicClient(apiKey, 4_500);
   const res = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 700,
@@ -240,10 +240,11 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
       return null;
     })) as typeof payload;
   } catch (err) {
+    console.error("[tm-report] asana request failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({
       ok: true,
       asanaSkipped: true,
-      asanaNote: `Asana request failed: ${err instanceof Error ? err.message : String(err)}. Report generated successfully.`,
+      asanaNote: "Asana request failed — report generated successfully.",
       reportText: lines.join("\n"),
     });
   }

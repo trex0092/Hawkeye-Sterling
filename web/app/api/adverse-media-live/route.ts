@@ -13,8 +13,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
-import { gdeltKeywordOr } from "@/lib/intelligence/amlKeywords";
-import { fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
+import { fetchGdeltCached, queryGdeltGkg } from "@/lib/intelligence/gdelt-cache";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 45;
@@ -28,7 +27,7 @@ export interface AdverseMediaLiveResult {
   subject: string;
   totalHits: number;
   riskScore: number; // 0-100
-  riskRating: "critical" | "high" | "medium" | "low" | "clear";
+  riskRating: "critical" | "high" | "medium" | "low" | "clear" | "unknown";
   articles: Array<{
     title: string;
     source: string;
@@ -140,9 +139,15 @@ function inferCategories(title: string, domain: string): string[] {
 // any other call site simultaneously. The cache also serves stale results on
 // upstream failure (tagged stale=true), which previously surfaced as a hard
 // "service unavailable" response here.
+//
+// We no longer pass a customQuery override. Without it, fetchGdeltCached() runs
+// the full parallel multi-query strategy from gdelt-cache.ts: 11 simultaneous
+// GDELT queries covering English risk categories PLUS native-script multilingual
+// queries (Arabic, Russian/Cyrillic, Spanish/Portuguese, CJK). This gives ~5×
+// the article coverage of the old single-English-query approach at zero added
+// latency — all queries fire in parallel via Promise.allSettled.
 async function queryGdelt(subjectName: string): Promise<{ articles: GdeltArticle[]; serviceError: boolean; stale?: boolean }> {
-  const customQuery = `"${subjectName}" AND (${gdeltKeywordOr()})`;
-  const cached = await fetchGdeltCached(subjectName, { query: customQuery });
+  const cached = await fetchGdeltCached(subjectName);
   return {
     articles: cached.articles,
     serviceError: cached.serviceError,
@@ -203,7 +208,7 @@ async function enrichWithClaude(
     return { summary: buildFallbackSummary(subjectName, articles, riskScore, riskRating), articlesWithCategories: articles, enriched: false };
   }
 
-  const client = getAnthropicClient(apiKey, 40_000);
+  const client = getAnthropicClient(apiKey, 4_500);
 
   const articleSummaries = articles
     .slice(0, 8)
@@ -364,8 +369,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Fan-out GDELT queries — each name variant wrapped independently so a
   // timeout on one variant cannot abort the others. Each variant routes
   // through the GDELT cache layer (memory → Redis → live).
+  // GKG query runs in parallel with the DOC fan-out — independent timeout (5s),
+  // failure is non-blocking.
   const rawArticles: GdeltArticle[] = [];
-  const gdeltSettled = await Promise.allSettled(variants.map((v) => queryGdelt(v)));
+  const [gdeltSettled, gkgResult] = await Promise.all([
+    Promise.allSettled(variants.map((v) => queryGdelt(v))),
+    queryGdeltGkg(subjectName).catch(() => null),
+  ]);
 
   const seenGdeltUrls = new Set<string>();
   let anyGdeltSucceeded = false;
@@ -481,8 +491,20 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   if (articles.length === 0) {
+    // When GDELT could not complete (timeout/unavailable), returning "clear" is
+    // a false-clear: the search did not succeed so we cannot assert no findings.
+    // Use "unknown" to force MLRO review. Only return "clear" when all sources
+    // succeeded and genuinely found nothing (FATF R.10 / FDL 10/2025 Art.19).
+    const emptyRiskRating: AdverseMediaLiveResult["riskRating"] =
+      gdeltStatus === "ok" ? "clear" : "unknown";
+    const emptySummary =
+      gdeltStatus === "ok"
+        ? FALLBACK.summary
+        : `Adverse media search for "${subjectName}" could not be completed — GDELT was ${gdeltStatus === "timeout" ? "unavailable" : "returning stale data"} at screening time. Cannot confirm clear status. Manual MLRO review required per FDL 10/2025 Art.19.`;
     return NextResponse.json({
       ...FALLBACK,
+      riskRating: emptyRiskRating,
+      summary: emptySummary,
       subject: subjectName,
       gdeltStatus,
       ...(gdeltStatus !== "ok" ? {
@@ -491,8 +513,8 @@ export async function POST(req: Request): Promise<NextResponse> {
             results: [],
             status: gdeltStatus,
             message: gdeltStatus === "timeout"
-              ? "GDELT unavailable at screening time — results may be incomplete"
-              : `GDELT cache stale at screening time — results may not reflect recent news`,
+              ? "GDELT unavailable at screening time — results may be incomplete. Risk rating set to UNKNOWN — manual review required."
+              : `GDELT cache stale at screening time — results may not reflect recent news. Risk rating set to UNKNOWN.`,
           },
         },
       } : {}),
@@ -519,6 +541,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
   );
 
+  // GKG metadata — attach crime themes and tone flag if present
+  const metadata: Record<string, unknown> = {};
+  if (gkgResult?.crimeThemes.length) {
+    metadata.gdeltGkgThemes = gkgResult.crimeThemes;
+    // If tone is very negative (< -5) and crime themes present, escalate to high risk
+    if (gkgResult.averageTone < -5) {
+      metadata.gdeltGkgToneFlag = "negative";
+    }
+  }
+
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[adverse-media-live] slow response latencyMs=${latencyMs}`);
   const result = {
@@ -532,6 +564,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
     enriched,
     gdeltStatus,
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     ...(gdeltStatus !== "ok" ? {
       adverseMedia: {
         gdelt: {

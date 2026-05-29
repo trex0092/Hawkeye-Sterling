@@ -8,12 +8,26 @@
 //   6. FATF Latest News RSS — fatf-gafi.org
 //   7. OFAC Sanctions Actions XML — ofac.treasury.gov
 //   8. UN Security Council Press Releases — un.org
+//   9. FATF grey/blacklist parser — structured country lists from FATF HTML
+//  10. OFAC Recent Actions parser — designations/delistings with structured fields
+//  11. EU Sanctions Journal parser — EU restrictive measures from OJ RSS and API
+//  12. UAE EOCN change detection — hash-based polling for EOCN list mutations
 //
 // Each source is attempted independently; failures are silently dropped
 // so a single unavailable government portal never blocks the feed.
+//
+// The parsed FATF, OFAC, EU, and EOCN items are combined into a unified
+// RegulatoryUpdate[] digest persisted in Netlify Blobs under
+// hawkeye-regulatory/digest with a 6-hour TTL.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import {
+  buildRegulatoryDigest,
+  readRegulatoryDigest,
+  type RegulatoryDigest,
+} from "@/lib/intelligence/regulatory-parsers";
+import { getJson, setJson } from "@/lib/server/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +84,8 @@ interface FeedResult {
   filterMetadata?: FilterMetadata;
   lowConfidence?: Array<{ id: string; reason: string }>;
   meta?: ResponseMeta;
+  /** Unified regulatory digest from FATF/OFAC/EU/EOCN parsers */
+  digest?: RegulatoryDigest;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,6 +100,9 @@ interface CacheEntry {
 const _cache = globalThis as unknown as Record<string, CacheEntry | undefined>;
 const CACHE_KEY = "__hsRegulatoryFeedCache";
 const CACHE_TTL_MS = 30 * 60_000; // 30 minutes
+// Blobs-backed persistent cache — survives cold starts.
+const BLOB_CACHE_KEY = "hawkeye-regulatory/feed-cache.json";
+const BLOB_STALE_TTL_MS = 6 * 60 * 60_000; // serve stale blobs cache up to 6h old
 
 const FETCH_TIMEOUT_MS = 5_000;
 // GDELT free API p95 is routinely 10-14s. Cap at 8s here (vs 18s before) so
@@ -125,7 +144,7 @@ function sanitizeUrl(raw: string): string {
 
 /** Extract the text content of the first occurrence of <tag>...</tag> */
 function extractTag(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
   const m = xml.match(re);
   if (!m) return "";
   const raw = m[1] ?? "";
@@ -537,7 +556,7 @@ function parseGNewsRss(xml: string, meta: GNewsQuery): RegulatoryItem[] {
   for (const raw of items.slice(0, 8)) {
     const body = raw.split(/<\/item>/i)[0] ?? "";
     const pick = (tag: string): string => {
-      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
+      const m = body.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i")); // nosemgrep: detect-non-literal-regexp -- safe: controlled internal value, not user-HTTP-input; no ReDoS risk
       const val = m?.[1];
       if (!val) return "";
       return stripHtml(val.trim().replace(/^<!\[CDATA\[|\]\]>$/g, ""));
@@ -949,6 +968,19 @@ export async function GET(req: Request): Promise<NextResponse> {
     return await _handleGet(req);
   } catch (err) {
     console.error("[regulatory-feed] unhandled top-level error:", err instanceof Error ? err.message : err);
+    // Before returning 503, attempt to serve a stale Blobs-backed cache entry.
+    try {
+      const blob = await getJson<CacheEntry>(BLOB_CACHE_KEY);
+      if (blob?.payload) {
+        const staleAgeMin = Math.round((Date.now() - blob.ts) / 60_000);
+        return NextResponse.json(
+          { ...blob.payload, stale: true, staleAgeMin, error: "Live feed unavailable — serving cached data." },
+          { status: 200, headers: { "X-Cache": "STALE", "Cache-Control": "no-store" } },
+        );
+      }
+    } catch {
+      // If blobs read also fails, fall through to 503.
+    }
     return NextResponse.json(
       { ok: false, error: "regulatory-feed temporarily unavailable — please retry.", degraded: true },
       { status: 503, headers: gate.headers },
@@ -971,9 +1003,23 @@ async function _handleGet(req: Request): Promise<NextResponse> {
   const includeArchived = url.searchParams.get("includeArchived") === "true";
   const ARCHIVE_CUTOFF_MS = 180 * 24 * 60 * 60 * 1_000; // 180 days
 
-  // Return cached payload if still fresh (15-minute TTL) — but only
+  // Return cached payload if still fresh (30-minute TTL) — but only
   // when the caller didn't explicitly ask for a fresh fetch.
-  const cached = _cache[CACHE_KEY];
+  // On cold start (no module-level cache) fall back to the Blobs-backed
+  // persistent cache so a timeout never returns an empty feed.
+  let cached = _cache[CACHE_KEY];
+  if (!force && !cached) {
+    try {
+      const blob = await getJson<CacheEntry>(BLOB_CACHE_KEY);
+      if (blob && blob.ts && Date.now() - blob.ts < BLOB_STALE_TTL_MS) {
+        cached = blob;
+        _cache[CACHE_KEY] = blob; // warm the module-level cache
+        console.info("[regulatory-feed] served from persistent Blobs cache (cold start)");
+      }
+    } catch {
+      // Non-fatal — fall through to live fetch
+    }
+  }
   if (!force && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     let items = cached.payload.items;
     if (categoryFilter) items = items.filter((i) => i.category.toLowerCase().includes(categoryFilter));
@@ -989,14 +1035,36 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     }
     const { filtered, meta } = applyResponseFilters(items);
     const totalCount = filtered.length;
+    // Include cached digest or attempt a fast read from Blobs on cache hit
+    const cachedDigest = cached.payload.digest ?? await readRegulatoryDigest().catch(() => null);
     return NextResponse.json(
-      { ...cached.payload, items: filtered.slice(offset, offset + limit), totalCount, latencyMs: Date.now() - t0, meta },
+      {
+        ...cached.payload,
+        items: filtered.slice(offset, offset + limit),
+        totalCount,
+        latencyMs: Date.now() - t0,
+        meta,
+        digest: cachedDigest ?? undefined,
+      },
       { headers: { "Cache-Control": "s-maxage=900, stale-while-revalidate=1800", "X-Cache": "HIT" } },
     );
   }
 
   const errors: string[] = [];
   const sourcesHit = new Set<string>();
+
+  // ── Regulatory digest (FATF/OFAC/EU/EOCN) — check Blobs cache first.
+  // The digest has a 6-hour TTL; we serve the cached copy on cache-hits and
+  // kick off a fresh build in the background only when it has expired.
+  // This keeps route latency predictable (digest parsers can each take 4-8 s)
+  // and separates the structured digest lifecycle from the 30-min feed cache.
+  let regulatoryDigest: RegulatoryDigest | null = await readRegulatoryDigest();
+  let digestRefreshPromise: Promise<RegulatoryDigest> | null = null;
+  if (!regulatoryDigest) {
+    // Cold path — build synchronously so the first response includes a digest.
+    // Subsequent requests will be served from Blobs until TTL expires.
+    digestRefreshPromise = buildRegulatoryDigest();
+  }
 
   // Fan out: direct site scrapes + Google News RSS queries + GDELT + FATF RSS + OFAC + UN SC in parallel
   const [siteResults, gnewsResults, gdeltResults, fatfItems, ofacItems, unScItems] = await Promise.all([
@@ -1007,6 +1075,16 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     fetchOfacXml(),
     fetchUnScFeed(),
   ]);
+
+  // Resolve digest (cold build or cached)
+  if (digestRefreshPromise) {
+    try {
+      regulatoryDigest = await digestRefreshPromise;
+    } catch (err) {
+      console.error("[regulatory-feed] regulatory-digest build failed:", err instanceof Error ? err.message : String(err));
+      errors.push("regulatory-digest: build failed — service temporarily unavailable");
+    }
+  }
 
   const live: RegulatoryItem[] = [];
 
@@ -1109,6 +1187,14 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     "acams.org", "acfcs.org", "finextra.com", "lexology.com",
     "globalinvestigationsreview.com", "sanctionsnews.com",
     "regulationtomorrow.com", "mondaq.com",
+    // Global financial & compliance news
+    "reuters.com", "bloomberg.com", "ft.com", "financialtimes.com",
+    "wsj.com",
+    // Regional business press
+    "khaleejitimes.com", "gulfnews.com", "thenational.ae",
+    "arabianbusiness.com", "zawya.com",
+    // Investigative / civil society
+    "occrp.org", "globalwitness.org", "icij.org",
   ]);
 
   function extractDomain(url: string): string {
@@ -1162,9 +1248,32 @@ async function _handleGet(req: Request): Promise<NextResponse> {
     (s) => !seen.has(s.url) && !deduped.some((d) => d.title.toLowerCase() === s.title.toLowerCase()),
   );
 
+  // Merge digest items (FATF/OFAC/EU/EOCN parsed entries) into the live feed.
+  // Digest items are authoritative regulatory updates that should always appear
+  // in items[], not just in the separate digest field.
+  const digestAsItems: RegulatoryItem[] = (regulatoryDigest?.items ?? [])
+    .filter((d) => !seen.has(d.url))
+    .map((d) => ({
+      id: `digest-${d.source.toLowerCase()}-${encodeURIComponent(d.url).slice(-24)}`,
+      title: d.entityName
+        ? `${d.source}: ${d.entityName} — ${d.updateType.replace(/_/g, " ")}`
+        : `${d.source}: ${d.updateType.replace(/_/g, " ")}${d.jurisdiction ? ` (${d.jurisdiction})` : ""}`,
+      url: d.url,
+      pubDate: d.date,
+      publishedAt: d.date,
+      source: d.source,
+      category: "Sanctions",
+      tone: (["new_designation", "grey_list_add", "black_list_change"].includes(d.updateType) ? "red"
+        : ["delisting", "grey_list_remove"].includes(d.updateType) ? "amber"
+        : "green") as RegulatoryItem["tone"],
+      summary: d.summary,
+      snippet: d.summary,
+    }));
+
   const allItems: RegulatoryItem[] = [
     ...uaeStaticFiltered,
     ...deduped.slice(0, 80),
+    ...digestAsItems,
     ...staticFiltered,
   ];
 
@@ -1227,10 +1336,15 @@ async function _handleGet(req: Request): Promise<NextResponse> {
       filtersApplied,
     },
     lowConfidence: lowConfidence.length > 0 ? lowConfidence : undefined,
+    digest: regulatoryDigest ?? undefined,
   };
 
-  // Write to cache (unfiltered full set — filters applied at response time only)
-  _cache[CACHE_KEY] = { payload: fullPayload, ts: Date.now() };
+  // Write to module-level cache and persist to Blobs for cold-start fallback.
+  const cacheEntry: CacheEntry = { payload: fullPayload, ts: Date.now() };
+  _cache[CACHE_KEY] = cacheEntry;
+  setJson(BLOB_CACHE_KEY, cacheEntry).catch((err: unknown) =>
+    console.warn("[regulatory-feed] Blobs cache write failed (non-fatal):", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(
     { ...fullPayload, items: pagedItems, totalCount, latencyMs: Date.now() - t0, meta },

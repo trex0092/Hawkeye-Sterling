@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { RegChangeResult, RegChange } from "@/app/api/reg-change/route";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { ImpactAssessmentResult } from "@/app/api/reg-change/impact/route";
 
 // ──────────────────────────────────────────────
@@ -120,11 +121,13 @@ function ImpactPanel({
 }) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ImpactAssessmentResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/reg-change/impact", {
         method: "POST",
@@ -133,6 +136,7 @@ function ImpactPanel({
       });
       if (!res.ok) {
         console.error(`[hawkeye] reg-change/impact HTTP ${res.status}`);
+        if (mountedRef.current) setError(apiErrorMessage(res.status, "Impact assessment"));
         return;
       }
       const d = await res.json().catch(() => ({})) as ImpactAssessmentResult;
@@ -140,6 +144,7 @@ function ImpactPanel({
       setData(d);
     } catch (err) {
       console.error("[hawkeye] reg-change/impact threw:", err);
+      if (mountedRef.current) setError(caughtErrorMessage(err, "Impact assessment failed — please try again."));
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -151,6 +156,9 @@ function ImpactPanel({
         <div className="bg-bg-panel border border-hair-2 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-15 font-semibold text-ink-0 mb-2">Deep-Dive Impact Assessment</h3>
           <p className="text-13 text-ink-1 mb-4">{regulation}</p>
+          {error && (
+            <div className="mb-3 text-12 text-red-300 bg-red-950/30 border border-red-500/40 rounded px-3 py-2">{error}</div>
+          )}
           <button
             type="button"
             onClick={load}
@@ -308,12 +316,12 @@ export default function RegChangePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ institution }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, "Regulatory change scan"));
       const d = await res.json().catch(() => ({})) as RegChangeResult;
       if (!mountedRef.current) return;
       setResult(d);
     } catch (e) {
-      if (mountedRef.current) setError(String(e));
+      if (mountedRef.current) setError(caughtErrorMessage(e));
     } finally {
       if (mountedRef.current) setLoading(false);
     }

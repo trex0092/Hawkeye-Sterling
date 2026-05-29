@@ -9,6 +9,7 @@
 // (tamper-evident retention) + Charter P9 (explicit calibration trail).
 
 import { useState, useRef, useEffect } from "react";
+import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface ReasoningChainNode {
   step: number;
@@ -35,20 +36,20 @@ interface VerdictResponse {
 }
 
 const FACULTY_BADGE: Record<string, string> = {
-  reasoning: "bg-blue-100 text-blue-800",
-  data_analysis: "bg-purple-100 text-purple-800",
-  deep_thinking: "bg-indigo-100 text-indigo-800",
-  intelligence: "bg-emerald-100 text-emerald-800",
-  smartness: "bg-amber-100 text-amber-800",
-  strong_brain: "bg-rose-100 text-rose-800",
-  inference: "bg-cyan-100 text-cyan-800",
-  argumentation: "bg-orange-100 text-orange-800",
-  introspection: "bg-zinc-100 text-zinc-700",
-  ratiocination: "bg-violet-100 text-violet-800",
-  synthesis: "bg-pink-100 text-pink-800",
-  anticipation: "bg-teal-100 text-teal-800",
-  forensic_accounting: "bg-yellow-100 text-yellow-800",
-  geopolitical_awareness: "bg-lime-100 text-lime-800",
+  reasoning: "bg-sky-950/30 text-sky-300 border border-sky-500/40",
+  data_analysis: "bg-purple-950/30 text-purple-300 border border-purple-500/40",
+  deep_thinking: "bg-indigo-950/30 text-indigo-300 border border-indigo-500/40",
+  intelligence: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
+  smartness: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
+  strong_brain: "bg-rose-950/30 text-rose-300 border border-rose-500/40",
+  inference: "bg-cyan-950/30 text-cyan-300 border border-cyan-500/40",
+  argumentation: "bg-orange-950/30 text-orange-300 border border-orange-500/40",
+  introspection: "bg-zinc-800/40 text-zinc-300 border border-zinc-600/40",
+  ratiocination: "bg-violet-950/30 text-violet-300 border border-violet-500/40",
+  synthesis: "bg-pink-950/30 text-pink-300 border border-pink-500/40",
+  anticipation: "bg-teal-950/30 text-teal-300 border border-teal-500/40",
+  forensic_accounting: "bg-yellow-950/30 text-yellow-300 border border-yellow-500/40",
+  geopolitical_awareness: "bg-lime-950/30 text-lime-300 border border-lime-500/40",
 };
 
 export function ChainReplayPanel(): JSX.Element {
@@ -74,39 +75,39 @@ export function ChainReplayPanel(): JSX.Element {
       }
       setData(json);
     } catch (err) {
-      if (mountedRef.current) setErrorText(err instanceof Error ? err.message : String(err));
+      if (mountedRef.current) setErrorText(caughtErrorMessage(err));
     } finally {
       if (mountedRef.current) setBusy(false);
     }
   }
 
   return (
-    <div className="rounded-md border border-zinc-200 bg-white p-3">
-      <div className="text-xs uppercase tracking-wide text-zinc-500">Reasoning-chain replay</div>
+    <div className="rounded-md border border-hair-2 bg-bg-panel p-3">
+      <div className="text-xs uppercase tracking-wide text-ink-3">Reasoning-chain replay</div>
       <div className="mt-2 flex gap-2">
         <input
           type="text"
           value={caseId}
           onChange={(e) => setCaseId(e.target.value)}
           placeholder="Case ID or runId"
-          className="flex-1 rounded border border-zinc-300 px-2 py-1 text-xs"
+          className="flex-1 rounded border border-hair-2 px-2 py-1 text-xs"
           onKeyDown={(e) => { if (e.key === "Enter") void load(); }}
         />
         <button
           type="button"
           onClick={() => void load()}
           disabled={busy || !caseId.trim()}
-          className="rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-800 disabled:opacity-50"
+          className="rounded bg-bg-2 px-3 py-1 text-xs text-white hover:bg-bg-3 disabled:opacity-50"
         >
           {busy ? "Loading…" : "Replay"}
         </button>
       </div>
 
-      {errorText && <div className="mt-2 text-xs text-red-600">{errorText}</div>}
+      {errorText && <div className="mt-2 text-xs text-red-400">{errorText}</div>}
 
       {data?.case && (
         <div className="mt-3">
-          <div className="rounded border border-zinc-200 bg-zinc-50 p-2 text-xs">
+          <div className="rounded border border-hair-2 bg-bg-base p-2 text-xs">
             <div><span className="opacity-60">subject </span><span className="font-medium">{data.case.subject?.name ?? "—"}</span></div>
             <div><span className="opacity-60">outcome </span><span className="font-mono">{data.case.outcome ?? "—"}</span></div>
             <div>
@@ -120,13 +121,13 @@ export function ChainReplayPanel(): JSX.Element {
           {data.case.chain && data.case.chain.length > 0 && (
             <ol className="mt-2 max-h-[460px] space-y-1 overflow-y-auto text-xs">
               {data.case.chain.map((node, i) => (
-                <li key={i} className="flex gap-2 rounded border border-zinc-100 bg-white px-2 py-1">
-                  <span className="w-6 text-right font-mono tabular-nums text-zinc-400">{node.step}</span>
-                  <span className={`rounded px-1 text-[10px] uppercase tracking-wide ${FACULTY_BADGE[node.faculty] ?? "bg-zinc-100"}`}>
+                <li key={i} className="flex gap-2 rounded border border-hair-2 bg-bg-base px-2 py-1">
+                  <span className="w-6 text-right font-mono tabular-nums text-ink-3">{node.step}</span>
+                  <span className={`rounded px-1 text-[10px] uppercase tracking-wide ${FACULTY_BADGE[node.faculty] ?? "bg-bg-1"}`}>
                     {node.faculty}
                   </span>
-                  <span className="font-mono text-zinc-700">{node.modeId}</span>
-                  <span className="flex-1 text-zinc-600">{node.summary}</span>
+                  <span className="font-mono text-ink-1">{node.modeId}</span>
+                  <span className="flex-1 text-ink-2">{node.summary}</span>
                 </li>
               ))}
             </ol>
@@ -134,8 +135,8 @@ export function ChainReplayPanel(): JSX.Element {
 
           {data.case.methodology && (
             <details className="mt-2 text-xs">
-              <summary className="cursor-pointer text-zinc-500">methodology</summary>
-              <pre className="mt-1 whitespace-pre-wrap rounded bg-zinc-50 p-2 text-[11px]">{data.case.methodology}</pre>
+              <summary className="cursor-pointer text-ink-3">methodology</summary>
+              <pre className="mt-1 whitespace-pre-wrap rounded bg-bg-base p-2 text-[11px]">{data.case.methodology}</pre>
             </details>
           )}
         </div>

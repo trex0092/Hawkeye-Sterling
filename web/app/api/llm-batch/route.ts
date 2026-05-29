@@ -10,6 +10,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { rehydrate, type RedactionMap } from "@/lib/server/redact";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,7 +87,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }));
 
   try {
-    const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+    const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
     const response = await client.messages.batches.create({ requests: anthropicRequests });
     const anthropicBatch = response as { id: string; processing_status: string; _redactionMaps: Record<string, RedactionMap> };
 
@@ -115,6 +117,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
     index.unshift(job);
     await setJson(batchIndexKey(ownerId), index.slice(0, 200));
+
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "llm_batch.submitted", actor: gate.keyId, meta: { batchId } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json({ ok: true, batchId, anthropicBatchId: anthropicBatch.id, requestCount: body.requests.length }, { status: 202, headers: gate.headers });
   } catch (err) {
@@ -150,7 +158,7 @@ async function fetchAndRehydrateResults(
   // the operator can see the redacted form rather than dropping data).
   const mapsByCustomId = (await getJson<Record<string, RedactionMap>>(batchMapsKey(anthropicBatchId))) ?? {};
 
-  const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
+  const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
   let iter: AsyncIterable<BatchResultEntry>;
   try {
     iter = (await client.messages.batches.results(anthropicBatchId)) as AsyncIterable<BatchResultEntry>;
@@ -195,51 +203,51 @@ export async function GET(req: Request): Promise<NextResponse> {
   const fetchResults = searchParams.get("fetchResults") === "true";
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  const ownerId = gate.keyId ?? "unknown";
-  const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
+  try {
+    const ownerId = gate.keyId ?? "unknown";
+    const index = (await getJson<BatchJob[]>(batchIndexKey(ownerId))) ?? [];
 
-  if (!batchId) {
-    return NextResponse.json({ ok: true, batches: index }, { headers: gate.headers });
-  }
-
-  const job = index.find((j) => j.batchId === batchId);
-  if (!job) {
-    return NextResponse.json({ ok: false, error: "batch not found" }, { status: 404, headers: gate.headers });
-  }
-
-  // Caller asked for results — stream them from Anthropic and rehydrate
-  // each custom_id's text content using the persisted redaction map.
-  // Requires the batch to have ended; if upstream is still processing the
-  // call will surface that via the Anthropic SDK error path.
-  if (fetchResults && job.anthropicBatchId && apiKey) {
-    const r = await fetchAndRehydrateResults(job.anthropicBatchId, apiKey);
-    if (!r.ok) {
-      return NextResponse.json({ ok: false, ...job, error: r.error }, { status: 502, headers: gate.headers });
+    if (!batchId) {
+      return NextResponse.json({ ok: true, batches: index }, { headers: gate.headers });
     }
-    return NextResponse.json({ ok: true, ...job, results: r.results }, { headers: gate.headers });
-  }
 
-  // Fetch live status from Anthropic via the guarded client.
-  // The status response itself contains no PII (counts + processing_status
-  // only), so this is a passthrough; rehydration of actual result text
-  // happens at result-retrieval time using the persisted redaction maps.
-  if (job.anthropicBatchId && apiKey) {
-    try {
-      const client = getAnthropicClient(apiKey, 25_000, "llm-batch");
-      const statusData = (await client.messages.batches.retrieve(job.anthropicBatchId)) as {
-        processing_status: string;
-        request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };
-        results_url?: string;
-      };
-      return NextResponse.json({
-        ok: true,
-        ...job,
-        liveStatus: statusData.processing_status,
-        requestCounts: statusData.request_counts,
-        // resultsUrl intentionally excluded — fetch results server-side only
-      }, { headers: gate.headers });
-    } catch { /* fall through to cached status */ }
-  }
+    const job = index.find((j) => j.batchId === batchId);
+    if (!job) {
+      return NextResponse.json({ ok: false, error: "batch not found" }, { status: 404, headers: gate.headers });
+    }
 
-  return NextResponse.json({ ok: true, ...job }, { headers: gate.headers });
+    // Caller asked for results — stream them from Anthropic and rehydrate
+    // each custom_id's text content using the persisted redaction map.
+    if (fetchResults && job.anthropicBatchId && apiKey) {
+      const r = await fetchAndRehydrateResults(job.anthropicBatchId, apiKey);
+      if (!r.ok) {
+        return NextResponse.json({ ok: false, ...job, error: r.error }, { status: 502, headers: gate.headers });
+      }
+      return NextResponse.json({ ok: true, ...job, results: r.results }, { headers: gate.headers });
+    }
+
+    // Fetch live status from Anthropic via the guarded client.
+    if (job.anthropicBatchId && apiKey) {
+      try {
+        const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
+        const statusData = (await client.messages.batches.retrieve(job.anthropicBatchId)) as {
+          processing_status: string;
+          request_counts: { processing: number; succeeded: number; errored: number; canceled: number; expired: number };
+          results_url?: string;
+        };
+        return NextResponse.json({
+          ok: true,
+          ...job,
+          liveStatus: statusData.processing_status,
+          requestCounts: statusData.request_counts,
+          // resultsUrl intentionally excluded — fetch results server-side only
+        }, { headers: gate.headers });
+      } catch { /* fall through to cached status */ }
+    }
+
+    return NextResponse.json({ ok: true, ...job }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[llm-batch] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load batch status" }, { status: 500, headers: gate.headers });
+  }
 }

@@ -40,8 +40,9 @@ export async function checkWatchman(name: string): Promise<WatchmanResult | null
       altNames?: WatchmanEntity[];
     };
 
+    const threshold = parseFloat(process.env["WATCHMAN_MATCH_THRESHOLD"] ?? "0.82");
     const hits = [...(data.SDNs ?? []), ...(data.altNames ?? [])].filter(
-      (e) => e.match >= 0.82,
+      (e) => e.match >= threshold,
     );
     return { hits, hitCount: hits.length };
   } catch (err) {

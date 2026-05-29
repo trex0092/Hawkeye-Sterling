@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +79,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     kind,
     text: text.slice(0, 500),
   };
-  await setJson(`engine-events/${at}-${ev.id}`, ev);
+  try {
+    await setJson(`engine-events/${at}-${ev.id}`, ev);
+  } catch (err) {
+    console.error("[activity-stream] POST setJson failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to buffer activity event" }, { status: 500, headers: gate.headers });
+  }
+
+  const tenant = tenantIdFromGate(gate);
+  void writeAuditChainEntry(
+    { event: "activity_stream.event_buffered", actor: gate.keyId, meta: { type: kind } },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json({ ok: true, event: ev }, { headers: gate.headers });
 }

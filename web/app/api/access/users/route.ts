@@ -9,8 +9,13 @@ import { adminAuth } from "@/lib/server/admin-auth";
 export async function GET(req: Request) {
   const deny = adminAuth(req);
   if (deny) return deny;
-  const users = await loadUsers();
-  // Strip password fields before returning to client
-  const safe = users.map(({ passwordHash: _h, passwordSalt: _s, ...u }) => u);
-  return NextResponse.json({ ok: true, users: safe });
+  try {
+    const users = await loadUsers();
+    // Strip password fields before returning to client
+    const safe = users.map(({ passwordHash: _h, passwordSalt: _s, ...u }) => u);
+    return NextResponse.json({ ok: true, users: safe });
+  } catch (err) {
+    console.error("[access/users] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load users" }, { status: 500 });
+  }
 }

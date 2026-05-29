@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
       const compiled = parseRule(rule);
       return NextResponse.json({ ok: true, ast: compiled.ast, rule: compiled.source }, { headers: gate.headers });
     } catch (err) {
-      return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 422, headers: gate.headers });
+      console.warn("[rule-engine] rule parse failed:", err);
+      return NextResponse.json({ ok: false, error: "Rule syntax error — please check the rule expression and retry." }, { status: 422, headers: gate.headers });
     }
   }
 
