@@ -76,6 +76,7 @@ export async function checkHallucination(
       '[hallucination-gate] detectHallucinations unavailable:',
       err instanceof Error ? err.message : String(err),
     );
+    incrementCounter('hawkeye_hallucination_gate_skip_total', 1, {});
   }
 
   const checkedAt = new Date().toISOString();

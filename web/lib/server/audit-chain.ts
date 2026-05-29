@@ -373,5 +373,6 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       }
     }
   }
+  incrementCounter('hawkeye_audit_write_failures_total', 1, { event: String(event.event ?? 'unknown') });
   return false;
 }

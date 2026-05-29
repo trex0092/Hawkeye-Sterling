@@ -100,6 +100,16 @@ function validateSecrets(): void {
     }
   }
 
+  // Production warnings for important-but-not-fatal missing vars.
+  if (isProduction) {
+    if (!process.env['RATE_LIMIT_STRICT'] || process.env['RATE_LIMIT_STRICT'] !== 'true') {
+      console.warn('[startup] RATE_LIMIT_STRICT is not set to "true" — rate limiting uses soft Blobs fallback in production. Set RATE_LIMIT_STRICT=true for fail-closed rate limiting.');
+    }
+    if (!process.env['EGRESS_GATE_ENABLED'] || process.env['EGRESS_GATE_ENABLED'] !== 'true') {
+      console.warn('[startup] EGRESS_GATE_ENABLED is not set to "true" — tipping-off egress gate is DISABLED. SAR/STR narratives are not checked for tipping-off language. Set EGRESS_GATE_ENABLED=true in production.');
+    }
+  }
+
   // goAML entity IDs: warn if still using placeholder value.
   const goamlId =
     process.env['GOAML_RENTITY_ID'] ??
