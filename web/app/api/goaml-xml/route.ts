@@ -630,6 +630,21 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
+  // XSD structural validation — only run against successfully built XML (not fallback/degraded).
+  if (!degradedReason) {
+    const xsdErrors = validateGoamlXmlStructure(xml);
+    const xsdErrorsOnly = xsdErrors.filter(e => e.severity === 'error');
+    if (xsdErrorsOnly.length > 0) {
+      return Response.json({
+        error: 'GOAML_XSD_INVALID',
+        message: 'Generated XML fails structural validation. Correct the envelope data before filing.',
+        errors: xsdErrors,
+        errorCount: xsdErrorsOnly.length,
+        warningCount: xsdErrors.filter(e => e.severity === 'warning').length,
+      }, { status: 422 });
+    }
+  }
+
   const result: GoAmlXmlResult = {
     ok: true,
     xml,

@@ -178,6 +178,21 @@ jobs:
             exit 1
           fi
           echo "PASS"
+      - name: Generate SBOM (root)
+        # Produces a CycloneDX SBOM for SOC 2 Type II / ISO 27001 evidence.
+        # npm 10.x ships `npm sbom` natively; no external tool needed.
+        # The SBOM is uploaded as a CI artifact — it is not committed to source.
+        run: npm sbom --sbom-format cyclonedx --sbom-type library --omit dev > /tmp/sbom-root.cdx.json
+      - name: Generate SBOM (web)
+        run: cd web && npm sbom --sbom-format cyclonedx --sbom-type library --omit dev > /tmp/sbom-web.cdx.json
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: |
+            /tmp/sbom-root.cdx.json
+            /tmp/sbom-web.cdx.json
+          retention-days: 365
 
       - name: Auth coverage gate (requireAuth:false allowlist)
         run: |

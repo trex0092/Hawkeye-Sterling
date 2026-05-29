@@ -329,3 +329,39 @@ export async function getOverdueCases(): Promise<Array<{ caseId: string; overdue
   }
   return overdue;
 }
+
+export async function expireCase(caseId: string, expiredBy: string): Promise<{ status: FourEyesStatus; expired: boolean }> {
+  const status = await getCaseApprovals(caseId);
+  if (status.passed) return { status, expired: false };
+  const expiry: ApprovalEntry = {
+    approvalId: `expiry_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    caseId,
+    actor: expiredBy,
+    decision: 'reject',
+    rationale: `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`,
+    approvedAt: new Date().toISOString(),
+    digest: digestApproval({ caseId, actor: expiredBy, decision: 'reject', rationale: 'auto-expire' }),
+  };
+  await setJson(approvalKey(caseId, expiry.approvalId), expiry);
+  const newStatus = await getCaseApprovals(caseId);
+  return { status: newStatus, expired: true };
+}
+
+export async function getOverdueCases(): Promise<Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }>> {
+  // List all case directories under four-eyes/approvals/
+  const allKeys = await listKeys(PREFIX);
+  const caseIds = Array.from(new Set(allKeys.map((k) => k.replace(PREFIX, '').split('/')[0] ?? '')));
+  const overdue: Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }> = [];
+  for (const caseId of caseIds) {
+    if (!caseId) continue;
+    const status = await getCaseApprovals(caseId);
+    if (!status.passed && !status.rejectedAt && status.isExpired) {
+      overdue.push({
+        caseId,
+        overdueHours: status.overdueHours ?? 0,
+        requiresEscalation: isCaseRequiresEscalation(status.decisions[0]?.approvedAt ?? new Date().toISOString()),
+      });
+    }
+  }
+  return overdue;
+}

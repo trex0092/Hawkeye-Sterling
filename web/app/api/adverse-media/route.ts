@@ -279,8 +279,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   }
 
   // When no Anthropic key is configured, run the deterministic 737-keyword
-  // classifier directly on the GDELT articles. This is the "no-LLM" fallback
-  // that keeps screening functional without requiring a Claude API key.
+  // classifier directly on the (possibly empty) cached articles.
   if (!apiKey) {
     const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);

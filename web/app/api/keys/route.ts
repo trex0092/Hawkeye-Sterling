@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { issueKey, listApiKeys } from "@/lib/server/api-keys";
-import { enforce } from "@/lib/server/enforce";
+import { adminAuth } from "@/lib/server/admin-auth";
 import { TIERS, type TierId } from "@/lib/data/tiers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -15,8 +15,8 @@ interface CreateKeyBody {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  const deny = adminAuth(req);
+  if (deny) return deny;
 
   try {
     const keys = await listApiKeys();
@@ -34,14 +34,14 @@ export async function GET(req: Request): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  const deny = adminAuth(req);
+  if (deny) return deny;
 
   let body: CreateKeyBody;
   try {
     body = (await req.json()) as CreateKeyBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
   const name = body.name?.trim();
   const email = body.email?.trim();
@@ -65,7 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   if (!TIERS[tier]) {
-    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 , headers: gate.headers });
+    return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 });
   }
   try {
     const issued = await issueKey({ name, email, tier });

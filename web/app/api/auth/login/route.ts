@@ -164,7 +164,12 @@ async function checkRateLimit(
   }
   if (rec.count >= maxFailures) {
     const lockUntil = now + WINDOW_MS;
-    await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil }).catch((err) => {
+      // Lockout write failure is safety-critical: if this fails, the lockout
+      // isn't persisted and the attacker can retry. Log prominently so the
+      // on-call team can investigate the blob store.
+      console.warn("[auth/login] CRITICAL: lockout write failed — brute-force protection degraded:", err instanceof Error ? err.message : String(err));
+    });
     return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
   }
   return { allowed: true };
@@ -174,18 +179,30 @@ async function recordFailure(prefix: string, key: string): Promise<void> {
   const now = Date.now();
   const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
   if (!rec || now - rec.windowStart > WINDOW_MS) {
-    await setJson(`${prefix}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch((err) => {
+      console.warn("[auth/login] failure counter write failed:", err instanceof Error ? err.message : String(err));
+    });
   } else {
-    await setJson(`${prefix}${key}`, { ...rec, count: rec.count + 1 }).catch(() => undefined);
+    await setJson(`${prefix}${key}`, { ...rec, count: rec.count + 1 }).catch((err) => {
+      console.warn("[auth/login] failure counter increment failed:", err instanceof Error ? err.message : String(err));
+    });
   }
 }
 
 async function recordSuccess(prefix: string, key: string): Promise<void> {
-  await del(`${prefix}${key}`).catch(() => undefined);
+  await del(`${prefix}${key}`).catch((err) => {
+    console.warn("[auth/login] failure counter clear failed (non-critical):", err instanceof Error ? err.message : String(err));
+  });
 }
 
 function clientIp(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  // Use the LAST value in x-forwarded-for: it is appended by the trusted
+  // Netlify CDN proxy and cannot be spoofed by the client.  The first value
+  // is client-controlled and could be forged to bypass per-IP brute-force
+  // protection by cycling through arbitrary source IPs.
+  const fwd = req.headers.get("x-forwarded-for");
+  const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  return ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
 }
 
 export async function POST(req: Request) {

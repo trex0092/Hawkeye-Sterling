@@ -52,12 +52,36 @@ export default [
   },
   {
     // CLI-only tooling — allow console.log for audit/debug output.
+    // Add TypeScript parser so these files are parsed correctly.
     files: ['src/brain/audit.ts', 'web/scripts/**/*.ts', 'src/ingestion/**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+    },
+    plugins: { '@typescript-eslint': tseslint },
     rules: {
       'no-console': 'off',
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '.netlify/**', 'coverage/**', 'web/node_modules/**'],
+    // Brain mode files use non-null assertions (!) as intentional invariants —
+    // these are well-tested (2500+ tests) and the assertions encode algorithmic
+    // guarantees the type system can't express. Suppress the warning here so
+    // legitimate violations elsewhere stay visible.
+    files: ['src/brain/modes/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '.netlify/**',
+      'coverage/**',
+      'web/node_modules/**',
+      // Next.js build output — generated JS is not subject to our lint rules.
+      'web/.next/**',
+    ],
   },
 ];

@@ -7,6 +7,8 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
