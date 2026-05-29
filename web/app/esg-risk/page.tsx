@@ -595,7 +595,8 @@ export default function EsgRiskPage() {
               const jsonMatch = text.match(/\{[\s\S]*\}/);
               if (!jsonMatch) return;
               const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | number>;
-              if (parsed.entity) setField("entity", String(parsed.entity));
+              const entityVal = parsed.entityName ?? parsed.entity;
+              if (entityVal) setField("entity", String(entityVal));
               if (parsed.sector) setField("sector", String(parsed.sector).toLowerCase());
               if (parsed.jurisdiction) setField("jurisdiction", String(parsed.jurisdiction).toUpperCase());
               if (parsed.employeeCount) setField("employeeCount", String(parsed.employeeCount));

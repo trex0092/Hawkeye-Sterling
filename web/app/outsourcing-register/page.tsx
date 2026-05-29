@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface OutsourcingArrangement {
   id: string;
@@ -101,8 +101,8 @@ export default function OutsourcingRegisterPage() {
       const data = await res.json() as { ok: boolean; records?: OutsourcingArrangement[]; error?: string };
       if (data.ok) setArrangements(data.records ?? []);
       else setError(data.error ?? "Failed to load outsourcing arrangements");
-    } catch {
-      setError("Network error loading outsourcing arrangements");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading outsourcing arrangements"));
     } finally {
       setLoading(false);
     }
@@ -136,8 +136,8 @@ export default function OutsourcingRegisterPage() {
       } else {
         setError(data.error ?? "Failed to create arrangement");
       }
-    } catch {
-      setError("Network error creating arrangement");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error creating arrangement"));
     } finally {
       setSubmitting(false);
     }
@@ -176,8 +176,8 @@ export default function OutsourcingRegisterPage() {
       const data = await res.json() as { ok: boolean; error?: string };
       if (data.ok) { setExpandedId(null); void fetchArrangements(); }
       else setError(data.error ?? "Failed to update arrangement");
-    } catch {
-      setError("Network error updating arrangement");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error updating arrangement"));
     } finally {
       setUpdatingId(null);
     }

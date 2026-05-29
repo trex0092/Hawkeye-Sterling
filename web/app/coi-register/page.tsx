@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { apiErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface CoiDeclaration {
   id: string;
@@ -92,8 +92,8 @@ export default function CoiRegisterPage() {
       } else {
         setError(data.error ?? "Failed to load COI declarations");
       }
-    } catch {
-      setError("Network error loading COI declarations");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error loading COI declarations"));
     } finally {
       setLoading(false);
     }
@@ -128,8 +128,8 @@ export default function CoiRegisterPage() {
       } else {
         setError(data.error ?? "Failed to create COI declaration");
       }
-    } catch {
-      setError("Network error creating COI declaration");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error creating COI declaration"));
     } finally {
       setSubmitting(false);
     }
@@ -158,8 +158,8 @@ export default function CoiRegisterPage() {
       } else {
         setError(data.error ?? "Failed to update COI declaration");
       }
-    } catch {
-      setError("Network error updating COI declaration");
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Network error updating COI declaration"));
     } finally {
       setUpdatingId(null);
     }

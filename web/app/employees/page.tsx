@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface CriticalExpiry {
   name: string;
@@ -195,13 +196,13 @@ export default function EmployeesPage() {
         body: JSON.stringify({ employees: mapped, today: new Date().toISOString().slice(0, 10) }),
       });
       if (res.ok) {
-        const data = await res.json().catch(() => ({})) as EmployeeRisk;
-        if (mountedRef.current) setEmpRisk(data);
+        const data = await res.json().catch(() => null) as EmployeeRisk | null;
+        if (mountedRef.current && data) setEmpRisk(data);
+        else if (mountedRef.current) setEmpRiskError("AI risk scan returned an invalid response — please retry.");
       } else {
-        const body = await res.text().catch(() => "");
         if (!mountedRef.current) return;
         console.error(`[hawkeye] employee-risk HTTP ${res.status}`);
-        setEmpRiskError(`AI risk scan failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
+        setEmpRiskError(apiErrorMessage(res.status, "AI risk scan"));
       }
     } catch (err) {
       if (!mountedRef.current) return;

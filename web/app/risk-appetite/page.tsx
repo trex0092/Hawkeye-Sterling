@@ -348,7 +348,7 @@ export default function RiskAppetitePage() {
             {config.updatedAt && config.updatedAt !== new Date(0).toISOString() && (
               <p className="text-xs text-ink-3">
                 Last updated: {new Date(config.updatedAt).toLocaleString()} by{" "}
-                <span className="font-mono">{config.updatedBy}</span>
+                <span className="font-mono">{config.updatedBy ?? "Unknown"}</span>
               </p>
             )}
 

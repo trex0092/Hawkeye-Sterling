@@ -65,6 +65,7 @@ export default function PKycPage() {
   const [subjects, setSubjects] = useState<PKycSubject[]>([]);
   const [stats, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
@@ -90,6 +91,7 @@ export default function PKycPage() {
       if (data.ok && mountedRef.current) { setSubjects(data.subjects ?? []); setStats(data.stats ?? null); }
     } catch (err) {
       console.error("[hawkeye] pkyc load failed:", err);
+      if (mountedRef.current) setLoadError(caughtErrorMessage(err, "Failed to load pKYC subjects — please try again."));
     } finally { if (mountedRef.current) setLoading(false); }
   }, [mountedRef]);
 
@@ -250,9 +252,14 @@ export default function PKycPage() {
       </div>
 
       {/* Subject table / empty state */}
+      {loadError && (
+        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-950/20 px-4 py-3 text-13 text-red-300 mb-4">
+          {loadError}
+        </div>
+      )}
       {loading ? (
         <p className="text-ink-2 text-13 py-8 text-center">Loading…</p>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && !loadError ? (
         <div className="py-16 text-center text-ink-2 text-13">
           No subjects enrolled. Click “+ Enroll Subject” to begin perpetual monitoring.
         </div>
