@@ -29,3 +29,6 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/worktrees/
+
+# Artefacts extracted from tool tarballs during local testing
+LICENSE

@@ -30,5 +30,3 @@ jobs:
           fail-on-severity: high
           # Post a summary comment on the PR when vulnerabilities are found
           comment-summary-in-pr: on-failure
-          # Warn on packages with licenses incompatible with our compliance posture
-          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0

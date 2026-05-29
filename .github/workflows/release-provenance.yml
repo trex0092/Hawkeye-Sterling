@@ -1,0 +1,56 @@
+name: SLSA Provenance
+
+# Generates SLSA level 2 signed provenance for the release tarball.
+# Kept in a separate file from release.yml so the SLSA generator runs only
+# in a push:tags context — the generator rejects workflows that also carry
+# a pull_request trigger.
+#
+# Triggered after the Release workflow completes successfully on a tag push.
+# Downloads the checksums artifact produced by build-and-sign and passes the
+# hashes to the SLSA generator so provenance covers the exact same artifacts
+# that are attached to the GitHub release.
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+
+permissions:
+  actions: read
+  id-token: write
+  contents: write
+
+jobs:
+  # Download checksums from the Release workflow run so the provenance covers
+  # the same artifacts uploaded to the GitHub release (avoids hash mismatch
+  # from a parallel rebuild).
+  prepare:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    outputs:
+      hashes: ${{ steps.read.outputs.hashes }}
+    steps:
+      - name: Download release artifacts from triggering run
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts-${{ github.event.workflow_run.head_branch }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract base64-encoded hashes
+        id: read
+        run: echo "hashes=$(cat checksums.sha256 | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+  # SLSA level 2 signed provenance (intoto envelope).
+  provenance:
+    needs: prepare
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.prepare.outputs.hashes }}"
+      upload-assets: true

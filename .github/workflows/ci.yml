@@ -391,6 +391,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.actor != 'dependabot[bot]'
+    container:
+      image: semgrep/semgrep
     permissions:
       security-events: write
       contents: read
@@ -405,6 +407,8 @@ jobs:
         run: pip install semgrep==1.90.0
 
       - name: Semgrep SAST scan
+        # Runs inside the semgrep container image which bundles community rules locally,
+        # avoiding HTTP 403 registry errors when SEMGREP_APP_TOKEN is absent.
         # --severity ERROR only: avoids failing on style warnings.
         # --sarif + --output: writes SARIF for Security tab alongside blocking output.
         # SEMGREP_APP_TOKEN: set this secret to enable Semgrep cloud registry access.
@@ -482,8 +486,9 @@ jobs:
       - name: Gitleaks full-history secret scan
         # --redact: replaces actual secret values in output with REDACTED (safe for logs).
         # --exit-code 1: fails CI if any secret is detected.
+        # --config: project allowlist for confirmed false positives (reviewed 2026-05-27).
         # Scans all commits, not just the current working tree.
-        run: gitleaks detect --source . --redact --exit-code 1
+        run: gitleaks detect --source . --redact --exit-code 1 --config .gitleaks.toml
 
   lint-web:
     runs-on: ubuntu-latest
