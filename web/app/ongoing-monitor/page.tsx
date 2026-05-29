@@ -360,7 +360,7 @@ export default function OngoingMonitorPage() {
       );
       save(next);
       if (mountedRef.current) setSubjects(next);
-      if (data.ok && data.topScore !== undefined && mountedRef.current) {
+      if (res.ok && data.ok && data.topScore !== undefined && mountedRef.current) {
         setLastResults((prev) => ({ ...prev, [s.id]: { severity: data.severity ?? "low", topScore: data.topScore ?? 0 } }));
         writeAuditEvent("system", "screening.completed", `${s.name} (${s.id}) — score ${data.topScore} · ${data.severity ?? "low"}`);
       }

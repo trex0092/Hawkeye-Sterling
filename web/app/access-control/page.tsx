@@ -420,9 +420,6 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       } else {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
-      } else {
-        console.error("[hawkeye] access-control role-change rejected:", data);
-        setRoleError(data.error ?? "Role change was rejected by the server.");
       }
     } catch (err) {
       console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
