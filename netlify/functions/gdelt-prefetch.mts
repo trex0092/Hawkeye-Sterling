@@ -12,6 +12,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "gdelt-cache";
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
@@ -217,6 +218,8 @@ export default async function handler(_req: Request): Promise<Response> {
   }
 
   console.info(`[gdelt-prefetch] done — refreshed ${refreshed}/${subjects.length} subjects in ${Date.now() - startedAt}ms`);
+
+  if (errors.length === 0) await writeHeartbeat("gdelt-prefetch");
 
   return new Response(
     JSON.stringify({ ok: errors.length === 0, refreshed, total: subjects.length, errors, durationMs: Date.now() - startedAt }),

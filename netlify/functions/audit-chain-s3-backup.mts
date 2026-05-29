@@ -25,6 +25,7 @@
 import type { Config } from '@netlify/functions';
 import { getStore, listStores } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
+import { writeHeartbeat } from '../lib/heartbeat.js';
 
 const LABEL = 'audit-chain-s3-backup';
 const schedule = '0 2 * * *';
@@ -234,6 +235,7 @@ export default async function handler(): Promise<void> {
     }
   } else {
     console.info(`[${LABEL}] all ${tenants.length} tenant(s) backed up successfully. Total: ${totalBytes.toLocaleString()} bytes.`);
+    await writeHeartbeat(LABEL);
   }
 }
 
