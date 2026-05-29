@@ -192,7 +192,7 @@ export default function SecurityScanPage() {
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-950/20 p-6 text-13 text-red-300">
+          <div role="alert" aria-live="assertive" className="rounded-xl border border-red-500/30 bg-red-950/20 p-6 text-13 text-red-300">
             Scan failed: {error}
           </div>
         )}

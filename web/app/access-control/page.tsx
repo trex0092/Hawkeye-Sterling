@@ -196,7 +196,7 @@ function SessionMonitorTab() {
   const inactive = sessions.filter((s) => !s.active);
 
   if (loading) return <p className="text-12 text-ink-3 py-6 text-center">Loading sessions…</p>;
-  if (error) return <p className="text-12 text-red py-4">{error}</p>;
+  if (error) return <p role="alert" aria-live="assertive" className="text-12 text-red py-4">{error}</p>;
 
   return (
     <div>
