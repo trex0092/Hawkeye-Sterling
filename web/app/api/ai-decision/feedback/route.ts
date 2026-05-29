@@ -85,6 +85,11 @@ export async function POST(req: Request) {
       tenantIdFromGate(gate),
     ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
+    void writeAuditChainEntry(
+      { event: "ai_decision.feedback.submitted", actor: gate.keyId, meta: { decisionId: body.decisionId, outcome: body.outcome } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
     const accepted = trimmed.filter((r) => r.outcome === "accepted").length;
     const overridden = trimmed.filter((r) => r.outcome === "overridden").length;
 

@@ -36,6 +36,36 @@ function appendHistory(entry: HistoryEntry): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// History helpers (localStorage)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HISTORY_KEY = "hawkeye.esg.history";
+
+interface HistoryEntry {
+  entity: string;
+  score: number;
+  rating: EsgRating;
+  mlRisk: MlRiskLevel;
+  ratedAt: string;
+}
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
+  } catch { return []; }
+}
+
+function saveHistory(entries: HistoryEntry[]): void {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 20))); } catch { /* noop */ }
+}
+
+function appendHistory(entry: HistoryEntry): void {
+  const existing = loadHistory();
+  saveHistory([entry, ...existing]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -449,6 +479,7 @@ export default function EsgRiskPage() {
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => { setHistory(loadHistory()); }, []);
 
   const setField = <K extends keyof FormData>(key: K, val: FormData[K]) => {
     setForm((f) => ({ ...f, [key]: val }));

@@ -68,6 +68,10 @@ step "5 clear .next cache"
 rm -rf .next
 echo ">>> HS-STEP-5 ok (exit $?)"
 
+step "5b web typecheck"
+npm run typecheck
+echo ">>> HS-STEP-5b ok (exit $?)"
+
 step "6 next build"
 APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \

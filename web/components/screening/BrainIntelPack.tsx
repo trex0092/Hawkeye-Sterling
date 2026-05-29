@@ -358,7 +358,7 @@ export function BrainDataFreshness({ result }: { result: SuperBrainResult }) {
   if (!df) return null;
   const rows = Object.entries(df) as Array<[string, string]>;
   return (
-    <Card title="Data-source freshness · 15 categories">
+    <Card title="Data-source freshness">
       <div className="space-y-1">
         {rows.map(([source, freshness]) => (
           <div key={source} className="flex items-baseline justify-between text-11">
@@ -371,10 +371,9 @@ export function BrainDataFreshness({ result }: { result: SuperBrainResult }) {
         Run ID: <span className="font-mono">{result.audit?.runId ?? "—"}</span>
         {" · "}Engine: <span className="font-mono">{result.audit?.engineVersion ?? "—"}</span>
       </div>
-      <div className="mt-2 pt-2 border-t border-hair-2 flex gap-4 text-10 font-mono text-ink-3">
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-green rounded-sm inline-block" /> within SLA</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-amber rounded-sm inline-block" /> approaching SLA</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-1 bg-red rounded-sm inline-block" /> SLA breached</span>
+      <div className="mt-1 text-10 text-ink-3">
+        Run ID: <span className="font-mono">{result.audit?.runId ?? "—"}</span>
+        {" · "}Engine: <span className="font-mono">{result.audit?.engineVersion ?? "—"}</span>
       </div>
     </Card>
   );

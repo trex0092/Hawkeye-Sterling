@@ -303,15 +303,15 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     // chronology of the request.
     await recordApproval({
       caseId: caseRef,
-      actor: mlro,
+      actor: filerActor,
       decision: "approve",
-      rationale: `${body.filingType} filer attestation`,
+      rationale: `${body.filingType} filer attestation (authenticated as ${filerActor})`,
     });
     await recordApproval({
       caseId: caseRef,
-      actor: body.approver,
+      actor: approverActor,
       decision: "approve",
-      rationale: `${body.filingType} second-approver (four-eyes) attestation`,
+      rationale: `${body.filingType} second-approver (four-eyes) attestation — declared by ${filerActor}`,
     });
   } catch (err) {
     // Audit-ledger write failures must NOT block the filing — the

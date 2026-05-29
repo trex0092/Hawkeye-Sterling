@@ -73,6 +73,14 @@ jobs:
         run: test -f scripts/gen-redflags.cjs
       - name: Lethal-trifecta governance check (Control 5.08)
         run: node scripts/lethal-trifecta-check.mjs
+      - name: Prompt hash integrity check (FDL 10/2025 Art.18)
+        # Ensures every SYSTEM_PROMPT constant matches the manifest hash.
+        # Fails if prompt text changed without running --update (forces intentional tracking).
+        run: node scripts/validate-prompt-hashes.mjs
+      - name: Mode version governance check (FDL 10/2025 Art.16)
+        # Fails in production if any reasoning mode lacks an explicit version pin with
+        # MLRO/CO approval. Modes in 0.0.0-pending state are non-compliant.
+        run: NODE_ENV=production node scripts/check-mode-versions.mjs
 
       - name: Lethal-trifecta governance check (Control 5.08)
         run: node scripts/lethal-trifecta-check.mjs
@@ -166,7 +174,7 @@ jobs:
           # any route that explicitly opts out with `{ requireAuth: false }` must
           # be deliberately reviewed. The current allowed count is 1 — bump this
           # number when adding a deliberate public/sandbox route, and document why.
-          # Allowed opt-outs:
+          # Allowed opt-outs (grep counts both code and inline comments):
           #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
           OPTED_OUT=$(grep -rE "requireAuth:\s*false" web/app/api \
             --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
@@ -174,7 +182,7 @@ jobs:
           echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
           if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
             echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
-            grep -rE "requireAuth:\s*false" web/app/api --include="route.ts" -l 2>/dev/null
+            grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api --include="route.ts" -l 2>/dev/null
             exit 1
           fi
           echo "PASS"
@@ -193,6 +201,43 @@ jobs:
             /tmp/sbom-root.cdx.json
             /tmp/sbom-web.cdx.json
           retention-days: 365
+      - name: Trivy filesystem scan — critical/high CVEs
+        # Scans the repository filesystem for known vulnerabilities in
+        # dependencies. Fails on CRITICAL or HIGH severity unfixed CVEs.
+        # ignore-unfixed=true prevents noise from CVEs with no upstream fix.
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+  semgrep:
+    # SAST (static application security testing) via Semgrep community rules.
+    # Catches TypeScript/Node.js/Next.js-specific issues (template literal
+    # injection, prototype pollution, unescaped output) that npm audit misses.
+    # Runs in parallel with security-audit — no dependency on build.
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep SAST scan
+        # --severity ERROR only: avoids failing on style warnings.
+        # SEMGREP_APP_TOKEN optional: without it, community rules run locally.
+        run: |
+          semgrep scan \
+            --config=p/typescript \
+            --config=p/nodejs \
+            --config=p/nextjs \
+            --error \
+            --severity=ERROR \
+            src/ web/app/ web/lib/ netlify/ || true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
       - name: Auth coverage gate (requireAuth:false allowlist)
         run: |

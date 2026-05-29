@@ -922,6 +922,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       amountUsd: tx.amountUsd,
       timestampUtc: tx.timestampUtc ?? new Date().toISOString(),
       drivers: result.drivers,
+      anomalyFlags: result.anomalyFlags,
       processed: false,
       createdAt: new Date().toISOString(),
     };
@@ -948,6 +949,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const latencyMs = Date.now() - t0;
   if (latencyMs > 5000) console.warn(`[transaction-anomaly] slow response latencyMs=${latencyMs}`);
+
+  void writeAuditChainEntry(
+    { event: "transaction_anomaly.updated", actor: gate.keyId, meta: { sessionId } },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
   return NextResponse.json(
     {
       ok: true,

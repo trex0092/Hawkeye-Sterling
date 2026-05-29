@@ -334,7 +334,7 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
   const expiry: ApprovalEntry = {
-    approvalId: `expiry_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    approvalId: `expiry_${Date.now()}_${randomBytes(4).toString("hex")}`,
     caseId,
     actor: expiredBy,
     decision: 'reject',
@@ -359,7 +359,7 @@ export async function getOverdueCases(): Promise<Array<{ caseId: string; overdue
       overdue.push({
         caseId,
         overdueHours: status.overdueHours ?? 0,
-        requiresEscalation: isCaseRequiresEscalation(status.decisions[0]?.approvedAt ?? new Date().toISOString()),
+        requiresEscalation: (status.overdueHours ?? 0) > FOUR_EYES_ESCALATION_HOURS,
       });
     }
   }
