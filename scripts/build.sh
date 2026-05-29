@@ -17,6 +17,9 @@
 #   6. next build          → produces the Next.js 15 SSR bundle
 
 set -euo pipefail
+# Trap any command failure and print its exit code + the failing command so
+# the Netlify build log pinpoints exactly which step returned non-zero.
+trap 'echo ">>> HS-BUILD-FAILED: exit_code=$? line=$LINENO cmd=$BASH_COMMAND"' ERR
 
 # Raise the open-file-descriptor limit. Next.js 16 + webpack opens hundreds
 # of files concurrently during static page generation; Netlify build agents
@@ -53,7 +56,7 @@ echo ">>> HS-STEP-3 ok (exit $?)"
 
 step "4 cd web && npm ci"
 cd web
-npm ci --include=dev
+npm ci --include=dev --no-audit --no-fund
 echo ">>> HS-STEP-4 ok (exit $?)"
 
 step "4b patch-als"
@@ -85,7 +88,6 @@ APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \
   NEXT_PUBLIC_COMMIT_SHA="${COMMIT_REF:-}" \
   NODE_OPTIONS="--max-old-space-size=8192 ${GRACEFUL_FS_REQUIRE}" \
-  npm run build
-echo ">>> HS-STEP-6 ok (exit $?)"
+  npm run build && echo ">>> HS-STEP-6 ok (exit 0)" || { ec=$?; echo ">>> HS-STEP-6 FAILED (exit $ec)"; exit $ec; }
 
 echo ">>> HS-STEP-DONE"
