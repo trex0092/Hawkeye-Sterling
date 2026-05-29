@@ -879,8 +879,8 @@ export default function RegulatoryPage() {
   // Library filter state
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [liveItems, setLiveItems] = useState<LiveItem[]>([]);
-  const [liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [_liveItems, setLiveItems] = useState<LiveItem[]>([]);
+  const [_liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   useEffect(() => {
     setLiveStatus("loading");

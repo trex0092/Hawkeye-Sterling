@@ -32,10 +32,8 @@ import { RowActions } from "@/components/shared/RowActions";
 import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
-  saveOperatorRole,
   canPerform,
   ROLE_LABEL,
-  ALL_ROLES,
   type OperatorRole,
 } from "@/lib/data/operator-role";
 import { writeAuditEvent } from "@/lib/audit";

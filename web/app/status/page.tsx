@@ -900,11 +900,11 @@ function AsanaRebuildSection() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const [rebuildState, setRebuildState] = useState<"idle" | "running" | "done" | "error">("idle");
-  const [rebuildResults, setRebuildResults] = useState<ResetResult[]>([]);
+  const [_rebuildResults, setRebuildResults] = useState<ResetResult[]>([]);
   const [rebuildErr, setRebuildErr] = useState("");
   const [resetState, setResetState] = useState<"idle" | "running" | "done" | "error">("idle");
-  const [resetResults, setResetResults] = useState<ResetResult[]>([]);
-  const [resetErr, setResetErr] = useState("");
+  const [_resetResults, setResetResults] = useState<ResetResult[]>([]);
+  const [_resetErr, setResetErr] = useState("");
 
   const createMissing = async () => {
     setCmState("running");
@@ -990,7 +990,7 @@ function AsanaRebuildSection() {
     { board: "19 · Incidents & Grievances",            envVar: "ASANA_INCIDENTS_PROJECT_GID" },
   ];
 
-  const runRebuild = async () => {
+  const _runRebuild = async () => {
     setRebuildState("running");
     setRebuildResults([]);
     setRebuildErr("");
@@ -1002,7 +1002,7 @@ function AsanaRebuildSection() {
     } catch (e) { setRebuildErr(e instanceof Error ? e.message : "Network error"); setRebuildState("error"); }
   };
 
-  const runFullReset = async () => {
+  const _runFullReset = async () => {
     setResetState("running");
     setResetResults([]);
     setResetErr("");
@@ -1014,7 +1014,7 @@ function AsanaRebuildSection() {
     } catch (e) { setResetErr(e instanceof Error ? e.message : "Network error"); setResetState("error"); }
   };
 
-  const busy = rebuildState === "running" || resetState === "running";
+  const _busy = rebuildState === "running" || resetState === "running";
 
   return (
     <div className="mt-8 border border-hair-2 rounded-xl p-5">

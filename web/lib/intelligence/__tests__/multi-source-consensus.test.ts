@@ -71,7 +71,7 @@ describe('multiSourceConsensus — multiple affirming sources', () => {
   });
 
   it('unified score saturates at 100, never exceeds it', () => {
-    const many = Array.from({ length: 20 }, (_, i) =>
+    const many = Array.from({ length: 20 }, (_, _i) =>
       ({ source: `ofac-sdn`, evidence: 'match' as const, rawScore: 100 }),
     );
     const r = multiSourceConsensus(many);

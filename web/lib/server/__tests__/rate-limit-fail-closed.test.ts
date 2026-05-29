@@ -16,18 +16,16 @@ vi.mock('../store', () => {
     getJson: vi.fn(async (key: string) => stored[key] ?? null),
     setJson: vi.fn(async (key: string, val: unknown) => { stored[key] = val; }),
     _resetStore: () => { stored = {}; },
-    _setStored: (key: string, val: unknown) => { stored[key] = val; },
+    _setStored: (_key: string, _val: unknown) => { /* no-op in mock */ },
   };
 });
 
 // import after mock is set up
-import { getJson, setJson } from '../store';
-
 const store = await import('../store') as unknown as {
   getJson: ReturnType<typeof vi.fn>;
   setJson: ReturnType<typeof vi.fn>;
   _resetStore: () => void;
-  _setStored: (k: string, v: unknown) => void;
+  _setStored: (_k: string, _v: unknown) => void;
 };
 
 beforeEach(() => {
@@ -104,7 +102,7 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
 
 describe('rate-limit — basic enforcement (no race)', () => {
   it('rejects when per-second limit is exceeded', async () => {
-    const key = 'ratelimit/test-key-sec';
+    const _key = 'ratelimit/test-key-sec';
     // Simulate a state where the second counter is already at the limit
     store.getJson.mockResolvedValue({
       second: { startMs: secondStart, count: 999 }, // very high count

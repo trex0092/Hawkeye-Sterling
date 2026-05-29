@@ -20,7 +20,7 @@ import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../src/br
 import { variantsOf } from "../../../../src/brain/translit.js";
 import { expandAliases } from "../../../../src/brain/aliases.js";
 import { doubleMetaphone, soundex } from "../../../../src/brain/matching.js";
-import { loadCandidates, loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
 import { classifyEsg } from "@/lib/data/esg";
 // Wave 4 enhancements — richer brain modules landed via PR #49.
 import { jurisdictionProfile } from "../../../../src/brain/lib/jurisdictions.js";

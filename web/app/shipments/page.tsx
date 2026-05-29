@@ -983,7 +983,7 @@ export default function ShipmentsPage() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [customRows, setCustomRows] = useState<Consignment[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [releasedIds, setReleasedIds] = useState<string[]>([]);
+  const [releasedIds, _setReleasedIds] = useState<string[]>([]);
   const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
   const [tbml, setTbml] = useState<ShipmentTbml | null>(null);
   const [tbmlLoading, setTbmlLoading] = useState(false);

@@ -32,7 +32,7 @@ import {
 
 // ── shared test clock ─────────────────────────────────────────────────────────
 
-const FIXED: QuickScreenOptions = {
+const _FIXED: QuickScreenOptions = {
   clock: () => 0,
   now: () => '2026-04-25T00:00:00.000Z',
 };

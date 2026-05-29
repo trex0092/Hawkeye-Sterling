@@ -191,18 +191,18 @@ function renderHtmlReport(text: string, input: ReportInput): string {
     amScored?.total ??
     (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
       (sb?.adverseMedia?.length ?? 0);
-  const amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
+  const _amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
   const amCategoriesTripped =
     amScored?.categoriesTripped && amScored.categoriesTripped.length > 0
       ? amScored.categoriesTripped
       : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
   const amVectorScore =
     amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
-  const amTopKeywords = amScored?.topKeywords ?? [];
+  const _amTopKeywords = amScored?.topKeywords ?? [];
   const newsArticles = (
     sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string; keywordGroups?: string[] }>; articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
   )?.newsDossier?.articles ?? [];
-  const newsDossierMeta = (
+  const _newsDossierMeta = (
     sb as { newsDossier?: { articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
   )?.newsDossier;
 

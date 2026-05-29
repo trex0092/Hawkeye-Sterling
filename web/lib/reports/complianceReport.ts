@@ -626,7 +626,7 @@ function formatMatrix(r: ReportScreeningResult, sb?: ReportSuperBrain | null): s
   lines.push(`${SUB.slice(0, 3)} SCREENING RESULT MATRIX ${"─".repeat(51)}`);
   lines.push(`Vector              Engine              Score    Result`);
   lines.push(`${"─".repeat(19)}   ${"─".repeat(17)}   ─────    ${"─".repeat(22)}`);
-  const brainSanctionsScore = sb?.composite?.breakdown?.["quickScreen"] ?? 0;
+  const _brainSanctionsScore = sb?.composite?.breakdown?.["quickScreen"] ?? 0;
   for (const v of SCREEN_VECTORS) {
     const hits = r.hits.filter((h) => v.listIdMatch.test(h.listId));
     const maxScore = hits.length > 0 ? Math.max(...hits.map((h) => h.score)) : 0;

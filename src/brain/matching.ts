@@ -103,27 +103,28 @@ export function levenshteinDistance(a: string, b: string): number {
   const n = t.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  const d: number[][] = [];
-  for (let i = 0; i <= m; i++) {
-    d[i] = new Array<number>(n + 1);
-    d[i]![0] = i;
-  }
-  for (let j = 0; j <= n; j++) d[0]![j] = j;
+  // Use a flat (m+1)*(n+1) Int32Array to avoid jagged-array non-null assertions.
+  const w = n + 1;
+  const d = new Int32Array((m + 1) * w);
+  for (let i = 0; i <= m; i++) d[i * w] = i;
+  for (let j = 0; j <= n; j++) d[j] = j;
+  // All cells are set before they are read; cast to number is safe.
+  const cell = (idx: number): number => d[idx] as number;
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const cost = s[i - 1] === t[j - 1] ? 0 : 1;
-      d[i]![j] = Math.min(
-        d[i - 1]![j]! + 1,           // deletion
-        d[i]![j - 1]! + 1,           // insertion
-        d[i - 1]![j - 1]! + cost,    // substitution
+      d[i * w + j] = Math.min(
+        cell((i - 1) * w + j) + 1,            // deletion
+        cell(i * w + (j - 1)) + 1,            // insertion
+        cell((i - 1) * w + (j - 1)) + cost,   // substitution
       );
       // Transposition of two adjacent characters (OSA extension).
       if (i > 1 && j > 1 && s[i - 1] === t[j - 2] && s[i - 2] === t[j - 1]) {
-        d[i]![j] = Math.min(d[i]![j]!, d[i - 2]![j - 2]! + cost);
+        d[i * w + j] = Math.min(cell(i * w + j), cell((i - 2) * w + (j - 2)) + cost);
       }
     }
   }
-  return d[m]![n]!;
+  return cell(m * w + n);
 }
 
 export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchScore {
@@ -596,10 +597,14 @@ const ROMAN_FAMILIES: Record<string, string> = {
   muhammed: 'muhammad', muhamad: 'muhammad', mouhamed: 'muhammad',
   // Ahmad/Ahmed variants
   ahmed: 'ahmad', ahmet: 'ahmad', ahmad: 'ahmad',
+  // Arabic consonant-skeleton transliterations (vowel marks stripped)
+  mhmd: 'muhammad', ahmd: 'ahmad', hsn: 'hassan',
+  // Cyrillic й → и + combining breve → и → extra 'i'; collapse double-i endings
+  dmitrii: 'dmitri',
   // Hussein/Hassan variants
   husain: 'hussein', husayn: 'hussein', hussain: 'hussein',
   hossein: 'hussein', hosein: 'hussein',
-  hassan: 'hasan', hasson: 'hasan', hassen: 'hasan',
+  hasan: 'hassan', hasson: 'hassan', hassen: 'hassan',
   // Yusuf variants
   yousef: 'yusuf', youssef: 'yusuf', yousuf: 'yusuf',
   yusoff: 'yusuf', yosef: 'yusuf', yusup: 'yusuf',
@@ -667,13 +672,15 @@ const ROMAN_FAMILIES: Record<string, string> = {
   // Faisal variants
   faysal: 'faisal', fayssal: 'faisal', feissal: 'faisal',
   // Zaid/Zayd variants
-  zayd: 'zaid', zayed: 'zaid',
+  zayd: 'zayed', zaid: 'zayed',
 };
 const MATCHER_PARTICLES: Set<string> = new Set([
   // Arabic particles
   'al', 'el', 'bin', 'ben', 'bint', 'abu', 'ibn', 'bou', 'bo',
   // North/West African patronymics
   'ould', 'wuld', 'ag', 'ait',
+  // South-Asian connective particle (Urdu/Hindi: "ul" in "Saif ul Islam")
+  'ul',
   // European particles (relevant for EU sanctions lists)
   'de', 'van', 'von', 'der', 'den', 'la', 'le', 'du', 'di',
 ]);
@@ -709,22 +716,24 @@ const LAM_ALEF_MAP: Record<string, string> = {
 export function normaliseForMatch(input: string): string {
   if (!input) return '';
   let s = input.toLowerCase();
+  // Expand lam-alef ligatures (Arabic Presentation Forms-A) so each component
+  // letter can be handled by ARABIC_LETTER_MAP individually.
+  s = s.replace(/./gu, (ch) => LAM_ALEF_MAP[ch] ?? ch);
   // Strip Arabic tashkeel (harakat diacritics), shadda, sukun, tatweel/kashida,
-  // and Arabic extended signs — all are invisible in handwritten/printed names
-  // but cause character-level mismatch when one source includes them and another
-  // doesn't (common when mixing OFAC/UN data with UAE EOCN/LTL data).
-  s = s.replace(/[ؐ-ًؚ-ٰٟـ]/g, '');
+  // and Arabic extended signs — invisible in printed names but cause mismatch
+  // when mixing OFAC/UN data with UAE EOCN/LTL data.
+  s = s.replace(ARABIC_DIACRITICS_RE, '');
   // Normalize alef variants (alef with hamza above/below, alef with madda) → bare alef.
   // Phonetically distinct in grammar but AML lists are inconsistent about which to use.
-  s = s.replace(/[آأإ]/g, 'ا'); // أ إ آ → ا
+  s = s.replace(/[\u0622\u0623\u0625]/g, '\u0627'); // أ إ آ → ا
   // Normalize final-ya / alef maqsura → ya (ى → ي)
-  s = s.replace(/ى/g, 'ي');
+  s = s.replace(/\u0649/g, '\u064a');
   // Normalize taa marbutah → ha (ة → ه) — relevant for female name suffixes
-  s = s.replace(/ة/g, 'ه');
+  s = s.replace(/\u0629/g, '\u0647');
   // NFD + strip Latin combining diacritics (accents, umlauts, etc.)
-  // Also map Turkish dotless-i (ı U+0131) which NFD does not decompose.
-  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-  s = s.replace(/ı/g, 'i').replace(/İ/g, 'i'); // Turkish: ı→i, İ→i
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Map chars that NFD does not decompose (ı, ß, ł, ø, etc.) to ASCII equivalents.
+  s = s.replace(/./gu, (ch) => SPECIAL_CHAR_MAP[ch] ?? ch);
   // Transliterate Arabic/Cyrillic to Latin
   s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
 
@@ -735,10 +744,14 @@ export function normaliseForMatch(input: string): string {
   s = s.replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 
   // 8. Drop particles, apply family-spelling normalisation.
+  // Guard: if every token is a particle (e.g. a single lam-alef ligature "la"),
+  // keep all tokens rather than returning an empty string — the input has
+  // meaningful content even if it is entirely composed of particle-like forms.
   const tokens = s.split(' ').filter(Boolean);
+  const nonParticle = tokens.filter((t) => !MATCHER_PARTICLES.has(t));
+  const base = nonParticle.length > 0 ? nonParticle : tokens;
   const out: string[] = [];
-  for (const t of tokens) {
-    if (MATCHER_PARTICLES.has(t)) continue;
+  for (const t of base) {
     out.push(ROMAN_FAMILIES[t] ?? t);
   }
   return out.join(' ').trim();
@@ -761,6 +774,7 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     matchTokenSortRatio(subject, candidate),
     matchPartialRatio(subject, candidate),
     matchInitials(subject, candidate),
+    matchAbbreviated(subject, candidate),
   ];
 
   const subjectNorm = normaliseForMatch(subject);
