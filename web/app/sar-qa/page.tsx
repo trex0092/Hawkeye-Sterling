@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
@@ -140,7 +140,7 @@ export default function SarQaPage() {
       });
       if (!mountedRef.current) return;
       if (!res.ok) {
-        setAiScoreError(`AI scoring failed (HTTP ${res.status}). Please try again.`);
+        setAiScoreError(apiErrorMessage(res.status, "AI scoring"));
         return;
       }
       const data = await res.json().catch(() => ({})) as { ok: boolean; scores?: QaScore[] };

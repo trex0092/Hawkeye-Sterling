@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { writeAuditEvent } from "@/lib/audit";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { RowActions } from "@/components/shared/RowActions";
@@ -299,7 +300,7 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing enrol HTTP ${res.status} — backend out of sync with UI`);
-        if (mountedRef.current) setBgError(`Failed to sync enrolment with server (HTTP ${res.status}). The subject has been saved locally.`);
+        if (mountedRef.current) setBgError(`Failed to sync enrolment with server — ${apiErrorMessage(res.status, "Sync")} The subject has been saved locally.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing enrol threw — backend out of sync with UI:", err);
@@ -325,7 +326,7 @@ export default function OngoingMonitorPage() {
       );
       if (!res.ok) {
         console.error(`[hawkeye] ongoing DELETE HTTP ${res.status} — backend row may persist as orphan`);
-        if (mountedRef.current) setBgError(`Failed to remove subject from server (HTTP ${res.status}). It has been removed locally but may reappear on next sync.`);
+        if (mountedRef.current) setBgError(`Failed to remove subject from server — ${apiErrorMessage(res.status, "Delete")} It has been removed locally but may reappear on next sync.`);
       }
     } catch (err) {
       console.error("[hawkeye] ongoing DELETE threw — backend row may persist as orphan:", err);
@@ -417,7 +418,7 @@ export default function OngoingMonitorPage() {
       });
       if (!res.ok) {
         console.error(`[hawkeye] ongoing-monitor-ai HTTP ${res.status} — portfolio-health KPI NOT refreshed`);
-        setBgError(`AI health check failed (HTTP ${res.status}). Portfolio alerts were not updated.`);
+        setBgError(`AI health check failed — ${apiErrorMessage(res.status, "AI health check")} Portfolio alerts were not updated.`);
         return;
       }
       const data = await res.json().catch(() => ({})) as MonitorAlertsResult;

@@ -355,7 +355,8 @@ export function AuditTrailViewer({
           if (res.status === 404) throw new Error("No audit record found for this screening ID.");
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
-        const json = await res.json().catch(() => ({})) as AuditViewResponse;
+        const json = await res.json().catch(() => null) as AuditViewResponse | null;
+        if (!json?.ok) throw new Error("Audit record unavailable — response malformed or missing");
         if (!cancelled) setData(json);
       } catch (err) {
         if (!cancelled)

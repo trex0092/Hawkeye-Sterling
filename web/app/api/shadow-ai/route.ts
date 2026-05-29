@@ -97,7 +97,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as PostBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   const VALID_TOOL_TYPES: ShadowAIEntry["toolType"][] = ["llm", "ml_api", "automation", "analytics", "image_gen", "other"];
@@ -105,16 +105,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   const VALID_DATA: ShadowAIEntry["dataClassification"][] = ["public", "internal", "confidential", "restricted"];
 
   if (!body.toolName?.trim() || body.toolName.length > 100) {
-    return NextResponse.json({ ok: false, error: "toolName required (≤100 chars)" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "toolName required (≤100 chars)" }, { status: 400, headers: gate.headers });
   }
   if (!body.toolType || !VALID_TOOL_TYPES.includes(body.toolType)) {
-    return NextResponse.json({ ok: false, error: "Invalid toolType" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid toolType" }, { status: 400, headers: gate.headers });
   }
   if (!body.detectionMethod || !VALID_DETECTION.includes(body.detectionMethod)) {
-    return NextResponse.json({ ok: false, error: "Invalid detectionMethod" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid detectionMethod" }, { status: 400, headers: gate.headers });
   }
   if (!body.dataClassification || !VALID_DATA.includes(body.dataClassification)) {
-    return NextResponse.json({ ok: false, error: "Invalid dataClassification" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid dataClassification" }, { status: 400, headers: gate.headers });
   }
 
   const vendorDpaExists = body.vendorDpaExists ?? false;
@@ -174,27 +174,27 @@ export async function PATCH(req: Request): Promise<NextResponse> {
   try {
     body = (await req.json()) as PatchBody;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
   if (!body.id?.trim()) {
-    return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "id required" }, { status: 400, headers: gate.headers });
   }
   const VALID_STATUSES: ShadowAIStatus[] = ["detected", "under_review", "approved", "blocked", "remediated"];
   if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) {
-    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid status" }, { status: 400, headers: gate.headers });
   }
   if (body.remediationAction !== undefined && body.remediationAction.length > 1000) {
-    return NextResponse.json({ ok: false, error: "remediationAction ≤1000 chars" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "remediationAction ≤1000 chars" }, { status: 400, headers: gate.headers });
   }
   if (body.notes !== undefined && body.notes.length > 1000) {
-    return NextResponse.json({ ok: false, error: "notes ≤1000 chars" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "notes ≤1000 chars" }, { status: 400, headers: gate.headers });
   }
 
   const entries = await loadEntries(tenant);
   const idx = entries.findIndex((e) => e.id === body.id);
   if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "Entry not found" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "Entry not found" }, { status: 404, headers: gate.headers });
   }
 
   const updated: ShadowAIEntry = {

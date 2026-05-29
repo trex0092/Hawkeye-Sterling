@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { SupplyChainRiskResult } from "@/app/api/supply-chain/risk/route";
 import type { SupplyChainMapResult } from "@/app/api/supply-chain/map/route";
@@ -390,6 +390,8 @@ export default function SupplyChainPage() {
           body: JSON.stringify({ company, suppliers }),
         }),
       ]);
+      if (!riskRes.ok) throw new Error(apiErrorMessage(riskRes.status, "Supply chain risk"));
+      if (!mapRes.ok) throw new Error(apiErrorMessage(mapRes.status, "Supply chain map"));
       const [riskData, mapData] = await Promise.all([
         riskRes.json() as Promise<SupplyChainRiskResult>,
         mapRes.json() as Promise<SupplyChainMapResult>,

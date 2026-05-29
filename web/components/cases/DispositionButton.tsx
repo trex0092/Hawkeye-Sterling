@@ -10,7 +10,7 @@
 // bias-signal detection over time.
 
 import { useState, useRef, useEffect } from "react";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 const DISPOSITION_CODES = [
   { code: "D00_no_match", label: "D00 — No match" },
@@ -94,8 +94,9 @@ export function DispositionButton({
       };
       if (!mountedRef.current) return;
       if (!res.ok || !data.ok) {
-        setErrorText(data.error ?? `HTTP ${res.status}`);
-        onSubmit?.({ ok: false, error: data.error ?? `HTTP ${res.status}` });
+        const msg = data.error ?? apiErrorMessage(res.status, "Disposition");
+        setErrorText(msg);
+        onSubmit?.({ ok: false, error: msg });
         return;
       }
       setDoneText(

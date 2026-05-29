@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { BarChart, Donut } from "@/components/ui/Charts";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface Manifest {
   product: string;
@@ -554,7 +554,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
       });
       const data = await res.json().catch(() => ({})) as ReasonResponse;
       if (!res.ok || !data.ok) {
-        setError(data.error ?? `HTTP ${res.status}`);
+        setError(data.error ?? apiErrorMessage(res.status, "Reasoning engine"));
       } else {
         setResult(data);
       }

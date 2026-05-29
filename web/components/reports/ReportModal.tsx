@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AsanaFile {
   endpoint: string;
@@ -133,7 +133,7 @@ export function ReportModal({
           }
           setAsana({
             status: "error",
-            message: json?.error ?? `Asana filing failed (server ${res.status})`,
+            message: json?.error ?? apiErrorMessage(res.status, "Asana filing"),
           });
           return;
         }

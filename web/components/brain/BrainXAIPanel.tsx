@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface ShapValue {
   feature: string;
@@ -40,7 +40,7 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
       body: JSON.stringify({ composite: { score, breakdown }, runId }),
     })
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(apiErrorMessage(res.status, "Score explanation"));
         return res.json() as Promise<ScoreExplainResponse>;
       })
       .then((d) => {
