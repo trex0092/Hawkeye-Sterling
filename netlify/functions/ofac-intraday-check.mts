@@ -20,6 +20,7 @@
 import type { Config } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
+import { writeHeartbeat, fireAlert } from '../lib/heartbeat.js';
 
 const LABEL = 'ofac-intraday-check';
 const schedule = '0 */4 * * *';
@@ -93,7 +94,9 @@ export default async function handler(): Promise<void> {
     if (!res.ok) throw new Error(`OFAC feed HTTP ${res.status}`);
     xml = await res.text();
   } catch (err) {
-    console.error(`[${LABEL}] OFAC SDN fetch failed:`, err instanceof Error ? err.message : String(err));
+    const errMsg = `OFAC SDN fetch failed: ${err instanceof Error ? err.message : String(err)}`;
+    console.error(`[${LABEL}]`, errMsg);
+    await fireAlert(LABEL, errMsg, 'critical');
     return;
   }
 
@@ -181,6 +184,8 @@ export default async function handler(): Promise<void> {
       console.warn(`[${LABEL}] fast refresh trigger failed:`, err instanceof Error ? err.message : String(err));
     }
   }
+
+  await writeHeartbeat(LABEL);
 }
 
 export const config: Config = { schedule };
