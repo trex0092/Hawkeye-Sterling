@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { UEBAReport, UEBAAlert, AnalystProfile, UEBASeverity } from "../../../src/monitoring/analyst-behavior";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -127,13 +128,13 @@ export default function AnalystBehaviorPage() {
     try {
       const res = await fetch(`/api/analyst-behavior?windowDays=${days}`);
       if (!res.ok) {
-        setError(res.status === 401 ? "Authentication required — please refresh the page." : `HTTP ${res.status}`);
+        setError(apiErrorMessage(res.status, "UEBA analysis"));
         return;
       }
       const json = await res.json() as ApiResponse;
       setData(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(caughtErrorMessage(err, "UEBA analysis failed — please try again."));
     } finally {
       setLoading(false);
     }
@@ -202,7 +203,7 @@ export default function AnalystBehaviorPage() {
         </div>
       ) : error ? (
         <div role="alert" aria-live="assertive" className="bg-red-950/20 border border-red-500/40 rounded-lg p-4 text-13 text-red-300">
-          UEBA engine error: {error}
+          {error}
         </div>
       ) : !report ? (
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-6">

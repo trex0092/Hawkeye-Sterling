@@ -48,6 +48,16 @@ function buildError(label: string, tail: string, detail?: string): string {
   return clean(detail ? `${label} ${tail} ${detail}` : `${label} ${tail}`);
 }
 
+// Map an HTTP status code to a user-friendly message that does not expose
+// server-internal error text (API key hints, stack traces, auth rejection reasons).
+function statusMessage(status: number, label: string): string | null {
+  if (status === 401) return "Authentication required — please refresh the page.";
+  if (status === 403) return "Access denied — you don't have permission for this action.";
+  if (status === 429) return "Too many requests — please wait a moment and try again.";
+  if (status === 404) return `${label} not found.`;
+  return null;
+}
+
 export async function fetchJson<T = unknown>(
   input: string,
   opts: FetchJsonOptions = {},
@@ -117,10 +127,11 @@ export async function fetchJson<T = unknown>(
           detail: envelope?.detail ?? envelope?.error ?? raw.slice(0, 200),
         };
       } else if (res.status < 200 || res.status > 299) {
+        const knownMsg = statusMessage(res.status, label);
         return {
           ok: false,
           status: res.status,
-          error: buildError(label, `server ${res.status}`, envelope?.error),
+          error: knownMsg ?? buildError(label, `server ${res.status}`, envelope?.error),
           detail: envelope?.detail ?? raw.slice(0, 200),
         };
       } else if (envelope && envelope.ok === false) {

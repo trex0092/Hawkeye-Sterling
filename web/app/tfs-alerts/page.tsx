@@ -448,6 +448,10 @@ export default function TFSAlertsPage() {
       if (!mountedRef.current) return;
 
       if (!searchRes.ok) {
+        if (searchRes.status === 401) {
+          setErrorMsg("Authentication required — please refresh the page.");
+          return;
+        }
         let err: { error?: string } = {};
         try { err = (await searchRes.json()) as { error?: string }; } catch { /* non-JSON error body */ }
         if (err.error === "GMAIL_REFRESH_FAILED") {

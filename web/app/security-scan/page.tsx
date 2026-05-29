@@ -193,7 +193,9 @@ export default function SecurityScanPage() {
 
         {error && (
           <div role="alert" aria-live="assertive" className="rounded-xl border border-red-500/30 bg-red-950/20 p-6 text-13 text-red-300">
-            Scan failed: {error}
+            {error.toLowerCase().startsWith("authentication") || error.toLowerCase().startsWith("access denied")
+              ? error
+              : `Scan failed: ${error}`}
           </div>
         )}
 
