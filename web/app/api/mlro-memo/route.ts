@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface MlroMemoResult {
   memoRef: string;
   memo: string;

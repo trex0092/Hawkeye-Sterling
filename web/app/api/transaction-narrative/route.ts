@@ -9,6 +9,8 @@ import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface TransactionAnalysis {
   typology: string;
   typologyFatfRef: string;

@@ -11,6 +11,8 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export interface CddRefreshTriggerResult {
   refreshRequired: boolean;
   urgency: "immediate" | "within_30_days" | "within_90_days" | "scheduled" | "none";

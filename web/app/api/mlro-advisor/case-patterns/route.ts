@@ -2,6 +2,8 @@ import { writeAuditEvent } from "@/lib/audit";
 import { parseLlmJson, withMlroLlm } from "@/lib/server/mlro-route-base";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
+import { getAnthropicClient } from "@/lib/server/llm";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
