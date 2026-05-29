@@ -439,6 +439,75 @@ export async function POST(req: Request): Promise<NextResponse> {
     result.hits.length,
   ).catch(() => undefined);
 
+  // Auto-create compliance case when hits are found (fire-and-forget).
+  if (result.hits.length > 0) {
+    void (async () => {
+      try {
+        const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+        const res = await fetch(`${baseUrl}/api/hs-cases`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+          },
+          body: JSON.stringify({
+            subjectName: subject.name,
+            subjectId: resultId,
+            severity: result.severity,
+            hits: result.hits.map((h) => ({
+              listId: h.listId,
+              listRef: h.listRef,
+              candidateName: h.candidateName,
+              matchScore: h.score,
+            })),
+            linkedAuditSeq: undefined,
+            createdBy: gate.keyId,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "");
+          console.warn("[screening/run] auto-case creation failed:", res.status, errBody.slice(0, 200));
+        } else {
+          const caseData = await res.json() as { ok: boolean; case?: { caseId: string }; deduplicated?: boolean };
+          if (caseData.ok && caseData.case?.caseId && !caseData.deduplicated) {
+            void fetch(`${baseUrl}/api/hs-cases/${caseData.case.caseId}/enrich`, {
+              method: "POST",
+              headers: { "x-api-key": process.env["ADMIN_TOKEN"] ?? "" },
+            }).catch((e: unknown) => {
+              console.warn("[screening/run] auto-enrich failed:", e instanceof Error ? e.message : String(e));
+            });
+          }
+          // If UAE lists are stale, queue subject for re-screen after refresh.
+          if (uaeStale) {
+            void fetch(`${baseUrl}/api/rescreen-queue`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
+              },
+              body: JSON.stringify({
+                subjectId: resultId,
+                subjectName: subject.name,
+                reason: "Screened while UAE EOCN or LTL list was stale (>36h). Re-screen required after refresh.",
+              }),
+            }).catch(() => undefined);
+          }
+        }
+      } catch (err) {
+        console.warn("[screening/run] auto-case creation error:", err instanceof Error ? err.message : String(err));
+      }
+    })();
+  }
+
+  // Record screening result for bias monitoring (fire-and-forget).
+  void recordScreeningBias(
+    tenant,
+    subject.name,
+    result.topScore,
+    result.severity,
+    result.hits.length,
+  ).catch(() => undefined);
+
   // Confidence calibration note — honest statement about what was and
   // wasn't checked. Never claim higher confidence than supported.
   const confidenceNote =
