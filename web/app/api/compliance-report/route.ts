@@ -178,6 +178,34 @@ function renderHtmlReport(text: string, input: ReportInput): string {
 
 
 
+  // ── Adverse-media findings — full evidence block for the PDF ───
+  // The .txt has emitted this for several PRs already (hit volume,
+  // categories with counts, keyword groups, top keywords, per-hit
+  // evidence with offsets, news dossier with article links). The
+  // PDF render historically only showed the chip overlay above and
+  // dropped everything else. Operator can't take that to a regulator
+  // — every adverse-media disposition needs the EVIDENCE in the
+  // file, not a category badge. Rebuilt below.
+  const amScored = sb?.adverseMediaScored ?? null;
+  const amTotalHits =
+    amScored?.total ??
+    (sb?.adverseKeywordGroups ?? []).reduce((s, g) => s + g.count, 0) +
+      (sb?.adverseMedia?.length ?? 0);
+  const amDistinctKw = amScored?.distinctKeywords ?? (sb?.adverseMedia?.length ?? 0);
+  const amCategoriesTripped =
+    amScored?.categoriesTripped && amScored.categoriesTripped.length > 0
+      ? amScored.categoriesTripped
+      : Array.from(new Set((sb?.adverseMedia ?? []).map((a) => a.categoryId)));
+  const amVectorScore =
+    amScored?.compositeScore != null ? Math.round(amScored.compositeScore) : null;
+  const amTopKeywords = amScored?.topKeywords ?? [];
+  const newsArticles = (
+    sb as { newsDossier?: { articles?: Array<{ title: string; link: string; pubDate?: string; source?: string; snippet?: string; severity?: string; keywordGroups?: string[] }>; articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier?.articles ?? [];
+  const newsDossierMeta = (
+    sb as { newsDossier?: { articleCount?: number; topSeverity?: string; source?: string; languages?: string[] } } | null | undefined
+  )?.newsDossier;
+
   // Recommendation
   let rec = "";
   if (sev === "critical") {
