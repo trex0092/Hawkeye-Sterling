@@ -503,9 +503,15 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   // Optionally cross-check each entry_id against the store so the caller
   // knows whether the referenced entries actually exist.
-  const allEntries = await loadAllEntries();
-  const storedIds = new Set(allEntries.map((e) => e.id));
-  const unknownIds = body.entry_ids.filter((id) => !storedIds.has(id));
+  let unknownIds: string[] = [];
+  try {
+    const allEntries = await loadAllEntries();
+    const storedIds = new Set(allEntries.map((e) => e.id));
+    unknownIds = body.entry_ids.filter((id) => !storedIds.has(id));
+  } catch (err) {
+    console.warn("[audit/view] POST loadAllEntries failed:", err instanceof Error ? err.message : err);
+    // Non-fatal — return verification result without cross-check
+  }
 
   return NextResponse.json(
     {
