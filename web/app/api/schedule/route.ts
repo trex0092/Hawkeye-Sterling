@@ -57,11 +57,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const keys = await listKeys(PREFIX);
+  let keys: string[];
+  try {
+    keys = await listKeys(PREFIX);
+  } catch (err) {
+    console.error("[schedule] listKeys failed:", err);
+    return NextResponse.json({ ok: false, error: "store unavailable" }, { status: 503 });
+  }
   const out: Schedule[] = [];
   for (const k of keys) {
-    const s = await getJson<Schedule>(k);
-    if (s) out.push(s);
+    try {
+      const s = await getJson<Schedule>(k);
+      if (s) out.push(s);
+    } catch { /* skip malformed entry */ }
   }
   return NextResponse.json({ ok: true, count: out.length, schedules: out }, { headers: gate.headers });
 }
