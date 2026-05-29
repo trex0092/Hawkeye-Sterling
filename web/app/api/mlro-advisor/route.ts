@@ -34,6 +34,13 @@ import {
   extractAndStripProbe,
 } from "@/lib/server/mlro-probe";
 import {
+  retrieveForQuestion,
+  runPreGenerationRouter,
+  runPostGenerationCheck,
+  appendAuditEntry,
+  type RetrievalContext,
+} from "@/lib/server/mlro-integration";
+import {
   buildJurisdictionComparator,
   buildCasePrecedentPreamble,
   buildRegulatoryUpdatePreamble,
