@@ -141,39 +141,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, degraded: true, ...fallback }, { headers: gate.headers });
   }
 
-  const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.
-
-Generate a comprehensive, regulatory-grade EDD questionnaire specific to the customer profile provided. Questions must be:
-- Actionable and specific (not generic)
-- Grounded in UAE/FATF regulatory obligations
-- Organised by category (Identity & Ownership, Source of Funds, Source of Wealth, Business Purpose, PEP Declarations, Sanctions & Restrictions, Trade Finance / Supply Chain, Transaction Patterns, Adverse Media)
-- Each question includes: the question itself, why it's asked (rationale), regulatory basis, whether mandatory, and optional follow-up prompt
-
-Respond ONLY with valid JSON — no markdown fences, no explanation:
-{
-  "eddLevel": "standard"|"enhanced"|"intensive",
-  "eddBasis": "<one-sentence basis for this EDD level>",
-  "totalQuestions": <number>,
-  "mandatoryCount": <number>,
-  "categories": ["<category>"],
-  "questions": [
-    {
-      "id": "<n>",
-      "category": "<category>",
-      "question": "<full question text>",
-      "rationale": "<why this is asked — AML grounding>",
-      "regulatoryBasis": "<UAE/FATF citation>",
-      "mandatory": <true|false>,
-      "followUp": "<optional follow-up prompt>"
-    }
-  ],
-  "documentationRequired": ["<document>"],
-  "seniorApprovalRequired": <true|false>,
-  "reviewFrequency": "<e.g. annual / quarterly>",
-  "regulatoryBasis": "<full citation list>"
-}
-
-Generate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
+  const systemPrompt = `You are a UAE AML/CFT compliance expert generating tailored Enhanced Due Diligence (EDD) questionnaires for a UAE-licensed DPMS (gold trader / precious metals dealer) operating under FDL 10/2025 and supervised by MoE.\n\nGenerate a comprehensive, regulatory-grade EDD questionnaire specific to the customer profile provided. Questions must be:\n- Actionable and specific (not generic)\n- Grounded in UAE/FATF regulatory obligations\n- Organised by category (Identity & Ownership, Source of Funds, Source of Wealth, Business Purpose, PEP Declarations, Sanctions & Restrictions, Trade Finance / Supply Chain, Transaction Patterns, Adverse Media)\n- Each question includes: the question itself, why it's asked (rationale), regulatory basis, whether mandatory, and optional follow-up prompt\n\nRespond ONLY with valid JSON — no markdown fences, no explanation:\n{\n  "eddLevel": "standard"|"enhanced"|"intensive",\n  "eddBasis": "<one-sentence basis for this EDD level>",\n  "totalQuestions": <number>,\n  "mandatoryCount": <number>,\n  "categories": ["<category>"],\n  "questions": [\n    {\n      "id": "<n>",\n      "category": "<category>",\n      "question": "<full question text>",\n      "rationale": "<why this is asked — AML grounding>",\n      "regulatoryBasis": "<UAE/FATF citation>",\n      "mandatory": <true|false>,\n      "followUp": "<optional follow-up prompt>"\n    }\n  ],\n  "documentationRequired": ["<document>"],\n  "seniorApprovalRequired": <true|false>,\n  "reviewFrequency": "<e.g. annual / quarterly>",\n  "regulatoryBasis": "<full citation list>"\n}\n\nGenerate 10–15 questions. Be specific to the UAE gold/DPMS context and the customer profile.`;
 
   try {
     const client = getAnthropicClient(apiKey, 4_500);
