@@ -150,13 +150,15 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
     return snapshot;
   }
 
+  const LIST_HEALTH_BLOB_TIMEOUT_MS = 1_200;
   await Promise.all(LIST_IDS.map(async (listId) => {
     const key = `${listId}/latest.json`;
     for (const store of stores) {
       try {
-        const raw = await store.get(key, { type: "json" }) as {
-          entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number;
-        } | null;
+        const raw = await Promise.race([
+          store.get(key, { type: "json" }) as Promise<{ entities?: unknown[]; report?: { fetchedAt?: number }; fetchedAt?: number } | null>,
+          new Promise<null>((r) => setTimeout(() => r(null), LIST_HEALTH_BLOB_TIMEOUT_MS)),
+        ]);
         if (!raw || !Array.isArray(raw.entities)) continue;
         const entityCount = raw.entities.length;
         const fetchedAtMs = raw.report?.fetchedAt ?? raw.fetchedAt ?? null;
