@@ -1464,16 +1464,7 @@ function renderBold(text: string): React.ReactNode[] {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MlroAdvisorPage() {
-  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools" | "data-analyst">("advisor");
-  const [daQuestion, setDaQuestion] = useState("");
-  const [daAnswer, setDaAnswer] = useState<string | null>(null);
-  const [daLoading, setDaLoading] = useState(false);
-  const [daError, setDaError] = useState<string | null>(null);
-  // Structured operator hint paired with daError when the server recognised
-  // the failure mode (MCP credential gap, agent-not-found, etc.). Rendered
-  // in a separate styled block below the raw error so the MLRO sees both
-  // the technical message AND the actionable next steps.
-  const [daHint, setDaHint] = useState<string | null>(null);
+  const [pageTab, setPageTab] = useState<"advisor" | "regulatory-qa" | "super-tools">("advisor");
 
   // ── Advisor state ────────────────────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -3525,9 +3516,6 @@ export default function MlroAdvisorPage() {
           </button>
           <button type="button" onClick={() => setPageTab("super-tools")} className={tabCls(pageTab === "super-tools")}>
             Super Tools
-          </button>
-          <button type="button" onClick={() => setPageTab("data-analyst")} className={tabCls(pageTab === "data-analyst")}>
-            Data Analyst
           </button>
         </div>
 
