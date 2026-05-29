@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface UserProfile {
   id: string;
@@ -75,7 +76,7 @@ export default function ProfilePage() {
       });
       const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string; sessionInvalidated?: boolean };
       if (!res.ok || !json.ok) {
-        setSaveError(json.error ?? `HTTP ${res.status}`);
+        setSaveError(json.error ?? apiErrorMessage(res.status, "Password change"));
       } else {
         setSaveSuccess(true);
         setCurrentPassword("");

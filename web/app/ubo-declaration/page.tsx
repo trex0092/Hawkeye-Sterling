@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ── UBO AI Risk types ─────────────────────────────────────────────────────────
 interface UboRisk {
@@ -92,9 +93,8 @@ export default function UboDeclarationPage() {
         if (!mountedRef.current) return;
         setUboRisk(data);
       } else {
-        const body = await res.text().catch(() => "");
         console.error(`[hawkeye] ubo-risk HTTP ${res.status}`);
-        if (mountedRef.current) setUboRiskError(`AI risk assessment failed (HTTP ${res.status})${body ? ` — ${body}` : ""}`);
+        if (mountedRef.current) setUboRiskError(apiErrorMessage(res.status, "AI risk assessment"));
       }
     } catch (err) {
       console.error("[hawkeye] ubo-risk threw:", err);
