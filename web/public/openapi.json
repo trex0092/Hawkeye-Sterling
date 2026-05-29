@@ -234,7 +234,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["subjectId", "cadence"],
+                "required": ["action"],
                 "properties": {
                   "subjectId": { "type": "string", "description": "Must match an enrolled subject ID", "example": "HS-10001" },
                   "cadence": {

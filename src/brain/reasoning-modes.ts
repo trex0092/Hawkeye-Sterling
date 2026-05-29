@@ -417,6 +417,18 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   if (w15override) REASONING_MODES[i] = w15override;
 }
 
+// Merge Wave 4: new predicate-crime, proliferation, correspondent-banking, hawala modes.
+const existingIdsW4 = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of WAVE4_MODES) {
+  if (!existingIdsW4.has(m.id)) REASONING_MODES.push(m);
+}
+// Apply WAVE4_OVERRIDES.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]!;
+  const w4override = WAVE4_OVERRIDES.find((o) => o.id === r.id);
+  if (w4override) REASONING_MODES[i] = w4override;
+}
+
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
   REASONING_MODES.map((r) => [r.id, r]),
 );

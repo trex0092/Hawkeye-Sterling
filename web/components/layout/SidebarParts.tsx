@@ -11,6 +11,8 @@ import {
 import type { FilterKey, SavedFilterSet } from "@/lib/types";
 
 const OPERATOR_STORAGE_KEY = "hawkeye.operator";
+const OPERATOR_DESIGNATION_KEY = "hawkeye.operator.designation";
+const OPERATOR_REGION_KEY = "hawkeye.operator.region";
 
 // ─── Shell & Section ───────────────────────────────────────────────────────
 
@@ -433,6 +435,8 @@ export function SidebarFilterList<K extends string>({
 
 export function SidebarMLROCard() {
   const [name, setName] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [region, setRegion] = useState("");
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [role, setRole] = useState<OperatorRole>("mlro");
