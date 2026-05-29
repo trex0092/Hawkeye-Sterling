@@ -365,13 +365,6 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   if (signal?.aborted) return { ok: false, error: 'aborted' };
   if (!result.ok) {
     const prefix = result.partial ? 'partial_response:' : '';
-    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
-    if (result.body && !result.partial) {
-      try {
-        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
-        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
-      } catch { /* keep default error detail */ }
-    }
     return {
       ok: false,
       error: `${prefix}${result.error ?? 'unknown error'} (${result.attempts} attempts, ${result.elapsedMs}ms)`,
