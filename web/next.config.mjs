@@ -5,16 +5,74 @@ import { createRequire } from "node:module";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-// Preload graceful-fs globally so every fs.open() that hits EMFILE retries
-// automatically. This must run before Next.js / webpack touch the filesystem
-// (i.e. at config-module load time). Fixes EMFILE on Netlify build agents and
-// any container with fd hard limit ≤ 4096.
-try {
-  const gracefulFs = require("graceful-fs");
-  gracefulFs.gracefulify(require("fs"));
-} catch {
-  // graceful-fs not installed — proceed without patch (build will rely on ulimit)
-}
+// Patch fs.promises with a concurrency semaphore + EMFILE retry.
+// The output:standalone trace phase opens ~3000 node_modules files concurrently
+// via readFile, spiking fds from ~245 to ~3246 (past the 4096 hard limit on
+// Netlify build agents). Semaphore caps concurrent fd-acquiring calls at 500.
+// Guard: preload-graceful-fs.cjs (via --require) runs earlier and sets
+// fs.__emfilePatched; skip here to avoid double-patching and shared semaphore state.
+;(function patchFsPromises() {
+  const fs = require("fs");
+  if (fs.__emfilePatched) return;
+  fs.__emfilePatched = true;
+
+  const MAX_CONCURRENT_FD = 500;
+  let active = 0;
+  const waiting = [];
+
+  function acquire() {
+    return new Promise(resolve => {
+      if (active < MAX_CONCURRENT_FD) { active++; resolve(); }
+      else waiting.push(resolve);
+    });
+  }
+
+  function release() {
+    if (waiting.length > 0) {
+      waiting.shift()();
+    } else {
+      active--;
+    }
+  }
+
+  const MAX_RETRIES = 20;
+  const FD_METHODS = new Set(["readFile", "writeFile", "appendFile", "copyFile"]);
+  const METHODS = ["open", "writeFile", "readFile", "appendFile", "copyFile",
+                   "rename", "mkdir", "readdir", "stat", "lstat", "access"];
+
+  for (const method of METHODS) {
+    const orig = fs.promises[method];
+    if (typeof orig !== "function") continue;
+    const limited = FD_METHODS.has(method);
+
+    fs.promises[method] = async function emfileRetry(...args) {
+      if (limited) await acquire();
+      try {
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            return await orig.apply(this, args);
+          } catch (err) {
+            if ((err.code === "EMFILE" || err.code === "ENFILE") && attempt < MAX_RETRIES) {
+              await new Promise(r => setTimeout(r, 50 * (attempt + 1)));
+              continue;
+            }
+            throw err;
+          }
+        }
+      } finally {
+        if (limited) release();
+      }
+    };
+  }
+
+  // Also patch callback-based API via graceful-fs if available.
+  try {
+    const gfs = require("graceful-fs");
+    gfs.gracefulify(fs);
+  } catch {
+    // graceful-fs unavailable — rely on ulimit and the promises patch above
+  }
+})();
 
 // Capture the deployed git SHA at build time. Netlify provides `COMMIT_REF`;
 // other CI providers expose it under different names. Without this, runtime
