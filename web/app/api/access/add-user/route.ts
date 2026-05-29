@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   if (!body.email?.includes("@") || body.email.length > 254) {
-    return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid email address" }, { status: 400 });
   }
 
   const { name, email, role, username, password } = body;

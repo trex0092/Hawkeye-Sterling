@@ -62,18 +62,23 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const entries = await loadEntries(tenant);
-  entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  try {
+    const entries = await loadEntries(tenant);
+    entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const stats = {
-    total: entries.length,
-    critical: entries.filter((e) => e.riskLevel === "critical").length,
-    high: entries.filter((e) => e.riskLevel === "high").length,
-    open: entries.filter((e) => ["detected", "under_review"].includes(e.status)).length,
-    blocked: entries.filter((e) => e.status === "blocked").length,
-  };
+    const stats = {
+      total: entries.length,
+      critical: entries.filter((e) => e.riskLevel === "critical").length,
+      high: entries.filter((e) => e.riskLevel === "high").length,
+      open: entries.filter((e) => ["detected", "under_review"].includes(e.status)).length,
+      blocked: entries.filter((e) => e.status === "blocked").length,
+    };
 
-  return NextResponse.json({ ok: true, entries, stats }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, entries, stats }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[shadow-ai] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load shadow AI entries" }, { status: 500, headers: gate.headers });
+  }
 }
 
 interface PostBody {
@@ -143,8 +148,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     updatedAt: now,
   };
 
-  const existing = await loadEntries(tenant);
-  await setJson(blobKey(tenant), [entry, ...existing].slice(0, 500));
+  try {
+    const existing = await loadEntries(tenant);
+    await setJson(blobKey(tenant), [entry, ...existing].slice(0, 500));
+  } catch (err) {
+    console.error("[shadow-ai] POST store failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to save shadow AI entry" }, { status: 500, headers: gate.headers });
+  }
 
   void writeAuditChainEntry({
     event: "shadow_ai.detected",
@@ -191,30 +201,35 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "notes ≤1000 chars" }, { status: 400, headers: gate.headers });
   }
 
-  const entries = await loadEntries(tenant);
-  const idx = entries.findIndex((e) => e.id === body.id);
-  if (idx === -1) {
-    return NextResponse.json({ ok: false, error: "Entry not found" }, { status: 404, headers: gate.headers });
+  try {
+    const entries = await loadEntries(tenant);
+    const idx = entries.findIndex((e) => e.id === body.id);
+    if (idx === -1) {
+      return NextResponse.json({ ok: false, error: "Entry not found" }, { status: 404, headers: gate.headers });
+    }
+
+    const updated: ShadowAIEntry = {
+      ...entries[idx]!,
+      ...(body.status !== undefined ? { status: body.status } : {}),
+      ...(body.remediationAction !== undefined ? { remediationAction: body.remediationAction } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
+      ...(body.approvedInRegistry !== undefined ? { approvedInRegistry: body.approvedInRegistry } : {}),
+      ...(body.vendorDpaExists !== undefined ? { vendorDpaExists: body.vendorDpaExists } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+
+    entries[idx] = updated;
+    await setJson(blobKey(tenant), entries);
+
+    void writeAuditChainEntry({
+      event: "shadow_ai.updated",
+      actor: gate.keyId ?? "system",
+      detail: `${body.id} → ${body.status ?? "updated"}`,
+    }, tenant).catch(() => {});
+
+    return NextResponse.json({ ok: true, entry: updated }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[shadow-ai] PATCH failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to update shadow AI entry" }, { status: 500, headers: gate.headers });
   }
-
-  const updated: ShadowAIEntry = {
-    ...entries[idx]!,
-    ...(body.status !== undefined ? { status: body.status } : {}),
-    ...(body.remediationAction !== undefined ? { remediationAction: body.remediationAction } : {}),
-    ...(body.notes !== undefined ? { notes: body.notes } : {}),
-    ...(body.approvedInRegistry !== undefined ? { approvedInRegistry: body.approvedInRegistry } : {}),
-    ...(body.vendorDpaExists !== undefined ? { vendorDpaExists: body.vendorDpaExists } : {}),
-    updatedAt: new Date().toISOString(),
-  };
-
-  entries[idx] = updated;
-  await setJson(blobKey(tenant), entries);
-
-  void writeAuditChainEntry({
-    event: "shadow_ai.updated",
-    actor: gate.keyId ?? "system",
-    detail: `${body.id} → ${body.status ?? "updated"}`,
-  }, tenant).catch(() => {});
-
-  return NextResponse.json({ ok: true, entry: updated }, { headers: gate.headers });
 }

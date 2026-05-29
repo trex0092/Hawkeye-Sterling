@@ -28,13 +28,18 @@ export async function GET(req: Request): Promise<NextResponse> {
     entityType: url.searchParams.get("entityType") ?? undefined,
     jurisdiction: url.searchParams.get("jurisdiction") ?? undefined,
   };
-  const { POST } = await import("@/app/api/adverse-media-live/route");
-  const synthetic = new Request(req.url.replace("/live-adverse-media", "/adverse-media-live"), {
-    method: "POST",
-    headers: new Headers({ "content-type": "application/json", ...Object.fromEntries(req.headers) }),
-    body: JSON.stringify(body),
-  });
-  return POST(synthetic);
+  try {
+    const { POST } = await import("@/app/api/adverse-media-live/route");
+    const synthetic = new Request(req.url.replace("/live-adverse-media", "/adverse-media-live"), {
+      method: "POST",
+      headers: new Headers({ "content-type": "application/json", ...Object.fromEntries(req.headers) }),
+      body: JSON.stringify(body),
+    });
+    return POST(synthetic);
+  } catch (err) {
+    console.error("[live-adverse-media] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Adverse media search failed" }, { status: 500, headers: gate.headers });
+  }
 }
 
 // POST — same body as /api/adverse-media-live

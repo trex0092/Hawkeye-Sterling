@@ -231,7 +231,7 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
   } catch (err) {
     console.error("[board-pack-auto] unhandled exception:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Report generation failed — please retry or contact support." },
+      { ok: false, error: "Report generation failed — please retry or contact support." },
       { status: 500, headers: gate.headers }
     );
   }

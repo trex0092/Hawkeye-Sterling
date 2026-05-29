@@ -64,8 +64,13 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
   }
 
-  const users = await getUsersWithRoles();
-  return NextResponse.json({ ok: true, users }, { headers: gate.headers });
+  try {
+    const users = await getUsersWithRoles();
+    return NextResponse.json({ ok: true, users }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[admin/rbac] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load users" }, { status: 500, headers: gate.headers });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -113,20 +118,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const result = await assignRole(body.userId, body.role);
-  if (!result.ok) {
-    return NextResponse.json(
-      { ok: false, error: result.error },
-      { status: 404, headers: gate.headers },
-    );
-  }
+  try {
+    const result = await assignRole(body.userId, body.role);
+    if (!result.ok) {
+      return NextResponse.json(
+        { ok: false, error: result.error },
+        { status: 404, headers: gate.headers },
+      );
+    }
 
-  void writeAuditChainEntry(
-    { event: "rbac.role_assigned", actor: gate.keyId, meta: { targetUserId: body.userId, role: body.role } },
-    tenantIdFromGate(gate),
-  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
-  return NextResponse.json(
-    { ok: true, userId: body.userId, role: body.role },
-    { headers: gate.headers },
-  );
+    void writeAuditChainEntry(
+      { event: "rbac.role_assigned", actor: gate.keyId, meta: { targetUserId: body.userId, role: body.role } },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json(
+      { ok: true, userId: body.userId, role: body.role },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[admin/rbac] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to assign role" }, { status: 500, headers: gate.headers });
+  }
 }

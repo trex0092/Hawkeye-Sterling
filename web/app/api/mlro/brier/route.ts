@@ -105,7 +105,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const since = Number.isFinite(sinceParsed) ? sinceParsed : Number.NEGATIVE_INFINITY;
   const until = Number.isFinite(untilParsed) ? untilParsed : Number.POSITIVE_INFINITY;
 
-  await hydrateJournalFromBlobs();
+  try {
+    await hydrateJournalFromBlobs();
+  } catch (err) {
+    console.warn("[mlro/brier] hydration failed, using in-process journal:", err instanceof Error ? err.message : err);
+  }
 
   const all = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);

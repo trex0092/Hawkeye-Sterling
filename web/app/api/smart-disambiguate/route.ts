@@ -134,7 +134,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (hits.length > 20) {
     return NextResponse.json(
-      { error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
+      { ok: false, error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
       { status: 400, headers: gate.headers }
     );
   }

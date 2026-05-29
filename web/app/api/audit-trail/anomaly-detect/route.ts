@@ -114,7 +114,7 @@ ${JSON.stringify(events, null, 2)}`,
     try {
       parsed = JSON.parse(stripped) as AnomalyDetectResult;
     } catch {
-      return NextResponse.json({ error: "LLM returned malformed JSON" }, { status: 502, headers: gate.headers });
+      return NextResponse.json({ ok: false, error: "LLM returned malformed JSON" }, { status: 502, headers: gate.headers });
     }
 
     return NextResponse.json({

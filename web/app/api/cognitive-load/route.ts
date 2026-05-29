@@ -23,23 +23,26 @@ export async function GET(req: Request) {
   const windowHours = Number(url.searchParams.get('windowHours') ?? '4');
 
   const tenantId = tenantIdFromGate(gate);
-  const events = await getJson<DisposalEvent[]>(eventsKey(tenantId, actorId)) ?? [];
+  try {
+    const events = await getJson<DisposalEvent[]>(eventsKey(tenantId, actorId)) ?? [];
+    const profile = detectAlertFatigue(
+      events.map((e) => ({ ...e, actorId })),
+      windowHours,
+    );
 
-  const profile = detectAlertFatigue(
-    events.map((e) => ({ ...e, actorId })),
-    windowHours,
-  );
+    if (profile.fatigueScore >= 40) {
+      void writeAuditChainEntry({
+        event: 'ai.alert_fatigue_detected',
+        actor: actorId,
+        payload: { fatigueScore: profile.fatigueScore, signalCount: profile.signals.length, caseCount: profile.caseCount },
+      }, tenantId).catch((e: unknown) => console.warn('[cognitive-load] audit write failed:', e instanceof Error ? e.message : String(e)));
+    }
 
-  if (profile.fatigueScore >= 40) {
-    await writeAuditChainEntry({
-      tenantId,
-      event: 'ai.alert_fatigue_detected',
-      actor: actorId,
-      payload: { fatigueScore: profile.fatigueScore, signalCount: profile.signals.length, caseCount: profile.caseCount },
-    });
+    return NextResponse.json({ ok: true, ...profile }, { headers: gate.headers });
+  } catch (err) {
+    console.error('[cognitive-load] GET failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to load cognitive load profile' }, { status: 500, headers: gate.headers });
   }
-
-  return NextResponse.json({ ok: true, ...profile });
 }
 
 export async function POST(req: Request) {
@@ -47,24 +50,25 @@ export async function POST(req: Request) {
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;
-  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
-  // Record a new disposal event
   const event = body as unknown as DisposalEvent;
   if (!event.eventId || !event.caseId || !event.disposedAt) {
-    return NextResponse.json({ error: 'eventId, caseId, disposedAt required' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'eventId, caseId, disposedAt required' }, { status: 400, headers: gate.headers });
   }
 
   const actorId = event.actorId ?? gate.keyId ?? 'unknown';
   const tenantId = tenantIdFromGate(gate);
-  const existing = await getJson<DisposalEvent[]>(eventsKey(tenantId, actorId)) ?? [];
+  try {
+    const existing = await getJson<DisposalEvent[]>(eventsKey(tenantId, actorId)) ?? [];
+    const cutoff = Date.now() - 86_400_000;
+    const filtered = existing.filter((e) => new Date(e.disposedAt).getTime() > cutoff);
+    filtered.push({ ...event, actorId });
+    await setJson(eventsKey(tenantId, actorId), filtered);
 
-  // Keep rolling 24-hour window only
-  const cutoff = Date.now() - 86_400_000;
-  const filtered = existing.filter((e) => new Date(e.disposedAt).getTime() > cutoff);
-  filtered.push({ ...event, actorId });
-
-  await setJson(eventsKey(tenantId, actorId), filtered);
-
-  return NextResponse.json({ ok: true, eventId: event.eventId, totalEventsInWindow: filtered.length });
+    return NextResponse.json({ ok: true, eventId: event.eventId, totalEventsInWindow: filtered.length }, { headers: gate.headers });
+  } catch (err) {
+    console.error('[cognitive-load] POST failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to record disposal event' }, { status: 500, headers: gate.headers });
+  }
 }

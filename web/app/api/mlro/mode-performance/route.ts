@@ -103,7 +103,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const gateHeaders = gate.headers;
 
   // Cold-start hydration from Blobs — idempotent after first call.
-  await hydrateJournalFromBlobs();
+  try {
+    await hydrateJournalFromBlobs();
+  } catch (err) {
+    console.warn("[mlro/mode-performance] hydration failed, using in-process journal:", err instanceof Error ? err.message : err);
+  }
 
   const now = Date.now();
   const recentStart = now - TREND_WINDOW_DAYS * MS_PER_DAY;

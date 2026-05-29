@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[grievances/cases] store error:", err instanceof Error ? err.message : err);
     return NextResponse.json(
-      { error: "Store temporarily unavailable — please retry." },
+      { ok: false, error: "Store temporarily unavailable — please retry." },
       { status: 503, headers: gate.headers }
     );
   }

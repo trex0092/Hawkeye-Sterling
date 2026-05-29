@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if (!gate.ok) return gate.response;
 
   let body: Record<string, unknown>;
-  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: gate.headers }); }
 
   const subject = (body['subject'] as Record<string, unknown> | undefined) ?? {};
   const subjectJurisdiction = typeof subject['jurisdiction'] === 'string' ? subject['jurisdiction'] : undefined;
@@ -21,26 +21,30 @@ export async function POST(req: Request) {
   const reportType = (['STR', 'SAR', 'CTR', 'FFR'].includes(body['reportType'] as string) ? body['reportType'] : 'STR') as 'STR' | 'SAR' | 'CTR' | 'FFR';
   const amountUsd = typeof body['amountUsd'] === 'number' ? body['amountUsd'] : undefined;
 
-  const result = resolveStrObligations({
-    subjectJurisdiction,
-    transactionJurisdictions,
-    reportType,
-    amountUsd,
-  });
-
-  const tenantId = tenantIdFromGate(gate);
-  await writeAuditChainEntry({
-    tenantId,
-    event: 'ai.str_obligation_resolved',
-    actor: gate.keyId ?? 'system',
-    payload: {
+  try {
+    const result = resolveStrObligations({
       subjectJurisdiction,
+      transactionJurisdictions,
       reportType,
-      obligationCount: result.obligations.length,
-      conflictCount: result.conflicts.length,
-      mandatoryCount: result.recommendedFilingOrder.length,
-    },
-  });
+      amountUsd,
+    });
 
-  return NextResponse.json({ ok: true, ...result });
+    const tenantId = tenantIdFromGate(gate);
+    void writeAuditChainEntry({
+      event: 'ai.str_obligation_resolved',
+      actor: gate.keyId ?? 'system',
+      payload: {
+        subjectJurisdiction,
+        reportType,
+        obligationCount: result.obligations.length,
+        conflictCount: result.conflicts.length,
+        mandatoryCount: result.recommendedFilingOrder.length,
+      },
+    }, tenantId).catch((e: unknown) => console.warn('[str-obligation] audit write failed:', e instanceof Error ? e.message : String(e)));
+
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  } catch (err) {
+    console.error('[str-obligation] POST failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: 'Failed to resolve STR obligations' }, { status: 500, headers: gate.headers });
+  }
 }

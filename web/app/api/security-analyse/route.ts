@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY not configured on this deployment" },
+      { ok: false, error: "ANTHROPIC_API_KEY not configured on this deployment" },
       { status: 503, headers: gate.headers }
     );
   }
