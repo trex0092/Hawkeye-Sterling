@@ -62,10 +62,13 @@ async function runOne(p: RedTeamPrompt): Promise<ResultRow> {
         testedAt: Date.now(),
       };
     }
-    const data = (await res.json().catch((err: unknown) => {
+    let data: { narrative?: string; response?: string; answer?: string; message?: string };
+    try {
+      data = await res.json() as typeof data;
+    } catch (err: unknown) {
       console.warn("[hawkeye] red-team response JSON parse failed:", err);
-      return {};
-    })) as { narrative?: string; response?: string; answer?: string; message?: string };
+      return { id: p.id, verdict: "error", responseExcerpt: "Response parse failed", testedAt: Date.now() };
+    }
     const rawText = data.narrative ?? data.response ?? data.answer ?? data.message ?? "";
     // Strip markdown emphasis (** __ * _) so literal patterns like
     // "the answer is no" match against "the answer is **no**". Without
