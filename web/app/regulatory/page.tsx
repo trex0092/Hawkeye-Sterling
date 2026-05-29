@@ -878,6 +878,21 @@ export default function RegulatoryPage() {
   // Library filter state
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [liveItems, setLiveItems] = useState<LiveItem[]>([]);
+  const [liveStatus, setLiveStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLiveStatus("loading");
+    fetch("/api/regulatory-feed")
+      .then((r) => r.json())
+      .then((data) => {
+        setLiveItems(data.items ?? []);
+        setFetchedAt(data.fetchedAt ?? null);
+        setLiveStatus("ok");
+      })
+      .catch(() => setLiveStatus("error"));
+  }, []);
 
   // Auto-refresh timer ref
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);

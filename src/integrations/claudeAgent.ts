@@ -158,6 +158,13 @@ export async function generateNarrativeReport(
 
   if (!result.ok) {
     const prefix = result.partial ? 'partial response (stream idle) ' : '';
+    let errorDetail = result.error ?? `HTTP ${result.status ?? 'unknown'}`;
+    if (result.body && !result.partial) {
+      try {
+        const parsed = JSON.parse(result.body) as { error?: { message?: string } };
+        if (parsed?.error?.message) errorDetail = `API Error: ${result.status} ${parsed.error.message}`;
+      } catch { /* keep default error detail */ }
+    }
     return {
       ok: false,
       error: `${prefix}${result.error ?? 'unknown error'} after ${result.attempts} attempt(s) in ${result.elapsedMs}ms`,
