@@ -66,7 +66,8 @@ export type MatchingMethod =
   | 'trigram'
   | 'partial_token_set'
   | 'fuzzball_token_sort'
-  | 'fuzzball_partial';
+  | 'fuzzball_partial'
+  | 'abbreviated';
 
 export interface MatchScore {
   method: MatchingMethod;

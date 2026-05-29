@@ -75,7 +75,7 @@ const CHINESE_SUBSET: Record<string, string> = {
   '熊': 'Xiong', '孟': 'Meng', '秦': 'Qin', '白': 'Bai', '江': 'Jiang',
   '阳': 'Yang', '燕': 'Yan', '段': 'Duan', '雷': 'Lei', '龙': 'Long',
   '石': 'Shi', '武': 'Wu', '钱': 'Qian', '汤': 'Tang', '姜': 'Jiang',
-  '范': 'Fan', '傅': 'Fu', '尹': 'Yin', '崔': 'Cui', '邹': 'Zou',
+  '范': 'Fan', '尹': 'Yin', '崔': 'Cui', '邹': 'Zou',
   '龚': 'Gong', '覃': 'Tan', '韦': 'Wei', '蒙': 'Meng', '涂': 'Tu',
   '殷': 'Yin', '仲': 'Zhong', '施': 'Shi', '廖': 'Liao', '柴': 'Chai',
   // ── CJK given-name morphemes (high-frequency) ────────────────────────────
@@ -88,12 +88,12 @@ const CHINESE_SUBSET: Record<string, string> = {
   '浩': 'Hao', '飞': 'Fei', '鹏': 'Peng', '辉': 'Hui', '俊': 'Jun',
   '斌': 'Bin', '凯': 'Kai', '亮': 'Liang', '坚': 'Jian', '刚': 'Gang',
   // ── Japanese surnames (Kanji shared with Chinese) ─────────────────────────
-  '山': 'Yama', '田': 'Ta', '川': 'Kawa', '木': 'Ki', '森': 'Mori',
+  '山': 'Yama', '川': 'Kawa', '木': 'Ki', '森': 'Mori',
   '上': 'Kami', '下': 'Shimo', '中': 'Naka', '村': 'Mura', '島': 'Shima',
   '橋': 'Hashi', '藤': 'Fuji', '原': 'Hara', '野': 'No', '本': 'Moto',
-  '松': 'Matsu', '竹': 'Take', '葉': 'Ha', '花': 'Hana', '水': 'Mizu',
+  '松': 'Matsu', '竹': 'Take', '葉': 'Ha', '水': 'Mizu',
   // ── Korean surnames (Hanja) ───────────────────────────────────────────────
-  '金': 'Kim', '박': 'Park', '이': 'Lee', '최': 'Choi', '정': 'Jung',
+  '박': 'Park', '이': 'Lee', '최': 'Choi', '정': 'Jung',
   '강': 'Kang', '조': 'Cho', '윤': 'Yoon', '장': 'Jang', '임': 'Lim',
   '한': 'Han', '오': 'Oh', '서': 'Seo', '신': 'Shin', '권': 'Kwon',
   '황': 'Hwang', '안': 'Ahn', '송': 'Song', '류': 'Ryu', '전': 'Jeon',

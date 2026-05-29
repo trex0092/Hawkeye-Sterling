@@ -111,100 +111,6 @@ function clientIp(req: Request): string {
   return ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
 }
 
-// ── Brute-force protection ────────────────────────────────────────────────────
-// Two independent guards — per-username AND per-IP — to block both targeted
-// account attacks and credential-spraying (many usernames from one IP).
-// Counters are persisted in Netlify Blobs so they survive Lambda cold-starts
-// and are enforced across all concurrent instances.
-
-const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
-
-// Per-username: hard-lock after 10 failures → stops targeted brute-force.
-const USER_MAX_FAILURES = 10;
-const USER_LOCK_PREFIX = "ratelimit/login-lock/";
-
-// Per-IP: hard-lock after 50 failures → stops credential-spraying while
-// tolerating shared IPs (corporate NAT). Raw IP is never stored — only a
-// 16-char SHA-256 prefix.
-const IP_MAX_FAILURES = 50;
-const IP_LOCK_PREFIX = "ratelimit/login-ip/";
-
-// Note: a previous in-memory `failureMap` with FIFO eviction lived here
-// (commit 52004ff3). Superseded on this merge by the Blobs-backed counters
-// above — Blobs persist across Lambdas and cold-starts.
-
-interface AttemptRecord {
-  count: number;
-  windowStart: number;
-  lockedUntil: number;
-}
-
-function usernameKey(username: string): string {
-  return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
-}
-
-function ipKey(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex").slice(0, 16);
-}
-
-async function checkRateLimit(
-  prefix: string,
-  key: string,
-  maxFailures: number,
-): Promise<{ allowed: boolean; retryAfterSec?: number }> {
-  const now = Date.now();
-  const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
-  if (!rec) return { allowed: true };
-  if (rec.lockedUntil > now) {
-    return { allowed: false, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) };
-  }
-  if (now - rec.windowStart > WINDOW_MS) {
-    await del(`${prefix}${key}`).catch(() => undefined);
-    return { allowed: true };
-  }
-  if (rec.count >= maxFailures) {
-    const lockUntil = now + WINDOW_MS;
-    await setJson(`${prefix}${key}`, { ...rec, lockedUntil: lockUntil }).catch((err) => {
-      // Lockout write failure is safety-critical: if this fails, the lockout
-      // isn't persisted and the attacker can retry. Log prominently so the
-      // on-call team can investigate the blob store.
-      console.warn("[auth/login] CRITICAL: lockout write failed — brute-force protection degraded:", err instanceof Error ? err.message : String(err));
-    });
-    return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
-  }
-  return { allowed: true };
-}
-
-async function recordFailure(prefix: string, key: string): Promise<void> {
-  const now = Date.now();
-  const rec = await getJson<AttemptRecord>(`${prefix}${key}`).catch(() => null);
-  if (!rec || now - rec.windowStart > WINDOW_MS) {
-    await setJson(`${prefix}${key}`, { count: 1, windowStart: now, lockedUntil: 0 }).catch((err) => {
-      console.warn("[auth/login] failure counter write failed:", err instanceof Error ? err.message : String(err));
-    });
-  } else {
-    await setJson(`${prefix}${key}`, { ...rec, count: rec.count + 1 }).catch((err) => {
-      console.warn("[auth/login] failure counter increment failed:", err instanceof Error ? err.message : String(err));
-    });
-  }
-}
-
-async function recordSuccess(prefix: string, key: string): Promise<void> {
-  await del(`${prefix}${key}`).catch((err) => {
-    console.warn("[auth/login] failure counter clear failed (non-critical):", err instanceof Error ? err.message : String(err));
-  });
-}
-
-function clientIp(req: Request): string {
-  // Use the LAST value in x-forwarded-for: it is appended by the trusted
-  // Netlify CDN proxy and cannot be spoofed by the client.  The first value
-  // is client-controlled and could be forged to bypass per-IP brute-force
-  // protection by cycling through arbitrary source IPs.
-  const fwd = req.headers.get("x-forwarded-for");
-  const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
-  return ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
-}
-
 export async function POST(req: Request) {
   let body: { username?: string; password?: string };
   try {
@@ -274,7 +180,7 @@ export async function POST(req: Request) {
       recordFailure(USER_LOCK_PREFIX, uKey),
       recordFailure(IP_LOCK_PREFIX, iKey),
     ]);
-    console.warn("[auth/login] failed attempt", { uKey, ip, userFound: !!user });
+    console.warn("[auth/login] failed attempt", { uKey, ipHash: iKey, userFound: false });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
   // Active-user lookup for normal authentication.
