@@ -17,14 +17,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const report = await getDriftReport(tenant);
-  if (!report) {
-    return NextResponse.json(
-      { ok: true, report: null, note: "No drift data yet — report generated after 50 AI decisions" },
-      { headers: gate.headers },
-    );
+  try {
+    const report = await getDriftReport(tenant);
+    if (!report) {
+      return NextResponse.json(
+        { ok: true, report: null, note: "No drift data yet — report generated after 50 AI decisions" },
+        { headers: gate.headers },
+      );
+    }
+    return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[admin/model-drift] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load drift report" }, { status: 500, headers: gate.headers });
   }
-  return NextResponse.json({ ok: true, report }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -34,6 +39,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const report = await computeDriftReport(tenant);
-  return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  try {
+    const report = await computeDriftReport(tenant);
+    return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[admin/model-drift] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to compute drift report" }, { status: 500, headers: gate.headers });
+  }
 }

@@ -37,15 +37,20 @@ export async function GET(req: Request): Promise<NextResponse> {
   const filterUserId = searchParams.get("userId");
   const filterActive = searchParams.get("active");
 
-  let sessions = await loadSessions();
+  try {
+    let sessions = await loadSessions();
 
-  if (filterUserId) sessions = sessions.filter((s) => s.userId === filterUserId);
-  if (filterActive === "true") sessions = sessions.filter((s) => s.active);
+    if (filterUserId) sessions = sessions.filter((s) => s.userId === filterUserId);
+    if (filterActive === "true") sessions = sessions.filter((s) => s.active);
 
-  // Sort most-recent first
-  sessions = sessions.sort((a, b) => b.lastActive.localeCompare(a.lastActive));
+    // Sort most-recent first
+    sessions = sessions.sort((a, b) => b.lastActive.localeCompare(a.lastActive));
 
-  return NextResponse.json({ ok: true, count: sessions.length, sessions });
+    return NextResponse.json({ ok: true, count: sessions.length, sessions });
+  } catch (err) {
+    console.error("[access/sessions] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load sessions" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request): Promise<NextResponse> {
@@ -58,53 +63,58 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "id query param required" }, { status: 400 });
   }
 
-  // Find the session to get userId before marking inactive
-  const sessions = await loadSessions();
-  const target = sessions.find((s: AccessSession) => s.id === id);
-  if (!target) {
-    return NextResponse.json({ ok: false, error: "Session not found" }, { status: 404 });
-  }
-
-  // Mark session inactive in the store
-  await markSessionInactive(id);
-
-  // Bump pwVersion for the user so auth/me immediately rejects their JWT
-  await withUsersLock(async () => {
-    const users = await loadUsers();
-    const idx = users.findIndex((u) => u.id === target.userId);
-    if (idx !== -1) {
-      const user = users[idx]!;
-      users[idx] = { ...user, pwVersion: (user.pwVersion ?? 0) + 1 };
-      await saveUsers(users);
+  try {
+    // Find the session to get userId before marking inactive
+    const sessions = await loadSessions();
+    const target = sessions.find((s: AccessSession) => s.id === id);
+    if (!target) {
+      return NextResponse.json({ ok: false, error: "Session not found" }, { status: 404 });
     }
-  });
 
-  // Also mark all other sessions for this user inactive (pwVersion bump kills them all)
-  await deactivateUserSessions(target.userId);
+    // Mark session inactive in the store
+    await markSessionInactive(id);
 
-  const logEntry = {
-    id: `log-${randomBytes(4).toString("hex")}`,
-    timestamp: new Date().toISOString(),
-    actor: "admin",
-    action: "session_revoked" as const,
-    targetUserId: target.userId,
-    targetUserName: target.userName,
-    reason: `Session ${id} revoked via Session Monitor`,
-  };
-  await appendPermissionLog(logEntry);
+    // Bump pwVersion for the user so auth/me immediately rejects their JWT
+    await withUsersLock(async () => {
+      const users = await loadUsers();
+      const idx = users.findIndex((u) => u.id === target.userId);
+      if (idx !== -1) {
+        const user = users[idx]!;
+        users[idx] = { ...user, pwVersion: (user.pwVersion ?? 0) + 1 };
+        await saveUsers(users);
+      }
+    });
 
-  void writeAuditChainEntry(
-    {
-      event: "access.session_revoked",
+    // Also mark all other sessions for this user inactive (pwVersion bump kills them all)
+    await deactivateUserSessions(target.userId);
+
+    const logEntry = {
+      id: `log-${randomBytes(4).toString("hex")}`,
+      timestamp: new Date().toISOString(),
       actor: "admin",
-      sessionId: id,
-      userId: target.userId,
+      action: "session_revoked" as const,
+      targetUserId: target.userId,
       targetUserName: target.userName,
-    },
-    "admin",
-  ).catch((err: unknown) =>
-    console.warn("[access/sessions] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
+      reason: `Session ${id} revoked via Session Monitor`,
+    };
+    await appendPermissionLog(logEntry);
 
-  return NextResponse.json({ ok: true, revoked: id, userId: target.userId, logEntry });
+    void writeAuditChainEntry(
+      {
+        event: "access.session_revoked",
+        actor: "admin",
+        sessionId: id,
+        userId: target.userId,
+        targetUserName: target.userName,
+      },
+      "admin",
+    ).catch((err: unknown) =>
+      console.warn("[access/sessions] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+
+    return NextResponse.json({ ok: true, revoked: id, userId: target.userId, logEntry });
+  } catch (err) {
+    console.error("[access/sessions] DELETE failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to revoke session" }, { status: 500 });
+  }
 }

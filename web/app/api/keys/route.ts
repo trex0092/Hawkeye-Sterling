@@ -18,14 +18,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   const deny = adminAuth(req);
   if (deny) return deny;
 
-  const keys = await listApiKeys();
-  return NextResponse.json({
-    ok: true,
-    keys: keys.map(({ hash: _hash, ...rest }) => {
-      void _hash;
-      return rest;
-    }),
-  });
+  try {
+    const keys = await listApiKeys();
+    return NextResponse.json({
+      ok: true,
+      keys: keys.map(({ hash: _hash, ...rest }) => {
+        void _hash;
+        return rest;
+      }),
+    });
+  } catch (err) {
+    console.error("[keys] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load API keys" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -62,19 +67,24 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!TIERS[tier]) {
     return NextResponse.json({ ok: false, error: "unknown tier" }, { status: 400 });
   }
-  const issued = await issueKey({ name, email, tier });
-  // API key issuance is a privileged admin action — must be on the tamper-evident chain.
-  void writeAuditChainEntry(
-    { event: "api_key.issued", actor: "admin", keyId: issued.id, name, email, tier },
-    "admin",
-  ).catch((err) =>
-    console.warn("[keys] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
-  return NextResponse.json({
-    ok: true,
-    id: issued.id,
-    apiKey: issued.plaintext,
-    warning: "Store this key securely — it will never be shown again.",
-    tier: issued.tier,
-  });
+  try {
+    const issued = await issueKey({ name, email, tier });
+    // API key issuance is a privileged admin action — must be on the tamper-evident chain.
+    void writeAuditChainEntry(
+      { event: "api_key.issued", actor: "admin", keyId: issued.id, name, email, tier },
+      "admin",
+    ).catch((err) =>
+      console.warn("[keys] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+    return NextResponse.json({
+      ok: true,
+      id: issued.id,
+      apiKey: issued.plaintext,
+      warning: "Store this key securely — it will never be shown again.",
+      tier: issued.tier,
+    });
+  } catch (err) {
+    console.error("[keys] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to issue API key" }, { status: 500 });
+  }
 }

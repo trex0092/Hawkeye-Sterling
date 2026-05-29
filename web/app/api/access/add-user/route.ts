@@ -70,50 +70,55 @@ export async function POST(req: Request) {
 
   // Atomic check-then-write: re-load under the in-process lock so a concurrent
   // add-user request cannot sneak in a duplicate between our earlier check and save.
-  const lockError = await withUsersLock(async () => {
-    const freshUsers = await loadUsers();
-    if (freshUsers.some((u) => u.email.toLowerCase() === emailLower)) {
-      return { status: 409, message: "A user with this email already exists" };
+  try {
+    const lockError = await withUsersLock(async () => {
+      const freshUsers = await loadUsers();
+      if (freshUsers.some((u) => u.email.toLowerCase() === emailLower)) {
+        return { status: 409, message: "A user with this email already exists" };
+      }
+      if (freshUsers.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
+        return { status: 409, message: "Username already taken — choose a different one" };
+      }
+      await saveUsers([...freshUsers, newUser]);
+      return null;
+    });
+    if (lockError) {
+      return NextResponse.json({ ok: false, error: lockError.message }, { status: lockError.status });
     }
-    if (freshUsers.some((u) => u.username?.toLowerCase() === derivedUsername.toLowerCase())) {
-      return { status: 409, message: "Username already taken — choose a different one" };
-    }
-    await saveUsers([...freshUsers, newUser]);
-    return null;
-  });
-  if (lockError) {
-    return NextResponse.json({ ok: false, error: lockError.message }, { status: lockError.status });
-  }
 
-  const logEntry = {
-    id: `log-${randomBytes(4).toString("hex")}`,
-    timestamp: new Date().toISOString(),
-    actor: addedBy,
-    action: "role_assigned" as const,
-    targetUserId: id,
-    targetUserName: name.trim(),
-    newRole: role,
-    reason: `User account created with ${role} role. Login: ${derivedUsername}`,
-  };
-  await appendPermissionLog(logEntry);
-
-  // FDL 10/2025 Art.20 — user creation is a privileged access-control event;
-  // must be on the tamper-evident server-side chain.
-  void writeAuditChainEntry(
-    {
-      event: "access.user_added",
+    const logEntry = {
+      id: `log-${randomBytes(4).toString("hex")}`,
+      timestamp: new Date().toISOString(),
       actor: addedBy,
-      newUserId: id,
+      action: "role_assigned" as const,
+      targetUserId: id,
       targetUserName: name.trim(),
-      email: emailLower,
-      role,
-    },
-    "admin",
-  ).catch((err) =>
-    console.warn("[access/add-user] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
+      newRole: role,
+      reason: `User account created with ${role} role. Login: ${derivedUsername}`,
+    };
+    await appendPermissionLog(logEntry);
 
-  // Return user without exposing hash/salt to the client
-  const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;
-  return NextResponse.json({ ok: true, user: safeUser, logEntry, passwordGenerated: !password?.trim() }, { status: 201 });
+    // FDL 10/2025 Art.20 — user creation is a privileged access-control event;
+    // must be on the tamper-evident server-side chain.
+    void writeAuditChainEntry(
+      {
+        event: "access.user_added",
+        actor: addedBy,
+        newUserId: id,
+        targetUserName: name.trim(),
+        email: emailLower,
+        role,
+      },
+      "admin",
+    ).catch((err) =>
+      console.warn("[access/add-user] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+
+    // Return user without exposing hash/salt to the client
+    const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;
+    return NextResponse.json({ ok: true, user: safeUser, logEntry, passwordGenerated: !password?.trim() }, { status: 201 });
+  } catch (err) {
+    console.error("[access/add-user] failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to create user" }, { status: 500 });
+  }
 }

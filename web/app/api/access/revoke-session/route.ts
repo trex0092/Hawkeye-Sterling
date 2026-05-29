@@ -31,54 +31,59 @@ export async function POST(req: Request) {
 
   let revokeResult: RevokeResult = { status: 'not_found' };
 
-  await withUsersLock(async () => {
-    const users = await loadUsers();
-    const userIdx = users.findIndex((u) => u.id === userId);
-    if (userIdx === -1) { revokeResult = { status: 'not_found' }; return; }
+  try {
+    await withUsersLock(async () => {
+      const users = await loadUsers();
+      const userIdx = users.findIndex((u) => u.id === userId);
+      if (userIdx === -1) { revokeResult = { status: 'not_found' }; return; }
 
-    const user = users[userIdx]!;
-    const updatedUsers = [...users];
-    // Bump pwVersion so auth/me's pwv check immediately rejects any current
-    // session token — without this, the old JWT remains valid for up to 8h.
-    updatedUsers[userIdx] = { ...user, active: false, pwVersion: (user.pwVersion ?? 0) + 1 };
-    await saveUsers(updatedUsers);
+      const user = users[userIdx]!;
+      const updatedUsers = [...users];
+      // Bump pwVersion so auth/me's pwv check immediately rejects any current
+      // session token — without this, the old JWT remains valid for up to 8h.
+      updatedUsers[userIdx] = { ...user, active: false, pwVersion: (user.pwVersion ?? 0) + 1 };
+      await saveUsers(updatedUsers);
 
-    // Strip credentials before surfacing to the caller.
-    const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUsers[userIdx]!;
-    revokeResult = { status: 'revoked', userName: user.name, safeUser };
-  });
+      // Strip credentials before surfacing to the caller.
+      const { passwordHash: _h, passwordSalt: _s, ...safeUser } = updatedUsers[userIdx]!;
+      revokeResult = { status: 'revoked', userName: user.name, safeUser };
+    });
 
-  if (revokeResult.status === 'not_found') {
-    return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
-  }
+    if (revokeResult.status === 'not_found') {
+      return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
+    }
 
-  const { userName, safeUser } = revokeResult as { status: 'revoked'; userName: string; safeUser: Record<string, unknown> };
+    const { userName, safeUser } = revokeResult as { status: 'revoked'; userName: string; safeUser: Record<string, unknown> };
 
-  const logEntry = {
-    id: `log-${randomBytes(4).toString("hex")}`,
-    timestamp: new Date().toISOString(),
-    actor: revokedBy,
-    action: "session_revoked" as const,
-    targetUserId: userId,
-    targetUserName: userName,
-    reason,
-  };
-  await appendPermissionLog(logEntry);
-
-  // FDL 10/2025 Art.20 — session revocation is a privileged access-control event;
-  // must be on the tamper-evident server-side chain.
-  void writeAuditChainEntry(
-    {
-      event: "access.session_revoked",
+    const logEntry = {
+      id: `log-${randomBytes(4).toString("hex")}`,
+      timestamp: new Date().toISOString(),
       actor: revokedBy,
-      userId,
+      action: "session_revoked" as const,
+      targetUserId: userId,
       targetUserName: userName,
       reason,
-    },
-    "admin",
-  ).catch((err) =>
-    console.warn("[access/revoke-session] audit chain write failed:", err instanceof Error ? err.message : String(err)),
-  );
+    };
+    await appendPermissionLog(logEntry);
 
-  return NextResponse.json({ ok: true, user: safeUser, logEntry });
+    // FDL 10/2025 Art.20 — session revocation is a privileged access-control event;
+    // must be on the tamper-evident server-side chain.
+    void writeAuditChainEntry(
+      {
+        event: "access.session_revoked",
+        actor: revokedBy,
+        userId,
+        targetUserName: userName,
+        reason,
+      },
+      "admin",
+    ).catch((err) =>
+      console.warn("[access/revoke-session] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
+
+    return NextResponse.json({ ok: true, user: safeUser, logEntry });
+  } catch (err) {
+    console.error("[access/revoke-session] failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to revoke session" }, { status: 500 });
+  }
 }

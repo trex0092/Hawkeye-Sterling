@@ -65,7 +65,11 @@ async function handleGet(req: Request): Promise<NextResponse> {
   const until = Number.isFinite(untilParsed) ? untilParsed : Number.POSITIVE_INFINITY;
 
   // Cold-start hydration from Blobs — idempotent after first call.
-  await hydrateJournalFromBlobs();
+  try {
+    await hydrateJournalFromBlobs();
+  } catch (err) {
+    console.warn("[mlro/performance] hydration failed, using in-process journal:", err instanceof Error ? err.message : err);
+  }
 
   const all = getJournal().list().filter((r: OutcomeRecord) => {
     const t = Date.parse(r.at);

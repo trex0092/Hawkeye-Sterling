@@ -114,7 +114,16 @@ async function handleGet(req: Request): Promise<Response> {
   const entryPrefix = tenantId === "default" ? "audit/entry/" : `audit/${tenantId}/entry/`;
   const headKey = tenantId === "default" ? "audit/head.json" : `audit/${tenantId}/head.json`;
 
-  const allKeys = (await listKeys(entryPrefix)).sort();
+  let allKeys: string[];
+  try {
+    allKeys = (await listKeys(entryPrefix)).sort();
+  } catch (err) {
+    console.error("[audit/verify] listKeys failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, error: "Audit store temporarily unavailable — please retry" },
+      { status: 503, headers: gate.headers },
+    );
+  }
   const brokenLinks: VerificationFault[] = [];
   const invalidIds: VerificationFault[] = [];
   const invalidSignatures: VerificationFault[] = [];

@@ -62,40 +62,45 @@ export async function GET(req: Request): Promise<NextResponse> {
   const status = url.searchParams.get("status");
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "200", 10) || 200, 500);
 
-  const keys = await listKeys("ongoing/subject/");
-  const loaded = await Promise.all(keys.slice(0, limit).map((k) => getJson<EnrolledSubject>(k)));
-  const subjects = loaded.filter((s): s is EnrolledSubject => s !== null);
+  try {
+    const keys = await listKeys("ongoing/subject/");
+    const loaded = await Promise.all(keys.slice(0, limit).map((k) => getJson<EnrolledSubject>(k)));
+    const subjects = loaded.filter((s): s is EnrolledSubject => s !== null);
 
-  const monitors: MonitorStatus[] = subjects.map((s) => {
-    const nextDue = s.nextDue ?? calcNextDue(s.lastRun, s.cadence ?? "monthly");
-    const overdueBy = isOverdue(nextDue);
-    return {
-      id: s.id,
-      name: s.name,
-      entityType: s.entityType,
-      jurisdiction: s.jurisdiction,
-      tier: s.tier ?? "2",
-      cadence: s.cadence ?? "monthly",
-      status: s.status ?? (overdueBy !== undefined ? "overdue" : "active"),
-      lastRun: s.lastRun ?? s.enrolledAt,
-      nextDue,
-      enrolledAt: s.enrolledAt,
-      ...(overdueBy !== undefined ? { overdueBy } : {}),
-    };
-  });
+    const monitors: MonitorStatus[] = subjects.map((s) => {
+      const nextDue = s.nextDue ?? calcNextDue(s.lastRun, s.cadence ?? "monthly");
+      const overdueBy = isOverdue(nextDue);
+      return {
+        id: s.id,
+        name: s.name,
+        entityType: s.entityType,
+        jurisdiction: s.jurisdiction,
+        tier: s.tier ?? "2",
+        cadence: s.cadence ?? "monthly",
+        status: s.status ?? (overdueBy !== undefined ? "overdue" : "active"),
+        lastRun: s.lastRun ?? s.enrolledAt,
+        nextDue,
+        enrolledAt: s.enrolledAt,
+        ...(overdueBy !== undefined ? { overdueBy } : {}),
+      };
+    });
 
-  const filtered = status ? monitors.filter((m) => m.status === status) : monitors;
-  const overdue = filtered.filter((m) => m.overdueBy !== undefined).length;
+    const filtered = status ? monitors.filter((m) => m.status === status) : monitors;
+    const overdue = filtered.filter((m) => m.overdueBy !== undefined).length;
 
-  return NextResponse.json(
-    {
-      ok: true,
-      total: filtered.length,
-      overdue,
-      subjects: filtered,
-    },
-    { headers: gate.headers },
-  );
+    return NextResponse.json(
+      {
+        ok: true,
+        total: filtered.length,
+        overdue,
+        subjects: filtered,
+      },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[ongoing-monitor] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load monitoring queue" }, { status: 500, headers: gate.headers });
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

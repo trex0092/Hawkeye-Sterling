@@ -18,14 +18,19 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const report = await getBiasReport(tenant);
-  if (!report) {
-    return NextResponse.json(
-      { ok: true, report: null, note: "No bias data yet — report generated after 100 screenings" },
-      { headers: gate.headers },
-    );
+  try {
+    const report = await getBiasReport(tenant);
+    if (!report) {
+      return NextResponse.json(
+        { ok: true, report: null, note: "No bias data yet — report generated after 100 screenings" },
+        { headers: gate.headers },
+      );
+    }
+    return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[admin/bias-audit] GET failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to load bias report" }, { status: 500, headers: gate.headers });
   }
-  return NextResponse.json({ ok: true, report }, { headers: gate.headers });
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -35,10 +40,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
 
-  const report = await computeBiasReport(tenant);
-  void writeAuditChainEntry(
-    { event: "bias_audit.computed", actor: gate.keyId, meta: { tenant } },
-    tenant,
-  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
-  return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  try {
+    const report = await computeBiasReport(tenant);
+    void writeAuditChainEntry(
+      { event: "bias_audit.computed", actor: gate.keyId, meta: { tenant } },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json({ ok: true, report }, { headers: gate.headers });
+  } catch (err) {
+    console.error("[admin/bias-audit] POST failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ ok: false, error: "Failed to compute bias report" }, { status: 500, headers: gate.headers });
+  }
 }
