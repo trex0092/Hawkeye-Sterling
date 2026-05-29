@@ -614,6 +614,22 @@ export default function ScreeningPage() {
     setListHealthWarnings(sel?.listHealthWarnings ?? []);
   }, [selectedId, subjects]);
 
+  useEffect(() => {
+    const loaded = loadSubjects();
+    setSubjects(loaded);
+    setSelectedId((prev) => prev ?? loaded[0]?.id ?? null);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+    } catch {
+      /* quota / disabled storage — just skip */
+    }
+  }, [subjects, hydrated]);
+
   const deferredQuery = useDeferredValue(query);
 
   const dynamicFilters = useMemo(() => computeDynamicFilters(subjects, operatorName), [subjects, operatorName]);
