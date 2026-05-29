@@ -414,6 +414,12 @@ jobs:
         # The separate Semgrep OSS GitHub App provides equivalent coverage when no
         # token is configured.
         run: |
+          if [ -z "$SEMGREP_APP_TOKEN" ]; then
+            echo "::warning::SEMGREP_APP_TOKEN not configured — remote rule packs require auth."
+            echo "::warning::Set the SEMGREP_APP_TOKEN repo secret to enable full SAST scanning."
+            echo '{"version":"2.1.0","runs":[]}' > semgrep-results.sarif
+            exit 0
+          fi
           semgrep scan \
             --config=p/typescript \
             --config=p/nodejs \
