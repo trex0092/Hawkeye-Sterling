@@ -70,6 +70,8 @@ export interface ClusterSummary {
   names: string[];
 }
 
+export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
+
 export interface QuickScreenHit {
   listId: string;
   listRef: string;

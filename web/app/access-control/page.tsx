@@ -420,6 +420,9 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       } else {
         setImpact(data.impactAssessment ?? null);
         onRoleChanged(data.user);
+      } else {
+        console.error("[hawkeye] access-control role-change rejected:", data);
+        setRoleError(data.error ?? "Role change was rejected by the server.");
       }
     } catch (err) {
       console.error("[hawkeye] access-control role-change threw — UI may show stale role:", err);
@@ -645,6 +648,7 @@ export default function AccessControlPage() {
   const [addingUser, setAddingUser] = useState(false);
   const [addError, setAddError] = useState("");
   const [newUserCreds, setNewUserCreds] = useState<{ username: string; password: string } | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);

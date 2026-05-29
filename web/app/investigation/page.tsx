@@ -106,6 +106,7 @@ export default function InvestigationPage() {
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
   const [exportingPack, setExportingPack] = useState(false);
   const [packReady, setPackReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);

@@ -66,7 +66,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
+        max_tokens: 1500,
         system:
           "You are a UAE AML data governance expert. Analyze these CDD data quality gaps for a licensed DPMS/VASP and provide a prioritized remediation plan for the MLRO. Focus on regulatory risk from incomplete records under FDL 10/2025 and FATF R.10. Return ONLY valid JSON, no markdown fences.",
         messages: [

@@ -111,6 +111,64 @@ function clientIp(req: Request): string {
   return ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
 }
 
+// ── Per-username brute-force protection ──────────────────────────────────────
+// Tracks failed attempts per normalised username. Hard-locks after
+// MAX_FAILURES within WINDOW_MS. Lock persists in this function instance.
+// For cross-instance protection in production, replace failureMap with
+// Upstash Redis (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
+
+const MAX_FAILURES = 10;
+const WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+
+interface AttemptRecord {
+  count: number;
+  windowStart: number;
+  lockedUntil: number;
+}
+
+const failureMap = new Map<string, AttemptRecord>();
+
+function usernameKey(username: string): string {
+  return createHash("sha256").update(username.toLowerCase().trim()).digest("hex").slice(0, 16);
+}
+
+function checkRateLimit(key: string): { allowed: boolean; retryAfterSec?: number } {
+  const now = Date.now();
+  const rec = failureMap.get(key);
+  if (!rec) return { allowed: true };
+  if (rec.lockedUntil > now) {
+    return { allowed: false, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) };
+  }
+  if (now - rec.windowStart > WINDOW_MS) {
+    failureMap.delete(key);
+    return { allowed: true };
+  }
+  if (rec.count >= MAX_FAILURES) {
+    const lockUntil = now + WINDOW_MS;
+    failureMap.set(key, { ...rec, lockedUntil: lockUntil });
+    return { allowed: false, retryAfterSec: Math.ceil(WINDOW_MS / 1000) };
+  }
+  return { allowed: true };
+}
+
+function recordFailure(key: string): void {
+  const now = Date.now();
+  const rec = failureMap.get(key);
+  if (!rec || now - rec.windowStart > WINDOW_MS) {
+    failureMap.set(key, { count: 1, windowStart: now, lockedUntil: 0 });
+  } else {
+    failureMap.set(key, { ...rec, count: rec.count + 1 });
+  }
+}
+
+function recordSuccess(key: string): void {
+  failureMap.delete(key);
+}
+
+function clientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+}
+
 export async function POST(req: Request) {
   let body: { username?: string; password?: string };
   try {
@@ -175,6 +233,8 @@ export async function POST(req: Request) {
       reason: err instanceof Error ? err.message : String(err),
     });
     await new Promise((r) => setTimeout(r, 400));
+    recordFailure(key);
+    console.warn("[auth/login] failed attempt", { key, ip, userFound: !!user });
     return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
   }
   // Active-user lookup for normal authentication.

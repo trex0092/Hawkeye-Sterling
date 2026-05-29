@@ -593,9 +593,11 @@ function FeedTab({
       if (data.ok) {
         setItems(data.items);
         setFetchedAt(data.fetchedAt);
+      } else {
+        console.error("[hawkeye] news-intel feed returned ok:false");
       }
-    } catch {
-      // keep existing items
+    } catch (err) {
+      console.error("[hawkeye] news-intel feed threw — keeping existing items:", err);
     } finally {
       setLoading(false);
     }

@@ -15,6 +15,8 @@ export interface EddChecklistResult {
 
 import { enforce } from "@/lib/server/enforce";
 
+import { enforce } from "@/lib/server/enforce";
+
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
