@@ -15,6 +15,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { fireAlert } from "../lib/heartbeat.js";
 
 const RETRY_STORE = "hawkeye-alert-retry";
 const RETRY_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop retries older than 24 h
@@ -263,8 +264,10 @@ export default async (_req: Request): Promise<Response> => {
       }
     }
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    await fireAlert("designation-alert-check", errMsg, "critical");
     return new Response(
-      JSON.stringify({ ok: false, error: String(err), at: new Date().toISOString() }),
+      JSON.stringify({ ok: false, error: errMsg, at: new Date().toISOString() }),
       { status: 500, headers: { "content-type": "application/json" } },
     );
   }

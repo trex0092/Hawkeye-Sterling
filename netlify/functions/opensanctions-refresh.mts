@@ -25,7 +25,7 @@ import {
   refreshOpenSanctionsBlob,
   type RefreshResult,
 } from "../../web/lib/intelligence/opensanctions-datasets.js";
-import { writeHeartbeat } from "../lib/heartbeat.js";
+import { writeHeartbeat, fireAlert } from "../lib/heartbeat.js";
 
 const LABEL = "opensanctions-refresh";
 const LOCK_TTL_MS = 10 * 60 * 1000;
@@ -59,14 +59,9 @@ export default async (req: Request): Promise<Response> => {
     if (result.ok) await writeHeartbeat(LABEL);
     return json(result, result.ok ? 200 : 502);
   } catch (err) {
-    return json(
-      {
-        ok: false,
-        error: `opensanctions-refresh threw — ${err instanceof Error ? err.message : String(err)}`,
-        at: new Date().toISOString(),
-      },
-      500,
-    );
+    const errMsg = `opensanctions-refresh threw — ${err instanceof Error ? err.message : String(err)}`;
+    await fireAlert(LABEL, errMsg, "high");
+    return json({ ok: false, error: errMsg, at: new Date().toISOString() }, 500);
   } finally {
     await hbStore.delete(`${LABEL}/lock`).catch(() => undefined);
   }

@@ -285,6 +285,7 @@ export async function POST(req: Request) {
     sameSite: "strict",
     maxAge: SESSION_TTL_S,
     path: "/",
+    partitioned: isSecure,
   });
 
   // Persist last-login timestamp and IP hash for next-login geo-velocity check.

@@ -14,7 +14,7 @@ import { randomBytes } from "node:crypto";
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 import { emit } from "../../dist/src/integrations/webhook-emitter.js";
-import { writeHeartbeat } from "../lib/heartbeat.js";
+import { writeHeartbeat, fireAlert } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-pep";
 const RUN_LABEL = "pep-refresh";
@@ -199,7 +199,9 @@ export default async function handler(_req: Request): Promise<Response> {
   try {
     await store.set("pep/current.json", JSON.stringify(records));
   } catch (err) {
-    return jsonResponse({ ok: false, label: RUN_LABEL, error: `snapshot write failed: ${err instanceof Error ? err.message : String(err)}`, durationMs: Date.now() - startedAt }, 503);
+    const errMsg = `snapshot write failed: ${err instanceof Error ? err.message : String(err)}`;
+    await fireAlert(RUN_LABEL, errMsg, "high");
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: errMsg, durationMs: Date.now() - startedAt }, 503);
   }
   if (additions.length + removals.length > 0) {
     const ts = new Date().toISOString().replace(/[:.]/g, "-");

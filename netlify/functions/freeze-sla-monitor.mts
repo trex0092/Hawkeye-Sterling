@@ -19,7 +19,7 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
-import { writeHeartbeat } from "../lib/heartbeat.js";
+import { writeHeartbeat, fireAlert } from "../lib/heartbeat.js";
 
 const STORE_NAME = "hawkeye-sterling";
 const TFS_KEY = "hawkeye-tfs-alerts/v1.json";
@@ -92,7 +92,9 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     store = getStore(STORE_NAME);
   } catch (err) {
-    return jsonResponse({ ok: false, label: RUN_LABEL, error: `getStore failed: ${err instanceof Error ? err.message : String(err)}` }, 503);
+    const errMsg = `getStore failed: ${err instanceof Error ? err.message : String(err)}`;
+    await fireAlert(RUN_LABEL, errMsg, "critical");
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: errMsg }, 503);
   }
 
   // Load TFS alerts

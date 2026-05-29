@@ -43,6 +43,7 @@ export async function GET(): Promise<NextResponse> {
       httpOnly: true,
       sameSite: "strict",
       secure: isSecure,
+      partitioned: isSecure,
     });
     return res;
   }
