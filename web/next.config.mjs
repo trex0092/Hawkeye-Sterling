@@ -1,7 +1,20 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+// Preload graceful-fs globally so every fs.open() that hits EMFILE retries
+// automatically. This must run before Next.js / webpack touch the filesystem
+// (i.e. at config-module load time). Fixes EMFILE on Netlify build agents and
+// any container with fd hard limit ≤ 4096.
+try {
+  const gracefulFs = require("graceful-fs");
+  gracefulFs.gracefulify(require("fs"));
+} catch {
+  // graceful-fs not installed — proceed without patch (build will rely on ulimit)
+}
 
 // Capture the deployed git SHA at build time. Netlify provides `COMMIT_REF`;
 // other CI providers expose it under different names. Without this, runtime

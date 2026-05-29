@@ -69,9 +69,22 @@ rm -rf .next
 echo ">>> HS-STEP-5 ok (exit $?)"
 
 step "6 next build"
+# --require the preload script before Next.js starts so graceful-fs patches
+# fs.open() before webpack caches any unpatched references. This is needed
+# on Netlify agents and containers where the fd hard limit is ≤ 4096:
+# 604 routes × compiled chunks exhaust the limit during manifest writes.
+PRELOAD_SCRIPT="$(cd .. && pwd)/scripts/preload-graceful-fs.cjs"
+if [ -f "$PRELOAD_SCRIPT" ]; then
+  echo ">>> HS-STEP-6 preloading graceful-fs via $PRELOAD_SCRIPT"
+  GRACEFUL_FS_REQUIRE="--require $PRELOAD_SCRIPT"
+else
+  echo ">>> HS-STEP-6 preload script not found, proceeding without graceful-fs"
+  GRACEFUL_FS_REQUIRE=""
+fi
 APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \
   NEXT_PUBLIC_COMMIT_SHA="${COMMIT_REF:-}" \
+  NODE_OPTIONS="--max-old-space-size=8192 ${GRACEFUL_FS_REQUIRE}" \
   npm run build
 echo ">>> HS-STEP-6 ok (exit $?)"
 
