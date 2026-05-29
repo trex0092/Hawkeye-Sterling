@@ -39,7 +39,7 @@ const SYSTEM_PROMPT = `You are a senior security researcher specialising in AML/
 }`;
 
 export async function POST(req: NextRequest) {
-  const gate = await enforce(req);
+  const gate = await enforce(req, { requireAuth: false });
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
