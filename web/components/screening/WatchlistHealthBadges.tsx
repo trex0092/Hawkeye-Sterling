@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface SanctionsList {
   id: string;
@@ -44,7 +45,7 @@ export function WatchlistHealthBadges() {
       try {
         const res = await fetch("/api/status", { headers: { accept: "application/json" } });
         if (!res.ok) {
-          if (!cancelled) setError(`status ${res.status}`);
+          if (!cancelled) setError(apiErrorMessage(res.status, "Watchlist status"));
           return;
         }
         const json = await res.json().catch(() => ({})) as StatusResponse;
