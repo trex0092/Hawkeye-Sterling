@@ -92,6 +92,9 @@ export function matchExact(a: string, b: string): MatchScore {
 }
 
 // ---------- Levenshtein
+// Damerau-Levenshtein (Optimal String Alignment) — extends standard Levenshtein
+// with transposition of adjacent characters. Critical for AML: OCR errors and
+// manual-entry typos frequently swap adjacent letters ("Muhammda" → "Muhammad").
 export function levenshteinDistance(a: string, b: string): number {
   const s = normalise(a);
   const t = normalise(b);
@@ -99,22 +102,27 @@ export function levenshteinDistance(a: string, b: string): number {
   const n = t.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  const prev = new Array<number>(n + 1);
-  for (let j = 0; j <= n; j++) prev[j] = j;
-  const curr = new Array<number>(n + 1);
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = s.charCodeAt(i - 1) === t.charCodeAt(j - 1) ? 0 : 1;
-      curr[j] = Math.min(
-        (curr[j - 1] as number) + 1,
-        (prev[j] as number) + 1,
-        (prev[j - 1] as number) + cost,
-      );
-    }
-    for (let j = 0; j <= n; j++) prev[j] = curr[j] as number;
+  const d: number[][] = [];
+  for (let i = 0; i <= m; i++) {
+    d[i] = new Array<number>(n + 1);
+    d[i]![0] = i;
   }
-  return prev[n] as number;
+  for (let j = 0; j <= n; j++) d[0]![j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = s[i - 1] === t[j - 1] ? 0 : 1;
+      d[i]![j] = Math.min(
+        d[i - 1]![j]! + 1,           // deletion
+        d[i]![j - 1]! + 1,           // insertion
+        d[i - 1]![j - 1]! + cost,    // substitution
+      );
+      // Transposition of two adjacent characters (OSA extension).
+      if (i > 1 && j > 1 && s[i - 1] === t[j - 2] && s[i - 2] === t[j - 1]) {
+        d[i]![j] = Math.min(d[i]![j]!, d[i - 2]![j - 2]! + cost);
+      }
+    }
+  }
+  return d[m]![n]!;
 }
 
 export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchScore {
@@ -411,6 +419,34 @@ export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): Ma
   return { method: 'partial_token_set', score, threshold, pass: score >= threshold };
 }
 
+// ---------- abbreviated name matching
+// Handles initial-based abbreviations ("M. Hassan" ↔ "Mohammed Hassan",
+// "J.K. Rowling" ↔ "Joanne Kathleen Rowling"). A single-character token is
+// treated as an initial and matches the first letter of any token in the
+// counterpart name. Multi-character tokens require exact token equality.
+export function matchAbbreviated(a: string, b: string, threshold = 0.85): MatchScore {
+  const ta = normalise(a).split(' ').filter(Boolean);
+  const tb = normalise(b).split(' ').filter(Boolean);
+  if (ta.length === 0 || tb.length === 0) {
+    return { method: 'abbreviated', score: 0, threshold, pass: false };
+  }
+  // Only fire when one side is meaningfully shorter and contains at least one initial.
+  const [abbr, full] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  const hasInitial = abbr.some((tok) => tok.length === 1);
+  // If neither side has single-letter tokens the partial-token-set matcher
+  // is already sufficient; skip to avoid spurious matches.
+  if (!hasInitial) {
+    return { method: 'abbreviated', score: 0, threshold, pass: false };
+  }
+  let matched = 0;
+  for (const tok of abbr) {
+    if (full.includes(tok)) { matched++; continue; }
+    if (tok.length === 1 && full.some((ft) => ft.charAt(0) === tok)) { matched++; }
+  }
+  const score = matched / abbr.length;
+  return { method: 'abbreviated', score, threshold, pass: score >= threshold };
+}
+
 // ---------- token-set (order-insensitive)
 export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore {
   const tokensA = new Set(normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
@@ -641,6 +677,30 @@ const MATCHER_PARTICLES: Set<string> = new Set([
   'de', 'van', 'von', 'der', 'den', 'la', 'le', 'du', 'di',
 ]);
 
+// Characters that do not decompose via NFD Unicode normalisation, mapped
+// to their closest ASCII / multi-char Latin equivalent. Covers Turkish (ı),
+// German (ß), Polish/Czech (ł), Nordic (æ, ø, þ, ð), and others.
+const SPECIAL_CHAR_MAP: Record<string, string> = {
+  'ı': 'i', 'ß': 'ss', 'ł': 'l', 'Ł': 'l',
+  'æ': 'ae', 'Æ': 'ae', 'ø': 'o', 'Ø': 'o',
+  'þ': 'th', 'Þ': 'th', 'ð': 'd', 'Ð': 'd',
+  'đ': 'd', 'Đ': 'd', 'ħ': 'h', 'Ħ': 'h',
+  'ŋ': 'n', 'Ŋ': 'n', 'œ': 'oe', 'Œ': 'oe',
+  'ĸ': 'k', 'ŉ': 'n', 'ĳ': 'ij', 'Ĳ': 'ij',
+};
+
+// Arabic harakat (vowel diacritics) and orthographic marks that survive NFD
+// decomposition. Removing them before letter-mapping prevents them becoming
+// spurious spaces and breaking "مُحَمَّد" → "muhammad" (was "m h m d").
+const ARABIC_DIACRITICS_RE = /[ؐ-ًؚ-ٟـ]/gu;
+
+// Lam-alef ligatures (Arabic Presentation Forms-A) → expand to component letters
+// so that ARABIC_LETTER_MAP can handle each character independently.
+const LAM_ALEF_MAP: Record<string, string> = {
+  'ﻵ': 'لأ', 'ﻶ': 'لأ', 'ﻷ': 'لإ', 'ﻸ': 'لإ',
+  'ﻹ': 'لا', 'ﻺ': 'لا', 'ﻻ': 'لا', 'ﻼ': 'لا',
+};
+
 // Normalise a name for comparison: lowercase, strip diacritics,
 // transliterate Arabic/Cyrillic to Latin, collapse Arabic-name family
 // spellings, drop particles. Returns an empty string when the input
@@ -666,8 +726,14 @@ export function normaliseForMatch(input: string): string {
   s = s.replace(/ı/g, 'i').replace(/İ/g, 'i'); // Turkish: ı→i, İ→i
   // Transliterate Arabic/Cyrillic to Latin
   s = s.replace(/./gu, (ch) => ARABIC_LETTER_MAP[ch] ?? ch);
+
+  // 6. Map Cyrillic letters.
   s = s.replace(/./gu, (ch) => CYRILLIC_LETTER_MAP[ch] ?? ch);
+
+  // 7. Strip everything non-alphabetic, collapse spaces.
   s = s.replace(/[^a-z\s-]/g, ' ').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // 8. Drop particles, apply family-spelling normalisation.
   const tokens = s.split(' ').filter(Boolean);
   const out: string[] = [];
   for (const t of tokens) {
