@@ -238,6 +238,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       a: sanitizeText(p.a, 2000),
     }));
   }
+  body.query = gateResult.question;
 
   // FAST PATH — Balanced depth (the default) routes through the same
   // Haiku 4.5 single-pass path that the MLRO Advisor "Quick" mode uses.

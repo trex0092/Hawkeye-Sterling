@@ -380,6 +380,7 @@ export async function POST(req: Request): Promise<Response> {
       { status: 200, headers: { ...gate.headers, ...corsHeaders(origin) } }
     );
   }
+  const question = gateResult.question;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
