@@ -134,9 +134,16 @@ const nextConfig = {
     return [
       { source: "/adverse-media", destination: "/screening", permanent: true },
       { source: "/compliance-qa", destination: "/mlro-advisor", permanent: true },
-      // Merged modules: secondary routes redirect to their canonical suite page.
-      // The canonical page shows a ModuleFamilyBar with links to all merged modules.
-      { source: "/weaponized-brain", destination: "/workbench", permanent: true },
+      { source: "/weaponized-brain", destination: "/intelligence-hub?tab=workbench", permanent: true },
+      // Intelligence Hub — old standalone pages redirect to the unified hub tab
+      { source: "/analytics", destination: "/intelligence-hub?tab=analytics", permanent: false },
+      { source: "/brain-intelligence", destination: "/intelligence-hub?tab=brain", permanent: false },
+      { source: "/workbench", destination: "/intelligence-hub?tab=workbench", permanent: false },
+      { source: "/intel/telemetry", destination: "/intelligence-hub?tab=telemetry", permanent: false },
+      { source: "/intel/red-team", destination: "/intelligence-hub?tab=red-team", permanent: false },
+      { source: "/security-audit", destination: "/intelligence-hub?tab=security-audit", permanent: false },
+      { source: "/status", destination: "/intelligence-hub?tab=status", permanent: false },
+      { source: "/api-docs", destination: "/intelligence-hub?tab=api-docs", permanent: false },
     ];
   },
 
