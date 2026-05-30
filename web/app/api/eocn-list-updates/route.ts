@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/eocn-fixture";
 import { deliverWebhookEvent } from "@/lib/server/webhook-delivery";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -324,10 +325,12 @@ async function handlePost(req: Request): Promise<NextResponse> {
     !!presented && safeTokenEqual(presented, cronToken);
 
   let gateHeaders: Record<string, string> = {};
+  let auditTenantId: string = process.env["DEFAULT_TENANT"] ?? "default";
   if (!cronMatch) {
     const gate = await enforce(req);
     if (!gate.ok) return gate.response;
     gateHeaders = gate.headers;
+    auditTenantId = tenantIdFromGate(gate);
   }
 
   const fix = fixturePayload();
@@ -413,7 +416,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
 
   void writeAuditChainEntry(
     { event: "eocn_list.refreshed", actor: cronMatch ? "system:eocn-cron" : "operator", meta: { ok: upstream.ok, listCount: payload.listUpdates.length } },
-    process.env["DEFAULT_TENANT"] ?? "default",
+    auditTenantId,
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   // Return 200 even when upstream was unavailable — the fixture data was

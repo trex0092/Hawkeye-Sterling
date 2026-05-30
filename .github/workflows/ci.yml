@@ -272,18 +272,20 @@ jobs:
           fi
           if [ "$SEMGREP_RC" -eq 7 ]; then
             if [ -n "$SEMGREP_APP_TOKEN" ]; then
-              echo "ERROR: SEMGREP_APP_TOKEN is set but Semgrep registry returned auth failure (exit 7)."
-              echo "This indicates a token permission issue — rotate the token or check registry access."
-              exit 1
+              echo "WARNING: SEMGREP_APP_TOKEN is set but Semgrep registry returned auth failure (exit 7)."
+              echo "         The token may be expired or lack registry permissions — rotate if full SAST coverage is needed."
+            else
+              echo "WARNING: Semgrep registry configs unavailable (exit 7 — SEMGREP_APP_TOKEN not set)."
+              echo "         p/typescript, p/nodejs, p/nextjs rules did NOT run."
+              echo "         Set SEMGREP_APP_TOKEN secret for full coverage."
             fi
-            echo "WARNING: Semgrep registry configs unavailable (exit 7 — SEMGREP_APP_TOKEN not set)."
-            echo "         p/typescript, p/nodejs, p/nextjs rules did NOT run."
-            echo "         Set SEMGREP_APP_TOKEN secret for full coverage."
           elif [ "$SEMGREP_RC" -ne 0 ]; then
             echo "INFO: Semgrep found findings (exit $SEMGREP_RC) — see Security tab and Semgrep OSS App for details"
           fi
           # Non-blocking: Semgrep OSS GitHub App provides the hard gate.
           # In-workflow scan runs for SARIF/Security tab visibility only.
+          # Exit 7 (registry auth failure) is always a warning, not a blocker —
+          # whether the token is absent or expired, local scan coverage is unchanged.
           exit 0
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
