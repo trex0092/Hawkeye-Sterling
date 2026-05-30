@@ -10,6 +10,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAllNews } from "@/lib/intelligence/newsAdapters";
@@ -342,6 +344,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: AdverseMediaLiveBody;
   try {
@@ -586,5 +589,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       : {}),
   };
 
+  void writeAuditChainEntry({ event: "adverse_media_live.completed", actor: gate.keyId, subjectName, riskRating, riskScore, totalHits: aggregatedTotal }, tenant).catch(() => {});
   return NextResponse.json(result, { headers: gate.headers });
 }

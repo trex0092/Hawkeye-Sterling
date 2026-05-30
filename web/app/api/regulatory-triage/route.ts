@@ -6,7 +6,10 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +36,7 @@ interface TriageResult {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   const apiKey = process.env["ANTHROPIC_API_KEY"];
 
   let items: TriageItem[];
@@ -56,10 +60,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const compact = items.map((i) => ({
     id: i.id,
-    title: i.title,
-    summary: i.summary ?? "",
-    tone: i.tone,
-    source: i.source,
+    title: sanitizeField(i.title, 500),
+    summary: sanitizeText(i.summary ?? "", 2000),
+    tone: sanitizeField(i.tone, 100),
+    source: sanitizeField(i.source, 200),
   }));
 
   let results: TriageResult[];
@@ -89,5 +93,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  void writeAuditChainEntry({ event: "regulatory_triage.completed", actor: gate.keyId, itemCount: items.length, resultCount: results.length }, tenant).catch(() => {});
   return NextResponse.json({ ok: true, results }, { headers: gate.headers });
 }

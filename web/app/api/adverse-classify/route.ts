@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
@@ -39,6 +41,7 @@ export interface AdverseClassifyResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     articleText: string;
     subjectName?: string;
@@ -99,6 +102,7 @@ Classify this adverse media against FATF predicate offences and assess SAR thres
     if (!Array.isArray(result.keyEntities)) result.keyEntities = [];
     if (!Array.isArray(result.corroborationRequired)) result.corroborationRequired = [];
     if (!Array.isArray(result.fatfR3Predicates)) result.fatfR3Predicates = [];
+    void writeAuditChainEntry({ event: "adverse_classify.completed", actor: gate.keyId, subjectName: body.subjectName, sarThresholdMet: result.sarThresholdMet, recommendedAction: result.recommendedAction }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
