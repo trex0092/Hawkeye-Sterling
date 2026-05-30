@@ -53,7 +53,7 @@ exporters:
     endpoint: tcp://clickhouse:9000
     database: signoz_metrics
     username: admin
-    password: hawkeye_ch_pass
+    password: ${CLICKHOUSE_PASSWORD}
     ttl: 1776h  # 74 days retention
 
   logging:
