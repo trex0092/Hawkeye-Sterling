@@ -84,17 +84,14 @@ else
   echo ">>> HS-STEP-6 preload script not found, proceeding without graceful-fs"
   GRACEFUL_FS_REQUIRE=""
 fi
-# Heap cap kept at 4096 to match netlify.toml. Must stay BELOW the build
-# container's RAM — over-allocating to 8192 made V8 defer GC past the
-# container's memory ceiling, so the kernel OOM-killed `next build` before
-# GC ran, which Netlify reported as the generic "exit code 2". The webpack
-# compile completes in <3 min using well under 4 GB (verified locally under
-# the same ulimit -n 4096 as the Netlify agent), so 4096 is ample and leaves
-# headroom for the OS + webpack workers + @netlify/plugin-nextjs.
+# Heap cap at 8192 matches netlify.toml. Netlify Pro build agents have ≥8 GB
+# RAM; 8192 was verified working (commit 360b4650, deploy_time 346 s). The
+# 4096 cap caused every build to fail with exit code 2 — webpack needs more
+# than 4 GB to compile 600+ routes with the compiled brain + Anthropic SDK.
 APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \
   NEXT_PUBLIC_COMMIT_SHA="${COMMIT_REF:-}" \
-  NODE_OPTIONS="--max-old-space-size=4096 ${GRACEFUL_FS_REQUIRE}" \
+  NODE_OPTIONS="--max-old-space-size=8192 ${GRACEFUL_FS_REQUIRE}" \
   npm run build && echo ">>> HS-STEP-6 ok (exit 0)" || { ec=$?; echo ">>> HS-STEP-6 FAILED (exit $ec)"; exit $ec; }
 
 echo ">>> HS-STEP-DONE"
