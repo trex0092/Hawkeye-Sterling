@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,8 +34,13 @@ interface RefreshSummary {
   message: string;
 }
 
-async function handleRefresh(_req: Request): Promise<NextResponse> {
+async function handleRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
   invalidateCandidateCache();
+
+  void writeAuditChainEntry(
+    { event: "sanctions.refresh", actor: ctx.apiKey.id, cacheInvalidated: true },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] sanctions/refresh:", e instanceof Error ? e.message : String(e)));
 
   const body: RefreshSummary = {
     ok: true,

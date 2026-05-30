@@ -288,11 +288,7 @@ export function AnalyticsSection() {
         }),
       });
       let result: { ok: boolean } & AnalyticsInsights;
-      try {
-        result = await res.json().catch(() => ({})) as { ok: boolean } & AnalyticsInsights;
-      } catch {
-        throw new Error(`AI insights failed (HTTP ${res.status}) — please retry`);
-      }
+      result = await res.json() as { ok: boolean } & AnalyticsInsights;
       if (!res.ok || !result.ok) {
         throw new Error((result as { error?: string }).error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
       }

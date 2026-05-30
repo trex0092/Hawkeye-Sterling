@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid,
   hsNarrative, hsTable, hsSignatureBlock, hsFinis, nowMeta, escHtml, type CoverData,
@@ -109,6 +111,11 @@ ${hsFinis(reportId, 2, 2)}`;
         content: contentBody }),
     ],
   });
+
+  void writeAuditChainEntry(
+    { event: "str.draft-generated", actor: gate.keyId, subject: body.subject.slice(0, 40), jurisdiction: body.jurisdiction, reportId },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] str-report:", e instanceof Error ? e.message : String(e)));
 
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", ...gate.headers } });
 }

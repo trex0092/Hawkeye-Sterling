@@ -48,20 +48,25 @@ export function BrainIntelSection() {
   const [activePanel, setActivePanel] = useState<ActivePanel>("xai");
   const [heatmap, setHeatmap] = useState<PortfolioHeatmap | null>(null);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
+  const [heatmapError, setHeatmapError] = useState<string | null>(null);
   const [responsibleAI, setResponsibleAI] = useState<ResponsibleAIDashboard | null>(null);
   const [raiLoading, setRaiLoading] = useState(false);
   const [demoActor] = useState("mlro-demo");
 
   const loadHeatmap = useCallback(async () => {
     setHeatmapLoading(true);
+    setHeatmapError(null);
     try {
       const res = await fetch("/api/portfolio-risk-heatmap");
       if (res.ok) {
         const data = (await res.json()) as { ok: boolean } & PortfolioHeatmap;
         if (data.ok) setHeatmap(data);
+        else setHeatmapError("Heatmap data unavailable — please retry");
+      } else {
+        setHeatmapError(`Heatmap unavailable (HTTP ${res.status})`);
       }
     } catch {
-      // graceful — demo data shown if API unavailable
+      setHeatmapError("Heatmap unavailable — network error");
     } finally {
       setHeatmapLoading(false);
     }
@@ -283,7 +288,12 @@ export function BrainIntelSection() {
                       ))}
                     </div>
                   )}
-                  {!heatmap && (
+                  {heatmapError && (
+                    <div className="bg-red-dim rounded-xl p-4 border border-red/30 text-13 text-red">
+                      {heatmapError}
+                    </div>
+                  )}
+                  {!heatmap && !heatmapError && (
                     <div className="bg-bg-panel rounded-xl p-4 border border-hair-2 text-13 text-ink-3">
                       No portfolio data available yet. Cases will populate the heatmap
                       as they are processed.
