@@ -231,7 +231,7 @@ Return ONLY valid JSON:
     messages: [{
       role: "user",
       content: `Subject Case ID: ${sanitizeField(subjectId)}
-Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: body.subjectName ?? "unknown" })}
+Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: sanitizeField(body.subjectName, 200) || "unknown" })}
 Subject Risk Score: ${subjectScore}
 
 Remaining Customer Base (${caseDigests.length} cases):

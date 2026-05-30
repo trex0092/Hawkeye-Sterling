@@ -4,7 +4,7 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
-import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface GapFinding {
@@ -84,9 +84,9 @@ export async function POST(req: Request) {
         {
           role: "user",
           content: `Institution: ${sanitizeField(body.institutionName ?? "Hawkeye Sterling", 200)}
-Approvals: ${JSON.stringify((body.approvals ?? []).slice(0, 50), null, 2)}
-Meeting Minutes: ${JSON.stringify((body.minutes ?? []).slice(0, 50), null, 2)}
-Regulatory Circulars: ${JSON.stringify((body.circulars ?? []).slice(0, 50), null, 2)}
+Approvals: ${sanitizeLlmInput(JSON.stringify((body.approvals ?? []).slice(0, 50), null, 2), 8000)}
+Meeting Minutes: ${sanitizeLlmInput(JSON.stringify((body.minutes ?? []).slice(0, 50), null, 2), 8000)}
+Regulatory Circulars: ${sanitizeLlmInput(JSON.stringify((body.circulars ?? []).slice(0, 50), null, 2), 8000)}
 
 Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, and remediation actions.`,
         },

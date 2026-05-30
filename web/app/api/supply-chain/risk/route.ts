@@ -136,10 +136,10 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
           role: "user",
           content: `Company: ${sanitizeField(body.company ?? "Unknown", 200)}
 Sector: ${sanitizeField(body.sector ?? "Unknown", 200)}
-Tier-1 Suppliers: ${JSON.stringify((body.tier1Suppliers ?? []).slice(0, 50))}
-Key Source Countries: ${JSON.stringify((body.keySourceCountries ?? []).slice(0, 50))}
-Commodities: ${JSON.stringify((body.commodities ?? []).slice(0, 50))}
-Certifications held: ${JSON.stringify((body.certifications ?? []).slice(0, 50))}
+Tier-1 Suppliers: ${JSON.stringify((body.tier1Suppliers ?? []).slice(0, 50).map((s) => sanitizeField(s, 200)))}
+Key Source Countries: ${JSON.stringify((body.keySourceCountries ?? []).slice(0, 50).map((s) => sanitizeField(s, 100)))}
+Commodities: ${JSON.stringify((body.commodities ?? []).slice(0, 50).map((s) => sanitizeField(s, 100)))}
+Certifications held: ${JSON.stringify((body.certifications ?? []).slice(0, 50).map((s) => sanitizeField(s, 200)))}
 
 Perform a comprehensive supply chain risk assessment covering: geographic concentration risk (single country dependency), sanctions exposure across supply chain, environmental crime risk (conflict minerals, illegal timber/gold), labour exploitation risk (forced labour, child labour), corruption risk in source jurisdictions, and regulatory compliance gaps (EU CSDDD, US Uyghur Forced Labor Prevention Act, Dodd-Frank 1502). Assess each tier-1 supplier individually and provide a complete action plan.`,
         },

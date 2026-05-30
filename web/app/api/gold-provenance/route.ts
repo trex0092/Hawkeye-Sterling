@@ -207,7 +207,15 @@ Total Weight: ${body.totalWeight ? `${body.totalWeight}g` : "not specified"}
 Chain Length: ${body.chain.length} hops
 
 Supply Chain:
-${JSON.stringify(body.chain, null, 2)}
+${JSON.stringify(body.chain.map((hop) => ({
+  ...hop,
+  actor: sanitizeField(hop.actor, 200),
+  country: sanitizeField(hop.country, 100),
+  documentType: hop.documentType ? sanitizeField(hop.documentType, 100) : undefined,
+  documentReference: hop.documentReference ? sanitizeField(hop.documentReference, 100) : undefined,
+  certification: hop.certification ? sanitizeField(hop.certification, 100) : undefined,
+  notes: hop.notes ? sanitizeField(hop.notes, 500) : undefined,
+})), null, 2)}
 
 Static Analysis Results:
 ${JSON.stringify(staticAnalysis, null, 2)}
