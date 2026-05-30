@@ -32,6 +32,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -345,6 +347,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     searchProvider: provider.name,
     latencyMs: Date.now() - t0,
   };
+
+  void writeAuditChainEntry(
+    {
+      event: "investigation.deep_research_completed",
+      actor: gate.keyId,
+      subject: result.ok ? subject : "unknown",
+      roundCount: result.roundCount,
+      queryCount: result.queryCount,
+      citationCount: (result.citations ?? []).length,
+      searchProvider: result.searchProvider,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[deep-research] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(result, { headers: gate.headers });
 }

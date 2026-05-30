@@ -19,6 +19,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -296,6 +298,20 @@ Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article
       criticalActions,
       generatedAt: new Date().toISOString(),
     };
+
+    void writeAuditChainEntry(
+      {
+        event: "regulatory_exam.war_room_generated",
+        actor: gate.keyId,
+        mode,
+        readinessScore,
+        daysUntilExam,
+        criticalActionCount: criticalActions.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[exam-war-room] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
