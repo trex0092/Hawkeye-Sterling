@@ -82,7 +82,7 @@ export async function GET(req: Request): Promise<Response> {
       recentChecks,
       generatedAt: new Date().toISOString(),
     },
-    { status: 200, headers: cors },
+    { status: 200, headers: { ...cors, ...gate.headers } },
   );
 }
 
@@ -97,14 +97,14 @@ export async function POST(req: Request): Promise<Response> {
   if (!body.sourceId) {
     return NextResponse.json(
       { ok: false, error: "sourceId is required" },
-      { status: 400, headers: cors },
+      { status: 400, headers: { ...cors, ...gate.headers } },
     );
   }
   const source = getSource(body.sourceId);
   if (!source) {
     return NextResponse.json(
       { ok: false, error: `unknown sourceId: ${body.sourceId}` },
-      { status: 404, headers: cors },
+      { status: 404, headers: { ...cors, ...gate.headers } },
     );
   }
 
@@ -123,6 +123,6 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json(
     { ok: true, event: ev, recentChecks },
-    { status: 200, headers: cors },
+    { status: 200, headers: { ...cors, ...gate.headers } },
   );
 }

@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { yenteMatch } from "../../../../src/integrations/yente.js";
+import { yenteMatch, type YenteMatchResult } from "../../../../src/integrations/yente.js";
 import { scoreWallet } from "../../../../src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
@@ -124,8 +124,7 @@ async function handlePaymentScreen(req: Request): Promise<NextResponse> {
       : Promise.resolve(null),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const yenteSummary = yenteResults?.map((r: any, i: number) => ({
+  const yenteSummary = yenteResults?.map((r: YenteMatchResult, i: number) => ({
     name: namesToMatch[i],
     topScore: r.hits[0]?.score ?? 0,
     datasets: r.hits[0]?.datasets ?? [],

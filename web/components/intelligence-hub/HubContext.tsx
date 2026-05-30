@@ -11,7 +11,7 @@ export type HubSignals = {
 
 type HubContextValue = {
   signals: HubSignals;
-  updateSignal: <K extends keyof HubSignals>(key: K, value: HubSignals[K]) => void;
+  updateSignal: <K extends keyof HubSignals>(_key: K, _value: HubSignals[K]) => void;
 };
 
 const HubContext = createContext<HubContextValue>({

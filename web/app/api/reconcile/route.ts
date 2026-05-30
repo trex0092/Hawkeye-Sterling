@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       body = await req.json();
     }
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid request body' }, { status: 400, headers: gate.headers });
   }
 
   const raw = (body ?? {}) as Record<string, unknown>;
@@ -132,16 +132,16 @@ export async function POST(req: NextRequest) {
       response[key] = res;
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers: gate.headers });
   }
 
   // Single query
   if (typeof raw['query'] === 'string') {
     const res = await reconcileQuery({ query: raw['query'] as string, type: raw['type'] as string | undefined });
-    return NextResponse.json(res);
+    return NextResponse.json(res, { headers: gate.headers });
   }
 
-  return NextResponse.json({ ok: false, error: 'Provide queries object or query string' }, { status: 400 });
+  return NextResponse.json({ ok: false, error: 'Provide queries object or query string' }, { status: 400, headers: gate.headers });
 }
 
 // OPTIONS preflights for /api/* are handled centrally in middleware.ts.

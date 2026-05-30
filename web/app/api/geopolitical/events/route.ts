@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface GeopoliticalEvent {
   id: string;
   country: string;
@@ -78,6 +80,12 @@ Include a mix of: 2-3 critical events, 5-6 high events, 3-4 medium events. Make 
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as { ok: boolean; events: GeopoliticalEvent[] };
     if (!Array.isArray(result.events)) result.events = [];
+
+    void writeAuditChainEntry(
+      { event: "geopolitical.events-generated", actor: gate.keyId, eventCount: result.events.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] geopolitical/events:", e instanceof Error ? e.message : String(e)));
+
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -167,7 +167,7 @@ function UnifiedHealthBar() {
 
 // ── Tab strip ────────────────────────────────────────────────────────────────
 
-function TabStrip({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (t: TabId) => void }) {
+function TabStrip({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (_t: TabId) => void }) {
   return (
     <div
       className="flex gap-1 mb-6 overflow-x-auto pb-1"

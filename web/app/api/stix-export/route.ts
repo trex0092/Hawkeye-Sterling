@@ -152,6 +152,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Disposition': 'attachment; filename="hawkeye-navigator-layer.json"',
+        ...gate.headers,
       },
     });
   }
@@ -161,6 +162,7 @@ export async function GET(req: NextRequest) {
     headers: {
       'Content-Type': 'application/stix+json',
       'Content-Disposition': 'attachment; filename="hawkeye-stix-bundle.json"',
+      ...gate.headers,
     },
   });
 }
