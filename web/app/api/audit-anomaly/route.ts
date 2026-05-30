@@ -4,6 +4,7 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "entries array must not exceed 500 items" }, { status: 400, headers: gate.headers });
   }
 
+  // Sanitize user-controlled string fields before interpolation into LLM prompt
+  const sanitizedEntries = entries.map((e) => ({
+    ts:      sanitizeField(e.ts,      50),
+    actor:   sanitizeField(e.actor,   100),
+    action:  sanitizeField(e.action,  200),
+    subject: sanitizeField(e.subject, 200),
+  }));
+
   try { writeAuditEvent("mlro", "audit-trail.ai-anomaly-scan", "trail"); }
   catch (err) { console.warn("[hawkeye] audit-anomaly writeAuditEvent failed:", err); }
 
@@ -82,7 +91,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `Audit trail (${safePeriodDays} days, ${entries.length} entries): ${JSON.stringify(entries)}. Return ONLY this JSON: { "anomalyScore": number, "anomalyLevel": "critical"|"elevated"|"normal", "anomalies": [{ "type": "string", "description": "string", "severity": "high"|"medium"|"low", "affectedActors": ["string"], "recommendation": "string" }], "patternSummary": "string", "actorRisk": [{ "actor": "string", "riskFlag": "string", "actionCount": number }], "integrityNote": "string", "regulatoryNote": "string" }`,
+            content: `Audit trail (${safePeriodDays} days, ${sanitizedEntries.length} entries): ${JSON.stringify(sanitizedEntries)}. Return ONLY this JSON: { "anomalyScore": number, "anomalyLevel": "critical"|"elevated"|"normal", "anomalies": [{ "type": "string", "description": "string", "severity": "high"|"medium"|"low", "affectedActors": ["string"], "recommendation": "string" }], "patternSummary": "string", "actorRisk": [{ "actor": "string", "riskFlag": "string", "actionCount": number }], "integrityNote": "string", "regulatoryNote": "string" }`,
           },
         ],
       });
