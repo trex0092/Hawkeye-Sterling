@@ -80,6 +80,9 @@ vi.mock('@/lib/server/enforce', () => ({
     remainingMonthly: null,
     headers: {},
   })),
+  // anonIpKey is used by auth/login ipKey() for HMAC-based IP rate limiting.
+  // Return a fixed test key so the HMAC call succeeds in test context.
+  anonIpKey: vi.fn(() => 'test-anon-ip-key-32-bytes-padded!!'),
 }));
 
 // ─── Mock the cryptoRisk dist module ────────────────────────────────────────
