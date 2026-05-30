@@ -21,6 +21,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -256,6 +258,7 @@ const PRIORITY_ORDER: Record<Priority, number> = { critical: 0, high: 1, medium:
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: { items: InboxItem[]; generateNarrative?: boolean };
   try {
@@ -336,5 +339,6 @@ Write a 3-4 sentence MLRO triage briefing for today's inbox. Highlight the most 
     }
   }
 
+  void writeAuditChainEntry({ event: "mlro_inbox_triage.completed", actor: gate.keyId, itemCount: body.items.length }, tenant).catch(() => {});
   return NextResponse.json(result, { headers: gate.headers });
 }

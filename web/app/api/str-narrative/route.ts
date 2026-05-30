@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -25,6 +27,7 @@ export interface StrNarrativeResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     subjectName: string;
     subjectType?: string;
@@ -175,6 +178,7 @@ Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
     }
 
     if (!best) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
+    void writeAuditChainEntry({ event: "str_narrative.generated", actor: gate.keyId, subjectName: body.subjectName, iterations, qualityScore: best.qualityScore }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...best, iterations }, { headers: gate.headers });
   } catch (err) {
     console.error("[str-narrative] failed:", err instanceof Error ? err.message : err);

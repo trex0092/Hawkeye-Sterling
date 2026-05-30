@@ -4,6 +4,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { searchEntities, matchEntity } from "@/lib/server/yente-client";
 
 export const runtime = "nodejs";
@@ -26,6 +28,7 @@ interface Body {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: Body;
   try {
@@ -54,6 +57,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
         { dataset: body.dataset, limit: body.limit ?? 10 },
       );
+      void writeAuditChainEntry({
+        event: "yente_search.match.completed",
+        actor: gate.keyId,
+        query,
+        dataset: body.dataset ?? "default",
+        hitCount: result.results.length,
+        source: "yente/opensanctions",
+      }, tenant).catch(() => {});
       return NextResponse.json(
         {
           ok: true,
@@ -74,6 +85,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       limit: body.limit ?? 10,
     });
 
+    void writeAuditChainEntry({
+      event: "yente_search.search.completed",
+      actor: gate.keyId,
+      query,
+      dataset: body.dataset ?? "default",
+      hitCount: result.results.length,
+      source: "yente/opensanctions",
+    }, tenant).catch(() => {});
     return NextResponse.json(
       {
         ok: true,

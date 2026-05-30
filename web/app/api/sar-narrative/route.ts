@@ -13,6 +13,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 
 export const runtime = "nodejs";
@@ -137,6 +139,7 @@ Return ONLY a plain prose narrative — no JSON, no markdown code fences, no hea
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true, cost: 3 });
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: SarNarrativeRequest;
   try {
@@ -224,6 +227,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ],
     };
 
+    void writeAuditChainEntry({ event: "sar_narrative.generated", actor: gate.keyId, subjectName: body.subjectName, jurisdiction: body.jurisdiction }, tenant).catch(() => {});
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error("[sar-narrative] AI generation failed:", err instanceof Error ? err.message : String(err));

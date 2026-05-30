@@ -30,10 +30,10 @@ export interface MemoryEntry {
 }
 
 export interface AgentMemory {
-  add(content: string, metadata?: Record<string, unknown>): Promise<string>;
-  search(query: string, limit?: number): Promise<MemoryEntry[]>;
-  getAll(limit?: number): Promise<MemoryEntry[]>;
-  delete(id: string): Promise<void>;
+  add(_content: string, _metadata?: Record<string, unknown>): Promise<string>;
+  search(_query: string, _limit?: number): Promise<MemoryEntry[]>;
+  getAll(_limit?: number): Promise<MemoryEntry[]>;
+  delete(_id: string): Promise<void>;
   readonly backend: string;
 }
 
