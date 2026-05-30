@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { getStore } from "@netlify/blobs";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // PEP matching against the local OpenSanctions bulk snapshot.
 // POST /api/pep-match  { name, birthYear?, aliases? }
@@ -304,7 +305,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     source,
     corpus: corpus.length,
     latencyMs: Date.now() - t0,
-  }).catch((err: unknown) => {
+  }, tenantIdFromGate(gate)).catch((err: unknown) => {
     console.error("[pep-match] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 

@@ -98,7 +98,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ── Build evidence pack structure ─────────────────────────────────────────────
   const evidencePack = {
     generatedAt: new Date().toISOString(),
-    caseId: body.caseId ?? caseData?.["id"] ?? "unknown",
+    caseId: body.caseId ?? (caseData?.["id"] as string | undefined) ?? "unknown",
     subjectName: body.subjectName ?? (caseData?.["subjectName"] as string) ?? "unknown",
     packVersion: "1.0",
     sections: {
