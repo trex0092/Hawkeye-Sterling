@@ -221,11 +221,11 @@ function ActiveSection({ tab }: { tab: TabId }) {
 function HubInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const rawTab = searchParams.get("tab");
+  const rawTab = searchParams?.get("tab") ?? null;
   const activeTab: TabId = isValidTab(rawTab) ? rawTab : "analytics";
 
   const handleTabChange = (tab: TabId) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", tab);
     router.replace(`/intelligence-hub?${params.toString()}`, { scroll: false });
   };
