@@ -75,6 +75,9 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
       { label: "🚢 Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
       { label: "🔢 Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
+      { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
+      { label: "🌍 Country & Geopolitical Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · live risk events · portfolio impact" },
+      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
     ],
   },
   {
@@ -94,20 +97,10 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     ],
   },
   {
-    // Analytics, AI brain internals, investigation tools, system health
+    // All intelligence modules unified in one hub page
     title: "Intelligence",
     items: [
-      { label: "📈 Analytics & KPI Dashboard", href: "/analytics", hint: "MLRO KPI digest + AI board insights · ML model evaluation · KPI metrics" },
-      { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
-      { label: "🌍 Country & Geopolitical Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · live risk events · portfolio impact" },
-      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
-      { label: "🧠 Brain Intelligence Hub", href: "/brain-intelligence", hint: "Wave 14 XAI decomposer · threat forecast · typology heatmap · counterfactual explainer · responsible AI" },
-      { label: "🔧 AI Reasoning Workbench", href: "/workbench", hint: "Multi-mode AI reasoning · counterfactual · steelman · brain manifest" },
-      { label: "📡 Mode Telemetry", href: "/intel/telemetry", hint: "Brain firing counts · mode drift" },
-      { label: "🥷 Red-Team Tests", href: "/intel/red-team", hint: "GenAI adversarial test catalogue" },
-      { label: "🛡️ Security Audit", href: "/security-audit", hint: "AI code analyser · OWASP checklist · free scan tools" },
-      { label: "💚 Status", href: "/status", hint: "Live endpoint & watchlist health" },
-      { label: "📘 API Docs", href: "/api-docs", hint: "OpenAPI reference" },
+      { label: "🔭 Intelligence Hub", href: "/intelligence-hub", hint: "Analytics · Brain · Workbench · Telemetry · Red-Team · Security · Status · API" },
     ],
   },
 ];
