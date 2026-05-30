@@ -18,9 +18,8 @@
 // maxDuration: 15 s.
 
 import { NextResponse } from "next/server";
-import { withGuard, type RequestContext } from "@/lib/server/guard";
+import { withGuard } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { FourEyesItem } from "@/lib/types";
 
@@ -72,7 +71,7 @@ async function expireItem(
   });
 }
 
-async function handler(req: Request, ctx: RequestContext): Promise<NextResponse> {
+async function handler(req: Request): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -120,7 +119,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
         { status: 409 },
       );
     }
-    await expireItem(key, item, reason, actor, tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id }));
+    await expireItem(key, item, reason, actor, process.env["DEFAULT_TENANT"] ?? "default");
     return NextResponse.json({ ok: true, expired: 1, itemIds: [itemId] });
   }
 
@@ -153,7 +152,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
     return NextResponse.json({ ok: true, expired: 0, itemIds: [], thresholdHours });
   }
 
-  const tenantId = tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id });
+  const tenantId = process.env["DEFAULT_TENANT"] ?? "default";
   await Promise.all(overdue.map(({ key, item }) => expireItem(key, item, reason, actor, tenantId)));
 
   const expiredIds = overdue.map(({ item }) => item.id);
