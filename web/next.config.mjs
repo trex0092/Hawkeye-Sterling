@@ -99,15 +99,13 @@ const nextConfig = {
 
   // EMFILE mitigation for Netlify build agents (fd hard limit ~4096).
   // cpus:1 — serialises page generation to 1 worker (default = os.cpus()-1 = 3).
-  // workerThreads:false — switches workers from worker_threads (which SHARE the
-  // parent process fd table) to child_process (isolated fd tables). With
-  // worker_threads, any fds leaked across 133 page generations accumulate in the
-  // parent's table, exhausting the limit before manifest writes. child_process
-  // workers are reaped by the OS on exit, releasing all their fds regardless of
-  // leaks, so the parent always has headroom to write pages-manifest.json.
+  // The IIFE at the top of this file caps concurrent fd calls at 500 with
+  // EMFILE retry (up to 20 attempts, 50 ms × attempt backoff). graceful-fs
+  // is also preloaded via NODE_OPTIONS --require in scripts/build.sh.
+  // Note: experimental.workerThreads is not a recognized Next.js 16 config
+  // key and is silently ignored — removed to avoid misleading documentation.
   experimental: {
     cpus: 1,
-    workerThreads: false,
   },
 
   // Don't disclose the framework + version to attackers. Removes the default

@@ -389,7 +389,7 @@ jobs:
         run: node scripts/gen-weaponized-brain.cjs
 
       - name: Patch AsyncLocalStorage.snapshot (ALS polyfill)
-        # Mirrors step 4b in scripts/build.sh — required for Next.js 15 compatibility
+        # Mirrors step 4b in scripts/build.sh — required for Next.js 16 compatibility
         # on runtimes where AsyncLocalStorage.snapshot() is not natively available.
         # Must run from web/ so path.resolve('node_modules/next/...') hits web/node_modules.
         run: cd web && node ../scripts/patch-als.cjs
@@ -417,6 +417,7 @@ jobs:
         run: cd web && npm run build
         env:
           NODE_ENV: production
+          NODE_OPTIONS: "--max-old-space-size=6144"
           APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('0.2.0-{0}', github.sha) }}
           GIT_COMMIT_SHA: ${{ github.sha }}
 

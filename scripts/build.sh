@@ -11,10 +11,10 @@
 #   2. tsc root            → compiles src/brain → dist/
 #   3. gen-weaponized-brain → weaponizes the compiled brain
 #   4. cd web && npm ci   → reproducible install for Next.js tree
-#   4b. patch-als          → patches async-local-storage for Next.js 15 compat
+#   4b. patch-als          → patches async-local-storage for Next.js 16 compat
 #   4c. patch-runtime-snapshot → injects runtime snapshot for the web build
 #   5. clear .next cache   → avoids stale chunk refs after major dep bumps
-#   6. next build          → produces the Next.js 15 SSR bundle
+#   6. next build          → produces the Next.js 16 SSR bundle
 
 set -euo pipefail
 # Trap any command failure and print its exit code + the failing command so
@@ -84,14 +84,13 @@ else
   echo ">>> HS-STEP-6 preload script not found, proceeding without graceful-fs"
   GRACEFUL_FS_REQUIRE=""
 fi
-# Heap cap at 8192 matches netlify.toml. Netlify Pro build agents have ≥8 GB
-# RAM; 8192 was verified working (commit 360b4650, deploy_time 346 s). The
-# 4096 cap caused every build to fail with exit code 2 — webpack needs more
-# than 4 GB to compile 600+ routes with the compiled brain + Anthropic SDK.
+# Heap cap at 6144 matches netlify.toml. 4096 OOMs (too low for 600+ routes);
+# 8192 OOMs the container (no room for OS + npm + V8 internal spaces alongside
+# an 8 GB heap on an 8 GB machine). 6144 leaves ~2 GB overhead — the sweet spot.
 APP_VERSION=$(node -p "require('../package.json').version") \
   GIT_COMMIT_SHA="${COMMIT_REF:-}" \
   NEXT_PUBLIC_COMMIT_SHA="${COMMIT_REF:-}" \
-  NODE_OPTIONS="--max-old-space-size=8192 ${GRACEFUL_FS_REQUIRE}" \
+  NODE_OPTIONS="--max-old-space-size=6144 ${GRACEFUL_FS_REQUIRE}" \
   npm run build && echo ">>> HS-STEP-6 ok (exit 0)" || { ec=$?; echo ">>> HS-STEP-6 FAILED (exit $ec)"; exit $ec; }
 
 echo ">>> HS-STEP-DONE"
