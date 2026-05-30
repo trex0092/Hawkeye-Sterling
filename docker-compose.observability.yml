@@ -11,6 +11,7 @@
 #   traceloop/openllmetry-js (400 ⭐) https://github.com/traceloop/openllmetry-js
 #
 # Usage:
+#   export CLICKHOUSE_PASSWORD=<choose-a-strong-password>
 #   docker compose -f docker-compose.observability.yml up -d
 #
 # Then set in your Netlify / local environment:
@@ -32,7 +33,7 @@ services:
       CLICKHOUSE_DB: signoz_metrics
       CLICKHOUSE_USER: admin
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
-      CLICKHOUSE_PASSWORD: hawkeye_ch_pass
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     ports:
@@ -49,6 +50,8 @@ services:
     image: otel/opentelemetry-collector-contrib:0.99.0
     container_name: hawkeye-otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol/config.yaml:ro
     ports:
@@ -67,7 +70,7 @@ services:
     image: signoz/query-service:0.45.0
     container_name: hawkeye-signoz-query
     environment:
-      ClickHouseUrl: tcp://admin:hawkeye_ch_pass@clickhouse:9000
+      ClickHouseUrl: tcp://admin:${CLICKHOUSE_PASSWORD}@clickhouse:9000
       ALERTMANAGER_API_PREFIX: http://hawkeye-signoz-query:9093/api/
       SIGNOZ_LOCAL_DB_PATH: /var/lib/signoz/signoz.db
       STORAGE: clickhouse
