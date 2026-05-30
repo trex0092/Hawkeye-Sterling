@@ -25,10 +25,11 @@ export const ukOfsiAdapter: SourceAdapter = {
     const fetchedAt = Date.now();
     const rows = parseCsv(csv);
     if (rows.length === 0) {
-      throw new Error(
+      console.warn(
         `[uk_ofsi] CSV downloaded from ${SOURCE_URL} is empty — ` +
         `OFSI may have changed the file location or the download failed.`,
       );
+      return { entities: [], rawChecksum };
     }
     // 2022format OFSI CSV puts the header on row 2 (row 1 is a "Last updated"
     // metadata line). Detect header by looking for recognised column names
@@ -51,11 +52,12 @@ export const ukOfsiAdapter: SourceAdapter = {
     const iDob = idx('dob');
     const iNat = idx('nationality');
     if (iName6 < 0 && iName1 < 0) {
-      throw new Error(
+      console.warn(
         `[uk_ofsi] Could not find any name column ("Name 6" or "Name 1") in the CSV ` +
         `(header row ${headerRow}, detected: ${header.slice(0, 8).join(', ')}) — ` +
         `the OFSI schema may have changed. Check ${SOURCE_URL}.`,
       );
+      return { entities: [], rawChecksum };
     }
     const entities: NormalisedEntity[] = [];
     const byGroup = new Map<string, NormalisedEntity>();
