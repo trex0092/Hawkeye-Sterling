@@ -22,6 +22,7 @@ import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
 import { tierFor } from "@/lib/data/tiers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
+import { verifySession, SESSION_COOKIE } from "./auth";
 import { log } from "./logger";
 import { startSpan, SpanStatus } from "./tracer";
 import { incrementCounter } from "./metrics-store";
@@ -205,6 +206,43 @@ async function _enforce(
       };
     }
     return { ok: true, tier: rl.tier, keyId: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+  }
+
+  // Session cookie path: portal same-origin requests that arrive without an
+  // Authorization header (e.g. when ADMIN_TOKEN is not set in the deployment
+  // env and proxy.ts skips token injection) can still authenticate via the
+  // HMAC-signed hs_session cookie issued by /api/auth/login.
+  // This is the fallback that makes the portal work correctly regardless of
+  // whether ADMIN_TOKEN is configured in Netlify env vars.
+  if (anonymous) {
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const sessionToken = cookieHeader
+      .split(";")
+      .map((s) => s.trim())
+      .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
+      ?.slice(SESSION_COOKIE.length + 1) ?? "";
+    if (sessionToken) {
+      let sessionPayload: ReturnType<typeof verifySession> = null;
+      try { sessionPayload = verifySession(sessionToken); } catch { /* SESSION_SECRET missing or invalid */ }
+      if (sessionPayload) {
+        const sessionKeyId = `session_${sessionPayload.userId}`;
+        const rl = await consumeRateLimit(sessionKeyId, "enterprise");
+        if (!rl.allowed) {
+          logAuthFailure(req, "rate_limit_exceeded:session_portal", 429);
+          return {
+            ok: false,
+            response: NextResponse.json(
+              { ok: false, error: "rate limit exceeded", retryAfterSec: rl.retryAfterSec },
+              { status: 429, headers: rateLimitHeaders(rl) },
+            ),
+          };
+        }
+        span.setAttribute('auth.keyId', sessionKeyId);
+        span.setAttribute('auth.tier', 'enterprise');
+        span.setAttribute('auth.outcome', 'allow_session');
+        return { ok: true, tier: rl.tier, keyId: sessionKeyId, record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+      }
+    }
   }
 
   if (anonymous && requireAuth) {
