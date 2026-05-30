@@ -24,6 +24,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -235,6 +237,7 @@ function statusFor(mandatoryScore: number, overallScore: number): EddCompletenes
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: { eddFile: EddFile; generateNarrative?: boolean };
   try {
@@ -340,5 +343,6 @@ Write a 3-4 sentence gap analysis memo suitable for MLRO review. Be specific abo
     }
   }
 
-  return NextResponse.json({ ok: true, ...result, sowVerificationStatus }, { headers: gate.headers });
+  void writeAuditChainEntry({ event: "edd_completeness.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json({ ok: true, ...result, sowVerificationStatus }, { headers: gate.headers });
 }

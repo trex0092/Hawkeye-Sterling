@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface HumanTraffickingRequest {
   entity: string;
@@ -65,6 +67,7 @@ export interface HumanTraffickingResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: HumanTraffickingRequest;
   try {
@@ -192,7 +195,8 @@ Perform a comprehensive human trafficking money laundering risk assessment. Appl
     if (!Array.isArray(result.victimProfileIndicators)) result.victimProfileIndicators = [];
     if (!Array.isArray(result.controllerNetworkFlags)) result.controllerNetworkFlags = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
-    return NextResponse.json(result, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "human_trafficking.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "human-trafficking temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });

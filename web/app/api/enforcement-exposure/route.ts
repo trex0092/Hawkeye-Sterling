@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface EnforcementExposureResult {
   violationCategory: string;
   penaltyRange: {
@@ -34,6 +36,7 @@ export interface EnforcementExposureResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: {
     violation: string;
@@ -83,7 +86,8 @@ Assess regulatory enforcement exposure for this AML violation. Return complete E
     if (!Array.isArray(result.aggravatingFactors)) result.aggravatingFactors = [];
     if (!Array.isArray(result.precedentCases)) result.precedentCases = [];
     if (!Array.isArray(result.remedialActions)) result.remedialActions = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "enforcement_exposure.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "enforcement-exposure temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
