@@ -15,6 +15,7 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient, type AnthropicGuard } from "@/lib/server/llm";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -148,7 +149,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  const allCases = body.cases;
+  const allCases = body.cases.map((c) => ({
+    id: sanitizeField(c.id, 100),
+    subject: sanitizeField(c.subject, 300),
+    meta: sanitizeLlmInput(c.meta, 2000),
+    status: sanitizeField(c.status, 50),
+    screeningHits: c.screeningHits,
+  }));
 
   if (!apiKey) {
     return NextResponse.json({ ok: true, triaged: ruleBasedTriage(allCases), fallback: true }, { headers: gate.headers });

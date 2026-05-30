@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 interface TxInput {
   id: string;
   amount: string | number;
@@ -71,7 +74,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const transactions = Array.isArray(body.transactions) ? body.transactions : [];
+  const rawTransactions = Array.isArray(body.transactions) ? body.transactions : [];
+  const transactions = rawTransactions.map((t) => ({
+    ...t,
+    id: sanitizeField(String(t.id ?? ""), 100),
+    currency: sanitizeField(String(t.currency ?? ""), 10),
+    fromAccount: t.fromAccount ? sanitizeField(t.fromAccount, 200) : undefined,
+    toAccount: t.toAccount ? sanitizeField(t.toAccount, 200) : undefined,
+    date: t.date ? sanitizeField(t.date, 50) : undefined,
+    description: t.description ? sanitizeLlmInput(t.description, 500) : undefined,
+    channel: t.channel ? sanitizeField(t.channel, 50) : undefined,
+  }));
   if (transactions.length === 0) {
     return NextResponse.json({
       ok: true,
@@ -163,6 +176,7 @@ ${JSON.stringify(transactions, null, 2)}`,
       (t) => HIGH_RISK_TYPOLOGIES.has(t.typology) && t.confidence >= 40,
     ).length;
 
+    void writeAuditChainEntry({ event: "transaction_monitor.typology_tagged", actor: gate.keyId, txCount: transactions.length, highRiskCount }, tenantIdFromGate(gate)).catch(() => {});
     return NextResponse.json({
       ok: true,
       tagged,
