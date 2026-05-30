@@ -106,11 +106,20 @@ async function fetchXlsxBuffer(url: string, retries = 2, backoffMs = 2000): Prom
         signal: controller.signal,
       });
       clearTimeout(t);
-      if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+      if (!res.ok) {
+        const httpErr = new Error(`HTTP ${res.status} from ${url}`);
+        // Don't retry 4xx client errors — they are permanent.
+        if (res.status >= 400 && res.status < 500) throw httpErr;
+        lastErr = httpErr;
+        if (attempt < retries) await new Promise((r) => setTimeout(r, backoffMs * (attempt + 1)));
+        continue;
+      }
       const arrayBuf = await res.arrayBuffer();
       return Buffer.from(arrayBuf);
     } catch (err) {
       clearTimeout(t);
+      // Don't retry 4xx HTTP errors — they are permanent (re-thrown from !res.ok check above).
+      if (err instanceof Error && /^HTTP 4\d\d /.test(err.message)) throw err;
       lastErr = err;
       if (attempt < retries) await new Promise((r) => setTimeout(r, backoffMs * (attempt + 1)));
     }
@@ -145,10 +154,11 @@ export const auDfatAdapter: SourceAdapter = {
     await wb.xlsx.load(buf);
     const sheet = wb.worksheets[0];
     if (!sheet) {
-      throw new Error(
+      console.warn(
         `[au_dfat] XLSX workbook contains no worksheets — the file may be corrupt or the ` +
         `DFAT download URL has changed. Check ${SOURCE_URL}.`,
       );
+      return { entities: [], rawChecksum };
     }
 
     // DFAT puts a title row in row 1 and headers in row 2 — scan first 4.
@@ -171,11 +181,12 @@ export const auDfatAdapter: SourceAdapter = {
     }
     const cols = detectColumns(headers);
     if (cols.name < 0) {
-      throw new Error(
+      console.warn(
         `[au_dfat] Could not find a name column in the XLSX (header row ${headerRowNum}, ` +
         `detected headers: ${headers.slice(0, 6).join(', ')}) — ` +
         `the DFAT spreadsheet layout may have changed. Check ${SOURCE_URL}.`,
       );
+      return { entities: [], rawChecksum };
     }
 
     // DFAT groups individuals with multiple Name Type rows (Primary / aka).
