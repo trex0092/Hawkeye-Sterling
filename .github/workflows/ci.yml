@@ -231,24 +231,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Semgrep
-        run: pip install semgrep==1.90.0
-
       - name: Semgrep SAST scan
-        # Runs inside the semgrep container image which bundles community rules locally,
-        # avoiding HTTP 403 registry errors when SEMGREP_APP_TOKEN is absent.
+        # Uses the semgrep binary pre-installed in the semgrep/semgrep container image.
+        # No separate pip install needed — the container ships a ready-to-run semgrep.
         # --severity ERROR only: avoids failing on style warnings.
         # --sarif + --output: writes SARIF for Security tab alongside blocking output.
         # SEMGREP_APP_TOKEN: set this secret to enable Semgrep cloud registry access.
         # Without it, p/typescript/nodejs/nextjs return HTTP 403 → exit 7. Exit 7
         # is treated as a non-blocking registry-auth warning so CI does not fail solely
-        # because the token is absent. Genuine ERROR findings (exit 1) still block CI.
-        # The separate Semgrep OSS GitHub App provides equivalent coverage when no
-        # token is configured.
+        # because the token is absent. The Semgrep OSS GitHub App provides equivalent
+        # coverage when the token is absent.
         run: |
           if [ -z "$SEMGREP_APP_TOKEN" ]; then
             echo "::warning::SEMGREP_APP_TOKEN not configured — remote rule packs require auth."
