@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 interface SubjectInput {
   id: string;
   name: string;
@@ -46,10 +49,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const subjects = Array.isArray(body.subjects) ? body.subjects : [];
-  if (subjects.length === 0) {
+  const rawSubjects = Array.isArray(body.subjects) ? body.subjects : [];
+  if (rawSubjects.length === 0) {
     return NextResponse.json({ ok: false, error: "No subjects provided" }, { status: 400 , headers: gate.headers });
   }
+  const subjects = rawSubjects.map((s) => ({
+    ...s,
+    name: sanitizeField(s.name, 300),
+    jurisdiction: s.jurisdiction ? sanitizeField(s.jurisdiction, 100) : undefined,
+    clientType: s.clientType ? sanitizeField(s.clientType, 100) : undefined,
+  }));
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
@@ -126,6 +135,11 @@ Analyse and prioritise these subjects for AML re-screening urgency. Flag immedia
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as PrioritizeResult;
     if (!Array.isArray(result.prioritized)) result.prioritized = [];
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "batch.prioritized", actor: gate.keyId, subjectCount: subjects.length, immediateCount: result.immediateCount, scheduledCount: result.scheduledCount },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
