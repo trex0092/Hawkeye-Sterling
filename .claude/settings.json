@@ -3,6 +3,100 @@
     "lseg-wc1": {
       "type": "http",
       "url": "http://localhost:3001/mcp"
+    },
+
+    "claude-mem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "claude-mem@latest", "serve"],
+      "env": {
+        "CLAUDE_MEM_DATA_DIR": ".claude-mem"
+      }
+    },
+
+    "memorix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "memorix@latest", "serve", "--workspace", "."],
+      "env": {}
+    },
+
+    "swarmvault": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "swarmvault@latest", "mcp"],
+      "env": {
+        "SWARMVAULT_DATA_DIR": ".swarmvault"
+      }
+    },
+
+    "ori-mnemos": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@aayoawoyemi/ori-mnemos@latest", "mcp"],
+      "env": {
+        "ORI_MNEMOS_DB_PATH": ".ori-mnemos/memory.db"
+      }
+    },
+
+    "codebase-memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "codebase-memory-mcp@latest", "serve", "--root", "."],
+      "env": {}
+    },
+
+    "memos-local": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@memtensor/memos-local-plugin@latest", "serve"],
+      "env": {
+        "MEMOS_DATA_DIR": ".memos"
+      }
+    },
+
+    "memora": {
+      "type": "http",
+      "url": "http://localhost:8765/mcp",
+      "env": {}
+    },
+
+    "supermemory": {
+      "type": "http",
+      "url": "https://api.supermemory.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SUPERMEMORY_API_KEY}"
+      }
+    },
+
+    "honcho": {
+      "type": "http",
+      "url": "${HONCHO_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${HONCHO_API_KEY}"
+      }
+    },
+
+    "holaos": {
+      "type": "http",
+      "url": "http://localhost:37373/mcp",
+      "env": {}
+    },
+
+    "everos": {
+      "type": "http",
+      "url": "${EVEROS_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${EVEROS_API_KEY}"
+      }
+    },
+
+    "octopoda": {
+      "type": "http",
+      "url": "${OCTOPODA_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${OCTOPODA_API_KEY}"
+      }
     }
   }
 }

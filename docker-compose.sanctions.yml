@@ -1,0 +1,80 @@
+# Hawkeye Sterling — Self-hosted sanctions screening stack.
+#
+# Services:
+#   opensearch  — OpenSearch 2.x (search backend for yente)
+#   yente       — opensanctions/yente (136 ⭐) self-hosted entity search API
+#                 Replaces the Netlify Blobs sanctions cache dependency.
+#
+# Related repos:
+#   opensanctions/yente        (136 ⭐) https://github.com/opensanctions/yente
+#   opensanctions/opensanctions (740 ⭐) https://github.com/opensanctions/opensanctions
+#   alephdata/followthemoney   (271 ⭐) https://github.com/alephdata/followthemoney
+#
+# Usage:
+#   docker compose -f docker-compose.sanctions.yml up -d
+#
+# Then set in your environment:
+#   YENTE_URL=http://localhost:8000
+#
+# First-time index build takes ~10 minutes for the full OpenSanctions dataset.
+
+version: "3.9"
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    container_name: hawkeye-opensearch
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx2g
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  yente:
+    image: ghcr.io/opensanctions/yente:latest
+    container_name: hawkeye-yente
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    environment:
+      YENTE_INDEX_URL: http://opensearch:9200
+      YENTE_SCOPE: "default"
+      # Optional: restrict to specific datasets (comma-separated)
+      # YENTE_DATASETS: "ofac_sdn,un_sc,eu_fsf,gb_hmt_sanctions"
+    volumes:
+      - yente-data:/var/lib/yente
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+    labels:
+      - "com.hawkeye.service=sanctions-screening"
+      - "com.hawkeye.repo=opensanctions/yente"
+
+volumes:
+  opensearch-data:
+    driver: local
+  yente-data:
+    driver: local
