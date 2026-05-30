@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { FourEyesItem } from "@/lib/types";
 import { asanaGids } from "@/lib/server/asanaConfig";
@@ -236,7 +237,7 @@ async function handleComplete(req: Request, ctx: RequestContext): Promise<NextRe
     initiatedBy: updated.initiatedBy,
     completionRoute: "/api/four-eyes/complete",
     ...(decision === "reject" && rejectionReason ? { rejectionReason } : {}),
-  }).catch((e) => console.warn("[four-eyes/complete] background task failed:", e instanceof Error ? e.message : String(e)));
+  }, tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id })).catch((e) => console.warn("[four-eyes/complete] background task failed:", e instanceof Error ? e.message : String(e)));
 
   // Asana — best-effort.
   const asanaTaskUrl = await reportToAsana(updated, decision, operator).catch(() => null);

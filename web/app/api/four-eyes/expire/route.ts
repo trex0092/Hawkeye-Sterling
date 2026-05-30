@@ -18,8 +18,9 @@
 // maxDuration: 15 s.
 
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys, setJson } from "@/lib/server/store";
 import type { FourEyesItem } from "@/lib/types";
 
@@ -50,6 +51,7 @@ async function expireItem(
   item: FourEyesItem,
   reason: string,
   actor: string,
+  tenantId: string,
 ): Promise<void> {
   const expired: FourEyesItem = {
     ...item,
@@ -65,12 +67,12 @@ async function expireItem(
     fourEyesAction: item.action,
     initiatedBy: item.initiatedBy,
     reason,
-  }).catch((err: unknown) => {
+  }, tenantId).catch((err: unknown) => {
     console.warn("[four-eyes/expire] audit write failed:", err instanceof Error ? err.message : String(err));
   });
 }
 
-async function handler(req: Request): Promise<NextResponse> {
+async function handler(req: Request, ctx: RequestContext): Promise<NextResponse> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -118,7 +120,7 @@ async function handler(req: Request): Promise<NextResponse> {
         { status: 409 },
       );
     }
-    await expireItem(key, item, reason, actor);
+    await expireItem(key, item, reason, actor, tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id }));
     return NextResponse.json({ ok: true, expired: 1, itemIds: [itemId] });
   }
 
@@ -151,7 +153,8 @@ async function handler(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, expired: 0, itemIds: [], thresholdHours });
   }
 
-  await Promise.all(overdue.map(({ key, item }) => expireItem(key, item, reason, actor)));
+  const tenantId = tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id });
+  await Promise.all(overdue.map(({ key, item }) => expireItem(key, item, reason, actor, tenantId)));
 
   const expiredIds = overdue.map(({ item }) => item.id);
   return NextResponse.json({ ok: true, expired: overdue.length, itemIds: expiredIds, thresholdHours });

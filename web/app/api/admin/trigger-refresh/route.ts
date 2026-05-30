@@ -95,7 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         failedCount: result.failed_count,
         durationMs: result.durationMs,
       },
-      "admin",
+      process.env["DEFAULT_TENANT"] ?? "default",
     ).catch((err) =>
       console.warn("[trigger-refresh] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );

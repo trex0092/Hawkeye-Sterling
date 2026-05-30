@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, setJson } from "@/lib/server/store";
 import { validateString, validateEnum } from "@/lib/server/validate";
 import { logRequest } from "@/lib/server/logger";
@@ -221,7 +222,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
       initiatedBy: updatedItem.initiatedBy,
       decision,
       rationale,
-    }).catch((err: unknown) => {
+    }, tenantIdFromGate({ ok: true as const, keyId: ctx.apiKey.id })).catch((err: unknown) => {
       console.warn("[four-eyes/approve] audit write failed:", err instanceof Error ? err.message : String(err));
     });
   }

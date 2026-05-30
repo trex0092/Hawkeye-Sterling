@@ -124,7 +124,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     reviewedAt: entry.reviewedAt,
     recordedAt: entry.recordedAt,
     note: note || undefined,
-  }, "admin").catch((err) =>
+  }, process.env["DEFAULT_TENANT"] ?? "default").catch((err) =>
     console.warn("[mark-catalogue-reviewed] audit chain write failed:", err instanceof Error ? err.message : String(err)),
   );
 

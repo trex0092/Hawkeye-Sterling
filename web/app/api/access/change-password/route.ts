@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     actor: session.username,
     target: session.userId,
     body: { role: session.role },
-  }).catch((err: unknown) => {
+  }, process.env["DEFAULT_TENANT"] ?? "default").catch((err: unknown) => {
     console.warn("[change-password] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 

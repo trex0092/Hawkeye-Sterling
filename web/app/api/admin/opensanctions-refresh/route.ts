@@ -53,7 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const result = await refreshOpenSanctionsBlob();
     void writeAuditChainEntry(
       { event: "admin.opensanctions_refresh", actor: "system", ok: result.ok, at: new Date().toISOString() },
-      "admin",
+      process.env["DEFAULT_TENANT"] ?? "default",
     ).catch(() => {});
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (err) {

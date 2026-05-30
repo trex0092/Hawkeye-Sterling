@@ -136,7 +136,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         count: records.length,
         sizeBytes: text.length,
       },
-      "admin",
+      process.env["DEFAULT_TENANT"] ?? "default",
     ).catch((err) =>
       console.warn("[admin/opensanctions-import] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );

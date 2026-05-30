@@ -202,7 +202,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       keysAnonymised: keysAffected.length,
       legalBasis: logEntry.legalBasis,
       holdExpiresAt: logEntry.holdExpiresAt,
-    }).catch((err: unknown) => {
+    }, "admin").catch((err: unknown) => {
       console.warn("[pdpl/erase] audit chain write failed:", err instanceof Error ? err.message : String(err));
     });
   }

@@ -17,6 +17,7 @@ export const maxDuration = 20;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface FilingInstitution {
   name: string;
@@ -218,7 +219,7 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
     subject: raw.subject.name,
     activityType: raw.activity.type,
     amount: raw.activity.amount,
-  }).catch((err: unknown) => {
+  }, tenantIdFromGate(gate)).catch((err: unknown) => {
     console.error("[fincen-sar] audit write failed:", err instanceof Error ? err.message : String(err));
   });
 
