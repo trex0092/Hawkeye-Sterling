@@ -2,7 +2,7 @@
 #
 # Build order:
 #   1. Root: `npm ci && npm run build` → compiles src/brain (TypeScript → dist/).
-#   2. web/: `npm ci && npm run build` → builds Next.js 15 app (SSR + API routes).
+#   2. web/: `npm ci && npm run build` → builds Next.js 16 app (SSR + API routes).
 #
 # The Next.js route handler at web/app/api/quick-screen/route.ts imports the
 # compiled brain from ../../../../../dist/src/brain/quick-screen.js, so step 1
@@ -24,15 +24,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # Node heap cap for the build. Netlify Pro build agents have ≥8 GB RAM.
+  # Node heap cap for the build. Netlify Pro build agents have ~8 GB RAM total.
   # The default V8 heap (~1.5 GB) OOMs during `next build` for this repo
   # (600+ routes, compiled brain dist/, Anthropic SDK, Upstash, zod).
-  # 8192 (8 GB) was verified working on May 29 (commit 360b4650, deploy_time
-  # 346 s). Lowering to 4096 caused every subsequent build to fail with
-  # "Build script returned non-zero exit code: 2" — webpack needs more than
-  # 4 GB to compile the full bundle. The Netlify Pro container comfortably
-  # holds an 8 GB heap alongside the OS and plugin-nextjs overhead.
-  NODE_OPTIONS = "--max-old-space-size=8192"
+  # 4096 is too low — webpack needs more than 4 GB to compile the full bundle.
+  # 8192 OOMs the container — it claims the entire machine RAM leaving nothing
+  # for the OS, npm CLI, native modules, and V8 internal spaces (code/map/LO).
+  # 6144 (6 GB) is the sweet spot: sufficient for webpack + leaves ~2 GB overhead.
+  NODE_OPTIONS = "--max-old-space-size=6144"
   # Disable Next.js telemetry in the build agent. Without this, next build
   # attempts a network call to telemetry.nextjs.org on every compilation;
   # if the Netlify build agent's outbound network is slow or the endpoint
