@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface SanctionsBreachResult {
   breachSeverity: "critical" | "high" | "medium" | "low";
@@ -19,6 +21,7 @@ export interface SanctionsBreachResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: {
     counterparty: string;
@@ -71,6 +74,7 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.mitigatingFactors)) parsed.mitigatingFactors = [];
     if (!Array.isArray(parsed.aggravatingFactors)) parsed.aggravatingFactors = [];
     if (!Array.isArray(parsed.immediateActions)) parsed.immediateActions = [];
+    void writeAuditChainEntry({ event: "sanctions_breach.completed", actor: gate.keyId, counterparty: body.counterparty, voluntaryDisclosureRecommended: parsed.voluntaryDisclosureRecommended }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[sanctions-breach] LLM call failed:", err instanceof Error ? err.message : String(err));

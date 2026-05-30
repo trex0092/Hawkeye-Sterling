@@ -9,6 +9,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { stats as feedbackStats } from "@/lib/server/feedback";
 import { getCurrentWeights } from "@/lib/server/risk-weight-calibrator";
@@ -89,6 +91,7 @@ function deterministicProbability(signals: CaseSignals, weights: Record<string, 
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let signals: CaseSignals;
   try { signals = await req.json() as CaseSignals; } catch {
@@ -142,6 +145,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch { /* narrative is non-blocking */ }
   }
 
+  void writeAuditChainEntry({ event: "sar_probability.completed", actor: gate.keyId, sarProbability: calibratedScore, queuePriority, recommendation }, tenant).catch(() => {});
   return NextResponse.json({
     ok: true,
     sarProbability: calibratedScore,

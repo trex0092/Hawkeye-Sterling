@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -37,6 +38,7 @@ export interface DocumentFraudResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     documentTypes: string;
     documentDetails?: string;
@@ -117,6 +119,7 @@ Assess these documents for fraud indicators.`,
     else for (const d of result.documentAssessments) { if (!Array.isArray(d.redFlags)) d.redFlags = []; if (!Array.isArray(d.verificationRequired)) d.verificationRequired = []; }
     if (!Array.isArray(result.requiredVerificationSteps)) result.requiredVerificationSteps = [];
     if (!Array.isArray(result.externalVerificationSources)) result.externalVerificationSources = [];
+    void writeAuditChainEntry({ event: "document_fraud.completed", actor: gate.keyId, subjectName: body.subjectName, kycImpact: result.kycImpact, recommendedAction: result.recommendedAction }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
