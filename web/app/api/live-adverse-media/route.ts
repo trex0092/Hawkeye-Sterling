@@ -48,12 +48,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   return handler(req);
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
-  return NextResponse.json({}, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
+export async function OPTIONS(req: Request): Promise<NextResponse> {
+  const { corsPreflight } = await import("@/lib/api/cors");
+  return corsPreflight(req.headers.get("origin")) as unknown as NextResponse;
 }
