@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface RegExamResult {
   examArea: string;
@@ -63,6 +65,10 @@ Generate comprehensive regulatory examination preparation materials for this top
     if (!Array.isArray(result.commonFindings)) result.commonFindings = [];
     if (!Array.isArray(result.bestPractices)) result.bestPractices = [];
     if (!Array.isArray(result.preparationSteps)) result.preparationSteps = [];
+    void writeAuditChainEntry(
+      { event: "regulatory_exam_prep", actor: gate.keyId, examArea: result.examArea, questionCount: result.likelyQuestions.length, findingsCount: result.commonFindings.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

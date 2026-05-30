@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 interface InputItem {
   title: string;
   summary?: string;
@@ -138,6 +140,10 @@ ${itemsList}`,
       };
     });
 
+    void writeAuditChainEntry(
+      { event: "regulatory_urgency_classified", actor: gate.keyId, itemCount: classified.length, criticalCount: classified.filter((c) => c.urgency === "critical").length, highCount: classified.filter((c) => c.urgency === "high").length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, classified } satisfies ClassifyUrgencyResult, { headers: gate.headers });
   } catch (err) {
     console.warn("[classify-urgency] classification failed:", err instanceof Error ? err.message : String(err));

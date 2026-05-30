@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,10 +59,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
-  const { smelters } = body;
-  if (!smelters || !Array.isArray(smelters) || smelters.length === 0) {
+  const rawSmelters = body.smelters;
+  if (!rawSmelters || !Array.isArray(rawSmelters) || rawSmelters.length === 0) {
     return NextResponse.json({ ok: false, error: "smelters array is required" }, { status: 400 , headers: gate.headers });
   }
+
+  const smelters = rawSmelters.map((s) => ({
+    ...s,
+    name: sanitizeField(s.name, 300),
+    country: sanitizeField(s.country, 100),
+    mineral: sanitizeField(s.mineral, 100),
+    rmapStatus: sanitizeField(s.rmapStatus, 100),
+    cahraRisk: sanitizeField(s.cahraRisk, 100),
+    flags: s.flags?.map((f) => sanitizeField(f, 200)) ?? [],
+    lastAuditDate: sanitizeField(s.lastAuditDate, 50),
+    nextAuditDue: sanitizeField(s.nextAuditDue, 50),
+    notes: sanitizeLlmInput(s.notes, 2000),
+  }));
 
   try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
   catch (err) { console.warn("[hawkeye] rmi-assess writeAuditEvent failed:", err); }

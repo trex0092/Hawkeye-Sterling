@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,7 +88,18 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const subjects = Array.isArray(body.subjects) ? body.subjects : [];
+  const rawSubjects = Array.isArray(body.subjects) ? body.subjects : [];
+  const subjects = rawSubjects.map((s) => ({
+    ...s,
+    id: sanitizeField(s.id, 100),
+    name: sanitizeField(s.name, 300),
+    tier: sanitizeField(s.tier, 50),
+    cadence: sanitizeField(s.cadence, 50),
+    status: sanitizeField(s.status, 50),
+    lastRun: sanitizeField(s.lastRun, 50),
+    nextDue: sanitizeField(s.nextDue, 50),
+    notes: sanitizeLlmInput(s.notes, 2000),
+  }));
 
   if (subjects.length === 0) {
     writeAuditEvent("mlro", "ongoing-monitor.ai-analysis", "no subjects — skipped");

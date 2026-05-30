@@ -8,6 +8,7 @@ const RECOVERY_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { anonIpKey } from "@/lib/server/enforce";
 import { getJson, setJson, del } from "@/lib/server/store";
 import { incrementCounter } from "@/lib/server/metrics-store";
 
@@ -44,7 +45,7 @@ function usernameKey(username: string): string {
 }
 
 function ipKey(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  return createHmac("sha256", anonIpKey()).update(ip).digest("hex").slice(0, 16);
 }
 
 async function checkRateLimit(
@@ -278,7 +279,7 @@ export async function POST(req: Request) {
       userId: user.id,
       prevIpHash: user.lastIpHash,
       currIpHash: iKey,
-    }).catch((err: unknown) => {
+    }, process.env["DEFAULT_TENANT"] ?? "default").catch((err: unknown) => {
       console.warn("[auth/login] audit chain write failed:", err instanceof Error ? err.message : String(err));
     });
   }

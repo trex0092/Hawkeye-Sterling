@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface RegChange {
   regulation: string;
   jurisdiction: string;
@@ -118,6 +120,10 @@ Generate a comprehensive regulatory change roadmap covering all material upcomin
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     if (!Array.isArray(result.complianceRoadmap)) result.complianceRoadmap = [];
     else for (const m of result.complianceRoadmap) { if (!Array.isArray(m.actions)) m.actions = []; }
+    void writeAuditChainEntry(
+      { event: "reg_change_analysis", actor: gate.keyId, totalChanges: result.totalChanges, criticalCount: result.criticalCount, immediateActions: result.immediateActions.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

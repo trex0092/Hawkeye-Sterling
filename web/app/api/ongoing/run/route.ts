@@ -817,7 +817,7 @@ export async function POST(req: Request): Promise<NextResponse> {
             listRef: h.listRef,
             candidateName: h.candidateName,
           })),
-        }).catch((err) => console.warn("[ongoing/run] audit chain write failed (new_hits_alert):", err instanceof Error ? err.message : String(err)));
+        }, s.tenantId ?? process.env["DEFAULT_TENANT"] ?? "default").catch((err) => console.warn("[ongoing/run] audit chain write failed (new_hits_alert):", err instanceof Error ? err.message : String(err)));
       } else {
         // Heartbeat entry: proves the subject was screened even with no new hits.
         // Regulators can audit the complete monitoring cadence from these entries.
@@ -833,7 +833,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           scoreDelta: 0,
           newHitCount: 0,
           runAt,
-        }).catch((err) => console.warn("[ongoing/run] audit chain write failed (monitor_tick):", err instanceof Error ? err.message : String(err)));
+        }, s.tenantId ?? process.env["DEFAULT_TENANT"] ?? "default").catch((err) => console.warn("[ongoing/run] audit chain write failed (monitor_tick):", err instanceof Error ? err.message : String(err)));
       }
 
       const webhookType: "screening.escalated" | "screening.delta" | "ongoing.rerun" =
@@ -962,7 +962,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         subjectName: s.name ?? "",
         error: "subject processing failed — see server logs",
         runAt,
-      }).catch((e) => console.warn("[ongoing/run] audit chain write failed (monitor_error):", e instanceof Error ? e.message : String(e)));
+      }, s.tenantId ?? process.env["DEFAULT_TENANT"] ?? "default").catch((e) => console.warn("[ongoing/run] audit chain write failed (monitor_error):", e instanceof Error ? e.message : String(e)));
     }
   }));
   } // end CONCURRENCY batch loop

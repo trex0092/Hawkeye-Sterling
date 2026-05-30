@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface NetworkMapResult {
   networkRisk: "critical" | "high" | "medium" | "low" | "clear";
@@ -79,6 +81,10 @@ Map this entity network and identify ML risk connections. Return complete Networ
     if (!Array.isArray(result.nodes)) result.nodes = [];
     if (!Array.isArray(result.connections)) result.connections = [];
     if (!Array.isArray(result.keyHubs)) result.keyHubs = [];
+    void writeAuditChainEntry(
+      { event: "network_map_generated", actor: gate.keyId, networkRisk: result.networkRisk, entityCount: result.entityCount, recommendedAction: result.recommendedAction },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.error("[network-mapper] LLM call failed:", err instanceof Error ? err.message : String(err));

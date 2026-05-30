@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
       caseId: newId,
       channel: newCase.channel,
       category: newCase.category,
-    }).catch((err: unknown) => {
+    }, tenantIdFromGate(gate)).catch((err: unknown) => {
       console.warn("[grievances/cases] audit chain write failed:", err instanceof Error ? err.message : String(err));
     });
     return NextResponse.json({ ok: true, case: newCase }, { status: 201, headers: gate.headers });

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -96,6 +98,10 @@ Respond ONLY with valid JSON:
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
       if (parsed.overallScore !== undefined) {
         if (!Array.isArray(parsed.dimensions)) parsed.dimensions = [];
+        void writeAuditChainEntry(
+          { event: "plausibility_score_computed", actor: gate.keyId, overallScore: parsed.overallScore as number, verdict: parsed.verdict as string, dimensionCount: (parsed.dimensions as unknown[]).length },
+          tenantIdFromGate(gate),
+        ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

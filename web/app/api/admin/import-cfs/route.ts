@@ -510,7 +510,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       adverseIndexed: adverseEntities.size,
       vesselsIndexed: vesselByImo.size,
     },
-    "admin",
+    process.env["DEFAULT_TENANT"] ?? "default",
   ).catch((err) =>
     console.warn("[import-cfs] audit chain write failed:", err instanceof Error ? err.message : String(err)),
   );

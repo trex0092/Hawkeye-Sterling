@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,7 +78,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const results = Array.isArray(body.results) ? body.results : [];
+  const results = (Array.isArray(body.results) ? body.results : []).map((r) => ({
+    ...r,
+    name: sanitizeField(r.name, 300),
+    severity: sanitizeField(r.severity, 100),
+    jurisdiction: r.jurisdiction ? sanitizeField(r.jurisdiction, 100) : undefined,
+    error: r.error ? sanitizeField(r.error, 200) : undefined,
+  }));
 
   if (results.length === 0) {
     writeAuditEvent("analyst", "batch.ai-priority-ranking", "no results — skipped");

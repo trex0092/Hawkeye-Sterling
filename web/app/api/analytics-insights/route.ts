@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,7 +81,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const kpis = body.kpis ?? {};
-  const period = body.period ?? "current";
+  const period = sanitizeField(body.period ?? "current", 100);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

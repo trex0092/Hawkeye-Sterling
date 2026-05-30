@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface AmlTrainingGapResult {
   completionRate: number;
@@ -65,6 +67,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.highRiskRoleGaps)) result.highRiskRoleGaps = [];
     if (!Array.isArray(result.mandatoryModules)) result.mandatoryModules = [];
     if (!Array.isArray(result.trainingPlan)) result.trainingPlan = [];
+    void writeAuditChainEntry(
+      { event: "aml_training.gap_analysed", actor: gate.keyId, completionRate: result.completionRate, gapRating: result.gapRating, trainingPlanCount: result.trainingPlan.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

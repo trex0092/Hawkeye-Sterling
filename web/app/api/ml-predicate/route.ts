@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface PrimaryPredicate {
   offence: string;
@@ -103,6 +105,10 @@ Map these facts to applicable UAE ML predicate offences with penalties.`,
     if (!Array.isArray(result.investigativeActions)) result.investigativeActions = [];
     if (!Array.isArray(result.jurisdictionalIssues)) result.jurisdictionalIssues = [];
     if (!Array.isArray(result.fatfR3Categories)) result.fatfR3Categories = [];
+    void writeAuditChainEntry(
+      { event: "ml_predicate_mapped", actor: gate.keyId, primaryPredicate: result.primaryPredicate?.offence, strRequired: result.strRequired, mlOffenceApplicable: result.mlOffenceApplicable },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

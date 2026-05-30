@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 export interface MlroDecision {
   caseId: string;
   subject: string;
@@ -55,7 +58,14 @@ export async function POST(req: Request) {
   if (!Array.isArray(body.decisions) || body.decisions.length === 0) {
     return NextResponse.json({ ok: false, error: "decisions must be a non-empty array" }, { status: 400, headers: gate.headers });
   }
-  const decisions = body.decisions;
+  const decisions = body.decisions.map((d) => ({
+    ...d,
+    subject: sanitizeField(d.subject, 300),
+    listName: sanitizeField(d.listName, 200),
+    clientType: sanitizeField(d.clientType, 100),
+    jurisdiction: sanitizeField(d.jurisdiction, 100),
+    decisionReason: sanitizeLlmInput(d.decisionReason, 2000),
+  }));
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "fp-optimizer/analyze temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
@@ -121,6 +131,11 @@ Analyse these decisions to identify false positive patterns, suggest threshold o
     if (!Array.isArray(result.patterns)) result.patterns = [];
     if (!Array.isArray(result.thresholdSuggestions)) result.thresholdSuggestions = [];
     if (!Array.isArray(result.systemicIssues)) result.systemicIssues = [];
+    const tenant = tenantIdFromGate(gate);
+    void writeAuditChainEntry(
+      { event: "fp_optimizer.analyzed", actor: gate.keyId, decisionCount: decisions.length, fpRate: result.fpRate, patternCount: result.patterns.length },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

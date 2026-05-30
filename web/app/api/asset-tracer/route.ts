@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface AssetTracerResult {
   tracingRisk: "critical" | "high" | "medium" | "low";
   tracingStages: Array<{
@@ -77,6 +79,10 @@ Trace these funds through money laundering stages and assess asset recovery pote
     else for (const s of result.tracingStages) { if (!Array.isArray(s.accountsInvolved)) s.accountsInvolved = []; if (!Array.isArray(s.jurisdictions)) s.jurisdictions = []; }
     if (!Array.isArray(result.evidenceGaps)) result.evidenceGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
+    void writeAuditChainEntry(
+      { event: "asset_tracer.traced", actor: gate.keyId, tracingRisk: result.tracingRisk, tracingStagesCount: result.tracingStages.length, confiscationPotential: result.confiscationPotential },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -20,6 +20,7 @@ import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../..
 import { type GdeltArticle, fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -165,7 +166,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     totalCount: taranisResult.totalCount,
     adverseCount: taranisResult.adverseCount,
     aiGenerated: true,
-  }).catch((err: unknown) => {
+  }, tenantIdFromGate(gate)).catch((err: unknown) => {
     console.error("[adverse-media] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 

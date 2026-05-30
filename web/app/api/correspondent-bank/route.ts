@@ -7,6 +7,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { assessCorrespondentBank } from "@/lib/intelligence/correspondent-bank";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── LLM-based result type (existing) ─────────────────────────────────────────
 export interface CorrespondentBankResult {
@@ -142,6 +144,10 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as CorrespondentBankResult;
     if (!Array.isArray(parsed.requiredEnhancements))
       parsed.requiredEnhancements = [];
+    void writeAuditChainEntry(
+      { event: "correspondent_bank.assessed", actor: gate.keyId, riskRating: parsed.riskRating, kycStatus: parsed.kycStatus, shellBankRisk: parsed.shellBankRisk },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn(

@@ -53,6 +53,7 @@ import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { validatePositiveInt, validateBoolean } from "@/lib/server/validate";
 import { logRequest } from "@/lib/server/logger";
 import type {
@@ -306,7 +307,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     subjectCount: body.subjects.length,
     elevatedCount: elevated.length,
     topScore: Math.max(...results.map((r) => r.topScore), 0),
-  }).catch((err) =>
+  }, tenantIdFromGate(gate)).catch((err) =>
     console.warn("[screen/batch] audit chain write failed:", err instanceof Error ? err.message : String(err)),
   );
 

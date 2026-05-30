@@ -70,7 +70,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   void writeAuditChainEntry(
     { event: "auth.emergency_password_reset", actor: "emergency_reset", meta: { username } },
-    "admin",
+    process.env["DEFAULT_TENANT"] ?? "default",
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json({

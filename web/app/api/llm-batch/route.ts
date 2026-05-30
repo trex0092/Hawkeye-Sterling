@@ -12,6 +12,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { rehydrate, type RedactionMap } from "@/lib/server/redact";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,8 +82,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     params: {
       model: r.model ?? DEFAULT_MODEL,
       max_tokens: r.maxTokens ?? 1024,
-      system: r.system ?? DEFAULT_SYSTEM,
-      messages: [{ role: "user" as const, content: r.userMessage }],
+      system: sanitizeText(r.system ?? DEFAULT_SYSTEM, 20_000),
+      messages: [{ role: "user" as const, content: sanitizeText(r.userMessage, 50_000) }],
     },
   }));
 

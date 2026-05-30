@@ -20,6 +20,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -230,7 +231,7 @@ Return ONLY valid JSON:
     messages: [{
       role: "user",
       content: `Subject Case ID: ${sanitizeField(subjectId)}
-Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: body.subjectName ?? "unknown" })}
+Subject Data: ${JSON.stringify(subjectCase ?? { id: subjectId, name: sanitizeField(body.subjectName, 200) || "unknown" })}
 Subject Risk Score: ${subjectScore}
 
 Remaining Customer Base (${caseDigests.length} cases):
@@ -274,6 +275,10 @@ Identify all cases that form a risk cluster with the subject. Only include cases
     ? Math.round(clusterScores.reduce((a, b) => a + b, 0) / clusterScores.length) : 0;
   const actionCount = Math.min(RECOMMENDED_ACTIONS.length, Math.ceil(1 + (propagatedScore / 100) * (RECOMMENDED_ACTIONS.length - 1)));
 
+  void writeAuditChainEntry(
+    { event: "cluster_contamination.analysed", actor: gate.keyId, clusterSize: clusterIds.length, contaminatedEntities: contaminatedCount, propagatedScore },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     subjectId,

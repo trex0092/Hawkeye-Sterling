@@ -21,6 +21,8 @@ import { gateMlroQuestion } from "@/lib/server/mlro-input-gate";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── Citation extraction ───────────────────────────────────────────────────────
 
@@ -264,12 +266,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     const fastResult = await runHaikuQuick(body.query.trim(), Array.isArray(body.context) ? body.context : [], apiKey);
     if (fastResult.ok) {
+      const citations = extractCitations(fastResult.answer ?? "");
+      void writeAuditChainEntry(
+        { event: "compliance_qa.answered", actor: gate.keyId, citationCount: citations.length, elapsedMs: fastResult.elapsedMs, source: "mlro-advisor-quick" },
+        tenantIdFromGate(gate),
+      ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
       return NextResponse.json(
         {
           ok: true,
           query: body.query.trim(),
           answer: fastResult.answer,
-          citations: extractCitations(fastResult.answer ?? ""),
+          citations,
           passedQualityGate: true,
           source: "mlro-advisor-quick",
           elapsedMs: fastResult.elapsedMs,

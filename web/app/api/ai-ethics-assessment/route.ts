@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface EthicsAssessmentResult {
   overallScore: number; // 0–100
   rating: "exemplary" | "good" | "adequate" | "needs-improvement" | "critical";
@@ -82,6 +84,10 @@ Return complete EthicsAssessmentResult JSON with overallScore (0-100), rating, u
     if (!Array.isArray(result.findings)) result.findings = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.priorities)) result.priorities = [];
+    void writeAuditChainEntry(
+      { event: "ai_ethics.assessed", actor: gate.keyId, overallScore: result.overallScore, rating: result.rating, findingsCount: result.findings.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

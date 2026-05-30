@@ -19,6 +19,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -205,7 +207,15 @@ Total Weight: ${body.totalWeight ? `${body.totalWeight}g` : "not specified"}
 Chain Length: ${body.chain.length} hops
 
 Supply Chain:
-${JSON.stringify(body.chain, null, 2)}
+${JSON.stringify(body.chain.map((hop) => ({
+  ...hop,
+  actor: sanitizeField(hop.actor, 200),
+  country: sanitizeField(hop.country, 100),
+  documentType: hop.documentType ? sanitizeField(hop.documentType, 100) : undefined,
+  documentReference: hop.documentReference ? sanitizeField(hop.documentReference, 100) : undefined,
+  certification: hop.certification ? sanitizeField(hop.certification, 100) : undefined,
+  notes: hop.notes ? sanitizeField(hop.notes, 500) : undefined,
+})), null, 2)}
 
 Static Analysis Results:
 ${JSON.stringify(staticAnalysis, null, 2)}
@@ -218,6 +228,10 @@ Analyse for DPMS/CAHRA compliance.`,
   let aiResult: Record<string, unknown> = {};
   try { aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}"); } catch { /* best effort */ }
 
+  void writeAuditChainEntry(
+    { event: "gold_provenance_assessed", actor: gate.keyId, overallRisk, integrityScore: staticAnalysis.integrityScore, cahraExposure: staticAnalysis.cahraExposure },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     commodity: body.commodity,

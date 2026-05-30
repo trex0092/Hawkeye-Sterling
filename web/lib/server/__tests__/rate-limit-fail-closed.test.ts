@@ -32,13 +32,20 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-const now = Date.now();
-const secondStart = Math.floor(now / 1000) * 1000;
-const minuteStart = Math.floor(now / 60000) * 60000;
+// Computed fresh before each test via freshTimeWindows() to avoid staleness
+// when the second or minute boundary rolls over mid-suite (25-second run).
+function freshTimeWindows() {
+  const now = Date.now();
+  return {
+    secondStart: Math.floor(now / 1000) * 1000,
+    minuteStart: Math.floor(now / 60000) * 60000,
+  };
+}
 
 // Simulate a state where our write (count=1) was overwritten by a concurrent
 // sibling that bumped it to 3 — visible in the read-back after our setJson.
 function simulateConcurrentWrite(keyId: string, ourCount = 1, racedCount = 3): void {
+  const { secondStart, minuteStart } = freshTimeWindows();
   const key = `ratelimit/${keyId}`;
   let callCount = 0;
   store.getJson.mockImplementation(async (k: string) => {
@@ -70,6 +77,7 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
   });
 
   it('returns allowed:true when read-back matches written count (no race)', async () => {
+    const { secondStart, minuteStart } = freshTimeWindows();
     const key = 'ratelimit/test-key-3';
     let callCount = 0;
     store.getJson.mockImplementation(async (k: string) => {
@@ -85,6 +93,7 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
   it('does not fail-closed when read-back count exceeds written by exactly 1 (within tolerance)', async () => {
     // The guard is `readBack.second.count > nextSecond + 1` (strictly greater than +1).
     // A delta of exactly 1 is the normal single-concurrent-request case, not worth blocking.
+    const { secondStart, minuteStart } = freshTimeWindows();
     const key = 'ratelimit/test-key-4';
     let callCount = 0;
     store.getJson.mockImplementation(async (k: string) => {
@@ -101,6 +110,7 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
 
 describe('rate-limit — basic enforcement (no race)', () => {
   it('rejects when per-second limit is exceeded', async () => {
+    const { secondStart, minuteStart } = freshTimeWindows();
     // Simulate a state where the second counter is already at the limit
     store.getJson.mockResolvedValue({
       second: { startMs: secondStart, count: 999 }, // very high count

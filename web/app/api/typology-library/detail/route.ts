@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface TypologyDetailResult {
   name: string;
@@ -138,6 +140,16 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.regulatoryGuidance)) result.regulatoryGuidance = [];
     if (!Array.isArray(result.relatedTypologies)) result.relatedTypologies = [];
     if (!Array.isArray(result.preventionMeasures)) result.preventionMeasures = [];
+    void writeAuditChainEntry(
+      {
+        event: "typology_detail_retrieved",
+        actor: gate.keyId,
+        typologyName: result.name,
+        category: result.category,
+        trendDirection: result.trendDirection,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

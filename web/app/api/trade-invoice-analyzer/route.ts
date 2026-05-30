@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -78,6 +79,16 @@ Analyse this trade invoice for TBML indicators. Return complete TradeInvoiceResu
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as TradeInvoiceResult;
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    void writeAuditChainEntry(
+      {
+        event: "trade_invoice_analyzed",
+        actor: gate.keyId,
+        tbmlRisk: result.tbmlRisk,
+        recommendedAction: result.recommendedAction,
+        indicatorCount: result.indicators.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

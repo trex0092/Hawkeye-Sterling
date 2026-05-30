@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -190,7 +191,10 @@ async function createSection(token: string, projectGid: string, name: string): P
   return res.ok;
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: Request): Promise<NextResponse> {
+  const deny = adminAuth(req);
+  if (deny) return deny;
+
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json({ ok: false, error: "ASANA_TOKEN not configured." }, { status: 503 });

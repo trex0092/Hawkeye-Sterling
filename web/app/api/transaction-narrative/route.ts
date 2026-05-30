@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -90,6 +92,16 @@ Respond ONLY with valid JSON — no markdown, no explanation:
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.missingInformation)) result.missingInformation = [];
     if (!Array.isArray(result.investigativeQuestions)) result.investigativeQuestions = [];
+    void writeAuditChainEntry(
+      {
+        event: "transaction_narrative_analyzed",
+        actor: gate.keyId,
+        riskVerdict: result.riskVerdict,
+        strRequired: result.strRequired,
+        recommendedAction: result.recommendedAction,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

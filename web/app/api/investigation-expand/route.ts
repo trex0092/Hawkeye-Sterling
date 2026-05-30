@@ -3,6 +3,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,7 +70,12 @@ What additional entities should investigators look for?`,
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as { discovered: DiscoveredEntity[] };
-    return NextResponse.json({ ok: true, discovered: Array.isArray(result.discovered) ? result.discovered : [] }, { headers: gate.headers });
+    const discovered = Array.isArray(result.discovered) ? result.discovered : [];
+    void writeAuditChainEntry(
+      { event: "investigation_expanded", actor: gate.keyId, discoveredCount: discovered.length, knownNodeCount: safeNodes.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json({ ok: true, discovered }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(

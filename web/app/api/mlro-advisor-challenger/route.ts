@@ -32,6 +32,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -251,6 +253,10 @@ export async function POST(req: Request): Promise<Response> {
 
     const raw = upstream.content[0]?.type === "text" ? upstream.content[0].text : "";
     const parsed = parseCritique(raw);
+    void writeAuditChainEntry(
+      { event: "mlro_challenger_critique_generated", actor: gate.keyId, outcome: parsed.outcome, weakCitationCount: parsed.weakCitations.length, hardenSuggestionCount: parsed.hardenSuggestions.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       {
         ok: true,

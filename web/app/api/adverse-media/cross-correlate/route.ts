@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const CROSS_CORRELATE_MODEL = "claude-haiku-4-5-20251001";
 const MAX_ARTICLES = 50;
@@ -124,6 +126,10 @@ Perform entity disambiguation, theme grouping, trend analysis, score computation
     if (!Array.isArray(result.confirmed)) result.confirmed = [];
     if (!Array.isArray(result.dismissed)) result.dismissed = [];
     if (result.themes == null || typeof result.themes !== "object" || Array.isArray(result.themes)) result.themes = {};
+    void writeAuditChainEntry(
+      { event: "adverse_media.cross_correlated", actor: gate.keyId, score: result.score, recommendation: result.recommendation, confirmedCount: result.confirmed.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -4,6 +4,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface MlScenarioResult {
   scenarioTitle: string;
   predicate: string;
@@ -71,6 +73,10 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as MlScenarioResult;
     if (!Array.isArray(parsed.keyVehicles)) parsed.keyVehicles = [];
     if (!Array.isArray(parsed.redFlagSummary)) parsed.redFlagSummary = [];
+    void writeAuditChainEntry(
+      { event: "ml_scenario_constructed", actor: gate.keyId, typologyCode: parsed.typologyCode, totalAmountAed: parsed.totalAmountAed, redFlagCount: parsed.redFlagSummary.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

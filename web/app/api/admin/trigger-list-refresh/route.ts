@@ -127,7 +127,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ltlRows,
         durationMs: result.durationMs,
       },
-      "admin",
+      process.env["DEFAULT_TENANT"] ?? "default",
     ).catch((err) =>
       console.warn("[trigger-list-refresh] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );

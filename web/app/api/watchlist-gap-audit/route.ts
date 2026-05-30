@@ -13,6 +13,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -115,6 +117,16 @@ async function handler(req: Request): Promise<NextResponse> {
     }
   }
 
+  void writeAuditChainEntry(
+    {
+      event: "watchlist_gap_audit_completed",
+      actor: gate.keyId,
+      institutionType,
+      coveragePercent,
+      criticalGaps: criticalGaps.length,
+    },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     institutionType,

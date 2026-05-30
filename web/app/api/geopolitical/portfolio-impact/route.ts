@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import type { GeopoliticalEvent } from "@/app/api/geopolitical/events/route";
 
 export interface PortfolioClient {
@@ -46,8 +49,18 @@ export async function POST(req: Request) {
     );
   }
 
-  const events = Array.isArray(body.events) ? body.events : [];
-  const portfolio = Array.isArray(body.portfolio) ? body.portfolio : [];
+  const events = (Array.isArray(body.events) ? body.events : []).map((e) => ({
+    ...e,
+    headline: sanitizeField(e.headline, 300),
+    country: sanitizeField(e.country, 100),
+    impact: sanitizeField(e.impact, 500),
+  }));
+  const portfolio = (Array.isArray(body.portfolio) ? body.portfolio : []).map((c) => ({
+    ...c,
+    clientName: sanitizeField(c.clientName, 300),
+    country: sanitizeField(c.country, 100),
+    sector: sanitizeField(c.sector, 200),
+  }));
 
   if (!events.length || !portfolio.length) {
     return NextResponse.json(
@@ -176,6 +189,10 @@ Assess which portfolio clients are exposed to which geopolitical events. Conside
     ) as PortfolioImpactResult;
     if (!Array.isArray(result.exposedClients)) result.exposedClients = [];
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
+    void writeAuditChainEntry(
+      { event: "geopolitical.portfolio_impact_assessed", actor: gate.keyId, portfolioSize: portfolio.length, exposedCount: result.exposedClients.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     // API call failed — return a rule-based fallback matching the no-key path

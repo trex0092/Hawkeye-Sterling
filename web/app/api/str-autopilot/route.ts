@@ -211,7 +211,7 @@ Transaction Date: ${body.transactionDate ?? "not specified"}
 Transaction Type: ${body.transactionType ?? "not specified"}
 Suspected Typology: ${body.suspectedTypology ?? "unknown"}
 Predicate: ${body.predicate ?? "unknown"}
-Additional Indicators: ${JSON.stringify(body.additionalIndicators ?? [])}
+Additional Indicators: ${JSON.stringify((body.additionalIndicators ?? []).map((s) => sanitizeField(s, 200)))}
 Case ID: ${body.caseId ?? "not assigned"}
 
 ${body.existingNarrative ? `Existing narrative (enhance this):\n${body.existingNarrative}` : "No existing narrative — draft from scratch."}

@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface AmlProgrammeGapResult {
   overallMaturity: "advanced" | "adequate" | "developing" | "inadequate";
   cbuaeReadinessScore: number;
@@ -76,6 +78,10 @@ Conduct a comprehensive AML programme gap analysis. Return complete AmlProgramme
     if (!Array.isArray(result.criticalFindings)) result.criticalFindings = [];
     if (!Array.isArray(result.priorityRemediation)) result.priorityRemediation = [];
     if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
+    void writeAuditChainEntry(
+      { event: "aml_programme.gap_analysed", actor: gate.keyId, overallMaturity: result.overallMaturity, cbuaeReadinessScore: result.cbuaeReadinessScore, gapsCount: result.gaps.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

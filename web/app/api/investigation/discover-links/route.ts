@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface DiscoverLinksEntity {
@@ -119,8 +122,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const entities = Array.isArray(body.entities) ? body.entities : [];
-  const existingLinks = Array.isArray(body.existingLinks) ? body.existingLinks : [];
+  const entities = (Array.isArray(body.entities) ? body.entities : []).map((e) => ({
+    id: sanitizeField(e.id, 100),
+    name: sanitizeField(e.name, 300),
+    type: sanitizeField(e.type, 100),
+    jurisdiction: e.jurisdiction ? sanitizeField(e.jurisdiction, 100) : undefined,
+    riskScore: e.riskScore,
+  }));
+  const existingLinks = (Array.isArray(body.existingLinks) ? body.existingLinks : []).map((l) => ({
+    from: sanitizeField(l.from, 100),
+    to: sanitizeField(l.to, 100),
+    type: sanitizeField(l.type, 100),
+  }));
 
   if (entities.length === 0) {
     return NextResponse.json({ ok: false, error: "entities array is required" }, { status: 400 , headers: gate.headers });
@@ -187,6 +200,7 @@ Identify hidden connections not yet reflected in the confirmed links. Focus on: 
     const cleaned = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(cleaned) as Omit<DiscoverLinksResult, "ok">;
     if (!Array.isArray(result.suggestedLinks)) result.suggestedLinks = [];
+    void writeAuditChainEntry({ event: "investigation.links_discovered", actor: gate.keyId, entityCount: entities.length, suggestedLinkCount: result.suggestedLinks.length }, tenantIdFromGate(gate)).catch(() => {});
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(entities, existingLinks), { headers: gate.headers });

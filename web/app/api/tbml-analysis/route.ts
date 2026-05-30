@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -124,6 +125,16 @@ Perform TBML risk analysis.`,
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.documentationGaps)) result.documentationGaps = [];
     if (!Array.isArray(result.investigativeSteps)) result.investigativeSteps = [];
+    void writeAuditChainEntry(
+      {
+        event: "tbml_analysis_completed",
+        actor: gate.keyId,
+        tbmlRisk: result.tbmlRisk,
+        recommendedAction: result.recommendedAction,
+        indicatorCount: result.indicators.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface AmlKpiDashboardResult {
   overallHealth: "excellent" | "good" | "needs-attention" | "critical";
@@ -64,6 +66,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.kpis)) result.kpis = [];
     if (!Array.isArray(result.topRisks)) result.topRisks = [];
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
+    void writeAuditChainEntry(
+      { event: "aml_kpi.dashboard_generated", actor: gate.keyId, overallHealth: result.overallHealth, healthScore: result.healthScore, kpisCount: result.kpis.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

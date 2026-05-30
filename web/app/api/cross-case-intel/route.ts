@@ -15,6 +15,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,10 +112,15 @@ Return ONLY valid JSON:
     const result = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}") as {
       patterns?: unknown[]; clusters?: unknown[]; summary?: string; organizedCrimeSignals?: string[];
     };
+    const patterns = Array.isArray(result.patterns) ? result.patterns : [];
+    void writeAuditChainEntry(
+      { event: "cross_case.intel_analyzed", actor: gate.keyId, caseCount: allCases.length, patternCount: patterns.length },
+      tenant,
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({
       ok: true,
       caseCount: allCases.length,
-      patterns: Array.isArray(result.patterns) ? result.patterns : [],
+      patterns,
       clusters: Array.isArray(result.clusters) ? result.clusters : [],
       summary: result.summary ?? "",
       organizedCrimeSignals: Array.isArray(result.organizedCrimeSignals) ? result.organizedCrimeSignals : [],

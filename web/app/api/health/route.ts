@@ -105,7 +105,7 @@ function triggerSanctionsDownAlert(downListIds: string[]): void {
     severity: "critical",
     message: `Mandatory sanctions list(s) down: ${downListIds.join(", ")}. Immediate refresh required.`,
     regulatoryAnchor: "UAE FDL No.10/2025 Art.20 — continuous sanctions monitoring obligation",
-  }).catch((err) => {
+  }, "default").catch((err) => {
     console.error("[health] sanctions alert write failed:", err instanceof Error ? err.message : String(err));
   });
 }

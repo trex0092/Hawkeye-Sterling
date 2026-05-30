@@ -268,7 +268,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         totalAlertCount: subjectAlerts,
         txCount: txs.length,
         runAt: new Date().toISOString(),
-      }).catch((err) => console.warn("[tm-run] audit chain write failed:", err instanceof Error ? err.message : String(err)));
+      }, process.env["DEFAULT_TENANT"] ?? "default").catch((err) => console.warn("[tm-run] audit chain write failed:", err instanceof Error ? err.message : String(err)));
     }
 
     rolls.push({

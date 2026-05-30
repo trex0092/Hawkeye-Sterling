@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,6 +76,10 @@ Respond ONLY with valid JSON matching this schema:
       if (parsed["deceptionScore"] !== undefined) {
         if (!Array.isArray(parsed["evasiveLanguage"])) parsed["evasiveLanguage"] = [];
         if (!Array.isArray(parsed["inconsistencies"])) parsed["inconsistencies"] = [];
+        void writeAuditChainEntry(
+          { event: "linguistic_risk_assessed", actor: gate.keyId, deceptionScore: parsed["deceptionScore"], riskLevel: parsed["riskLevel"] },
+          tenantIdFromGate(gate),
+        ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

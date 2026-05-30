@@ -6,6 +6,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface RoleRecommendation {
   recommendedRole: string;
   rationale: string;
@@ -85,6 +87,10 @@ Return ONLY valid JSON (no markdown fences):
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RoleRecommendation;
     if (!Array.isArray(result.suggestedModules)) result.suggestedModules = [];
     if (!Array.isArray(result.risks)) result.risks = [];
+    void writeAuditChainEntry(
+      { event: "access.ai_recommend", actor: gate.keyId, recommendedRole: result.recommendedRole, suggestedModulesCount: result.suggestedModules.length, risksCount: result.risks.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -20,6 +20,9 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { weaponizedSystemPrompt } from "../../../../../src/brain/weaponized.js";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,11 +128,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     audience: "MLRO",
   });
 
+  const sanitizedSubjectName = sanitizeField(
+    typeof body.subject.name === "string" ? body.subject.name : "",
+    300,
+  );
+
   try {
     const userMsg =
-      `Verdict to steelman against: ${body.verdict.outcome}\n\nSubject + evidence:\n` +
+      `Verdict to steelman against: ${sanitizeField(body.verdict.outcome, 50)}\n\nSubject + evidence:\n` +
       "```json\n" +
-      JSON.stringify({ subject: body.subject, evidence: body.evidence ?? {}, verdictSummary: body.verdict }, null, 2) +
+      JSON.stringify({ subject: { ...body.subject, name: sanitizedSubjectName }, evidence: body.evidence ?? {}, verdictSummary: body.verdict }, null, 2) +
       "\n```\n\n" +
       STEELMAN_INSTRUCTION(body.verdict.outcome);
 
@@ -158,6 +166,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       console.warn("[agent/steelman] parse failed", perr);
     }
 
+    void writeAuditChainEntry(
+      { event: "agent.steelman", actor: gate.keyId, verdictOutcome: body.verdict.outcome, recommendedAction: (steelman as { recommendedAction?: string } | null)?.recommendedAction ?? null, confidence: (steelman as { confidence?: string } | null)?.confidence ?? null },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       {
         ok: true,

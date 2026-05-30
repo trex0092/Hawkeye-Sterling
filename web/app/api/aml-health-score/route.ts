@@ -22,6 +22,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -327,6 +329,20 @@ Write a practical 4-6 bullet remediation plan focused on the weakest areas (${we
       console.warn("[aml-health-score] AI remediation plan failed:", err instanceof Error ? err.message : err);
     }
   }
+
+  void writeAuditChainEntry(
+    {
+      event: "aml_programme.health_scored",
+      actor: gate.keyId,
+      compositeScore,
+      band,
+      weaknessCount: result.topWeaknesses.length,
+      aiRemediationRequested: generateRemediationPlan,
+    },
+    tenantIdFromGate(gate),
+  ).catch((err) =>
+    console.warn("[aml-health-score] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+  );
 
   return NextResponse.json(result, { headers: gate.headers });
 }

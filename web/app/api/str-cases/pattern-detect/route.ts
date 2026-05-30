@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface PatternCase {
   id: string;
   subject: string;
@@ -44,11 +47,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
 
-  const cases = Array.isArray(body.cases) ? body.cases : [];
+  const rawCases = Array.isArray(body.cases) ? body.cases : [];
+  const cases = rawCases.map((c) => ({
+    id: sanitizeField(c.id, 100),
+    subject: sanitizeField(c.subject, 300),
+    amount: sanitizeField(c.amount, 50),
+    jurisdiction: sanitizeField(c.jurisdiction, 100),
+    typology: sanitizeField(c.typology, 100),
+    status: sanitizeField(c.status, 50),
+    date: sanitizeField(c.date, 50),
+  }));
 
   if (cases.length < 2) {
     return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
+
+  const tenant = tenantIdFromGate(gate);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: false, error: "str-cases/pattern-detect temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
@@ -116,6 +130,7 @@ Identify all statistically significant or operationally relevant patterns across
     ) as PatternDetectResult;
     if (!Array.isArray(result.patterns)) result.patterns = [];
     else for (const p of result.patterns) { if (!Array.isArray(p.caseIds)) p.caseIds = []; }
+    void writeAuditChainEntry({ event: "str_cases.pattern_detected", actor: gate.keyId, caseCount: cases.length, patternCount: result.patterns.length }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

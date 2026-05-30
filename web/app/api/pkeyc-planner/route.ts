@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface PkycPlannerResult {
   reviewFrequency: "monthly" | "quarterly" | "bi-annual" | "annual";
@@ -66,6 +68,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.overdueItems)) result.overdueItems = [];
     if (!Array.isArray(result.automationOpportunities)) result.automationOpportunities = [];
     if (!Array.isArray(result.kycRefreshPlan)) result.kycRefreshPlan = [];
+    void writeAuditChainEntry(
+      { event: "pkyc_plan_generated", actor: gate.keyId, reviewFrequency: result.reviewFrequency, overdueCount: result.overdueItems.length, kycRefreshPlanCount: result.kycRefreshPlan.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

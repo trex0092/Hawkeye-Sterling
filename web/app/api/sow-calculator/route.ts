@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface SowCalculatorResult {
   sowRisk: "critical" | "high" | "medium" | "low" | "clear";
   totalDeclaredIncomeAed: number;
@@ -84,6 +86,10 @@ Conduct a source of wealth reconciliation analysis. Return complete SowCalculato
     if (!Array.isArray(result.assetsSummary)) result.assetsSummary = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    void writeAuditChainEntry(
+      { event: "sow_calculation_completed", actor: gate.keyId, sowRisk: result.sowRisk, unexplainedWealthPct: result.unexplainedWealthPct, redFlagCount: result.redFlags.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

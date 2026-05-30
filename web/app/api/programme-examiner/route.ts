@@ -17,6 +17,9 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -137,9 +140,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
+  const tenant = tenantIdFromGate(gate);
+  const sanitizedFacts: ProgrammeFacts = {
+    ...body,
+    tmSystemVendor: body.tmSystemVendor ? sanitizeField(body.tmSystemVendor, 200) : undefined,
+    screeningVendor: body.screeningVendor ? sanitizeField(body.screeningVendor, 200) : undefined,
+    additionalContext: body.additionalContext ? sanitizeLlmInput(body.additionalContext, 5000) : undefined,
+  };
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    const scores = heuristicAssessment(body);
+    const scores = heuristicAssessment(sanitizedFacts);
     const overall = Math.round(Object.values(scores).reduce((s, v) => s + v, 0) / Object.keys(scores).length);
     return NextResponse.json({
       ok: true, overallScore: overall, ioScores: scores,
@@ -180,7 +191,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Programme Facts:\n${JSON.stringify(body, null, 2).slice(0, 20_000)}\n\nIO Descriptions for reference:\n${JSON.stringify(IO_DESCRIPTIONS, null, 2)}\n\nConduct the virtual assessment.`,
+      content: `Programme Facts:\n${JSON.stringify(sanitizedFacts, null, 2).slice(0, 20_000)}\n\nIO Descriptions for reference:\n${JSON.stringify(IO_DESCRIPTIONS, null, 2)}\n\nConduct the virtual assessment.`,
     }],
   });
 
@@ -191,6 +202,7 @@ Return ONLY valid JSON:
     if (!Array.isArray(result.examinerQuestions)) result.examinerQuestions = [];
     if (!Array.isArray(result.remediationRoadmap)) result.remediationRoadmap = [];
     if (!Array.isArray(result.strengthAreas)) result.strengthAreas = [];
+    void writeAuditChainEntry({ event: "programme_examiner.completed", actor: gate.keyId, overallScore: result.overallScore, rating: result.rating, gapCount: result.gaps.length }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

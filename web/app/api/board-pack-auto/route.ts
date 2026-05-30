@@ -21,6 +21,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -226,6 +228,19 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
       attestation: `This report was prepared by the MLRO (${metrics.mlroName ?? "N/A"}) for the board of directors for the period ${period}. It is prepared in compliance with FDL 10/2025 Art.23 and the CBUAE AML/CFT Guidelines. The information contained herein is accurate and complete to the best of the MLRO's knowledge as of ${metrics.reportingDate ?? new Date().toISOString().split("T")[0]}.`,
       generatedAt: new Date().toISOString(),
     };
+
+    void writeAuditChainEntry(
+      {
+        event: "board_pack.generated",
+        actor: gate.keyId,
+        entityName: metrics.entityName ?? "unknown",
+        period,
+        sectionCount: sectionList.length,
+      },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn("[board-pack-auto] audit chain write failed:", err instanceof Error ? err.message : String(err)),
+    );
 
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {

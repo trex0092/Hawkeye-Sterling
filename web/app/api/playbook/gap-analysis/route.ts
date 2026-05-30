@@ -3,6 +3,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,6 +91,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(result.regulatoryExposure)) result.regulatoryExposure = [];
     if (!Array.isArray(result.priorityActions)) result.priorityActions = [];
 
+    void writeAuditChainEntry(
+      { event: "playbook_gap_analysis_completed", actor: gate.keyId, riskRating: result.riskRating, criticalGapCount: result.criticalGaps.length, canFileSAR: result.canFileSAR },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

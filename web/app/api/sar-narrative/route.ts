@@ -16,6 +16,7 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -166,18 +167,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const systemPrompt = buildSystemPrompt(body.jurisdiction);
 
   const userContent = [
-    `Subject Name: ${body.subjectName}`,
-    `Subject Type: ${body.subjectType}`,
-    body.nationality ? `Nationality/Country: ${body.nationality}` : null,
+    `Subject Name: ${sanitizeField(body.subjectName, 300)}`,
+    `Subject Type: ${sanitizeField(body.subjectType, 20)}`,
+    body.nationality ? `Nationality/Country: ${sanitizeField(body.nationality, 100)}` : null,
     body.riskScore != null ? `Risk Score: ${body.riskScore}/100` : null,
     body.pepStatus ? `PEP Status: YES — subject is a Politically Exposed Person` : null,
     body.sanctionsHits?.length
-      ? `Sanctions Hits: ${body.sanctionsHits.map((h) => `${h.list} (${Math.round(h.matchScore * 100)}% match)`).join("; ")}`
+      ? `Sanctions Hits: ${body.sanctionsHits.map((h) => `${sanitizeField(h.list, 100)} (${Math.round(h.matchScore * 100)}% match)`).join("; ")}`
       : null,
-    body.adverseMediaSummary ? `Adverse Media Summary: ${body.adverseMediaSummary}` : null,
-    body.transactionSummary ? `Transaction Summary: ${body.transactionSummary}` : null,
-    body.mlroNotes ? `MLRO Notes: ${body.mlroNotes}` : null,
-    `Jurisdiction for filing: ${body.jurisdiction.toUpperCase()}`,
+    body.adverseMediaSummary ? `Adverse Media Summary: ${sanitizeLlmInput(body.adverseMediaSummary, 2000)}` : null,
+    body.transactionSummary ? `Transaction Summary: ${sanitizeLlmInput(body.transactionSummary, 2000)}` : null,
+    body.mlroNotes ? `MLRO Notes: ${sanitizeLlmInput(body.mlroNotes, 2000)}` : null,
+    `Jurisdiction for filing: ${sanitizeField(body.jurisdiction, 20).toUpperCase()}`,
   ]
     .filter(Boolean)
     .join("\n");

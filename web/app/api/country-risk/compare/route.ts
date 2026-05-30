@@ -9,6 +9,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import type { CountryRiskResult } from "../route";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface CountryCompareResult {
   ok: true;
@@ -106,6 +108,10 @@ For each country provide complete risk scoring, FATF status, sanctions profile (
       if (!Array.isArray(rr["recentDevelopments"])) rr["recentDevelopments"] = [];
       if (!Array.isArray(rr["regulatoryObligations"])) rr["regulatoryObligations"] = [];
     }
+    void writeAuditChainEntry(
+      { event: "country_risk.compared", actor: gate.keyId, countryCount: results.length, countries: countries.join(",") },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({
       ok: true,
       countries: results,

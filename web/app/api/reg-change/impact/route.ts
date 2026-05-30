@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface ImpactAssessmentResult {
   ok: true;
   regulation: string;
@@ -126,6 +128,10 @@ Produce a comprehensive impact assessment for how this regulation affects this s
     else for (const r of result.implementationRoadmap) { if (!Array.isArray(r.actions)) r.actions = []; if (!Array.isArray(r.dependencies)) r.dependencies = []; }
     if (!Array.isArray(result.gaps)) result.gaps = [];
     if (!Array.isArray(result.quickWins)) result.quickWins = [];
+    void writeAuditChainEntry(
+      { event: "reg_change_impact_assessed", actor: gate.keyId, overallImpact: result.overallImpact, impactScore: result.impactScore, gapCount: result.gaps.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

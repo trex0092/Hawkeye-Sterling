@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface PepScreeningEnhanceResult {
   pepClassification: "PEP-1" | "PEP-2" | "PEP-3" | "Former-PEP" | "Not-PEP";
@@ -59,6 +61,10 @@ export async function POST(req: Request) {
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as PepScreeningEnhanceResult;
     if (!Array.isArray(result.eddChecklist)) result.eddChecklist = [];
+    void writeAuditChainEntry(
+      { event: "pep_screening_enhanced", actor: gate.keyId, pepClassification: result.pepClassification, riskRating: result.riskRating, eddChecklistCount: result.eddChecklist.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -37,7 +37,7 @@ import { incrementCounter } from "./metrics-store";
 const ENFORCE_COMPARE_KEY = Buffer.from("hawkeye-enforce-token-v1", "utf8");
 
 let _anonIpKey: string | undefined;
-function anonIpKey(): string {
+export function anonIpKey(): string {
   if (_anonIpKey) return _anonIpKey;
   const secret = process.env["SESSION_SECRET"] ?? "hawkeye-ip-anon-dev";
   _anonIpKey = createHmac("sha256", secret).update("ip-anon-v1").digest("hex");

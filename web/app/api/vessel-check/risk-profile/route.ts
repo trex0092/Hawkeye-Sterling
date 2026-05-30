@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 // Audit M-05: GET requests previously got the Next.js default bare 405 with no
@@ -125,6 +127,16 @@ Generate a comprehensive vessel risk profile including AIS pattern anomaly analy
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as VesselRiskProfileResult;
     if (!Array.isArray(result.anomalies)) result.anomalies = [];
+    void writeAuditChainEntry(
+      {
+        event: "vessel_risk_profile_assessed",
+        actor: gate.keyId,
+        riskScore: result.riskScore,
+        riskTier: result.riskTier,
+        recommendation: result.recommendation,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

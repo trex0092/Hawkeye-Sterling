@@ -24,16 +24,12 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { REGULATORY_SOURCES, getSource } from "@/lib/regulatorySources";
+import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const CORS: Record<string, string> = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, POST, OPTIONS",
-  "access-control-allow-headers": "content-type, authorization, x-api-key",
-};
 
 export type CheckStatus =
   | "no_parser"
@@ -71,13 +67,14 @@ interface PostBody {
   triggeredBy?: string;
 }
 
-export async function OPTIONS(): Promise<Response> {
-  return new Response(null, { status: 204, headers: CORS });
+export async function OPTIONS(req: Request): Promise<Response> {
+  return corsPreflight(req.headers.get("origin"));
 }
 
 export async function GET(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
+  const cors = corsHeaders(req.headers.get("origin"));
   return NextResponse.json(
     {
       ok: true,
@@ -85,13 +82,14 @@ export async function GET(req: Request): Promise<Response> {
       recentChecks,
       generatedAt: new Date().toISOString(),
     },
-    { status: 200, headers: CORS },
+    { status: 200, headers: cors },
   );
 }
 
 export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
-  if (!gate.ok && gate.response.status === 429) return gate.response;
+  if (!gate.ok) return gate.response;
+  const cors = corsHeaders(req.headers.get("origin"));
 
   let body: PostBody = {};
   try { body = (await req.json()) as PostBody; } catch { /* allow empty body */ }
@@ -99,14 +97,14 @@ export async function POST(req: Request): Promise<Response> {
   if (!body.sourceId) {
     return NextResponse.json(
       { ok: false, error: "sourceId is required" },
-      { status: 400, headers: CORS },
+      { status: 400, headers: cors },
     );
   }
   const source = getSource(body.sourceId);
   if (!source) {
     return NextResponse.json(
       { ok: false, error: `unknown sourceId: ${body.sourceId}` },
-      { status: 404, headers: CORS },
+      { status: 404, headers: cors },
     );
   }
 
@@ -125,6 +123,6 @@ export async function POST(req: Request): Promise<Response> {
 
   return NextResponse.json(
     { ok: true, event: ev, recentChecks },
-    { status: 200, headers: CORS },
+    { status: 200, headers: cors },
   );
 }

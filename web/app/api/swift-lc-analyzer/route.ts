@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface SwiftLcResult {
   tbmlRisk: "critical" | "high" | "medium" | "low" | "clear";
@@ -77,6 +79,10 @@ Analyse this SWIFT/LC for TBML indicators. Return complete SwiftLcResult JSON.`,
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as SwiftLcResult;
     if (!Array.isArray(result.fieldAnalysis)) result.fieldAnalysis = [];
     if (!Array.isArray(result.indicators)) result.indicators = [];
+    void writeAuditChainEntry(
+      { event: "swift_lc_analyzed", actor: gate.keyId, tbmlRisk: result.tbmlRisk, indicatorCount: result.indicators.length, recommendedAction: result.recommendedAction },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

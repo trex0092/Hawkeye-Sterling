@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export type EsgRating = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "CCC";
 export type MlRiskLevel = "low" | "medium" | "high";
 
@@ -230,6 +232,10 @@ Generate a comprehensive ESG risk assessment with ML risk overlay for this entit
     if (!Array.isArray(result.supplyChainRisks)) result.supplyChainRisks = [];
     if (!result.sectorBenchmark) result.sectorBenchmark = { sectorAvgScore: 62, entityVsAvg: "at", percentile: 50 };
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    void writeAuditChainEntry(
+      { event: "esg_risk_assessed", actor: gate.keyId, overallEsgScore: result.overallEsgScore, esgRating: result.esgRating, overallMlRisk: result.mlRiskOverlay?.overallMlRisk },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[esg-risk] LLM failed:", err instanceof Error ? err.message : err);

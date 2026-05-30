@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface RiskAppetiteResult {
   riskAppetiteStatement: string;
@@ -66,6 +68,10 @@ Draft a comprehensive AML/CFT Risk Appetite Statement for this institution. Retu
     if (!Array.isArray(result.riskTolerances)) result.riskTolerances = [];
     if (!Array.isArray(result.prohibitedActivities)) result.prohibitedActivities = [];
     if (!Array.isArray(result.escalationTriggers)) result.escalationTriggers = [];
+    void writeAuditChainEntry(
+      { event: "risk_appetite_built", actor: gate.keyId, institutionType: body.institutionType, toleranceCount: result.riskTolerances.length, prohibitedCount: result.prohibitedActivities.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

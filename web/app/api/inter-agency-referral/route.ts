@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface InterAgencyReferralResult {
   referralAgency: string;
@@ -80,6 +82,10 @@ Prepare a comprehensive inter-agency referral package. Return complete InterAgen
     if (!Array.isArray(result.referralPackage.requestedActions)) result.referralPackage.requestedActions = [];
     if (!Array.isArray(result.parallelNotifications)) result.parallelNotifications = [];
     if (!Array.isArray(result.evidencePreservationSteps)) result.evidencePreservationSteps = [];
+    void writeAuditChainEntry(
+      { event: "inter_agency_referral_drafted", actor: gate.keyId, referralAgency: result.referralAgency, urgencyLevel: result.urgencyLevel, mulatRequired: result.mulatRequired },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

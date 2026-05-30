@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface ToolConfig {
   title: string;
@@ -592,6 +594,10 @@ export async function POST(req: Request) {
       const result = JSON.parse(cleaned) as Record<string, unknown>;
       if (!Array.isArray(result["findings"])) result["findings"] = [];
       if (!Array.isArray(result["recommendations"])) result["recommendations"] = [];
+      void writeAuditChainEntry(
+        { event: "generic_tool_assessment_completed", actor: gate.keyId, toolId, riskRating: result["riskRating"], riskScore: result["riskScore"] },
+        tenantIdFromGate(gate),
+      ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
       return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
     } catch {
       return NextResponse.json({
