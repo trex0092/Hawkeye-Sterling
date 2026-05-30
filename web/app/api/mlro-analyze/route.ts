@@ -38,6 +38,7 @@ import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { getAgentMemory } from "@/lib/server/agent-memory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function buildExecutorPrompt(body: Body): string {
+function buildExecutorPrompt(body: Body, pastAnalyses: string = ""): string {
   const hits = body.screeningHits ?? [];
   const hitsText = hits.length
     ? hits.map((h) => `  - ${h.listId}: ${h.candidateName} (score ${Math.round(h.score * 100)}%, method: ${h.method})`).join("\n")
@@ -92,7 +93,7 @@ ADVERSE MEDIA:
 ${mediaText}
 UBO DEPTH ASSESSED: ${body.uboDepth ?? "not assessed"}
 TRANSACTION CONTEXT: ${sanitizeField(body.transactionContext ?? "None provided")}
-
+${pastAnalyses}
 ${body.question ? `SPECIFIC QUESTION: ${sanitizeField(body.question)}` : ""}
 
 Provide:
@@ -183,6 +184,19 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const mode = body.mode ?? "balanced";
+
+  // Load relevant past analyses from agent memory (fire-and-forget on failure).
+  // Injects institutional knowledge from prior decisions into the executor context.
+  const agentMem = getAgentMemory();
+  let pastAnalyses = "";
+  try {
+    const past = await agentMem.search(body.subjectName, 3);
+    if (past.length > 0) {
+      pastAnalyses = "\n\nRELEVANT PAST ANALYSES FROM INSTITUTIONAL MEMORY:\n" +
+        past.map((p, i) => `[${i + 1}] ${p.createdAt}: ${p.content.slice(0, 400)}`).join("\n");
+    }
+  } catch { /* non-blocking */ }
+
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503, headers: gate.headers });
@@ -192,7 +206,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   function budgetLeft() { return Math.max(50, _routeDeadline - Date.now()); }
 
   // Step 1: Executor analysis
-  const executorPrompt = buildExecutorPrompt(body);
+  const executorPrompt = buildExecutorPrompt(body, pastAnalyses);
   let executorRaw = "";
   try {
     const executorMsg = await client.messages.create({
@@ -247,6 +261,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     : typeof executorResult["disposition"] === "string" ? executorResult["disposition"] : "escalate";
   const advisorConfidence = typeof advisorResult["confidence"] === "number" ? advisorResult["confidence"] : null;
   const challengerFpp = typeof challengerResult["falsePositiveProbability"] === "number" ? challengerResult["falsePositiveProbability"] : null;
+
+  // Persist analysis to agent memory (fire-and-forget) so future analyses on
+  // the same subject benefit from institutional knowledge.
+  void agentMem.add(
+    `MLRO analysis of ${body.subjectName}: riskScore=${riskScore} severity=${severity} disposition=${finalDisposition} mode=${mode}. ` +
+    `Executor: ${typeof executorResult["rationale"] === "string" ? executorResult["rationale"].slice(0, 300) : ""}`,
+    { subjectName: body.subjectName, riskScore, severity, disposition: finalDisposition, jurisdiction: body.jurisdiction ?? null },
+  ).catch(() => {});
 
   // Audit chain entry
   void writeAuditChainEntry({

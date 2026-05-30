@@ -1,0 +1,172 @@
+# Hawkeye Sterling — yente sanctions screening service (Kubernetes).
+#
+# Deploys:
+#   opensanctions/yente (136 ⭐) — self-hosted entity search API
+#   opensanctions/opensanctions — data source
+#
+# Prerequisites:
+#   1. OpenSearch or Elasticsearch cluster (update YENTE_INDEX_URL below)
+#   2. kubectl apply -f k8s/namespace.yaml first
+#
+# After deploy:
+#   Set YENTE_URL=http://yente.hawkeye.svc.cluster.local:8000 in your app secrets.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yente-config
+  namespace: hawkeye
+  labels:
+    app: yente
+    component: sanctions-screening
+data:
+  YENTE_SCOPE: "default"
+  YENTE_LOG_LEVEL: "INFO"
+  # Restrict to specific lists to reduce index size (optional):
+  # YENTE_DATASETS: "ofac_sdn,un_sc,eu_fsf,gb_hmt_sanctions,ae_local_terrorists"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yente
+  namespace: hawkeye
+  labels:
+    app: yente
+    component: sanctions-screening
+    repo: opensanctions/yente
+  annotations:
+    kubernetes.io/change-cause: "opensanctions/yente self-hosted sanctions API"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: yente
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: yente
+        component: sanctions-screening
+    spec:
+      containers:
+        - name: yente
+          image: ghcr.io/opensanctions/yente:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: YENTE_INDEX_URL
+              valueFrom:
+                secretKeyRef:
+                  name: yente-secrets
+                  key: opensearch-url
+          envFrom:
+            - configMapRef:
+                name: yente-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          volumeMounts:
+            - name: yente-data
+              mountPath: /var/lib/yente
+      volumes:
+        - name: yente-data
+          persistentVolumeClaim:
+            claimName: yente-pvc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yente
+  namespace: hawkeye
+  labels:
+    app: yente
+    component: sanctions-screening
+spec:
+  selector:
+    app: yente
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: yente-pvc
+  namespace: hawkeye
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: yente-pdb
+  namespace: hawkeye
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: yente
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: yente-hpa
+  namespace: hawkeye
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: yente
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

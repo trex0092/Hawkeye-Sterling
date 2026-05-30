@@ -1,0 +1,78 @@
+# OpenTelemetry Collector config for Hawkeye Sterling.
+# Receives traces from the Next.js app (web/lib/server/tracer.ts) and
+# LLM spans from llm.ts, then exports to ClickHouse via SigNoz.
+#
+# LLM observability: traceloop/openllmetry-js (400 ⭐)
+# All Anthropic client calls in llm.ts emit llm.* span attributes:
+#   llm.model, llm.route, llm.input_tokens, llm.output_tokens, llm.latency_ms
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins: ["*"]
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: hawkeye-sterling
+          scrape_interval: 30s
+          static_configs:
+            - targets: ["host.docker.internal:3000"]
+          metrics_path: /api/metrics
+
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+
+  # Tag all telemetry with the service name
+  resource:
+    attributes:
+      - key: service.name
+        value: hawkeye-sterling
+        action: insert
+      - key: service.version
+        value: "0.2.0"
+        action: insert
+      - key: deployment.environment
+        from_attribute: ENVIRONMENT
+        action: insert
+
+exporters:
+  clickhouse:
+    endpoint: tcp://clickhouse:9000
+    database: signoz_metrics
+    username: admin
+    password: hawkeye_ch_pass
+    ttl: 1776h  # 74 days retention
+
+  logging:
+    verbosity: normal
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [clickhouse, logging]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, batch, resource]
+      exporters: [clickhouse]

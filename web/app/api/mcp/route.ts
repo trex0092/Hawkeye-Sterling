@@ -1297,6 +1297,120 @@ const TOOLS: ToolDef[] = [
     },
   },
 
+  // ── YENTE / OPENSANCTIONS ────────────────────────────────────────────────────
+  // opensanctions/yente (136 ⭐) + opensanctions/opensanctions (740 ⭐)
+  // + alephdata/followthemoney (271 ⭐) FTM schema
+  {
+    name: "yente_search",
+    description:
+      "Search the OpenSanctions / yente self-hosted sanctions database by entity name. Returns FTM-schema entities with dataset membership, aliases, and programmes. Configure YENTE_URL env var to use your own yente instance; defaults to the public OpenSanctions API.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Entity name to search" },
+        schema: {
+          type: "string",
+          description: "FTM schema type: Person, Organization, Vessel, Aircraft, etc.",
+        },
+        dataset: { type: "string", description: "Dataset ID (default: 'default' = all lists)" },
+        limit: { type: "number", minimum: 1, maximum: 50, description: "Max results (default 10)" },
+      },
+      required: ["query"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/yente-search", "POST", {
+        query: String(a["query"] ?? ""),
+        schema: a["schema"] ? String(a["schema"]) : undefined,
+        dataset: a["dataset"] ? String(a["dataset"]) : undefined,
+        limit: typeof a["limit"] === "number" ? a["limit"] : 10,
+      });
+    },
+  },
+
+  // ── ALEPH INVESTIGATIVE DATA ──────────────────────────────────────────────────
+  // alephdata/aleph (2 367 ⭐) + alephdata/followthemoney (271 ⭐)
+  {
+    name: "aleph_search",
+    description:
+      "Search the Aleph investigative data platform (OCCRP) for entities, leaked documents, corporate registries, and financial crime networks. Covers 250+ country datasets including PEP networks, shell company registries, and financial scandal documents.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Entity or keyword to search" },
+        schema: {
+          type: "string",
+          description: "FTM schema: Person, Organization, Company, Payment, etc.",
+        },
+        limit: { type: "number", minimum: 1, maximum: 50, description: "Max results (default 10)" },
+      },
+      required: ["query"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/aleph-search", "POST", {
+        query: String(a["query"] ?? ""),
+        schema: a["schema"] ? String(a["schema"]) : undefined,
+        limit: typeof a["limit"] === "number" ? a["limit"] : 10,
+      });
+    },
+  },
+
+  // ── AGENT MEMORY ─────────────────────────────────────────────────────────────
+  // supermemoryai/supermemory (22 830 ⭐) + mem0ai/mem0 (57 134 ⭐)
+  // + plastic-labs/honcho (4 506 ⭐) + MemTensor/MemOS (9 456 ⭐)
+  // + EverMind-AI/EverOS (6 128 ⭐) + RyjoxTechnologies/Octopoda-OS (338 ⭐)
+  // + thedotmack/claude-mem (79 707 ⭐) + AVIDS2/memorix (441 ⭐)
+  // + cortexkit/magic-context (746 ⭐) + agentic-box/memora (407 ⭐)
+  // + Tencent/TencentDB-Agent-Memory (4 465 ⭐)
+  {
+    name: "agent_memory_add",
+    description:
+      "Store a compliance analysis, finding, or observation in the agent's persistent memory. Memories survive across sessions and are automatically retrieved by mlro_analyze. Backend: Supermemory → Mem0 → Honcho → MemOS → Netlify Blobs (configured by env vars).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content: { type: "string", description: "The observation, analysis result, or note to remember" },
+        subjectName: { type: "string", description: "Subject entity this memory relates to" },
+        tags: { type: "array", items: { type: "string" }, description: "Classification tags" },
+      },
+      required: ["content"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/agent-memory", "POST", {
+        action: "add",
+        content: String(a["content"] ?? ""),
+        metadata: {
+          subjectName: a["subjectName"] ?? null,
+          tags: Array.isArray(a["tags"]) ? a["tags"] : [],
+          source: "mcp",
+        },
+      });
+    },
+  },
+  {
+    name: "agent_memory_search",
+    description:
+      "Search the agent's persistent memory for past compliance analyses, decisions, and observations relevant to a query. Returns semantically similar entries with relevance scores.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Subject name or keyword to search for" },
+        limit: { type: "number", minimum: 1, maximum: 20, description: "Max results (default 5)" },
+      },
+      required: ["query"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi("/api/agent-memory", "POST", {
+        action: "search",
+        query: String(a["query"] ?? ""),
+        limit: typeof a["limit"] === "number" ? a["limit"] : 5,
+      });
+    },
+  },
+
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────
   {
     name: "call_api",

@@ -1,0 +1,101 @@
+# Hawkeye Sterling — Observability stack.
+#
+# Services:
+#   signoz-clickhouse — ClickHouse storage backend for SigNoz
+#   signoz-query      — SigNoz query service
+#   signoz-frontend   — SigNoz UI (port 3301)
+#   otel-collector    — OpenTelemetry Collector (receives traces/metrics on 4317/4318)
+#
+# Related repos:
+#   SigNoz/signoz        (27 144 ⭐) https://github.com/SigNoz/signoz
+#   traceloop/openllmetry-js (400 ⭐) https://github.com/traceloop/openllmetry-js
+#
+# Usage:
+#   docker compose -f docker-compose.observability.yml up -d
+#
+# Then set in your Netlify / local environment:
+#   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+#   OTEL_SERVICE_NAME=hawkeye-sterling
+#
+# Hawkeye already has 7 OTel boundary spans and 14 Prometheus metric families.
+# This stack provides the backend to receive and visualise them.
+#
+# Access SigNoz UI: http://localhost:3301
+
+version: "3.9"
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.1.5-alpine
+    container_name: hawkeye-clickhouse
+    environment:
+      CLICKHOUSE_DB: signoz_metrics
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      CLICKHOUSE_PASSWORD: hawkeye_ch_pass
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.99.0
+    container_name: hawkeye-otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # gRPC
+      - "4318:4318"   # HTTP/protobuf
+      - "9464:9464"   # Prometheus scrape endpoint
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+    labels:
+      - "com.hawkeye.service=otel-collector"
+      - "com.hawkeye.repo=SigNoz/signoz"
+
+  signoz-query:
+    image: signoz/query-service:0.45.0
+    container_name: hawkeye-signoz-query
+    environment:
+      ClickHouseUrl: tcp://admin:hawkeye_ch_pass@clickhouse:9000
+      ALERTMANAGER_API_PREFIX: http://hawkeye-signoz-query:9093/api/
+      SIGNOZ_LOCAL_DB_PATH: /var/lib/signoz/signoz.db
+      STORAGE: clickhouse
+    volumes:
+      - signoz-data:/var/lib/signoz
+    ports:
+      - "8080:8080"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+
+  signoz-frontend:
+    image: signoz/frontend:0.45.0
+    container_name: hawkeye-signoz-frontend
+    environment:
+      FRONTEND_API_ENDPOINT: http://hawkeye-signoz-query:8080
+    ports:
+      - "3301:3301"
+    depends_on:
+      - signoz-query
+    restart: unless-stopped
+    labels:
+      - "com.hawkeye.service=signoz-ui"
+      - "com.hawkeye.ui-port=3301"
+
+volumes:
+  clickhouse-data:
+    driver: local
+  signoz-data:
+    driver: local
