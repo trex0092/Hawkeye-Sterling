@@ -287,8 +287,7 @@ export function AnalyticsSection() {
           period: formatPeriod(now),
         }),
       });
-      let result: { ok: boolean } & AnalyticsInsights;
-      result = await res.json() as { ok: boolean } & AnalyticsInsights;
+      const result = await res.json() as { ok: boolean } & AnalyticsInsights;
       if (!res.ok || !result.ok) {
         throw new Error((result as { error?: string }).error ?? `AI insights failed (HTTP ${res.status}) — please retry`);
       }

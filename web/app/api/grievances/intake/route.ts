@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const receivedAt = new Date().toISOString();
 
   return NextResponse.json(
-    { caseRef, receivedAt, status: "acknowledged", message: "Your disclosure has been received and will be handled confidentially." },
+    { ok: true, caseRef, receivedAt, status: "acknowledged", message: "Your disclosure has been received and will be handled confidentially." },
     { status: 201, headers: { "Cache-Control": "no-store" } },
   );
 }

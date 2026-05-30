@@ -24,6 +24,8 @@ import type { Beta } from "@anthropic-ai/sdk/resources/index.js";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,6 +143,11 @@ export async function POST(req: Request) {
         { status: 504, headers: gate.headers },
       );
     }
+
+    void writeAuditChainEntry(
+      { event: "agent.data-analyst", actor: gate.keyId, sessionId, questionLength: question.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] agent/data-analyst:", e instanceof Error ? e.message : String(e)));
 
     return NextResponse.json({ ok: true, answer, sessionId }, { headers: gate.headers });
   } catch (err) {
