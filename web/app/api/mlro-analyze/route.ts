@@ -69,7 +69,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function buildExecutorPrompt(body: Body): string {
+function buildExecutorPrompt(body: Body, pastAnalyses: string = ""): string {
   const hits = body.screeningHits ?? [];
   const hitsText = hits.length
     ? hits.map((h) => `  - ${h.listId}: ${h.candidateName} (score ${Math.round(h.score * 100)}%, method: ${h.method})`).join("\n")
@@ -206,7 +206,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   function budgetLeft() { return Math.max(50, _routeDeadline - Date.now()); }
 
   // Step 1: Executor analysis
-  const executorPrompt = buildExecutorPrompt(body);
+  const executorPrompt = buildExecutorPrompt(body, pastAnalyses);
   let executorRaw = "";
   try {
     const executorMsg = await client.messages.create({

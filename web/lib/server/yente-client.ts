@@ -56,7 +56,7 @@ export interface YenteMatchResult {
   query: {
     id: string;
     schema: string;
-    properties: Record<string, string[]>;
+    properties: Record<string, string[] | undefined>;
   };
   results: FtmEntity[];
   total: { value: number; relation: string };
