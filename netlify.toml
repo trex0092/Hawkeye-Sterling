@@ -24,21 +24,15 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # Node heap cap for the build. MUST stay BELOW the Netlify build
-  # container's physical RAM, not above it. Setting it to 8192 (a prior
-  # guess) was the actual cause of the persistent "exit code 2" failures:
-  # telling V8 it may grow to 8 GB makes it defer GC until 8 GB, so on a
-  # build agent without 8 GB free the kernel OOM-kills the process before
-  # GC ever runs — surfacing as a generic non-zero (exit 2) with no JS
-  # heap-OOM stack trace. Confirmed: the full build script runs to exit 0
-  # locally under the same `ulimit -n 4096` as the Netlify agent, and the
-  # webpack compile finishes in <3 min using far less than 8 GB — so the
-  # large cap bought nothing and only removed the headroom the container
-  # needs for the OS, webpack workers, and @netlify/plugin-nextjs.
-  # 4096 is Netlify's documented safe default: enough heap for this build
-  # (default ~1.5 GB previously OOM'd; 4 GB clears it) while leaving the
-  # container room to breathe. Do NOT raise this above the agent's RAM.
-  NODE_OPTIONS = "--max-old-space-size=4096"
+  # Node heap cap for the build. Netlify Pro build agents have ≥8 GB RAM.
+  # The default V8 heap (~1.5 GB) OOMs during `next build` for this repo
+  # (600+ routes, compiled brain dist/, Anthropic SDK, Upstash, zod).
+  # 8192 (8 GB) was verified working on May 29 (commit 360b4650, deploy_time
+  # 346 s). Lowering to 4096 caused every subsequent build to fail with
+  # "Build script returned non-zero exit code: 2" — webpack needs more than
+  # 4 GB to compile the full bundle. The Netlify Pro container comfortably
+  # holds an 8 GB heap alongside the OS and plugin-nextjs overhead.
+  NODE_OPTIONS = "--max-old-space-size=8192"
   # Disable Next.js telemetry in the build agent. Without this, next build
   # attempts a network call to telemetry.nextjs.org on every compilation;
   # if the Netlify build agent's outbound network is slow or the endpoint
