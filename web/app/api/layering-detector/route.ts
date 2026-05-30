@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface LayeringResult {
   layeringRisk: "critical" | "high" | "medium" | "low" | "none";
@@ -32,6 +34,7 @@ export interface LayeringResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     transactions: string;
     subjectName?: string;
@@ -79,7 +82,8 @@ Analyse for money laundering placement, layering, and integration stages. Return
     if (!Array.isArray(result.integrationIndicators)) result.integrationIndicators = [];
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "layering_detector.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "layering-detector temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

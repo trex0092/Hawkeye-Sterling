@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 export interface PepRiskAssessment {
   pepExposure: string;
@@ -122,6 +124,7 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     entity?: string;
     entityType?: string;
@@ -186,7 +189,8 @@ Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obl
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.requiredApprovals)) result.requiredApprovals = [];
     if (!Array.isArray(result.reportingObligations)) result.reportingObligations = [];
-    return NextResponse.json(result, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "corruption_risk.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "corruption-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

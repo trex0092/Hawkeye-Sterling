@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
@@ -41,6 +43,7 @@ export interface TfScreenerResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     subject: string;
     subjectCountry?: string;
@@ -142,7 +145,8 @@ Assess for terrorism financing risk.`,
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     if (!Array.isArray(result.applicableRegime)) result.applicableRegime = [];
     if (!Array.isArray(result.ctfObligations)) result.ctfObligations = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "tf_screener.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "tf-screener temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

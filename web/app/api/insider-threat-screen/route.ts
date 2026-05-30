@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export interface InsiderThreatResult {
@@ -29,6 +31,7 @@ export interface InsiderThreatResult {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
   let body: {
     employeeName?: string;
     employeeRole?: string;
@@ -76,7 +79,8 @@ Assess this employee for insider threat risk. Return complete InsiderThreatResul
     if (!Array.isArray(result.behaviouralIndicators)) result.behaviouralIndicators = [];
     if (!Array.isArray(result.hrActions)) result.hrActions = [];
     if (!Array.isArray(result.complianceActions)) result.complianceActions = [];
-    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    void writeAuditChainEntry({ event: "insider_threat_screen.completed", actor: gate.keyId }, tenant).catch(() => {});
+return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ ok: false, error: "insider-threat-screen temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });

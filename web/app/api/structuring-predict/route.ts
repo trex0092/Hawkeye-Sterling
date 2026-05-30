@@ -16,6 +16,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -181,6 +183,7 @@ function analyzeStructuring(txns: Transaction[], threshold: number): {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: StructuringRequest;
   try { body = await req.json() as StructuringRequest; } catch {
@@ -238,6 +241,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let narrative: { sarNarrative?: string; fatfTypologies?: string[]; additionalPatterns?: string[]; confidence?: string } = {};
   try { narrative = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}"); } catch { /* best effort */ }
 
+  void writeAuditChainEntry({ event: "structuring_predict.completed", actor: gate.keyId, subjectName: body.subjectName ?? "unknown", structuringScore: analysis.structuringScore, recommendation }, tenant).catch(() => {});
   return NextResponse.json({
     ok: true,
     subjectName: body.subjectName ?? "unknown",
