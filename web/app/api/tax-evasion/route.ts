@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface TaxEvasionRequest {
   entity: string;
   entityType: "individual" | "corporate" | "trust" | "foundation";
@@ -184,6 +186,10 @@ Perform a comprehensive tax evasion ML risk assessment. Identify all schemes, cl
     if (!Array.isArray(result.roundTrippingIndicators)) result.roundTrippingIndicators = [];
     if (!Array.isArray(result.regulatoryRequirements)) result.regulatoryRequirements = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
+    void writeAuditChainEntry(
+      { event: "tax_evasion_risk_assessed", actor: gate.keyId, taxEvasionRiskScore: result.taxEvasionRiskScore, riskTier: result.riskTier, recommendation: result.recommendation },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

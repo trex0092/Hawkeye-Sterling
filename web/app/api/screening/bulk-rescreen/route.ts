@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const BULK_RESCREEN_MODEL = "claude-haiku-4-5-20251001";
 export interface BulkRescreenSubject {
@@ -178,6 +180,10 @@ Simulate a full portfolio re-screen against the new list version. Generate reali
     result.rescreened = subjects.length;
     // Always mark as simulated — this endpoint never screens against a real list.
     result.simulated = true;
+    void writeAuditChainEntry(
+      { event: "bulk_rescreen_completed", actor: gate.keyId, rescreened: result.rescreened, newHitsCount: result.newHits.length, clearedCount: result.cleared.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error(

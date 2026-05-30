@@ -47,6 +47,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { weaponizedSystemPrompt } from "../../../../../src/brain/weaponized.js";
 import { evaluateRedlines } from "../../../../../src/brain/redlines.js";
 import { classifyPepRole } from "../../../../../src/brain/pep-classifier.js";
@@ -449,6 +451,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       .map((c) => c.text ?? "")
       .join("\n\n");
 
+    void writeAuditChainEntry(
+      { event: "agent.screen", actor: gate.keyId, stopReason: final?.stop_reason ?? "max_iterations", iterations: transcript.length, toolCallCount: transcript.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(
       {
         ok: true,

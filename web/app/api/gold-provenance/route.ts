@@ -19,6 +19,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -218,6 +220,10 @@ Analyse for DPMS/CAHRA compliance.`,
   let aiResult: Record<string, unknown> = {};
   try { aiResult = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}"); } catch { /* best effort */ }
 
+  void writeAuditChainEntry(
+    { event: "gold_provenance_assessed", actor: gate.keyId, overallRisk, integrityScore: staticAnalysis.integrityScore, cahraExposure: staticAnalysis.cahraExposure },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     commodity: body.commodity,

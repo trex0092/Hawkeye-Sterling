@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface StrQualityResult {
   qualityScore: number;
@@ -62,6 +64,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.narrativeWeaknesses)) result.narrativeWeaknesses = [];
     if (!Array.isArray(result.strengths)) result.strengths = [];
     if (!Array.isArray(result.revisedNarrativeSuggestions)) result.revisedNarrativeSuggestions = [];
+    void writeAuditChainEntry(
+      { event: "str_quality_assessed", actor: gate.keyId, qualityScore: result.qualityScore, grade: result.grade, goamlReadiness: result.goamlReadiness },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

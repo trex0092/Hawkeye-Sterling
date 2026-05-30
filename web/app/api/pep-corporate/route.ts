@@ -5,6 +5,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface PepCorporateResult {
   pepExposureLevel: "direct" | "indirect" | "none";
@@ -60,6 +62,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(result.politicalConnections)) result.politicalConnections = [];
     if (!Array.isArray(result.corruptionRiskFactors)) result.corruptionRiskFactors = [];
     if (!Array.isArray(result.eddMeasures)) result.eddMeasures = [];
+    void writeAuditChainEntry(
+      { event: "pep_corporate_assessed", actor: gate.keyId, pepExposureLevel: result.pepExposureLevel, riskRating: result.riskRating, eddMeasureCount: result.eddMeasures.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

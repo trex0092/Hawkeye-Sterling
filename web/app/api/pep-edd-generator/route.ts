@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface PepEddResult {
   pepClassification: "domestic_pep" | "foreign_pep" | "international_organisation_pep" | "former_pep" | "pep_family" | "pep_associate" | "not_pep";
@@ -100,6 +102,10 @@ Generate a complete PEP EDD package for this individual.`,
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
     if (!Array.isArray(result.ongoingMonitoringMeasures)) result.ongoingMonitoringMeasures = [];
     if (!Array.isArray(result.screeningRequirements)) result.screeningRequirements = [];
+    void writeAuditChainEntry(
+      { event: "pep_edd_generated", actor: gate.keyId, pepClassification: result.pepClassification, riskRating: result.riskRating, recommendedAction: result.recommendedAction },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

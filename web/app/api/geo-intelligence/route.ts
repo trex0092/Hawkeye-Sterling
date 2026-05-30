@@ -15,6 +15,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   CONFLICT_ZONES,
   CPI_SCORES,
@@ -186,6 +188,10 @@ Return ONLY valid JSON:
     if (!Array.isArray(aiResult["keyRisks"])) aiResult["keyRisks"] = [];
     if (!Array.isArray(aiResult["recentEnforcementActions"])) aiResult["recentEnforcementActions"] = [];
     if (!Array.isArray(aiResult["uaeSpecificObligations"])) aiResult["uaeSpecificObligations"] = [];
+    void writeAuditChainEntry(
+      { event: "geo_intelligence_assessed", actor: gate.keyId, jurisdiction: body.jurisdiction, baseRiskTier: staticProfile["baseRiskTier"], correspondentBankingRisk: aiResult["correspondentBankingRisk"] },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({
       ok: true,
       jurisdiction: body.jurisdiction,

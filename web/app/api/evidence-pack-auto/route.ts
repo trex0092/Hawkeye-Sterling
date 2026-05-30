@@ -18,6 +18,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -150,6 +151,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  void writeAuditChainEntry(
+    { event: "evidence_pack_generated", actor: gate.keyId, caseId: evidencePack.caseId, alertCount: evidencePack.sections.alertCount, totalCasesInRegister: cases.length },
+    tenant,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     evidencePack,

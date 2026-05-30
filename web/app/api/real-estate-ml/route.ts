@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface RealEstateMlResult {
   mlRisk: "critical" | "high" | "medium" | "low" | "clear";
   dldRegistrationRisk: string;
@@ -81,6 +83,10 @@ Assess this real estate transaction for money laundering risk indicators. Return
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as RealEstateMlResult;
     if (!Array.isArray(result.indicators)) result.indicators = [];
     if (!Array.isArray(result.requiredDocumentation)) result.requiredDocumentation = [];
+    void writeAuditChainEntry(
+      { event: "real_estate_ml_assessed", actor: gate.keyId, mlRisk: result.mlRisk, recommendedAction: result.recommendedAction, indicatorCount: result.indicators.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

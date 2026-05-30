@@ -11,6 +11,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -227,6 +229,16 @@ Analyse for TBML risk.`,
     }
     if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.routingCountries)) aiResult.extractedFields.routingCountries = [];
     if (aiResult.extractedFields && !Array.isArray(aiResult.extractedFields.certifications)) aiResult.extractedFields.certifications = [];
+    void writeAuditChainEntry(
+      {
+        event: "trade_doc_intel_analyzed",
+        actor: gate.keyId,
+        documentType: body.documentType,
+        overallRisk: aiResult.overallRisk as string | undefined,
+        tbmlIndicatorCount: Array.isArray(aiResult.tbmlIndicators) ? (aiResult.tbmlIndicators as unknown[]).length : 0,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({
       ok: true,
       documentType: body.documentType,

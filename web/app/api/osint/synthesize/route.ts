@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface SynthesisSource {
   source: string;
   content: string;
@@ -110,6 +112,10 @@ Synthesise all source intelligence into a coherent subject profile. Identify cor
     if (!Array.isArray(result.contradicting)) result.contradicting = [];
     if (!Array.isArray(result.intelligenceGaps)) result.intelligenceGaps = [];
     if (!Array.isArray(result.recommendedActions)) result.recommendedActions = [];
+    void writeAuditChainEntry(
+      { event: "osint_synthesis_completed", actor: gate.keyId, threatLevel: result.threatLevel, confidenceScore: result.confidenceScore, sourceCount: body.sources?.length ?? 0 },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

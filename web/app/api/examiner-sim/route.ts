@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,6 +109,10 @@ Simulate an examiner review. Respond ONLY with valid JSON:
         if (!Array.isArray(parsed.examinerFindings)) parsed.examinerFindings = [];
         if (!Array.isArray(parsed.challengeAreas)) parsed.challengeAreas = [];
         if (!Array.isArray(parsed.recommendations)) parsed.recommendations = [];
+        void writeAuditChainEntry(
+          { event: "examiner_sim_completed", actor: gate.keyId, examinerScore: parsed.examinerScore as number, likelyOutcome: parsed.likelyOutcome as string, riskScore },
+          tenantIdFromGate(gate),
+        ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
         return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
       }
     } catch {

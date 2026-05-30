@@ -6,6 +6,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { stats as feedbackStats, adjustScore } from "@/lib/server/feedback";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface ConfidenceScoreResult {
   ok: true;
@@ -148,6 +150,10 @@ Assess whether this is a true sanctions/PEP/watchlist match or a false positive.
       if (result.confidenceScore < 30) result.recommendation = "clear";
     }
 
+    void writeAuditChainEntry(
+      { event: "screening_confidence_scored", actor: gate.keyId, confidenceScore: result.confidenceScore, falsePositiveProbability: result.falsePositiveProbability, recommendation: result.recommendation },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error("[confidence-score] LLM failed, using deterministic template:", err instanceof Error ? err.message : err);

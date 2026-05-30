@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface PredictRequest {
   subject: string;
   listName: string;
@@ -180,6 +182,10 @@ Predict whether this is a false positive and recommend the appropriate action.`,
     if (!Array.isArray(result.similarCases)) result.similarCases = [];
     if (!Array.isArray(result.riskFactors)) result.riskFactors = [];
     if (!Array.isArray(result.mitigatingFactors)) result.mitigatingFactors = [];
+    void writeAuditChainEntry(
+      { event: "fp_prediction_completed", actor: gate.keyId, fpProbability: result.fpProbability, recommendedAction: result.recommendedAction, matchScore: body.matchScore },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch {
     return NextResponse.json(simplePredictFallback(body), { headers: gate.headers });

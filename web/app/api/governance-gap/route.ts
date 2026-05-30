@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface GapFinding {
   area: string;
   finding: string;
@@ -96,6 +98,10 @@ Perform a comprehensive AML governance gap analysis. Identify all gaps, risks, a
     if (!Array.isArray(result.findings)) result.findings = [];
     if (!Array.isArray(result.recommendations)) result.recommendations = [];
     if (!Array.isArray(result.regulatoryRisks)) result.regulatoryRisks = [];
+    void writeAuditChainEntry(
+      { event: "governance_gap_assessed", actor: gate.keyId, overallGrade: result.overallGrade, criticalGapCount: result.criticalGaps.length, findingCount: result.findings.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

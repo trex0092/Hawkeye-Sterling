@@ -4,7 +4,8 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -104,6 +105,16 @@ Assess FATF R.16 compliance.`,
     if (!Array.isArray(result.requiredActions)) result.requiredActions = [];
     if (result.originatorCheck && !Array.isArray(result.originatorCheck.missing)) result.originatorCheck.missing = [];
     if (result.beneficiaryCheck && !Array.isArray(result.beneficiaryCheck.missing)) result.beneficiaryCheck.missing = [];
+    void writeAuditChainEntry(
+      {
+        event: "wire_r16_compliance_checked",
+        actor: gate.keyId,
+        r16Compliant: result.r16Compliant,
+        complianceLevel: result.complianceLevel,
+        verdict: result.verdict,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface OwnershipResult {
   ok: true;
   uboIdentified: boolean;
@@ -102,6 +104,10 @@ Map the ownership structure, identify UBOs, assess shell company risk and jurisd
     if (!Array.isArray(result.ownershipTree)) result.ownershipTree = [];
     if (!Array.isArray(result.jurisdictionLayering)) result.jurisdictionLayering = [];
     if (!Array.isArray(result.beneficialOwners)) result.beneficialOwners = [];
+    void writeAuditChainEntry(
+      { event: "ubo_ownership_analysed", actor: gate.keyId, shellCompanyRisk: result.shellCompanyRisk, ownershipLayers: result.ownershipLayers, uboIdentified: result.uboIdentified },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

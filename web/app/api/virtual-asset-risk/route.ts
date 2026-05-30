@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export async function POST(req: Request) {
@@ -52,6 +54,16 @@ Assess FATF R.15/R.16 compliance, travel rule status, DeFi exposure, mixer/tumbl
     const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as Record<string, unknown>;
     // Normalize arrays — LLM occasionally returns null instead of [].
     if (!Array.isArray(result["redFlags"])) result["redFlags"] = [];
+    void writeAuditChainEntry(
+      {
+        event: "virtual_asset_risk_assessed",
+        actor: gate.keyId,
+        riskTier: result["riskTier"],
+        redFlagCount: (result["redFlags"] as unknown[]).length,
+        travelRuleStatus: result["travelRuleStatus"],
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

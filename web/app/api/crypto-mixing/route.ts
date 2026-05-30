@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export interface CryptoMixingResult {
   mixingRisk: "critical" | "high" | "medium" | "low";
@@ -64,6 +66,10 @@ export async function POST(req: Request) {
       raw.replace(/```json\n?|\n?```/g, "").trim()
     ) as CryptoMixingResult;
     if (!Array.isArray(result.mixingTechniques)) result.mixingTechniques = [];
+    void writeAuditChainEntry(
+      { event: "crypto_mixing.assessed", actor: gate.keyId, mixingRisk: result.mixingRisk, obfuscationScore: result.obfuscationScore, traceabilityRating: result.traceabilityRating },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

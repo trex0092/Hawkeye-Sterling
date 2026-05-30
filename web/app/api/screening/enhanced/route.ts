@@ -16,6 +16,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { stats as feedbackStats, adjustScore } from "@/lib/server/feedback";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   normalizeName,
   detectHomoglyphs,
@@ -236,6 +238,10 @@ Assess: true match or false positive?`,
     ? Math.max(...deduplicatedHits.map((h) => h.score ?? 0))
     : 0;
 
+  void writeAuditChainEntry(
+    { event: "screening_enhanced_completed", actor: gate.keyId, deduplicatedHitCount: deduplicatedHits.length, topScore: revisedTopScore, triageCount: triageResults.length },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     enhanced: true,
     // Core screening result (ok from screenResult may be overwritten — keep our own)

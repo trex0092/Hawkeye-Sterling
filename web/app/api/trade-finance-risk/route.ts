@@ -4,6 +4,8 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 // ─── LLM-path types (existing) ──────────────────────────────────────────────
@@ -505,6 +507,16 @@ Perform a comprehensive TBML risk assessment. Identify all applicable FATF typol
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.immediateActions)) result.immediateActions = [];
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
+    void writeAuditChainEntry(
+      {
+        event: "trade_finance_risk_analyzed",
+        actor: gate.keyId,
+        tbmlRiskScore: result.tbmlRiskScore,
+        riskTier: result.riskTier,
+        recommendation: result.recommendation,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface EvidencePackEntity {
@@ -164,6 +166,10 @@ Generate a court-ready evidence pack summary covering: case overview, entity pro
     const result = JSON.parse(cleaned) as Omit<EvidencePackResult, "ok" | "generatedAt">;
     if (!Array.isArray(result.evidencePoints)) result.evidencePoints = [];
     if (!Array.isArray(result.nextSteps)) result.nextSteps = [];
+    void writeAuditChainEntry(
+      { event: "evidence_pack_generated", actor: gate.keyId, entityCount: entities.length, linkCount: links.length, evidencePointCount: result.evidencePoints.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...result, generatedAt }, { headers: gate.headers });
   } catch {
     return NextResponse.json(buildFallback(caseTitle, entities, links, narrative, analyst), { headers: gate.headers });

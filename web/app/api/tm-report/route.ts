@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { withGuard } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { postWebhook } from "@/lib/server/webhook";
-
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
@@ -84,7 +84,7 @@ async function classifyTransaction(
   }
 }
 
-async function handleTmReport(req: Request): Promise<NextResponse> {
+async function handleTmReport(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   const projectGid = asanaGids.tm();
   const asanaEnabled = !!token && !!projectGid;
@@ -266,6 +266,17 @@ async function handleTmReport(req: Request): Promise<NextResponse> {
     generatedAt: t.loggedAt,
     source: "hawkeye-sterling",
   }).catch((err) => console.error("[tm-report] webhook failed", err));
+
+  void writeAuditChainEntry(
+    {
+      event: "tm_report_filed",
+      actor: ctx.apiKey.id,
+      transactionRef: t.ref,
+      severity,
+      typologyCount: typologyResult?.typologies?.length ?? 0,
+    },
+    ctx.tenantId,
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
   return NextResponse.json(
     {

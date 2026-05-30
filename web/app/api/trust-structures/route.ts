@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 export interface TrustStructuresResult {
   opacityScore: number;
@@ -69,6 +71,16 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as TrustStructuresResult;
     if (!Array.isArray(parsed.structureRedFlags)) parsed.structureRedFlags = [];
     if (!Array.isArray(parsed.uboVerificationSteps)) parsed.uboVerificationSteps = [];
+    void writeAuditChainEntry(
+      {
+        event: "trust_structure_assessed",
+        actor: gate.keyId,
+        riskRating: parsed.riskRating,
+        opacityScore: parsed.opacityScore,
+        uboIdentified: parsed.uboIdentified,
+      },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

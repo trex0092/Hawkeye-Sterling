@@ -4,6 +4,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface CrossBorderWireResult {
   corridorRisk: "critical" | "high" | "medium" | "low";
   r16ComplianceStatus: "compliant" | "partial" | "non-compliant";
@@ -77,6 +79,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.redFlags)) parsed.redFlags = [];
     if (!Array.isArray(parsed.missingOriginatorInfo)) parsed.missingOriginatorInfo = [];
     if (!Array.isArray(parsed.missingBeneficiaryInfo)) parsed.missingBeneficiaryInfo = [];
+    void writeAuditChainEntry(
+      { event: "cross_border_wire.assessed", actor: gate.keyId, corridorRisk: parsed.corridorRisk, r16ComplianceStatus: parsed.r16ComplianceStatus, recommendedAction: parsed.recommendedAction },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

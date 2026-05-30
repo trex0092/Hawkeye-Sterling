@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface ScenarioSimulateResult {
   chapters: string[];
   redFlags: string[];
@@ -109,6 +111,10 @@ Identify the relevant playbook chapters, red flags present, step-by-step recomme
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.actions)) result.actions = [];
     if (!Array.isArray(result.regulatoryRefs)) result.regulatoryRefs = [];
+    void writeAuditChainEntry(
+      { event: "scenario_simulated", actor: gate.keyId, recommendation: result.recommendation, urgency: result.urgency, redFlagCount: result.redFlags.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

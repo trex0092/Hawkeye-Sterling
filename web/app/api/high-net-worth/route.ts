@@ -4,6 +4,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface HnwRiskResult {
   riskScore: number;
   riskRating: "critical" | "high" | "medium" | "low";
@@ -72,6 +74,10 @@ export async function POST(req: Request) {
     if (!Array.isArray(parsed.wealthSourceGaps)) parsed.wealthSourceGaps = [];
     if (!Array.isArray(parsed.keyRiskFactors)) parsed.keyRiskFactors = [];
     if (!Array.isArray(parsed.eddRequirements)) parsed.eddRequirements = [];
+    void writeAuditChainEntry(
+      { event: "hnw_edd_risk_assessed", actor: gate.keyId, riskScore: parsed.riskScore, riskRating: parsed.riskRating, wealthSourceVerified: parsed.wealthSourceVerified },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

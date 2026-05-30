@@ -15,6 +15,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -201,6 +202,10 @@ Identify all direct and ${includeIndirect ? "indirect (up to " + maxHops + " hop
   const highRisk = contaminationMap.filter((c) => c.contaminationScore >= HIGH_RISK_THRESHOLD);
   const mediumRisk = contaminationMap.filter((c) => c.contaminationScore >= MEDIUM_RISK_THRESHOLD && c.contaminationScore < HIGH_RISK_THRESHOLD);
 
+  void writeAuditChainEntry(
+    { event: "counterparty_propagate.scanned", actor: gate.keyId, totalCasesScanned: allCases.length, directExposures: directLinks.length, highRiskExposures: highRisk.length },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     entityName: body.entityName,

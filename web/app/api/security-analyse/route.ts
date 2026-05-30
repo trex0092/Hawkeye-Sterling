@@ -6,6 +6,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface SecurityFinding {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
@@ -39,7 +41,7 @@ const SYSTEM_PROMPT = `You are a senior security researcher specialising in AML/
 }`;
 
 export async function POST(req: NextRequest) {
-  const gate = await enforce(req, { requireAuth: false });
+  const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
@@ -79,6 +81,10 @@ export async function POST(req: NextRequest) {
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const clean = raw.replace(/```json\n?|\n?```/g, "").trim();
     const result = JSON.parse(clean) as AnalysisResult;
+    void writeAuditChainEntry(
+      { event: "security_analysis_completed", actor: gate.keyId, findingsCount: result.findings.length, score: result.score },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (e) {
     const msg =

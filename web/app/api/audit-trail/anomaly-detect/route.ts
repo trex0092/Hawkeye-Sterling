@@ -4,6 +4,9 @@ export const maxDuration = 60;
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 interface AuditEvent {
   id: string;
   timestamp: string;
@@ -53,7 +56,13 @@ export async function POST(req: Request) {
       { status: 400, headers: gate.headers },
     );
   }
-  const events = body.events;
+  const events = body.events.map((e) => ({
+    ...e,
+    id: sanitizeField(e.id, 100),
+    actor: sanitizeField(e.actor, 200),
+    action: sanitizeField(e.action, 200),
+    target: sanitizeField(e.target, 300),
+  }));
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) return NextResponse.json({ ok: true, ...buildFallback() }, { headers: gate.headers });
@@ -117,11 +126,13 @@ ${JSON.stringify(events, null, 2)}`,
       return NextResponse.json({ ok: false, error: "LLM returned malformed JSON" }, { status: 502, headers: gate.headers });
     }
 
-    return NextResponse.json({
-      ok: true,
-      anomalies: Array.isArray(parsed.anomalies) ? parsed.anomalies : [],
-      riskScore: typeof parsed.riskScore === "number" ? Math.min(100, Math.max(0, parsed.riskScore)) : 0,
-    }, { headers: gate.headers });
+    const anomalies = Array.isArray(parsed.anomalies) ? parsed.anomalies : [];
+    const riskScore = typeof parsed.riskScore === "number" ? Math.min(100, Math.max(0, parsed.riskScore)) : 0;
+    void writeAuditChainEntry(
+      { event: "audit_trail.anomaly_detected", actor: gate.keyId, eventCount: events.length, anomalyCount: anomalies.length, riskScore },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json({ ok: true, anomalies, riskScore }, { headers: gate.headers });
   } catch (err) {
     console.error("[hawkeye] audit-trail/anomaly-detect: LLM call or parse failed — returning empty fallback:", err);
     return NextResponse.json(

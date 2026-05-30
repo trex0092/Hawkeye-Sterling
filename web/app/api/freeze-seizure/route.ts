@@ -4,6 +4,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface FreezeSeizureResult {
   legalBasis: string;
   eligibleAssets: string[];
@@ -69,6 +71,10 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(jsonMatch[0]) as FreezeSeizureResult;
     if (!Array.isArray(parsed.eligibleAssets)) parsed.eligibleAssets = [];
     if (!Array.isArray(parsed.procedureSteps)) parsed.procedureSteps = [];
+    void writeAuditChainEntry(
+      { event: "freeze_seizure_assessed", actor: gate.keyId, internationalCooperation: parsed.internationalCooperation, mutualLegalAssistance: parsed.mutualLegalAssistance, eligibleAssetCount: parsed.eligibleAssets.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

@@ -20,6 +20,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 
@@ -239,6 +241,16 @@ Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
     eddRequired = highCount > 0;
   }
 
+  void writeAuditChainEntry(
+    {
+      event: "typology_chain_mapped",
+      actor: gate.keyId,
+      matchedTypologies: staticMatches.length,
+      strTrigger,
+      eddRequired,
+    },
+    tenantIdFromGate(gate),
+  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
   return NextResponse.json({
     ok: true,
     matchedTypologies: staticMatches.length,

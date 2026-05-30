@@ -9,6 +9,8 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { isCahra, getCountryRisk } from "@/lib/server/high-risk-countries";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── Public API response shape ─────────────────────────────────────────────────
 
@@ -721,6 +723,10 @@ Provide a complete country risk intelligence assessment covering AML/CFT risk, F
     if (!result.riskDimensions || typeof result.riskDimensions !== "object") result.riskDimensions = {};
     const latencyMs = Date.now() - t0;
     if (latencyMs > 5000) console.warn(`[country-risk] slow response latencyMs=${latencyMs}`);
+    void writeAuditChainEntry(
+      { event: "country_risk.assessed", actor: gate.keyId, riskLevel: result.riskLevel, riskScore: result.riskScore, recommendation: result.recommendation },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ...result, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

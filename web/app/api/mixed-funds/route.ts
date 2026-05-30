@@ -4,6 +4,8 @@ export const maxDuration = 60;import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface MixedFundsResult {
   taintPercentage: number;
   taintRating: "critical" | "high" | "medium" | "low";
@@ -70,6 +72,10 @@ export async function POST(req: Request) {
 
     const parsed = JSON.parse(jsonMatch[0]) as MixedFundsResult;
     if (!Array.isArray(parsed.investigativeSteps)) parsed.investigativeSteps = [];
+    void writeAuditChainEntry(
+      { event: "mixed_funds_traced", actor: gate.keyId, taintPercentage: parsed.taintPercentage, taintRating: parsed.taintRating, confiscationRisk: parsed.confiscationRisk },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

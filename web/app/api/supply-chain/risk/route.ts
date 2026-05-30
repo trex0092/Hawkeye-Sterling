@@ -5,6 +5,8 @@ import { enforce } from "@/lib/server/enforce";
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface SupplierRisk {
   name: string;
   country: string;
@@ -151,6 +153,10 @@ Perform a comprehensive supply chain risk assessment covering: geographic concen
     if (!Array.isArray(result.regulatoryObligations)) result.regulatoryObligations = [];
     if (!Array.isArray(result.redFlags)) result.redFlags = [];
     if (!Array.isArray(result.actionPlan)) result.actionPlan = [];
+    void writeAuditChainEntry(
+      { event: "supply_chain_risk_assessed", actor: gate.keyId, overallRisk: result.overallRisk, riskScore: result.riskScore, redFlagCount: result.redFlags.length },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

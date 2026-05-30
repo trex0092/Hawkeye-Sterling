@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface ChainRunResult {
   ok: true;
   subjectBrief: string;
@@ -143,6 +145,10 @@ Risk Score: ${riskScore}/100`,
 
     const chainDuration = Date.now() - chainStart;
 
+    void writeAuditChainEntry(
+      { event: "mlro_chain_run_completed", actor: gate.keyId, riskScore, jurisdiction, chainDuration },
+      tenantIdFromGate(gate),
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
     return NextResponse.json({
       ok: true,
       subjectBrief,
