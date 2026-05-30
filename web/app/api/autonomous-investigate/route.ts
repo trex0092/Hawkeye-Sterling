@@ -13,6 +13,8 @@
 import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
@@ -77,6 +79,7 @@ async function runStage(
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: ReqBody;
   try {
@@ -165,6 +168,7 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
     );
     stages.push({ stage: 5, name: "DECISION", output: s5 });
 
+    void writeAuditChainEntry({ event: "autonomous_investigate.completed", actor: gate.keyId, subjectName, decision: s5["decision"] ?? "monitor", riskScore }, tenant).catch(() => {});
     return NextResponse.json({
       ok: true,
       investigationSummary: s5["investigationSummary"] ?? `5-stage autonomous investigation completed for ${subjectName}.`,
@@ -179,6 +183,7 @@ Decide: close (no action) | monitor (ongoing CDD) | edd (enhanced due diligence)
   } catch (err) {
     console.error("[autonomous-investigate] stage chain failed — returning heuristic fallback:", err instanceof Error ? err.message : String(err));
     const fallback = heuristicInvestigation(subjectName, entityType, riskScore, jurisdiction);
+    void writeAuditChainEntry({ event: "autonomous_investigate.fallback", actor: gate.keyId, subjectName, riskScore }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...fallback, stages }, { headers: gate.headers });
   }
 }

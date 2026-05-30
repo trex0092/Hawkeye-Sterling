@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
@@ -132,6 +134,7 @@ function validateCompletenessChecklist(req: StrAutopilotRequest, narrative: stri
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  const tenant = tenantIdFromGate(gate);
 
   let body: StrAutopilotRequest;
   try { body = await req.json() as StrAutopilotRequest; } catch {
@@ -246,6 +249,7 @@ Draft the STR narrative.`,
   const missingFields = checklist.filter((c) => c.status === "missing").map((c) => c.field);
   const weakFields = checklist.filter((c) => c.status === "weak").map((c) => c.field);
 
+  void writeAuditChainEntry({ event: "str_autopilot.generated", actor: gate.keyId, subjectName: body.subjectName, referenceNumber, readyToSubmit: missingFields.length === 0 }, tenant).catch(() => {});
   return NextResponse.json({
     ok: true,
     referenceNumber,
