@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,10 +95,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const userContent = JSON.stringify({
-    target: body.target,
-    mode: body.mode,
-    domain: body.domain ?? null,
-    sherlock: body.sherlock ?? null,
+    target: sanitizeLlmInput(body.target, 2000),
+    mode: sanitizeField(body.mode, 20),
+    domain: body.domain ? {
+      emails: body.domain.emails.map((e) => sanitizeField(e, 200)),
+      hosts: body.domain.hosts.map((h) => sanitizeField(h, 300)),
+      ips: body.domain.ips.map((ip) => sanitizeField(ip, 50)),
+    } : null,
+    sherlock: body.sherlock ? { ...body.sherlock, username: sanitizeField(body.sherlock.username, 200) } : null,
     social: body.social ?? null,
   });
 

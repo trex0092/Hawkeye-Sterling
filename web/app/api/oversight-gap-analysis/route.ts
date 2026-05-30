@@ -7,6 +7,9 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeText } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,11 +41,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 , headers: gate.headers });
   }
 
-  const bodyStr = JSON.stringify(body);
-  if (bodyStr.length > 50_000) {
+  const rawBodyStr = JSON.stringify(body);
+  if (rawBodyStr.length > 50_000) {
     return NextResponse.json({ ok: false, error: "request body exceeds 50,000 character limit" }, { status: 400, headers: gate.headers });
   }
+  const bodyStr = sanitizeText(rawBodyStr, 50_000);
 
+  const tenant = tenantIdFromGate(gate);
   let result: GapAnalysisResult;
   try {
     const client = getAnthropicClient(apiKey, 4_500);
@@ -67,5 +72,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "oversight-gap-analysis temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
+  void writeAuditChainEntry({ event: "oversight_gap_analysis.completed", actor: gate.keyId, gapCount: result.gaps.length, breachRiskCount: result.breachRisks.length }, tenant).catch(() => {});
   return NextResponse.json({ ok: true, result }, { headers: gate.headers });
 }

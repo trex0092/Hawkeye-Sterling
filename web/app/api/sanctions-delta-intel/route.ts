@@ -14,6 +14,8 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +68,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, { headers: gate.headers });
   }
 
+  const sanitizedBody = {
+    entityName: sanitizeField(body.entityName, 300),
+    listId: sanitizeField(body.listId, 100),
+    designationDate: sanitizeField(body.designationDate, 50),
+    predicateOffenses: body.predicateOffenses?.map((p) => sanitizeField(p, 200)) ?? [],
+    associatedEntities: body.associatedEntities?.map((e) => sanitizeField(e, 300)) ?? [],
+    jurisdictions: body.jurisdictions?.map((j) => sanitizeField(j, 100)) ?? [],
+    narrative: sanitizeLlmInput(body.narrative ?? "", 5000),
+  };
+
   const client = getAnthropicClient(apiKey, 4_500, "sanctions-delta-intel");
 
   const response = await client.messages.create({
@@ -98,7 +110,7 @@ Return ONLY valid JSON:
 }`,
     messages: [{
       role: "user",
-      content: `Designation Event:\n${JSON.stringify(body, null, 2)}\n\nCustomer Base (${caseDigests.length} cases):\n${JSON.stringify(caseDigests, null, 2)}\n\nAnalyse pattern and score customers.`,
+      content: `Designation Event:\n${JSON.stringify(sanitizedBody, null, 2)}\n\nCustomer Base (${caseDigests.length} cases):\n${JSON.stringify(caseDigests, null, 2)}\n\nAnalyse pattern and score customers.`,
     }],
   });
 
@@ -107,6 +119,7 @@ Return ONLY valid JSON:
     const result = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
     if (!Array.isArray(result.customerMatches)) result.customerMatches = [];
     if (!Array.isArray(result.proactiveActions)) result.proactiveActions = [];
+    void writeAuditChainEntry({ event: "sanctions_delta_intel.completed", actor: gate.keyId, entityName: sanitizedBody.entityName, listId: sanitizedBody.listId, threatLevel: result.threatLevel, matchCount: result.customerMatches.length }, tenant).catch(() => {});
     return NextResponse.json({ ok: true, ...result, customerCount: caseDigests.length }, { headers: gate.headers });
   } catch (err) {
     console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));

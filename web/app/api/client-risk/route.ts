@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +81,25 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "client-risk temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
+  const sanitizedEntity = {
+    name: sanitizeField(entity.name, 300),
+    alternateNames: sanitizeField(entity.alternateNames, 300),
+    countryOfIncorporation: sanitizeField(entity.countryOfIncorporation, 100),
+    tradeLicence: sanitizeField(entity.tradeLicence, 100),
+    email: sanitizeField(entity.email, 200),
+    phone: sanitizeField(entity.phone, 50),
+  };
+  const sanitizedShareholders = shareholders.map((s) => ({
+    designation: sanitizeField(s.designation, 100),
+    name: sanitizeField(s.name, 300),
+    sharesPct: sanitizeField(s.sharesPct, 10),
+    kind: sanitizeField(s.kind, 50),
+    nationality: sanitizeField(s.nationality, 100),
+    pepStatus: sanitizeField(s.pepStatus, 50),
+    emiratesId: sanitizeField(s.emiratesId, 50),
+    idNumber: sanitizeField(s.idNumber, 100),
+  }));
+
   try {
     const client = getAnthropicClient(apiKey, 4_500);
     const res = await client.messages.create({
@@ -90,7 +110,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         messages: [
           {
             role: "user",
-            content: `Entity: ${JSON.stringify(entity)}. Shareholders: ${JSON.stringify(shareholders)}. Return ONLY this JSON: { "overallRisk": "critical"|"high"|"medium"|"low", "riskNarrative": "string", "jurisdictionalRisk": "string", "ownershipRisk": "string", "pepExposure": { "detected": boolean, "pepNames": ["string"], "mitigants": "string" }, "cddRequirements": ["string"], "eddRequired": boolean, "eddReason": "string", "enhancedMeasures": ["string"], "recommendedAction": "onboard_standard"|"onboard_with_edd"|"refer_to_mlro"|"reject"|"pending_docs", "regulatoryBasis": "string", "riskRating": "string" }`,
+            content: `Entity: ${JSON.stringify(sanitizedEntity)}. Shareholders: ${JSON.stringify(sanitizedShareholders)}. Return ONLY this JSON: { "overallRisk": "critical"|"high"|"medium"|"low", "riskNarrative": "string", "jurisdictionalRisk": "string", "ownershipRisk": "string", "pepExposure": { "detected": boolean, "pepNames": ["string"], "mitigants": "string" }, "cddRequirements": ["string"], "eddRequired": boolean, "eddReason": "string", "enhancedMeasures": ["string"], "recommendedAction": "onboard_standard"|"onboard_with_edd"|"refer_to_mlro"|"reject"|"pending_docs", "regulatoryBasis": "string", "riskRating": "string" }`,
           },
         ],
       });

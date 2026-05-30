@@ -31,6 +31,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { weaponizedSystemPrompt } from "../../../../../src/brain/weaponized.js";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,8 +140,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     audience: "MLRO",
   });
 
+  const sanitizedSubjectName = sanitizeField(
+    typeof body.subject.name === "string" ? body.subject.name : "",
+    300,
+  );
+
   try {
-    const userMsg = `Current verdict outcome: ${body.verdict.outcome}\nTarget outcome to flip to: ${target}\n\nSubject + evidence pack:\n\`\`\`json\n${JSON.stringify({ subject: body.subject, evidence: body.evidence ?? {}, verdictSummary: { outcome: body.verdict.outcome, aggregateScore: body.verdict.aggregateScore, posterior: body.verdict.posterior } }, null, 2)}\n\`\`\`\n\n${COUNTERFACTUAL_INSTRUCTION(target)}`;
+    const userMsg = `Current verdict outcome: ${sanitizeField(body.verdict.outcome, 50)}\nTarget outcome to flip to: ${sanitizeField(target, 50)}\n\nSubject + evidence pack:\n\`\`\`json\n${JSON.stringify({ subject: { ...body.subject, name: sanitizedSubjectName }, evidence: body.evidence ?? {}, verdictSummary: { outcome: body.verdict.outcome, aggregateScore: body.verdict.aggregateScore, posterior: body.verdict.posterior } }, null, 2)}\n\`\`\`\n\n${COUNTERFACTUAL_INSTRUCTION(target)}`;
 
     const client = getAnthropicClient(apiKey, BUDGET_MS);
     const response = await client.messages.create({

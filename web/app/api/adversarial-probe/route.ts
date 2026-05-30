@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   PROBES,
   getProbesByCategory,
@@ -105,6 +107,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const passed = results.filter((r) => r.passed).length;
   const failed = results.filter((r) => !r.passed).length;
   const score = probes.length > 0 ? Math.round((passed / probes.length) * 100) : 0;
+
+  void writeAuditChainEntry({ event: "adversarial_probe.completed", actor: gate.keyId, score, passed, failed, total: probes.length }, tenantIdFromGate(gate)).catch(() => {});
 
   return NextResponse.json({
     ok: true,

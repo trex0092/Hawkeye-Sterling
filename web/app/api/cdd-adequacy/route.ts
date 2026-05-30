@@ -10,6 +10,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "cdd-adequacy temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
+  const sanitizedReviews = reviews.map((r) => ({
+    id: sanitizeField(r.id, 100),
+    subject: sanitizeField(r.subject, 300),
+    tier: r.tier,
+    lastReview: sanitizeField(r.lastReview, 50),
+    notes: sanitizeLlmInput(r.notes, 2000),
+    lastOutcome: r.lastOutcome ? sanitizeField(r.lastOutcome, 200) : undefined,
+    daysOverdue: r.daysOverdue,
+    status: sanitizeField(r.status, 50),
+  }));
+
   try {
     const client = getAnthropicClient(apiKey, 4_500);
     const response = await client.messages.create({
@@ -95,7 +107,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       messages: [
         {
           role: "user",
-          content: JSON.stringify(reviews),
+          content: JSON.stringify(sanitizedReviews),
         },
       ],
     });

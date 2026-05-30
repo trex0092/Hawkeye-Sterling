@@ -5,6 +5,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +64,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 , headers: gate.headers });
     }
 
-  const { consignments } = body;
+  const rawConsignments = body.consignments ?? [];
+  const consignments = rawConsignments.map((c) => ({
+    ...c,
+    reference: sanitizeField(c.reference, 100),
+    status: sanitizeField(c.status, 50),
+    origin: sanitizeField(c.origin, 200),
+    originCountry: sanitizeField(c.originCountry, 100),
+    refinery: sanitizeField(c.refinery, 200),
+    refineryLbmaId: sanitizeField(c.refineryLbmaId, 50),
+    counterparty: sanitizeField(c.counterparty, 300),
+    counterpartyCountry: sanitizeField(c.counterpartyCountry, 100),
+    paymentMethod: c.paymentMethod ? sanitizeField(c.paymentMethod, 100) : undefined,
+    flags: c.flags?.map((f) => sanitizeField(f, 200)),
+  }));
 
   try { writeAuditEvent("analyst", "shipments.ai-tbml-scan", "consignment-portfolio"); }
   catch (err) { console.warn("[hawkeye] shipment-tbml writeAuditEvent failed:", err); }

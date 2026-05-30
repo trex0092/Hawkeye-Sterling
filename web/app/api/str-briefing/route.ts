@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 interface CaseInput {
   id: string;
@@ -46,7 +47,15 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 , headers: gate.headers });
   }
-  const cases = Array.isArray(body.cases) ? body.cases : [];
+  const rawCases = Array.isArray(body.cases) ? body.cases : [];
+  const cases = rawCases.map((c) => ({
+    id: sanitizeField(c.id, 100),
+    title: sanitizeField(c.title, 300),
+    reportKind: sanitizeField(c.reportKind, 50),
+    subject: sanitizeField(c.subject, 300),
+    status: sanitizeField(c.status, 50),
+    openedAt: sanitizeField(c.openedAt, 50),
+  }));
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

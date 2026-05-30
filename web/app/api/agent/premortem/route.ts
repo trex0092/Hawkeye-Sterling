@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { weaponizedSystemPrompt } from "../../../../../src/brain/weaponized.js";
+import { sanitizeField } from "@/lib/server/sanitize-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,11 +123,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     audience: "MLRO",
   });
 
+  const sanitizedSubjectName = sanitizeField(
+    typeof body.subject.name === "string" ? body.subject.name : "",
+    300,
+  );
+
   try {
     const userMsg =
-      `Verdict outcome: ${body.verdict.outcome}\n\nSubject + evidence pack:\n` +
+      `Verdict outcome: ${sanitizeField(body.verdict.outcome, 50)}\n\nSubject + evidence pack:\n` +
       "```json\n" +
-      JSON.stringify({ subject: body.subject, evidence: body.evidence ?? {}, verdictSummary: body.verdict }, null, 2) +
+      JSON.stringify({ subject: { ...body.subject, name: sanitizedSubjectName }, evidence: body.evidence ?? {}, verdictSummary: body.verdict }, null, 2) +
       "\n```\n\n" +
       PREMORTEM_INSTRUCTION(horizon);
 
