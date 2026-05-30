@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Picked up from middleware.ts — empty string fallback keeps dev hot-reload
+  // Picked up from proxy.ts — empty string fallback keeps dev hot-reload
   // working when the middleware hasn't run (e.g. static export probes).
   const nonce = (await headers()).get("x-nonce") ?? "";
 

@@ -91,7 +91,7 @@ export async function fetchJson<T = unknown>(
     }
 
     try {
-      // Auth is injected server-side by web/middleware.ts (ADMIN_TOKEN env var)
+      // Auth is injected server-side by web/proxy.ts (ADMIN_TOKEN env var)
       // for same-origin portal requests so the credential is never included in
       // the browser bundle. Caller-supplied headers take precedence over the
       // middleware-injected value for routes that use a dedicated API key.

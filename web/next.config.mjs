@@ -91,6 +91,12 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // @upstash/box ships ESM-only ("type":"module", exports.import only, no exports.require).
+  // Without transpilePackages webpack tries to bundle it as CJS and fails at runtime
+  // with "exports is not defined" or similar. transpilePackages runs the package through
+  // SWC before bundling, converting ESM export syntax to webpack-compatible CJS.
+  transpilePackages: ["@upstash/box"],
+
   // EMFILE mitigation for Netlify build agents (fd hard limit ~4096).
   // cpus:1 — serialises page generation to 1 worker (default = os.cpus()-1 = 3).
   // workerThreads:false — switches workers from worker_threads (which SHARE the
