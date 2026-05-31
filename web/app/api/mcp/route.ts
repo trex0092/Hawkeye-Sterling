@@ -198,7 +198,7 @@ function trackAndDetectAnomaly(sessionId: string, toolName: string, level: Conse
   const now = Date.now();
   // Prune stale sessions (>10 min idle) when the map grows large to prevent
   // unbounded memory growth on long-lived Lambda instances.
-  if (_sessionWindows.size > 5_000) {
+  if (_sessionWindows.size > 1_000) {
     const cutoff = now - 10 * 60_000;
     for (const [id, w] of _sessionWindows) {
       if (w.windowStart < cutoff) _sessionWindows.delete(id);

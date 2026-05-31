@@ -17,6 +17,7 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -229,6 +230,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     };
 
     void writeAuditChainEntry({ event: "sar_narrative.generated", actor: gate.keyId, subjectName: body.subjectName, jurisdiction: body.jurisdiction }, tenant).catch(() => {});
+    // Fire-and-forget hallucination check — must not block the response path.
+    const evidence = [body.adverseMediaSummary, body.transactionSummary, body.mlroNotes].filter((s): s is string => !!s);
+    void checkHallucination(narrative, evidence, { route: "sar-narrative", tenantId: tenant, actor: gate.keyId }).catch(() => undefined);
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
     console.error("[sar-narrative] AI generation failed:", err instanceof Error ? err.message : String(err));

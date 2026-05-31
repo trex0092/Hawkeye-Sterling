@@ -7,6 +7,7 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { checkHallucination } from "@/lib/server/hallucination-gate";
 
 export interface StrNarrativeResult {
   narrative: string;
@@ -179,6 +180,9 @@ Produce a revised narrative that scores ≥${QUALITY_THRESHOLD}/100.`;
 
     if (!best) return NextResponse.json({ ok: false, error: "str-narrative temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
     void writeAuditChainEntry({ event: "str_narrative.generated", actor: gate.keyId, subjectName: body.subjectName, iterations, qualityScore: best.qualityScore }, tenant).catch(() => {});
+    // Fire-and-forget hallucination check — must not block the response path.
+    const evidence = [body.activityDescription, body.adverseMediaFindings, body.transactionMonitoringAlert].filter((s): s is string => !!s);
+    void checkHallucination(best.narrative, evidence, { route: "str-narrative", tenantId: tenant, actor: gate.keyId }).catch(() => undefined);
     return NextResponse.json({ ok: true, ...best, iterations }, { headers: gate.headers });
   } catch (err) {
     console.error("[str-narrative] failed:", err instanceof Error ? err.message : err);

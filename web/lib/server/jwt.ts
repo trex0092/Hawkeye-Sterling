@@ -96,7 +96,7 @@ export function issueJwt(
 
 export interface JwtVerifyResult {
   ok: boolean;
-  reason?: "malformed" | "bad_signature" | "expired" | "alg_mismatch" | "no_secret";
+  reason?: "malformed" | "bad_signature" | "expired" | "alg_mismatch" | "no_secret" | "invalid_issuer";
   payload?: JwtPayload;
 }
 
@@ -143,6 +143,12 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
   const now = Math.floor(Date.now() / 1000);
   if (typeof payload.exp !== "number" || payload.exp <= now) {
     return { ok: false, reason: "expired", payload };
+  }
+
+  // Reject tokens that carry an explicit wrong issuer. Protects against
+  // cross-service JWT confusion if another service shares the signing key.
+  if (payload.iss !== undefined && payload.iss !== "hawkeye-sterling") {
+    return { ok: false, reason: "invalid_issuer" };
   }
 
   if (usedPrevKey) {
