@@ -35,6 +35,7 @@ export type WebhookChannel =
   | 'alert_hallucination'
   | 'audit_write_failure'
   | 'alert_four_eyes_orphan'
+  | 'alert_four_eyes_tamper'
   | 'alert_hallucination_gate_skip';
 
 const ENV_KEY: Record<WebhookChannel, string> = {
@@ -47,6 +48,7 @@ const ENV_KEY: Record<WebhookChannel, string> = {
   alert_hallucination:           'WEBHOOK_ALERT_HALLUCINATION',
   audit_write_failure:           'ALERT_WEBHOOK_URL',
   alert_four_eyes_orphan:        'ALERT_WEBHOOK_URL',
+  alert_four_eyes_tamper:        'ALERT_WEBHOOK_URL',
   alert_hallucination_gate_skip: 'ALERT_WEBHOOK_URL',
 };
 
