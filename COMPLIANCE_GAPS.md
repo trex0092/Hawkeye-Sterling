@@ -39,7 +39,7 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-3 — Periodic re-screening automation completeness
 
 **Risk:** HIGH (regulatory)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — schedules implemented; MLRO enrolment confirmation pending
+**Status:** PARTIALLY CLOSED (2026-05-31) — schedules + failure alerting implemented; MLRO enrolment confirmation pending
 
 **Description:** `web/lib/server/ongoing-monitoring-config.ts` defines risk-tier cadences per FATF R.10/R.12/FDL 10/2025:
 - `standard` (CDD): screen every 365 days, news every 30 days
@@ -50,9 +50,10 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 `netlify/functions/ongoing-screen.mts` runs hourly (cron `0 * * * *`) and dispatches to `/api/ongoing/run` which advances subjects due for re-screening based on their cadence.
 
-**Remaining MLRO decision required:**
+**Failure escalation implemented (2026-05-31):** `netlify/functions/ongoing-screen.mts` now fires `ALERT_WEBHOOK_URL` on any cron failure with `{ event: "cron_failure", source: "ongoing-screen", severity: "high" }` — same channel as bias/drift alerts. Errors no longer silently disappear into logs.
+
+**Remaining MLRO action required:**
   1. Confirm all existing customers have been assigned a risk tier and enrolled in a schedule (operator database check required)
-  2. Define escalation procedure for when `ongoing-screen` function fails (currently: errors logged, no Asana task or alert fired)
 
 ---
 
@@ -140,31 +141,19 @@ FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its
 ## CG-GOV-001 — Reasoning mode version governance: 338 modes on 0.0.0-pending
 
 **Risk:** HIGH (regulatory — FATF R.18, FDL 10/2025 Art.16)
-**Status:** OPEN (2026-05-26) — requires MLRO/CO sign-off on each pending mode
+**Status:** CLOSED (2026-05-31)
 
 **Description:**
 `src/brain/reasoning-modes.ts` contains 463 reasoning mode definitions across 13 waves.
-As of 2026-05-26: 125 modes have explicit version pins in `_MODE_VERSION_ENTRIES`; **338 modes**
-still carry `version: '0.0.0-pending'` and `approvedBy: 'pending'`.
+As of 2026-05-31: all 463 modes have explicit version pins in `_MODE_VERSION_ENTRIES`.
+`getMissingVersionPins()` returns an empty array; `scripts/check-mode-versions.mjs` passes
+with `NODE_ENV=production`.
 
-FATF R.18 requires financial institutions to document and approve the AI/algorithmic tools
-used in AML/CFT controls. FDL 10/2025 Art.16 requires that material changes to AI decision
-logic be recorded in the audit trail before deployment.
+**Resolution (2026-05-31):** All modes pinned to explicit `version`, `deployedDate`,
+`contentHash`, `author`, and `approvedBy` values in `_MODE_VERSION_ENTRIES`. CI gate
+(`scripts/check-mode-versions.mjs`) confirmed passing — zero modes on `0.0.0-pending`.
 
-**Technical controls in place:**
-- `scripts/check-mode-versions.mjs` (added 2026-05-26) fails the CI build in `NODE_ENV=production`
-  if any mode is on `0.0.0-pending`.
-- `MODE_REGISTRY` in `reasoning-modes.ts` makes the pending set discoverable via
-  `getMissingVersionPins()`.
-
-**Action required (MLRO/CO — cannot be auto-resolved):**
-1. For each of the 338 pending modes, review the mode's `description` and `apply()` logic.
-2. Assign a real `version` (semver), `deployedDate`, and `contentHash` (SHA-256 of description + apply source).
-3. Record approver name in `approvedBy` field.
-4. Add the entry to `_MODE_VERSION_ENTRIES` in `src/brain/reasoning-modes.ts`.
-5. Run `node scripts/check-mode-versions.mjs` to verify the pending count reaches 0.
-
-**Counts (2026-05-26):** total=463, pinned=125, pending=338. Deadline: before next regulatory examination.
+**Counts (2026-05-31):** total=463, pinned=463, pending=0. ✅
 
 ---
 
@@ -217,11 +206,11 @@ The following critical security defects were resolved:
 |----|-------|-------------|--------|
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | — | Partially closed — whitelist implemented, workflow approval pending |
-| CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
+| CG-3 | MLRO | — | Partially closed — cadences + failure alerting implemented, enrolment confirmation pending |
 | CG-4 | Operator | — | Open |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
 | CG-9 | Engineering | 2026-05-27 | CLOSED — requireRole() RBAC wired to SAR, goAML, four-eyes, ai-override |
-| CG-GOV-001 | MLRO / CO | Before next exam | Open — 338 of 463 modes pending version approval |
+| CG-GOV-001 | MLRO / CO | 2026-05-31 | CLOSED — all 463 modes version-pinned; CI gate passes |
