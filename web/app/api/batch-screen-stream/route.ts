@@ -19,6 +19,8 @@ import { loadCandidates } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { checkWatchman } from "@/lib/server/watchman-client";
 import { checkMarble } from "@/lib/server/marble-client";
 import { checkJube } from "@/lib/server/jube-client";
@@ -293,6 +295,17 @@ export async function POST(req: Request): Promise<Response> {
       }
 
       const failed = allResults.filter((r) => !!r.error).length;
+      // Tamper-evident audit entry for regulatory traceability (same as batch-screen).
+      void writeAuditChainEntry({
+        event: "batch.screen_completed",
+        actor: gate.keyId ?? "system",
+        totalSubjects: allResults.length,
+        criticalHits: allResults.filter((r) => r.severity === "critical").length,
+        failedRows: failed,
+        requestedBy: gate.keyId,
+      }, tenantIdFromGate(gate)).catch((e: unknown) =>
+        console.warn("[batch-screen-stream] audit chain write failed:", e instanceof Error ? e.message : String(e))
+      );
       // Final NDJSON line closes the stream with totals.
       send({ done: true, total: allResults.length, failed });
       controller.close();
