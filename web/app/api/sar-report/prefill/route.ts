@@ -17,6 +17,16 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, listKeys } from "@/lib/server/store";
 
+const SAFE_ID_RE = /^[a-zA-Z0-9_\-.:]+$/;
+const MAX_ID_LENGTH = 256;
+
+function safeSubjectId(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t || t.length > MAX_ID_LENGTH || !SAFE_ID_RE.test(t)) return null;
+  return t;
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -169,10 +179,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   const autoFilled: Record<string, boolean> = {};
   const reviewRequired: string[] = [];
 
+  // ── Validate subjectId before using as blob key segment ──
+  const safeSubId = body.subjectId ? safeSubjectId(body.subjectId) : null;
+  if (body.subjectId && !safeSubId) {
+    return NextResponse.json({ ok: false, error: "invalid subjectId" }, { status: 400, headers: gate.headers });
+  }
+
   // ── Resolve subject from subjectId if provided, otherwise use body.subject ──
   let subject: PrefillSubject = body.subject ?? {};
-  if (body.subjectId && !body.subject) {
-    const persisted = await getJson<PrefillSubject>(`ongoing/subject/${body.subjectId}`);
+  if (safeSubId && !body.subject) {
+    const persisted = await getJson<PrefillSubject>(`ongoing/subject/${safeSubId}`);
     if (persisted) {
       subject = persisted;
       autoFilled["subjectFromStore"] = true;
@@ -187,9 +203,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // If hits not supplied, try to pull recent screening-history for this subject.
   let derivedHits = hits;
-  if (derivedHits.length === 0 && body.subjectId) {
+  if (derivedHits.length === 0 && safeSubId) {
     try {
-      const histKeys = await listKeys(`screening-history/${body.subjectId}/`);
+      const histKeys = await listKeys(`screening-history/${safeSubId}/`);
       // Use only the most recent screening record's hits to avoid stale signals.
       const last = histKeys.length > 0 ? histKeys[histKeys.length - 1]! : null;
       if (last) {

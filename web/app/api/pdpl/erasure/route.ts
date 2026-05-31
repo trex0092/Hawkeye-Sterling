@@ -21,6 +21,14 @@ import { adminAuth } from '@/lib/server/admin-auth';
 import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 import { tenantIdFromGate } from '@/lib/server/tenant';
 
+const SAFE_ID_RE = /^[a-zA-Z0-9_\-.:]+$/;
+function safeRequestId(v: string | null | undefined): string | null {
+  if (!v) return null;
+  const t = v.trim();
+  if (!t || t.length > 256 || !SAFE_ID_RE.test(t)) return null;
+  return t;
+}
+
 export type ErasureStatus = 'pending' | 'approved' | 'rejected' | 'completed';
 
 export interface ErasureRequest {
@@ -111,8 +119,8 @@ export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const requestId = req.nextUrl.searchParams.get('requestId');
-  if (!requestId?.trim()) return NextResponse.json({ ok: false, error: 'requestId query param required' }, { status: 400, headers: gate.headers });
+  const requestId = safeRequestId(req.nextUrl.searchParams.get('requestId'));
+  if (!requestId) return NextResponse.json({ ok: false, error: 'requestId query param required and must be alphanumeric' }, { status: 400, headers: gate.headers });
   const request = await getJson<ErasureRequest>(erasureKey(tenantIdFromGate(gate), requestId));
   if (!request) return NextResponse.json({ ok: false, error: 'Erasure request not found' }, { status: 404, headers: gate.headers });
   return NextResponse.json({ ok: true, request }, { headers: gate.headers });
@@ -128,13 +136,13 @@ export async function PATCH(req: NextRequest) {
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 }); }
   const raw = (body ?? {}) as Record<string, unknown>;
-  const requestId = (raw['requestId'] as string | undefined)?.trim();
+  const requestId = safeRequestId((raw['requestId'] as string | undefined)?.trim());
   const decision = raw['decision'] as string | undefined;
   const reviewedBy = (raw['reviewedBy'] as string | undefined)?.trim();
   const reviewNotes = (raw['reviewNotes'] as string | undefined)?.trim();
 
   if (!requestId || !decision || !reviewedBy) {
-    return NextResponse.json({ ok: false, error: 'requestId, decision, reviewedBy are required' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'requestId (alphanumeric), decision, reviewedBy are required' }, { status: 400 });
   }
   if (decision !== 'approved' && decision !== 'rejected') {
     return NextResponse.json({ ok: false, error: 'decision must be approved or rejected' }, { status: 400 });

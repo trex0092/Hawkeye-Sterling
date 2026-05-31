@@ -52,7 +52,8 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 **Remaining MLRO decision required:**
   1. Confirm all existing customers have been assigned a risk tier and enrolled in a schedule (operator database check required)
-  2. Define escalation procedure for when `ongoing-screen` function fails (currently: errors logged, no Asana task or alert fired)
+
+**Resolved (2026-05-31):** Escalation on `ongoing-screen` failure is implemented — `netlify/functions/ongoing-screen.mts` fires `ALERT_WEBHOOK_URL` on every catch (lines 88-101) with `severity: "high"`. The comment in the file references this CG-3 resolution. Additionally, `netlify/functions/warm-pool.mts`, `sanctions-daily-0830.mts`, and `transaction-monitor.mts` now also wrap their handlers in top-level try/catch with `fireAlert()` calls so all cron failures surface as ops alerts.
 
 ---
 

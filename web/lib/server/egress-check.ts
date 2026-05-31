@@ -16,6 +16,8 @@
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
+import { incrementCounter } from "@/lib/server/metrics-store";
+import { emitAndLog } from "../../../src/integrations/webhook-emitter";
 
 export type EgressVerdict = "approved" | "held_tipping_off" | "held_incomplete" | "held_review";
 
@@ -85,11 +87,20 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     // FAIL CLOSED on LLM error — hold for manual MLRO review rather than
     // silently approving. Tipping-off (FDL 10/2025 Art.17) is criminal;
     // infrastructure failures must not disable the compliance gate.
-    console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", err instanceof Error ? err.message : String(err));
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", msg);
+    incrementCounter('hawkeye_egress_gate_failures_total', 1, { reason: 'llm_error' });
+    void emitAndLog('alert_hallucination', {
+      event: 'egress_gate_llm_failure',
+      reportType,
+      error: msg,
+      severity: 'critical',
+      at: new Date().toISOString(),
+    }).catch(() => undefined);
     return {
       allowed: false,
       verdict: "held_review",
-      reason: `Egress gate LLM check failed (${err instanceof Error ? err.message : "unknown error"}). Artefact held for manual MLRO review (FDL 10/2025 Art.17).`,
+      reason: `Egress gate LLM check failed (${msg}). Artefact held for manual MLRO review (FDL 10/2025 Art.17).`,
     };
   }
 
@@ -111,6 +122,14 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
   } catch {
     // FAIL CLOSED on parse error — same rationale as LLM failure above.
     console.warn("[egress-check] could not parse LLM response — holding artefact for manual MLRO review:", raw.slice(0, 200));
+    incrementCounter('hawkeye_egress_gate_failures_total', 1, { reason: 'parse_error' });
+    void emitAndLog('alert_hallucination', {
+      event: 'egress_gate_parse_failure',
+      reportType,
+      rawSnippet: raw.slice(0, 200),
+      severity: 'high',
+      at: new Date().toISOString(),
+    }).catch(() => undefined);
     return {
       allowed: false,
       verdict: "held_review",

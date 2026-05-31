@@ -671,6 +671,320 @@
           "422": { "description": "Insufficient data — fewer samples than required for a stable test" }
         }
       }
+    },
+
+    "/api/screening/run": {
+      "post": {
+        "summary": "Full AML/sanctions/PEP screening against all configured lists",
+        "description": "Runs the complete Hawkeye screening pipeline: name matching across OFAC SDN, UN Consolidated, UAE EOCN, UAE LTL, and PEP lists, plus adverse media, adverse-AI, and redlines. Writes a tamper-evident audit chain entry on completion. Rate-limited per tier (UAE FDL 20/2018 Art.18).",
+        "tags": ["Screening"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subject"],
+                "properties": {
+                  "subject": { "$ref": "#/components/schemas/Subject" },
+                  "candidates": {
+                    "type": "array",
+                    "items": { "type": "object" },
+                    "description": "Optional pre-fetched candidate list; if omitted the engine queries all lists"
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "includeAdverseMedia": { "type": "boolean" },
+                      "pepTier": { "type": "integer", "minimum": 1, "maximum": 3 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Screening result with hits, score, severity, and audit ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "id": { "type": "string" },
+                    "subject": { "$ref": "#/components/schemas/Subject" },
+                    "hits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "listId": { "type": "string" },
+                          "listRef": { "type": "string" },
+                          "matchRationale": { "type": "string" },
+                          "score": { "type": "number" },
+                          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] }
+                        }
+                      }
+                    },
+                    "score": { "type": "number", "description": "Composite risk score 0–100" },
+                    "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "none"] },
+                    "generatedAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+
+    "/api/sar-report": {
+      "post": {
+        "summary": "Generate a Suspicious Activity Report (SAR / STR) document",
+        "description": "Generates a regulator-grade SAR/STR/CTR document after verifying four-eyes dual-attestation (UAE FDL 10/2025 Art.16). The report is tamper-evidently signed and appended to the audit chain. Supported filing types: STR, SAR, CTR, DPMSR, FFR, PNMR, HRCR, AIF, PEPR, FTFR.",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filingType", "caseId"],
+                "properties": {
+                  "filingType": {
+                    "type": "string",
+                    "enum": ["STR", "SAR", "CTR", "DPMSR", "FFR", "PNMR", "HRCR", "AIF", "PEPR", "FTFR"],
+                    "description": "UAE FIU / FinCEN report type"
+                  },
+                  "caseId": { "type": "string", "description": "Case identifier — four-eyes approval must be recorded against this ID" },
+                  "subjectId": { "type": "string" },
+                  "narrative": { "type": "string", "description": "Operator-supplied SAR narrative" },
+                  "amountAed": { "type": "number", "description": "Suspicious transaction amount in AED" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "HTML report document ready for download / regulatory submission",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          },
+          "403": { "description": "Four-eyes gate not satisfied — two distinct approvers required (UAE FDL 10/2025 Art.16)" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+
+    "/api/goaml": {
+      "post": {
+        "summary": "Generate a goAML XML envelope for UAE FIU filing",
+        "description": "Serialises a goAML-compliant XML envelope for direct upload to the UAE FIU goAML portal. Supported report codes: STR, SAR, FFR, PNMR, CTR, AIF, EFT, HRC, RFI. Enforces four-eyes dual-attestation and writes to the tamper-evident audit chain.",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["reportCode", "subject", "narrative"],
+                "properties": {
+                  "reportCode": {
+                    "type": "string",
+                    "enum": ["STR", "SAR", "FFR", "PNMR", "CTR", "AIF", "EFT", "HRC", "RFI"],
+                    "description": "goAML report type code"
+                  },
+                  "subject": {
+                    "type": "object",
+                    "required": ["name", "entityType"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "entityType": { "type": "string", "enum": ["individual", "organisation", "vessel", "aircraft", "other"] },
+                      "jurisdiction": { "type": "string" },
+                      "dob": { "type": "string", "format": "date" },
+                      "aliases": { "type": "array", "items": { "type": "string" } },
+                      "idNumber": { "type": "string" },
+                      "caseId": { "type": "string" }
+                    }
+                  },
+                  "narrative": { "type": "string", "description": "Narrative description of the suspicious activity" },
+                  "amountAed": { "type": "number" },
+                  "currency": { "type": "string", "default": "AED" },
+                  "counterparty": { "type": "string" },
+                  "reportingEntity": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "goAML XML envelope",
+            "content": { "application/xml": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "403": { "description": "Four-eyes gate not satisfied" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+
+    "/api/four-eyes": {
+      "get": {
+        "summary": "List pending four-eyes approval items",
+        "description": "Returns all pending dual-attestation items. Two distinct operators must approve before a regulated action (STR filing, freeze, EDD uplift, escalation) can proceed (UAE FDL 10/2025 Art.16, FATF R.26).",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of four-eyes items with approval state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "action": { "type": "string", "enum": ["str", "freeze", "decline", "edd-uplift", "escalate"] },
+                          "status": { "type": "string", "enum": ["pending", "approved", "rejected", "expired"] },
+                          "subjectId": { "type": "string" },
+                          "caseId": { "type": "string" },
+                          "initiatedAt": { "type": "string", "format": "date-time" },
+                          "approverCount": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      },
+      "post": {
+        "summary": "Enqueue a new four-eyes approval request",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action", "subjectId", "caseId"],
+                "properties": {
+                  "action": { "type": "string", "enum": ["str", "freeze", "decline", "edd-uplift", "escalate"] },
+                  "subjectId": { "type": "string" },
+                  "caseId": { "type": "string" },
+                  "filingBlocked": { "type": "boolean", "description": "Set true to block filing until approved" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Four-eyes item created; pending second approval" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "patch": {
+        "summary": "Record an approval or rejection",
+        "description": "The actor identity is resolved from the inbound auth context. A single operator approving twice is rejected (collusion guard).",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "decision", "rationale"],
+                "properties": {
+                  "id": { "type": "string", "description": "Four-eyes item ID" },
+                  "decision": { "type": "string", "enum": ["approve", "reject"] },
+                  "rationale": { "type": "string", "minLength": 20, "description": "Substantive reasoning (min 20 chars, UAE FDL 10/2025 Art.16)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Approval recorded; returns updated status" },
+          "409": { "description": "Same actor already approved — collusion guard triggered" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+
+    "/api/audit-trail": {
+      "get": {
+        "summary": "Read the tamper-evident audit chain",
+        "description": "Returns paginated entries from the SHA-256 / HMAC-SHA256 audit chain stored in Netlify Blobs. Set verified=true to run full cryptographic chain verification on retrieval (slower but provides integrity guarantees for regulatory review). FDL 10/2025 Art.24 audit trail retention.",
+        "tags": ["Compliance"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
+          { "name": "verified", "in": "query", "schema": { "type": "boolean", "default": false }, "description": "Run HMAC verification on each entry before returning" },
+          { "name": "tenantId", "in": "query", "schema": { "type": "string", "default": "default" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated audit entries with optional tamper marker",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "totalEntries": { "type": "integer" },
+                    "page": { "type": "integer" },
+                    "pageSize": { "type": "integer" },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "seq": { "type": "integer" },
+                          "entryHash": { "type": "string" },
+                          "prevHash": { "type": "string" },
+                          "hashAlg": { "type": "string", "enum": ["sha256", "hmac-sha256", "fnv1a"] },
+                          "payload": { "type": "object" },
+                          "at": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "tamperMarker": {
+                      "type": "object",
+                      "description": "Present if tampering is detected",
+                      "properties": {
+                        "detectedAt": { "type": "string", "format": "date-time" },
+                        "tamperedAt": { "type": "array", "items": { "type": "integer" } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
     }
 
   },
