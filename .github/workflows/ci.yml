@@ -164,10 +164,11 @@ jobs:
           # listed here with justification. Adding a new public route without
           # updating this list fails CI, preventing silent auth bypasses.
           ALLOWED_ROUTES=(
-            "web/app/api/health/route.ts"          # public liveness probe — no data exposed
-            "web/app/api/news-search/route.ts"     # unauthenticated RSS/GDELT proxy — public news metadata only
-            "web/app/api/openapi/route.ts"         # public OpenAPI spec — no PII
-            "web/app/api/routes/route.ts"          # public route manifest — no PII
+            "web/app/api/health/route.ts"                # public liveness probe — no data exposed
+            "web/app/api/news-search/route.ts"           # unauthenticated RSS/GDELT proxy — public news metadata only
+            "web/app/api/openapi/route.ts"               # public OpenAPI spec — no PII
+            "web/app/api/routes/route.ts"                # public route manifest — no PII
+            "web/app/api/auth/emergency-reset/route.ts"  # secret-gated via EMERGENCY_RESET_SECRET in request body — account recovery only, no regulated AML data
           )
           FAIL=0
           while IFS= read -r file; do
