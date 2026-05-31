@@ -71,12 +71,18 @@ export async function checkHallucination(
     severity = result.severity;
     patterns = result.detectedPatterns;
   } catch (err) {
-    // Brain module unavailable (e.g. dist/ not compiled) — log and pass through.
-    console.warn(
-      '[hallucination-gate] detectHallucinations unavailable:',
-      err instanceof Error ? err.message : String(err),
-    );
-    incrementCounter('hawkeye_hallucination_gate_skip_total', 1, {});
+    // Brain module unavailable (e.g. dist/ not compiled) — log and alert.
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.warn('[hallucination-gate] detectHallucinations unavailable:', errMsg);
+    incrementCounter('hawkeye_hallucination_gate_skip_total', 1, { route: opts.route });
+    void emitAndLog('alert_hallucination_gate_skip', {
+      event: 'hallucination_gate_skipped',
+      route: opts.route,
+      reason: errMsg,
+      severity: 'high',
+      tenantId: opts.tenantId ?? 'default',
+      at: new Date().toISOString(),
+    }).catch(() => undefined);
   }
 
   const checkedAt = new Date().toISOString();

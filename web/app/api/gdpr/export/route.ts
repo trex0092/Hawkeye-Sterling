@@ -19,6 +19,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadSubject } from "@/lib/server/subject-store";
 import { loadAllCases } from "@/lib/server/case-vault";
 import { buildGdprExportPackage } from "@/lib/server/gdpr";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { CaseRecord } from "@/lib/types";
 
 /**
@@ -101,6 +102,23 @@ export async function GET(req: Request): Promise<NextResponse> {
   };
 
   const pkg = buildGdprExportPackage(subjectForExport, subjectCases);
+
+  // Tamper-evident record of this data portability exercise — GDPR Art.5(2)
+  // accountability principle + UAE PDPL Art.11 + FDL 10/2025 Art.24 audit trail.
+  void writeAuditChainEntry(
+    {
+      event: "gdpr.data_export",
+      actor: gate.keyId,
+      caseId: subjectProfile.activeCaseId ?? subjectId,
+      subjectId,
+      format,
+      caseCount: subjectCases.length,
+      exportedAt: pkg.exportedAt,
+    },
+    tenant,
+  ).catch((e) =>
+    console.warn("[gdpr/export] audit chain write failed:", e instanceof Error ? e.message : String(e)),
+  );
 
   // ── CSV export ────────────────────────────────────────────────────────────
   if (format === "csv") {

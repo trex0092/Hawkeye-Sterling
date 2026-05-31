@@ -17,6 +17,9 @@
 import { getJson, setJson, listKeys, del } from "@/lib/server/store";
 import { createHash, randomBytes } from "node:crypto";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
+import { log } from "@/lib/server/logger";
+import { incrementCounter } from "@/lib/server/metrics-store";
+import { emitAndLog } from "../../../src/integrations/webhook-emitter";
 
 // Hash actor for OTel span attributes — actor may be an email/GID (PII).
 // 12-hex prefix is sufficient for correlation without being reversible.
@@ -185,10 +188,17 @@ async function _recordApproval(
     await del(approvalKey(input.caseId, approvalId)).catch(async () => {
       await new Promise((r) => setTimeout(r, 200));
       await del(approvalKey(input.caseId, approvalId)).catch((retryErr) => {
-        console.error(
-          "[four-eyes] orphaned approval entry — both delete attempts failed:",
-          { caseId: input.caseId, approvalId, err: retryErr instanceof Error ? retryErr.message : String(retryErr) },
-        );
+        const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+        log({ level: "error", route: "four-eyes-gate", event: "four_eyes.orphan_delete_failed", caseId: input.caseId, approvalId, err: errMsg });
+        incrementCounter('hawkeye_four_eyes_orphan_total', 1, {});
+        void emitAndLog('alert_four_eyes_orphan', {
+          event: 'four_eyes_orphaned_approval',
+          caseId: input.caseId,
+          approvalId,
+          error: errMsg,
+          severity: 'critical',
+          at: new Date().toISOString(),
+        }).catch(() => undefined);
       });
     });
     const earlier = actorDecisions[0]!;

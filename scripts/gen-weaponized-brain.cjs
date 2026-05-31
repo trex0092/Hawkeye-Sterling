@@ -176,10 +176,13 @@ function len(k, obj) {
     integrity,
     enhanced,
   };
-  fs.writeFileSync(outPath, JSON.stringify(payload, null, 2));
-  const bytes = fs.statSync(outPath).size;
+  const outJson = JSON.stringify(payload, null, 2);
+  fs.writeFileSync(outPath, outJson);
+  const bytes = outJson.length;
+  const { createHash } = require('crypto');
+  const sha256 = createHash('sha256').update(outJson).digest('hex');
   console.log(
-    `[gen-weaponized-brain] wrote ${path.relative(root, outPath)} — ${bytes} bytes${
+    `[gen-weaponized-brain] wrote ${path.relative(root, outPath)} — ${bytes} bytes sha256=${sha256}${
       manifest ? "" : " (manifest skipped — dist/weaponized.js unavailable)"
     }`,
   );

@@ -160,21 +160,32 @@ jobs:
           echo "No server-secret exposure in client components"
       - name: Auth coverage gate — no silent opt-outs of enforce()
         run: |
-          # After enforce() defaults to requireAuth:true (web/lib/server/enforce.ts),
-          # any route that explicitly opts out with `{ requireAuth: false }` must
-          # be deliberately reviewed. The current allowed count is 12 — bump this
-          # number when adding a deliberate public/sandbox route, and document why.
-          # Allowed opt-outs (grep counts both code and inline comments):
-          #   1. web/app/api/health/route.ts — public liveness probe, no data exposed.
-          #   2. web/app/api/news-search/route.ts — unauthenticated RSS/GDELT proxy;
-          #      returns only public news metadata, no PII or case data.
-          OPTED_OUT=$(grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api \
-            --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
-          ALLOWED_COUNT=12
-          echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: $ALLOWED_COUNT)"
-          if [ "$OPTED_OUT" -gt "$ALLOWED_COUNT" ]; then
-            echo "FAIL: $OPTED_OUT route(s) have opted out of auth — review and bump ALLOWED_COUNT in this workflow with justification"
-            grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api --include="route.ts" -l 2>/dev/null
+          # Explicit allowlist — every intentional requireAuth:false route must be
+          # listed here with justification. Adding a new public route without
+          # updating this list fails CI, preventing silent auth bypasses.
+          ALLOWED_ROUTES=(
+            "web/app/api/health/route.ts"          # public liveness probe — no data exposed
+            "web/app/api/news-search/route.ts"     # unauthenticated RSS/GDELT proxy — public news metadata only
+            "web/app/api/openapi/route.ts"         # public OpenAPI spec — no PII
+            "web/app/api/routes/route.ts"          # public route manifest — no PII
+          )
+          FAIL=0
+          while IFS= read -r file; do
+            MATCH=0
+            for allowed in "${ALLOWED_ROUTES[@]}"; do
+              if [ "$file" = "$allowed" ]; then
+                MATCH=1
+                break
+              fi
+            done
+            if [ "$MATCH" -eq 0 ]; then
+              echo "FAIL: unexpected requireAuth:false in $file — add to ALLOWED_ROUTES with justification"
+              FAIL=1
+            fi
+          done < <(grep -rlE "requireAuth:\s*false[^a-zA-Z]" web/app/api --include="route.ts" 2>/dev/null)
+          OPTED_OUT=$(grep -rE "requireAuth:\s*false[^a-zA-Z]" web/app/api --include="route.ts" 2>/dev/null | wc -l | tr -d ' ')
+          echo "Routes with explicit requireAuth:false: $OPTED_OUT (allowed: ${#ALLOWED_ROUTES[@]})"
+          if [ "$FAIL" -eq 1 ]; then
             exit 1
           fi
           echo "PASS"

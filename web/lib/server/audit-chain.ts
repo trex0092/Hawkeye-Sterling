@@ -18,6 +18,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import { startSpan, SpanStatus } from './tracer';
 import { incrementCounter } from './metrics-store';
+import { emitAndLog } from '../../../src/integrations/webhook-emitter';
 
 // ── Per-tenant key derivation ─────────────────────────────────────────────────
 // Derives a per-tenant HMAC signing key from the root AUDIT_CHAIN_SECRET.
@@ -374,5 +375,15 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
     }
   }
   incrementCounter('hawkeye_audit_write_failures_total', 1, { event: String(event.event ?? 'unknown') });
+  // Alert ops — a lost audit entry is a regulatory incident under FDL 10/2025 Art.24.
+  void emitAndLog('audit_write_failure', {
+    event: 'audit_chain_write_failed',
+    auditEvent: event.event,
+    actor: event.actor,
+    caseId: event.caseId ?? null,
+    tenantId,
+    severity: 'critical',
+    at: new Date().toISOString(),
+  }).catch(() => undefined);
   return false;
 }

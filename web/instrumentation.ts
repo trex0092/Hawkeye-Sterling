@@ -46,6 +46,9 @@ const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> =
   { key: "JWT_SIGNING_SECRET", minLen: 24, genCmd: "openssl rand -base64 32" },
   { key: "AUDIT_CHAIN_SECRET", minLen: 32, genCmd: "openssl rand -hex 64" },
   { key: "ADMIN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
+  // ANTHROPIC_API_KEY: required for all AI routes; egress gate fail-closes without it.
+  // Listed last because its absence degrades AI features, not auth/audit integrity.
+  { key: "ANTHROPIC_API_KEY", minLen: 20, genCmd: "obtain from https://console.anthropic.com/settings/keys" },
 ];
 
 // Required public env vars — not secrets, but routes break without them.
