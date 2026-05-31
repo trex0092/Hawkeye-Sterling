@@ -3,7 +3,7 @@ import { enforce } from "@/lib/server/enforce";
 import { requireRole } from "@/lib/server/role-gate";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { getEntity } from "@/lib/config/entities";
+import { getEntityForSubmission } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 import { runEgressCheck } from "@/lib/server/egress-check";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
@@ -236,7 +236,21 @@ async function handleGoaml(req: Request): Promise<Response> {
   // in the body, we use that; otherwise the default entity from
   // HAWKEYE_DEFAULT_ENTITY_ID. Falls back to single-entity legacy
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
-  const reportingEntity = getEntity(body.entityId);
+  // getEntityForSubmission() throws when the resolved entity has a placeholder
+  // goamlRentityId (e.g. "REPLACE_ME") — placeholder IDs cause the UAE FIU to
+  // reject every filing (FDL 10/2025 Art.15). Configure the real Rentity ID
+  // in Netlify environment variables before deploying to production (F-03 fix).
+  let reportingEntity: ReturnType<typeof getEntityForSubmission>;
+  try {
+    reportingEntity = getEntityForSubmission(body.entityId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goaml] entity ID validation failed:", msg);
+    return NextResponse.json(
+      { ok: false, error: msg, code: "GOAML_ENTITY_PLACEHOLDER" },
+      { status: 503 },
+    );
+  }
 
   const mlroName = process.env["GOAML_MLRO_FULL_NAME"];
   if (!mlroName) {

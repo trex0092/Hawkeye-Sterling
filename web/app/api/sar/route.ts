@@ -214,8 +214,10 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     console.warn(
       `[sar] four-eyes BYPASSED: caseId=${caseId} generatedBy=${generatedBy} role=${callerRole}`,
     );
-    // Write an immutable audit-chain entry so the bypass is permanently logged.
-    void writeAuditChainEntry({
+    // F-15 fix: four-eyes bypass audit write is BLOCKING — do not proceed with
+    // the SAR generation if the tamper-evident record cannot be written.
+    // A missing audit entry for a bypass violates FDL 10/2025 Art.16.
+    const bypassWritten = await writeAuditChainEntry({
       event: "four_eyes.bypass",
       actor: generatedBy,
       caseId,
@@ -224,9 +226,18 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       bypassReason: "role_override",
       bypassRole: callerRole,
       filingType,
-    }).catch((err: unknown) => {
-      console.warn("[sar] four_eyes.bypass audit write failed:", err instanceof Error ? err.message : String(err));
     });
+    if (!bypassWritten) {
+      console.error("[sar] four_eyes.bypass audit write FAILED — blocking SAR generation (FDL 10/2025 Art.16)");
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Audit chain unavailable — four-eyes bypass blocked. Retry when storage is available.",
+          code: "AUDIT_WRITE_FAILED",
+        },
+        { status: 503 },
+      );
+    }
   }
 
   // ── Delegate to sar-report route for actual generation ────────────────────

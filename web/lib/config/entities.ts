@@ -97,6 +97,9 @@ export function loadEntities(): ReportingEntity[] {
   return cached;
 }
 
+/** Placeholder values that operators must replace with real FIU-assigned IDs. */
+const PLACEHOLDER_RENTITY_IDS = new Set(["REPLACE_ME", "PENDING_FIU_ASSIGNMENT", "", "PLACEHOLDER"]);
+
 /**
  * Returns the entity matching `id`, or the configured default when `id`
  * is null/undefined/unknown. Default is `HAWKEYE_DEFAULT_ENTITY_ID` if
@@ -114,6 +117,22 @@ export function getEntity(id?: string | null): ReportingEntity {
     if (def) return def;
   }
   return list[0]!;
+}
+
+/**
+ * Like `getEntity()` but throws if the resolved entity has a placeholder
+ * `goamlRentityId`. Call this from any route that submits to the UAE FIU
+ * — a placeholder ID causes the FIU to reject every filing (FDL 10/2025 Art.15).
+ */
+export function getEntityForSubmission(id?: string | null): ReportingEntity {
+  const entity = getEntity(id);
+  if (PLACEHOLDER_RENTITY_IDS.has(entity.goamlRentityId)) {
+    throw new Error(
+      `goAML reporting entity "${entity.name}" (id: "${entity.id}") has a placeholder goamlRentityId: "${entity.goamlRentityId}". ` +
+      `Replace it with the real FIU-assigned goAML Rentity ID in Netlify environment variables before filing (FDL 10/2025 Art.15).`,
+    );
+  }
+  return entity;
 }
 
 /** Test-only — clears the in-process cache so .env changes take effect. */

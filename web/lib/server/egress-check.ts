@@ -62,9 +62,17 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
 
   const client = getAnthropicClient(apiKey, 30_000, "egress-check");
 
-  // M-5: Log when narrative is truncated — tipping-off phrases in the tail could be missed.
-  if (narrative.length > 3000) {
-    console.warn(`[egress-check] narrative truncated from ${narrative.length} to 3000 chars for '${reportType}' — tipping-off phrases in tail may be missed`);
+  // F-29 fix: for long narratives, pass head + tail to the LLM so tipping-off
+  // phrases are not missed because they appear after the 3000-char truncation
+  // boundary. Regex hasTippingOff() already scans the full text (called above
+  // in runEgressCheck); the LLM now also sees both ends.
+  const LLM_WINDOW = 1500;
+  const narrativeForLlm = narrative.length > LLM_WINDOW * 2
+    ? narrative.slice(0, LLM_WINDOW) + "\n...[middle truncated]...\n" + narrative.slice(-LLM_WINDOW)
+    : narrative;
+
+  if (narrative.length > LLM_WINDOW * 2) {
+    console.warn(`[egress-check] narrative (${narrative.length} chars) sent as head+tail to LLM for '${reportType}'`);
     incrementCounter('hawkeye_egress_narrative_truncated_total', 1, { reportType });
   }
 
@@ -82,7 +90,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
           role: "user",
           content:
             `Report type: ${reportType}\n\n` +
-            `Narrative:\n${narrative.slice(0, 3000)}\n\n` +
+            `Narrative:\n${narrativeForLlm}\n\n` +
             "Check: (1) Does this narrative contain any language that could tip off the subject that a report is being filed? " +
             "(2) Are there any blank or placeholder sections that should be completed before filing? " +
             "Return the JSON verdict.",
@@ -169,12 +177,16 @@ export async function runEgressCheck(
 ): Promise<EgressCheckResult> {
   const span = startSpan('egress-gate.check', { 'aml.report_type': reportType });
   try {
-    const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
-    if (!gateEnabled) {
+    // Gate is ON by default — fail-closed for criminal-liability tipping-off risk.
+    // Set EGRESS_GATE_DISABLED=true (opt-out) ONLY with written MLRO waiver.
+    // Previous opt-in design (EGRESS_GATE_ENABLED=true) meant a fresh deployment
+    // ran without tipping-off checks, violating FDL 10/2025 Art.17 (F-02 fix).
+    const gateDisabled = process.env["EGRESS_GATE_DISABLED"] === "true";
+    if (gateDisabled) {
       span.setAttribute('egress.gate_enabled', false);
-      // H-1: Alert monitoring when gate is disabled so ops can detect misconfigured deployments.
-      // Tipping-off (FDL 10/2025 Art.17) is criminal; gate must be ON in production.
-      console.error("[egress-check] EGRESS_GATE_ENABLED is not set — tipping-off checks are DISABLED. Set EGRESS_GATE_ENABLED=true in production after MLRO sign-off.");
+      // Alert monitoring when gate is explicitly disabled so ops can detect
+      // deployments missing the MLRO waiver (FDL 10/2025 Art.17 is criminal).
+      console.error("[egress-check] EGRESS_GATE_DISABLED=true — tipping-off checks are DISABLED. Written MLRO waiver required before deploying with this flag.");
       incrementCounter('hawkeye_egress_gate_disabled_total', 1, {});
       return { allowed: true, verdict: "approved" };
     }
