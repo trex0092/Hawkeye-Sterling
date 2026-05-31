@@ -86,7 +86,7 @@ async function createAsanaAlert(notes: string): Promise<void> {
 // (1.5× their cron interval, rounded up).
 const HEARTBEAT_SPECS: Array<{ label: string; maxSilenceHours: number }> = [
   { label: "sanctions-watch-15min",  maxSilenceHours: 1  }, // every 15 min → alert after 1h
-  { label: "warm-pool",              maxSilenceHours: 1  }, // every 4 min → alert after 1h
+  { label: "warm-pool",              maxSilenceHours: 1  }, // every 10 min → alert after 1h
   { label: "transaction-monitor",    maxSilenceHours: 2  }, // every 1h → alert after 2h
   { label: "audit-chain-probe",      maxSilenceHours: 2  }, // every 1h → alert after 2h
   { label: "adverse-media-rss",      maxSilenceHours: 2  }, // every 30 min → alert after 2h

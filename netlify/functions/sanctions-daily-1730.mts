@@ -12,17 +12,26 @@ export default async (_req: Request): Promise<Response> => {
     process.env["DEPLOY_PRIME_URL"] ??
     "https://hawkeye-sterling.netlify.app";
 
-  const result = await runSanctionsReport({
-    reportLabel: "17:30 GST",
-    nextLabel:   "08:30 GST tomorrow",
-    baseUrl,
-  });
+  try {
+    const result = await runSanctionsReport({
+      reportLabel: "17:30 GST",
+      nextLabel:   "08:30 GST tomorrow",
+      baseUrl,
+    });
 
-  if (result.ok) await writeHeartbeat("sanctions-daily-1730");
-  return new Response(JSON.stringify(result), {
-    status: result.ok ? 200 : 500,
-    headers: { "content-type": "application/json" },
-  });
+    if (result.ok) await writeHeartbeat("sanctions-daily-1730");
+    return new Response(JSON.stringify(result), {
+      status: result.ok ? 200 : 500,
+      headers: { "content-type": "application/json" },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[sanctions-daily-1730] unhandled error:", msg);
+    return new Response(JSON.stringify({ ok: false, error: msg }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
 };
 
 export const config: Config = { schedule: "0 14 * * *" };

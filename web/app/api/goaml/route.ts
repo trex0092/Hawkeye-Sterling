@@ -176,7 +176,7 @@ async function handleGoaml(req: Request): Promise<Response> {
   span.setAttribute('aml.report_code', body.reportCode ?? '');
   span.setAttribute('aml.subject_id', body.subject?.caseId ?? '');
   span.setAttribute('aml.case_id', body.subject?.caseId ?? '');
-  if (!body?.subject?.name || !body?.reportCode || !body?.narrative) {
+  if (!body?.subject?.name?.trim() || !body?.reportCode || !body?.narrative) {
     return NextResponse.json(
       { ok: false, error: "subject.name, reportCode and narrative are required" },
       { status: 400, headers: gateHeaders },
@@ -224,8 +224,20 @@ async function handleGoaml(req: Request): Promise<Response> {
 
   if (body.subject.entityType === "individual") {
     const n = splitFullName(body.subject.name);
+    if (!n.first.trim() || !n.last.trim()) {
+      return NextResponse.json(
+        { ok: false, error: "subject.name must contain at least a first and last name for individual filings" },
+        { status: 400, headers: gateHeaders },
+      );
+    }
+    if (n.first.trim() === n.last.trim()) {
+      return NextResponse.json(
+        { ok: false, error: "subject.name must contain a distinct first and last name — single-name subjects produce invalid goAML XML" },
+        { status: 400, headers: gateHeaders },
+      );
+    }
     const person: GoAmlPerson = {
-      firstName: n.first,
+      firstName: n.first.trim(),
       ...(n.middle ? { middleName: n.middle } : {}),
       lastName: n.last,
       ...(body.subject.dob ? { dateOfBirth: body.subject.dob } : {}),

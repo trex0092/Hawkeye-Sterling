@@ -116,7 +116,14 @@ export function getEntity(id?: string | null): ReportingEntity {
     const def = list.find((e) => e.id === defaultId);
     if (def) return def;
   }
-  return list[0]!;
+  const first = list[0];
+  if (!first) {
+    throw new Error(
+      "[entities] loadEntities() returned an empty array — " +
+      "HAWKEYE_ENTITIES must be a non-empty JSON array, or unset to use legacy GOAML_RENTITY_ID.",
+    );
+  }
+  return first;
 }
 
 /**

@@ -74,8 +74,8 @@ export interface SanitizedFourEyesStatus {
 }
 
 const PREFIX = "four-eyes/approvals/";
-const FOUR_EYES_TTL_HOURS = 48; // Cases pending > 48h are flagged as overdue (FDL 10/2025 Art.16)
-const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
+const FOUR_EYES_TTL_HOURS = 48; // Cases pending >= 48h are flagged as overdue (FDL 10/2025 Art.16)
+const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending >= 72h trigger escalation
 
 function safeSegment(s: string): string {
   return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
@@ -88,7 +88,7 @@ export function isCaseOverdue(firstApprovalAt: string, nowMs = Date.now()): bool
 
 export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.now()): boolean {
   const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
-  return ageHours > FOUR_EYES_ESCALATION_HOURS;
+  return ageHours >= FOUR_EYES_ESCALATION_HOURS;
 }
 
 function approvalKey(caseId: string, approvalId: string): string {

@@ -90,14 +90,14 @@ export function issueSession(
   return `${encoded}.${sig}`;
 }
 
-/** Compute a 16-char fingerprint from client IP and User-Agent.
+/** Compute a 32-char (128-bit) fingerprint from client IP and User-Agent.
  *  Embeds in the session token at login; compared on each /api/auth/me
  *  call to detect possible session token theft via IP change. */
 export function computeRequestFingerprint(ip: string, userAgent: string): string {
   return createHmac("sha256", getSecret())
     .update(`${ip}:${userAgent}`)
     .digest("hex")
-    .slice(0, 16);
+    .slice(0, 32);
 }
 
 const SESSION_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");

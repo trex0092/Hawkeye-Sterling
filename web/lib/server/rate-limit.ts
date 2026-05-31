@@ -211,11 +211,13 @@ export async function consumeRateLimit(
   prior.minute.count = nextMinute;
   await setJson(storageKey, prior);
 
-  // Post-write read-back: detect concurrent increments from other Lambda instances.
-  // If the stored value jumped further than our own write, another Lambda raced
-  // us. Rather than silently allowing the request (previous behaviour), treat
-  // it as a limit-exceeded so the rate limit is conservatively enforced even
-  // under concurrent soft-enforcement. For strict atomic enforcement configure
+  // Post-write read-back: detect a subset of concurrent increments from other
+  // Lambda instances. Catches the case where one Lambda incremented the bucket
+  // to a different value than ours (i.e. reads back a higher count). Does NOT
+  // catch the "last-writer-wins with identical value" race where two Lambdas
+  // independently compute the same nextSecond and one silently overwrites the
+  // other — in that case both see the expected count and both are allowed through.
+  // For strictly atomic per-second enforcement, configure
   // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (the primary Redis path).
   const readBack = await getJson<LimitState>(storageKey).catch(() => null);
   if (readBack && readBack.second.count !== nextSecond) {

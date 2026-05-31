@@ -50,7 +50,7 @@ export async function getEnrichmentJob(jobId: string): Promise<EnrichmentJob | n
     const raw = await store.get(jobKey(jobId));
     if (!raw) return null;
     const job = JSON.parse(raw) as EnrichmentJob;
-    // Treat jobs older than 30 minutes as expired.  Delete the blob to prevent
+    // Treat jobs older than 24 hours as expired.  Delete the blob to prevent
     // indefinite accumulation — without cleanup, expired jobs accumulate forever.
     const ageMs = Date.now() - new Date(job.requestedAt).getTime();
     if (ageMs > JOB_TTL_MS) {

@@ -224,7 +224,10 @@ function buildInitialScreeningNotes(b: ReportBody): string {
       `Jurisdictional risk for ${b.subject.jurisdiction} is assessed based on FATF posture and CAHRA register status.`,
     );
   }
-  analysisBits.push(`No PEP classification was raised by the brain during this screen.`);
+  const pepHits = hits.filter((h) => /pep/i.test(h.listId));
+  analysisBits.push(pepHits.length > 0
+    ? `PEP classification raised — ${pepHits.length} hit${pepHits.length === 1 ? "" : "s"} on ${[...new Set(pepHits.map((h) => h.listId))].join(", ")}.`
+    : `No PEP classification was raised by the brain during this screen.`);
   if (amFiring.length > 0) {
     analysisBits.push(
       `The adverse-media signal is presently open-source and requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
@@ -375,7 +378,8 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
     }
     if (hits.length > 6) lines.push(`  … and ${hits.length - 6} more`);
   }
-  lines.push(`PEP classification        : ${b.subject.ongoingScreening === false ? "—" : "— (not classified this tick)"}`);
+  const ongoingPepHits = hits.filter((h) => /pep/i.test(h.listId));
+  lines.push(`PEP classification        : ${b.subject.ongoingScreening === false ? "—" : ongoingPepHits.length > 0 ? `RAISED — ${ongoingPepHits.length} hit(s) on ${[...new Set(ongoingPepHits.map((h) => h.listId))].join(", ")}` : "— (not classified this tick)"}`);
   if (esg.length > 0) {
     lines.push(
       `Adverse-media categories  : ${esg.map((e) => e.label).join(" · ")}`,
@@ -434,6 +438,61 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
   if (!body?.subject?.name || !body?.result) {
     return respond(400, { ok: false, error: "subject.name and result are required" });
   }
+  if (!Array.isArray(body.result.hits)) {
+    return respond(400, { ok: false, error: "result.hits must be an array" });
+  }
+
+  // M-9: Optional four-eyes enforcement. When an approver is provided, verify
+  // that the approver differs from the filer — same-person approvals are rejected
+  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  if (body.approver !== undefined) {
+    const trimmedApprover = body.approver.trim();
+    if (!trimmedApprover || trimmedApprover.length > 128) {
+      return respond(400, { ok: false, error: "approver name must be between 1 and 128 characters" });
+    }
+    // Normalise both sides before comparison to resist homoglyph bypasses
+    // (e.g. cyrillic 'о' vs latin 'o' passing as different approvers).
+    const normalise = (s: string): string =>
+      s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (normalise(trimmedApprover) === normalise(ctx.apiKey?.id ?? "")) {
+      void writeAuditChainEntry(
+        { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
+        ctx.tenantId,
+      ).catch(() => undefined);
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+    }
+    void writeAuditChainEntry(
+      { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
+      ctx.tenantId,
+    ).catch(() => undefined);
+  }
+
+  // C-7: Record this screening for drift and bias monitoring. Fire-and-forget
+  // so it never blocks the response path regardless of success or failure.
+  void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
+  void recordScreeningBias(ctx.tenantId, body.subject.name, body.result.topScore, body.result.severity, body.result.hits?.length ?? 0).catch(() => undefined);
+
+  // L-10: Compute screening provenance for goAML traceability. The runId and
+  // payloadSha256 are returned in the API response so the MLRO UI can pass them
+  // as `screeningProvenance` when triggering a goAML filing from this report.
+  const runId = randomUUID();
+  const payloadSha256 = createHash("sha256").update(JSON.stringify(body)).digest("hex");
+
+  // Write audit chain entry for compliance traceability (FDL 10/2025 Art.24).
+  void writeAuditChainEntry(
+    {
+      event: "screening.report.generated",
+      actor: ctx.apiKey?.id ?? "system",
+      subjectName: body.subject.name,
+      subjectId: body.subject.id,
+      severity: body.result.severity,
+      topScore: body.result.topScore,
+      trigger: body.trigger ?? "manual",
+      runId,
+      payloadSha256,
+    },
+    ctx.tenantId,
+  ).catch(() => undefined);
 
   // M-9: Optional four-eyes enforcement. When an approver is provided, verify
   // that the approver differs from the filer — same-person approvals are rejected

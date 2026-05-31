@@ -116,6 +116,7 @@ function normaliseJson(listId: string, raw: unknown): ControlledGoodsEntry[] {
 }
 
 export default async function handler(_req: Request): Promise<Response> {
+  try {
   const startedAt = Date.now();
   let store: ReturnType<typeof getStore>;
   try { store = getStore(STORE_NAME); }
@@ -172,14 +173,20 @@ export default async function handler(_req: Request): Promise<Response> {
     }
   }
 
-  await writeHeartbeat(RUN_LABEL);
+  const allOk = outcomes.every((o) => o.ok);
+  if (allOk) await writeHeartbeat(RUN_LABEL);
   return jsonResponse({
-    ok: outcomes.every((o) => o.ok),
+    ok: allOk,
     label: RUN_LABEL,
     feeds: outcomes,
     durationMs: Date.now() - startedAt,
     note: "Cabinet Resolution 156/2025 + EU 2021/821 + US 15 CFR Part 774 ingested; transaction-monitoring path queries `current/<listId>.json` per HS code.",
-  });
+  }, allOk ? 200 : 502);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goods-control-ingest] unhandled error:", msg);
+    return jsonResponse({ ok: false, label: RUN_LABEL, error: msg }, 500);
+  }
 }
 
 function jsonResponse(body: unknown, status = 200): Response {

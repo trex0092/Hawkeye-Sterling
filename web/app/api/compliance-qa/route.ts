@@ -233,7 +233,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: gateResult.status, headers: { ...gate.headers, ...CORS } }
     );
   }
-  body.query = sanitizeText(gateResult.question, 2000);
   if (Array.isArray(body.context)) {
     body.context = body.context.map((p) => ({
       q: sanitizeText(p.q, 2000),

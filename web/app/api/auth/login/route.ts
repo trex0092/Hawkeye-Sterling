@@ -222,6 +222,7 @@ export async function POST(req: Request) {
       const newHash = hashPassword(password, newSalt);
       // Track the new pwVersion so the issued session token matches Blobs.
       let savedPwVersion = (luisaRecord.pwVersion ?? 0) + 1;
+      let lockFailed = false;
       await withUsersLock(async () => {
         const freshUsers = await loadUsers();
         const freshRecord = freshUsers.find((u) => u.id === luisaRecord.id);
@@ -234,8 +235,15 @@ export async function POST(req: Request) {
           ),
         );
       }).catch((err: unknown) => {
+        lockFailed = true;
         console.warn("[auth/login] recovery hash update failed:", err instanceof Error ? err.message : String(err));
       });
+      // If the blob write failed, do not issue a session — the stored pwVersion
+      // was never updated, so any issued token would fail /api/auth/me immediately.
+      if (lockFailed) {
+        await new Promise((r) => setTimeout(r, 400));
+        return NextResponse.json({ ok: false, error: "Service temporarily unavailable. Please retry." }, { status: 503 });
+      }
       console.warn("[auth/login] luisa recovery login succeeded — hash updated and recoveryUsed flagged (recovery path now permanently disabled)");
       // Must use the NEW pwVersion so the issued session token matches Blobs.
       // Using the stale luisaRecord.pwVersion causes /api/auth/me to see a

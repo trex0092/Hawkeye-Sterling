@@ -436,7 +436,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // enhanced runs must always be fresh (live adapter results change frequently).
   const cacheBypass = body.options?.forceRefresh === true || body.options?.enhanced === true;
   const normalizedName = subject.name.toLowerCase().trim().replace(/\s+/g, " ");
-  const cacheKey = `${tenantId ?? ""}|${normalizedName}`;
+  // Use gate.keyId (always set) rather than tenantId (null for non-API-key callers)
+  // so every authenticated identity gets an isolated cache namespace.
+  const cacheKey = `${gate.keyId}|${normalizedName}`;
 
   if (!cacheBypass) {
     const cached = _screenCache.get(cacheKey);

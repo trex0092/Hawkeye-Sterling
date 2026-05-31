@@ -160,7 +160,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // screening each). Gate + rate-limit before touching the body.
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
+  const gateHeaders = gate.headers;
 
   // D6 - idempotency-key support. If the caller passes
   // `Idempotency-Key: <token>` and we have a prior cached response
@@ -402,35 +402,35 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Do not surface gate decision to the caller — log it, skip Asana, continue response.
       // (Batch screen returns results regardless; the gate only controls MLRO inbox delivery.)
     } else {
-    try {
-      const res = await fetch("https://app.asana.com/api/1.0/tasks", {
-        signal: AbortSignal.timeout(15_000),
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${token}`,
-          "content-type": "application/json",
-          accept: "application/json",
-        },
-        body: JSON.stringify({
-          data: {
-            name: `[BATCH · ${topSeverity}] ${elevated.length} elevated subject(s) — ${results.length} total screened`,
-            notes: lines.join("\n"),
-            projects: [batchScreenProjectGid()],
-            workspace: asanaGids.workspace(),
-            assignee: asanaGids.assignee(),
+      try {
+        const res = await fetch("https://app.asana.com/api/1.0/tasks", {
+          signal: AbortSignal.timeout(15_000),
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${token}`,
+            "content-type": "application/json",
+            accept: "application/json",
           },
-        }),
-      });
-      const payload = (await res.json().catch((err: unknown) => {
-        console.warn("[hawkeye] batch-screen Asana response parse failed:", err);
-        return null;
-      })) as
-        | { data?: { permalink_url?: string } }
-        | null;
-      if (res.ok && payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
-    } catch (err) {
-      console.warn("[hawkeye] batch-screen Asana POST threw — batch results still returned to caller:", err);
-    }
+          body: JSON.stringify({
+            data: {
+              name: `[BATCH · ${topSeverity}] ${elevated.length} elevated subject(s) — ${results.length} total screened`,
+              notes: lines.join("\n"),
+              projects: [batchScreenProjectGid()],
+              workspace: asanaGids.workspace(),
+              assignee: asanaGids.assignee(),
+            },
+          }),
+        });
+        const payload = (await res.json().catch((err: unknown) => {
+          console.warn("[hawkeye] batch-screen Asana response parse failed:", err);
+          return null;
+        })) as
+          | { data?: { permalink_url?: string } }
+          | null;
+        if (res.ok && payload?.data?.permalink_url) asanaTaskUrl = payload.data.permalink_url;
+      } catch (err) {
+        console.warn("[hawkeye] batch-screen Asana POST threw — batch results still returned to caller:", err);
+      }
     } // end egress gate else
   } // end if (elevated.length > 0 && token)
 

@@ -382,13 +382,13 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
 
       // H-4: Detect sequence gaps before appending — indicates prior corruption/lost entries.
+      // Use ?. because noUncheckedIndexedAccess types array[i] as T|undefined even when
+      // the loop bounds guarantee a valid index.
       for (let i = 1; i < chain.length; i++) {
-        const prev = chain[i - 1]!;
-        const curr = chain[i]!;
-        const expectedSeq = (prev.seq ?? -1) + 1;
-        if (curr.seq !== expectedSeq) {
+        const expectedSeq = (chain[i - 1]?.seq ?? -1) + 1;
+        if (chain[i]?.seq !== expectedSeq) {
           console.error(
-            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${curr.seq}`,
+            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i]?.seq}`,
             { tenant: tenantId },
           );
           incrementCounter('hawkeye_audit_chain_gaps_total', 1, { tenant: tenantId });
@@ -416,8 +416,13 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       // C-1: Post-write race detection — verify our entry persisted under concurrent writes.
       // With consistency:"strong" the read reflects the winning write. If our hash is absent,
       // another Lambda's write overwrote ours; retry with jitter so we append on top of it.
-      const readBack = await store.get(chainFile, { type: "json" }) as ChainEntry[] | null;
-      const readBackChain = Array.isArray(readBack) ? readBack : [];
+      // Retry read-back once to distinguish a transient network null (write succeeded)
+      // from a genuine concurrent-write conflict (different Lambda won the CAS race).
+      let readBackRaw = await store.get(chainFile, { type: "json" }).catch(() => null) as ChainEntry[] | null;
+      if (!readBackRaw) {
+        readBackRaw = await store.get(chainFile, { type: "json" }).catch(() => null) as ChainEntry[] | null;
+      }
+      const readBackChain = Array.isArray(readBackRaw) ? readBackRaw : [];
       if (!readBackChain.some((e: ChainEntry) => e.entryHash === hash)) {
         const jitterMs = 50 + Math.floor(Math.random() * 100);
         console.warn(

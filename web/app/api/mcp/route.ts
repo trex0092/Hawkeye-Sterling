@@ -59,10 +59,20 @@ const INJECTION_PATTERNS: RegExp[] = [
   /###\s*INSTRUCTION/i,
   /---\s*SYSTEM\s*PROMPT/i,
   /override\s+(safety|security|compliance)\s+mode/i,
+  // Additional patterns: bracket/tag variants and alternate model formats
+  /\[system\s+prompt\]/i,
+  /\[user\]/i,
+  /\[assistant\]/i,
+  /###\s*SYSTEM:/i,
+  /<\|im_start\|>/,
+  /<\|im_end\|>/,
 ];
 
 function detectInjection(input: string): boolean {
-  const s = typeof input === "string" ? input : JSON.stringify(input);
+  const raw = typeof input === "string" ? input : JSON.stringify(input);
+  // NFKD normalization + combining-mark strip before pattern check so Unicode
+  // lookalikes and diacritic obfuscation (e.g. "ıgnore") cannot bypass detection.
+  const s = raw.normalize("NFKD").replace(/\p{M}/gu, "");
   return INJECTION_PATTERNS.some(p => p.test(s));
 }
 
