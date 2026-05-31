@@ -141,13 +141,19 @@ cd web && npx playwright test
 
 ## Open Compliance Gaps
 
-See `COMPLIANCE_GAPS.md`. As of 2026-05-26:
-- CG-1 (anonymous quick-screen): OPEN — pending MLRO sign-off to enforce auth
-- CG-2 (OFAC SDN delta): OPEN
-- CG-3 (PEP tier-2 relatives): OPEN
-- CG-4 (goAML live entity IDs): OPEN
-- CG-6 (GDPR/PDPL erasure): OPEN
-- CG-8 (four-eyes quorum ≥3): OPEN
+See `COMPLIANCE_GAPS.md` for full details. As of 2026-05-31:
 
-CG-5 CLOSED 2026-05-26 — fonts.bunny.net confirmed GDPR/PDPL compliant.
-CG-7 CLOSED — egressGate wired to SAR/STR routes.
+**Open / Partial (require operator or MLRO action):**
+- CG-2 (false-positive whitelist): PARTIAL — mechanism implemented; MLRO workflow approval pending
+- CG-3 (periodic re-screening): PARTIAL — cadences implemented; enrollment confirmation pending
+- CG-4 (goAML entity IDs): OPEN — `REPLACE_ME` placeholders in env; operator must set real goAML Rentity IDs
+- CG-6 (audit chain 10-yr retention): PARTIAL — S3/WORM backup implemented; MLRO/CTO must configure bucket + sign off
+- CG-8 (HSTS preload): OPEN — operator must submit domain to hstspreload.org
+- CG-BIAS-001 (bias threshold): DELIBERATE DEVIATION — threshold 1.15 (tighter than FATF floor 1.5); MLRO acknowledgement required
+
+**Closed:**
+- CG-1 CLOSED 2026-05-26 — requireAuth:true on /api/quick-screen; auth coverage gate enforces it in CI
+- CG-5 CLOSED 2026-05-26 — fonts.bunny.net confirmed GDPR/PDPL compliant
+- CG-7 CLOSED 2026-05-26 — egressGate wired to SAR/goAML narrative routes
+- CG-9 CLOSED 2026-05-27 — requireRole() RBAC on SAR, goAML, four-eyes, ai-override
+- CG-GOV-001 CLOSED 2026-05-31 — all 463 reasoning modes have explicit version pins; CI gate passes
