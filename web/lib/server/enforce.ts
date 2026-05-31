@@ -164,29 +164,74 @@ async function _enforce(
   const requireJson = requireJsonBody && bodyMethod;
   if (requireJson) {
     const ct = req.headers.get("content-type") ?? "";
-    // Determine body presence via content-length only. Netlify's reverse proxy
-    // strips content-length and adds transfer-encoding: chunked on all proxied
-    // POST requests, even body-less ones — relying on transfer-encoding alone
-    // produces false 415s for legitimate body-less POSTs from the UI.
-    const cl = req.headers.get("content-length");
-    const clNum = cl !== null ? parseInt(cl, 10) : -1;
-    const hasBody = clNum > 0;
+
+    // F-12: Enforce body size via streaming byte-count on a cloned request so the
+    // check covers chunked transfer encoding (Netlify strips Content-Length on all
+    // proxied requests, making header-only enforcement useless there). The original
+    // `req` body is not consumed — route handlers can still call req.json() normally.
+    // Fall back to Content-Length check when the body stream is unavailable (e.g.
+    // body-less POSTs from the portal UI that arrive without a body at all).
+    let actualBodyBytes = 0;
+    let streamChecked = false;
+    if (req.body) {
+      try {
+        const cloned = req.clone();
+        const reader = cloned.body?.getReader();
+        if (reader) {
+          let overflow = false;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            actualBodyBytes += value.byteLength;
+            if (actualBodyBytes > maxBodyBytes) {
+              overflow = true;
+              reader.cancel().catch(() => undefined);
+              break;
+            }
+          }
+          streamChecked = true;
+          if (overflow) {
+            logAuthFailure(req, "request_body_too_large", 413, { bodyBytes: `>${maxBodyBytes}`, maxBodyBytes });
+            return {
+              ok: false,
+              response: NextResponse.json(
+                { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+                { status: 413 },
+              ),
+            };
+          }
+        }
+      } catch {
+        // Clone/stream read failed — fall through to Content-Length check below.
+        streamChecked = false;
+      }
+    }
+
+    // Legacy Content-Length fallback for environments where body streaming is
+    // unavailable (older runtimes, certain test environments).
+    if (!streamChecked) {
+      const cl = req.headers.get("content-length");
+      const clNum = cl !== null ? parseInt(cl, 10) : -1;
+      if (clNum > maxBodyBytes) {
+        logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+            { status: 413 },
+          ),
+        };
+      }
+      actualBodyBytes = clNum > 0 ? clNum : 0;
+    }
+
+    const hasBody = actualBodyBytes > 0;
     if (hasBody && !ct.toLowerCase().includes("application/json")) {
       return {
         ok: false,
         response: NextResponse.json(
           { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
           { status: 415 },
-        ),
-      };
-    }
-    if (hasBody && clNum > maxBodyBytes) {
-      logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
-      return {
-        ok: false,
-        response: NextResponse.json(
-          { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
-          { status: 413 },
         ),
       };
     }
