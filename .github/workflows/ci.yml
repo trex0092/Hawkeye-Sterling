@@ -216,7 +216,7 @@ jobs:
         # Scans the repository filesystem for known vulnerabilities in
         # dependencies. Fails on CRITICAL or HIGH severity unfixed CVEs.
         # ignore-unfixed=true prevents noise from CVEs with no upstream fix.
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
