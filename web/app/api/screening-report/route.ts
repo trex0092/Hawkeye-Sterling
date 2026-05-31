@@ -223,7 +223,10 @@ function buildInitialScreeningNotes(b: ReportBody): string {
       `Jurisdictional risk for ${b.subject.jurisdiction} is assessed based on FATF posture and CAHRA register status.`,
     );
   }
-  analysisBits.push(`No PEP classification was raised by the brain during this screen.`);
+  const pepHits = hits.filter((h) => /pep/i.test(h.listId));
+  analysisBits.push(pepHits.length > 0
+    ? `PEP classification raised — ${pepHits.length} hit${pepHits.length === 1 ? "" : "s"} on ${[...new Set(pepHits.map((h) => h.listId))].join(", ")}.`
+    : `No PEP classification was raised by the brain during this screen.`);
   if (amFiring.length > 0) {
     analysisBits.push(
       `The adverse-media signal is presently open-source and requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
@@ -374,7 +377,8 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
     }
     if (hits.length > 6) lines.push(`  … and ${hits.length - 6} more`);
   }
-  lines.push(`PEP classification        : ${b.subject.ongoingScreening === false ? "—" : "— (not classified this tick)"}`);
+  const ongoingPepHits = hits.filter((h) => /pep/i.test(h.listId));
+  lines.push(`PEP classification        : ${b.subject.ongoingScreening === false ? "—" : ongoingPepHits.length > 0 ? `RAISED — ${ongoingPepHits.length} hit(s) on ${[...new Set(ongoingPepHits.map((h) => h.listId))].join(", ")}` : "— (not classified this tick)"}`);
   if (esg.length > 0) {
     lines.push(
       `Adverse-media categories  : ${esg.map((e) => e.label).join(" · ")}`,
@@ -432,6 +436,9 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
   }
   if (!body?.subject?.name || !body?.result) {
     return respond(400, { ok: false, error: "subject.name and result are required" });
+  }
+  if (!Array.isArray(body.result.hits)) {
+    return respond(400, { ok: false, error: "result.hits must be an array" });
   }
 
   // M-9: Optional four-eyes enforcement. When an approver is provided, verify

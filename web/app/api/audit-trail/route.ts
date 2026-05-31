@@ -17,7 +17,7 @@
 // Response:
 //   { ok, totalEntries, page, pageSize, entries, tamperMarker? }
 
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { verifyRegulatorToken } from "@/lib/server/regulator-jwt";
@@ -33,6 +33,8 @@ interface ChainEntry {
   entryHash: string;
   payload: unknown;
   at: string;
+  /** "hmac-sha256" | "sha256" | "fnv1a" — absent on legacy entries */
+  hashAlg?: string;
 }
 
 interface TamperMarker {
@@ -42,11 +44,19 @@ interface TamperMarker {
   totalEntries: number;
 }
 
-// SHA-256 chain hash — matches the algorithm used by src/brain/audit-chain.ts.
-// FNV-1a was previously used here but is non-cryptographic (32-bit, trivially
-// collisable). SHA-256 is required for compliance-grade tamper evidence.
-function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number): string {
+// Recompute an entry's hash using the same algorithm that wrote it.
+// Production deployments with AUDIT_CHAIN_SECRET use HMAC-SHA256 (hashAlg="hmac-sha256").
+// Without the secret the writer falls back to plain SHA-256 (hashAlg="sha256" or absent).
+// Using the wrong algorithm always produces a mismatch, making verified=true useless.
+function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number, hashAlg?: string): string {
   const input = `${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`;
+  if (hashAlg === "hmac-sha256") {
+    const secret = process.env["AUDIT_CHAIN_SECRET"];
+    if (!secret) return ""; // cannot verify without the secret — caller will see hashValid:false
+    // Derive per-tenant key the same way audit-chain.ts does for the default tenant
+    const tenantKey = createHmac("sha256", secret).update("default").digest("hex");
+    return createHmac("sha256", tenantKey).update(input).digest("hex");
+  }
   return createHash("sha256").update(input, "utf8").digest("hex");
 }
 
@@ -152,6 +162,7 @@ async function handleGet(req: Request, responseHeaders: Record<string, string> =
         e.payload,
         e.at,
         e.seq,
+        e.hashAlg,
       );
       return { ...e, hashValid: expected === e.entryHash };
     });

@@ -5,7 +5,6 @@
 // and FATF R.10 guidance.
 
 import { NextResponse } from "next/server";
-import { writeAuditEvent } from "@/lib/audit";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -129,7 +128,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "hits array is required and must not be empty" }, { status: 400 , headers: gate.headers });
   }
 
-  writeAuditEvent("analyst", "screening.smart-disambiguate", client.name);
+  void writeAuditChainEntry(
+    { event: "screening.disambiguation_started", actor: gate.keyId, clientName: client.name, hitCount: hits.length },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -197,7 +199,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const client = getAnthropicClient(apiKey, 6_000);
     const response = await client.messages.create({
       model: modelChoice.model,
-      max_tokens: 380, // per-hit JSON ~30 tok × 10 hits + overhead ≈ 350 tok; 380 keeps response under 0.8s
+      max_tokens: Math.min(1024, 200 + hits.length * 40), // ~40 tok/hit; scale with batch size (max 20 hits → 1000 tok)
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -246,7 +248,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[smart-disambiguate] LLM call failed:", msg);
-    writeAuditEvent("analyst", "screening.smart-disambiguate.error", `${client.name} — LLM service temporarily unavailable`);
+    void writeAuditChainEntry(
+      { event: "screening.disambiguation_error", actor: gate.keyId, clientName: sanitizedClient?.name ?? client.name, reason: msg },
+      tenantIdFromGate(gate),
+    ).catch(() => undefined);
     return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }

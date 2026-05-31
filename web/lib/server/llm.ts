@@ -199,12 +199,12 @@ export class AnthropicGuard {
         // change doesn't require a code deploy. Defaults match Haiku 4.5 / Sonnet 4.
         const defaultInputPrice = response.model.includes('haiku') ? 0.80 : 3.00;
         const defaultOutputPrice = response.model.includes('haiku') ? 4.00 : 15.00;
-        const inputPricePerMTok = process.env["LLM_INPUT_PRICE_PER_MTOK"]
-          ? parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"]) || defaultInputPrice
-          : defaultInputPrice;
-        const outputPricePerMTok = process.env["LLM_OUTPUT_PRICE_PER_MTOK"]
-          ? parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"]) || defaultOutputPrice
-          : defaultOutputPrice;
+        // Use Number.isFinite to handle 0 correctly — parseFloat("0") is 0, not NaN,
+        // so `|| default` would silently ignore a deliberate zero-cost configuration.
+        const parsedInput = parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"] ?? "");
+        const inputPricePerMTok = Number.isFinite(parsedInput) ? parsedInput : defaultInputPrice;
+        const parsedOutput = parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"] ?? "");
+        const outputPricePerMTok = Number.isFinite(parsedOutput) ? parsedOutput : defaultOutputPrice;
         const inputTokens = response.usage?.input_tokens ?? 0;
         const outputTokens = response.usage?.output_tokens ?? 0;
         const costUsd = (inputTokens * inputPricePerMTok + outputTokens * outputPricePerMTok) / 1_000_000;

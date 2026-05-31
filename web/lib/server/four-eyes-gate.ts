@@ -74,8 +74,8 @@ export interface SanitizedFourEyesStatus {
 }
 
 const PREFIX = "four-eyes/approvals/";
-const FOUR_EYES_TTL_HOURS = 48; // Cases pending > 48h are flagged as overdue (FDL 10/2025 Art.16)
-const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending > 72h trigger escalation
+const FOUR_EYES_TTL_HOURS = 48; // Cases pending >= 48h are flagged as overdue (FDL 10/2025 Art.16)
+const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending >= 72h trigger escalation
 
 function safeSegment(s: string): string {
   return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 128);
@@ -191,9 +191,11 @@ async function _recordApproval(
   if (actorDecisions.length > 1) {
     // We lost the race — delete our entry and surface the earlier one.
     // If deletion fails after two attempts, the orphaned entry persists in
-    // storage but remains invisible to getCaseApprovals() (its digest won't
-    // match) so it cannot contribute to a false quorum. The hawkeye_four_eyes_orphan_total
-    // counter + critical alert lets ops clean it up manually (H-3).
+    // storage, but duplicate-actor protection is provided by the Set-based
+    // deduplication in getCaseApprovals() — a duplicate actor only appears once
+    // in distinctApprovers regardless of how many entries they have in storage.
+    // The hawkeye_four_eyes_orphan_total counter + critical alert lets ops clean
+    // it up manually (H-3).
     await del(approvalKey(input.caseId, approvalId)).catch(async () => {
       await new Promise((r) => setTimeout(r, 200));
       await del(approvalKey(input.caseId, approvalId)).catch((retryErr) => {

@@ -469,6 +469,15 @@ export async function POST(req: Request) {
     console.error(
       `[ai-decision] DATA INTEGRITY GATE TRIGGERED decisionId=pending missingLists=${JSON.stringify(integrity.missingLists)}`,
     );
+    void writeAuditChainEntry(
+      {
+        event: "ai_decision.blocked_data_integrity",
+        actor: gate.keyId,
+        subjectId: body.subjectId,
+        missingLists: integrity.missingLists,
+      },
+      tenantIdFromGate(gate),
+    ).catch(() => undefined);
     return NextResponse.json(
       {
         ok: false,
@@ -678,7 +687,10 @@ export async function POST(req: Request) {
 function deriveRuleBasedDecision(req: DecisionRequest): AIDecision {
   const hasConfirmedHit = req.sanctionsHits.some((h) => h.score >= 0.85);
   if (hasConfirmedHit) return "str";
-  const isPEP12 = req.pepTier === "1" || req.pepTier === "2" || req.pepTier === "Tier 1" || req.pepTier === "Tier 2";
+  // Match brain output formats: "tier_1_head_of_state_or_gov", "Tier 1", "1", etc.
+  const isPEP12 = req.pepTier === "1" || req.pepTier === "2" ||
+    req.pepTier === "Tier 1" || req.pepTier === "Tier 2" ||
+    /^tier[_-]?[12]\b/i.test(req.pepTier ?? "");
   const highExposure = parseInt(req.exposureAED?.replace(/[^\d]/g, "") || "0", 10) > 100000;
   if (isPEP12 && highExposure) return "escalate";
   if (req.riskScore >= 80 && req.adverseMedia) return "escalate";

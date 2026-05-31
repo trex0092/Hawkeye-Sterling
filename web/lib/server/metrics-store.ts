@@ -54,7 +54,7 @@ function guardCardinality(store: MetricsStore): boolean {
     // Also attempt to write a dedicated overflow counter — if it already exists
     // in the store it will increment without triggering the cardinality guard.
     console.error(`[metrics-store] cardinality limit reached (${total} series) — dropping new metric write`);
-    const overflowKey = 'hawkeye_metrics_cardinality_overflow_total{}';
+    const overflowKey = 'hawkeye_metrics_cardinality_overflow_total';
     const existing = store.counters.get(overflowKey);
     if (existing !== undefined) {
       store.counters.set(overflowKey, existing + 1);

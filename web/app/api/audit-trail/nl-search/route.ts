@@ -16,7 +16,6 @@ import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { writeAuditEvent } from "@/lib/audit";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
@@ -125,7 +124,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  writeAuditEvent("analyst", "audit-trail.nl-search", userQuery.slice(0, 100));
+  void writeAuditChainEntry(
+    { event: "audit_trail.nl_search_started", actor: gate.keyId, query: userQuery.slice(0, 100) },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {

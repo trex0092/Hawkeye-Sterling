@@ -207,6 +207,12 @@ async function handleGoaml(req: Request): Promise<Response> {
         { status: 400, headers: gateHeaders },
       );
     }
+    if (n.first.trim() === n.last.trim()) {
+      return NextResponse.json(
+        { ok: false, error: "subject.name must contain a distinct first and last name — single-name subjects produce invalid goAML XML" },
+        { status: 400, headers: gateHeaders },
+      );
+    }
     const person: GoAmlPerson = {
       firstName: n.first.trim(),
       ...(n.middle ? { middleName: n.middle } : {}),
