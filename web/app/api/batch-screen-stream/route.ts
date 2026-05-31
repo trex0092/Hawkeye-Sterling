@@ -268,13 +268,16 @@ export async function POST(req: Request): Promise<Response> {
       for (let i = 0; i < rows.length; i += STREAM_CONCURRENCY) {
         const batch = rows.slice(i, i + STREAM_CONCURRENCY);
         await Promise.all(
-          batch.map((row, offset) =>
-            Promise.race([
+          batch.map((row, offset) => {
+            let tid: ReturnType<typeof setTimeout> | undefined;
+            return Promise.race([
               processAndEmit(row, i + offset),
-              new Promise<void>((_, reject) =>
-                setTimeout(() => reject(new Error("per-subject timeout")), 30_000)
-              ),
-            ]).catch((err: unknown) => {
+              new Promise<void>((_, reject) => {
+                tid = setTimeout(() => reject(new Error("per-subject timeout")), 30_000);
+              }),
+            ])
+            .finally(() => clearTimeout(tid))
+            .catch((err: unknown) => {
               console.error("[batch-screen-stream] subject timed out or failed:", err instanceof Error ? err.message : err);
               const result: RowResult = {
                 name: row?.name ?? "",
@@ -284,8 +287,8 @@ export async function POST(req: Request): Promise<Response> {
               };
               allResults.push(result);
               send({ type: "progress", index: i + offset, total: rows.length, result });
-            })
-          )
+            });
+          })
         );
       }
 

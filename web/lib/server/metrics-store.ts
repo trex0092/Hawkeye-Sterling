@@ -43,14 +43,28 @@ function labelKey(name: string, labels?: Record<string, string>): string {
   return `${name}{${encoded}}`;
 }
 
+// Guard against unbounded label cardinality from high-cardinality values
+// (e.g. user IDs, UUIDs) being passed as labels by mistake.
+const MAX_SERIES = 10_000;
+
+function guardCardinality(store: MetricsStore): boolean {
+  const total = store.counters.size + store.gauges.size;
+  if (total >= MAX_SERIES) {
+    console.warn(`[metrics-store] cardinality limit reached (${total} series) — dropping new metric write`);
+    return false;
+  }
+  return true;
+}
+
 /** Increment a counter metric (monotonically increasing). */
 export function incrementCounter(
   name: string,
   by = 1,
   labels?: Record<string, string>,
 ): void {
-  const key = labelKey(name, labels);
   const store = getStore();
+  const key = labelKey(name, labels);
+  if (!store.counters.has(key) && !guardCardinality(store)) return;
   store.counters.set(key, (store.counters.get(key) ?? 0) + by);
 }
 
@@ -60,8 +74,10 @@ export function setGauge(
   value: number,
   labels?: Record<string, string>,
 ): void {
+  const store = getStore();
   const key = labelKey(name, labels);
-  getStore().gauges.set(key, value);
+  if (!store.gauges.has(key) && !guardCardinality(store)) return;
+  store.gauges.set(key, value);
 }
 
 export interface MetricEntry {
