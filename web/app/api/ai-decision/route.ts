@@ -659,7 +659,7 @@ export async function POST(req: Request) {
   // Post-response hallucination check (fire-and-forget — writes to audit chain on detection).
   const evidenceFragments = [
     ...responseBody.keyFactors,
-    ...(body.adverseMedia ? [body.adverseMedia] : []),
+    ...(body.adverseMedia ? [body.adverseMedia.slice(0, 5_000)] : []),
     ...body.sanctionsHits.map((h) => `${h.list}: score ${h.score}${h.details ? ` — ${h.details}` : ""}`),
   ];
   void checkHallucination(responseBody.rationale, evidenceFragments, {

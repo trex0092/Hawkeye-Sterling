@@ -54,6 +54,13 @@ export async function GET(req: Request): Promise<NextResponse> {
     if (idx === -1) {
       return;
     }
+    // Block repeated use — recoveryUsed is set to true after first successful use
+    // (by either this route or the login recovery path) so LUISA_INITIAL_PASSWORD
+    // cannot be used indefinitely. If a second reset is needed, the operator must
+    // reconfigure the LUISA_INITIAL_PASSWORD env var (single-use design).
+    if (users[idx]!.recoveryUsed) {
+      return;
+    }
     const salt = generateSalt();
     const hash = hashPassword(newPassword, salt);
     const updatedUsers = [...users];
@@ -63,6 +70,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       passwordSalt: salt,
       pwVersion: (users[idx]!.pwVersion ?? 0) + 1,
       active: true,
+      recoveryUsed: true,
     };
     await saveUsers(updatedUsers);
     updated = true;
@@ -70,6 +78,16 @@ export async function GET(req: Request): Promise<NextResponse> {
   });
 
   if (!updated) {
+    // Distinguish between "not found" and "already used" so the operator knows
+    // whether to look for a different account name or reconfigure the env var.
+    const users = await loadUsers();
+    const luisa = users.find((u) => u.username?.toLowerCase() === "luisa" || u.id === "usr-001");
+    if (luisa?.recoveryUsed) {
+      return NextResponse.json(
+        { ok: false, error: "Recovery already used. Reconfigure LUISA_INITIAL_PASSWORD in env vars to enable another reset." },
+        { status: 403 },
+      );
+    }
     return NextResponse.json({ ok: false, error: "luisa account not found in store." }, { status: 404 });
   }
 

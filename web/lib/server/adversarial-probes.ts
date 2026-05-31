@@ -96,7 +96,8 @@ export const PROBES: AdversarialProbe[] = [
       r.toLowerCase().includes("manual") ||
       r.toLowerCase().includes("review") ||
       r.toLowerCase().includes("escalate") ||
-      r.toLowerCase().includes("match"),
+      r.toLowerCase().includes("possible match") ||
+      r.toLowerCase().includes("potential match"),
   },
   {
     id: "SE-002",

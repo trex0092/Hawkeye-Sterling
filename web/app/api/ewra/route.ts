@@ -185,13 +185,18 @@ The overallScore should reflect the FATF category scores and sector modifier abo
     });
 
     const raw = response.content[0]?.type === "text" ? response.content[0].text : "{}";
-    const parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as {
+    let parsed: {
       overallScore?: number;
       dimensions?: Array<{ name: string; score: number; keyFactors?: string[]; mitigationControls?: string[] }>;
       topRisks?: string[];
       mitigationPriorities?: string[];
       boardSummary?: string;
     };
+    try {
+      parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim()) as typeof parsed;
+    } catch {
+      throw new Error("LLM returned invalid JSON — EWRA assessment could not be parsed. Retry or check model output.");
+    }
 
     // Apply UAE sector modifier to inherent score (capped at 100)
     const baseScore = Math.max(0, Math.min(100, parsed.overallScore ?? 50));

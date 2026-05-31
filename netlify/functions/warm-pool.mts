@@ -1,6 +1,6 @@
 // Hawkeye Sterling — warm-pool keep-alive (audit follow-up #37).
 //
-// Scheduled every 4 minutes (well inside the AWS Lambda ~15-minute idle
+// Scheduled every 10 minutes (well inside the AWS Lambda ~15-minute idle
 // reclamation window). Two warming strategies, both attempted every tick:
 //
 //   1. HTTP pings against hot-path API routes. May fail on Netlify when

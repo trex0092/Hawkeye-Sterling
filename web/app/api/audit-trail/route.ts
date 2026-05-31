@@ -202,5 +202,8 @@ export const GET = async (req: Request) => {
   return enforce(req as Parameters<typeof enforce>[0]).then((gate) => {
     if (!gate.ok) return gate.response as unknown as NextResponse;
     return handleGet(req, gate.headers);
+  }).catch((err: unknown) => {
+    console.error("[audit-trail] enforce() rejected:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
   });
 };

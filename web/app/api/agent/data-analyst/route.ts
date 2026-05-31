@@ -23,6 +23,7 @@ import { NextResponse } from "next/server";
 import type { Beta } from "@anthropic-ai/sdk/resources/index.js";
 import { enforce } from "@/lib/server/enforce";
 import { getAnthropicClient } from "@/lib/server/llm";
+import { redact, rehydrate } from "@/lib/server/redact";
 import { sanitizeText } from "@/lib/server/sanitize-prompt";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -69,10 +70,13 @@ export async function POST(req: Request) {
     const session = await beta.sessions.create({ agent: AGENT_ID, environment_id: ENV_ID });
     const sessionId: string = session.id;
 
-    // 2. Build the user message (with optional context prepended).
-    const userText = context
+    // 2. Build the user message (with optional context prepended), then
+    //    redact PII before sending through the unguarded beta sessions API.
+    const rawUserText = context
       ? `Context / dataset:\n${context}\n\n---\n\n${question}`
       : question;
+    const piiMap = {};
+    const userText = redact(rawUserText, piiMap);
 
     // 3. Stream-first: open the stream BEFORE sending so no events are missed.
     const deadline = Date.now() + timeoutMs;
@@ -149,7 +153,8 @@ export async function POST(req: Request) {
       tenantIdFromGate(gate),
     ).catch((e: unknown) => console.warn("[audit] agent/data-analyst:", e instanceof Error ? e.message : String(e)));
 
-    return NextResponse.json({ ok: true, answer, sessionId }, { headers: gate.headers });
+    // Rehydrate any redacted PII tokens back into the answer before returning.
+    return NextResponse.json({ ok: true, answer: rehydrate(answer, piiMap), sessionId }, { headers: gate.headers });
   } catch (err) {
     console.error("[agent/data-analyst]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(

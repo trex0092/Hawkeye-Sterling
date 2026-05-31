@@ -201,7 +201,7 @@ export default async (_req: Request) => {
   // Consecutive failure tracking — BUG 4.
   // After 2 consecutive run failures: create P1 Asana task + MLRO CRITICAL webhook.
   const failureCountKey = "hawkeye-eocn/consecutive-failures.json";
-  interface FailureRecord { count: number; firstFailAt: string; lastFailAt: string }
+  interface FailureRecord { count: number; firstFailAt: string | null; lastFailAt: string | null }
   const mainStoreForFailures = (() => {
     const siteId = process.env["NETLIFY_SITE_ID"] ?? process.env["SITE_ID"] ?? "";
     const blobToken = process.env["NETLIFY_BLOBS_TOKEN"] ?? process.env["NETLIFY_API_TOKEN"] ?? process.env["NETLIFY_AUTH_TOKEN"] ?? "";

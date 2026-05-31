@@ -88,7 +88,7 @@ export function isCaseOverdue(firstApprovalAt: string, nowMs = Date.now()): bool
 
 export function isCaseRequiresEscalation(firstApprovalAt: string, nowMs = Date.now()): boolean {
   const ageHours = (nowMs - Date.parse(firstApprovalAt)) / 3_600_000;
-  return ageHours > FOUR_EYES_ESCALATION_HOURS;
+  return ageHours >= FOUR_EYES_ESCALATION_HOURS;
 }
 
 function approvalKey(caseId: string, approvalId: string): string {
@@ -375,7 +375,7 @@ export async function getOverdueCases(): Promise<Array<{ caseId: string; overdue
       overdue.push({
         caseId,
         overdueHours: status.overdueHours ?? 0,
-        requiresEscalation: (status.overdueHours ?? 0) > FOUR_EYES_ESCALATION_HOURS,
+        requiresEscalation: (status.overdueHours ?? 0) >= FOUR_EYES_ESCALATION_HOURS,
       });
     }
   }

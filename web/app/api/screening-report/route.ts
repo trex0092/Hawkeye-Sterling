@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash, randomUUID } from "node:crypto";
-import { withGuard } from "@/lib/server/guard";
-import type { RequestContext } from "@/lib/server/guard";
+import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
 import { asanaGids } from "@/lib/server/asanaConfig";
