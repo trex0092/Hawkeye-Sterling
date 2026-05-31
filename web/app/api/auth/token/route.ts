@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume } from "@/lib/server/api-keys";
-import { issueJwt } from "@/lib/server/jwt";
+import { issueJwt, looksLikeJwt } from "@/lib/server/jwt";
 import { consumeRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
@@ -25,6 +25,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       { ok: false, error: "API key required. Supply Authorization: Bearer or X-Api-Key." },
       { status: 401 },
+    );
+  }
+
+  // F-33: Reject JWT tokens at this endpoint — accepting a JWT to issue another
+  // JWT creates a JWT-of-JWT confusion path where a stolen short-lived token can
+  // mint a new short-lived token indefinitely. Only raw API keys (hks_live_…) may
+  // be exchanged for a JWT.
+  if (looksLikeJwt(plaintext)) {
+    return NextResponse.json(
+      { ok: false, error: "JWT tokens cannot be exchanged for new JWTs. Supply a raw API key." },
+      { status: 400 },
     );
   }
 

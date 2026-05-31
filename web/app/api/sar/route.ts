@@ -24,7 +24,7 @@
 //   the request is rejected with 403 four_eyes_required.
 //   This implements UAE FDL 10/2025 Art.16 in code, not just governance policy.
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { requireRole } from "@/lib/server/role-gate";
@@ -150,6 +150,25 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
         { ok: false, error: "Insufficient permissions to bypass four-eyes requirement" },
         { status: 403, headers: gateHeaders },
       );
+    }
+  }
+
+  // F-23: Idempotency key guard — prevents duplicate SAR filings on network retry.
+  const idempotencyKey = req.headers.get("idempotency-key")?.trim();
+  if (idempotencyKey) {
+    if (idempotencyKey.length > 256) {
+      return NextResponse.json({ ok: false, error: "Idempotency-Key exceeds 256-character limit" }, { status: 400, headers: gateHeaders });
+    }
+    const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+    const existing = await getJson<{ submittedAt: string; sarId: string }>(`filing-idempotency/${idemHash}.json`).catch(() => null);
+    if (existing) {
+      const ageMs = Date.now() - Date.parse(existing.submittedAt);
+      if (ageMs < 24 * 60 * 60 * 1000) {
+        return NextResponse.json(
+          { ok: true, duplicate: true, sarId: existing.sarId, submittedAt: existing.submittedAt },
+          { status: 200, headers: gateHeaders },
+        );
+      }
     }
   }
 
@@ -316,6 +335,15 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     ).catch((err) =>
       console.warn("[sar] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
+
+    // F-23: Store idempotency record so retries return the same sarId.
+    if (idempotencyKey) {
+      const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+      void setJson(`filing-idempotency/${idemHash}.json`, {
+        submittedAt: record.generatedAt,
+        sarId,
+      }).catch(() => undefined);
+    }
 
     return NextResponse.json({
       ok: true,

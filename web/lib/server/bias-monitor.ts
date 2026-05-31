@@ -118,11 +118,29 @@ const MIN_NATIONALITY_SAMPLE = 5;   // minimum entries per nationality for bias 
 // must be declared is checked separately in bias-report/route.ts (criticalGroups).
 // Override via BIAS_THRESHOLD_PCT env var (e.g. "20" → ratio 1.20). Requires MLRO sign-off
 // before loosening above 50 (ratio 1.5) in production — see COMPLIANCE_GAPS.md.
+// FATF R.10 regulatory floor: biasRatio must never exceed 1.5.
+// The internal default (1.15) is tighter; operators can loosen it up to but
+// NOT exceeding 1.5. F-19 fix: throw at startup when BIAS_THRESHOLD_PCT
+// would produce a ratio exceeding the FATF floor.
+const FATF_BIAS_RATIO_FLOOR = 1.5;
+const FATF_BIAS_THRESHOLD_PCT_MAX = (FATF_BIAS_RATIO_FLOOR - 1) * 100; // 50
+
 function getBiasThreshold(): number {
   const raw = process.env["BIAS_THRESHOLD_PCT"];
   if (raw !== undefined && raw !== "") {
     const v = parseFloat(raw);
-    if (isFinite(v) && v > 0 && v < 100) return 1 + v / 100;
+    if (isFinite(v) && v > 0) {
+      if (v > FATF_BIAS_THRESHOLD_PCT_MAX) {
+        // Throw rather than silently weakening the non-discrimination control.
+        // An operator must NOT set BIAS_THRESHOLD_PCT above 50 (ratio 1.5).
+        throw new Error(
+          `BIAS_THRESHOLD_PCT=${v} would produce biasRatio=${(1 + v / 100).toFixed(2)}, ` +
+          `exceeding FATF R.10 regulatory floor (ratio ≤ ${FATF_BIAS_RATIO_FLOOR}). ` +
+          `Maximum allowed value is ${FATF_BIAS_THRESHOLD_PCT_MAX} (ratio 1.5).`,
+        );
+      }
+      if (v < 100) return 1 + v / 100;
+    }
   }
   return 1.15;
 }

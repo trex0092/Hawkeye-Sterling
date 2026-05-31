@@ -26,6 +26,7 @@ import { verifySession, SESSION_COOKIE } from "./auth";
 import { log } from "./logger";
 import { startSpan, SpanStatus } from "./tracer";
 import { incrementCounter } from "./metrics-store";
+import { writeAuditChainEntry } from "./audit-chain";
 
 // Memoized HMAC key for IP anonymization. Derived once per deployment from
 // SESSION_SECRET so that the same IP always produces the same hash within a
@@ -49,6 +50,16 @@ export function anonIpKey(): string {
   return _anonIpKey;
 }
 
+// F-14: Auth failure reasons that are high-severity enough to warrant a
+// tamper-evident chain entry. Mutable-log rotation cannot be relied upon for
+// forensic reconstruction of credential-stuffing or key-revocation evasion.
+const HIGH_SEVERITY_AUTH_REASONS = new Set([
+  "jwt_key_revoked",
+  "anonymous_request_rejected",
+  "invalid_jwt:bad_signature",
+  "invalid_jwt:alg_mismatch",
+]);
+
 /** Internal: emit a structured auth-failure log entry for every enforcement rejection. */
 function logAuthFailure(
   req: Request,
@@ -63,6 +74,7 @@ function logAuthFailure(
   const ip = ips.length > 0 ? (ips[ips.length - 1] ?? UNKNOWN_IP) : UNKNOWN_IP;
   const requestId = req.headers.get("x-request-id") ?? "unset";
   const route = new URL(req.url).pathname;
+  const ipHash = createHmac("sha256", anonIpKey()).update(ip ?? "").digest("hex").slice(0, 16);
   log({
     level: "warn",
     route,
@@ -73,11 +85,29 @@ function logAuthFailure(
     // IP HMAC-hashed for PII hygiene — raw IP not logged.
     // HMAC-SHA256 with a per-deployment key prevents rainbow-table reversal
     // of the ~4B IPv4 address space that plain SHA-256 would allow.
-    ipHash: createHmac("sha256", anonIpKey()).update(ip ?? "").digest("hex").slice(0, 16),
+    ipHash,
     method: req.method,
     ...extra,
   });
   incrementCounter('hawkeye_auth_failures_total', 1, { reason: reason.split(':')[0] ?? reason });
+
+  // F-14: Write high-severity failures to the tamper-evident audit chain so
+  // credential-stuffing and revocation-evasion attempts survive log rotation.
+  if (HIGH_SEVERITY_AUTH_REASONS.has(reason)) {
+    void writeAuditChainEntry(
+      {
+        event: "auth.failure",
+        actor: "system",
+        route,
+        reason,
+        ipHash,
+        method: req.method,
+        status,
+        ...extra,
+      },
+      "default",
+    ).catch(() => undefined);
+  }
 }
 
 export interface EnforcementAllow {
