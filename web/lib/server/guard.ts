@@ -73,7 +73,11 @@ export function withGuard(handler: Handler): (_req: Request) => Promise<Response
 
     const ctx: RequestContext = {
       apiKey,
-      tenantId: apiKey.email,
+      // F-39: Use the unique key ID as tenantId, not the email address.
+      // Two API keys sharing the same email would collide on the tenant
+      // namespace if email were used — e.g. a compromised key reissued
+      // to the same user would read/write the prior key's blob partition.
+      tenantId: apiKey.id,
       traceId,
       receivedAt,
     };

@@ -21,7 +21,7 @@ import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { sanitizeField } from "@/lib/server/sanitize-prompt";
+import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 import {
   FATF_RISK_FACTOR_MATRIX,
   computeFatfCategoryScore,
@@ -111,8 +111,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400, headers: gate.headers });
   }
 
-  const sector = sanitizeField((body.sector ?? "financial_services").trim(), 100);
-  const jurisdiction = sanitizeField((body.jurisdiction ?? "UAE").trim(), 100);
+  // F-13: sanitizeLlmInput applies injection-pattern stripping in addition to
+  // the newline/control-char cleaning done by sanitizeField, preventing prompt
+  // injection via sector/jurisdiction values interpolated directly into the LLM prompt.
+  const sector = sanitizeLlmInput((body.sector ?? "financial_services").trim(), 100);
+  const jurisdiction = sanitizeLlmInput((body.jurisdiction ?? "UAE").trim(), 100);
   const reportingPeriod = sanitizeField(body.reportingPeriod ?? new Date().getFullYear().toString(), 50);
   const depth = body.analysisDepth ?? "full";
 

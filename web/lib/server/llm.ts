@@ -195,16 +195,37 @@ export class AnthropicGuard {
           route,
           type: 'total',
         });
-        // Prices per million tokens — configurable via env vars so a model price
-        // change doesn't require a code deploy. Defaults match Haiku 4.5 / Sonnet 4.
-        const defaultInputPrice = response.model.includes('haiku') ? 0.80 : 3.00;
-        const defaultOutputPrice = response.model.includes('haiku') ? 4.00 : 15.00;
-        const inputPricePerMTok = process.env["LLM_INPUT_PRICE_PER_MTOK"]
-          ? parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"]) || defaultInputPrice
-          : defaultInputPrice;
-        const outputPricePerMTok = process.env["LLM_OUTPUT_PRICE_PER_MTOK"]
-          ? parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"]) || defaultOutputPrice
-          : defaultOutputPrice;
+        // Prices per million tokens — keyed by exact model ID. The previous
+        // `model.includes('haiku')` heuristic broke on non-haiku models sharing
+        // similar name patterns and used a single $3/$15 fallback for every non-haiku
+        // model regardless of actual pricing (F-11 fix).
+        // Override ALL models globally via LLM_INPUT_PRICE_PER_MTOK / LLM_OUTPUT_PRICE_PER_MTOK,
+        // or a single model via LLM_PRICE_<MODEL_ID_UPPER>_INPUT / OUTPUT.
+        const MODEL_PRICES: Record<string, { input: number; output: number }> = {
+          "claude-haiku-4-5-20251001": { input: 0.80, output: 4.00 },
+          "claude-haiku-4-5": { input: 0.80, output: 4.00 },
+          "claude-sonnet-4-6": { input: 3.00, output: 15.00 },
+          "claude-sonnet-4-5": { input: 3.00, output: 15.00 },
+          "claude-opus-4-8": { input: 15.00, output: 75.00 },
+          "claude-opus-4-7": { input: 15.00, output: 75.00 },
+        };
+        const knownPrices = MODEL_PRICES[response.model] ?? { input: 3.00, output: 15.00 };
+        if (!MODEL_PRICES[response.model]) {
+          console.warn(`[llm] unknown model pricing for '${response.model}' — using default $3/$15. Add it to MODEL_PRICES in llm.ts.`);
+        }
+        const modelEnvKey = response.model.toUpperCase().replace(/[^A-Z0-9]/g, "_");
+        const inputPricePerMTok =
+          process.env["LLM_INPUT_PRICE_PER_MTOK"]
+            ? (parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"]) || knownPrices.input)
+            : (process.env[`LLM_PRICE_${modelEnvKey}_INPUT`]
+                ? (parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_INPUT`]!) || knownPrices.input)
+                : knownPrices.input);
+        const outputPricePerMTok =
+          process.env["LLM_OUTPUT_PRICE_PER_MTOK"]
+            ? (parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"]) || knownPrices.output)
+            : (process.env[`LLM_PRICE_${modelEnvKey}_OUTPUT`]
+                ? (parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_OUTPUT`]!) || knownPrices.output)
+                : knownPrices.output);
         const inputTokens = response.usage?.input_tokens ?? 0;
         const outputTokens = response.usage?.output_tokens ?? 0;
         const costUsd = (inputTokens * inputPricePerMTok + outputTokens * outputPricePerMTok) / 1_000_000;

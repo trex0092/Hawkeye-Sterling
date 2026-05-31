@@ -1137,6 +1137,14 @@ export async function GET(req: Request): Promise<NextResponse> {
       { status: 400, headers: gateHeaders },
     );
   }
+  // F-18: Reject control characters in query to prevent injection into
+  // RSS query strings and external news API parameters.
+  if (/[\x00-\x1f\x7f]/.test(q)) {
+    return NextResponse.json(
+      { ok: false, error: "query `q` contains disallowed control characters" },
+      { status: 400, headers: gateHeaders },
+    );
+  }
 
   const cacheKey = q.toLowerCase().trim();
   const cached = NEWS_CACHE.get(cacheKey);

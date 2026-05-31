@@ -47,15 +47,40 @@ function getSecret(): string {
  *
  * Rotation procedure (10-minute window = DEFAULT_TTL_SEC):
  *   1. Set JWT_SIGNING_SECRET_PREV = current JWT_SIGNING_SECRET
- *   2. Deploy new JWT_SIGNING_SECRET
- *   3. Existing tokens signed with the old key continue to verify via _PREV
- *   4. After 600s (all old tokens expired), remove JWT_SIGNING_SECRET_PREV
+ *   2. Set JWT_SIGNING_SECRET_ROTATED_AT = unix timestamp of rotation
+ *   3. Deploy new JWT_SIGNING_SECRET
+ *   4. Existing tokens signed with the old key continue to verify via _PREV
+ *   5. After 600s (all old tokens expired), remove both _PREV and _ROTATED_AT
  *
- * Returns undefined when no previous secret is configured.
+ * F-16 fix: if JWT_SIGNING_SECRET_ROTATED_AT is set and more than 2× TTL
+ * seconds have elapsed, the prev-key is automatically rejected even if still
+ * present. This prevents a forgotten _PREV from accepting compromised tokens
+ * indefinitely. Without ROTATED_AT the grace window is not enforced
+ * (backward-compatible for deployments that haven't set this var yet).
+ *
+ * Returns undefined when no previous secret is configured or when the grace
+ * period has expired.
  */
 function getPrevSecret(): string | undefined {
   const raw = process.env["JWT_SIGNING_SECRET_PREV"];
   if (!raw || raw.length < 32) return undefined;
+
+  const rotatedAt = parseInt(process.env["JWT_SIGNING_SECRET_ROTATED_AT"] ?? "0", 10);
+  if (rotatedAt > 0) {
+    const ttlSec = parseInt(process.env["JWT_TTL_SEC"] ?? String(DEFAULT_TTL_SEC), 10);
+    const gracePeriodSec = ttlSec * 2; // 2× TTL — all old tokens must have expired by then
+    const elapsedSec = Math.floor(Date.now() / 1000) - rotatedAt;
+    if (elapsedSec > gracePeriodSec) {
+      log({
+        level: "error",
+        event: "jwt.prev_key_grace_expired",
+        detail: `JWT_SIGNING_SECRET_PREV has exceeded grace period (${gracePeriodSec}s elapsed: ${elapsedSec}s) — rejecting prev-key tokens. Remove JWT_SIGNING_SECRET_PREV and JWT_SIGNING_SECRET_ROTATED_AT from env.`,
+      });
+      incrementCounter('hawkeye_jwt_prev_key_expired_total');
+      return undefined;
+    }
+  }
+
   return raw;
 }
 
@@ -148,9 +173,11 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
     return { ok: false, reason: "expired", payload };
   }
 
-  // Reject tokens that carry an explicit wrong issuer. Protects against
-  // cross-service JWT confusion if another service shares the signing key.
-  if (payload.iss !== undefined && payload.iss !== "hawkeye-sterling") {
+  // Require a valid issuer on every token. Tokens issued by issueJwt() always
+  // carry iss: "hawkeye-sterling" (line 89). Accepting tokens without an iss
+  // claim opened a cross-service JWT confusion path when another service
+  // shared JWT_SIGNING_SECRET. F-06 fix: iss is now required and pinned.
+  if (!payload.iss || payload.iss !== "hawkeye-sterling") {
     return { ok: false, reason: "invalid_issuer" };
   }
 

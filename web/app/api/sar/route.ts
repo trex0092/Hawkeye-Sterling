@@ -24,7 +24,7 @@
 //   the request is rejected with 403 four_eyes_required.
 //   This implements UAE FDL 10/2025 Art.16 in code, not just governance policy.
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { requireRole } from "@/lib/server/role-gate";
@@ -153,6 +153,25 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     }
   }
 
+  // F-23: Idempotency key guard — prevents duplicate SAR filings on network retry.
+  const idempotencyKey = req.headers.get("idempotency-key")?.trim();
+  if (idempotencyKey) {
+    if (idempotencyKey.length > 256) {
+      return NextResponse.json({ ok: false, error: "Idempotency-Key exceeds 256-character limit" }, { status: 400, headers: gateHeaders });
+    }
+    const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+    const existing = await getJson<{ submittedAt: string; sarId: string }>(`filing-idempotency/${idemHash}.json`).catch(() => null);
+    if (existing) {
+      const ageMs = Date.now() - Date.parse(existing.submittedAt);
+      if (ageMs < 24 * 60 * 60 * 1000) {
+        return NextResponse.json(
+          { ok: true, duplicate: true, sarId: existing.sarId, submittedAt: existing.submittedAt },
+          { status: 200, headers: gateHeaders },
+        );
+      }
+    }
+  }
+
   if (!caseId) {
     return NextResponse.json({ ok: false, error: "caseId required" }, { status: 400, headers: gateHeaders });
   }
@@ -214,8 +233,10 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     console.warn(
       `[sar] four-eyes BYPASSED: caseId=${caseId} generatedBy=${generatedBy} role=${callerRole}`,
     );
-    // Write an immutable audit-chain entry so the bypass is permanently logged.
-    void writeAuditChainEntry({
+    // F-15 fix: four-eyes bypass audit write is BLOCKING — do not proceed with
+    // the SAR generation if the tamper-evident record cannot be written.
+    // A missing audit entry for a bypass violates FDL 10/2025 Art.16.
+    const bypassWritten = await writeAuditChainEntry({
       event: "four_eyes.bypass",
       actor: generatedBy,
       caseId,
@@ -224,9 +245,18 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       bypassReason: "role_override",
       bypassRole: callerRole,
       filingType,
-    }).catch((err: unknown) => {
-      console.warn("[sar] four_eyes.bypass audit write failed:", err instanceof Error ? err.message : String(err));
     });
+    if (!bypassWritten) {
+      console.error("[sar] four_eyes.bypass audit write FAILED — blocking SAR generation (FDL 10/2025 Art.16)");
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Audit chain unavailable — four-eyes bypass blocked. Retry when storage is available.",
+          code: "AUDIT_WRITE_FAILED",
+        },
+        { status: 503 },
+      );
+    }
   }
 
   // ── Delegate to sar-report route for actual generation ────────────────────
@@ -305,6 +335,15 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     ).catch((err) =>
       console.warn("[sar] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
+
+    // F-23: Store idempotency record so retries return the same sarId.
+    if (idempotencyKey) {
+      const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+      void setJson(`filing-idempotency/${idemHash}.json`, {
+        submittedAt: record.generatedAt,
+        sarId,
+      }).catch(() => undefined);
+    }
 
     return NextResponse.json({
       ok: true,

@@ -1,11 +1,15 @@
 // Per-key circuit breaker with exponential-backoff retry and
-// Netlify-Blobs persistence so state survives Lambda cold starts.
+// dual-layer persistence so state survives Lambda cold starts.
 //
 // Hot path (isBreakerOpen / recordSuccess / recordFailure) stays in-memory
-// for latency — Blobs writes are fire-and-forget. On first probe of any
-// key, we hydrate the in-memory entry from Blobs (best-effort) so a fresh
-// Lambda inherits whatever state a sibling Lambda last wrote. The Blob
-// store key is `circuit-breaker/<sanitisedKey>.json`.
+// for latency. Persistence order:
+//   1. Upstash Redis — consistent, sub-millisecond, shared across all Lambda
+//      instances. TTL = RESET_MS so expired entries auto-expire. (F-17 fix)
+//   2. Netlify Blobs fallback — best-effort when Redis is unavailable.
+//
+// On first probe of any key, we hydrate the in-memory entry from Redis (then
+// Blobs) so a fresh Lambda inherits whatever state a sibling Lambda last wrote.
+// The Blob store key is `circuit-breaker/<sanitisedKey>.json`.
 //
 // Concurrency model: last-writer-wins. Circuit-breaker state is advisory,
 // not transactional — a brief disagreement between concurrent Lambdas
@@ -18,38 +22,79 @@ const breakers = new Map<string, BreakerState>();
 const hydrated = new Set<string>();
 const THRESHOLD = 5;
 const RESET_MS = 60_000; // 1 minute
+// Redis key prefix and TTL for circuit breaker state entries.
+const REDIS_CB_PREFIX = "cb:";
+const REDIS_TTL_SEC = Math.ceil(RESET_MS / 1000) * 2; // 2× reset window
 
-// Sanitise an arbitrary breaker key for use as a Blob key. Anything outside
-// [a-zA-Z0-9_.-] is replaced with `_` and the result is capped at 100 chars.
-// Keeps the storage key namespace stable across renames / config drift.
+// Sanitise an arbitrary breaker key for use as a Blob/Redis key.
+function storageKeyFor(key: string): string {
+  return key.replace(/[^a-zA-Z0-9_.\-]/g, "_").slice(0, 100);
+}
 function blobKeyFor(key: string): string {
-  return `circuit-breaker/${key.replace(/[^a-zA-Z0-9_.\-]/g, "_").slice(0, 100)}.json`;
+  return `circuit-breaker/${storageKeyFor(key)}.json`;
+}
+function redisKeyFor(key: string): string {
+  return `${REDIS_CB_PREFIX}${storageKeyFor(key)}`;
 }
 
-// Best-effort hydration from Blobs. Fire-and-forget on a miss. We never
-// throw — circuit-breaker checks must stay sync-able from hot paths.
+// F-17: Read circuit breaker state from Upstash Redis if configured.
+async function redisGet(key: string): Promise<BreakerState | null> {
+  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
+  if (!url || !token) return null;
+  try {
+    const res = await fetch(`${url}/get/${encodeURIComponent(redisKeyFor(key))}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const j = await res.json() as { result: string | null };
+    if (!j.result) return null;
+    return JSON.parse(j.result) as BreakerState;
+  } catch {
+    return null;
+  }
+}
+
+// F-17: Write circuit breaker state to Upstash Redis with auto-expiry TTL.
+async function redisSet(key: string, state: BreakerState): Promise<void> {
+  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
+  if (!url || !token) return;
+  try {
+    await fetch(`${url}/set/${encodeURIComponent(redisKeyFor(key))}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify([JSON.stringify(state), "EX", REDIS_TTL_SEC]),
+    });
+  } catch {
+    // Redis write failure must not break the request path.
+  }
+}
+
+// Best-effort hydration — Redis first, Blobs fallback. Fire-and-forget on a miss.
 function hydrate(key: string): void {
   if (hydrated.has(key)) return;
   hydrated.add(key);
   void (async () => {
     try {
-      const { getJson } = await import("./store");
-      const persisted = await getJson<BreakerState>(blobKeyFor(key));
+      // F-17: Try Redis first — consistent across all Lambda instances.
+      let persisted = await redisGet(key);
+      if (!persisted) {
+        // Fall back to Blobs for continuity with pre-F-17 deployments.
+        const { getJson } = await import("./store");
+        persisted = await getJson<BreakerState>(blobKeyFor(key));
+      }
       if (!persisted) return;
-      // Only adopt persisted state if it's still recent — a `RESET_MS`-aged
-      // openedAt is already due for reset, so skip the merge.
+      // Only adopt persisted state if it's still recent.
       if (persisted.openedAt !== null && Date.now() - persisted.openedAt > RESET_MS) return;
-      // Merge with whatever the local map has accumulated since this call
-      // was scheduled (local wins on ties).
       if (!breakers.has(key)) breakers.set(key, persisted);
     } catch {
-      // Blob layer unavailable (no NETLIFY_SITE_ID locally, transient errors).
-      // The breaker still works purely from memory.
+      // Storage layer unavailable — breaker works purely from memory.
     }
   })();
 }
 
 function persist(key: string, state: BreakerState): void {
+  void redisSet(key, state); // F-17: primary persistence path
   void (async () => {
     try {
       const { setJson } = await import("./store");

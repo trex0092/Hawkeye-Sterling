@@ -339,6 +339,16 @@ export async function requireFourEyes(caseId: string): Promise<{
 export async function expireCase(caseId: string, expiredBy: string): Promise<{ status: FourEyesStatus; expired: boolean }> {
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
+  // F-07 fix: reject if the expiry actor is one of the existing approvers.
+  // expireCase() was missing the same-actor uniqueness guard that _recordApproval()
+  // applies, allowing a scenario where the expiry rejection is attributed to an
+  // actor who already approved the case — violating the dual-attestation principle.
+  if (status.approverGids.includes(expiredBy)) {
+    throw new Error(
+      `expireCase: expiredBy actor ${hashActor(expiredBy)} is an existing approver on this case. ` +
+      `Use a system/cron identity that is not a case approver (FDL 10/2025 Art.16).`,
+    );
+  }
   const expiryRationale = `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`;
   const expiry: ApprovalEntry = {
     approvalId: `expiry_${Date.now()}_${randomBytes(8).toString("hex")}`,
@@ -366,17 +376,25 @@ export async function getOverdueCases(): Promise<Array<{ caseId: string; overdue
       return '';
     }
     return parts[0];
-  })));
+  }))).filter(Boolean);
+
+  // F-21 fix: parallel fetch with bounded concurrency instead of sequential
+  // for-await. The previous O(n) sequential loop made 1 Blobs round-trip per
+  // case (~50ms each) — with 1,000 open cases that exceeds Lambda timeout.
+  // Batch into groups of 20 concurrent requests to bound peak concurrency.
+  const BATCH_SIZE = 20;
   const overdue: Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }> = [];
-  for (const caseId of caseIds) {
-    if (!caseId) continue;
-    const status = await getCaseApprovals(caseId);
-    if (!status.passed && !status.rejectedAt && status.isExpired) {
-      overdue.push({
-        caseId,
-        overdueHours: status.overdueHours ?? 0,
-        requiresEscalation: (status.overdueHours ?? 0) > FOUR_EYES_ESCALATION_HOURS,
-      });
+  for (let i = 0; i < caseIds.length; i += BATCH_SIZE) {
+    const batch = caseIds.slice(i, i + BATCH_SIZE) as string[];
+    const statuses = await Promise.all(batch.map((caseId) => getCaseApprovals(caseId)));
+    for (const status of statuses) {
+      if (!status.passed && !status.rejectedAt && status.isExpired) {
+        overdue.push({
+          caseId: status.caseId,
+          overdueHours: status.overdueHours ?? 0,
+          requiresEscalation: (status.overdueHours ?? 0) > FOUR_EYES_ESCALATION_HOURS,
+        });
+      }
     }
   }
   return overdue;
