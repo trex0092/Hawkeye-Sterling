@@ -15,8 +15,12 @@ export interface EnrichmentJob {
   fullResult?: Record<string, unknown>;
 }
 
+function safeJobId(id: string): string {
+  return id.replace(/[^A-Za-z0-9._\-:]/g, "_").slice(0, 128);
+}
+
 function jobKey(jobId: string): string {
-  return `${JOB_PREFIX}${jobId}`;
+  return `${JOB_PREFIX}${safeJobId(jobId)}`;
 }
 
 export async function saveEnrichmentJob(

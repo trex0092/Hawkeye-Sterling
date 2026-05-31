@@ -43,8 +43,12 @@ function safeTenant(tenantId: string): string {
   return tenantId.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64);
 }
 
+function safeReviewId(id: string): string {
+  return id.replace(/[^A-Za-z0-9._\-:]/g, "_").slice(0, 128);
+}
+
 function reviewKey(tenantId: string, id: string): string {
-  return `hawkeye-cdd/${safeTenant(tenantId)}/reviews/${id}.json`;
+  return `hawkeye-cdd/${safeTenant(tenantId)}/reviews/${safeReviewId(id)}.json`;
 }
 
 function reviewPrefix(tenantId: string): string {

@@ -28,8 +28,12 @@ export interface BreachRecord {
 
 const COUNTER_KEY = "hs-breach-register/counter.json";
 
+function safeBreachId(id: string): string {
+  return id.replace(/[^A-Za-z0-9._\-:]/g, "_").slice(0, 64);
+}
+
 function breachKey(breachId: string): string {
-  return `hs-breach-register/${breachId}.json`;
+  return `hs-breach-register/${safeBreachId(breachId)}.json`;
 }
 
 function dueDays(category: BreachCategory): number {

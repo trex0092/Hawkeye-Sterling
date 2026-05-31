@@ -31,8 +31,12 @@ const LIST_REDLINE_MAP: Record<string, string> = {
   uae_eocn:        "rl_eocn_confirmed",
 };
 
+function safeAlertId(id: string): string {
+  return id.replace(/[^A-Za-z0-9._\-:]/g, "_").slice(0, 128);
+}
+
 function alertKey(id: string): string {
-  return `alerts/${id}.json`;
+  return `alerts/${safeAlertId(id)}.json`;
 }
 
 const INDEX_KEY = "alerts/_index.json";
