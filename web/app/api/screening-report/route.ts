@@ -467,31 +467,6 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
     ).catch(() => undefined);
   }
 
-  // M-9: Optional four-eyes enforcement. When an approver is provided, verify
-  // that the approver differs from the filer — same-person approvals are rejected
-  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
-  if (body.approver !== undefined) {
-    const trimmedApprover = body.approver.trim();
-    if (!trimmedApprover || trimmedApprover.length > 128) {
-      return respond(400, { ok: false, error: "approver name must be between 1 and 128 characters" });
-    }
-    // Normalise both sides before comparison to resist homoglyph bypasses
-    // (e.g. cyrillic 'о' vs latin 'o' passing as different approvers).
-    const normalise = (s: string): string =>
-      s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
-    if (normalise(trimmedApprover) === normalise(ctx.apiKey?.id ?? "")) {
-      void writeAuditChainEntry(
-        { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
-        ctx.tenantId,
-      ).catch(() => undefined);
-      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
-    }
-    void writeAuditChainEntry(
-      { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
-      ctx.tenantId,
-    ).catch(() => undefined);
-  }
-
   // C-7: Record this screening for drift and bias monitoring. Fire-and-forget
   // so it never blocks the response path regardless of success or failure.
   void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
@@ -518,6 +493,31 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
     },
     ctx.tenantId,
   ).catch(() => undefined);
+
+  // M-9: Optional four-eyes enforcement. When an approver is provided, verify
+  // that the approver differs from the filer — same-person approvals are rejected
+  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  if (body.approver !== undefined) {
+    const trimmedApprover = body.approver.trim();
+    if (!trimmedApprover || trimmedApprover.length > 128) {
+      return respond(400, { ok: false, error: "approver name must be between 1 and 128 characters" });
+    }
+    // Normalise both sides before comparison to resist homoglyph bypasses
+    // (e.g. cyrillic 'о' vs latin 'o' passing as different approvers).
+    const normalise = (s: string): string =>
+      s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (normalise(trimmedApprover) === normalise(ctx.apiKey?.id ?? "")) {
+      void writeAuditChainEntry(
+        { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
+        ctx.tenantId,
+      ).catch(() => undefined);
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+    }
+    void writeAuditChainEntry(
+      { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
+      ctx.tenantId,
+    ).catch(() => undefined);
+  }
 
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);
