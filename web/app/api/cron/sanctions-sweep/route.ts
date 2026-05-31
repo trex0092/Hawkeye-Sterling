@@ -108,128 +108,134 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  const now = new Date().toISOString();
-
-  // 2. Load last-known metadata from Blobs
-  const prevMeta = await readMeta();
-  const prevEtag = prevMeta?.etag ?? null;
-  const prevLastModified = prevMeta?.lastModified ?? null;
-  const prevContentLength = (prevMeta as (SanctionsMeta & { contentLength?: number }) | null)?.contentLength ?? null;
-
-  // 3. Conditional GET to OFAC SDN — use If-None-Match / If-Modified-Since
-  //    to avoid downloading the full ~10 MB XML unless it changed.
-  const reqHeaders: Record<string, string> = {
-    "Accept": "application/xml, text/xml",
-    "User-Agent": "Hawkeye-Sterling-SanctionsSweep/1.0 (compliance-monitoring)",
-  };
-  if (prevEtag) reqHeaders["If-None-Match"] = prevEtag;
-  else if (prevLastModified) reqHeaders["If-Modified-Since"] = prevLastModified;
-
-  let updated = false;
-  let deltaCount = 0;
-  let newEtag: string | null = null;
-  let newLastModified: string | null = null;
-  let newContentLength: number | null = null;
-  let fetchError: string | null = null;
-
   try {
-    const res = await fetch(OFAC_SDN_URL, {
-      method: "GET",
-      headers: reqHeaders,
-      signal: AbortSignal.timeout(30_000),
-    });
+    const now = new Date().toISOString();
 
-    newEtag = res.headers.get("etag");
-    newLastModified = res.headers.get("last-modified");
-    const clStr = res.headers.get("content-length");
-    newContentLength = clStr ? parseInt(clStr, 10) : null;
+    // 2. Load last-known metadata from Blobs
+    const prevMeta = await readMeta();
+    const prevEtag = prevMeta?.etag ?? null;
+    const prevLastModified = prevMeta?.lastModified ?? null;
+    const prevContentLength = (prevMeta as (SanctionsMeta & { contentLength?: number }) | null)?.contentLength ?? null;
 
-    if (res.status === 304) {
-      // Not Modified — list unchanged
-      updated = false;
-    } else if (res.ok) {
-      // Consume response body (required to release the connection), but we only
-      // need the first few bytes to detect real content vs. an empty/error body.
-      // The full body is NOT stored — we just detect the change here.
-      const bodyText = await res.text();
-      const looksLikeSdn = bodyText.includes("<sdnList") || bodyText.includes("<publshInformation");
+    // 3. Conditional GET to OFAC SDN — use If-None-Match / If-Modified-Since
+    //    to avoid downloading the full ~10 MB XML unless it changed.
+    const reqHeaders: Record<string, string> = {
+      "Accept": "application/xml, text/xml",
+      "User-Agent": "Hawkeye-Sterling-SanctionsSweep/1.0 (compliance-monitoring)",
+    };
+    if (prevEtag) reqHeaders["If-None-Match"] = prevEtag;
+    else if (prevLastModified) reqHeaders["If-Modified-Since"] = prevLastModified;
 
-      if (!looksLikeSdn) {
-        // Defensive: OFAC might have returned a redirect page or error
-        console.warn("[sanctions-sweep] OFAC response doesn't look like SDN XML, skipping update");
+    let updated = false;
+    let deltaCount = 0;
+    let newEtag: string | null = null;
+    let newLastModified: string | null = null;
+    let newContentLength: number | null = null;
+    let fetchError: string | null = null;
+
+    try {
+      const res = await fetch(OFAC_SDN_URL, {
+        method: "GET",
+        headers: reqHeaders,
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      newEtag = res.headers.get("etag");
+      newLastModified = res.headers.get("last-modified");
+      const clStr = res.headers.get("content-length");
+      newContentLength = clStr ? parseInt(clStr, 10) : null;
+
+      if (res.status === 304) {
+        // Not Modified — list unchanged
         updated = false;
-      } else {
-        // Compare ETag or Last-Modified to previous known value
-        const etagChanged = newEtag && newEtag !== prevEtag;
-        const lastModifiedChanged = newLastModified && newLastModified !== prevLastModified;
-        const isFirstRun = !prevEtag && !prevLastModified;
+      } else if (res.ok) {
+        // Consume response body (required to release the connection), but we only
+        // need the first few bytes to detect real content vs. an empty/error body.
+        // The full body is NOT stored — we just detect the change here.
+        const bodyText = await res.text();
+        const looksLikeSdn = bodyText.includes("<sdnList") || bodyText.includes("<publshInformation");
 
-        updated = Boolean(etagChanged || lastModifiedChanged || isFirstRun);
+        if (!looksLikeSdn) {
+          // Defensive: OFAC might have returned a redirect page or error
+          console.warn("[sanctions-sweep] OFAC response doesn't look like SDN XML, skipping update");
+          updated = false;
+        } else {
+          // Compare ETag or Last-Modified to previous known value
+          const etagChanged = newEtag && newEtag !== prevEtag;
+          const lastModifiedChanged = newLastModified && newLastModified !== prevLastModified;
+          const isFirstRun = !prevEtag && !prevLastModified;
 
-        if (updated && !isFirstRun) {
-          deltaCount = estimateDeltaCount(prevContentLength, newContentLength);
+          updated = Boolean(etagChanged || lastModifiedChanged || isFirstRun);
+
+          if (updated && !isFirstRun) {
+            deltaCount = estimateDeltaCount(prevContentLength, newContentLength);
+          }
         }
+      } else {
+        fetchError = `OFAC SDN HTTP ${res.status}`;
+        console.warn(`[sanctions-sweep] ${fetchError}`);
       }
-    } else {
-      fetchError = `OFAC SDN HTTP ${res.status}`;
-      console.warn(`[sanctions-sweep] ${fetchError}`);
+    } catch (err) {
+      fetchError = err instanceof Error ? err.message : String(err);
+      console.warn("[sanctions-sweep] OFAC fetch error:", fetchError);
     }
+
+    // 4. If changed: append audit chain event + update stored metadata
+    if (updated) {
+      const newMeta: SanctionsMeta & { contentLength?: number } = {
+        etag: newEtag ?? prevEtag,
+        lastModified: newLastModified ?? prevLastModified,
+        lastCheckedAt: now,
+        lastUpdatedAt: now,
+        updateCount: (prevMeta?.updateCount ?? 0) + 1,
+        ...(newContentLength !== null ? { contentLength: newContentLength } : {}),
+      };
+      await writeMeta(newMeta);
+
+      // Tamper-evidently record the list-change event in the audit chain
+      await writeAuditChainEntry(
+        {
+          event: "sanctions.list_updated",
+          actor: "cron_internal",
+          source: "OFAC SDN",
+          url: OFAC_SDN_URL,
+          etag: newEtag,
+          lastModified: newLastModified,
+          deltaCount,
+          updateCount: newMeta.updateCount,
+          detectedAt: now,
+        },
+        "default",
+      );
+
+      void `[sanctions-sweep] OFAC SDN list changed — etag=${newEtag ?? "n/a"}, estimatedDelta=${deltaCount}`;
+    } else {
+      // Always bump lastCheckedAt even when unchanged, so ops can see recency
+      const checkedMeta: SanctionsMeta & { contentLength?: number } = {
+        etag: newEtag ?? prevEtag,
+        lastModified: newLastModified ?? prevLastModified,
+        lastCheckedAt: now,
+        lastUpdatedAt: prevMeta?.lastUpdatedAt ?? null,
+        updateCount: prevMeta?.updateCount ?? 0,
+        ...(newContentLength !== null ? { contentLength: newContentLength } : {}),
+      };
+      await writeMeta(checkedMeta);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      updated,
+      deltaCount,
+      etag: newEtag ?? prevEtag,
+      lastModified: newLastModified ?? prevLastModified,
+      checkedAt: now,
+      ...(fetchError ? { warning: fetchError } : {}),
+    });
   } catch (err) {
-    fetchError = err instanceof Error ? err.message : String(err);
-    console.warn("[sanctions-sweep] OFAC fetch error:", fetchError);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[sanctions-sweep] unhandled error:", msg);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
-
-  // 4. If changed: append audit chain event + update stored metadata
-  if (updated) {
-    const newMeta: SanctionsMeta & { contentLength?: number } = {
-      etag: newEtag ?? prevEtag,
-      lastModified: newLastModified ?? prevLastModified,
-      lastCheckedAt: now,
-      lastUpdatedAt: now,
-      updateCount: (prevMeta?.updateCount ?? 0) + 1,
-      ...(newContentLength !== null ? { contentLength: newContentLength } : {}),
-    };
-    await writeMeta(newMeta);
-
-    // Tamper-evidently record the list-change event in the audit chain
-    await writeAuditChainEntry(
-      {
-        event: "sanctions.list_updated",
-        actor: "cron_internal",
-        source: "OFAC SDN",
-        url: OFAC_SDN_URL,
-        etag: newEtag,
-        lastModified: newLastModified,
-        deltaCount,
-        updateCount: newMeta.updateCount,
-        detectedAt: now,
-      },
-      "default",
-    );
-
-    void `[sanctions-sweep] OFAC SDN list changed — etag=${newEtag ?? "n/a"}, estimatedDelta=${deltaCount}`;
-  } else {
-    // Always bump lastCheckedAt even when unchanged, so ops can see recency
-    const checkedMeta: SanctionsMeta & { contentLength?: number } = {
-      etag: newEtag ?? prevEtag,
-      lastModified: newLastModified ?? prevLastModified,
-      lastCheckedAt: now,
-      lastUpdatedAt: prevMeta?.lastUpdatedAt ?? null,
-      updateCount: prevMeta?.updateCount ?? 0,
-      ...(newContentLength !== null ? { contentLength: newContentLength } : {}),
-    };
-    await writeMeta(checkedMeta);
-  }
-
-  return NextResponse.json({
-    ok: true,
-    updated,
-    deltaCount,
-    etag: newEtag ?? prevEtag,
-    lastModified: newLastModified ?? prevLastModified,
-    checkedAt: now,
-    ...(fetchError ? { warning: fetchError } : {}),
-  });
 }
 
 // Also support GET for health-check probes (returns last-known meta without

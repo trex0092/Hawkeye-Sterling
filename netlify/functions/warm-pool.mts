@@ -20,7 +20,7 @@
 // trivially identifiable as warming traffic, not real screening input.
 
 import type { Config } from '@netlify/functions';
-import { writeHeartbeat } from '../lib/heartbeat.js';
+import { fireAlert, writeHeartbeat } from '../lib/heartbeat.js';
 
 const RUN_LABEL = 'warm-pool';
 const PING_TIMEOUT_MS = 4_000;
@@ -121,30 +121,40 @@ export default async function handler(req: Request): Promise<Response> {
   const startedAt = Date.now();
   const origin = process.env['URL'] ?? process.env['DEPLOY_PRIME_URL'] ?? new URL(req.url).origin;
 
-  const [httpResults, moduleResults] = await Promise.all([
-    Promise.all(
-      KEEPALIVE_ROUTES.map((r) =>
-        pingWithTimeout(`${origin}${r.path}`, r.method).then((o) => ({ route: r.path, ...o })),
+  try {
+    const [httpResults, moduleResults] = await Promise.all([
+      Promise.all(
+        KEEPALIVE_ROUTES.map((r) =>
+          pingWithTimeout(`${origin}${r.path}`, r.method).then((o) => ({ route: r.path, ...o })),
+        ),
       ),
-    ),
-    touchBrainModules(),
-  ]);
+      touchBrainModules(),
+    ]);
 
-  await writeHeartbeat(RUN_LABEL);
-  return new Response(
-    JSON.stringify(
-      {
-        label: RUN_LABEL,
-        origin,
-        httpPings: httpResults,
-        moduleTouches: moduleResults,
-        durationMs: Date.now() - startedAt,
-      },
-      null,
-      2,
-    ),
-    { status: 200, headers: { 'content-type': 'application/json' } },
-  );
+    await writeHeartbeat(RUN_LABEL);
+    return new Response(
+      JSON.stringify(
+        {
+          label: RUN_LABEL,
+          origin,
+          httpPings: httpResults,
+          moduleTouches: moduleResults,
+          durationMs: Date.now() - startedAt,
+        },
+        null,
+        2,
+      ),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[${RUN_LABEL}] unhandled error:`, msg);
+    await fireAlert(RUN_LABEL, msg);
+    return new Response(
+      JSON.stringify({ label: RUN_LABEL, error: msg, durationMs: Date.now() - startedAt }),
+      { status: 500, headers: { 'content-type': 'application/json' } },
+    );
+  }
 }
 
 export const config: Config = {

@@ -132,42 +132,48 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  const allTenantKeys = await listKeys("hawkeye-txn-flags/");
-  const unprocessed: TxnFlagRecord[] = [];
+  try {
+    const allTenantKeys = await listKeys("hawkeye-txn-flags/");
+    const unprocessed: TxnFlagRecord[] = [];
 
-  for (const key of allTenantKeys) {
-    const record = await getJson<TxnFlagRecord>(key);
-    if (record && !record.processed) unprocessed.push(record);
-  }
-
-  const results = { total: unprocessed.length, casesOpened: 0, errors: 0 };
-
-  for (const record of unprocessed) {
-    try {
-      const typology = await runTypologyMatch(record);
-      const strength = typology?.primaryTypology?.matchStrength;
-
-      if (record.tier === "hold" || strength === "strong" || strength === "moderate") {
-        await openCase(record, typology ?? {});
-        results.casesOpened++;
-      }
-
-      // Mark processed regardless — even if we didn't open a case
-      await setJson(`hawkeye-txn-flags/${safeSegment(record.tenantId)}/${safeSegment(record.flagId)}.json`, {
-        ...record,
-        processed: true,
-        processedAt: new Date().toISOString(),
-        typologyStrength: strength ?? "none",
-      });
-    } catch (err) {
-      console.error("[txn-monitor] failed to process flag", record.flagId, err);
-      results.errors++;
+    for (const key of allTenantKeys) {
+      const record = await getJson<TxnFlagRecord>(key);
+      if (record && !record.processed) unprocessed.push(record);
     }
-  }
 
-  void writeAuditChainEntry(
-    { event: "txn_monitor.cron_run", actor: "cron", meta: { total: results.total, casesOpened: results.casesOpened, errors: results.errors } },
-    "system",
-  ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
-  return NextResponse.json({ ok: true, ...results, at: new Date().toISOString() });
+    const results = { total: unprocessed.length, casesOpened: 0, errors: 0 };
+
+    for (const record of unprocessed) {
+      try {
+        const typology = await runTypologyMatch(record);
+        const strength = typology?.primaryTypology?.matchStrength;
+
+        if (record.tier === "hold" || strength === "strong" || strength === "moderate") {
+          await openCase(record, typology ?? {});
+          results.casesOpened++;
+        }
+
+        // Mark processed regardless — even if we didn't open a case
+        await setJson(`hawkeye-txn-flags/${safeSegment(record.tenantId)}/${safeSegment(record.flagId)}.json`, {
+          ...record,
+          processed: true,
+          processedAt: new Date().toISOString(),
+          typologyStrength: strength ?? "none",
+        });
+      } catch (err) {
+        console.error("[txn-monitor] failed to process flag", record.flagId, err);
+        results.errors++;
+      }
+    }
+
+    void writeAuditChainEntry(
+      { event: "txn_monitor.cron_run", actor: "cron", meta: { total: results.total, casesOpened: results.casesOpened, errors: results.errors } },
+      "system",
+    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+    return NextResponse.json({ ok: true, ...results, at: new Date().toISOString() });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[txn-monitor] unhandled error:", msg);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
 }

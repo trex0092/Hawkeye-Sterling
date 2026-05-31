@@ -332,6 +332,7 @@ async function handleGet(req: Request): Promise<Response> {
     STALE_HOURS_DEFAULT,
   );
 
+  try {
   const [store, ingestMetaStore] = await Promise.all([loadStore(), loadIngestMetaStore()]);
   const [lists, lastIngestMeta] = await Promise.all([
     Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours))),
@@ -458,6 +459,14 @@ async function handleGet(req: Request): Promise<Response> {
     },
     { headers: gate.headers },
   );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[sanctions/status] unhandled error:", msg);
+    return new Response(JSON.stringify({ ok: false, error: "internal_error", detail: msg }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
 
 export const GET = handleGet;

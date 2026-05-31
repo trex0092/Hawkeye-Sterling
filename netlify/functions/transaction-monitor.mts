@@ -6,7 +6,7 @@
 //           and auto-opens cases for strong/moderate hits or any HOLD tier.
 
 import type { Config } from "@netlify/functions";
-import { writeHeartbeat } from "../lib/heartbeat.js";
+import { fireAlert, writeHeartbeat } from "../lib/heartbeat.js";
 
 export default async (_req: Request) => {
   const base =
@@ -52,10 +52,12 @@ export default async (_req: Request) => {
       },
     );
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await fireAlert("transaction-monitor", msg);
     return new Response(
       JSON.stringify({
         triggered: false,
-        error: err instanceof Error ? err.message : String(err),
+        error: msg,
       }),
       {
         status: 500,

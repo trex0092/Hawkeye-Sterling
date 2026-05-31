@@ -1713,22 +1713,28 @@ export async function POST(req: Request): Promise<Response> {
     undefined;
   const sessionId = deriveSessionId(req);
 
-  // Batch request
-  if (Array.isArray(body)) {
-    const results = await _callCtx.run({ authHeader, sessionId }, () =>
-      Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
-    );
-    const responses = results.filter((r: unknown) => r !== null);
-    return json(responses);
-  }
+  try {
+    // Batch request
+    if (Array.isArray(body)) {
+      const results = await _callCtx.run({ authHeader, sessionId }, () =>
+        Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
+      );
+      const responses = results.filter((r: unknown) => r !== null);
+      return json(responses);
+    }
 
-  // Single request
-  const result = await _callCtx.run({ authHeader, sessionId }, () =>
-    dispatch(body as Parameters<typeof dispatch>[0]),
-  );
-  if (result === null) {
-    // Notification — no response body
-    return new Response(null, { status: 202, headers: CORS });
+    // Single request
+    const result = await _callCtx.run({ authHeader, sessionId }, () =>
+      dispatch(body as Parameters<typeof dispatch>[0]),
+    );
+    if (result === null) {
+      // Notification — no response body
+      return new Response(null, { status: 202, headers: CORS });
+    }
+    return json(result);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[mcp] unhandled dispatch error:", msg);
+    return json(err(null, -32603, "Internal error"), 500);
   }
-  return json(result);
 }
