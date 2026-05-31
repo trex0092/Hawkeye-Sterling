@@ -90,9 +90,10 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
     expect(result.allowed).toBe(true);
   });
 
-  it('does not fail-closed when read-back count exceeds written by exactly 1 (within tolerance)', async () => {
-    // The guard is `readBack.second.count > nextSecond + 1` (strictly greater than +1).
-    // A delta of exactly 1 is the normal single-concurrent-request case, not worth blocking.
+  it('fails-closed when read-back count exceeds written by exactly 1 (C-8: any delta rejected)', async () => {
+    // C-8: guard changed from `> nextSecond + 1` to `!== nextSecond` — any delta is blocked.
+    // C-8 fix: any delta (including exactly 1) is now blocked to prevent the
+    // 1-request slippage bypass where two concurrent requests at the limit both pass.
     const { secondStart, minuteStart } = freshTimeWindows();
     const key = 'ratelimit/test-key-4';
     let callCount = 0;
@@ -103,8 +104,8 @@ describe('rate-limit — fail-closed on concurrent write detection', () => {
       return { second: { startMs: secondStart, count: priorCount }, minute: { startMs: minuteStart, count: priorCount } };
     });
     const result = await consumeRateLimit('test-key-4', 'sandbox');
-    // delta is 1 (2 - 1), which is ≤ 1 so NOT blocked
-    expect(result.allowed).toBe(true);
+    // delta is 1 (2 ≠ 1) — stricter check now rejects any concurrent write
+    expect(result.allowed).toBe(false);
   });
 });
 

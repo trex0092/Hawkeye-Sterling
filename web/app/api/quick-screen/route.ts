@@ -54,8 +54,12 @@ import { LatencyBudget } from "@/lib/server/latency-budget";
 
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
-// TTL: 3 minutes — sanctions lists refresh frequently so we can't cache longer.
-const SCREEN_CACHE_TTL_MS = 180_000;
+// TTL: 60 seconds — reduced from 3 min to limit stale CLEAR results for recently
+// designated entities. Netlify Lambda is single-threaded per invocation so the
+// Map iteration in the cleanup sweep is not truly concurrent with request reads;
+// TTL is a soft bound and occasional stale reads within the 60s window are
+// acceptable given low designation frequency.
+const SCREEN_CACHE_TTL_MS = 60_000;
 // eslint-disable-next-line no-var
 declare global { var __hs_screen_cache: Map<string, { result: unknown; cachedAt: number }> | undefined; }
 const _screenCache: Map<string, { result: unknown; cachedAt: number }> =
@@ -673,12 +677,19 @@ export async function POST(req: Request): Promise<NextResponse> {
         hit.matchReason = hit.reason;
       }
       if (!hit.confidenceTier) {
-        const s = hit.score ?? hit.baseScore ?? 0;
-        hit.confidenceTier =
-          s >= 0.95 ? "confirmed"
-          : s >= 0.80 ? "probable"
-          : s >= 0.60 ? "possible"
-          : "unlikely";
+        const rawScore = hit.score ?? hit.baseScore;
+        // Guard against NaN/null/undefined scores — coerce to 0 and mark as
+        // "unscored" so corrupted scores don't silently produce under-flagged hits.
+        const s = typeof rawScore === 'number' && isFinite(rawScore) ? rawScore : 0;
+        if (rawScore === undefined || rawScore === null || !isFinite(rawScore as number)) {
+          hit.confidenceTier = "unscored";
+        } else {
+          hit.confidenceTier =
+            s >= 0.95 ? "confirmed"
+            : s >= 0.80 ? "probable"
+            : s >= 0.60 ? "possible"
+            : "unlikely";
+        }
       }
     }
 

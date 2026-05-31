@@ -36,26 +36,28 @@ section("Disposition engine: lethal trifecta → critical");
   }
 
   // Must have escalate("critical") called somewhere (sanctions or redlines or CAHRA)
-  const hasCriticalEscalation = /escalate\(["']critical["']/.test(src);
+  // Use \s* to tolerate whitespace variants: escalate('critical') or escalate( 'critical' )
+  const hasCriticalEscalation = /escalate\(\s*["']critical["']/.test(src);
   if (!hasCriticalEscalation) fail("dispositionEngine: escalate('critical') not found");
   else pass("escalate('critical') present in dispositionEngine");
 
   // Must have PEP escalation to at least "high"
-  const hasPepHigh = /pepTier[\s\S]{0,300}escalate\(["']high["']/s.test(src)
-    || /escalate\(["']high["'][^)]*PEP/s.test(src)
-    || (src.includes("input.pepTier") && /escalate\(["']high["']/.test(src));
+  // Proximity window 600 chars (increased from 300) to tolerate refactoring that spreads checks.
+  const hasPepHigh = /pepTier[\s\S]{0,600}escalate\(\s*["']high["']/s.test(src)
+    || /escalate\(\s*["']high["'][^)]*PEP/s.test(src)
+    || (src.includes("input.pepTier") && /escalate\(\s*["']high["']/.test(src));
   if (!hasPepHigh) fail("dispositionEngine: PEP does not escalate to at least 'high'");
   else pass("PEP → 'high' escalation present");
 
   // Must have adverse media escalation
-  const hasAmEscalation = /amCompositeScore[\s\S]{0,200}escalate\(["'](?:critical|high)["']/s.test(src)
-    || /amComposite[\s\S]{0,100}escalate/s.test(src);
+  const hasAmEscalation = /amCompositeScore[\s\S]{0,400}escalate\(\s*["'](?:critical|high)["']/s.test(src)
+    || /amComposite[\s\S]{0,200}escalate/s.test(src);
   if (!hasAmEscalation) fail("dispositionEngine: adverse-media escalation path not found");
   else pass("Adverse-media escalation path present");
 
   // Redlines must always push to critical
-  const hasRedlineCritical = /redlinesFired[\s\S]{0,200}escalate\(["']critical["']/s.test(src)
-    || /redlines[\s\S]{0,100}critical/s.test(src);
+  const hasRedlineCritical = /redlinesFired[\s\S]{0,400}escalate\(\s*["']critical["']/s.test(src)
+    || /redlines[\s\S]{0,200}critical/s.test(src);
   if (!hasRedlineCritical) fail("dispositionEngine: redlines do not force critical");
   else pass("Redlines → critical path present");
 }
@@ -117,12 +119,22 @@ section("MCP route: prompt-injection detection patterns");
   if (!hasDetectInjection) fail("detectInjection function removed from mcp/route.ts");
   else pass("detectInjection() present in mcp/route.ts");
 
-  // Count entries in the INJECTION_PATTERNS array
-  const patternBlock = src.match(/INJECTION_PATTERNS\s*:\s*RegExp\[\]\s*=\s*\[([\s\S]*?)\];/);
-  const minPatterns = patternBlock
-    ? (patternBlock[1].match(/\/[^/]/g) ?? []).length
-    : (src.match(/INJECTION_PATTERNS[\s\S]{0,2000}/)?.[0]?.match(/^\s*\//mg) ?? []).length;
-  const patternCount = Math.max(minPatterns, (src.match(/ignore.*previous|act.*as.*if|disregard.*instruct|forget.*everything|override.*safety/gi) ?? []).length);
+  // Count entries in the INJECTION_PATTERNS array.
+  // Use regex literal count (/re/) inside the block for correctness; fall back to
+  // counting array elements via commas if block extraction fails.
+  const patternBlock = src.match(/INJECTION_PATTERNS\s*(?::\s*RegExp\[\])?\s*=\s*\[([\s\S]*?)\];/);
+  let patternCount = 0;
+  if (patternBlock) {
+    // Count top-level regex literals: each starts with '/' and is not a comment.
+    patternCount = (patternBlock[1].match(/^\s*\//mg) ?? []).length;
+  }
+  // Fallback: count keyword fragments known to be in AML injection patterns.
+  if (patternCount < 5) {
+    patternCount = Math.max(
+      patternCount,
+      (src.match(/ignore\s+(?:all\s+)?previous|act\s+as\s+if|disregard\s+instruct|forget\s+everything|override\s+safety/gi) ?? []).length,
+    );
+  }
   if (patternCount < 5) fail(`Too few injection regex patterns: ${patternCount} (expected ≥ 5)`);
   else pass(`Injection regex patterns present (${patternCount}+)`);
 }

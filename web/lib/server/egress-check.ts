@@ -62,6 +62,12 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
 
   const client = getAnthropicClient(apiKey, 30_000, "egress-check");
 
+  // M-5: Log when narrative is truncated — tipping-off phrases in the tail could be missed.
+  if (narrative.length > 3000) {
+    console.warn(`[egress-check] narrative truncated from ${narrative.length} to 3000 chars for '${reportType}' — tipping-off phrases in tail may be missed`);
+    incrementCounter('hawkeye_egress_narrative_truncated_total', 1, { reportType });
+  }
+
   let response: Awaited<ReturnType<typeof client.messages.create>>;
   try {
     response = await client.messages.create({
@@ -96,7 +102,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       error: msg,
       severity: 'critical',
       at: new Date().toISOString(),
-    }).catch(() => undefined);
+    }).catch(() => { incrementCounter('hawkeye_webhook_emit_errors_total', 1, { context: 'egress-check' }); });
     return {
       allowed: false,
       verdict: "held_review",
@@ -114,6 +120,11 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       "approved", "held_tipping_off", "held_incomplete", "held_review",
     ]);
     const rawVerdict = parsed.verdict ?? "held_review";
+    if (rawVerdict !== "held_review" && !VALID_VERDICTS.has(rawVerdict as EgressVerdict)) {
+      // M-4: Log unexpected verdicts before coercing so hallucination patterns are visible.
+      console.warn(`[egress-check] unexpected LLM verdict '${rawVerdict}' for ${reportType} — coercing to held_review`);
+      incrementCounter('hawkeye_egress_unexpected_verdict_total', 1, { reportType });
+    }
     const verdict: EgressVerdict = VALID_VERDICTS.has(rawVerdict as EgressVerdict)
       ? (rawVerdict as EgressVerdict)
       : "held_review";
@@ -129,7 +140,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
       rawSnippet: raw.slice(0, 200),
       severity: 'high',
       at: new Date().toISOString(),
-    }).catch(() => undefined);
+    }).catch(() => { incrementCounter('hawkeye_webhook_emit_errors_total', 1, { context: 'egress-check' }); });
     return {
       allowed: false,
       verdict: "held_review",
@@ -161,6 +172,10 @@ export async function runEgressCheck(
     const gateEnabled = process.env["EGRESS_GATE_ENABLED"] === "true";
     if (!gateEnabled) {
       span.setAttribute('egress.gate_enabled', false);
+      // H-1: Alert monitoring when gate is disabled so ops can detect misconfigured deployments.
+      // Tipping-off (FDL 10/2025 Art.17) is criminal; gate must be ON in production.
+      console.error("[egress-check] EGRESS_GATE_ENABLED is not set — tipping-off checks are DISABLED. Set EGRESS_GATE_ENABLED=true in production after MLRO sign-off.");
+      incrementCounter('hawkeye_egress_gate_disabled_total', 1, {});
       return { allowed: true, verdict: "approved" };
     }
     span.setAttribute('egress.gate_enabled', true);

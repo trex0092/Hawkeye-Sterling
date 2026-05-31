@@ -856,3 +856,11 @@ export const SEED_SCENARIOS: RegressionScenario[] = [
       'OECD DDG para.1.3 applies to gold from artisanal/small-scale and large-scale mines. E-waste recovery is a secondary source and generally outside OECD DDG mineral-extraction scope, though LBMA RGG scope covers all gold entering the market. Standard CDD applies; EDD not triggered solely by e-waste origin.',
   },
 ];
+
+// Guard: minimum scenario count required for adequate eval coverage.
+// Deleting scenarios must fail CI — this assertion prevents silent regression.
+if (SEED_SCENARIOS.length < 50) {
+  throw new Error(
+    `eval-harness: SEED_SCENARIOS has ${SEED_SCENARIOS.length} entries — minimum is 50. Do not delete eval scenarios.`,
+  );
+}

@@ -227,10 +227,6 @@ export function buildEntry(
 //   - writeAuditChainEntry → hawkeye-audit-chain/chain.json (sha256)
 // The two co-exist for different observability purposes; keep both.
 //
-// MIGRATION NOTE: entries written before 2026-05-18 used FNV-1a (32-bit).
-// New entries use SHA-256 and carry hashAlg: "sha256". The probe handles
-// both; legacy entries are verified with FNV-1a, new entries with SHA-256.
-//
 // Non-throwing: errors are logged and return false so callers never block
 // a compliance action on an audit-write failure.
 
@@ -319,6 +315,11 @@ export async function writeAuditChainEntry(event: AuditChainEvent, tenantId = "d
   }
 }
 
+// Alert debounce: at most one critical alert per event type per 5 seconds to
+// prevent alert floods when blob storage is degraded under load (M-8).
+const _lastAlertMs: Record<string, number> = {};
+const ALERT_DEBOUNCE_MS = 5_000;
+
 async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): Promise<boolean> {
   const chainSecret = getChainSecret(tenantId);
   if (!chainSecret) {
@@ -339,12 +340,26 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
   }
   const chainFile = tenantId === "default" ? "chain.json" : `${tenantId}.json`;
 
-  const MAX_ATTEMPTS = 3;
+  // Extra attempts cover both transient blob errors and concurrent-write retries (C-1).
+  const MAX_ATTEMPTS = 5;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const store = await loadAuditStore();
       const raw = await store.get(chainFile, { type: "json" }) as ChainEntry[] | null;
       const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
+
+      // H-4: Detect sequence gaps before appending — indicates prior corruption/lost entries.
+      for (let i = 1; i < chain.length; i++) {
+        const expectedSeq = (chain[i - 1].seq ?? -1) + 1;
+        if (chain[i].seq !== expectedSeq) {
+          console.error(
+            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i].seq}`,
+            { tenant: tenantId },
+          );
+          incrementCounter('hawkeye_audit_chain_gaps_total', 1, { tenant: tenantId });
+        }
+      }
+
       const prev = chain[chain.length - 1];
       const seq = (prev?.seq ?? -1) + 1;
       const at = new Date().toISOString();
@@ -362,11 +377,26 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
         at,
       });
       await store.set(chainFile, JSON.stringify(chain));
+
+      // C-1: Post-write race detection — verify our entry persisted under concurrent writes.
+      // With consistency:"strong" the read reflects the winning write. If our hash is absent,
+      // another Lambda's write overwrote ours; retry with jitter so we append on top of it.
+      const readBack = await store.get(chainFile, { type: "json" }) as ChainEntry[] | null;
+      const readBackChain = Array.isArray(readBack) ? readBack : [];
+      if (!readBackChain.some((e: ChainEntry) => e.entryHash === hash)) {
+        const jitterMs = 50 + Math.floor(Math.random() * 100);
+        console.warn(
+          `[audit-chain] concurrent write detected (attempt ${attempt + 1}/${MAX_ATTEMPTS}), retrying in ${jitterMs}ms`,
+        );
+        incrementCounter('hawkeye_audit_chain_concurrent_write_total', 1, { tenant: tenantId });
+        await new Promise((r) => setTimeout(r, jitterMs));
+        continue;
+      }
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (attempt < MAX_ATTEMPTS - 1) {
-        const delayMs = 100 * (2 ** attempt); // 100ms, 200ms
+        const delayMs = 100 * (2 ** attempt); // 100ms, 200ms, 400ms, 800ms
         console.warn(`[audit-chain] write failed (attempt ${attempt + 1}/${MAX_ATTEMPTS}), retrying in ${delayMs}ms: ${msg}`);
         await new Promise((r) => setTimeout(r, delayMs));
       } else {
@@ -375,15 +405,20 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
     }
   }
   incrementCounter('hawkeye_audit_write_failures_total', 1, { event: String(event.event ?? 'unknown') });
-  // Alert ops — a lost audit entry is a regulatory incident under FDL 10/2025 Art.24.
-  void emitAndLog('audit_write_failure', {
-    event: 'audit_chain_write_failed',
-    auditEvent: event.event,
-    actor: event.actor,
-    caseId: event.caseId ?? null,
-    tenantId,
-    severity: 'critical',
-    at: new Date().toISOString(),
-  }).catch(() => undefined);
+  // M-8: Rate-limit critical alerts to prevent alert floods during storage outages.
+  const alertKey = String(event.event ?? 'unknown');
+  const now = Date.now();
+  if (now - (_lastAlertMs[alertKey] ?? 0) > ALERT_DEBOUNCE_MS) {
+    _lastAlertMs[alertKey] = now;
+    void emitAndLog('audit_write_failure', {
+      event: 'audit_chain_write_failed',
+      auditEvent: event.event,
+      actor: event.actor,
+      caseId: event.caseId ?? null,
+      tenantId,
+      severity: 'critical',
+      at: new Date().toISOString(),
+    }).catch(() => undefined);
+  }
   return false;
 }

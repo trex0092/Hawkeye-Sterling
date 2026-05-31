@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
+import type { RequestContext } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
+import { recordDecision } from "@/lib/server/drift-monitor";
+import { recordScreeningBias } from "@/lib/server/bias-monitor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -412,7 +415,7 @@ function buildTaskNotes(b: ReportBody): string {
     : buildInitialScreeningNotes(b);
 }
 
-async function handleScreeningReport(req: Request): Promise<NextResponse> {
+async function handleScreeningReport(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   const asanaEnabled = !!token;
 
@@ -425,6 +428,11 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
   if (!body?.subject?.name || !body?.result) {
     return respond(400, { ok: false, error: "subject.name and result are required" });
   }
+
+  // C-7: Record this screening for drift and bias monitoring. Fire-and-forget
+  // so it never blocks the response path regardless of success or failure.
+  void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
+  void recordScreeningBias(ctx.tenantId, body.subject.name, body.result.topScore, body.result.severity, body.result.hits?.length ?? 0).catch(() => undefined);
 
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);

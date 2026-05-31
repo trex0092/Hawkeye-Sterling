@@ -37,6 +37,10 @@ import { incrementCounter } from "./metrics-store";
 // never short-circuits on byte-length mismatch — avoids leaking token length.
 const ENFORCE_COMPARE_KEY = Buffer.from("hawkeye-enforce-token-v1", "utf8");
 
+// Stable placeholder used wherever an IP or key is unavailable — prevents
+// rate-limit bucket collisions between different code paths.
+const UNKNOWN_IP = "anonymous-ip";
+
 let _anonIpKey: string | undefined;
 export function anonIpKey(): string {
   if (_anonIpKey) return _anonIpKey;
@@ -56,7 +60,7 @@ function logAuthFailure(
   // Use the last (proxy-appended) IP for consistency with the rate-limit
   // bucketing below — avoids logging a different IP than the one being limited.
   const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
-  const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "unknown") : "unknown";
+  const ip = ips.length > 0 ? (ips[ips.length - 1] ?? UNKNOWN_IP) : UNKNOWN_IP;
   const requestId = req.headers.get("x-request-id") ?? "unset";
   const route = new URL(req.url).pathname;
   log({
@@ -292,7 +296,18 @@ async function _enforce(
     keyId = v.payload.sub;
     // Look up live record to get current tier — don't trust JWT-embedded tier claim.
     // A JWT holder whose tier was downgraded must get the new (lower) rate limits.
+    // Also check revoked state: a key revoked after JWT issuance must be rejected here.
     const liveRecord = await getJson<ApiKeyRecord>(`keys/${keyId}`).catch(() => null);
+    if (liveRecord?.revoked === true) {
+      logAuthFailure(req, "jwt_key_revoked", 401, { keyId });
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { ok: false, error: "API key has been revoked" },
+          { status: 401 },
+        ),
+      };
+    }
     tierId = liveRecord?.tier ?? v.payload.tier ?? "free";
     const rl = await consumeRateLimit(keyId, tierId, cost);
     if (!rl.allowed) {
@@ -323,7 +338,7 @@ async function _enforce(
           : check.reason === "revoked"
             ? "API key revoked"
             : "invalid API key";
-      logAuthFailure(req, `api_key_${check.reason ?? "invalid"}`, check.reason === "quota_exceeded" ? 429 : 401, { keyIdPrefix: plaintext.slice(0, 8) });
+      logAuthFailure(req, `api_key_${check.reason ?? "invalid"}`, check.reason === "quota_exceeded" ? 429 : 401, { keyIdPrefix: check.record?.id?.slice(0, 8) ?? "[unknown]" });
       return {
         ok: false,
         response: NextResponse.json(
@@ -358,7 +373,7 @@ async function _enforce(
     // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
     const fwd = req.headers.get("x-forwarded-for");
     const ips = fwd ? fwd.split(",").map((s) => s.trim()).filter(Boolean) : [];
-    const ip = ips.length > 0 ? (ips[ips.length - 1] ?? "anonymous") : "anonymous";
+    const ip = ips.length > 0 ? (ips[ips.length - 1] ?? UNKNOWN_IP) : UNKNOWN_IP;
     keyId = `anon_${createHmac("sha256", anonIpKey()).update(ip).digest("hex").slice(0, 12)}`;
   }
 

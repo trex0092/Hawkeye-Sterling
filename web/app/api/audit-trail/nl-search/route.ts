@@ -186,6 +186,15 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[audit-trail/nl-search] LLM parse failed:", msg);
+    void writeAuditChainEntry(
+      {
+        event: "audit_trail.nl_search_degraded",
+        actor: gate.keyId,
+        query: userQuery.slice(0, 100),
+        reason: msg.slice(0, 100),
+      },
+      tenantIdFromGate(gate),
+    ).catch(() => undefined);
     return NextResponse.json(
       {
         ok: true,

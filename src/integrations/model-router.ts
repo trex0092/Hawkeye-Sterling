@@ -77,11 +77,20 @@ export interface ModelChoice {
   recommendsThinking: boolean;   // true when the model would benefit from extended thinking
   costTier: CostSensitivity;
   latencyTier: "snap" | "sync" | "deep";
+  /** Groq model to retry with if Anthropic returns 503 or rate-limit (GROQ_API_KEY required). */
+  fallbackModel?: string;
 }
 
 const OPUS = "claude-opus-4-7";
 const SONNET = "claude-sonnet-4-6";
 const HAIKU = "claude-haiku-4-5-20251001";
+
+// Groq fallback models — used when Anthropic returns 503 or rate-limit.
+// These are OpenAI-compatible and served at free/low cost via api.groq.com.
+export const GROQ_HAIKU_FALLBACK = "llama-3.3-70b-versatile";
+export const GROQ_SONNET_FALLBACK = "llama-3.3-70b-versatile";
+// Opus tasks are compliance-critical; no Groq fallback — fail closed rather
+// than silently downgrade quality on regulator-facing artefacts.
 
 // Maximum latency budget for which a fast-path Sonnet selection is allowed on
 // otherwise Opus-mandatory tasks. At ≤ 8 000 ms Sonnet delivers 90%+ of Opus
@@ -173,6 +182,12 @@ export function pickModel(task: ModelTask): ModelChoice {
 }
 
 function choice(model: string, reason: string, task: ModelTask): ModelChoice {
+  // Populate Groq fallback for non-Opus models where quality degradation is acceptable.
+  let fallbackModel: string | undefined;
+  if (model === HAIKU) fallbackModel = GROQ_HAIKU_FALLBACK;
+  else if (model === SONNET) fallbackModel = GROQ_SONNET_FALLBACK;
+  // Opus: no Groq fallback — fail closed on regulator-facing artefacts.
+
   return {
     model,
     reason,
@@ -180,6 +195,7 @@ function choice(model: string, reason: string, task: ModelTask): ModelChoice {
     recommendsThinking: model === OPUS && (task.extendedThinking ?? task.regulatorFacing ?? false),
     costTier: task.costSensitivity ?? (model === OPUS ? "best" : model === HAIKU ? "cheap" : "balanced"),
     latencyTier: latencyTier(task.latencyBudgetMs),
+    fallbackModel,
   };
 }
 

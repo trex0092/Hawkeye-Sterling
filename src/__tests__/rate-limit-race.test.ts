@@ -106,16 +106,18 @@ describe("consumeRateLimit — concurrent write detection", () => {
     );
   });
 
-  it("returns allowed:true when read-back count is exactly nextSecond + 1 (within tolerance)", async () => {
+  it("returns allowed:false when read-back count is exactly nextSecond + 1 (concurrent write detected)", async () => {
     // nextSecond will be 1 (0 + effectiveCost 1).
-    // readBack count = 2 = nextSecond + 1. This is at the boundary — allowed.
+    // readBack count = 2 ≠ nextSecond (1). Stricter check: any delta triggers rejection.
+    // This prevents the 1-request slippage bypass where two concurrent requests at the
+    // limit boundary both pass (C-8 fix: changed > nextSecond+1 to !== nextSecond).
     mockInitialState = makeLimitState(0);
     mockReadBackState = makeLimitState(2);
 
     const { consumeRateLimit } = await import("@/lib/server/rate-limit");
     const result = await consumeRateLimit("test-key", "standard");
 
-    expect(result.allowed).toBe(true);
+    expect(result.allowed).toBe(false);
   });
 
   it("returns allowed:true when read-back count equals nextSecond (normal single-instance write)", async () => {

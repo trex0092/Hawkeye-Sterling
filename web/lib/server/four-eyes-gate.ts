@@ -50,6 +50,8 @@ export interface FourEyesStatus {
   rejectedAt?: string;
   rejectedBy?: string;
   rejectionReason?: string;
+  /** True when any stored approval entry failed digest verification — indicates tampering. */
+  tampered?: boolean;
   isExpired?: boolean;
   expiresAt?: string;
   overdueHours?: number;
@@ -166,14 +168,17 @@ async function _recordApproval(
   }
 
   const approvalId = `appr_${Date.now()}_${randomBytes(8).toString("hex")}`;
+  // M-10: trim rationale so whitespace-padded submissions don't bypass the 20-char guard
+  // while storing junk. Digest is computed from trimmed value for consistency.
+  const trimmedRationale = input.rationale.trim();
   const entry: ApprovalEntry = {
     approvalId,
     caseId: input.caseId,
     actor: input.actor,
     decision: input.decision,
-    rationale: input.rationale,
+    rationale: trimmedRationale,
     approvedAt: new Date().toISOString(),
-    digest: digestApproval(input),
+    digest: digestApproval({ caseId: input.caseId, actor: input.actor, decision: input.decision, rationale: trimmedRationale }),
     ...(input.parentJti ? { parentJti: input.parentJti } : {}),
   };
   await setJson(approvalKey(input.caseId, approvalId), entry);
@@ -217,13 +222,16 @@ async function _recordApproval(
 export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> {
   const keys = await listKeys(`${PREFIX}${safeSegment(caseId)}/`);
   const results = await Promise.all(keys.map((k) => getJson<ApprovalEntry>(k)));
+  let tamperDetected = false;
   const decisions: ApprovalEntry[] = results.filter((e): e is ApprovalEntry => {
     if (e == null || !e.approvalId || !e.actor) return false;
     // Verify tamper-evident digest before trusting this entry.
     const expected = digestApproval({ caseId: e.caseId, actor: e.actor, decision: e.decision, rationale: e.rationale });
     if (e.digest !== expected) {
+      tamperDetected = true;
       log({ level: "error", route: "four-eyes-gate", event: "four_eyes.digest_mismatch", caseId: e.caseId, approvalId: e.approvalId });
       incrementCounter('hawkeye_four_eyes_tamper_total', 1, {});
+      incrementCounter('hawkeye_four_eyes_tamper_detected_total', 1, { caseId: e.caseId });
       void emitAndLog('alert_four_eyes_tamper', {
         event: 'four_eyes_digest_mismatch',
         caseId: e.caseId,
@@ -235,7 +243,8 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
     }
     return true;
   });
-  decisions.sort((a, b) => a.approvedAt.localeCompare(b.approvedAt));
+  // Stable sort: primary by approvedAt, secondary by approvalId for determinism on ties.
+  decisions.sort((a, b) => a.approvedAt.localeCompare(b.approvedAt) || a.approvalId.localeCompare(b.approvalId));
 
   // Compute expiry fields based on the first approval timestamp.
   const firstApprovalAt = decisions[0]?.approvedAt;
@@ -256,6 +265,7 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
       approverGids: Array.from(new Set(decisions.map((d) => d.actor))),
       decisions,
       passed: false,
+      ...(tamperDetected ? { tampered: true } : {}),
       rejectedAt: rejected.approvedAt,
       rejectedBy: rejected.actor,
       rejectionReason: rejected.rationale,
@@ -270,7 +280,10 @@ export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> 
     approverCount: decisions.length,
     approverGids: distinctApprovers,
     decisions,
-    passed: distinctApprovers.length >= 2,
+    // Never pass a tampered case — tamper detected means at least one approval entry
+    // failed integrity verification and was excluded (H-2).
+    passed: !tamperDetected && distinctApprovers.length >= 2,
+    ...(tamperDetected ? { tampered: true } : {}),
     isExpired,
     expiresAt,
     overdueHours,
@@ -340,7 +353,16 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
 export async function getOverdueCases(): Promise<Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }>> {
   // List all case directories under four-eyes/approvals/
   const allKeys = await listKeys(PREFIX);
-  const caseIds = Array.from(new Set(allKeys.map((k) => k.replace(PREFIX, '').split('/')[0] ?? '')));
+  // M-11: validate key format before extracting caseId — log unexpected keys.
+  const caseIds = Array.from(new Set(allKeys.map((k) => {
+    const relative = k.replace(PREFIX, '');
+    const parts = relative.split('/');
+    if (parts.length < 2 || !parts[0]) {
+      console.warn(`[four-eyes-gate] unexpected storage key format: ${k}`);
+      return '';
+    }
+    return parts[0];
+  })));
   const overdue: Array<{ caseId: string; overdueHours: number; requiresEscalation: boolean }> = [];
   for (const caseId of caseIds) {
     if (!caseId) continue;

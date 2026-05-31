@@ -422,6 +422,23 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     charterIntegrityHash: process.env["CHARTER_HASH"] ?? "hawkeye-sterling-v1",
   };
 
+  // Audit every draft attempt — even those that will fail validation — so
+  // the compliance record exists regardless of outcome (FDL 10/2025 Art.24).
+  void writeAuditChainEntry(
+    {
+      event: "sar.report.draft_attempted",
+      actor: actorKeyId ?? mlro,
+      subjectName: body.subject.name,
+      subjectId: body.subject.id,
+      filingType: body.filingType,
+      caseId: body.subject.caseId,
+      internalRef,
+    },
+    tenant,
+  ).catch((err) =>
+    console.warn("[sar-report] audit chain write failed (draft_attempted):", err instanceof Error ? err.message : String(err)),
+  );
+
   // Validate the envelope before serialising. If validation produces ANY
   // errors we refuse the filing — pushing a broken envelope to the FIU
   // is worse than refusing to file: the FIU rejects it silently and the
@@ -450,6 +467,22 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       validationErrors,
       goamlSerialiseError,
     });
+    void writeAuditChainEntry(
+      {
+        event: "sar.report.validation_failed",
+        actor: actorKeyId ?? mlro,
+        subjectName: body.subject.name,
+        subjectId: body.subject.id,
+        filingType: body.filingType,
+        caseId: body.subject.caseId,
+        internalRef,
+        validationErrors,
+        goamlSerialiseError: goamlSerialiseError ?? undefined,
+      },
+      tenant,
+    ).catch((err) =>
+      console.warn("[sar-report] audit chain write failed (validation_failed):", err instanceof Error ? err.message : String(err)),
+    );
     return NextResponse.json(
       {
         ok: false,

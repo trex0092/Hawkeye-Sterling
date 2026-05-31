@@ -24,6 +24,14 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
+  if (!tenant) {
+    return NextResponse.json({ ok: false, error: "tenant_id_missing" }, { status: 403, headers: gate.headers });
+  }
+
+  void writeAuditChainEntry(
+    { event: "bias_report.accessed", actor: gate.keyId },
+    tenant,
+  ).catch(() => undefined);
 
   try {
     const report = await getBiasReport(tenant);
@@ -63,6 +71,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenant = tenantIdFromGate(gate);
+  if (!tenant) {
+    return NextResponse.json({ ok: false, error: "tenant_id_missing" }, { status: 403, headers: gate.headers });
+  }
 
   try {
     const report = await computeBiasReport(tenant);

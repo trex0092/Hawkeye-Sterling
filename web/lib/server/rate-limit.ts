@@ -140,7 +140,12 @@ export async function consumeRateLimit(
 ): Promise<RateLimitResult> {
   const tier = tierFor(tierId);
   // Clamp cost to a positive integer so a misconfigured caller can't
-  // zero-out the counter or overflow it.
+  // zero-out the counter or overflow it. Log misconfigurations so they
+  // aren't silently swallowed.
+  if (cost < 1) {
+    console.warn(`[rate-limit] cost ${cost} for key '${keyId}' is below 1 — clamping to 1. Check the caller's cost configuration.`);
+    incrementCounter('hawkeye_rate_limit_cost_clamp_total', 1, { tier: tierId });
+  }
   const effectiveCost = Math.max(1, Math.floor(cost));
 
   // Prefer Redis atomic enforcement when configured.
@@ -213,7 +218,7 @@ export async function consumeRateLimit(
   // under concurrent soft-enforcement. For strict atomic enforcement configure
   // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (the primary Redis path).
   const readBack = await getJson<LimitState>(storageKey).catch(() => null);
-  if (readBack && readBack.second.count > nextSecond + 1) {
+  if (readBack && readBack.second.count !== nextSecond) {
     console.warn(
       `[rate-limit] concurrent write detected for key=${keyId}: ` +
       `expected count=${nextSecond}, stored count=${readBack.second.count} ` +
