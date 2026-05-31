@@ -217,9 +217,24 @@ async function _recordApproval(
 export async function getCaseApprovals(caseId: string): Promise<FourEyesStatus> {
   const keys = await listKeys(`${PREFIX}${safeSegment(caseId)}/`);
   const results = await Promise.all(keys.map((k) => getJson<ApprovalEntry>(k)));
-  const decisions: ApprovalEntry[] = results.filter(
-    (e): e is ApprovalEntry => e != null && !!e.approvalId && !!e.actor,
-  );
+  const decisions: ApprovalEntry[] = results.filter((e): e is ApprovalEntry => {
+    if (e == null || !e.approvalId || !e.actor) return false;
+    // Verify tamper-evident digest before trusting this entry.
+    const expected = digestApproval({ caseId: e.caseId, actor: e.actor, decision: e.decision, rationale: e.rationale });
+    if (e.digest !== expected) {
+      log({ level: "error", route: "four-eyes-gate", event: "four_eyes.digest_mismatch", caseId: e.caseId, approvalId: e.approvalId });
+      incrementCounter('hawkeye_four_eyes_tamper_total', 1, {});
+      void emitAndLog('alert_four_eyes_tamper', {
+        event: 'four_eyes_digest_mismatch',
+        caseId: e.caseId,
+        approvalId: e.approvalId,
+        severity: 'critical',
+        at: new Date().toISOString(),
+      }).catch(() => undefined);
+      return false;
+    }
+    return true;
+  });
   decisions.sort((a, b) => a.approvedAt.localeCompare(b.approvedAt));
 
   // Compute expiry fields based on the first approval timestamp.
@@ -307,14 +322,15 @@ export async function requireFourEyes(caseId: string): Promise<{
 export async function expireCase(caseId: string, expiredBy: string): Promise<{ status: FourEyesStatus; expired: boolean }> {
   const status = await getCaseApprovals(caseId);
   if (status.passed) return { status, expired: false };
+  const expiryRationale = `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`;
   const expiry: ApprovalEntry = {
     approvalId: `expiry_${Date.now()}_${randomBytes(8).toString("hex")}`,
     caseId,
     actor: expiredBy,
     decision: 'reject',
-    rationale: `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`,
+    rationale: expiryRationale,
     approvedAt: new Date().toISOString(),
-    digest: digestApproval({ caseId, actor: expiredBy, decision: 'reject', rationale: 'auto-expire' }),
+    digest: digestApproval({ caseId, actor: expiredBy, decision: 'reject', rationale: expiryRationale }),
   };
   await setJson(approvalKey(caseId, expiry.approvalId), expiry);
   const newStatus = await getCaseApprovals(caseId);
