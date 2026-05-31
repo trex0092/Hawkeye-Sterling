@@ -182,11 +182,11 @@ export function pickModel(task: ModelTask): ModelChoice {
 }
 
 function choice(model: string, reason: string, task: ModelTask): ModelChoice {
-  // Populate Groq fallback for non-Opus models where quality degradation is acceptable.
-  let fallbackModel: string | undefined;
-  if (model === HAIKU) fallbackModel = GROQ_HAIKU_FALLBACK;
-  else if (model === SONNET) fallbackModel = GROQ_SONNET_FALLBACK;
   // Opus: no Groq fallback — fail closed on regulator-facing artefacts.
+  const groqFallback: string | undefined =
+    model === HAIKU ? GROQ_HAIKU_FALLBACK
+    : model === SONNET ? GROQ_SONNET_FALLBACK
+    : undefined;
 
   return {
     model,
@@ -195,7 +195,7 @@ function choice(model: string, reason: string, task: ModelTask): ModelChoice {
     recommendsThinking: model === OPUS && (task.extendedThinking ?? task.regulatorFacing ?? false),
     costTier: task.costSensitivity ?? (model === OPUS ? "best" : model === HAIKU ? "cheap" : "balanced"),
     latencyTier: latencyTier(task.latencyBudgetMs),
-    fallbackModel,
+    ...(groqFallback !== undefined ? { fallbackModel: groqFallback } : {}),
   };
 }
 

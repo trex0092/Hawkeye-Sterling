@@ -259,6 +259,11 @@ export function rateLimitHeaders(r: RateLimitResult): Record<string, string> {
     "x-ratelimit-limit-second": String(r.tier.rateLimitPerSecond),
     "x-ratelimit-remaining-second": String(r.remainingSecond),
     // Retry-After on 429 responses (RFC 7231 §7.1.3)
-    ...(r.allowed ? {} : { "retry-after": String(r.retryAfterSec) }),
+    // Seconds form is the primary value; HTTP-date form is a convenience alias
+    // for clients that prefer absolute timestamps (e.g. browsers, fetch polyfills).
+    ...(r.allowed ? {} : {
+      "retry-after": String(r.retryAfterSec),
+      "retry-after-date": new Date(Date.now() + r.retryAfterSec * 1000).toUTCString(),
+    }),
   };
 }
