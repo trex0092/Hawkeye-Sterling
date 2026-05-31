@@ -27,7 +27,7 @@ export default async (_req: Request): Promise<Response> => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[sanctions-daily-1300] unhandled error:", msg);
-    return new Response(JSON.stringify({ ok: false, error: msg }), {
+    return new Response(JSON.stringify({ ok: false, error: "internal_error" }), {
       status: 500,
       headers: { "content-type": "application/json" },
     });

@@ -467,33 +467,6 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
     ).catch(() => undefined);
   }
 
-  // C-7: Record this screening for drift and bias monitoring. Fire-and-forget
-  // so it never blocks the response path regardless of success or failure.
-  void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
-  void recordScreeningBias(ctx.tenantId, body.subject.name, body.result.topScore, body.result.severity, body.result.hits?.length ?? 0).catch(() => undefined);
-
-  // L-10: Compute screening provenance for goAML traceability. The runId and
-  // payloadSha256 are returned in the API response so the MLRO UI can pass them
-  // as `screeningProvenance` when triggering a goAML filing from this report.
-  const runId = randomUUID();
-  const payloadSha256 = createHash("sha256").update(JSON.stringify(body)).digest("hex");
-
-  // Write audit chain entry for compliance traceability (FDL 10/2025 Art.24).
-  void writeAuditChainEntry(
-    {
-      event: "screening.report.generated",
-      actor: ctx.apiKey?.id ?? "system",
-      subjectName: body.subject.name,
-      subjectId: body.subject.id,
-      severity: body.result.severity,
-      topScore: body.result.topScore,
-      trigger: body.trigger ?? "manual",
-      runId,
-      payloadSha256,
-    },
-    ctx.tenantId,
-  ).catch(() => undefined);
-
   // M-9: Optional four-eyes enforcement. When an approver is provided, verify
   // that the approver differs from the filer — same-person approvals are rejected
   // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
