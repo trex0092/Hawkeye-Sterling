@@ -18,6 +18,10 @@ import {
 
 const SECRET = 'test-secret-not-for-production-use-only-for-vitest';
 
+// F-37: buildEntry now validates that 'at' is within ±5 minutes of server time.
+// Use timestamps relative to now so tests don't break as time passes.
+const TEST_BASE_MS = Date.now();
+
 function freshEntry(
   sequence: number,
   prevHash: string,
@@ -26,7 +30,7 @@ function freshEntry(
   return buildEntry(
     {
       sequence,
-      at: `2026-05-18T10:00:${String(sequence).padStart(2, '0')}.000Z`,
+      at: new Date(TEST_BASE_MS + sequence * 1000).toISOString(),
       actor: { role: 'mlro', name: 'Test MLRO' },
       action: 'disposition',
       target: `case-${sequence}`,

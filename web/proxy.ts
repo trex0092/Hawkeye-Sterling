@@ -268,20 +268,24 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     if (adminToken) {
       const host = req.headers.get("host") ?? "";
       const origin = req.headers.get("origin");
-      const referer = req.headers.get("referer");
+      // NOTE: Referer header intentionally excluded — it is client-controlled and
+      // cannot be used as a security boundary. Only a HMAC-verified session cookie
+      // or the browser-enforced Origin header are acceptable same-origin signals.
+      // Using Referer allowed non-browser HTTP clients to forge origin identity and
+      // receive ADMIN_TOKEN-level access without a valid session (F-01 fix).
 
       const hostHostname = hostnameOf(host);
-      // A HMAC-verified session cookie is a reliable same-origin indicator:
+      // A HMAC-verified session cookie is the primary same-origin indicator:
       // browsers attach HttpOnly cookies automatically on same-origin requests,
       // and verifySessionEdge() checks the full HMAC so a forged cookie cannot
-      // trigger injection. origin/referer match is kept as the alternative for
-      // requests from browser contexts where the cookie isn't yet set.
+      // trigger injection. The Origin header is browser-enforced and cannot be
+      // forged by browser JS — also acceptable for same-origin detection.
       const hasValidSession = await verifySessionEdge(req.cookies.get(SESSION_COOKIE)?.value ?? "");
       const isSameOrigin =
         hasValidSession ||
         (hostHostname !== null &&
-          ((origin != null && hostnameOf(origin) === hostHostname) ||
-            (referer != null && hostnameOf(referer) === hostHostname)));
+          origin != null &&
+          hostnameOf(origin) === hostHostname);
 
       if (isSameOrigin) {
         const requestHeaders = new Headers(req.headers);

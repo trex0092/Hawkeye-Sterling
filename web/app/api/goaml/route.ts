@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { requireRole } from "@/lib/server/role-gate";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
-import { getEntity } from "@/lib/config/entities";
+import { getEntityForSubmission } from "@/lib/config/entities";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 import { runEgressCheck } from "@/lib/server/egress-check";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
+import { getJson, setJson } from "@/lib/server/store";
 // Pull the compiled brain + integrations from dist — the other screening
 // routes do the same to keep cold-start below the 10s Netlify Function cap.
 import { serialiseGoamlXml } from "../../../../src/integrations/goaml-xml.js";
@@ -144,6 +146,27 @@ async function handleGoaml(req: Request): Promise<Response> {
   if (roleBlock) return roleBlock;
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
+  // F-23: Idempotency key guard — prevents duplicate regulatory filings on retry.
+  // A network timeout causing a client retry would otherwise submit two goAML STRs.
+  const idempotencyKey = req.headers.get("idempotency-key")?.trim();
+  if (idempotencyKey) {
+    if (idempotencyKey.length > 256) {
+      return NextResponse.json({ ok: false, error: "Idempotency-Key exceeds 256-character limit" }, { status: 400, headers: gateHeaders });
+    }
+    const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+    const idemKey = `filing-idempotency/${idemHash}.json`;
+    const existing = await getJson<{ submittedAt: string; reportRef: string }>(idemKey).catch(() => null);
+    if (existing) {
+      const ageMs = Date.now() - Date.parse(existing.submittedAt);
+      if (ageMs < 24 * 60 * 60 * 1000) {
+        return NextResponse.json(
+          { ok: true, duplicate: true, reportRef: existing.reportRef, submittedAt: existing.submittedAt },
+          { status: 200, headers: gateHeaders },
+        );
+      }
+    }
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -248,7 +271,21 @@ async function handleGoaml(req: Request): Promise<Response> {
   // in the body, we use that; otherwise the default entity from
   // HAWKEYE_DEFAULT_ENTITY_ID. Falls back to single-entity legacy
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
-  const reportingEntity = getEntity(body.entityId);
+  // getEntityForSubmission() throws when the resolved entity has a placeholder
+  // goamlRentityId (e.g. "REPLACE_ME") — placeholder IDs cause the UAE FIU to
+  // reject every filing (FDL 10/2025 Art.15). Configure the real Rentity ID
+  // in Netlify environment variables before deploying to production (F-03 fix).
+  let reportingEntity: ReturnType<typeof getEntityForSubmission>;
+  try {
+    reportingEntity = getEntityForSubmission(body.entityId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goaml] entity ID validation failed:", msg);
+    return NextResponse.json(
+      { ok: false, error: msg, code: "GOAML_ENTITY_PLACEHOLDER" },
+      { status: 503 },
+    );
+  }
 
   const mlroName = process.env["GOAML_MLRO_FULL_NAME"];
   if (!mlroName) {
@@ -386,6 +423,13 @@ async function handleGoaml(req: Request): Promise<Response> {
     { event: "goaml.submission_generated", actor: gate.keyId, meta: { reportRef, reportCode: body.reportCode } },
     tenant,
   ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+
+  // F-23: Store idempotency record after successful generation so retries
+  // return the same reportRef rather than filing duplicate STRs with the FIU.
+  if (idempotencyKey) {
+    const idemHash = createHash("sha256").update(idempotencyKey).digest("hex");
+    void setJson(`filing-idempotency/${idemHash}.json`, { submittedAt: iso, reportRef }).catch(() => undefined);
+  }
 
   const filename = `goaml-${body.reportCode.toLowerCase()}-${safeFilenameSegment(reportRef)}.xml`;
   const narrativeTruncated = body.narrative.length > 4000;

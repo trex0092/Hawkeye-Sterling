@@ -26,6 +26,7 @@ import { verifySession, SESSION_COOKIE } from "./auth";
 import { log } from "./logger";
 import { startSpan, SpanStatus } from "./tracer";
 import { incrementCounter } from "./metrics-store";
+import { writeAuditChainEntry } from "./audit-chain";
 
 // Memoized HMAC key for IP anonymization. Derived once per deployment from
 // SESSION_SECRET so that the same IP always produces the same hash within a
@@ -49,6 +50,16 @@ export function anonIpKey(): string {
   return _anonIpKey;
 }
 
+// F-14: Auth failure reasons that are high-severity enough to warrant a
+// tamper-evident chain entry. Mutable-log rotation cannot be relied upon for
+// forensic reconstruction of credential-stuffing or key-revocation evasion.
+const HIGH_SEVERITY_AUTH_REASONS = new Set([
+  "jwt_key_revoked",
+  "anonymous_request_rejected",
+  "invalid_jwt:bad_signature",
+  "invalid_jwt:alg_mismatch",
+]);
+
 /** Internal: emit a structured auth-failure log entry for every enforcement rejection. */
 function logAuthFailure(
   req: Request,
@@ -63,6 +74,7 @@ function logAuthFailure(
   const ip = ips.length > 0 ? (ips[ips.length - 1] ?? UNKNOWN_IP) : UNKNOWN_IP;
   const requestId = req.headers.get("x-request-id") ?? "unset";
   const route = new URL(req.url).pathname;
+  const ipHash = createHmac("sha256", anonIpKey()).update(ip ?? "").digest("hex").slice(0, 16);
   log({
     level: "warn",
     route,
@@ -73,11 +85,29 @@ function logAuthFailure(
     // IP HMAC-hashed for PII hygiene — raw IP not logged.
     // HMAC-SHA256 with a per-deployment key prevents rainbow-table reversal
     // of the ~4B IPv4 address space that plain SHA-256 would allow.
-    ipHash: createHmac("sha256", anonIpKey()).update(ip ?? "").digest("hex").slice(0, 16),
+    ipHash,
     method: req.method,
     ...extra,
   });
   incrementCounter('hawkeye_auth_failures_total', 1, { reason: reason.split(':')[0] ?? reason });
+
+  // F-14: Write high-severity failures to the tamper-evident audit chain so
+  // credential-stuffing and revocation-evasion attempts survive log rotation.
+  if (HIGH_SEVERITY_AUTH_REASONS.has(reason)) {
+    void writeAuditChainEntry(
+      {
+        event: "auth.failure",
+        actor: "system",
+        route,
+        reason,
+        ipHash,
+        method: req.method,
+        status,
+        ...extra,
+      },
+      "default",
+    ).catch(() => undefined);
+  }
 }
 
 export interface EnforcementAllow {
@@ -134,29 +164,74 @@ async function _enforce(
   const requireJson = requireJsonBody && bodyMethod;
   if (requireJson) {
     const ct = req.headers.get("content-type") ?? "";
-    // Determine body presence via content-length only. Netlify's reverse proxy
-    // strips content-length and adds transfer-encoding: chunked on all proxied
-    // POST requests, even body-less ones — relying on transfer-encoding alone
-    // produces false 415s for legitimate body-less POSTs from the UI.
-    const cl = req.headers.get("content-length");
-    const clNum = cl !== null ? parseInt(cl, 10) : -1;
-    const hasBody = clNum > 0;
+
+    // F-12: Enforce body size via streaming byte-count on a cloned request so the
+    // check covers chunked transfer encoding (Netlify strips Content-Length on all
+    // proxied requests, making header-only enforcement useless there). The original
+    // `req` body is not consumed — route handlers can still call req.json() normally.
+    // Fall back to Content-Length check when the body stream is unavailable (e.g.
+    // body-less POSTs from the portal UI that arrive without a body at all).
+    let actualBodyBytes = 0;
+    let streamChecked = false;
+    if (req.body) {
+      try {
+        const cloned = req.clone();
+        const reader = cloned.body?.getReader();
+        if (reader) {
+          let overflow = false;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            actualBodyBytes += value.byteLength;
+            if (actualBodyBytes > maxBodyBytes) {
+              overflow = true;
+              reader.cancel().catch(() => undefined);
+              break;
+            }
+          }
+          streamChecked = true;
+          if (overflow) {
+            logAuthFailure(req, "request_body_too_large", 413, { bodyBytes: `>${maxBodyBytes}`, maxBodyBytes });
+            return {
+              ok: false,
+              response: NextResponse.json(
+                { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+                { status: 413 },
+              ),
+            };
+          }
+        }
+      } catch {
+        // Clone/stream read failed — fall through to Content-Length check below.
+        streamChecked = false;
+      }
+    }
+
+    // Legacy Content-Length fallback for environments where body streaming is
+    // unavailable (older runtimes, certain test environments).
+    if (!streamChecked) {
+      const cl = req.headers.get("content-length");
+      const clNum = cl !== null ? parseInt(cl, 10) : -1;
+      if (clNum > maxBodyBytes) {
+        logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
+            { status: 413 },
+          ),
+        };
+      }
+      actualBodyBytes = clNum > 0 ? clNum : 0;
+    }
+
+    const hasBody = actualBodyBytes > 0;
     if (hasBody && !ct.toLowerCase().includes("application/json")) {
       return {
         ok: false,
         response: NextResponse.json(
           { ok: false, error: "Content-Type: application/json required for POST/PUT/PATCH requests with a body", code: "UNSUPPORTED_MEDIA_TYPE" },
           { status: 415 },
-        ),
-      };
-    }
-    if (hasBody && clNum > maxBodyBytes) {
-      logAuthFailure(req, "request_body_too_large", 413, { contentLength: clNum, maxBodyBytes });
-      return {
-        ok: false,
-        response: NextResponse.json(
-          { ok: false, error: `Request body too large. Maximum allowed: ${maxBodyBytes} bytes.`, code: "PAYLOAD_TOO_LARGE" },
-          { status: 413 },
         ),
       };
     }

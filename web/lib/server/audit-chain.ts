@@ -194,12 +194,32 @@ export function verifyChain(
  * (audit/sign route) and by tests that need to construct a valid
  * chain without duplicating the math.
  */
+// Maximum clock skew accepted for caller-supplied `at` timestamps (seconds).
+const MAX_TIMESTAMP_SKEW_SEC = 300; // ±5 minutes
+
 export function buildEntry(
   partial: Omit<AuditEntry, 'id' | 'signature' | 'previousHash'> & { previousHash?: string },
   prevHash: string,
   secret: string,
 ): AuditEntry {
   const previousHash = partial.previousHash ?? prevHash;
+
+  // F-37: Validate `at` is a parseable ISO 8601 timestamp within ±5 minutes
+  // of server time. A caller-controlled far-past or far-future timestamp can
+  // break chain ordering and defeat chronological audit reconstruction.
+  const nowSec = Math.floor(Date.now() / 1000);
+  const atMs = Date.parse(partial.at);
+  if (isNaN(atMs)) {
+    throw new Error(`buildEntry: 'at' field "${partial.at}" is not a valid ISO 8601 timestamp`);
+  }
+  const skewSec = Math.abs(Math.floor(atMs / 1000) - nowSec);
+  if (skewSec > MAX_TIMESTAMP_SKEW_SEC) {
+    throw new Error(
+      `buildEntry: 'at' field skew ${skewSec}s exceeds maximum ${MAX_TIMESTAMP_SKEW_SEC}s — ` +
+      `use a timestamp within ±${MAX_TIMESTAMP_SKEW_SEC}s of server time`,
+    );
+  }
+
   const draft: AuditEntry = {
     sequence: partial.sequence,
     id: '',
@@ -323,6 +343,19 @@ const ALERT_DEBOUNCE_MS = 5_000;
 async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): Promise<boolean> {
   const chainSecret = getChainSecret(tenantId);
   if (!chainSecret) {
+    // F-40: In production, missing AUDIT_CHAIN_SECRET means the chain is forgeable —
+    // any actor with Blobs write access can silently modify or fabricate entries.
+    // Fail closed rather than produce an unprotected chain that satisfies no
+    // regulator under FDL 10/2025 Art.24.
+    if (process.env["NODE_ENV"] === "production") {
+      console.error(
+        "[audit-chain] AUDIT_CHAIN_SECRET absent or too short in production — " +
+        "blocking chain write. Generate with: openssl rand -hex 64",
+        { event: event.event, actor: event.actor, tenant: tenantId },
+      );
+      incrementCounter('hawkeye_audit_chain_secret_missing_total', 1, { tenant: tenantId });
+      return false;
+    }
     console.error(
       "[audit-chain] AUDIT_CHAIN_SECRET is missing or too short (min 32 chars). " +
       "Writing chain entry WITHOUT HMAC protection — chain is tamper-detectable " +

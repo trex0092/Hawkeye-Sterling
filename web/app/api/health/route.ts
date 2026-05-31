@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { hallucinationGateStatus } from "@/lib/server/hallucination-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -223,6 +224,8 @@ export async function GET(req: Request): Promise<NextResponse> {
     ),
   ]);
 
+  const hGate = hallucinationGateStatus();
+
   const downLists = listResults.filter((l) => l.down);
   const sanctionsDown = downLists.length;
   const mandatoryListsHealthy = sanctionsDown === 0;
@@ -233,16 +236,27 @@ export async function GET(req: Request): Promise<NextResponse> {
     triggerSanctionsDownAlert(downListIds);
   }
 
+  // Build a warnings list for non-fatal degraded subsystems.
+  const warnings: string[] = [];
+  if (!hGate.loaded) warnings.push("hallucination_gate_disabled");
+
+  // F-08: S3 audit backup required for FDL 10/2025 Art.24 10-year retention.
+  // Netlify Blobs has no 10-year SLA; S3/WORM backup is mandatory in production.
+  const s3Configured = !!(process.env["S3_BACKUP_ENDPOINT"] && process.env["S3_BACKUP_BUCKET"]);
+  if (!s3Configured && process.env["NODE_ENV"] === "production") {
+    warnings.push("s3_audit_backup_unconfigured");
+  }
+
   // Section 20: tiered HTTP status
   // 503 if 3+ mandatory lists are down OR brain is down
-  // 207 if 1–2 mandatory lists are down
-  // 200 if all mandatory lists healthy AND brain ok
+  // 207 if 1–2 mandatory lists are down OR non-fatal warnings present
+  // 200 if all mandatory lists healthy AND brain ok AND no warnings
   let httpStatus: 200 | 207 | 503;
   let overallStatus: "operational" | "degraded" | "down";
   if (!brain.ok || sanctionsDown >= 3) {
     httpStatus = 503;
     overallStatus = "down";
-  } else if (sanctionsDown >= 1) {
+  } else if (sanctionsDown >= 1 || warnings.length > 0) {
     httpStatus = 207;
     overallStatus = "degraded";
   } else {
@@ -271,6 +285,12 @@ export async function GET(req: Request): Promise<NextResponse> {
         mlroAction: "Trigger GET /api/admin/trigger-list-refresh?list=" + downListIds.join(",") + " to restore. MLRO audit alert has been raised.",
       } : {}),
       brain: { ok: brain.ok },
+      hallucinationGate: {
+        loaded: hGate.loaded,
+        ...(hGate.error ? { error: hGate.error } : {}),
+      },
+      s3AuditBackup: { configured: s3Configured },
+      ...(warnings.length > 0 ? { warnings } : {}),
       ts: new Date().toISOString(),
       runtime: "nodejs",
       ...(authenticated ? { buildId: BUILD_ID, commitRef: COMMIT_REF } : {}),

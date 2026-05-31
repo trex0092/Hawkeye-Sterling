@@ -55,6 +55,7 @@ void import('@brain/GroundedComplianceLLM.js').then((m: { detectHallucinations: 
 }).catch((err: unknown) => {
   _detectHallucinationsLoadErr = err instanceof Error ? err.message : String(err);
   console.warn('[hallucination-gate] brain module unavailable at startup:', _detectHallucinationsLoadErr);
+  incrementCounter('hawkeye_hallucination_gate_disabled_total', 1, {});
 });
 
 function buildCitationsFromFragments(fragments: string[]) {
@@ -149,4 +150,13 @@ export async function checkHallucination(
     checkedAt,
     ...(skipReason !== undefined ? { skipped: true, skipReason } : {}),
   };
+}
+
+/**
+ * Returns the load status of the brain hallucination module.
+ * Used by the health endpoint to surface a silent gate failure so the MLRO
+ * can see when hallucination detection is not running (F-20).
+ */
+export function hallucinationGateStatus(): { loaded: boolean; error: string | null } {
+  return { loaded: _detectHallucinations !== null, error: _detectHallucinationsLoadErr };
 }

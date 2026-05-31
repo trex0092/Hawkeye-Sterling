@@ -26,7 +26,7 @@ async function getJwt() {
 describe("issueJwt / verifyJwt", () => {
   it("round-trips a valid token", async () => {
     const { issueJwt, verifyJwt } = await getJwt();
-    const { token } = issueJwt({ sub: "key_001", tier: "standard" });
+    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { iss: "hawkeye-sterling" });
     const result = verifyJwt(token);
     expect(result.ok).toBe(true);
     expect(result.payload?.sub).toBe("key_001");
@@ -34,7 +34,7 @@ describe("issueJwt / verifyJwt", () => {
 
   it("rejects an expired token", async () => {
     const { issueJwt, verifyJwt } = await getJwt();
-    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { ttlSec: -1 });
+    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { iss: "hawkeye-sterling", ttlSec: -1 });
     const result = verifyJwt(token);
     expect(result.ok).toBe(false);
     expect(result.reason).toBe("expired");
@@ -42,7 +42,7 @@ describe("issueJwt / verifyJwt", () => {
 
   it("rejects a tampered signature", async () => {
     const { issueJwt, verifyJwt } = await getJwt();
-    const { token } = issueJwt({ sub: "key_001", tier: "standard" });
+    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { iss: "hawkeye-sterling" });
     const parts = token.split(".");
     const tampered = `${parts[0]}.${parts[1]}.aaaa`;
     const result = verifyJwt(tampered);
@@ -68,7 +68,7 @@ describe("issueJwt / verifyJwt", () => {
   it("accepts token verified by JWT_SIGNING_SECRET_PREV during rotation", async () => {
     vi.stubEnv("JWT_SIGNING_SECRET", PREV_SECRET);
     const { issueJwt } = await getJwt();
-    const { token } = issueJwt({ sub: "key_001", tier: "standard" });
+    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { iss: "hawkeye-sterling" });
 
     vi.resetModules();
     vi.stubEnv("JWT_SIGNING_SECRET", SECRET);
@@ -95,11 +95,12 @@ describe("issueJwt / verifyJwt", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("accepts token with no iss field (optional field)", async () => {
+  it("rejects token with no iss field (required after F-06 fix)", async () => {
     const { issueJwt, verifyJwt } = await getJwt();
     const { token } = issueJwt({ sub: "key_001", tier: "standard" });
     const result = verifyJwt(token);
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("invalid_issuer");
   });
 
   it("returns no_secret when JWT_SIGNING_SECRET is absent", async () => {
