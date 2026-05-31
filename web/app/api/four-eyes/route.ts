@@ -270,7 +270,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     subjectName: enrichedItem.subjectName,
     fourEyesAction: enrichedItem.action,
     reason: enrichedItem.reason,
-  }).catch((err: unknown) => {
+  }, ctx.tenantId).catch((err: unknown) => {
     console.warn("[four-eyes] enqueued audit write failed:", err instanceof Error ? err.message : String(err));
   });
 
@@ -409,7 +409,7 @@ async function handlePatch(req: Request, ctx: RequestContext): Promise<NextRespo
     fourEyesAction: updated.action,
     initiatedBy: updated.initiatedBy,
     ...(action === "reject" && updated.rejectionReason ? { rejectionReason: updated.rejectionReason } : {}),
-  }).catch((err: unknown) => {
+  }, ctx.tenantId).catch((err: unknown) => {
     console.warn("[four-eyes] action audit write failed:", err instanceof Error ? err.message : String(err));
   });
 
@@ -437,7 +437,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     subjectName: existing.subjectName,
     fourEyesAction: existing.action,
     priorStatus: existing.status,
-  }).catch((err: unknown) => {
+  }, ctx.tenantId).catch((err: unknown) => {
     console.warn("[four-eyes] delete audit write failed:", err instanceof Error ? err.message : String(err));
   });
   return NextResponse.json({ ok: true });
