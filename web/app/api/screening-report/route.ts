@@ -82,6 +82,10 @@ interface ReportBody {
     generatedAt: string;
   };
   trigger?: "screen" | "ongoing" | "save";
+  /** Optional second-officer identity for four-eyes filing. When present, enforces
+   *  that the approver differs from the filer (ctx.apiKey.id). Required for
+   *  high-severity reports filed to the MLRO inbox per FDL 10/2025 Art.16. */
+  approver?: string;
 }
 
 interface ApiResponse {
@@ -429,6 +433,31 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
   }
   if (!body?.subject?.name || !body?.result) {
     return respond(400, { ok: false, error: "subject.name and result are required" });
+  }
+
+  // M-9: Optional four-eyes enforcement. When an approver is provided, verify
+  // that the approver differs from the filer — same-person approvals are rejected
+  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  if (body.approver !== undefined) {
+    const trimmedApprover = body.approver.trim();
+    if (!trimmedApprover || trimmedApprover.length > 128) {
+      return respond(400, { ok: false, error: "approver name must be between 1 and 128 characters" });
+    }
+    // Normalise both sides before comparison to resist homoglyph bypasses
+    // (e.g. cyrillic 'о' vs latin 'o' passing as different approvers).
+    const normalise = (s: string): string =>
+      s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (normalise(trimmedApprover) === normalise(ctx.apiKey?.id ?? "")) {
+      void writeAuditChainEntry(
+        { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
+        ctx.tenantId,
+      ).catch(() => undefined);
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+    }
+    void writeAuditChainEntry(
+      { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
+      ctx.tenantId,
+    ).catch(() => undefined);
   }
 
   // C-7: Record this screening for drift and bias monitoring. Fire-and-forget

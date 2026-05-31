@@ -206,6 +206,11 @@ async function main() {
   }
 }
 
+// NOTE (L-15): The top-level `main().catch()` pattern is safe here because this
+// file is always executed directly via `node scripts/validate-prompt-hashes.mjs`
+// or an npm script — it is not imported as a module. If it is ever imported,
+// the unhandled rejection will surface at the import site. Do not add a
+// synchronous `throw` at module scope; keep the async boundary here.
 main().catch(err => {
   console.error('[validate-prompt-hashes] Fatal:', err);
   process.exit(1);
