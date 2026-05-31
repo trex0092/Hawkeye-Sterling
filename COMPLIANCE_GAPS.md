@@ -212,6 +212,29 @@ The following critical security defects were resolved:
 
 ---
 
+## Phase 2 Security Fixes (2026-05-31)
+
+**Fix-2.1 — JWT cross-service issuer confusion:**
+`web/lib/server/jwt.ts` — `verifyJwt()` now rejects tokens that carry an explicit `iss` claim other than `"hawkeye-sterling"`. Defense-in-depth against cross-service JWT confusion if another service ever shares the signing key. Added `invalid_issuer` to the `JwtVerifyResult.reason` union. Test coverage added (`web/lib/server/__tests__/jwt.test.ts`, 10 cases).
+
+**Fix-2.2 — Hallucination gate missing from regulatory narrative routes:**
+`web/app/api/sar-narrative/route.ts`, `web/app/api/str-narrative/route.ts` — `checkHallucination()` wired as fire-and-forget post-response gate on both AI-generated regulatory document routes. Evidence fragments (activityDescription, adverseMedia, mlroNotes) passed to enable citation-grounded detection before MLRO review.
+
+**Fix-2.3 — Emergency-reset brute-force protection:**
+`web/app/api/auth/emergency-reset/route.ts` — Added `enforce(req, { requireAuth: false, cost: 5 })` rate-limiting gate to prevent automated brute-force of `LUISA_INITIAL_PASSWORD`. Previously unauthenticated callers had no request budget.
+
+**Fix-2.4 — Blob-key path-traversal in 4 stores:**
+User-supplied IDs were used as blob-store key segments without sanitization in:
+- `web/lib/server/cdd-vault.ts` — `reviewKey()` now strips non-safe chars via `safeReviewId()`
+- `web/lib/server/breach-store.ts` — `breachKey()` now sanitizes via `safeBreachId()`
+- `web/lib/server/alerts-store.ts` — `alertKey()` now sanitizes via `safeAlertId()`
+- `web/lib/server/enrichment-jobs.ts` — `jobKey()` now sanitizes via `safeJobId()`
+
+**Fix-2.5 — batch-screen-stream missing audit chain:**
+`web/app/api/batch-screen-stream/route.ts` — Added `writeAuditChainEntry` (event: `batch.screen_completed`) at stream completion, matching the non-streaming batch-screen endpoint. Previously, any batch screening run via the streaming endpoint left no trace in the tamper-evident audit chain.
+
+---
+
 ## Resolution Checklist
 
 | ID | Owner | Target Date | Status |
