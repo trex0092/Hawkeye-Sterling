@@ -133,6 +133,11 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
 
   // ── Action ────────────────────────────────────────────────────────────────
   // These tools can modify external state. Use with explicit intent.
+  freeze_account: {
+    level: "action",
+    description: "Freeze a compliance case — sets status to 'frozen' and appends reason to case notes",
+    regulatoryNote: "Irreversible case state change — requires MLRO authorisation; audit entry written on every call (Cabinet Resolution 74/2020)",
+  },
   call_api: {
     level: "action",
     description: "Generic proxy — calls any /api/* endpoint directly",
