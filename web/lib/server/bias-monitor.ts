@@ -234,7 +234,9 @@ function computeNationalityBias(pepEntries: PepNationalityEntry[]): {
   for (const [nationality, items] of byNationality.entries()) {
     if (items.length < MIN_NATIONALITY_SAMPLE) continue;
     const total = items.length;
-    const hitRate = items.filter((e) => e.isHit).length / total;
+    // items are pre-filtered to isHit=true so hitRate is always 1.0 here;
+    // a meaningful hit-rate would require recording non-hit screenings per nationality.
+    const hitRate = 1;
     const fpRate  = items.filter((e) => e.isFalsePos).length / total;
     const biasRatio = globalFP > 0 ? fpRate / globalFP : (fpRate > 0 ? Infinity : 1);
     const flagged = Math.abs(fpRate - globalFP) > getNationalityFpDelta();

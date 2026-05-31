@@ -381,8 +381,13 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       // C-1: Post-write race detection — verify our entry persisted under concurrent writes.
       // With consistency:"strong" the read reflects the winning write. If our hash is absent,
       // another Lambda's write overwrote ours; retry with jitter so we append on top of it.
-      const readBack = await store.get(chainFile, { type: "json" }) as ChainEntry[] | null;
-      const readBackChain = Array.isArray(readBack) ? readBack : [];
+      // Retry read-back once to distinguish a transient network null (write succeeded)
+      // from a genuine concurrent-write conflict (different Lambda won the CAS race).
+      let readBackRaw = await store.get(chainFile, { type: "json" }).catch(() => null) as ChainEntry[] | null;
+      if (!readBackRaw) {
+        readBackRaw = await store.get(chainFile, { type: "json" }).catch(() => null) as ChainEntry[] | null;
+      }
+      const readBackChain = Array.isArray(readBackRaw) ? readBackRaw : [];
       if (!readBackChain.some((e: ChainEntry) => e.entryHash === hash)) {
         const jitterMs = 50 + Math.floor(Math.random() * 100);
         console.warn(
