@@ -190,6 +190,10 @@ async function _recordApproval(
   const actorDecisions = status.decisions.filter((d) => d.actor === input.actor);
   if (actorDecisions.length > 1) {
     // We lost the race — delete our entry and surface the earlier one.
+    // If deletion fails after two attempts, the orphaned entry persists in
+    // storage but remains invisible to getCaseApprovals() (its digest won't
+    // match) so it cannot contribute to a false quorum. The hawkeye_four_eyes_orphan_total
+    // counter + critical alert lets ops clean it up manually (H-3).
     await del(approvalKey(input.caseId, approvalId)).catch(async () => {
       await new Promise((r) => setTimeout(r, 200));
       await del(approvalKey(input.caseId, approvalId)).catch((retryErr) => {

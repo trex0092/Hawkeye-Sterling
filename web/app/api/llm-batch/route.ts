@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { getJson, setJson } from "@/lib/server/store";
-import { getAnthropicClient } from "@/lib/server/llm";
+import { getAnthropicClient, persistRedactionMaps, loadRedactionMaps } from "@/lib/server/llm";
 import { rehydrate, type RedactionMap } from "@/lib/server/redact";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -19,10 +19,6 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const batchIndexKey = (keyId: string) => `llm-batch/index/${keyId}`;
-// Per-batch redaction maps are persisted here so results retrieved hours
-// later can be rehydrated with the same maps that redacted the inputs.
-// Survives cold starts because Blobs are durable.
-const batchMapsKey = (anthropicBatchId: string) => `llm-batch/maps/${anthropicBatchId}.json`;
 
 interface BatchJob {
   batchId: string;
@@ -94,10 +90,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // Persist per-customId redaction maps so result text retrieved hours
     // later can be rehydrated against the same maps that redacted inputs.
-    // Stored under the Anthropic batch ID, which is what the results
-    // endpoint keys on.
+    // Uses the canonical persistRedactionMaps helper from llm.ts.
     try {
-      await setJson(batchMapsKey(anthropicBatch.id), anthropicBatch._redactionMaps);
+      await persistRedactionMaps(anthropicBatch.id, anthropicBatch._redactionMaps);
     } catch (mapErr) {
       console.warn("[llm-batch] redaction-map persist failed:", mapErr instanceof Error ? mapErr.message : mapErr);
     }
@@ -157,7 +152,7 @@ async function fetchAndRehydrateResults(
   // Load the per-customId redaction maps persisted at submission time.
   // Missing maps → rehydrate is a no-op (we still return the raw text so
   // the operator can see the redacted form rather than dropping data).
-  const mapsByCustomId = (await getJson<Record<string, RedactionMap>>(batchMapsKey(anthropicBatchId))) ?? {};
+  const mapsByCustomId = await loadRedactionMaps(anthropicBatchId);
 
   const client = getAnthropicClient(apiKey, 4_500, "llm-batch");
   let iter: AsyncIterable<BatchResultEntry>;

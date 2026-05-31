@@ -264,7 +264,7 @@ export async function computeBiasReport(tenant: string, entries?: BiasEntry[]): 
     return await _computeBiasReport(tenant, entries);
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
-    throw err;
+    throw err; // intentional rethrow — span.end() fires in finally below
   } finally {
     span.end();
   }

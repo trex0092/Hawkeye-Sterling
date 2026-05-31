@@ -17,6 +17,7 @@ import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
 import { startSpan, SpanStatus } from "./tracer";
 import { incrementCounter } from "./metrics-store";
+import { getJson, setJson } from "./store";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -321,4 +322,40 @@ export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: s
     _pool.set(poolKey, guard);
   }
   return guard;
+}
+
+// ── Batch redaction map helpers ───────────────────────────────────────────────
+// `batches.create()` returns `_redactionMaps` (custom_id → RedactionMap).
+// The caller MUST persist these maps before the Lambda instance is recycled —
+// batch results arrive hours later on a cold instance that has no in-memory maps.
+// Use `persistRedactionMaps` immediately after `batches.create()` and
+// `loadRedactionMaps` before rehydrating retrieved results.
+
+const batchMapsStoreKey = (anthropicBatchId: string): string =>
+  `llm-batch/maps/${anthropicBatchId}.json`;
+
+/**
+ * Persist the redaction maps returned by `batches.create()` to Netlify Blobs.
+ * Must be called immediately after batch submission so cold-start result
+ * retrieval can rehydrate `[REDACTED_*]` tokens back to their original values.
+ *
+ * @throws if the Blobs write fails — the caller should surface this as an error
+ *         rather than proceeding, since unrehydrated batch results will contain
+ *         placeholder tokens permanently.
+ */
+export async function persistRedactionMaps(
+  anthropicBatchId: string,
+  maps: Record<string, RedactionMap>,
+): Promise<void> {
+  await setJson(batchMapsStoreKey(anthropicBatchId), maps);
+}
+
+/**
+ * Load persisted redaction maps for a batch.
+ * Returns an empty object when no maps are found (e.g. pre-migration batches).
+ */
+export async function loadRedactionMaps(
+  anthropicBatchId: string,
+): Promise<Record<string, RedactionMap>> {
+  return (await getJson<Record<string, RedactionMap>>(batchMapsStoreKey(anthropicBatchId)).catch(() => null)) ?? {};
 }

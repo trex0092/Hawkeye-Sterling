@@ -110,7 +110,7 @@ export async function computeDriftReport(tenant: string, entries?: DriftEntry[])
     return await _computeDriftReport(tenant, entries);
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
-    throw err;
+    throw err; // intentional rethrow — span.end() fires in finally below
   } finally {
     span.end();
   }

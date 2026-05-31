@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash, randomUUID } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
 import type { RequestContext } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
@@ -7,6 +8,7 @@ import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
 import { recordDecision } from "@/lib/server/drift-monitor";
 import { recordScreeningBias } from "@/lib/server/bias-monitor";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -434,6 +436,28 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
   void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
   void recordScreeningBias(ctx.tenantId, body.subject.name, body.result.topScore, body.result.severity, body.result.hits?.length ?? 0).catch(() => undefined);
 
+  // L-10: Compute screening provenance for goAML traceability. The runId and
+  // payloadSha256 are returned in the API response so the MLRO UI can pass them
+  // as `screeningProvenance` when triggering a goAML filing from this report.
+  const runId = randomUUID();
+  const payloadSha256 = createHash("sha256").update(JSON.stringify(body)).digest("hex");
+
+  // Write audit chain entry for compliance traceability (FDL 10/2025 Art.24).
+  void writeAuditChainEntry(
+    {
+      event: "screening.report.generated",
+      actor: ctx.apiKey?.id ?? "system",
+      subjectName: body.subject.name,
+      subjectId: body.subject.id,
+      severity: body.result.severity,
+      topScore: body.result.topScore,
+      trigger: body.trigger ?? "manual",
+      runId,
+      payloadSha256,
+    },
+    ctx.tenantId,
+  ).catch(() => undefined);
+
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);
 
@@ -444,6 +468,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
       asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox. Set ASANA_TOKEN in Netlify env to enable automatic filing.",
       reportName: name,
       reportNotes: notes,
+      screeningProvenance: { runId, payloadSha256 },
     });
   }
 
@@ -567,6 +592,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
       ok: true,
       taskGid: payload.data.gid,
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
+      screeningProvenance: { runId, payloadSha256 },
     });
   } catch (err) {
     console.error("[screening-report] asana request failed", err instanceof Error ? err.message : String(err));
