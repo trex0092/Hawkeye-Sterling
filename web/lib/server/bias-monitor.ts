@@ -112,6 +112,12 @@ const MIN_NATIONALITY_SAMPLE = 5;   // minimum entries per nationality for bias 
 // Thresholds are operator-configurable via env vars.
 // BIAS_THRESHOLD_PCT: integer percentage above global mean that triggers a flag (default 15 → ratio 1.15)
 // NATIONALITY_FP_DELTA_PCT: integer percentage gap in false-positive rates between nationalities (default 20 → 0.20)
+//
+// NOTE: Default threshold is 1.15, deliberately tighter than the FATF R.10 regulatory floor of 1.5.
+// A 15% deviation triggers internal review; the 1.5 threshold at which point a FATF R.10 incident
+// must be declared is checked separately in bias-report/route.ts (criticalGroups).
+// Override via BIAS_THRESHOLD_PCT env var (e.g. "20" → ratio 1.20). Requires MLRO sign-off
+// before loosening above 50 (ratio 1.5) in production — see COMPLIANCE_GAPS.md.
 function getBiasThreshold(): number {
   const raw = process.env["BIAS_THRESHOLD_PCT"];
   if (raw !== undefined && raw !== "") {
@@ -258,7 +264,7 @@ export async function computeBiasReport(tenant: string, entries?: BiasEntry[]): 
     return await _computeBiasReport(tenant, entries);
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
-    throw err;
+    throw err; // intentional rethrow — span.end() fires in finally below
   } finally {
     span.end();
   }

@@ -50,7 +50,15 @@ const MAX_SERIES = 10_000;
 function guardCardinality(store: MetricsStore): boolean {
   const total = store.counters.size + store.gauges.size;
   if (total >= MAX_SERIES) {
-    console.warn(`[metrics-store] cardinality limit reached (${total} series) — dropping new metric write`);
+    // Use console.error (not warn) so ops alerts fire on cardinality exhaustion.
+    // Also attempt to write a dedicated overflow counter — if it already exists
+    // in the store it will increment without triggering the cardinality guard.
+    console.error(`[metrics-store] cardinality limit reached (${total} series) — dropping new metric write`);
+    const overflowKey = 'hawkeye_metrics_cardinality_overflow_total{}';
+    const existing = store.counters.get(overflowKey);
+    if (existing !== undefined) {
+      store.counters.set(overflowKey, existing + 1);
+    }
     return false;
   }
   return true;

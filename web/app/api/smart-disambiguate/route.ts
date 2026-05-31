@@ -11,6 +11,7 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
+import { pickModel } from "../../../../src/integrations/model-router";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -192,9 +193,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
 
   try {
+    const modelChoice = pickModel({ kind: "classification", costSensitivity: "balanced", latencyBudgetMs: 6_000 });
     const client = getAnthropicClient(apiKey, 6_000);
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: modelChoice.model,
       max_tokens: 380, // per-hit JSON ~30 tok × 10 hits + overhead ≈ 350 tok; 380 keeps response under 0.8s
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
@@ -202,10 +204,26 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
 
-    // Strip markdown fences before JSON.parse
+    // Strip markdown fences before JSON.parse. max_tokens=380 is tight — if
+    // Claude truncates mid-JSON, parse throws; catch it and degrade gracefully.
     const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
 
-    const parsed = JSON.parse(stripped) as DisambiguationResult;
+    let parsed: DisambiguationResult;
+    try {
+      parsed = JSON.parse(stripped) as DisambiguationResult;
+    } catch {
+      console.warn("[smart-disambiguate] JSON parse failed (likely truncated response) — using template fallback");
+      void writeAuditChainEntry(
+        {
+          event: "screening.disambiguation_degraded",
+          actor: gate.keyId,
+          clientName: sanitizedClient.name,
+          reason: "json_parse_failed",
+        },
+        tenantIdFromGate(gate),
+      ).catch(() => undefined);
+      return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM response truncated — deterministic template used", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    }
 
     // Normalize arrays — LLM occasionally returns null instead of [].
     if (!Array.isArray(parsed.hits)) parsed.hits = [];

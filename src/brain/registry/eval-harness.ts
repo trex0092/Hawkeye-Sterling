@@ -58,6 +58,10 @@ export interface RegressionScenario {
   expectedTypologies?: string[];
   /** Optional: country iso2 codes whose 5-list lookup must surface. */
   expectedJurisdictions?: string[];
+  /** ISO date of last expert review — catches stale gold answers when regulations change. */
+  lastReviewedAt?: string;
+  /** Identity of the MLRO or compliance officer who last reviewed the gold answer. */
+  lastReviewedBy?: string;
 }
 
 // ── Per-run grading ────────────────────────────────────────────────────────
@@ -140,6 +144,38 @@ export class EvalHarness {
       throw new Error(`eval: scenario id already registered: ${s.id}`);
     }
     this.scenarios.push(s);
+  }
+
+  /**
+   * Load MLRO-created scenarios from Netlify Blobs and merge them into the
+   * in-memory set. Scenarios stored at key `eval-scenarios/{tenantId}` as a
+   * JSON array of RegressionScenario. IDs already registered are skipped.
+   *
+   * This allows the MLRO to create and persist scenarios via the UI without a
+   * code deploy (L-13). Requires `NETLIFY_TOKEN` + `NETLIFY_SITE_ID` env vars.
+   */
+  async loadScenariosFromBlob(tenantId: string): Promise<void> {
+    try {
+      // Dynamic import keeps the Netlify Blobs SDK optional — eval-harness
+      // is also consumed in Node CLI scripts that don't have Blobs configured.
+      const { getStore } = await import("@netlify/blobs") as { getStore: (name: string) => { get: (key: string, opts: { type: string }) => Promise<string | null> } };
+      const store = getStore("hawkeye-eval");
+      const raw = await store.get(`eval-scenarios/${tenantId}`, { type: "text" });
+      if (!raw || raw.length < 2) return;
+      const external = JSON.parse(raw) as RegressionScenario[];
+      let added = 0;
+      for (const s of external) {
+        if (!s.id || this.scenarios.some((x) => x.id === s.id)) continue;
+        this.scenarios.push(s);
+        added++;
+      }
+      if (added > 0) {
+        console.info(`[eval-harness] loaded ${added} MLRO scenario(s) from Blobs for tenant '${tenantId}'`);
+      }
+    } catch (err) {
+      // Non-fatal — fall back to seeded scenarios only.
+      console.warn("[eval-harness] loadScenariosFromBlob failed (using seed scenarios only):", err instanceof Error ? err.message : String(err));
+    }
   }
 
   list(): RegressionScenario[] {
@@ -856,3 +892,11 @@ export const SEED_SCENARIOS: RegressionScenario[] = [
       'OECD DDG para.1.3 applies to gold from artisanal/small-scale and large-scale mines. E-waste recovery is a secondary source and generally outside OECD DDG mineral-extraction scope, though LBMA RGG scope covers all gold entering the market. Standard CDD applies; EDD not triggered solely by e-waste origin.',
   },
 ];
+
+// Guard: minimum scenario count required for adequate eval coverage.
+// Deleting scenarios must fail CI — this assertion prevents silent regression.
+if (SEED_SCENARIOS.length < 50) {
+  throw new Error(
+    `eval-harness: SEED_SCENARIOS has ${SEED_SCENARIOS.length} entries — minimum is 50. Do not delete eval scenarios.`,
+  );
+}

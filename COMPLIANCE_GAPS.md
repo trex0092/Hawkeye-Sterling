@@ -235,6 +235,24 @@ User-supplied IDs were used as blob-store key segments without sanitization in:
 
 ---
 
+## CG-BIAS-001 — Bias ratio threshold tighter than regulatory floor
+
+**Risk:** LOW (regulatory alignment)
+**Status:** DELIBERATE DEVIATION — MLRO acknowledgement required
+
+**Description:** `web/lib/server/bias-monitor.ts` flags name-script groups as biased when `biasRatio > 1.15` (i.e., a group's mean screening score deviates more than 15% above the global mean). FATF R.10 Non-Discrimination and FDL 10/2025 Annex III set a regulatory floor of `biasRatio ≤ 1.5` (50% deviation).
+
+The implementation is **more conservative** than the regulatory minimum. This is intentional: the 1.15 threshold was selected to detect emerging bias earlier and provide a margin of safety before the regulatory limit is breached.
+
+**Configurable via:** `BIAS_RATIO_THRESHOLD` environment variable (default: `1.15`). The regulatory floor of `1.5` must never be exceeded regardless of this setting.
+
+**Action required (MLRO):**
+1. Confirm the 1.15 threshold is acceptable for the institution's risk appetite.
+2. If the threshold generates excessive false-positive bias alerts on the current screening population, it may be raised up to but not exceeding `1.5`.
+3. Document the MLRO sign-off date and rationale in this file.
+
+---
+
 ## Resolution Checklist
 
 | ID | Owner | Target Date | Status |

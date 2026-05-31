@@ -393,7 +393,7 @@ async function handleGoaml(req: Request): Promise<Response> {
   });
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
-    throw err;
+    throw err; // intentional rethrow — span.end() fires in finally below
   } finally {
     span.end();
   }

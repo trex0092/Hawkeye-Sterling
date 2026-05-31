@@ -52,6 +52,8 @@ import { yenteMatch } from "../../../../src/integrations/yente.js"; // opensanct
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { recordDecision } from "@/lib/server/drift-monitor";
+import { recordScreeningBias } from "@/lib/server/bias-monitor";
 
 type QuickScreenFn = (
   _subject: QuickScreenSubject,
@@ -431,6 +433,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     } // end egress gate else
   } // end if (elevated.length > 0 && token)
+
+  // C-6: Record each result for drift and bias monitoring so these monitors
+  // are not blind to the highest-volume screening path. Fire-and-forget.
+  const tenantForMonitors = tenantIdFromGate(gate);
+  for (const result of results) {
+    void recordDecision(tenantForMonitors, result.severity, result.topScore / 100, result.topScore).catch(() => undefined);
+    void recordScreeningBias(tenantForMonitors, result.name, result.topScore, result.severity, result.hitCount).catch(() => undefined);
+  }
 
   // Write tamper-evident audit chain entry for this batch screen run.
   void writeAuditChainEntry({

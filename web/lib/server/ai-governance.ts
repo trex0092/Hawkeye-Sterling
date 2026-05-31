@@ -24,8 +24,9 @@ export interface ModelApprovalRecord {
   approvedAt: string;
   /** ISO 8601 date by which the next attestation is due */
   nextAttestationDue: string;
-  /** current = within cycle; due = within 30 days; overdue = past due date */
-  attestationStatus: "current" | "due" | "overdue";
+  // attestationStatus is intentionally omitted from the stored record — it
+  // is derived at query time via computeAttestationStatus(nextAttestationDue)
+  // so it never goes stale in long-lived Lambda instances.
 }
 
 export interface ModelRegistryEntry {
@@ -46,8 +47,8 @@ export interface ModelRegistryEntry {
   /** ISO date of last adversarial red-team run against this model deployment */
   redTeamLastRunAt?: string;
   /** Path to the model card document relative to repo root.
-   *  Required for attestation — panel must review card before signing off. */
-  cardRef?: string;
+   *  Required for FDL 10/2025 Art.18 attestation — panel must review card before signing off. */
+  cardRef: string;
 }
 
 export interface GovernancePolicy {
@@ -80,7 +81,6 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       approvedBy:           "mlro",
       approvedAt:           "2026-05-26",
       nextAttestationDue:   "2026-08-24",
-      attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
     cardRef:     "docs/model-cards/hs-001-screening.md",
@@ -105,7 +105,6 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       approvedBy:           "mlro",
       approvedAt:           "2026-05-26",
       nextAttestationDue:   "2026-08-24",
-      attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
     cardRef:     "docs/model-cards/hs-002-reasoning.md",
@@ -129,7 +128,6 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       approvedBy:           "mlro",
       approvedAt:           "2026-05-26",
       nextAttestationDue:   "2026-08-24",
-      attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
     cardRef:     "docs/model-cards/hs-004-mlro-dispositioner.md",
@@ -153,7 +151,6 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       approvedBy:           "mlro",
       approvedAt:           "2026-05-26",
       nextAttestationDue:   "2026-08-24",
-      attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
     cardRef:     "docs/model-cards/hs-002-reasoning.md",
@@ -177,7 +174,6 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
       approvedBy:           "cto",
       approvedAt:           "2026-05-26",
       nextAttestationDue:   "2026-11-22",
-      attestationStatus:    "current",
     },
     redTeamLastRunAt: "2026-05-26",
     cardRef:     "docs/model-cards/hs-003-adverse-media.md",
@@ -202,7 +198,7 @@ export function hashPromptText(text: string): string {
  * Compute attestation status for a model approval record relative to today.
  * "current" = more than 30 days until due; "due" = within 30 days; "overdue" = past.
  */
-export function computeAttestationStatus(nextAttestationDue: string): ModelApprovalRecord["attestationStatus"] {
+export function computeAttestationStatus(nextAttestationDue: string): "current" | "due" | "overdue" {
   const due = new Date(nextAttestationDue).getTime();
   const now = Date.now();
   if (due < now) return "overdue";
@@ -213,11 +209,32 @@ export function computeAttestationStatus(nextAttestationDue: string): ModelAppro
 /**
  * Return MODEL_REGISTRY entries that are overdue for attestation.
  * Used by /api/ai-governance/risk-register to drive a 503 health signal.
+ * Also validates the registry for required fields on each call so misconfigured
+ * entries are surfaced at runtime rather than silently serving stale data.
  */
 export function getOverdueModels(): readonly ModelRegistryEntry[] {
+  validateModelRegistry();
   return MODEL_REGISTRY.filter(
     (m) => computeAttestationStatus(m.approval.nextAttestationDue) === "overdue",
   );
+}
+
+/**
+ * Validate all MODEL_REGISTRY entries for required compliance fields.
+ * Logs CRITICAL errors for missing cardRef, riskTier, or approval records
+ * so misconfigured entries are visible before they reach a regulator audit.
+ */
+function validateModelRegistry(): void {
+  for (const m of MODEL_REGISTRY) {
+    const missing: string[] = [];
+    if (!m.cardRef) missing.push("cardRef");
+    if (!m.riskTier) missing.push("riskTier");
+    if (!m.approval?.approvedBy) missing.push("approval.approvedBy");
+    if (!m.approval?.nextAttestationDue) missing.push("approval.nextAttestationDue");
+    if (missing.length > 0) {
+      console.error(`[ai-governance] MODEL_REGISTRY entry '${m.modelId}' missing required fields: ${missing.join(", ")} — FDL 10/2025 Art.18 compliance gap`);
+    }
+  }
 }
 
 // ── Explainability metadata ───────────────────────────────────────────────────

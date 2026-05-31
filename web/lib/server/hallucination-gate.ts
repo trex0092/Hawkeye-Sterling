@@ -28,6 +28,10 @@ export interface HallucinationResult {
   severity: 'critical' | 'high' | 'medium' | 'low';
   patterns: string[];
   checkedAt: string;
+  /** True when the check could not run (module load failure). Callers must
+   *  surface this in audit entries so the MLRO knows the check was bypassed. */
+  skipped?: boolean;
+  skipReason?: string;
 }
 
 interface CheckOpts {
@@ -38,6 +42,20 @@ interface CheckOpts {
    *  Default false — only writes on detection to reduce audit noise. */
   alwaysAudit?: boolean;
 }
+
+// Module-level cache for the brain module. Loaded eagerly so the first
+// checkHallucination() call doesn't pay a cold-module-load penalty inside the
+// fire-and-forget promise, and so load failures are surfaced at startup rather
+// than silently skipped per-request.
+let _detectHallucinations: ((_text: string, _citations: ReturnType<typeof buildCitationsFromFragments>) => { hasHallucination: boolean; severity: HallucinationResult['severity']; detectedPatterns: string[] }) | null = null;
+let _detectHallucinationsLoadErr: string | null = null;
+
+void import('@brain/GroundedComplianceLLM.js').then((m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
+  _detectHallucinations = m.detectHallucinations;
+}).catch((err: unknown) => {
+  _detectHallucinationsLoadErr = err instanceof Error ? err.message : String(err);
+  console.warn('[hallucination-gate] brain module unavailable at startup:', _detectHallucinationsLoadErr);
+});
 
 function buildCitationsFromFragments(fragments: string[]) {
   const now = new Date().toISOString();
@@ -62,23 +80,29 @@ export async function checkHallucination(
   let severity: HallucinationResult['severity'] = 'low';
   let patterns: string[] = [];
 
+  let skipReason: string | undefined;
   try {
-    // Dynamic import keeps @brain/* out of the module graph when not needed.
-    const { detectHallucinations } = await import('@brain/GroundedComplianceLLM.js');
+    // Use module-level cached loader; fall back to dynamic import if still loading.
+    const detect = _detectHallucinations ?? await import('@brain/GroundedComplianceLLM.js').then(
+      (m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
+        _detectHallucinations = m.detectHallucinations;
+        return m.detectHallucinations;
+      },
+    );
     const citations = buildCitationsFromFragments(evidenceFragments);
-    const result = detectHallucinations(responseText, citations);
+    const result = detect(responseText, citations);
     detected = result.hasHallucination;
     severity = result.severity;
     patterns = result.detectedPatterns;
   } catch (err) {
     // Brain module unavailable (e.g. dist/ not compiled) — log and alert.
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.warn('[hallucination-gate] detectHallucinations unavailable:', errMsg);
+    skipReason = err instanceof Error ? err.message : String(err);
+    console.warn('[hallucination-gate] detectHallucinations unavailable:', skipReason);
     incrementCounter('hawkeye_hallucination_gate_skip_total', 1, { route: opts.route });
     void emitAndLog('alert_hallucination_gate_skip', {
       event: 'hallucination_gate_skipped',
       route: opts.route,
-      reason: errMsg,
+      reason: skipReason,
       severity: 'high',
       tenantId: opts.tenantId ?? 'default',
       at: new Date().toISOString(),
@@ -116,5 +140,11 @@ export async function checkHallucination(
     );
   }
 
-  return { detected, severity, patterns, checkedAt };
+  return {
+    detected,
+    severity,
+    patterns,
+    checkedAt,
+    ...(skipReason !== undefined ? { skipped: true, skipReason } : {}),
+  };
 }

@@ -3,7 +3,8 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import type { QuickScreenSubject } from "@/lib/api/quickScreen.types";
 
 const JOB_PREFIX = "enrichment-jobs/";
-const JOB_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const JOB_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — gives clients a full day to poll
+const STALE_ALERT_MS = 30 * 60 * 1000;   // alert after 30 min if job still pending
 
 export interface EnrichmentJob {
   jobId: string;
@@ -51,11 +52,17 @@ export async function getEnrichmentJob(jobId: string): Promise<EnrichmentJob | n
     const job = JSON.parse(raw) as EnrichmentJob;
     // Treat jobs older than 30 minutes as expired.  Delete the blob to prevent
     // indefinite accumulation — without cleanup, expired jobs accumulate forever.
-    if (Date.now() - new Date(job.requestedAt).getTime() > JOB_TTL_MS) {
+    const ageMs = Date.now() - new Date(job.requestedAt).getTime();
+    if (ageMs > JOB_TTL_MS) {
       void store.delete(jobKey(jobId)).catch((err: unknown) => {
         console.warn("[enrichment-jobs] expired job cleanup failed (non-critical):", err instanceof Error ? err.message : String(err));
       });
       return null;
+    }
+    // Stale-alert: if the job is still pending after 30 minutes, the client
+    // has likely abandoned the poll. Log a warning so ops can detect stuck jobs.
+    if (job.status === "pending" && ageMs > STALE_ALERT_MS) {
+      console.warn(`[enrichment-jobs] job '${jobId}' is still pending after ${Math.round(ageMs / 60_000)} min — client may have abandoned the poll. Subject: ${job.subject.name}`);
     }
     return job;
   } catch {

@@ -634,6 +634,9 @@ export async function POST(req: Request) {
 
   // Prometheus screening decisions counter.
   incrementCounter('hawkeye_screening_decisions_total', 1, { verdict: responseBody.decision });
+  if (isDegraded) {
+    incrementCounter('hawkeye_ai_decision_degraded_total', 1, { route: 'ai-decision' });
+  }
 
   // Audit chain entry for AI decision (FDL 10/2025 Art.18 — fire-and-forget).
   void writeAuditChainEntry(

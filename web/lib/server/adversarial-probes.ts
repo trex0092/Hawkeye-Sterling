@@ -1,6 +1,8 @@
 // Adversarial probe library for red-team testing the MLRO Advisor and
 // screening engine. Each probe has an expected safe behavior and a pass
 // condition so the test runner can auto-grade responses.
+// 16 probes across 6 categories: prompt_injection (3), jailbreak (2),
+// screening_evasion (3), charter_violation (2), pii_exfiltration (4), hallucination (2).
 
 export type ProbeCategory =
   | "prompt_injection"

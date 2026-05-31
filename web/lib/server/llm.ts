@@ -17,6 +17,7 @@ import { redact, rehydrate, type RedactionMap } from "./redact";
 import { recordCall } from "./llm-telemetry";
 import { startSpan, SpanStatus } from "./tracer";
 import { incrementCounter } from "./metrics-store";
+import { getJson, setJson } from "./store";
 
 // ── Types (forward SDK types so callers don't need to import both) ─────────────
 
@@ -156,7 +157,10 @@ export class AnthropicGuard {
           response = await inner.messages.create(safe, requestOptions);
         } catch (err) {
           span.setStatus({ code: SpanStatus.ERROR });
-          span.recordException(err instanceof Error ? err : new Error(String(err)));
+          // Sanitize error message before tracing — raw SDK errors may contain
+          // fragments of the pre-redaction payload (PII leakage risk).
+          const safeMsg = err instanceof Error ? err.message.slice(0, 100) : String(err).slice(0, 100);
+          span.recordException(new Error(`LLM request failed: ${safeMsg}`));
           span.end();
           throw err;
         }
@@ -191,8 +195,16 @@ export class AnthropicGuard {
           route,
           type: 'total',
         });
-        const inputPricePerMTok = response.model.includes('haiku') ? 0.80 : 3.00;
-        const outputPricePerMTok = response.model.includes('haiku') ? 4.00 : 15.00;
+        // Prices per million tokens — configurable via env vars so a model price
+        // change doesn't require a code deploy. Defaults match Haiku 4.5 / Sonnet 4.
+        const defaultInputPrice = response.model.includes('haiku') ? 0.80 : 3.00;
+        const defaultOutputPrice = response.model.includes('haiku') ? 4.00 : 15.00;
+        const inputPricePerMTok = process.env["LLM_INPUT_PRICE_PER_MTOK"]
+          ? parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"]) || defaultInputPrice
+          : defaultInputPrice;
+        const outputPricePerMTok = process.env["LLM_OUTPUT_PRICE_PER_MTOK"]
+          ? parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"]) || defaultOutputPrice
+          : defaultOutputPrice;
         const inputTokens = response.usage?.input_tokens ?? 0;
         const outputTokens = response.usage?.output_tokens ?? 0;
         const costUsd = (inputTokens * inputPricePerMTok + outputTokens * outputPricePerMTok) / 1_000_000;
@@ -292,6 +304,12 @@ const _pool: Map<string, AnthropicGuard> =
  * @param route    - Caller route label for telemetry. Reused across pool hits.
  */
 export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: string): AnthropicGuard {
+  // Fail fast with a clear message rather than sending an empty key to Anthropic
+  // and receiving a cryptic 401 upstream. Routes using withLlmFallback check for
+  // the key before calling here; routes calling this directly must also check.
+  if (!apiKey) {
+    throw new Error(`[getAnthropicClient] ANTHROPIC_API_KEY is not set${route ? ` (route: ${route})` : ""} — configure the key or use withLlmFallback for graceful degradation`);
+  }
   const tms = timeoutMs ?? DEFAULT_ANTHROPIC_TIMEOUT_MS;
   // Key on SHA-256(key) + timeout. All Anthropic API keys share the prefix
   // "sk-ant-a" so an 8-char prefix produces a collision-universal pool key.
@@ -304,4 +322,40 @@ export function getAnthropicClient(apiKey: string, timeoutMs?: number, route?: s
     _pool.set(poolKey, guard);
   }
   return guard;
+}
+
+// ── Batch redaction map helpers ───────────────────────────────────────────────
+// `batches.create()` returns `_redactionMaps` (custom_id → RedactionMap).
+// The caller MUST persist these maps before the Lambda instance is recycled —
+// batch results arrive hours later on a cold instance that has no in-memory maps.
+// Use `persistRedactionMaps` immediately after `batches.create()` and
+// `loadRedactionMaps` before rehydrating retrieved results.
+
+const batchMapsStoreKey = (anthropicBatchId: string): string =>
+  `llm-batch/maps/${anthropicBatchId}.json`;
+
+/**
+ * Persist the redaction maps returned by `batches.create()` to Netlify Blobs.
+ * Must be called immediately after batch submission so cold-start result
+ * retrieval can rehydrate `[REDACTED_*]` tokens back to their original values.
+ *
+ * @throws if the Blobs write fails — the caller should surface this as an error
+ *         rather than proceeding, since unrehydrated batch results will contain
+ *         placeholder tokens permanently.
+ */
+export async function persistRedactionMaps(
+  anthropicBatchId: string,
+  maps: Record<string, RedactionMap>,
+): Promise<void> {
+  await setJson(batchMapsStoreKey(anthropicBatchId), maps);
+}
+
+/**
+ * Load persisted redaction maps for a batch.
+ * Returns an empty object when no maps are found (e.g. pre-migration batches).
+ */
+export async function loadRedactionMaps(
+  anthropicBatchId: string,
+): Promise<Record<string, RedactionMap>> {
+  return (await getJson<Record<string, RedactionMap>>(batchMapsStoreKey(anthropicBatchId)).catch(() => null)) ?? {};
 }

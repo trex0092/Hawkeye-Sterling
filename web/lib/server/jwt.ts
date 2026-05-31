@@ -16,6 +16,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { incrementCounter } from "./metrics-store";
+import { log } from "./logger";
 
 const ALG = "HS256" as const;
 const DEFAULT_TTL_SEC = 600;
@@ -121,8 +122,10 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
 
   function tryVerify(signingSecret: string): boolean {
     const expected = sign(headerB64, payloadB64, signingSecret);
-    const aBuf = Buffer.from(sig, "utf8");
-    const bBuf = Buffer.from(expected, "utf8");
+    // Decode base64url → binary before comparing so timingSafeEqual operates
+    // on actual HMAC bytes, not the ASCII representation of the encoding.
+    const aBuf = Buffer.from(sig, "base64url");
+    const bBuf = Buffer.from(expected, "base64url");
     const a = new Uint8Array(aBuf.buffer, aBuf.byteOffset, aBuf.byteLength);
     const b = new Uint8Array(bBuf.buffer, bBuf.byteOffset, bBuf.byteLength);
     return a.length === b.length && timingSafeEqual(a, b);
@@ -152,11 +155,21 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
   }
 
   if (usedPrevKey) {
-    console.warn("[jwt] token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC");
+    log({ level: "warn", event: "jwt.prev_key_used", detail: "token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC" });
     incrementCounter('hawkeye_jwt_signed_with_prev_key_total');
   }
 
   return { ok: true, payload, ...(usedPrevKey ? { usedPrevKey: true } : {}) };
+}
+
+/**
+ * Validate that JWT_SIGNING_SECRET is configured and meets minimum length.
+ * Call this from a Next.js instrumentation file or startup check so missing
+ * configuration is caught at boot rather than on the first JWT operation.
+ * Throws if the secret is absent or shorter than 32 bytes.
+ */
+export function validateJwtSecretAtStartup(): void {
+  getSecret(); // throws on missing/short secret
 }
 
 export function extractBearer(req: Request): string | null {

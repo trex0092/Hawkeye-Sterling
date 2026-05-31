@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { createHash, randomUUID } from "node:crypto";
 import { withGuard } from "@/lib/server/guard";
+import type { RequestContext } from "@/lib/server/guard";
 import { classifyEsg } from "@/lib/data/esg";
 import { postWebhook } from "@/lib/server/webhook";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
+import { recordDecision } from "@/lib/server/drift-monitor";
+import { recordScreeningBias } from "@/lib/server/bias-monitor";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +82,10 @@ interface ReportBody {
     generatedAt: string;
   };
   trigger?: "screen" | "ongoing" | "save";
+  /** Optional second-officer identity for four-eyes filing. When present, enforces
+   *  that the approver differs from the filer (ctx.apiKey.id). Required for
+   *  high-severity reports filed to the MLRO inbox per FDL 10/2025 Art.16. */
+  approver?: string;
 }
 
 interface ApiResponse {
@@ -412,7 +421,7 @@ function buildTaskNotes(b: ReportBody): string {
     : buildInitialScreeningNotes(b);
 }
 
-async function handleScreeningReport(req: Request): Promise<NextResponse> {
+async function handleScreeningReport(req: Request, ctx: RequestContext): Promise<NextResponse> {
   const token = process.env["ASANA_TOKEN"];
   const asanaEnabled = !!token;
 
@@ -426,6 +435,58 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
     return respond(400, { ok: false, error: "subject.name and result are required" });
   }
 
+  // M-9: Optional four-eyes enforcement. When an approver is provided, verify
+  // that the approver differs from the filer — same-person approvals are rejected
+  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  if (body.approver !== undefined) {
+    const trimmedApprover = body.approver.trim();
+    if (!trimmedApprover || trimmedApprover.length > 128) {
+      return respond(400, { ok: false, error: "approver name must be between 1 and 128 characters" });
+    }
+    // Normalise both sides before comparison to resist homoglyph bypasses
+    // (e.g. cyrillic 'о' vs latin 'o' passing as different approvers).
+    const normalise = (s: string): string =>
+      s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (normalise(trimmedApprover) === normalise(ctx.apiKey?.id ?? "")) {
+      void writeAuditChainEntry(
+        { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
+        ctx.tenantId,
+      ).catch(() => undefined);
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+    }
+    void writeAuditChainEntry(
+      { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
+      ctx.tenantId,
+    ).catch(() => undefined);
+  }
+
+  // C-7: Record this screening for drift and bias monitoring. Fire-and-forget
+  // so it never blocks the response path regardless of success or failure.
+  void recordDecision(ctx.tenantId, body.result.severity, body.result.topScore / 100, body.result.topScore).catch(() => undefined);
+  void recordScreeningBias(ctx.tenantId, body.subject.name, body.result.topScore, body.result.severity, body.result.hits?.length ?? 0).catch(() => undefined);
+
+  // L-10: Compute screening provenance for goAML traceability. The runId and
+  // payloadSha256 are returned in the API response so the MLRO UI can pass them
+  // as `screeningProvenance` when triggering a goAML filing from this report.
+  const runId = randomUUID();
+  const payloadSha256 = createHash("sha256").update(JSON.stringify(body)).digest("hex");
+
+  // Write audit chain entry for compliance traceability (FDL 10/2025 Art.24).
+  void writeAuditChainEntry(
+    {
+      event: "screening.report.generated",
+      actor: ctx.apiKey?.id ?? "system",
+      subjectName: body.subject.name,
+      subjectId: body.subject.id,
+      severity: body.result.severity,
+      topScore: body.result.topScore,
+      trigger: body.trigger ?? "manual",
+      runId,
+      payloadSha256,
+    },
+    ctx.tenantId,
+  ).catch(() => undefined);
+
   const name = buildTaskName(body);
   const notes = buildTaskNotes(body);
 
@@ -436,6 +497,7 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       asanaNote: "ASANA_TOKEN not configured — report generated but not filed to MLRO inbox. Set ASANA_TOKEN in Netlify env to enable automatic filing.",
       reportName: name,
       reportNotes: notes,
+      screeningProvenance: { runId, payloadSha256 },
     });
   }
 
@@ -559,6 +621,7 @@ async function handleScreeningReport(req: Request): Promise<NextResponse> {
       ok: true,
       taskGid: payload.data.gid,
       ...(payload.data.permalink_url ? { taskUrl: payload.data.permalink_url } : {}),
+      screeningProvenance: { runId, payloadSha256 },
     });
   } catch (err) {
     console.error("[screening-report] asana request failed", err instanceof Error ? err.message : String(err));

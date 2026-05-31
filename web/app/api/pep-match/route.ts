@@ -7,6 +7,7 @@ import { getStore } from "@netlify/blobs";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { recordPepNationalityScreening } from "@/lib/server/bias-monitor";
 
 // PEP matching against the local OpenSanctions bulk snapshot.
 // POST /api/pep-match  { name, birthYear?, aliases? }
@@ -295,6 +296,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     datasets: rec.datasets ?? [],
   }));
 
+  // H-11: Record PEP nationality bias data for each hit so the bias monitor
+  // can detect statistically significant FPR differences across nationalities.
+  const tenant = tenantIdFromGate(gate);
+  for (const hit of hits) {
+    const country = hit.countries[0];
+    if (country) {
+      void recordPepNationalityScreening(tenant, country, true, false).catch(() => undefined);
+    }
+  }
+
   // Write audit chain entry for PEP determinations — a PEP match can trigger
   // EDD requirements; the compliance record must exist even for clear verdicts.
   void writeAuditChainEntry({
@@ -305,7 +316,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     source,
     corpus: corpus.length,
     latencyMs: Date.now() - t0,
-  }, tenantIdFromGate(gate)).catch((err: unknown) => {
+  }, tenant).catch((err: unknown) => {
     console.error("[pep-match] audit chain write failed:", err instanceof Error ? err.message : String(err));
   });
 
