@@ -1411,6 +1411,29 @@ const TOOLS: ToolDef[] = [
     },
   },
 
+  // ── CASE FREEZE ──────────────────────────────────────────────────────────────
+  {
+    name: "freeze_account",
+    description:
+      "Freeze a compliance case by caseId. Sets status to 'frozen', appends the reason to case notes, and writes an immutable audit chain entry. Requires MLRO authorisation (Cabinet Resolution 74/2020).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        caseId: { type: "string", description: "Hawkeye Sterling case ID (hs-cases UUID)" },
+        reason: { type: "string", description: "Plain-language reason for the freeze (≤ 200 chars)" },
+      },
+      required: ["caseId"],
+    },
+    handler: async (args) => {
+      const a = args as Record<string, unknown>;
+      return callApi(
+        `/api/hs-cases/${encodeURIComponent(String(a["caseId"] ?? ""))}/freeze`,
+        "POST",
+        { reason: a["reason"] ?? "Frozen by MCP tool call" },
+      );
+    },
+  },
+
   // ── GENERIC PROXY ────────────────────────────────────────────────────────────
   {
     name: "call_api",

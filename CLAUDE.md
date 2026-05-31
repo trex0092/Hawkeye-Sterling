@@ -12,7 +12,7 @@ Operator: enterprise and regulator-grade financial institutions.
 |---|---|
 | Frontend | Next.js 15 / React 19 / Tailwind CSS |
 | Backend | Next.js App Router route handlers (Node 22) |
-| Brain | 481 TypeScript files, 10 faculties, 270+ reasoning modes (`src/brain/`) |
+| Brain | 481 TypeScript files, 15 faculties, 1475 reasoning modes (`src/brain/`) |
 | AI | Anthropic Claude primary + Groq cost fallback via `src/integrations/model-router.ts` |
 | DB | MoonDB primary, Netlify Blobs (audit/lists/cache), Upstash Redis (rate limiting) |
 | Deployment | Netlify serverless + standalone Docker (`Dockerfile`) + k8s (`k8s/`) |
