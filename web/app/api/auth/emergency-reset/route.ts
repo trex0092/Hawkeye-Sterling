@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { enforce } from "@/lib/server/enforce";
 
 /**
  * Emergency password reset for the luisa MLRO account.
@@ -19,6 +20,10 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
  * - Returns JSON so the result is visible immediately.
  */
 export async function GET(req: Request): Promise<NextResponse> {
+  // Rate-limit unauthenticated callers to prevent brute-force of LUISA_INITIAL_PASSWORD.
+  const gate = await enforce(req, { requireAuth: false, cost: 5 });
+  if (!gate.ok) return gate.response;
+
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret") ?? "";
   const newPassword = searchParams.get("password") ?? "";
