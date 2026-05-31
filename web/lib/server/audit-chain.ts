@@ -349,11 +349,13 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       const chain: ChainEntry[] = Array.isArray(raw) ? structuredClone(raw) : [];
 
       // H-4: Detect sequence gaps before appending — indicates prior corruption/lost entries.
+      // Use ?. because noUncheckedIndexedAccess types array[i] as T|undefined even when
+      // the loop bounds guarantee a valid index.
       for (let i = 1; i < chain.length; i++) {
-        const expectedSeq = (chain[i - 1].seq ?? -1) + 1;
-        if (chain[i].seq !== expectedSeq) {
+        const expectedSeq = (chain[i - 1]?.seq ?? -1) + 1;
+        if (chain[i]?.seq !== expectedSeq) {
           console.error(
-            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i].seq}`,
+            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i]?.seq}`,
             { tenant: tenantId },
           );
           incrementCounter('hawkeye_audit_chain_gaps_total', 1, { tenant: tenantId });

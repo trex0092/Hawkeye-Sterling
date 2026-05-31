@@ -39,7 +39,7 @@ import type { QuickScreenHit, QuickScreenSubject, QuickScreenCandidate } from '.
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely';
+export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely' | 'unscored';
 
 export interface DisambiguationFactors {
   /** +25 (exact nationality match) / +10 (regional) / -30 (conflict) */

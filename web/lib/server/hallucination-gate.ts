@@ -83,14 +83,16 @@ export async function checkHallucination(
   let skipReason: string | undefined;
   try {
     // Use module-level cached loader; fall back to dynamic import if still loading.
-    const detect = _detectHallucinations ?? await import('@brain/GroundedComplianceLLM.js').then(
+    const detectRaw = _detectHallucinations ?? await import('@brain/GroundedComplianceLLM.js').then(
       (m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
         _detectHallucinations = m.detectHallucinations;
         return m.detectHallucinations;
       },
     );
+    // Guard required by TypeScript — module-level let prevents narrowing through ??.
+    if (!detectRaw) throw new Error('detectHallucinations module not loaded');
     const citations = buildCitationsFromFragments(evidenceFragments);
-    const result = detect(responseText, citations);
+    const result = detectRaw(responseText, citations);
     detected = result.hasHallucination;
     severity = result.severity;
     patterns = result.detectedPatterns;

@@ -97,6 +97,7 @@ interface ApiResponse {
   asanaNote?: string;
   reportName?: string;
   reportNotes?: string;
+  screeningProvenance?: { runId: string; payloadSha256: string };
 }
 
 function respond(status: number, body: ApiResponse): NextResponse {

@@ -155,7 +155,7 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
   }
 
   if (usedPrevKey) {
-    log({ level: "warn", event: "jwt.prev_key_used", detail: "token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC" });
+    log({ level: "warn", route: "jwt", event: "jwt.prev_key_used", detail: "token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC" });
     incrementCounter('hawkeye_jwt_signed_with_prev_key_total');
   }
 
