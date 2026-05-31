@@ -1,12 +1,18 @@
 // Shared admin-auth guard for privileged endpoints (key management, GDPR).
 // Returns null on success; returns a NextResponse to short-circuit on failure.
 //
-// Fail-closed: if ADMIN_TOKEN is not configured the endpoint returns 503
-// rather than opening access. Set a high-entropy value (e.g. `openssl rand
-// -hex 32`) in Netlify → Site settings → Environment variables.
+// Two authentication paths (tried in order):
+//   1. ADMIN_TOKEN bearer token injected by web/proxy.ts for same-origin portal
+//      requests, or supplied directly by external operator tooling.
+//   2. Session-cookie fallback: a valid hs_session cookie issued by
+//      /api/auth/login.  Mirrors the session-cookie path added to enforce.ts
+//      (commit e8c9536f) so that adminAuth() routes are equally robust when
+//      the proxy's isSameOrigin detection cannot inject the ADMIN_TOKEN
+//      (e.g. GET requests without an Origin header, missing env vars, etc.).
 
 import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { verifySession, SESSION_COOKIE } from "./auth";
 
 // Normalize variable-length strings to fixed-length HMAC digests before
 // constant-time comparison. The early-exit `byteLength === byteLength` check
@@ -22,23 +28,37 @@ function constantTimeEq(a: string, b: string): boolean {
 }
 
 export function adminAuth(req: Request): NextResponse | null {
+  // Path 1: ADMIN_TOKEN via Authorization header.
+  // Injected server-side by web/proxy.ts for same-origin portal requests;
+  // also used directly by external operator tooling and cron jobs.
   const expected = process.env["ADMIN_TOKEN"];
-  if (!expected) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "ADMIN_TOKEN not configured. Set it in Netlify environment variables.",
-      },
-      { status: 503 },
-    );
+  if (expected) {
+    const auth = req.headers.get("authorization");
+    const token = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
+    if (constantTimeEq(token, expected)) return null;
   }
-  const auth = req.headers.get("authorization");
-  const token = auth?.replace(/^Bearer\s+/i, "").trim() ?? "";
-  if (!constantTimeEq(token, expected)) {
-    return NextResponse.json(
-      { ok: false, error: "Admin authorization required." },
-      { status: 401 },
-    );
-  }
-  return null;
+
+  // Path 2: Session-cookie fallback.
+  // Portal API calls that arrive without an Authorization header (e.g. when
+  // isSameOrigin detection in proxy.ts skips ADMIN_TOKEN injection) can still
+  // authenticate via the HMAC-signed hs_session cookie issued at login.
+  // verifySession() is synchronous; wrapped in try/catch so a missing or
+  // too-short SESSION_SECRET does not throw past the caller.
+  try {
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const sessionToken = cookieHeader
+      .split(";")
+      .map((s) => s.trim())
+      .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
+      ?.slice(SESSION_COOKIE.length + 1) ?? "";
+    if (sessionToken) {
+      const payload = verifySession(sessionToken);
+      if (payload) return null; // valid, non-expired portal session
+    }
+  } catch { /* SESSION_SECRET missing or too short — fall through to 401 */ }
+
+  return NextResponse.json(
+    { ok: false, error: "Admin authorization required." },
+    { status: 401 },
+  );
 }
