@@ -90,6 +90,7 @@ export async function checkHallucination(
         return m.detectHallucinations;
       },
     );
+    if (!detect) throw new Error('detectHallucinations not available');
     const citations = buildCitationsFromFragments(evidenceFragments);
     const result = detect(responseText, citations);
     detected = result.hasHallucination;

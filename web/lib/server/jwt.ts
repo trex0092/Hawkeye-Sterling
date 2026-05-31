@@ -73,6 +73,7 @@ function getPrevSecret(): string | undefined {
     if (elapsedSec > gracePeriodSec) {
       log({
         level: "error",
+        route: "jwt",
         event: "jwt.prev_key_grace_expired",
         detail: `JWT_SIGNING_SECRET_PREV has exceeded grace period (${gracePeriodSec}s elapsed: ${elapsedSec}s) — rejecting prev-key tokens. Remove JWT_SIGNING_SECRET_PREV and JWT_SIGNING_SECRET_ROTATED_AT from env.`,
       });
@@ -182,7 +183,7 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
   }
 
   if (usedPrevKey) {
-    log({ level: "warn", event: "jwt.prev_key_used", detail: "token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC" });
+    log({ level: "warn", route: "jwt", event: "jwt.prev_key_used", detail: "token verified with JWT_SIGNING_SECRET_PREV — rotation in progress, remove _PREV after JWT_TTL_SEC" });
     incrementCounter('hawkeye_jwt_signed_with_prev_key_total');
   }
 

@@ -52,7 +52,7 @@ export interface QuickScreenCandidate {
 
 export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
 
-export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely';
+export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely' | 'unscored';
 
 export interface DisambiguationFactors {
   nationalityPoints: number;

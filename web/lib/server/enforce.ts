@@ -373,7 +373,7 @@ async function _enforce(
     // A JWT holder whose tier was downgraded must get the new (lower) rate limits.
     // Also check revoked state: a key revoked after JWT issuance must be rejected here.
     const liveRecord = await getJson<ApiKeyRecord>(`keys/${keyId}`).catch(() => null);
-    if (liveRecord?.revoked === true) {
+    if (liveRecord?.revokedAt) {
       logAuthFailure(req, "jwt_key_revoked", 401, { keyId });
       return {
         ok: false,

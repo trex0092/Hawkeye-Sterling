@@ -383,10 +383,12 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
 
       // H-4: Detect sequence gaps before appending — indicates prior corruption/lost entries.
       for (let i = 1; i < chain.length; i++) {
-        const expectedSeq = (chain[i - 1].seq ?? -1) + 1;
-        if (chain[i].seq !== expectedSeq) {
+        const prev = chain[i - 1]!;
+        const curr = chain[i]!;
+        const expectedSeq = (prev.seq ?? -1) + 1;
+        if (curr.seq !== expectedSeq) {
           console.error(
-            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i].seq}`,
+            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${curr.seq}`,
             { tenant: tenantId },
           );
           incrementCounter('hawkeye_audit_chain_gaps_total', 1, { tenant: tenantId });
