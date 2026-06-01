@@ -258,12 +258,22 @@ function computeNationalityBias(pepEntries: PepNationalityEntry[]): {
     const fpRate  = items.filter((e) => e.isFalsePos).length / total;
     const biasRatio = globalFP > 0 ? fpRate / globalFP : (fpRate > 0 ? Infinity : 1);
     const flagged = Math.abs(fpRate - globalFP) > getNationalityFpDelta();
+    let biasRatioRounded: number;
+    if (!isFinite(biasRatio)) {
+      // biasRatio = Infinity when globalFP = 0 but this nationality has FP hits.
+      // Log + count so ops can distinguish "no global data yet" from a real spike.
+      incrementCounter('hawkeye_bias_infinity_ratio_total', 1, { nationality });
+      console.warn(`[bias-monitor] biasRatio for nationality '${nationality}' is Infinity (no global FP baseline yet) — capping to 99`);
+      biasRatioRounded = 99;
+    } else {
+      biasRatioRounded = Math.round(biasRatio * 1000) / 1000;
+    }
     groups.push({
       nationality,
       count: total,
       hitRate: Math.round(hitRate * 1000) / 1000,
       falsePositiveRate: Math.round(fpRate * 1000) / 1000,
-      biasRatio: isFinite(biasRatio) ? Math.round(biasRatio * 1000) / 1000 : 99,
+      biasRatio: biasRatioRounded,
       flagged,
     });
   }

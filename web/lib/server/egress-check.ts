@@ -33,9 +33,12 @@ export interface EgressCheckResult {
 // about to be filed) to the subject or their associates is a criminal offence.
 const TIPPING_OFF_PATTERNS = [
   /\bsuspicious\s+(transaction|activity)\s+report\b/i,
+  /\bsuspicious\s+(transaction|activity)\b.*\bfil(ed|ing)\b/i,
   /\bSTR\b.*\bfil(ed|ing)\b/i,
   /\bSAR\b.*\bfil(ed|ing)\b/i,
   /\bgoAML\b.*\bsubmit/i,
+  /\bFIU\b.*\bsubmit/i,
+  /\bsubmit.{0,40}\b(?:FIU|financial\s+intelligence\s+unit)\b/i,
   /\breport(ed|ing)\s+(you|your|them|the\s+subject)\b/i,
   /\bnotif(y|ied|ying)\s+(the\s+)?(?:subject|client|customer)\b/i,
   /\balert(ed|ing)\s+(the\s+)?(?:subject|client|customer)\b/i,
@@ -104,7 +107,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", msg);
     incrementCounter('hawkeye_egress_gate_failures_total', 1, { reason: 'llm_error' });
-    void emitAndLog('alert_hallucination', {
+    void emitAndLog('alert_egress_gate_failure', {
       event: 'egress_gate_llm_failure',
       reportType,
       error: msg,
@@ -142,7 +145,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     // FAIL CLOSED on parse error — same rationale as LLM failure above.
     console.warn("[egress-check] could not parse LLM response — holding artefact for manual MLRO review:", raw.slice(0, 200));
     incrementCounter('hawkeye_egress_gate_failures_total', 1, { reason: 'parse_error' });
-    void emitAndLog('alert_hallucination', {
+    void emitAndLog('alert_egress_gate_failure', {
       event: 'egress_gate_parse_failure',
       reportType,
       rawSnippet: raw.slice(0, 200),

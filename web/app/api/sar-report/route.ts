@@ -104,15 +104,6 @@ const TIPPING_OFF_PATTERNS = [
   /\bI\s+shouldn'?t\s+(?:tell|say)\s+you.{0,80}\b(?:STR|SAR|FIU|investigat|report|fil)/is,
 ];
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 function safeFilenameSegment(s: string | undefined | null): string {
   if (!s) return "unknown";
   return s.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64) || "unknown";
@@ -261,7 +252,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   // 10/2025 Art.16 + FATF R.26).
   try {
     const { recordApproval } = await import("@/lib/server/four-eyes-gate");
-    const caseRef = `sar:${body.subject?.name ?? "unknown"}:${Date.now()}`;
+    const caseRef = `sar:${body.subject?.name ?? "unknown"}:${Date.now()}`.replace(/[^A-Za-z0-9:._-]/g, "_").slice(0, 128);
     // Actor is the authenticated API key identity (gate.keyId), not the
     // user-supplied body.mlro string. body.mlro is a display name only;
     // recording it in the four-eyes ledger as the actor would allow any
@@ -606,27 +597,27 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       ${body.superBrain?.jurisdiction ? `
         <h2 class="hs-section-h">Jurisdiction risk</h2>
         ${hsKvGrid([
-          { k: "Country", v: `${escapeHtml(body.superBrain.jurisdiction.name)} (${escapeHtml(body.superBrain.jurisdiction.iso2)})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
-          { k: "Active regimes", v: escapeHtml((body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—") },
+          { k: "Country", v: `${escHtml(body.superBrain.jurisdiction.name)} (${escHtml(body.superBrain.jurisdiction.iso2)})${body.superBrain.jurisdiction.cahra ? " · CAHRA" : ""}` },
+          { k: "Active regimes", v: escHtml((body.superBrain.jurisdiction.regimes ?? []).join(", ") || "—") },
         ])}
       ` : ""}
       ${body.superBrain?.pep && body.superBrain.pep.salience > 0 ? `
         <h2 class="hs-section-h">PEP</h2>
         ${hsKvGrid([
-          { k: "Type", v: escapeHtml(body.superBrain.pep.type.replace(/_/g, " ")) },
-          { k: "Tier", v: escapeHtml(body.superBrain.pep.tier) },
+          { k: "Type", v: escHtml(body.superBrain.pep.type.replace(/_/g, " ")) },
+          { k: "Tier", v: escHtml(body.superBrain.pep.tier) },
           { k: "Salience", v: `${Math.round(body.superBrain.pep.salience * 100)}%` },
         ])}
       ` : ""}
       ${body.superBrain?.adverseKeywordGroups?.length ? `
         <h2 class="hs-section-h">Adverse-media groups</h2>
-        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${escapeHtml(g.label)} (${g.count})</li>`).join("")}</ul>
+        <ul class="hs-findings">${body.superBrain.adverseKeywordGroups.map((g) => `<li>${escHtml(g.label)} (${g.count})</li>`).join("")}</ul>
       ` : ""}
     `;
 
     const narrativePage = `
       <h2 class="hs-section-h" style="margin-top:0">Narrative (MLRO review required)</h2>
-      <p class="hs-narrative">${escapeHtml(narrative).replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
+      <p class="hs-narrative">${escHtml(narrative).replace(/\n/g, "</p><p class='hs-narrative'>")}</p>
       <h2 class="hs-section-h" style="margin-top:14px">goAML envelope</h2>
       ${hsKvGrid([
         // internalRef contains body.subject.id which is user-controlled —
@@ -638,7 +629,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       ])}
       ${goamlValidationWarnings.length > 0 ? `
         <p class="hs-narrative" style="color:#b45309"><strong>Validation warnings:</strong></p>
-        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
+        <ul class="hs-findings">${goamlValidationWarnings.map((w) => `<li>${escHtml(w)}</li>`).join("")}</ul>
       ` : ""}
       ${hsFinis(reportId, 2, 2)}
     `;

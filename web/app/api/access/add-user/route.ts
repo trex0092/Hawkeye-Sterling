@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
   const { name, email, role, username, password } = body;
   // addedBy is derived from the Authorization header (ADMIN_TOKEN), never from the request body.
-  const addedBy = "admin";
+  // Use "portal_admin" consistent with enforce.ts keyId assignment for the ADMIN_TOKEN bypass path.
+  const addedBy = "portal_admin";
   if (!name?.trim() || !email?.trim() || !role) {
     return NextResponse.json({ ok: false, error: "name, email, and role are required" }, { status: 400 });
   }
