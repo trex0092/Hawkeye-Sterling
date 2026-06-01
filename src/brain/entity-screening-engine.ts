@@ -25,6 +25,7 @@ import {
   type ResolutionResult,
 } from './entity-resolution.js';
 import { matchEnsemble } from './matching.js';
+import { MATCHING_THRESHOLDS } from './matching-config.js';
 import type { MatchConfidenceLevel } from '../policy/systemPrompt.js';
 import type { Alert, AlertKind } from './alerts.js';
 import {
@@ -191,7 +192,9 @@ export interface ScreeningEngineResult {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-const DEFAULT_ENSEMBLE_FLOOR = 0.7;
+// AML-09: env-driven so MLROs can tune sensitivity without a code redeploy.
+// Default 0.7 preserved; override via HAWKEYE_MATCH_ENSEMBLE_FLOOR.
+const DEFAULT_ENSEMBLE_FLOOR = MATCHING_THRESHOLDS.ensembleFloor;
 const DEFAULT_STALENESS_DAYS = 30;
 const ENGINE_VERSION = 'hawkeye-sterling.entity-screening-engine@1.0.0';
 

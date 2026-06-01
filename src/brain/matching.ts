@@ -7,6 +7,7 @@
 // so the reasoning chain can cite which algorithm produced a hit.
 
 import { cyrillicToLatin, chineseToPinyinSubset } from './translit-cyrillic-cjk.js';
+import { MATCHING_THRESHOLDS } from './matching-config.js';
 
 // Minimal Arabic/Persian Unicode block → Latin transliteration.
 // Used only to feed Double Metaphone with ASCII when the input is Arabic-script.
@@ -127,7 +128,7 @@ export function levenshteinDistance(a: string, b: string): number {
   return cell(m * w + n);
 }
 
-export function matchLevenshtein(a: string, b: string, threshold = 0.82): MatchScore {
+export function matchLevenshtein(a: string, b: string, threshold = MATCHING_THRESHOLDS.levenshtein): MatchScore {
   const s = normalise(a);
   const t = normalise(b);
   const maxLen = Math.max(s.length, t.length);
@@ -187,7 +188,7 @@ export function jaroWinkler(a: string, b: string, p = 0.1, maxPrefix = 4): numbe
   return j + l * p * (1 - j);
 }
 
-export function matchJaroWinkler(a: string, b: string, threshold = 0.9): MatchScore {
+export function matchJaroWinkler(a: string, b: string, threshold = MATCHING_THRESHOLDS.jaroWinkler): MatchScore {
   const score = jaroWinkler(a, b);
   return { method: 'jaro_winkler', score, threshold, pass: score >= threshold };
 }
@@ -376,7 +377,7 @@ function ngramSet(s: string, n: number): Set<string> {
   return out;
 }
 
-export function matchTrigram(a: string, b: string, threshold = 0.5): MatchScore {
+export function matchTrigram(a: string, b: string, threshold = MATCHING_THRESHOLDS.trigram): MatchScore {
   const sa = normalise(a);
   const sb = normalise(b);
   const ta = ngramSet(sa, 3);
@@ -407,7 +408,7 @@ const ENTITY_STOP_WORDS = new Set([
   'and', 'the', 'for', 'of',
 ]);
 
-export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): MatchScore {
+export function matchPartialTokenSet(a: string, b: string, threshold = MATCHING_THRESHOLDS.partialToken): MatchScore {
   const ta = normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));
   const tb = normalise(b).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));
   if (ta.length === 0 || tb.length === 0) {
@@ -426,7 +427,7 @@ export function matchPartialTokenSet(a: string, b: string, threshold = 0.85): Ma
 // "J.K. Rowling" ↔ "Joanne Kathleen Rowling"). A single-character token is
 // treated as an initial and matches the first letter of any token in the
 // counterpart name. Multi-character tokens require exact token equality.
-export function matchAbbreviated(a: string, b: string, threshold = 0.85): MatchScore {
+export function matchAbbreviated(a: string, b: string, threshold = MATCHING_THRESHOLDS.abbreviated): MatchScore {
   const ta = normalise(a).split(' ').filter(Boolean);
   const tb = normalise(b).split(' ').filter(Boolean);
   if (ta.length === 0 || tb.length === 0) {
@@ -450,7 +451,7 @@ export function matchAbbreviated(a: string, b: string, threshold = 0.85): MatchS
 }
 
 // ---------- token-set (order-insensitive)
-export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore {
+export function matchTokenSet(a: string, b: string, threshold = MATCHING_THRESHOLDS.tokenSet): MatchScore {
   const tokensA = new Set(normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
   const tokensB = new Set(normalise(b).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)));
   if (tokensA.size === 0 || tokensB.size === 0) {
@@ -467,7 +468,7 @@ export function matchTokenSet(a: string, b: string, threshold = 0.8): MatchScore
 // Sorts tokens alphabetically then runs Levenshtein ratio on the joined
 // result. Unlike token-set Jaccard this catches near-miss transpositions
 // with character-level differences, e.g. "HUSSEIN SADDAM" ≈ "SADDAM HUSEIN".
-export function matchTokenSortRatio(a: string, b: string, threshold = 0.85): MatchScore {
+export function matchTokenSortRatio(a: string, b: string, threshold = MATCHING_THRESHOLDS.tokenSort): MatchScore {
   const sa = normalise(a).split(' ').filter(Boolean).sort().join(' ');
   const sb = normalise(b).split(' ').filter(Boolean).sort().join(' ');
   const maxLen = Math.max(sa.length, sb.length);
@@ -486,7 +487,7 @@ export function matchTokenSortRatio(a: string, b: string, threshold = 0.85): Mat
 // slide trivially across longer strings and produce spurious 1.0 matches.
 const MIN_PARTIAL_RATIO_LEN = 4;
 
-export function matchPartialRatio(a: string, b: string, threshold = 0.9): MatchScore {
+export function matchPartialRatio(a: string, b: string, threshold = MATCHING_THRESHOLDS.partialRatio): MatchScore {
   const s = normalise(a);
   const t = normalise(b);
   if (s.length === 0 || t.length === 0) {
