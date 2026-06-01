@@ -52,6 +52,30 @@ export interface QuickScreenCandidate {
 
 export type DobMatch = 'exact' | 'year' | 'conflict' | 'none';
 
+// ── Adverse-media types (surfaced in multi-source screening Lane C) ────────────
+
+export interface AdverseMediaItem {
+  id: string;
+  title: string;
+  url: string;
+  publishedAt?: string;
+  source: string;
+  language?: string;
+  categories: string[];
+  severity: 'critical' | 'high' | 'medium' | 'low';
+}
+
+export interface AdverseMediaSummary {
+  found: boolean;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  itemCount: number;
+  adverseCount: number;
+  items: AdverseMediaItem[];
+  categories: string[];
+  provider: string;
+  fatfPredicates: string[];
+}
+
 export type ConfidenceTier = 'confirmed' | 'probable' | 'possible' | 'unlikely' | 'unscored';
 
 export interface DisambiguationFactors {
@@ -158,6 +182,10 @@ export interface QuickScreenResult {
   // the full enriched result.
   enrichmentPending?: boolean;
   enrichJobId?: string;
+  // Multi-source screening extensions (populated by /api/screening/run)
+  adverseMedia?: AdverseMediaSummary;
+  sourcesQueried?: string[];
+  laneHealth?: Record<string, 'ok' | 'degraded' | 'skipped'>;
 }
 
 /**

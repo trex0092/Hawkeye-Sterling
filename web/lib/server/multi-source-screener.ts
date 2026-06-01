@@ -18,31 +18,14 @@ import type {
   QuickScreenResult,
   QuickScreenHit,
   QuickScreenSeverity,
+  AdverseMediaItem,
+  AdverseMediaSummary,
 } from '@/lib/api/quickScreen.types';
 
+// Re-export so callers that already import from here don't break.
+export type { AdverseMediaItem, AdverseMediaSummary } from '@/lib/api/quickScreen.types';
+
 // ── Exported types ────────────────────────────────────────────────────────────
-
-export interface AdverseMediaItem {
-  id: string;
-  title: string;
-  url: string;
-  publishedAt?: string;
-  source: string;
-  language?: string;
-  categories: string[];
-  severity: 'critical' | 'high' | 'medium' | 'low';
-}
-
-export interface AdverseMediaSummary {
-  found: boolean;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'none';
-  itemCount: number;
-  adverseCount: number;
-  items: AdverseMediaItem[];
-  categories: string[];
-  provider: string;
-  fatfPredicates: string[];
-}
 
 export type LaneStatus = 'ok' | 'degraded' | 'skipped';
 

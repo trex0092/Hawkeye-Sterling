@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
+import { ModuleFamilyBar, type FamilyModule } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
@@ -621,13 +621,63 @@ function JurisdictionIntelPanel() {
   );
 }
 
+// ── Intelligence modules — rendered inline when selected ──────────────────────
+
+const INTEL_MODULES: FamilyModule[] = [
+  { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+  { label: "OSINT", href: "/osint", icon: "🌐" },
+  { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
+  { label: "LEI Lookup", href: "/gleif?tab=lookup", icon: "🔍" },
+  { label: "Name Search", href: "/gleif?tab=search", icon: "🔎" },
+  { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
+  { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
+  { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
+  { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
+  { label: "Single Check", href: "/vessel-check?tab=single", icon: "🔭" },
+  { label: "Batch Check", href: "/vessel-check?tab=batch", icon: "📦" },
+  { label: "Benford Analysis", href: "/benford", icon: "🔢" },
+  { label: "Investigation", href: "/investigation", icon: "🕵️" },
+  { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
+  { label: "Single Country", href: "/country-risk?tab=single", icon: "📍" },
+  { label: "Compare", href: "/country-risk?tab=compare", icon: "⚖️" },
+  { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
+  { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
+  { label: "UBO Walker", href: "/governance/intelligence-tools?tab=ubo", icon: "🏢" },
+  { label: "Crypto Exposure", href: "/governance/intelligence-tools?tab=crypto", icon: "₿" },
+  { label: "Synthetic ID", href: "/governance/intelligence-tools?tab=synthetic", icon: "🧬" },
+  { label: "Analytics", href: "/intelligence-hub?tab=analytics", icon: "📈" },
+  { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
+  { label: "Workbench", href: "/intelligence-hub?tab=workbench", icon: "🔧" },
+  { label: "Telemetry", href: "/intelligence-hub?tab=telemetry", icon: "📡" },
+  { label: "Red-Team", href: "/intelligence-hub?tab=red-team", icon: "🥷" },
+  { label: "Security", href: "/intelligence-hub?tab=security-audit", icon: "🛡️" },
+  { label: "Status", href: "/intelligence-hub?tab=status", icon: "💚" },
+  { label: "API Docs", href: "/intelligence-hub?tab=api-docs", icon: "📘" },
+  { label: "System Card", href: "/system-card", icon: "📋" },
+  { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+  { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+  { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+  { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
+];
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntelPage() {
+  const [activeModule, setActiveModule] = useState<FamilyModule | null>(null);
+
+  const handleModuleSelect = (mod: FamilyModule) => {
+    // "Live Intel Feed" is this page — toggle off or show inline panels
+    if (mod.href === "/intel") {
+      setActiveModule(null);
+      return;
+    }
+    // Toggle: clicking the active module closes it
+    setActiveModule((prev) => (prev?.href === mod.href ? null : mod));
+  };
+
   return (
     <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
       <ModuleHero
-
         eyebrow=""
         title="Intel"
         titleEm="feed."
@@ -649,42 +699,51 @@ export default function IntelPage() {
           { value: "5m", label: "live refresh cadence" },
         ]}
       />
-      <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
-        { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-        { label: "OSINT", href: "/osint", icon: "🌐" },
-        { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
-        { label: "LEI Lookup", href: "/gleif?tab=lookup", icon: "🔍" },
-        { label: "Name Search", href: "/gleif?tab=search", icon: "🔎" },
-        { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
-        { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
-        { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
-        { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
-        { label: "Single Check", href: "/vessel-check?tab=single", icon: "🔭" },
-        { label: "Batch Check", href: "/vessel-check?tab=batch", icon: "📦" },
-        { label: "Benford Analysis", href: "/benford", icon: "🔢" },
-        { label: "Investigation", href: "/investigation", icon: "🕵️" },
-        { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
-        { label: "Single Country", href: "/country-risk?tab=single", icon: "📍" },
-        { label: "Compare", href: "/country-risk?tab=compare", icon: "⚖️" },
-        { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
-        { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
-        { label: "UBO Walker", href: "/governance/intelligence-tools?tab=ubo", icon: "🏢" },
-        { label: "Crypto Exposure", href: "/governance/intelligence-tools?tab=crypto", icon: "₿" },
-        { label: "Synthetic ID", href: "/governance/intelligence-tools?tab=synthetic", icon: "🧬" },
-        { label: "Analytics", href: "/intelligence-hub?tab=analytics", icon: "📈" },
-        { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
-        { label: "Workbench", href: "/intelligence-hub?tab=workbench", icon: "🔧" },
-        { label: "Telemetry", href: "/intelligence-hub?tab=telemetry", icon: "📡" },
-        { label: "Red-Team", href: "/intelligence-hub?tab=red-team", icon: "🥷" },
-        { label: "Security", href: "/intelligence-hub?tab=security-audit", icon: "🛡️" },
-        { label: "Status", href: "/intelligence-hub?tab=status", icon: "💚" },
-        { label: "API Docs", href: "/intelligence-hub?tab=api-docs", icon: "📘" },
-        { label: "System Card", href: "/system-card", icon: "📋" },
-        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
-        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
-        { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-      ]} />
+
+      <ModuleFamilyBar
+        suiteName="Live Intelligence Feed"
+        modules={INTEL_MODULES}
+        onSelect={handleModuleSelect}
+        activeHref={activeModule?.href ?? "/intel"}
+      />
+
+      {/* Inline module panel — appears below the bar without navigation */}
+      {activeModule && (
+        <div className="mb-6 border border-brand/30 rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-brand/5 border-b border-brand/20">
+            <div className="flex items-center gap-2">
+              {activeModule.icon && <span className="text-15">{activeModule.icon}</span>}
+              <span className="text-12 font-semibold text-ink-0">{activeModule.label}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href={activeModule.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-10 font-mono text-brand hover:underline"
+              >
+                open full page ↗
+              </a>
+              <button
+                type="button"
+                onClick={() => setActiveModule(null)}
+                className="text-14 text-ink-3 hover:text-ink-0 px-2 leading-none"
+                aria-label="Close panel"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <iframe
+            key={activeModule.href}
+            src={activeModule.href}
+            title={activeModule.label}
+            className="w-full border-0 bg-bg-0"
+            style={{ minHeight: 720, display: "block" }}
+            loading="lazy"
+          />
+        </div>
+      )}
 
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />
