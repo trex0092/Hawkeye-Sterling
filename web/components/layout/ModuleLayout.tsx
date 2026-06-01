@@ -22,6 +22,13 @@ interface ModuleLayoutProps<K extends string = string> {
   onFilterChange?: ((_key: K) => void) | undefined;
   filtersTitle?: string | undefined;
   sidebarExtra?: ReactNode | undefined;
+  // Asana-style sidebar actions. Pass the module's primary action buttons
+  // (e.g. "+ Add transaction", "▶ Run Due", "Run daily scan") and they
+  // render in a dedicated "Actions" section in the left sidebar instead
+  // of crowding the page header. Vertical stack inside the sidebar so
+  // each button is one tap target — matches Asana's "+ Add task" / quick
+  // actions placement.
+  sidebarActions?: ReactNode | undefined;
   detailPanel?: ReactNode | undefined;
   // Label shown on the live engine feed. Defaults to "Compliance engine".
   engineLabel?: string | undefined;
@@ -42,6 +49,7 @@ export function ModuleLayout<K extends string = string>({
   onFilterChange: _onFilterChange,
   filtersTitle: _filtersTitle = "Queue filters",
   sidebarExtra,
+  sidebarActions,
   detailPanel,
   engineLabel = "Compliance engine",
   asanaModule,
@@ -56,6 +64,12 @@ export function ModuleLayout<K extends string = string>({
             <SidebarSection title="Regulatory">
               <SidebarMLROCard />
             </SidebarSection>
+
+            {sidebarActions && (
+              <SidebarSection title="Actions">
+                <div className="flex flex-col gap-2 px-2">{sidebarActions}</div>
+              </SidebarSection>
+            )}
 
             {sidebarExtra}
 

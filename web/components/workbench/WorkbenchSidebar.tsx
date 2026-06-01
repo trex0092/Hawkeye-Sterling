@@ -1,43 +1,41 @@
 "use client";
 
+// Unified left-sidebar for the Workbench module. Previously rendered
+// "Pipeline" + "Faculties" sections; the product direction is now that
+// every section shows the same two-block sidebar (REGULATORY operator
+// card + REPORT button) so the workspace chrome is identical across
+// modules. Faculty filtering is still available inline on the page.
 import {
-  SidebarFilterList,
+  SidebarMLROCard,
   SidebarSection,
   SidebarShell,
 } from "@/components/layout/SidebarParts";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { FacultyFilter, FacultyFilterKey } from "@/lib/types";
 
 interface WorkbenchSidebarProps {
-  filters: FacultyFilter[];
-  activeFilter: FacultyFilterKey;
-  onFilterChange: (_key: FacultyFilterKey) => void;
+  // Inert here now; preserved on the public surface so the page does
+  // not need an edit. A future refactor can drop them.
+  filters?: FacultyFilter[];
+  activeFilter?: FacultyFilterKey;
+  onFilterChange?: (_key: FacultyFilterKey) => void;
 }
 
-export function WorkbenchSidebar({
-  filters,
-  activeFilter,
-  onFilterChange,
-}: WorkbenchSidebarProps) {
+export function WorkbenchSidebar(_props: WorkbenchSidebarProps) {
   return (
     <SidebarShell>
-      <SidebarSection title="Pipeline">
-        <div className="text-12 text-ink-1 px-2">
-          <div className="mb-3">
-            <div className="font-medium text-ink-0 mb-1">Multi-perspective</div>
-            <div className="text-11 text-ink-2">Sonnet executor → Opus advisor</div>
-          </div>
-          <div className="mb-3">
-            <div className="font-medium text-ink-0 mb-1">Charter coverage</div>
-            <div className="text-11 text-ink-2">P1–P10 · Immutable</div>
-          </div>
-        </div>
+      <SidebarSection title="Regulatory">
+        <SidebarMLROCard />
       </SidebarSection>
 
-      <SidebarSection title="Faculties">
-        <SidebarFilterList
-          items={filters}
-          activeKeys={[activeFilter]}
-          onSelect={(key) => onFilterChange(key as FacultyFilterKey)}
+      <SidebarSection title="Report">
+        <AsanaReportButton
+          payload={{
+            module: "workbench",
+            label: "Brain Workbench",
+            summary:
+              "Workbench report submitted from Hawkeye Sterling — multi-perspective reasoning chain and faculty coverage snapshot.",
+          }}
         />
       </SidebarSection>
     </SidebarShell>

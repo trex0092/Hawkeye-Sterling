@@ -64,8 +64,18 @@ function SectionHeader({ id: _id, label, icon, desc, completed, active, onClick 
   );
 }
 
+// LoadStatus replaces the prior "if (!survey) show 'Loading…' forever"
+// shape — a 401/502 from /api/moe-survey with empty localStorage left the
+// page pinned on the spinner with no way out.
+type LoadStatus =
+  | { phase: "loading" }
+  | { phase: "ready" }
+  | { phase: "auth_required" }
+  | { phase: "error"; detail: string };
+
 export default function MoeSurveyPage() {
   const [survey, setSurvey] = useState<MoeSurveyState | null>(null);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>({ phase: "loading" });
   const [activeSection, setActiveSection] = useState<string>("business-profile");
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -73,18 +83,53 @@ export default function MoeSurveyPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadSurvey = useCallback(async () => {
+    if (mountedRef.current) setLoadStatus({ phase: "loading" });
+    let serverStatus: number | null = null;
+    let serverThrew = false;
     try {
       const res = await fetch("/api/moe-survey");
+      serverStatus = res.status;
       if (res.ok) {
-        const data = await res.json().catch(() => ({})) as { ok: boolean; survey: MoeSurveyState };
+        const data = (await res.json().catch(() => ({}))) as {
+          ok: boolean;
+          survey: MoeSurveyState;
+        };
         if (!mountedRef.current) return;
-        if (data.ok) { setSurvey(data.survey); return; }
+        if (data.ok) {
+          setSurvey(data.survey);
+          setLoadStatus({ phase: "ready" });
+          return;
+        }
       }
-    } catch (err) { console.warn("[hawkeye] moe-survey server load failed:", err); }
+    } catch (err) {
+      serverThrew = true;
+      console.warn("[hawkeye] moe-survey server load failed:", err);
+    }
+    // localStorage fallback. If both server and storage produce nothing,
+    // surface a useful UI state instead of pinning on "Loading…".
+    let restored: MoeSurveyState | null = null;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw && mountedRef.current) setSurvey(JSON.parse(raw) as MoeSurveyState);
-    } catch (err) { console.warn("[hawkeye] moe-survey localStorage parse failed:", err); }
+      if (raw) restored = JSON.parse(raw) as MoeSurveyState;
+    } catch (err) {
+      console.warn("[hawkeye] moe-survey localStorage parse failed:", err);
+    }
+    if (!mountedRef.current) return;
+    if (restored) {
+      setSurvey(restored);
+      setLoadStatus({ phase: "ready" });
+      return;
+    }
+    if (serverStatus === 401 || serverStatus === 403) {
+      setLoadStatus({ phase: "auth_required" });
+      return;
+    }
+    setLoadStatus({
+      phase: "error",
+      detail: serverThrew
+        ? "Network error while loading the MoE survey."
+        : `Server returned HTTP ${serverStatus ?? "unknown"} loading the survey.`,
+    });
   }, []);
 
   useEffect(() => { void loadSurvey(); }, [loadSurvey]);
@@ -119,7 +164,60 @@ export default function MoeSurveyPage() {
     update({ sections });
   };
 
-  if (!survey) return <div className="p-8 text-12 text-ink-3">Loading survey…</div>;
+  if (!survey) {
+    if (loadStatus.phase === "auth_required") {
+      return (
+        <div className="p-8 max-w-md mx-auto mt-12 text-center">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
+            MoE Survey · Authentication required
+          </div>
+          <h1 className="font-display font-normal text-24 text-ink-0 mb-3">
+            Sign in to continue
+          </h1>
+          <p className="text-13 text-ink-2 mb-6 leading-relaxed">
+            Your session has expired or you are not signed in. Sign in to view and
+            edit the MoE survey, or try again to load any locally saved progress.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <a
+              href="/login"
+              className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+            >
+              Sign in
+            </a>
+            <button
+              type="button"
+              onClick={() => void loadSurvey()}
+              className="px-5 py-2 border border-hair-2 text-ink-1 text-13 font-semibold rounded hover:bg-bg-1 transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (loadStatus.phase === "error") {
+      return (
+        <div className="p-8 max-w-md mx-auto mt-12 text-center">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
+            MoE Survey · Error
+          </div>
+          <h1 className="font-display font-normal text-24 text-ink-0 mb-3">
+            Survey unavailable
+          </h1>
+          <p className="text-13 text-ink-2 mb-6 leading-relaxed">{loadStatus.detail}</p>
+          <button
+            type="button"
+            onClick={() => void loadSurvey()}
+            className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return <div className="p-8 text-12 text-ink-3">Loading survey…</div>;
+  }
 
   const totalSections = SECTION_META.length;
   const completedCount = survey.sections.filter((s) => s.completed).length;

@@ -1,44 +1,45 @@
 "use client";
 
+// Unified left-sidebar for the Cases module. Previously rendered a
+// "Case status" filter list + an "Evidence vault" stats panel; the
+// product direction now is that every section shows the same two-block
+// sidebar (REGULATORY operator card + REPORT button) so the workspace
+// chrome is identical across modules. The case-status filter is still
+// available inline on the page above the table — only the sidebar copy
+// of it was removed.
 import {
-  SidebarFilterList,
+  SidebarMLROCard,
   SidebarSection,
   SidebarShell,
 } from "@/components/layout/SidebarParts";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { CaseFilter, CaseFilterKey } from "@/lib/types";
 
 interface CasesSidebarProps {
-  filters: CaseFilter[];
-  activeFilter: CaseFilterKey;
-  onFilterChange: (_key: CaseFilterKey) => void;
+  // Props kept on the public surface so the page does not need an edit;
+  // they're inert here now. A future refactor can drop them once every
+  // call site stops passing them.
+  filters?: CaseFilter[];
+  activeFilter?: CaseFilterKey;
+  onFilterChange?: (_key: CaseFilterKey) => void;
 }
 
-export function CasesSidebar({
-  filters,
-  activeFilter,
-  onFilterChange,
-}: CasesSidebarProps) {
+export function CasesSidebar(_props: CasesSidebarProps) {
   return (
     <SidebarShell>
-      <SidebarSection title="Case status">
-        <SidebarFilterList
-          items={filters}
-          activeKeys={[activeFilter]}
-          onSelect={(key) => onFilterChange(key as CaseFilterKey)}
-        />
+      <SidebarSection title="Regulatory">
+        <SidebarMLROCard />
       </SidebarSection>
 
-<SidebarSection title="Evidence vault">
-        <div className="text-12 text-ink-1 px-2">
-          <div className="mb-2">
-            <div className="font-medium text-ink-0">2,847 documents</div>
-            <div className="text-11 text-ink-2 mt-0.5">Immutable chain</div>
-          </div>
-          <div>
-            <div className="font-medium text-ink-0">10-year retention</div>
-            <div className="text-11 text-ink-2 mt-0.5">FDL 10/2025 Art.24</div>
-          </div>
-        </div>
+      <SidebarSection title="Report">
+        <AsanaReportButton
+          payload={{
+            module: "cases",
+            label: "Cases Dashboard",
+            summary:
+              "Case management report submitted from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed.",
+          }}
+        />
       </SidebarSection>
     </SidebarShell>
   );

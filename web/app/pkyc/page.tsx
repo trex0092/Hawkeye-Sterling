@@ -180,7 +180,27 @@ export default function PKycPage() {
   });
 
   return (
-    <ModuleLayout>
+    <ModuleLayout
+      sidebarActions={
+        <>
+          <button
+            type="button"
+            onClick={() => setShowEnroll(true)}
+            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-13 font-semibold rounded transition-colors text-left"
+          >
+            + Enroll Subject
+          </button>
+          <button
+            type="button"
+            onClick={handleRunAll}
+            disabled={running}
+            className="px-4 py-2 bg-blue hover:bg-blue/80 text-white text-13 font-semibold rounded transition-colors disabled:opacity-50 text-left"
+          >
+            {running ? "Running…" : "▶ Run Due"}
+          </button>
+        </>
+      }
+    >
       {/* Hero */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <ModuleHero
@@ -189,21 +209,6 @@ export default function PKycPage() {
           titleEm="monitoring."
           intro="FDL 10/2025 Art.14 · CR 134/2025 §17 · FATF R.10 — continuous CDD lifecycle"
         />
-        <div className="flex gap-2 shrink-0 mt-2">
-          <button
-            onClick={() => setShowEnroll(true)}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-13 font-semibold rounded transition-colors"
-          >
-            + Enroll Subject
-          </button>
-          <button
-            onClick={handleRunAll}
-            disabled={running}
-            className="px-4 py-2 bg-blue hover:bg-blue/80 text-white text-13 font-semibold rounded transition-colors disabled:opacity-50"
-          >
-            {running ? "Running…" : "▶ Run Due"}
-          </button>
-        </div>
       </div>
 
       {/* Stats bar */}

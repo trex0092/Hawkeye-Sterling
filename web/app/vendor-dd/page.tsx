@@ -183,7 +183,19 @@ export default function SupplierDdPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="vendor-dd" asanaLabel="Vendor Due Diligence">
+    <ModuleLayout
+      asanaModule="vendor-dd"
+      asanaLabel="Vendor Due Diligence"
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => { setShowForm((s) => !s); setForm(EMPTY_FORM); }}
+          className="px-4 py-2 rounded text-13 font-semibold bg-brand text-white hover:bg-brand/90 transition-colors text-left"
+        >
+          {showForm ? "Cancel" : "+ Add Supplier"}
+        </button>
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -204,16 +216,7 @@ export default function SupplierDdPage() {
         ]}
       />
 
-      {/* Add button */}
-      <div className="flex justify-end mb-4">
-        <button
-          type="button"
-          onClick={() => { setShowForm((s) => !s); setForm(EMPTY_FORM); }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-11 font-semibold bg-brand text-white hover:bg-brand/90 transition-colors"
-        >
-          {showForm ? "Cancel" : "+ Add Supplier"}
-        </button>
-      </div>
+      {/* + Add Supplier button moved to sidebar Actions */}
 
       {/* Add form */}
       {showForm && (

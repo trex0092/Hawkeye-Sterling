@@ -428,28 +428,31 @@ export default function TransactionMonitorPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="transaction-monitor" asanaLabel="Transaction Monitor">
+    <ModuleLayout
+      asanaModule="transaction-monitor"
+      asanaLabel="Transaction Monitor"
+      sidebarActions={
+        <>
+          <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
+            {running ? "Running scan…" : "Run daily scan"}
+          </Btn>
+          <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
+            {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
+          </Btn>
+          <Btn variant="ghost" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
+            {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
+          </Btn>
+          <Btn variant="primary" onClick={focusForm}>
+            + Add transaction
+          </Btn>
+        </>
+      }
+    >
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
             subtitle="MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
             dotColor="amber"
-            actions={
-              <>
-                <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
-                  {running ? "Running scan…" : "Run daily scan"}
-                </Btn>
-                <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
-                  {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
-                </Btn>
-                <Btn variant="ghost" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
-                  {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
-                </Btn>
-                <Btn variant="primary" onClick={focusForm}>
-                  + Add transaction
-                </Btn>
-              </>
-            }
       />
 
       <ModuleFamilyBar

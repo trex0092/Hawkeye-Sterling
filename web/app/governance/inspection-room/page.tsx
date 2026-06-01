@@ -365,7 +365,29 @@ export default function InspectionRoomPage() {
         : "missing";
 
   return (
-    <ModuleLayout asanaModule="inspection-room" asanaLabel="Inspection Room">
+    <ModuleLayout
+      asanaModule="inspection-room"
+      asanaLabel="Inspection Room"
+      sidebarActions={
+        <>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="text-13 font-mono px-4 py-2 rounded border font-semibold text-left"
+            style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
+          >
+            PDF
+          </button>
+          <button
+            type="button"
+            onClick={refresh}
+            className="text-13 font-mono px-4 py-2 border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 text-left"
+          >
+            ↻ Refresh
+          </button>
+        </>
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -388,22 +410,8 @@ export default function InspectionRoomPage() {
         ]}
       />
 
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
-          style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
-        >
-          PDF
-        </button>
-        <button
-          type="button"
-          onClick={refresh}
-          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70"
-        >
-          ↻
-        </button>
+      {/* PDF + refresh moved to sidebar Actions */}
+      <div className="flex items-center mb-4">
         <span className="text-11 text-ink-3 font-mono ml-auto">
           generated {generatedAt}
         </span>
