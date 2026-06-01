@@ -751,10 +751,8 @@ export default function AccessControlPage() {
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
-      <ModuleFamilyBar suiteName="Security" modules={[
-        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
-        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+      <ModuleFamilyBar suiteName="Access Control" modules={[
+        { label: "Access Control", href: "/access-control", icon: "🔑" },
       ]} />
       <ModuleHero
 
