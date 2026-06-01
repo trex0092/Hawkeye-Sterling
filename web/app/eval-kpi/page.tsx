@@ -132,7 +132,7 @@ export default function EvalKpiPage() {
     <ModuleLayout asanaModule="eval-kpi" asanaLabel="Eval KPIs" engineLabel="MLRO Eval">
       <ModuleHero
 
-        eyebrow="Evaluation"
+        eyebrow=""
         title="MLRO Advisor"
         titleEm="evaluation."
         intro={

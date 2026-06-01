@@ -759,7 +759,7 @@ export default function AccessControlPage() {
       ]} />
       <ModuleHero
 
-        eyebrow="Governance"
+        eyebrow=""
         title="Access &"
         titleEm="permissions."
         kpis={[

@@ -713,7 +713,7 @@ export default function TFSAlertsPage() {
       asanaLabel="TFS Alerts"
     >
       <ModuleHero
-        eyebrow="EOCN · UAE Targeted Financial Sanctions · TFS Monitoring"
+        eyebrow=""
         title="TFS Subscription"
         titleEm="Alerts."
         kpis={[

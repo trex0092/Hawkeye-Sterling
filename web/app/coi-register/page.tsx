@@ -182,7 +182,7 @@ export default function CoiRegisterPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="⚖️ Governance — FATF R.35 · CBUAE Guidelines · FDL 10/2025 Art.19"
+        eyebrow=""
         title="Conflicts of Interest"
         titleEm="register."
         intro="Staff declarations · MLRO sign-off · annual review · conflict management · CBUAE governance"

@@ -129,7 +129,7 @@ export default function BraPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="📊 Governance — MOE Circular 6/2025"
+        eyebrow=""
         title="Business Risk"
         titleEm="assessments."
         intro="DNFBP risk scoring · 90-day review cycle · inherent risk · controls effectiveness · residual risk"

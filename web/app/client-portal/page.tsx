@@ -387,7 +387,7 @@ export default function ClientPortalPage() {
       <div>
         <ModuleHero
 
-          eyebrow="Self-service KYC"
+          eyebrow=""
           title="Client"
           titleEm="portal."
           intro={

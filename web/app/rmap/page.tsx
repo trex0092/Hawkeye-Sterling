@@ -95,7 +95,7 @@ export default function RmapPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="⛏️ Responsible Minerals — RMI RMAP · CMRT v6.01"
+        eyebrow=""
         title="RMAP Smelter"
         titleEm="database."
         intro="Conformant smelter lookup · CMRT v6.01 export · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 annual certification"

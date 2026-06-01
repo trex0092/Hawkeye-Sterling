@@ -310,7 +310,7 @@ export default function GoAmlSubmissionPage() {
   return (
     <ModuleLayout asanaModule="goaml-submission" asanaLabel="goAML STR Submission">
       <ModuleHero
-        eyebrow="goAML Filing"
+        eyebrow=""
         title="STR / SAR"
         titleEm="submission."
         intro={

@@ -99,7 +99,7 @@ export default function ProfilePage() {
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="profile" asanaLabel="Profile">
       <ModuleHero
-        eyebrow="Account Settings"
+        eyebrow=""
         title="Your"
         titleEm="profile."
 

@@ -214,7 +214,7 @@ export default function DormantAccountsPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="💤 Compliance — CBUAE AML/CFT §8"
+        eyebrow=""
         title="Dormant Account"
         titleEm="register."
         intro="12-month inactivity threshold · re-KYC on reactivation · MLRO notification · CBUAE §8.4"

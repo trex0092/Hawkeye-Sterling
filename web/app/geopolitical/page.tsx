@@ -209,7 +209,7 @@ export default function GeopoliticalPage() {
   return (
     <ModuleLayout engineLabel="Geopolitical intelligence">
       <ModuleHero
-        eyebrow="Intelligence · AML · Sanctions"
+        eyebrow=""
         title="Geopolitical"
         titleEm="risk."
 

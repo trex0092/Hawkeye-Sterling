@@ -149,7 +149,7 @@ export default function KriDashboardPage() {
   return (
     <ModuleLayout asanaModule="kri-dashboard" asanaLabel="KRI Dashboard" engineLabel="Risk Indicators">
       <ModuleHero
-        eyebrow="Leadership · Risk Posture"
+        eyebrow=""
         title="KRI"
         titleEm="dashboard."
         intro={

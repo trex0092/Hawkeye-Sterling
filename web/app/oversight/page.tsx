@@ -1215,7 +1215,7 @@ export default function OversightPage() {
     <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
       <ModuleHero
 
-        eyebrow="Governance"
+        eyebrow=""
         title="Management"
         titleEm="oversight."
         intro={

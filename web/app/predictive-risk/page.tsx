@@ -360,7 +360,7 @@ export default function PredictiveRiskPage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="Intelligence"
+        eyebrow=""
         title="Predictive Risk Scoring"
         intro="Forward-looking 7-signal weighted risk model with OpenCorporates and Wikidata OSINT enrichment."
       />

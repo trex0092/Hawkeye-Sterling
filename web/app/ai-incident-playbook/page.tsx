@@ -177,7 +177,7 @@ export default function AIIncidentPlaybookPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="🤖 UAE AI Governance — FDL 10/2025 Art.24"
+        eyebrow=""
         title="AI Incident Response"
         titleEm="playbook."
         intro="Step-by-step AI failure response · Hallucination · Bias · Prompt injection · Data leakage · CBUAE reporting"

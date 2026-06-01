@@ -319,7 +319,7 @@ export default function EwraPage() {
     <ModuleLayout asanaModule="ewra" asanaLabel="Enterprise-Wide Risk Assessment">
         <ModuleHero
 
-          eyebrow="Risk Assessment"
+          eyebrow=""
           title="EWRA / BWRA"
           titleEm="dashboard."
           intro={

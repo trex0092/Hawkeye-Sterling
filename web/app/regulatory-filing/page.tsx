@@ -581,7 +581,7 @@ export default function RegulatoryFilingPage() {
     <ModuleLayout>
       <div className="px-6 py-6 max-w-[900px]">
         <ModuleHero
-          eyebrow="Hawkeye Sterling · Compliance"
+          eyebrow=""
           title="Regulatory"
           titleEm="Filing."
           intro={

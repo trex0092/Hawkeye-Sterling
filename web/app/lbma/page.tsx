@@ -105,7 +105,7 @@ export default function LbmaPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="🥇 Responsible Gold — LBMA RGG V9"
+        eyebrow=""
         title="LBMA Responsible Gold"
         titleEm="compliance."
         intro="Counterparty due diligence questionnaires · GDL verification · CAHRA sourcing · supply chain traceability · LBMA RGG V9"

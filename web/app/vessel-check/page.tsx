@@ -163,7 +163,7 @@ export default function VesselCheckPage() {
     <ModuleLayout asanaModule="vessel-check" asanaLabel="Vessel Check" engineLabel="Vessel Check">
       <ModuleHero
 
-        eyebrow="Maritime Intelligence"
+        eyebrow=""
         title="Vessel sanctions"
         titleEm="check."
         intro="IMO number lookup — sanctions screening, ownership chain, flag state. Batch mode supports up to 50 vessels."

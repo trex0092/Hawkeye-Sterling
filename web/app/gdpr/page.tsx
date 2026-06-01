@@ -331,7 +331,7 @@ export default function GdprPage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="🔒 Data Protection — GDPR Art.17/20 · UAE PDPL · FDL 10/2025 Art.20"
+        eyebrow=""
         title="GDPR Data Subject"
         titleEm="rights."
         intro="Manage data subject erasure, export, and retention. All operations are logged in the tamper-evident audit chain."

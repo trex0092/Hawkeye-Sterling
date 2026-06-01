@@ -75,7 +75,7 @@ export default function IntelStatusPage(): React.ReactElement {
   return (
     <ModuleLayout asanaModule="intel-status" asanaLabel="Intelligence Sources">
       <ModuleHero
-        eyebrow="Enrichment · Intelligence Vendors"
+        eyebrow=""
         title="Intelligence sources"
         titleEm="status."
         intro="Live view of every vendor adapter — configured vs missing — with sign-up URL for each free tier."

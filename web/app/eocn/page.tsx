@@ -437,7 +437,7 @@ export default function EocnPage() {
     <ModuleLayout asanaModule="eocn" asanaLabel="EOCN Trade Compliance" engineLabel="EOCN sanctions engine">
       <ModuleHero
 
-        eyebrow="Sanctions"
+        eyebrow=""
         title="EOCN targeted financial"
         titleEm="sanctions."
         intro={

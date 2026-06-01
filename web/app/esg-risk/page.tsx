@@ -513,7 +513,7 @@ export default function EsgRiskPage() {
     <ModuleLayout engineLabel="ESG risk engine">
       <ModuleHero
 
-        eyebrow="Hawkeye Sterling · Sustainability & Governance"
+        eyebrow=""
         title="ESG"
         titleEm="risk."
         kpis={KPIS}

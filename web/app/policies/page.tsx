@@ -798,7 +798,7 @@ export default function PoliciesPage() {
     <ModuleLayout asanaModule="policies" asanaLabel="Policies">
         <ModuleHero
 
-          eyebrow="SOP vault"
+          eyebrow=""
           title="Policies"
           titleEm="charter."
           intro={

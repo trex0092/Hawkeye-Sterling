@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="LEGAL · DATA PROTECTION"
+        eyebrow=""
         title="Privacy"
         titleEm="policy."
         intro="How Hawkeye Sterling collects, processes, and protects personal data under UAE Federal Law No. 45/2021 (PDPL) and applicable AML/CFT obligations."

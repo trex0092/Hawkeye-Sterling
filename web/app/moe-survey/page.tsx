@@ -131,7 +131,7 @@ export default function MoeSurveyPage() {
     <ModuleLayout asanaModule="moe-survey" asanaLabel="MoE 2026 AML/CFT Survey" engineLabel="Compliance survey engine">
       <ModuleHero
 
-        eyebrow="Regulatory Compliance"
+        eyebrow=""
         title="MoE 2026 mandatory AML/CFT"
         titleEm="survey."
         kpis={[

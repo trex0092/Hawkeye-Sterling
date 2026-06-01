@@ -127,7 +127,7 @@ export default function OwnershipPage() {
     >
       <ModuleHero
 
-        eyebrow="KYC / Beneficial Ownership"
+        eyebrow=""
         title="Ownership"
         titleEm="explorer."
         intro={

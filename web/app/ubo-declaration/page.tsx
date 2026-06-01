@@ -240,7 +240,7 @@ export default function UboDeclarationPage() {
       <div>
         <ModuleHero
 
-          eyebrow="Public-facing form"
+          eyebrow=""
           title="Beneficial owner"
           titleEm="declaration."
           intro={

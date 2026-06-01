@@ -187,7 +187,7 @@ export default function VoluntaryDisclosurePage() {
     <ModuleLayout>
       <ModuleFamilyBar suiteName="Governance & Ethics" modules={GOV_MODULES} />
       <ModuleHero
-        eyebrow="📣 Regulatory — FDL 10/2025 Art.25 · CBUAE Enforcement Policy"
+        eyebrow=""
         title="Voluntary Disclosure"
         titleEm="register."
         intro="Self-report regulatory breaches before detection to qualify for enforcement mitigation under CBUAE policy."

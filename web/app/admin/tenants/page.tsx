@@ -356,7 +356,7 @@ export default function AdminTenantsPage() {
   return (
     <ModuleLayout engineLabel="Multi-Tenant Admin" asanaModule="admin-tenants" asanaLabel="Tenant Management">
       <ModuleHero
-        eyebrow="Admin · Platform"
+        eyebrow=""
         title="Tenant"
         titleEm="Management."
         kpis={[

@@ -195,7 +195,7 @@ export default function TmRulesPage() {
     <ModuleLayout>
       <ModuleFamilyBar suiteName="Transaction Monitoring" modules={TM_MODULES} />
       <ModuleHero
-        eyebrow="📐 Compliance — CBUAE AML/CFT Guidelines §7"
+        eyebrow=""
         title="TM Rule Change"
         titleEm="management."
         intro="Propose, test, and obtain MLRO sign-off on transaction monitoring rule changes before deployment."

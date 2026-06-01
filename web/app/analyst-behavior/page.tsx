@@ -149,7 +149,7 @@ export default function AnalystBehaviorPage() {
   return (
     <ModuleLayout asanaModule="analyst-behavior" asanaLabel="UEBA Alerts" engineLabel="UEBA Engine">
       <ModuleHero
-        eyebrow="Security Operations · UEBA"
+        eyebrow=""
         title="Analyst behavior"
         titleEm="analytics."
         intro={

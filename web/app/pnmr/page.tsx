@@ -120,7 +120,7 @@ export default function PnmrQueuePage() {
         ]}
       />
       <ModuleHero
-        eyebrow="📋 Sanctions — Cabinet Decision 74/2020"
+        eyebrow=""
         title="PNMR"
         titleEm="queue."
         intro="Provisional Notification of Match Records · goAML submission · 48-hour SLA · false positive resolution"

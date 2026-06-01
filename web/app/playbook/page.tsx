@@ -8216,7 +8216,7 @@ export default function PlaybookPage() {
     <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
       <ModuleHero
 
-        eyebrow="Guided due-diligence"
+        eyebrow=""
         title="Playbook"
         titleEm="engine."
         intro={

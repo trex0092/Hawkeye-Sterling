@@ -303,7 +303,7 @@ export default function MakerCheckerPage() {
   return (
     <ModuleLayout engineLabel="Maker-checker engine" asanaModule="maker-checker" asanaLabel="Maker-Checker">
       <ModuleHero
-        eyebrow="Compliance Controls · UAE FDL 10/2025 Art.16 · FATF R.28"
+        eyebrow=""
         title="Maker-Checker"
         titleEm="Queue."
         kpis={[

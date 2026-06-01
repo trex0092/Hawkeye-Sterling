@@ -153,7 +153,7 @@ export default function FpOptimizerPage() {
   return (
     <ModuleLayout engineLabel="ML FP Optimizer">
       <ModuleHero
-        eyebrow="ML Screening · Pattern Analysis · Threshold Optimisation"
+        eyebrow=""
         title="False Positive"
         titleEm="optimizer."
 

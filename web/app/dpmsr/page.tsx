@@ -217,7 +217,7 @@ export default function DpmsrPage() {
     <ModuleLayout asanaModule="dpmsr" asanaLabel="DPMSR Filing Queue" engineLabel="DPMSR threshold engine">
       <ModuleHero
 
-        eyebrow="Regulatory Reporting"
+        eyebrow=""
         title="DPMSR — AED 55,000 threshold"
         titleEm="obligations."
         kpis={[

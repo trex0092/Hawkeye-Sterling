@@ -719,7 +719,7 @@ export default function TypologyLibraryPage() {
   return (
     <ModuleLayout engineLabel="Typology engine" asanaModule="typology-library" asanaLabel="Typology Library">
       <ModuleHero
-        eyebrow="AI-Powered AML Knowledge Base"
+        eyebrow=""
         title="Typology"
         titleEm="library."
 

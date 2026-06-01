@@ -496,7 +496,7 @@ export default function WebhooksPage() {
     <ModuleLayout>
       <div className="flex-1 p-6 max-w-6xl mx-auto">
         <ModuleHero
-          eyebrow="Integrations"
+          eyebrow=""
           title="Outbound Webhooks"
           intro="Receive real-time compliance events in Salesforce, ServiceNow, Jira, or any HTTPS endpoint."
         />

@@ -108,7 +108,7 @@ export default function HeatmapPage() {
     <ModuleLayout asanaModule="heatmap" asanaLabel="Geographic Heatmap">
       <ModuleHero
 
-        eyebrow="Geographic Heatmap"
+        eyebrow=""
         title="Country"
         titleEm="exposure."
         intro={
