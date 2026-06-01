@@ -26,6 +26,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
       { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan · training tracker" },
+      { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
     ],
   },
   {
@@ -43,6 +44,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📋 MoE Survey", href: "/moe-survey", hint: "Mandatory AML/CFT survey MOET/AML/001/2026 · all DNFBPs" },
       { label: "👮 Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
       { label: "⚖️ Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
+      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
     ],
   },
   {
@@ -57,20 +59,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
-    ],
-  },
-  {
-    // Subject & entity enrichment: external data lookups, forensic tools, OSINT
-    title: "Enrichment",
-    items: [
-      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
-    ],
-  },
-  {
-    // Employee-facing approval tracker
-    title: "Approvals",
-    items: [
-      { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
     ],
   },
 ];
