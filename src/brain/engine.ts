@@ -36,6 +36,20 @@ const META_MODE_IDS: readonly string[] = [
 ];
 const META_MODE_SET: ReadonlySet<string> = new Set(META_MODE_IDS);
 
+// AML-15: modes whose failure must NEVER silently degrade to inconclusive.
+// A thrown exception in any of these categories indicates we cannot trust
+// the screening outcome — fail-closed by emitting an `escalate` finding so
+// the MLRO is forced to review rather than the run quietly clearing.
+// Categories chosen by direct compliance impact: any miss is a regulatory
+// breach risk (FATF R.6/R.10/R.12 + UAE FDL 10/2025 Art.18-Art.20).
+const CRITICAL_MODE_CATEGORIES: ReadonlySet<string> = new Set([
+  'sanctions',
+  'pep_screening',
+  'proliferation',
+  'sanctions_evasion',
+  'compliance_framework',
+]);
+
 export interface RunOptions {
   subject: Subject;
   evidence?: Evidence;
@@ -82,15 +96,25 @@ export async function run(options: RunOptions): Promise<BrainVerdict> {
     try {
       finding = await mode.apply(ctx);
     } catch (err) {
-      console.warn(`[engine] mode ${modeId} threw — recording error finding:`, err instanceof Error ? err.message : String(err));
+      // AML-15: critical-category mode failures must NOT silently downgrade
+      // to inconclusive — emit `escalate` with explicit failure rationale so
+      // the MLRO sees the gap. Non-critical modes retain the old behaviour.
+      const isCritical = CRITICAL_MODE_CATEGORIES.has(mode.category);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[engine] mode ${modeId} (${mode.category}) threw — ${isCritical ? 'ESCALATING' : 'recording error finding'}:`,
+        errMsg,
+      );
       finding = {
         modeId: mode.id,
         category: mode.category,
         faculties: mode.faculties,
-        score: 0,
-        confidence: 0,
-        verdict: 'inconclusive' as const,
-        rationale: `Mode ${mode.name} failed: ${err instanceof Error ? err.message : String(err)}`,
+        score: isCritical ? 0.8 : 0,
+        confidence: isCritical ? 0.8 : 0,
+        verdict: isCritical ? ('escalate' as const) : ('inconclusive' as const),
+        rationale: isCritical
+          ? `CRITICAL mode ${mode.name} failed (${mode.category}): ${errMsg}. Manual MLRO review required — screening cannot self-attest.`
+          : `Mode ${mode.name} failed: ${errMsg}`,
         evidence: [],
         producedAt: Date.now(),
       };

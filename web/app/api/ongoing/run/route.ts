@@ -10,7 +10,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import {
   type CustomerRiskTier,
@@ -205,6 +205,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
+  // CRON-001 defense-in-depth: in production also require Netlify's
+  // scheduled-function header. A leaked ONGOING_RUN_TOKEN alone cannot
+  // trigger this route from an attacker's host because Netlify injects
+  // x-netlify-scheduled-function only for scheduled invocations.
+  // Mirrors refresh-lists.ts:177-187.
+  const isScheduled = req.headers.get("x-netlify-scheduled-function") === "true";
+  if (process.env["NODE_ENV"] === "production" && !isScheduled) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
   const asanaToken = process.env["ASANA_TOKEN"];
   if (!asanaToken) {
     console.warn("[ongoing/run] ASANA_TOKEN not set — all Asana task creation will be skipped. Compliance audit trail may be incomplete.");
@@ -215,11 +225,36 @@ export async function POST(req: Request): Promise<NextResponse> {
   const loadedSubjects = await Promise.all(keys.map((key) => getJson<EnrolledSubject>(key).catch(() => null)));
   const subjects: EnrolledSubject[] = loadedSubjects.filter((s): s is EnrolledSubject => s !== null);
 
-  // Live sanctions corpus (OFAC / UN / EU / UK / EOCN / UAE LTL) from the
-  // Netlify Blobs store populated by netlify/functions/refresh-lists cron.
-  // Falls back to the static seed fixture when blobs aren't populated
-  // (first-run / dev). Loaded once per invocation, not per-subject.
-  const CANDIDATES = await loadCandidates();
+  // SANCT-001: fail-closed on missing sanctions corpus. Loading via
+  // loadCandidatesWithHealth() lets us refuse to screen if both OFAC SDN and
+  // UN Consolidated are absent (the same gate /api/quick-screen enforces).
+  // Without this, an ingestion outage would silently produce 'CLEAR' for
+  // every subject, masking real exposure.
+  let CANDIDATES: QuickScreenCandidate[];
+  try {
+    const { candidates, health } = await loadCandidatesWithHealth();
+    const loadedListIds = new Set(candidates.map((c) => c.listId));
+    const criticalLists = ["ofac_sdn", "un_consolidated"] as const;
+    const missingCritical = criticalLists.filter((id) => !loadedListIds.has(id));
+    if (candidates.length === 0 || missingCritical.length === criticalLists.length) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "screening_corpus_unavailable",
+          missingLists: missingCritical,
+          health,
+        },
+        { status: 503 },
+      );
+    }
+    CANDIDATES = candidates;
+  } catch (err) {
+    console.error("[ongoing/run] loadCandidatesWithHealth failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      { ok: false, error: "screening_corpus_unavailable" },
+      { status: 503 },
+    );
+  }
 
   const runAt = new Date().toISOString();
   const results: Array<{

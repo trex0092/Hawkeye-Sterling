@@ -307,8 +307,14 @@ export default async (req: Request): Promise<Response> => {
         const appStore = getStore('hawkeye-sterling');
         await appStore.setJSON('sanctions/meta.json', buildSanctionsMeta(result, LABEL));
       } catch (metaErr) {
-        console.warn(
-          `[${LABEL}] sanctions/meta.json write failed (non-critical):`,
+        // BLOBS-02: this WAS labelled "non-critical" but downstream
+        // /api/screening/health uses this key to determine corpus
+        // freshness. A silent failure here means the health endpoint
+        // reports CORPUS_MISSING indefinitely despite a successful
+        // per-list write. Elevate the log to ERROR so SLA monitors can
+        // catch it and operators don't dismiss it as benign.
+        console.error(
+          `[${LABEL}] sanctions/meta.json write FAILED — /api/screening/health will report CORPUS_MISSING until next successful ingest. Detail:`,
           metaErr instanceof Error ? metaErr.message : String(metaErr),
         );
       }

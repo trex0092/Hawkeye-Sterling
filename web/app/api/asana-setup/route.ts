@@ -300,7 +300,9 @@ async function handleSetup(req: Request): Promise<NextResponse> {
       envVar: r.envVar,
       board: r.label,
       hint: "Create this project in Asana or check the project name matches",
-      fallback: `Tasks will go to Master Inbox (${MASTER_INBOX_GID}) until this is set`,
+      // SECRET-001: don't leak the master-inbox GID in the response body.
+      // The hint conveys the same information without exposing the value.
+      fallback: `Tasks will go to the Master Inbox project (set ASANA_PROJECT_GID to override)`,
     })),
     instructions: [
       "1. Go to Netlify → hawkeye-sterling → Site configuration → Environment variables",

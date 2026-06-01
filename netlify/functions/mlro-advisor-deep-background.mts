@@ -66,9 +66,23 @@ function buildStoreOptions(): Parameters<typeof getStore>[0] {
   return { name: STORE_NAME };
 }
 
+// BLOBS-01: getStore() can throw on Netlify Free tier or when
+// NETLIFY_SITE_ID is missing. The pre-fix code propagated the throw
+// upward and turned every unguarded call site into a 500. We wrap the
+// store interaction so the handler degrades gracefully with a WARN —
+// preserving the existing void contract so existing callers don't
+// need to change.
 async function writeJob(jobId: string, record: JobRecord): Promise<void> {
-  const store = getStore(buildStoreOptions());
-  await store.set(`${KEY_PREFIX}/${jobId}`, JSON.stringify(record));
+  try {
+    const store = getStore(buildStoreOptions());
+    await store.set(`${KEY_PREFIX}/${jobId}`, JSON.stringify(record));
+  } catch (err) {
+    console.warn(
+      `[mlro-advisor-deep-background] Blobs write failed for jobId=${jobId}: ${
+        err instanceof Error ? err.message : String(err)
+      }. Job state not persisted.`,
+    );
+  }
 }
 
 export default async (req: Request): Promise<Response> => {

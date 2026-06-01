@@ -84,6 +84,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
+  // CRON-001 defense-in-depth: in production also require Netlify's
+  // x-netlify-scheduled-function header. Token alone is not enough — if it
+  // leaks, an attacker still cannot trigger this expensive ingestion route
+  // from their own host.
+  const isScheduled = req.headers.get("x-netlify-scheduled-function") === "true";
+  if (process.env["NODE_ENV"] === "production" && !isScheduled) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
   // ── Ingestion ──────────────────────────────────────────────────────
   // Dynamic imports so the heavyweight adapters don't inflate cold-start
   // time for other routes.

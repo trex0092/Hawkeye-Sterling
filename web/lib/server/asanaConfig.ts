@@ -104,11 +104,14 @@ function maybeWarnMissingGids(): void {
   if (_startupChecked) return;
   _startupChecked = true;
   const missing: string[] = [];
+  // SECRET-001: do NOT log the fallback GID values themselves — they are
+  // organisational identifiers that aid reconnaissance if logs leak. The
+  // env-var name alone is enough signal for ops to fix the misconfiguration.
   if (!process.env["ASANA_TOKEN"])         missing.push("ASANA_TOKEN");
-  if (!process.env["ASANA_WORKSPACE_GID"]) missing.push("ASANA_WORKSPACE_GID (using fallback 1213645083721316)");
-  if (!process.env["ASANA_PROJECT_GID"])   missing.push("ASANA_PROJECT_GID (using fallback 1214828087238181)");
+  if (!process.env["ASANA_WORKSPACE_GID"]) missing.push("ASANA_WORKSPACE_GID (using fallback)");
+  if (!process.env["ASANA_PROJECT_GID"])   missing.push("ASANA_PROJECT_GID (using fallback)");
   if (missing.length > 0) {
-    console.warn("[asanaConfig] missing env vars — falling back to hardcoded GIDs:", missing.join(", "));
+    console.warn("[asanaConfig] missing env vars — using fallback:", missing.join(", "));
   }
 }
 

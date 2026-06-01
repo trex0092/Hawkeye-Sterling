@@ -391,6 +391,12 @@ export function screenEntity(
   const tier1 = new Set(identifierExactHits(subject, candidates).map((h) => h.candidateIndex));
   const methodsUsed = new Set<string>();
   const findings: ScreeningFinding[] = [];
+  // AML-14: track candidates that were evaluated but suppressed by the
+  // ensemble floor. When findings.length === 0 this distinguishes a clean
+  // pass (no candidates considered at all) from a near-miss (candidates
+  // touched the floor but didn't clear it — MLRO should review subject
+  // spelling / aliases).
+  let candidatesFilteredOutBelowFloor = 0;
 
   candidates.forEach((cand, idx) => {
     const resolution = resolveEntities(subject, cand.record);
@@ -400,6 +406,7 @@ export function screenEntity(
 
     // Filter floor unless Tier-1 identifier match already promoted this row.
     if (!tier1.has(idx) && ensembleScore < ensembleFloor && resolution.confidence === 'NO_MATCH') {
+      candidatesFilteredOutBelowFloor++;
       return;
     }
 
@@ -570,6 +577,15 @@ export function screenEntity(
   }
   if (!subject.identifiers || subject.identifiers.length === 0) {
     gaps.push('No strong identifiers supplied for subject — EXACT/STRONG tiers unreachable via Tier-1.');
+  }
+  // AML-14: surface near-miss candidates so a NO_MATCH topMatchRiskTier
+  // doesn't conflate "clean pass" with "we filtered candidates that almost
+  // cleared the floor". Operator can re-screen with corrected spelling.
+  if (findings.length === 0 && candidatesFilteredOutBelowFloor > 0) {
+    gaps.push(
+      `${candidatesFilteredOutBelowFloor} candidate(s) were evaluated but filtered below the ensemble floor (${ensembleFloor}); ` +
+      'review subject name accuracy, aliases, and transliteration before concluding clean pass.',
+    );
   }
 
   // Red flags — factual indicators only (P3 — no legal conclusions).

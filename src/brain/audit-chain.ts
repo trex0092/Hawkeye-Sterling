@@ -28,7 +28,7 @@ function getCreateHash() {
   // Dynamic require keeps this module importable in non-Node environments
   // (browser bundles) where it would be unused.
   try {
-     
+
     _cryptoCreateHash = (require('node:crypto') as { createHash: typeof _cryptoCreateHash }).createHash;
   } catch (err) {
     // CRITICAL: tamper-evident audit chain falls back to FNV-1a (non-cryptographic)
@@ -45,11 +45,40 @@ function getCreateHash() {
   return _cryptoCreateHash;
 }
 
+// AML-05: eager-init guard. In production we never want the silent FNV-1a
+// fallback path to fire on first append — by that time forged entries may
+// already be persisted. Setting AUDIT_CHAIN_REQUIRE_CRYPTO=true (default in
+// production via env) throws here so misconfiguration surfaces at boot,
+// not at write time. Tests / dev can omit the env to keep the lazy path.
+export function assertSha256Available(): void {
+  const createHash = getCreateHash();
+  if (!createHash) {
+    throw new Error(
+      "[hawkeye] audit-chain: SHA-256 unavailable (node:crypto failed to load). " +
+      "Refusing to operate with FNV-1a fallback — tamper-evidence would be lost.",
+    );
+  }
+  // Sanity check: hashing a known input must produce the expected digest length.
+  const probe = createHash("sha256").update("hawkeye-probe", "utf8").digest("hex");
+  if (typeof probe !== "string" || probe.length !== 64) {
+    throw new Error(
+      "[hawkeye] audit-chain: SHA-256 probe failed (got length=" + (probe?.length ?? "unknown") + "). " +
+      "Refusing to operate without a verified hasher.",
+    );
+  }
+}
+
 export function sha256hex(input: string): string {
   const createHash = getCreateHash();
   if (!createHash) {
-    // Fallback: FNV-1a if crypto is unavailable (edge runtime / browser).
-    // This should never happen in production — emit a console warning.
+    // Production fail-closed: if AUDIT_CHAIN_REQUIRE_CRYPTO is set we throw
+    // rather than silently degrade. Dev / tests retain the FNV-1a fallback.
+    if (process.env["AUDIT_CHAIN_REQUIRE_CRYPTO"] === "true" || process.env["NODE_ENV"] === "production") {
+      throw new Error(
+        "[audit-chain] SHA-256 unavailable in production — refusing FNV-1a fallback. " +
+        "Set AUDIT_CHAIN_REQUIRE_CRYPTO=false only in dev/test environments.",
+      );
+    }
     console.warn('[audit-chain] SHA-256 unavailable; falling back to FNV-1a. Do not use in production.');
     return fnv1a(input);
   }

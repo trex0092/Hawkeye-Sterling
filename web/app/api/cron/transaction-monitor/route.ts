@@ -132,6 +132,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
+  // CRON-001 defense-in-depth: in production also require Netlify's
+  // x-netlify-scheduled-function header. Token alone is insufficient — a
+  // leaked CRON_SECRET cannot trigger this route from an attacker's host
+  // because Netlify injects the header only on scheduled invocations.
+  const isScheduled = req.headers.get("x-netlify-scheduled-function") === "true";
+  if (process.env["NODE_ENV"] === "production" && !isScheduled) {
+    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     const allTenantKeys = await listKeys("hawkeye-txn-flags/");
     const unprocessed: TxnFlagRecord[] = [];
