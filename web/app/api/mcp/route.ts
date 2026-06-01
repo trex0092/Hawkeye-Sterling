@@ -27,7 +27,6 @@ import {
 import { resolveCommitRef, resolveEngineVersion } from "@/lib/server/api-error";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
-import { enforce } from "@/lib/server/enforce";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;

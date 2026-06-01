@@ -194,8 +194,9 @@ function resolveAllowedOrigin(): string {
 const CORS_ALLOWED_ORIGIN = resolveAllowedOrigin();
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": CORS_ALLOWED_ORIGIN,
-  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Api-Key,X-Request-ID,X-Trace-ID",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Api-Key,X-Request-ID,X-Trace-ID,Mcp-Session-Id",
+  "Access-Control-Expose-Headers": "MCP-Protocol-Version,Mcp-Session-Id",
   "Access-Control-Max-Age": "86400",
   // Expose Vary so CDNs/proxies cache per-Origin when the allowed origin is dynamic.
   ...(CORS_ALLOWED_ORIGIN !== "*" ? { Vary: "Origin" } : {}),
