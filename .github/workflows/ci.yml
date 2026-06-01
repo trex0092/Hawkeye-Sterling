@@ -67,9 +67,7 @@ jobs:
         # Imports Next.js route handlers directly with synthetic Request objects.
         # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
         id: integration
-        run: |
-          npx vitest run --config vitest.integration.ts --reporter=verbose 2>&1 | tee /tmp/integration-out.txt
-          exit ${PIPESTATUS[0]}
+        run: npx vitest run --config vitest.integration.ts --reporter=default
 
       - name: Brain audit
         id: brain
