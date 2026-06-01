@@ -662,6 +662,11 @@ export default function IntelPage() {
         { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
         { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
         { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
+        { label: "Intelligence Hub", href: "/intelligence-hub", icon: "🔭" },
+        { label: "System Card", href: "/system-card", icon: "📋" },
+        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+        { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
+        { label: "Analyst UEBA", href: "/analyst-behavior", icon: "🕵️" },
       ]} />
 
       <div className="mt-6 space-y-6">

@@ -73,23 +73,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
     ],
   },
-  {
-    // Leadership: board-level posture, KRI tracking, incident response
-    title: "Leadership & Risk Posture",
-    items: [
-      { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "14 key risk indicators · live green/amber/red bands · board-pack export" },
-      { label: "🕵️ Analyst UEBA", href: "/analyst-behavior", hint: "User & Entity Behavior Analytics — insider-threat signals · export spikes · off-hours access · override rates" },
-    ],
-  },
-  {
-    // All intelligence modules unified in one hub page
-    title: "Intelligence",
-    items: [
-      { label: "🔭 Intelligence Hub", href: "/intelligence-hub", hint: "Analytics · Brain · Workbench · Telemetry · Red-Team · Security · Status · API" },
-      { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
-      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
-    ],
-  },
 ];
 
 function isActive(pathname: string, href: string): boolean {
