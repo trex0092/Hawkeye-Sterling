@@ -245,17 +245,28 @@ export default async (_req: Request) => {
       // MLRO CRITICAL webhook.
       const webhookUrl = process.env["ALERT_WEBHOOK_URL"];
       if (webhookUrl) {
+        // NETLIFY-004 (forensic audit batch 3): the prior silent .catch
+        // hid webhook-delivery failures, so MLROs would never know that
+        // the EOCN consecutive-failure alert was generated but never
+        // reached them. Log loudly — the alert is itself critical.
         await fetch(webhookUrl, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ alert: "EOCN_CONSECUTIVE_FAILURES", severity: "CRITICAL", count: failRecord.count, firstFailAt: failRecord.firstFailAt, lastFailAt: failRecord.lastFailAt, at: new Date().toISOString(), source: "eocn-poll" }),
           signal: AbortSignal.timeout(5_000),
-        }).catch(() => undefined);
+        }).catch((err) => console.warn(
+          "[eocn-poll] CRITICAL alert webhook delivery failed:",
+          err instanceof Error ? err.message : String(err),
+        ));
       }
     }
   } else {
-    // Clear failure counter on success.
-    mainStoreForFailures.setJSON(failureCountKey, { count: 0, firstFailAt: null, lastFailAt: null }).catch(() => undefined);
+    // Clear failure counter on success. NETLIFY-004: log on failure so
+    // a Blobs outage doesn't leave the counter pinned forever silently.
+    mainStoreForFailures.setJSON(failureCountKey, { count: 0, firstFailAt: null, lastFailAt: null }).catch((err) => console.warn(
+      "[eocn-poll] failure-counter reset write failed:",
+      err instanceof Error ? err.message : String(err),
+    ));
   }
 
   // Zero-row guard: if the API returned 0 rows but prior stored count was > 0,

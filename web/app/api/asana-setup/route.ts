@@ -7,7 +7,10 @@ export const maxDuration = 15;
 
 const WORKSPACE_GID     = "1213645083721316";
 const API               = "https://app.asana.com/api/1.0";
-const MASTER_INBOX_GID  = "1214828087238181";
+// MASTER_INBOX_GID constant removed in forensic audit batch 3 — the only
+// reference to it was in a user-facing hint string that was rewritten by
+// SECRET-001 to avoid leaking the GID. ASANA_PROJECT_GID env var is the
+// runtime override.
 
 // ── Project matching + workflow sections ────────────────────────────────────
 const PROJECT_MAP = [

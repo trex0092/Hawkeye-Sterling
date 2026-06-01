@@ -45,7 +45,19 @@ const UNKNOWN_IP = "anonymous-ip";
 let _anonIpKey: string | undefined;
 export function anonIpKey(): string {
   if (_anonIpKey) return _anonIpKey;
-  const secret = process.env["SESSION_SECRET"] ?? "hawkeye-ip-anon-dev";
+  // ENV-005 (forensic audit batch 3): the prior unconditional fallback
+  // ("hawkeye-ip-anon-dev") meant a production deploy missing
+  // SESSION_SECRET would silently HMAC every IP with a public constant,
+  // turning the per-deployment anti-rainbow-table guarantee into a
+  // global one. Production now fails closed; dev / tests keep the
+  // recognisable string so test fixtures remain deterministic.
+  const explicit = process.env["SESSION_SECRET"];
+  if (!explicit && process.env["NODE_ENV"] === "production") {
+    throw new Error(
+      "[enforce] SESSION_SECRET is required in production. Generate with: openssl rand -hex 32",
+    );
+  }
+  const secret = explicit ?? "hawkeye-ip-anon-dev";
   _anonIpKey = createHmac("sha256", secret).update("ip-anon-v1").digest("hex");
   return _anonIpKey;
 }

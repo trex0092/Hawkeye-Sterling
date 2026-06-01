@@ -97,7 +97,10 @@ export async function completeEnrichmentJob(
       enrichmentCompletedAt: job.completedAt,
       enrichmentResultId: jobId,
     }).catch((err: unknown) => {
-      console.warn("[enrichment-jobs] audit write failed:", err instanceof Error ? err.message : String(err));
+      // WEB-003 (forensic audit batch 3): audit-chain write failures are
+      // compliance-critical (FDL 10/2025 Art.18 — every AI decision must
+      // be auditable). Surface at ERROR so SLA dashboards page MLRO.
+      console.error("[enrichment-jobs] audit write FAILED:", err instanceof Error ? err.message : String(err));
     });
   } catch (err) {
     console.warn("[enrichment-jobs] completeEnrichmentJob failed (non-critical):", err instanceof Error ? err.message : String(err));
