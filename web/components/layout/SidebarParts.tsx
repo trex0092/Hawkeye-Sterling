@@ -558,25 +558,6 @@ export function SidebarMLROCard() {
           </button>
           <div className="mt-2 pt-2 border-t border-white/20 flex items-center justify-between">
             <span className="text-10 uppercase tracking-wide-3 text-white/70">
-              Role
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                const idx = CARD_ROLES.indexOf(role);
-                const next =
-                  CARD_ROLES[(idx === -1 ? 0 : idx + 1) % CARD_ROLES.length]!;
-                selectRole(next);
-              }}
-              className="inline-flex items-center gap-1 text-11 font-semibold px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white border border-white/20"
-              title="Click to cycle role"
-            >
-              {ROLE_LABEL[role]}
-              <span className="text-10 opacity-75">⇄</span>
-            </button>
-          </div>
-          <div className="mt-1.5 flex items-center justify-between">
-            <span className="text-10 uppercase tracking-wide-3 text-white/70">
               Shift
             </span>
             <span className="text-11 font-semibold font-mono text-white/90">

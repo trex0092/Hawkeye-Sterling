@@ -5,7 +5,6 @@ import { Header } from "./Header";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
-  SidebarFilterList,
   SidebarMLROCard,
   SidebarSection,
   SidebarShell,
@@ -53,16 +52,6 @@ export function ModuleLayout<K extends string = string>({
             <SidebarSection title="Regulatory">
               <SidebarMLROCard />
             </SidebarSection>
-
-            {filters && activeFilter !== undefined && onFilterChange && (
-              <SidebarSection title={filtersTitle}>
-                <SidebarFilterList
-                  items={filters}
-                  activeKeys={[activeFilter]}
-                  onSelect={(key) => onFilterChange(key)}
-                />
-              </SidebarSection>
-            )}
 
             {sidebarExtra}
 
