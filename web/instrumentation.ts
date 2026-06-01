@@ -46,6 +46,16 @@ const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> =
   { key: "JWT_SIGNING_SECRET", minLen: 24, genCmd: "openssl rand -base64 32" },
   { key: "AUDIT_CHAIN_SECRET", minLen: 32, genCmd: "openssl rand -hex 64" },
   { key: "ADMIN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
+  // ENV-002 (forensic audit batch 3): cron-protecting tokens were absent
+  // from startup validation. Production routes return 503 on missing token
+  // — that's correct fail-closed behaviour, but ops had no surface signal
+  // until the first scheduled invocation attempted and the alert pipeline
+  // (paradoxically, dependent on these same tokens) failed. Add them at
+  // 16 chars to match the existing ADMIN_TOKEN floor and the timing-safe
+  // comparison key length used in route handlers.
+  { key: "ONGOING_RUN_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
+  { key: "SANCTIONS_CRON_TOKEN", minLen: 16, genCmd: "openssl rand -hex 32" },
+  { key: "CRON_SECRET", minLen: 16, genCmd: "openssl rand -hex 32" },
   // ANTHROPIC_API_KEY: required for all AI routes; egress gate fail-closes without it.
   // Listed last because its absence degrades AI features, not auth/audit integrity.
   { key: "ANTHROPIC_API_KEY", minLen: 20, genCmd: "obtain from https://console.anthropic.com/settings/keys" },
@@ -110,6 +120,41 @@ function validateSecrets(): void {
     }
     if (!process.env['EGRESS_GATE_ENABLED'] || process.env['EGRESS_GATE_ENABLED'] !== 'true') {
       console.warn('[startup] EGRESS_GATE_ENABLED is not set to "true" — tipping-off egress gate is DISABLED. SAR/STR narratives are not checked for tipping-off language. Set EGRESS_GATE_ENABLED=true in production.');
+    }
+
+    // ENV-010: Egress gate cross-check. If gate IS active (default), it
+    // depends on ANTHROPIC_API_KEY — without the key every SAR/STR narrative
+    // gets "held_review" and humans must approve manually. That's correct
+    // fail-closed, but ops should see it at startup, not on every SAR.
+    const gateDisabled = process.env['EGRESS_GATE_DISABLED'] === 'true';
+    if (!gateDisabled && !process.env['ANTHROPIC_API_KEY']) {
+      console.error(
+        '[startup] CRITICAL: Egress gate is ACTIVE (FDL 10/2025 Art.17 tipping-off checks) but ANTHROPIC_API_KEY is missing. ' +
+        'Every SAR/STR will return held_review until the key is set or EGRESS_GATE_DISABLED=true is acknowledged.',
+      );
+    }
+
+    // ENV-003: Upstash Redis is used for fail-closed rate limiting in
+    // production. If either URL or token is malformed (typo, partial paste)
+    // every limiter call silently degrades to the Blobs soft path — a
+    // burst can multiply effective limit by parallel request count.
+    const redisUrl = process.env['UPSTASH_REDIS_REST_URL'];
+    const redisToken = process.env['UPSTASH_REDIS_REST_TOKEN'];
+    if (redisUrl || redisToken) {
+      const urlOk = redisUrl && /^https:\/\/[a-z0-9-]+\.[a-z0-9.-]+\/?$/i.test(redisUrl);
+      const tokenOk = redisToken && redisToken.length >= 32;
+      if (!urlOk) {
+        console.error(
+          '[startup] UPSTASH_REDIS_REST_URL is set but does not look like a valid https://*.upstash.io URL. ' +
+          'Rate limiting will silently degrade to the Blobs soft path.',
+        );
+      }
+      if (!tokenOk) {
+        console.error(
+          '[startup] UPSTASH_REDIS_REST_TOKEN is set but is too short (need >= 32 chars). ' +
+          'Rate limiting will silently degrade to the Blobs soft path.',
+        );
+      }
     }
   }
 

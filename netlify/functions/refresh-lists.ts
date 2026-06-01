@@ -42,7 +42,16 @@ async function snapshotLists(store: ReturnType<typeof getStore>): Promise<ListSn
         if (listRef && e.name) m.set(listRef, e.name);
       }
       snap.set(listId, m);
-    } catch {
+    } catch (err) {
+      // NETLIFY-009 (forensic audit batch 3): prior bare catch hid every
+      // snapshot failure. A permissions issue or schema-drift on one list
+      // would silently make change-detection think "no entities ever
+      // existed" for that list — so every entity later loaded would
+      // appear as an addition and no removals would be detected.
+      console.warn(
+        `[refresh-lists] snapshot load failed for ${listId} — changes against this list won't be detected:`,
+        err instanceof Error ? err.message : String(err),
+      );
       snap.set(listId, new Map());
     }
   }));

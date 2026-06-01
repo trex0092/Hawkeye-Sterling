@@ -33,10 +33,14 @@ interface ModuleLayoutProps<K extends string = string> {
 
 export function ModuleLayout<K extends string = string>({
   children,
-  filters,
-  activeFilter,
-  onFilterChange,
-  filtersTitle = "Queue filters",
+  // ModuleLayout used to render a sidebar filter list; that responsibility
+  // moved to Sidebar.tsx + SidebarFilterList. The props remain in the
+  // interface so call sites don't break, but are not consumed here yet.
+  // Prefix with _ to satisfy no-unused-vars without removing public API.
+  filters: _filters,
+  activeFilter: _activeFilter,
+  onFilterChange: _onFilterChange,
+  filtersTitle: _filtersTitle = "Queue filters",
   sidebarExtra,
   detailPanel,
   engineLabel = "Compliance engine",

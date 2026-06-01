@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  SidebarFilterList,
+  // SidebarFilterList: imported until pin/save/delta UX lands; alias-only
+  // keeps the import path warm for IDEs without raising no-unused-vars.
+  SidebarFilterList as _SidebarFilterList,
   SidebarMLROCard,
   SidebarSection,
   SidebarShell,
@@ -21,8 +23,10 @@ interface SidebarProps {
 
 export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: SidebarProps) {
   // --- Pinning (localStorage) ---
-  const [pinnedKeys, setPinnedKeys] = useState<FilterKey[]>([]);
-  const [savedFilters, setSavedFilters] = useState<SavedFilterSet[]>([]);
+  // State scaffold preserved for the in-flight pin/save UX. Setters are
+  // wired to localStorage on hydration; reads land when the new chips ship.
+  const [_pinnedKeys, setPinnedKeys] = useState<FilterKey[]>([]);
+  const [_savedFilters, setSavedFilters] = useState<SavedFilterSet[]>([]);
 
   useEffect(() => {
     try {
@@ -37,7 +41,7 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
 
   // --- Count delta tracking ---
   const prevCountsRef = useRef<Record<string, number>>({});
-  const [countDeltas, setCountDeltas] = useState<Record<string, number>>({});
+  const [_countDeltas, setCountDeltas] = useState<Record<string, number>>({});
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -89,7 +93,7 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
   }, [onFiltersChange]);
 
   // --- Pin toggle ---
-  const togglePin = useCallback((key: FilterKey) => {
+  const _togglePin = useCallback((key: FilterKey) => {
     setPinnedKeys((prev) => {
       const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
       try { localStorage.setItem(PINNED_KEY, JSON.stringify(next)); }
@@ -99,7 +103,7 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
   }, []);
 
   // --- Save current filter set ---
-  const saveFilterSet = useCallback((label: string) => {
+  const _saveFilterSet = useCallback((label: string) => {
     const set: SavedFilterSet = {
       id: Date.now().toString(),
       label,
@@ -114,7 +118,7 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
     });
   }, [activeFilters]);
 
-  const deleteSavedFilter = useCallback((id: string) => {
+  const _deleteSavedFilter = useCallback((id: string) => {
     setSavedFilters((prev) => {
       const next = prev.filter((s) => s.id !== id);
       try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); }
@@ -124,7 +128,7 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
   }, []);
 
   // --- Multi-select handler ---
-  const handleSelect = useCallback((key: FilterKey, multiSelect: boolean) => {
+  const _handleSelect = useCallback((key: FilterKey, multiSelect: boolean) => {
     if (multiSelect) {
       if (activeFilters.includes(key)) {
         const next = activeFilters.filter((k) => k !== key);

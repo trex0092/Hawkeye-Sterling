@@ -113,6 +113,14 @@ export async function emitWebhookEvent(
   const CONCURRENCY_LIMIT = 10;
   for (let i = 0; i < active.length; i += CONCURRENCY_LIMIT) {
     await Promise.all(active.slice(i, i + CONCURRENCY_LIMIT).map(async (reg) => {
+      // WEB-001 (forensic audit batch 3): top-level guard around the entire
+      // per-registration callback. Body construction (JSON.stringify on a
+      // caller-supplied payload), HMAC generation (reg.secret may be an
+      // empty/corrupt string from a Blobs read), and storeDelivery() were
+      // all able to throw outside the retry try/catch — which would reject
+      // the Promise.all() and abort the whole batch silently. This outer
+      // try ensures one bad registration record can never poison the rest.
+      try {
       const deliveryId = randomUUID();
       const sentAt = new Date().toISOString();
       // Spread payload first so envelope fields (event, deliveryId, sentAt)
@@ -197,6 +205,18 @@ export async function emitWebhookEvent(
           e instanceof Error ? e.message : e,
         ),
       );
+      } catch (outerErr) {
+        // WEB-001 outer guard: catch anything that escaped the inner retry
+        // loop — corrupt body, undefined HMAC key, randomUUID failure on
+        // crypto-unavailable runtime, etc. Increment failureCount so the
+        // dashboard reflects reality.
+        console.error(
+          `[webhook-emitter] CRITICAL outer failure for registration ${reg.id}:`,
+          outerErr instanceof Error ? outerErr.message : String(outerErr),
+        );
+        reg.failureCount = (reg.failureCount ?? 0) + 1;
+        reg.lastDeliveryAt = new Date().toISOString();
+      }
     }));
   }
 

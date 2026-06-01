@@ -77,7 +77,14 @@ async function fetchSourceFile(path: string, repo: string, token: string): Promi
       return null;
     }
     return await res.text();
-  } catch {
+  } catch (err) {
+    // NETLIFY-007: prior bare catch swallowed network + JSON errors silently,
+    // so a misconfigured GITHUB_TOKEN or transient GitHub 5xx would just
+    // drop the file from the scan with no signal.
+    console.warn(
+      `[code-scan] GitHub fetch failed for ${path}:`,
+      err instanceof Error ? err.message : String(err),
+    );
     return null;
   } finally {
     clearTimeout(t);
@@ -164,7 +171,15 @@ async function analyseFile(
         cwe: typeof r["cwe"] === "string" ? r["cwe"] : undefined,
         file: path,
       }));
-  } catch {
+  } catch (err) {
+    // NETLIFY-007: prior bare catch swallowed Anthropic SDK errors silently,
+    // so an expired API key, rate-limit response, or malformed JSON would
+    // simply emit zero findings for that file — indistinguishable from
+    // "no issues found".
+    console.warn(
+      `[code-scan] LLM analysis failed for ${path}:`,
+      err instanceof Error ? err.message : String(err),
+    );
     return [];
   } finally {
     clearTimeout(t);
