@@ -92,7 +92,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Leadership & Risk Posture",
     items: [
       { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "14 key risk indicators · live green/amber/red bands · board-pack export" },
-      { label: "🏛️ Board Dashboard", href: "/board-dashboard", hint: "Executive posture view — case backlog · KRI summary · AI health · compliance calendar" },
       { label: "🕵️ Analyst UEBA", href: "/analyst-behavior", hint: "User & Entity Behavior Analytics — insider-threat signals · export spikes · off-hours access · override rates" },
     ],
   },
