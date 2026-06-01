@@ -68,7 +68,7 @@ function GleifInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tab, setTab] = useState<"lookup" | "search">(
-    (searchParams.get("tab") as "lookup" | "search") ?? "lookup"
+    (searchParams?.get("tab") as "lookup" | "search") ?? "lookup"
   );
   const [lei, setLei] = useState("");
   const [query, setQuery] = useState("");

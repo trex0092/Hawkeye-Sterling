@@ -27,7 +27,7 @@ function ModuleFamilyBarInner({ suiteName, modules }: Props) {
     if (!modQuery) return true;
     const modParams = new URLSearchParams(modQuery);
     for (const [key, val] of modParams.entries()) {
-      if (searchParams.get(key) !== val) return false;
+      if (searchParams?.get(key) !== val) return false;
     }
     return true;
   }

@@ -390,7 +390,7 @@ function CountryRiskInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mode, setMode] = useState<"single" | "compare">(
-    (searchParams.get("tab") as "single" | "compare") ?? "single"
+    (searchParams?.get("tab") as "single" | "compare") ?? "single"
   );
   const [compareList, setCompareList] = useState<string[]>([]);
   const [compareInput, setCompareInput] = useState("");

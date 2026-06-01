@@ -56,7 +56,7 @@ function IntelligenceToolsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(
-    (searchParams.get("tab") as Tab) ?? "ubo"
+    (searchParams?.get("tab") as Tab) ?? "ubo"
   );
   const [ownershipJson, setOwnershipJson] = useState<string>(JSON.stringify(DEMO_OWNERSHIP, null, 2));
   const [walletsJson, setWalletsJson] = useState<string>(JSON.stringify(DEMO_WALLETS, null, 2));
