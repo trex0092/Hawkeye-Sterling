@@ -651,6 +651,14 @@ export default function IntelPage() {
       />
       <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
         { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+        { label: "OSINT", href: "/osint", icon: "🌐" },
+        { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
+        { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
+        { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
+        { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
+        { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
+        { label: "Benford Analysis", href: "/benford", icon: "🔢" },
+        { label: "Investigation", href: "/investigation", icon: "🕵️" },
         { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
       ]} />
 

@@ -65,14 +65,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Subject & entity enrichment: external data lookups, forensic tools, OSINT
     title: "Enrichment",
     items: [
-      { label: "🌐 OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
-      { label: "🆔 GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
-      { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
-      { label: "🌍 Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
-      { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
-      { label: "🚢 Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
-      { label: "🔢 Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
-      { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
     ],
   },
