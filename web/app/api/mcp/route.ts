@@ -253,7 +253,7 @@ async function writeAnomaly(data: Record<string, unknown>): Promise<void> {
   } catch { /* never blocks */ }
 }
 
-const PROTOCOL_VERSION = "2024-11-05";
+const PROTOCOL_VERSION = "2025-06-18";
 const SERVER_NAME = "hawkeye-sterling";
 const SERVER_VERSION = "1.0.0";
 
@@ -274,8 +274,9 @@ const BASE_URL = resolveBaseUrl();
 
 const CORS: Record<string, string> = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
+  "access-control-allow-methods": "POST, HEAD, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, mcp-session-id",
+  "access-control-expose-headers": "mcp-protocol-version, mcp-session-id",
 };
 
 // ── Sanctions-health cache (audit follow-up) ──────────────────────────────────
@@ -1480,11 +1481,18 @@ function ok(id: unknown, result: unknown) {
 function err(id: unknown, code: number, message: string) {
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, extra?: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json", ...CORS },
+    headers: { "content-type": "application/json", ...CORS, ...(extra ?? {}) },
   });
+}
+
+function mcpResponseHeaders(sessionId: string): Record<string, string> {
+  return {
+    "mcp-protocol-version": PROTOCOL_VERSION,
+    "mcp-session-id": sessionId,
+  };
 }
 
 // ── MCP request dispatcher ────────────────────────────────────────────────────
@@ -1679,41 +1687,49 @@ export async function OPTIONS(): Promise<Response> {
   return new Response(null, { status: 204, headers: CORS });
 }
 
-export async function GET(req: Request): Promise<Response> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-
-  // Claude.ai sends a GET to discover the MCP endpoint.
-  // Return a minimal SSE stream that immediately closes.
-  const body = new ReadableStream({
-    start(c) {
-      c.enqueue(
-        new TextEncoder().encode(
-          `data: ${JSON.stringify({ type: "endpoint", endpoint: "/api/mcp" })}\n\n`,
-        ),
-      );
-      c.close();
-    },
+// Claude.ai probes HEAD before attempting a connection.
+export async function HEAD(): Promise<Response> {
+  return new Response(null, {
+    status: 200,
+    headers: { "mcp-protocol-version": PROTOCOL_VERSION, ...CORS },
   });
-  return new Response(body, {
-    headers: {
-      "content-type": "text/event-stream",
-      "cache-control": "no-cache",
-      ...CORS,
-    },
+}
+
+// 405 (not 501) — Claude.ai treats 501 as "server broken".
+export async function GET(): Promise<Response> {
+  return new Response(null, {
+    status: 405,
+    headers: { Allow: "POST, HEAD", "mcp-protocol-version": PROTOCOL_VERSION, ...CORS },
   });
 }
 
 export async function POST(req: Request): Promise<Response> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
+  // Accept MCP_API_KEY bearer token (for Claude.ai custom connector) or fall
+  // back to the platform's enforce() gate (HMAC/JWT credentials).
+  const mcpKey = process.env["MCP_API_KEY"];
+  if (mcpKey) {
+    const auth = req.headers.get("authorization") ?? "";
+    const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+    if (bearer !== mcpKey) {
+      const sid = req.headers.get("mcp-session-id") ?? randomBytes(8).toString("hex");
+      return json(err(null, -32000, "Unauthorized"), 401, mcpResponseHeaders(sid));
+    }
+  } else {
+    const gate = await enforce(req);
+    if (!gate.ok) return gate.response;
+  }
+
+  // Derive or generate the MCP session ID for response headers.
+  const mcpSessionId = req.headers.get("mcp-session-id") ?? randomBytes(8).toString("hex");
+  const mh = mcpResponseHeaders(mcpSessionId);
 
   // Kill switch — set MCP_ENABLED=false in Netlify env vars to instantly
-  // disable all 24 tools. All tool calls return 503 until re-enabled.
+  // disable all tools. All tool calls return 503 until re-enabled.
   if (process.env["MCP_ENABLED"] === "false") {
     return json(
       err(null, -32001, "Hawkeye Sterling MCP is offline. Contact your MLRO to re-enable."),
       503,
+      mh,
     );
   }
 
@@ -1726,6 +1742,7 @@ export async function POST(req: Request): Promise<Response> {
       return json(
         err(null, -32700, `Request body too large: ${declared} bytes (max ${MAX_BODY_BYTES})`),
         413,
+        mh,
       );
     }
   }
@@ -1734,15 +1751,15 @@ export async function POST(req: Request): Promise<Response> {
   try {
     body = await req.json();
   } catch {
-    return json(err(null, -32700, "Parse error"), 400);
+    return json(err(null, -32700, "Parse error"), 400, mh);
   }
 
   // Thread caller's auth + derived sessionId into all internal callApi
   // requests via AsyncLocalStorage so each concurrent request has its own
   // isolated context.
   const authHeader =
-    req.headers.get('authorization') ||
-    req.headers.get('x-api-key') ||
+    req.headers.get("authorization") ||
+    req.headers.get("x-api-key") ||
     undefined;
   const sessionId = deriveSessionId(req);
 
@@ -1753,7 +1770,7 @@ export async function POST(req: Request): Promise<Response> {
         Promise.all(body.map((msg) => dispatch(msg as Parameters<typeof dispatch>[0]))),
       );
       const responses = results.filter((r: unknown) => r !== null);
-      return json(responses);
+      return json(responses, 200, mh);
     }
 
     // Single request
@@ -1762,12 +1779,12 @@ export async function POST(req: Request): Promise<Response> {
     );
     if (result === null) {
       // Notification — no response body
-      return new Response(null, { status: 202, headers: CORS });
+      return new Response(null, { status: 202, headers: { ...CORS, ...mh } });
     }
-    return json(result);
+    return json(result, 200, mh);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[mcp] unhandled dispatch error:", msg);
-    return json(err(null, -32603, "Internal error"), 500);
+    return json(err(null, -32603, "Internal error"), 500, mh);
   }
 }
