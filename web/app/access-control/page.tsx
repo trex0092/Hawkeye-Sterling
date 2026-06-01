@@ -754,7 +754,6 @@ export default function AccessControlPage() {
       <ModuleFamilyBar suiteName="Security" modules={[
         { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
         { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Access Control", href: "/access-control", icon: "🔐" },
         { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
       ]} />
       <ModuleHero
