@@ -286,7 +286,22 @@ export default function TrainingPage() {
     setDraft((d) => ({ ...d, [k]: e.target.value }));
 
   return (
-    <ModuleLayout asanaModule="training" asanaLabel="Training">
+    <ModuleLayout
+      asanaModule="training"
+      asanaLabel="Training"
+      sidebarActions={
+        activeTab === "log" ? (
+          <button
+            type="button"
+            onClick={add}
+            disabled={!draft.name || !draft.course}
+            className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors text-left"
+          >
+            + Log training
+          </button>
+        ) : null
+      }
+    >
       <ModuleHero
 
           eyebrow=""
@@ -415,14 +430,7 @@ export default function TrainingPage() {
                 <input value={draft.durationHrs} onChange={set("durationHrs")} placeholder="Duration (Hrs)" type="number" min="0" step="0.5" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
                 <input value={draft.delivery} onChange={set("delivery")} placeholder="Delivery Method" className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0" />
               </div>
-              <button
-                type="button"
-                onClick={add}
-                disabled={!draft.name || !draft.course}
-                className="mt-3 text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors"
-              >
-                + Log training
-              </button>
+              {/* + Log training button moved to sidebar Actions */}
             </div>
           </>
         )}

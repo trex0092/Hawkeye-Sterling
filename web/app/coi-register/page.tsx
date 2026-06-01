@@ -173,7 +173,17 @@ export default function CoiRegisterPage() {
   const inputCls = "w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2";
 
   return (
-    <ModuleLayout>
+    <ModuleLayout
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-brand text-white px-4 py-2 rounded text-13 font-semibold hover:opacity-90 text-left"
+        >
+          {showForm ? "Cancel" : "New Declaration"}
+        </button>
+      }
+    >
       <ModuleFamilyBar
         suiteName="Governance & Ethics"
         modules={[
@@ -205,15 +215,7 @@ export default function CoiRegisterPage() {
           ))}
         </div>
 
-        {/* Action bar */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "New Declaration"}
-          </button>
-        </div>
+        {/* New Declaration button moved to sidebar Actions */}
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
