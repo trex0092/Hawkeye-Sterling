@@ -108,6 +108,35 @@ function logAuthFailure(
       "default",
     ).catch(() => undefined);
   }
+
+  // LOG-001: feed the distributed-bruteforce correlator. Fire-and-forget so
+  // the hot enforcement path is unaffected by Blobs latency or unavailability.
+  // The auth-failure-correlator.mts scheduled function reads from this ring
+  // buffer every 10 minutes and alerts when an ipHash exceeds the threshold.
+  void recordAuthFailureToBlobs({ ipHash, route, reason, status, at: new Date().toISOString() }).catch(() => undefined);
+}
+
+// LOG-001: Blobs-backed auth-failure ring buffer for the correlator.
+// Dynamic import keeps the Next.js cold-start unchanged and Blobs failures
+// never reach the enforcement path. Key format mirrors the prefix the
+// correlator reads (`auth-failures/<ipHash>/<iso>.json`).
+async function recordAuthFailureToBlobs(record: {
+  ipHash: string;
+  route: string;
+  reason: string;
+  status: number;
+  at: string;
+}): Promise<void> {
+  try {
+    const { getStore } = await import("@netlify/blobs");
+    const store = getStore("hawkeye-sterling");
+    const key = `auth-failures/${record.ipHash}/${record.at}.json`;
+    await store.setJSON(key, record);
+  } catch {
+    // Best-effort — production logs (and the F-14 audit chain for high-severity
+    // events) remain the authoritative record. The correlator simply has
+    // fewer records to grouping over until Blobs comes back.
+  }
 }
 
 export interface EnforcementAllow {
