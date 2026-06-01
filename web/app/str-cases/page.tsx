@@ -609,7 +609,37 @@ export default function StrCasesPage() {
   if (!canPerform(role, "str_read")) return <AccessDeniedScreen role={role} />;
 
   return (
-    <ModuleLayout asanaModule="str-cases" asanaLabel="STR / SAR Cases">
+    <ModuleLayout
+      asanaModule="str-cases"
+      asanaLabel="STR / SAR Cases"
+      sidebarActions={
+        <>
+          <Btn
+            variant="ghost"
+            onClick={() => void generateBriefing()}
+            disabled={briefingLoading || cases.length === 0}
+          >
+            {briefingLoading ? "Generating…" : "✦AI Briefing"}
+          </Btn>
+          <Btn
+            variant="ghost"
+            onClick={() => {
+              const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
+              openReportWindow("/api/str-report", {
+                subject: open[0]?.subject ?? "Multiple subjects",
+                narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
+                transactions: [],
+                composite: 75,
+                jurisdiction: "AE",
+              });
+            }}
+          >
+            PDF
+          </Btn>
+          <Btn variant="ghost">+ New case</Btn>
+        </>
+      }
+    >
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
@@ -619,29 +649,6 @@ export default function StrCasesPage() {
               label: "FDL Art. 26–27 · File without delay",
               tone: "critical",
             }}
-            actions={
-              <div className="flex items-center gap-2">
-                <Btn variant="ghost" onClick={() => void generateBriefing()} disabled={briefingLoading || cases.length === 0}>
-                  {briefingLoading ? "Generating…" : "✦AI"}
-                </Btn>
-                <Btn
-                  variant="ghost"
-                  onClick={() => {
-                    const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
-                    openReportWindow("/api/str-report", {
-                      subject: open[0]?.subject ?? "Multiple subjects",
-                      narrative: `STR case register export — ${cases.length} total cases, ${open.length} open. Generated for MLRO review.`,
-                      transactions: [],
-                      composite: 75,
-                      jurisdiction: "AE",
-                    });
-                  }}
-                >
-                  <span style={{ color: "#7c3aed", fontWeight: 600 }}>PDF</span>
-                </Btn>
-                <Btn variant="ghost">+ New case</Btn>
-              </div>
-            }
       />
 
       <ModuleFamilyBar

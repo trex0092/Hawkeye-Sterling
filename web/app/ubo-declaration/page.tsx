@@ -236,7 +236,19 @@ export default function UboDeclarationPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="ubo-declaration" asanaLabel="UBO Declaration">
+    <ModuleLayout
+      asanaModule="ubo-declaration"
+      asanaLabel="UBO Declaration"
+      sidebarActions={
+        <button
+          type="button"
+          onClick={addUbo}
+          className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors text-left"
+        >
+          + Add UBO
+        </button>
+      }
+    >
       <div>
         <ModuleHero
 
@@ -344,13 +356,7 @@ export default function UboDeclarationPage() {
             </div>
           ))}
 
-          <button
-            type="button"
-            onClick={addUbo}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
-          >
-            + Add UBO
-          </button>
+          {/* + Add UBO button moved to sidebar Actions */}
 
           <div className="border-t border-hair pt-4 flex items-center justify-between">
             <div className="text-10 text-ink-3">

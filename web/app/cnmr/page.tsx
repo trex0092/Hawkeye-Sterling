@@ -256,7 +256,22 @@ export default function CnmrPage() {
   const filed = cases.filter((c) => c.status === "filed").length;
 
   return (
-    <ModuleLayout asanaModule="cnmr" asanaLabel="CNMR Workflow" engineLabel="CNMR compliance engine">
+    <ModuleLayout
+      asanaModule="cnmr"
+      asanaLabel="CNMR Workflow"
+      engineLabel="CNMR compliance engine"
+      sidebarActions={
+        !showNew ? (
+          <button
+            type="button"
+            onClick={() => setShowNew(true)}
+            className="px-4 py-2 rounded bg-red text-white text-13 font-semibold hover:bg-red/90 text-left"
+          >
+            + New CNMR case
+          </button>
+        ) : null
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -300,14 +315,10 @@ export default function CnmrPage() {
         </div>
       </div>
 
-      {/* New case button */}
+      {/* + New CNMR button moved to sidebar Actions */}
       {!showNew && (
         <div className="flex items-center gap-3 mb-4">
-          <button type="button" onClick={() => setShowNew(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:bg-red/90">
-            + New CNMR case
-          </button>
-          <span className="text-11 text-ink-3">Triggered automatically when a screening hit is resolved &quot;Positive&quot; on a TFS list — or enter manually.</span>
+          <span className="text-11 text-ink-3">Triggered automatically when a screening hit is resolved &quot;Positive&quot; on a TFS list — or enter manually via the sidebar.</span>
         </div>
       )}
 

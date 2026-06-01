@@ -795,7 +795,21 @@ export default function PoliciesPage() {
   const sections = Array.from(new Set(policies.map((p) => p.section)));
 
   return (
-    <ModuleLayout asanaModule="policies" asanaLabel="Policies">
+    <ModuleLayout
+      asanaModule="policies"
+      asanaLabel="Policies"
+      sidebarActions={
+        !adding ? (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded bg-brand text-white text-13 font-semibold hover:bg-brand/90 transition-colors text-left"
+          >
+            <span className="text-14 leading-none">+</span> Add policy
+          </button>
+        ) : null
+      }
+    >
         <ModuleHero
 
           eyebrow=""
@@ -946,15 +960,8 @@ export default function PoliciesPage() {
                 </button>
               </div>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors"
-            >
-              <span className="text-14 leading-none">+</span> Add policy
-            </button>
-          )}
+          ) : null}
+          {/* + Add policy button moved to sidebar Actions */}
         </div>
     </ModuleLayout>
   );
