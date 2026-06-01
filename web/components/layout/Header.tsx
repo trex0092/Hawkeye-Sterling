@@ -91,6 +91,7 @@ export function Header() {
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
     { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
+    { label: "🔐 Access Control", href: "/access-control" },
   ];
 
   useEffect(() => {
