@@ -137,5 +137,12 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
     }
   }, [activeFilters, onFiltersChange]);
 
-  return null;
+  return (
+    <SidebarShell>
+      <SidebarSection title="Regulatory">
+        <SidebarMLROCard />
+      </SidebarSection>
+
+    </SidebarShell>
+  );
 }

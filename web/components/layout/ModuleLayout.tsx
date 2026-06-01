@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
+  SidebarMLROCard,
   SidebarSection,
   SidebarShell,
   type SidebarFilterItem,
@@ -32,10 +33,10 @@ interface ModuleLayoutProps<K extends string = string> {
 
 export function ModuleLayout<K extends string = string>({
   children,
-  filters: _filters,
-  activeFilter: _activeFilter,
-  onFilterChange: _onFilterChange,
-  filtersTitle: _filtersTitle,
+  filters,
+  activeFilter,
+  onFilterChange,
+  filtersTitle = "Queue filters",
   sidebarExtra,
   detailPanel,
   engineLabel = "Compliance engine",
@@ -48,6 +49,10 @@ export function ModuleLayout<K extends string = string>({
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <SidebarShell>
+            <SidebarSection title="Regulatory">
+              <SidebarMLROCard />
+            </SidebarSection>
+
             {sidebarExtra}
 
             {asanaModule && (
