@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { pushBellEvent } from "@/lib/bell-events";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
   Kpi,
@@ -449,6 +450,14 @@ export default function TransactionMonitorPage() {
                 </Btn>
               </>
             }
+      />
+
+      <ModuleFamilyBar
+        suiteName="Transaction Tools"
+        modules={[
+          { label: "Transaction Monitor", href: "/transaction-monitor", icon: "💸" },
+          { label: "STR Cases", href: "/str-cases", icon: "📁" },
+        ]}
       />
 
       <KpiGrid cols={3}>

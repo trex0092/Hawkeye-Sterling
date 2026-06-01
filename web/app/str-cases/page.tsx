@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
   Kpi,
@@ -641,6 +642,14 @@ export default function StrCasesPage() {
                 <Btn variant="ghost">+ New case</Btn>
               </div>
             }
+      />
+
+      <ModuleFamilyBar
+        suiteName="Transaction Tools"
+        modules={[
+          { label: "Transaction Monitor", href: "/transaction-monitor", icon: "💸" },
+          { label: "STR Cases", href: "/str-cases", icon: "📁" },
+        ]}
       />
 
       <KpiGrid cols={5}>

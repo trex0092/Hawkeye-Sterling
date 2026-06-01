@@ -25,8 +25,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
       { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
-      { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
-      { label: "🎓 Training", href: "/training", hint: "Staff AML certification tracker" },
+      { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan · training tracker" },
     ],
   },
   {
@@ -50,7 +49,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Regulatory record-keeping, audit trail, reference library
     title: "Governance & Audit",
     items: [
-      { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
       { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
       { label: "🏛️ Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
@@ -60,7 +58,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
-      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
       { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
     ],
   },
@@ -68,15 +65,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     // Subject & entity enrichment: external data lookups, forensic tools, OSINT
     title: "Enrichment",
     items: [
-      { label: "🌐 OSINT", href: "/osint", hint: "Subject enrichment · SpiderFoot · AI threat synthesis" },
-      { label: "🆔 GLEIF / LEI", href: "/gleif", hint: "Global LEI · beneficial ownership chain" },
-      { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "UBO · officers · OpenCorporates" },
-      { label: "🌍 Domain Intel", href: "/domain-intel", hint: "WHOIS · malware · email security analysis" },
-      { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet AML taint + AI blockchain threat" },
-      { label: "🚢 Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
-      { label: "🔢 Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
-      { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
-      { label: "🌍 Country & Geopolitical Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · live risk events · portfolio impact" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
     ],
   },
@@ -92,7 +80,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Leadership & Risk Posture",
     items: [
       { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "14 key risk indicators · live green/amber/red bands · board-pack export" },
-      { label: "🏛️ Board Dashboard", href: "/board-dashboard", hint: "Executive posture view — case backlog · KRI summary · AI health · compliance calendar" },
       { label: "🕵️ Analyst UEBA", href: "/analyst-behavior", hint: "User & Entity Behavior Analytics — insider-threat signals · export spikes · off-hours access · override rates" },
     ],
   },
@@ -101,6 +88,8 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Intelligence",
     items: [
       { label: "🔭 Intelligence Hub", href: "/intelligence-hub", hint: "Analytics · Brain · Workbench · Telemetry · Red-Team · Security · Status · API" },
+      { label: "📋 System Card", href: "/system-card", hint: "AI system disclosure · capabilities · safeguards · regulatory basis" },
+      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Platform security posture · authentication · UEBA · audit integrity · score 0–100" },
     ],
   },
 ];
@@ -131,7 +120,6 @@ export function Header() {
     { label: `🔎 ${strings.screening}`, href: "/screening" },
     { label: `🗂️ ${strings.cases}`, href: "/cases" },
     { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
-    { label: `📁 ${strings.strCases}`, href: "/str-cases" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
     { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },

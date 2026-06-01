@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
@@ -333,6 +334,14 @@ export default function EmployeesPage() {
               documents for timely renewal.
             </>
           }
+        />
+
+        <ModuleFamilyBar
+          suiteName="People & Training"
+          modules={[
+            { label: "Employees", href: "/employees", icon: "🧑‍💼" },
+            { label: "Training", href: "/training", icon: "🎓" },
+          ]}
         />
 
         {/* Summary bar */}
