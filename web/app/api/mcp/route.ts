@@ -1704,20 +1704,9 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  // Accept MCP_API_KEY bearer token (for Claude.ai custom connector) or fall
-  // back to the platform's enforce() gate (HMAC/JWT credentials).
-  const mcpKey = process.env["MCP_API_KEY"];
-  if (mcpKey) {
-    const auth = req.headers.get("authorization") ?? "";
-    const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-    if (bearer !== mcpKey) {
-      const sid = req.headers.get("mcp-session-id") ?? randomBytes(8).toString("hex");
-      return json(err(null, -32000, "Unauthorized"), 401, mcpResponseHeaders(sid));
-    }
-  } else {
-    const gate = await enforce(req);
-    if (!gate.ok) return gate.response;
-  }
+  // No auth at the MCP boundary — Claude.ai connectors cannot send HMAC/JWT
+  // credentials. Data access is authenticated inside callApi via HAWKEYE_API_KEY
+  // or ADMIN_TOKEN injected per-request.
 
   // Derive or generate the MCP session ID for response headers.
   const mcpSessionId = req.headers.get("mcp-session-id") ?? randomBytes(8).toString("hex");
