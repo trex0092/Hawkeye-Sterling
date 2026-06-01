@@ -751,10 +751,25 @@ export default function AccessControlPage() {
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
-      <ModuleFamilyBar suiteName="Security" modules={[
+      <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
+        { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+        { label: "OSINT", href: "/osint", icon: "🌐" },
+        { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
+        { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
+        { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
+        { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
+        { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
+        { label: "Benford Analysis", href: "/benford", icon: "🔢" },
+        { label: "Investigation", href: "/investigation", icon: "🕵️" },
+        { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
+        { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
+        { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
+        { label: "Intelligence Hub", href: "/intelligence-hub", icon: "🔭" },
+        { label: "System Card", href: "/system-card", icon: "📋" },
         { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
         { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
         { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+        { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
       ]} />
       <ModuleHero
 
