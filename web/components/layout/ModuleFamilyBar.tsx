@@ -14,7 +14,7 @@ interface Props {
   suiteName: string;
   modules: FamilyModule[];
   /** When provided, clicking a module calls onSelect instead of navigating. */
-  onSelect?: (mod: FamilyModule) => void;
+  onSelect?: (_mod: FamilyModule) => void;
   /** Highlights the button whose href matches this value (inline tab mode). */
   activeHref?: string;
 }

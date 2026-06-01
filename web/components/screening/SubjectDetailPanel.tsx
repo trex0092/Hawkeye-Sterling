@@ -57,7 +57,6 @@ import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
 import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
 import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
-import { DispositionButton } from "@/components/cases/DispositionButton";
 import { SnoozeButton } from "@/components/screening/SnoozeButton";
 import { ReScreenDiff } from "@/components/screening/ReScreenDiff";
 import { CrossSubjectLinks } from "@/components/screening/CrossSubjectLinks";

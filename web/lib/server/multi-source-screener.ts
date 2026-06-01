@@ -38,9 +38,9 @@ export interface MultiSourceScreeningResult extends QuickScreenResult {
 // ── Brain loader (module-level cache) ─────────────────────────────────────────
 
 type BrainScreenFn = (
-  s: QuickScreenSubject,
-  c: QuickScreenCandidate[],
-  o?: QuickScreenOptions,
+  _s: QuickScreenSubject,
+  _c: QuickScreenCandidate[],
+  _o?: QuickScreenOptions,
 ) => QuickScreenResult;
 
 let _brain: BrainScreenFn | null = null;
