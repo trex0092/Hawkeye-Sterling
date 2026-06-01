@@ -509,8 +509,95 @@ export default function EsgRiskPage() {
   const ratingStyle = result ? ESG_RATING_STYLES[result.esgRating] : null;
   const mlStyle = result ? ML_RISK_STYLES[result.mlRiskOverlay.overallMlRisk] : null;
 
+  // Pre-fill a representative ESG entity so the operator can demo the
+  // scoring pipeline without typing — moved out of the inline JSX so the
+  // sidebarActions handler stays a one-liner.
+  const fillSampleEntity = () => {
+    setField("entity", "Meridian Resources Ltd");
+    setField("sector", "mining");
+    setField("jurisdiction", "GH");
+    setField("employeeCount", "850");
+    setField(
+      "operations",
+      "Gold mining and refining operations across West Africa, with downstream LBMA-accredited refinery in Dubai. Tier-1 suppliers include artisanal mining cooperatives in DRC and Ghana.",
+    );
+    setField("supplierCountries", "Ghana, DRC, Mali, Burkina Faso");
+    setField(
+      "notes",
+      "Recent CAHRA exposure flagged in 2024 conflict-minerals audit; remediation plan in progress.",
+    );
+  };
+
+  const aiSuggestEntity = async () => {
+    setError(null);
+    try {
+      const res = await fetch("/api/mlro-advisor-quick", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          question:
+            "Suggest a representative high-risk ESG entity profile to assess. Return ONLY a JSON object with fields: entityName, sector, jurisdiction (ISO-2), employeeCount (number), operations (string, 2 sentences), supplierCountries (comma-separated string), notes (string).",
+          redTeamMode: false,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        answer?: string; message?: string; error?: string;
+      };
+      if (!res.ok) {
+        if (!mountedRef.current) return;
+        throw new Error(data.error ?? apiErrorMessage(res.status, "AI suggest"));
+      }
+      if (!mountedRef.current) return;
+      const text = data.answer ?? data.message ?? "";
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return;
+      const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | number>;
+      const entityVal = parsed.entityName ?? parsed.entity;
+      if (entityVal) setField("entity", String(entityVal));
+      if (parsed.sector) setField("sector", String(parsed.sector).toLowerCase());
+      if (parsed.jurisdiction) setField("jurisdiction", String(parsed.jurisdiction).toUpperCase());
+      if (parsed.employeeCount) setField("employeeCount", String(parsed.employeeCount));
+      if (parsed.operations) setField("operations", String(parsed.operations));
+      if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
+      if (parsed.notes) setField("notes", String(parsed.notes));
+    } catch (err) {
+      if (mountedRef.current) setError(caughtErrorMessage(err, "AI suggest failed — please retry"));
+    }
+  };
+
   return (
-    <ModuleLayout engineLabel="ESG risk engine">
+    <ModuleLayout
+      engineLabel="ESG risk engine"
+      sidebarActions={
+        <>
+          <button
+            type="button"
+            onClick={fillSampleEntity}
+            className="px-4 py-2 rounded border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 transition-all text-left"
+            title="Pre-fill with a sample entity profile"
+          >
+            + Add
+          </button>
+          <button
+            type="button"
+            onClick={() => void aiSuggestEntity()}
+            disabled={loading}
+            className="px-4 py-2 rounded border-2 border-amber-400 bg-amber-400/10 text-amber-300 text-13 font-bold hover:bg-amber-400/20 transition-all disabled:opacity-50 text-left"
+            title="AI-suggest a representative entity profile"
+          >
+            ✨ AI
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 rounded border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 transition-colors text-left"
+            title="Import entities from CSV (entityName column required)"
+          >
+            📥 CSV Import
+          </button>
+        </>
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -551,76 +638,10 @@ export default function EsgRiskPage() {
         }}
       />
 
-      {/* Quick-action buttons */}
+      {/* Quick-action buttons — + Add / ✨ AI / 📥 CSV Import moved to sidebar Actions.
+          Only the conditional Export-PDF action remains inline because it
+          depends on the in-page result render position. */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <button
-          type="button"
-          onClick={() => {
-            setField("entity", "Meridian Resources Ltd");
-            setField("sector", "mining");
-            setField("jurisdiction", "GH");
-            setField("employeeCount", "850");
-            setField("operations", "Gold mining and refining operations across West Africa, with downstream LBMA-accredited refinery in Dubai. Tier-1 suppliers include artisanal mining cooperatives in DRC and Ghana.");
-            setField("supplierCountries", "Ghana, DRC, Mali, Burkina Faso");
-            setField("notes", "Recent CAHRA exposure flagged in 2024 conflict-minerals audit; remediation plan in progress.");
-          }}
-          className="px-5 py-2 rounded-lg border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 whitespace-nowrap shadow-[0_0_12px_rgba(236,72,153,0.15)] hover:shadow-[0_0_18px_rgba(236,72,153,0.30)] transition-all"
-          title="Pre-fill with a sample entity profile"
-        >
-          + Add
-        </button>
-        <button
-          type="button"
-          onClick={async () => {
-            // AI-suggest: ask Claude to generate a representative
-            // high-risk entity profile so the operator can demo the
-            // ESG scoring pipeline without typing.
-            setError(null);
-            try {
-              const res = await fetch("/api/mlro-advisor-quick", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({
-                  question: "Suggest a representative high-risk ESG entity profile to assess. Return ONLY a JSON object with fields: entityName, sector, jurisdiction (ISO-2), employeeCount (number), operations (string, 2 sentences), supplierCountries (comma-separated string), notes (string).",
-                  redTeamMode: false,
-                }),
-              });
-              const data = await res.json().catch(() => ({})) as { answer?: string; message?: string; error?: string };
-              if (!res.ok) {
-                if (!mountedRef.current) return;
-                throw new Error(data.error ?? apiErrorMessage(res.status, "AI suggest"));
-              }
-              if (!mountedRef.current) return;
-              const text = data.answer ?? data.message ?? "";
-              const jsonMatch = text.match(/\{[\s\S]*\}/);
-              if (!jsonMatch) return;
-              const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | number>;
-              const entityVal = parsed.entityName ?? parsed.entity;
-              if (entityVal) setField("entity", String(entityVal));
-              if (parsed.sector) setField("sector", String(parsed.sector).toLowerCase());
-              if (parsed.jurisdiction) setField("jurisdiction", String(parsed.jurisdiction).toUpperCase());
-              if (parsed.employeeCount) setField("employeeCount", String(parsed.employeeCount));
-              if (parsed.operations) setField("operations", String(parsed.operations));
-              if (parsed.supplierCountries) setField("supplierCountries", String(parsed.supplierCountries));
-              if (parsed.notes) setField("notes", String(parsed.notes));
-            } catch (err) {
-              if (mountedRef.current) setError(caughtErrorMessage(err, "AI suggest failed — please retry"));
-            }
-          }}
-          disabled={loading}
-          className="px-5 py-2 rounded-lg border-2 border-amber-400 bg-amber-400/10 text-amber-300 text-13 font-bold hover:bg-amber-400/20 whitespace-nowrap shadow-[0_0_12px_rgba(251,191,36,0.15)] hover:shadow-[0_0_18px_rgba(251,191,36,0.30)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          title="AI-suggest a representative entity profile"
-        >
-          ✨ AI
-        </button>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-2 rounded-lg border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 whitespace-nowrap transition-colors"
-          title="Import entities from CSV (entityName column required)"
-        >
-          📥 CSV Import
-        </button>
         {result && (
           <button
             type="button"

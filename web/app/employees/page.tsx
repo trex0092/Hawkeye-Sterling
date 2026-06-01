@@ -321,7 +321,29 @@ export default function EmployeesPage() {
   const expiring = employees.filter((e) => overallStatus(e) === "expiring").length;
 
   return (
-    <ModuleLayout asanaModule="employees" asanaLabel="Employees">
+    <ModuleLayout
+      asanaModule="employees"
+      asanaLabel="Employees"
+      sidebarActions={
+        <>
+          <button
+            type="button"
+            onClick={runEmployeeRiskScan}
+            disabled={employees.length === 0 || empRiskLoading}
+            className="text-13 font-semibold px-4 py-2 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors text-left"
+          >
+            {empRiskLoading ? "Scanning…" : "✦AI"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdding((v) => !v)}
+            className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors text-left"
+          >
+            {adding ? "Cancel" : "+ Add employee"}
+          </button>
+        </>
+      }
+    >
         <ModuleHero
 
           eyebrow=""
@@ -365,21 +387,7 @@ export default function EmployeesPage() {
             placeholder="Search employees…"
             className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 w-56"
           />
-          <button
-            type="button"
-            onClick={runEmployeeRiskScan}
-            disabled={employees.length === 0 || empRiskLoading}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors"
-          >
-            {empRiskLoading ? "Scanning…" : "✦AI"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdding((v) => !v)}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors"
-          >
-            {adding ? "Cancel" : "+ Add employee"}
-          </button>
+          {/* ✦AI + Add employee buttons moved to sidebar Actions */}
         </div>
 
         {/* Add form */}

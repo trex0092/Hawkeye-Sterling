@@ -146,7 +146,17 @@ export default function ShadowAIPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-orange-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-orange-700 text-left"
+        >
+          {showForm ? "Cancel" : "Report Shadow AI"}
+        </button>
+      }
+    >
       <ModuleFamilyBar
         suiteName="AI Governance"
         modules={[
@@ -164,8 +174,8 @@ export default function ShadowAIPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Stats + action bar */}
-        <div className="flex items-center justify-between gap-4">
+        {/* Stats — Report Shadow AI button moved to sidebar Actions */}
+        <div className="flex items-center justify-start gap-4">
           <div className="flex gap-3">
             <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
               <div className="text-2xl font-bold text-ink-1">{stats.total}</div>
@@ -184,12 +194,6 @@ export default function ShadowAIPage() {
               <div className="text-10 text-ink-2 mt-0.5">Blocked</div>
             </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
-          >
-            {showForm ? "Cancel" : "Report Shadow AI"}
-          </button>
         </div>
 
         {/* Policy notice */}

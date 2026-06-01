@@ -88,8 +88,18 @@ function StepProgress({ step, state }: { step: typeof OECD_STEPS[0]; state: Resp
   );
 }
 
+// LoadStatus replaces the prior "if (!workflow) show 'Loading…' forever"
+// shape. We track loading and an explicit error so a 401 with empty
+// localStorage no longer leaves the page hanging.
+type LoadStatus =
+  | { phase: "loading" }
+  | { phase: "ready" }
+  | { phase: "auth_required" }
+  | { phase: "error"; detail: string };
+
 export default function ResponsibleSourcingPage() {
   const [workflow, setWorkflow] = useState<ResponsibleSourcingState | null>(null);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>({ phase: "loading" });
   const [activeStep, setActiveStep] = useState<number>(1);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -97,18 +107,56 @@ export default function ResponsibleSourcingPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const loadWorkflow = useCallback(async () => {
+    if (mountedRef.current) setLoadStatus({ phase: "loading" });
+    let serverStatus: number | null = null;
+    let serverThrew = false;
     try {
       const res = await fetch("/api/responsible-sourcing");
+      serverStatus = res.status;
       if (res.ok) {
-        const data = await res.json().catch(() => ({})) as { ok: boolean; workflow: ResponsibleSourcingState };
+        const data = (await res.json().catch(() => ({}))) as {
+          ok: boolean;
+          workflow: ResponsibleSourcingState;
+        };
         if (!mountedRef.current) return;
-        if (data.ok) { setWorkflow(data.workflow); return; }
+        if (data.ok) {
+          setWorkflow(data.workflow);
+          setLoadStatus({ phase: "ready" });
+          return;
+        }
       }
-    } catch (err) { console.warn("[hawkeye] responsible-sourcing server load failed — falling back to localStorage:", err); }
+    } catch (err) {
+      serverThrew = true;
+      console.warn(
+        "[hawkeye] responsible-sourcing server load failed — falling back to localStorage:",
+        err,
+      );
+    }
+    // localStorage fallback. If both server and storage fail, we surface a
+    // useful state in the UI instead of pinning the page on "Loading…".
+    let restored: ResponsibleSourcingState | null = null;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw && mountedRef.current) setWorkflow(JSON.parse(raw) as ResponsibleSourcingState);
-    } catch (err) { console.warn("[hawkeye] responsible-sourcing localStorage parse failed:", err); }
+      if (raw) restored = JSON.parse(raw) as ResponsibleSourcingState;
+    } catch (err) {
+      console.warn("[hawkeye] responsible-sourcing localStorage parse failed:", err);
+    }
+    if (!mountedRef.current) return;
+    if (restored) {
+      setWorkflow(restored);
+      setLoadStatus({ phase: "ready" });
+      return;
+    }
+    if (serverStatus === 401 || serverStatus === 403) {
+      setLoadStatus({ phase: "auth_required" });
+      return;
+    }
+    setLoadStatus({
+      phase: "error",
+      detail: serverThrew
+        ? "Network error while loading the responsible-sourcing workflow."
+        : `Server returned HTTP ${serverStatus ?? "unknown"} loading the workflow.`,
+    });
   }, []);
 
   useEffect(() => { void loadWorkflow(); }, [loadWorkflow]);
@@ -145,7 +193,61 @@ export default function ResponsibleSourcingPage() {
     });
   }, [autosave]);
 
-  if (!workflow) return <div className="p-8 text-12 text-ink-3">Loading workflow…</div>;
+  if (!workflow) {
+    if (loadStatus.phase === "auth_required") {
+      return (
+        <div className="p-8 max-w-md mx-auto mt-12 text-center">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
+            Responsible Sourcing · Authentication required
+          </div>
+          <h1 className="font-display font-normal text-24 text-ink-0 mb-3">
+            Sign in to continue
+          </h1>
+          <p className="text-13 text-ink-2 mb-6 leading-relaxed">
+            Your session has expired or you are not signed in. Sign in to view and
+            edit the OECD 5-step workflow, or try again to recover any locally
+            saved progress.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <a
+              href="/login"
+              className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+            >
+              Sign in
+            </a>
+            <button
+              type="button"
+              onClick={() => void loadWorkflow()}
+              className="px-5 py-2 border border-hair-2 text-ink-1 text-13 font-semibold rounded hover:bg-bg-1 transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (loadStatus.phase === "error") {
+      return (
+        <div className="p-8 max-w-md mx-auto mt-12 text-center">
+          <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
+            Responsible Sourcing · Error
+          </div>
+          <h1 className="font-display font-normal text-24 text-ink-0 mb-3">
+            Workflow unavailable
+          </h1>
+          <p className="text-13 text-ink-2 mb-6 leading-relaxed">{loadStatus.detail}</p>
+          <button
+            type="button"
+            onClick={() => void loadWorkflow()}
+            className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return <div className="p-8 text-12 text-ink-3">Loading workflow…</div>;
+  }
 
   const completedSteps = [workflow.step1, workflow.step2, workflow.step3, workflow.step4, workflow.step5].filter((s) => s?.completed).length;
   const progressPct = Math.round((completedSteps / 5) * 100);

@@ -1108,7 +1108,41 @@ export default function ShipmentsPage() {
   const totalKg = live.filter((c) => c.status !== "delivered").reduce((s, c) => s + c.grossWeightKg, 0);
 
   return (
-    <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
+    <ModuleLayout
+      asanaModule="shipments"
+      asanaLabel="Shipments"
+      engineLabel="Bullion compliance engine"
+      sidebarActions={
+        showAdd ? null : (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors text-left"
+            >
+              + Add
+            </button>
+            <button
+              type="button"
+              disabled={tbmlLoading}
+              onClick={() => void runTbmlScan(visible)}
+              className="text-13 font-semibold px-4 py-2 rounded border border-amber/60 text-amber bg-amber-dim hover:bg-amber/20 transition-colors disabled:opacity-50 text-left"
+            >
+              {tbmlLoading ? "Scanning…" : "✦AI"}
+            </button>
+            {tbml && (
+              <button
+                type="button"
+                onClick={() => setTbml(null)}
+                className="text-13 text-ink-3 hover:text-ink-1 px-4 py-2 text-left"
+              >
+                Clear scan
+              </button>
+            )}
+          </>
+        )
+      }
+    >
       <ModuleHero
 
         eyebrow=""

@@ -383,7 +383,37 @@ export default function ClientPortalPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
+    <ModuleLayout
+      asanaModule="client-portal"
+      asanaLabel="Client Portal"
+      sidebarActions={
+        <>
+          <button
+            type="button"
+            onClick={addShareholder}
+            className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors text-left"
+          >
+            + Add Individual
+          </button>
+          <button
+            type="button"
+            onClick={runClientRiskAssessment}
+            disabled={!canRunRisk || clientRiskLoading}
+            className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors text-left"
+          >
+            {clientRiskLoading ? "Assessing…" : "✦AI"}
+          </button>
+          <button
+            type="submit"
+            form="client-portal-form"
+            disabled={!entity.name || !sharesValid}
+            className="text-13 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 text-left"
+          >
+            Submit for screening
+          </button>
+        </>
+      }
+    >
       <div>
         <ModuleHero
 
@@ -401,7 +431,7 @@ export default function ClientPortalPage() {
           }
         />
 
-        <form onSubmit={submit} className="space-y-4 mt-6">
+        <form id="client-portal-form" onSubmit={submit} className="space-y-4 mt-6">
 
           {/* ── Entity section ──────────────────────────────────────── */}
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
@@ -453,10 +483,7 @@ export default function ClientPortalPage() {
                   </div>
                 )}
               </div>
-              <button type="button" onClick={addShareholder}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
-                + Add Individual
-              </button>
+              {/* + Add Individual button moved to sidebar Actions */}
             </div>
 
             {shareholders.length === 0 ? (
@@ -482,28 +509,14 @@ export default function ClientPortalPage() {
             )}
           </div>
 
-          {/* ── Submit ──────────────────────────────────────────────── */}
-          <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 flex items-start justify-between gap-4">
-            <p className="text-10.5 text-ink-3 leading-relaxed max-w-sm">
+          {/* ── Submit notice ─ buttons moved to sidebar Actions ───── */}
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+            <p className="text-10.5 text-ink-3 leading-relaxed max-w-2xl">
               By submitting you consent to screening under FDL 10/2025 Art.10 (CDD)
               and confirm data accuracy under Art.29 (false-statement offence).
               UBO information is shared with MoE / MOEC as required by Cabinet
               Decision 58/2020.
             </p>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={runClientRiskAssessment}
-                disabled={!canRunRisk || clientRiskLoading}
-                className="whitespace-nowrap text-12 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors"
-              >
-                {clientRiskLoading ? "Assessing…" : "✦AI"}
-              </button>
-              <button type="submit" disabled={!entity.name || !sharesValid}
-                className="whitespace-nowrap text-12 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
-                Submit for screening
-              </button>
-            </div>
           </div>
         </form>
 
