@@ -67,7 +67,9 @@ jobs:
         # Imports Next.js route handlers directly with synthetic Request objects.
         # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
         id: integration
-        run: npx vitest run --config vitest.integration.ts --reporter=default
+        run: |
+          npx vitest run --config vitest.integration.ts --reporter=verbose 2>&1 | tee /tmp/integration-out.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Brain audit
         id: brain
@@ -142,6 +144,17 @@ jobs:
           body = f"Build diagnostic `{sha}` - step outcomes:\n\n| Step | Outcome |\n|------|---------|"
           for name, outcome in rows:
             body += f"\n| {name} | {icon(outcome)} {outcome} |"
+          # Append integration test output if the file exists
+          try:
+            with open('/tmp/integration-out.txt') as f:
+              out = f.read().strip()
+            if out:
+              # Truncate to last 3000 chars to stay within GitHub comment limits
+              if len(out) > 3000:
+                out = '...(truncated)...\n' + out[-3000:]
+              body += f"\n\n<details><summary>Integration test output</summary>\n\n```\n{out}\n```\n</details>"
+          except FileNotFoundError:
+            pass
           data = json.dumps({'body': body}).encode()
           repo = os.environ['GITHUB_REPOSITORY']
           pr   = os.environ['PR_NUM']
