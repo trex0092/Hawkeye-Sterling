@@ -651,6 +651,7 @@ export default function IntelPage() {
       />
       <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
         { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+        { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
       ]} />
 
       <div className="mt-6 space-y-6">

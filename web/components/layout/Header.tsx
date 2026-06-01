@@ -73,7 +73,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🚢 Vessel Check", href: "/vessel-check", hint: "IMO · flag · sanctions · ownership" },
       { label: "🔢 Benford Analysis", href: "/benford", hint: "Forensic digit distribution + AI interpretation" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Link-analysis canvas · network mapping" },
-      { label: "🌍 Country & Geopolitical Risk", href: "/country-risk", hint: "Basel AML · FATF · sanctions · political risk · live risk events · portfolio impact" },
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
     ],
   },
