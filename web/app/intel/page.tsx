@@ -666,7 +666,6 @@ export default function IntelPage() {
         { label: "System Card", href: "/system-card", icon: "📋" },
         { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
         { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
         { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
       ]} />
 

@@ -137,45 +137,5 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
     }
   }, [activeFilters, onFiltersChange]);
 
-  return (
-    <SidebarShell>
-      <SidebarSection title="Regulatory">
-        <SidebarMLROCard />
-      </SidebarSection>
-
-      <SidebarSection
-        title="Queue filters"
-        collapsible
-        actions={
-          onRefresh ? (
-            <button
-              type="button"
-              onClick={onRefresh}
-              title="Refresh counts"
-              className="text-ink-3 hover:text-ink-1 transition-colors p-0.5 rounded"
-            >
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.5 2A5 5 0 1 0 11 6.5" />
-                <polyline points="10.5,0.5 10.5,3 8,3" />
-              </svg>
-            </button>
-          ) : undefined
-        }
-      >
-        <SidebarFilterList
-          items={filters}
-          activeKeys={activeFilters}
-          onSelect={handleSelect}
-          pinnedKeys={pinnedKeys}
-          onTogglePin={togglePin}
-          countDeltas={countDeltas}
-          lastRefreshed={lastRefreshed}
-          savedFilters={savedFilters}
-          onSaveFilter={saveFilterSet}
-          onDeleteSaved={deleteSavedFilter}
-          onApplySaved={onFiltersChange}
-        />
-      </SidebarSection>
-    </SidebarShell>
-  );
+  return null;
 }
