@@ -200,7 +200,7 @@ export default function OsintPage() {
     <ModuleLayout asanaModule="osint" asanaLabel="OSINT Intelligence">
       <ModuleHero
 
-        eyebrow="Enrichment · Open Source Intelligence"
+        eyebrow=""
         title="OSINT"
         titleEm="Intelligence."
         intro="Harvest open-source signals from public infrastructure, social platforms, and domain records via theHarvester, Sherlock, and Social Analyzer."

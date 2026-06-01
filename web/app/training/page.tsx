@@ -289,7 +289,7 @@ export default function TrainingPage() {
     <ModuleLayout asanaModule="training" asanaLabel="Training">
       <ModuleHero
 
-          eyebrow="Module 15 · Staff certification"
+          eyebrow=""
           title="Training"
           titleEm="log."
           intro={

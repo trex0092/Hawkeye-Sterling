@@ -1392,7 +1392,7 @@ export default function ResponsibleAIPage() {
   return (
     <ModuleLayout engineLabel="AI governance engine" asanaModule="responsible-ai" asanaLabel="Responsible AI">
       <ModuleHero
-        eyebrow="Module 27 · AI Governance"
+        eyebrow=""
         title="Responsible AI"
         titleEm="governance."
         intro={

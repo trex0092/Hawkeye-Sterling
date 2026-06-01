@@ -144,7 +144,7 @@ export default function OperatorConsolePage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="🔭 Governance"
+        eyebrow=""
         title="Operator Console"
         intro="MCP activity log, telemetry, and fairness monitoring — every tool call made by Claude is logged here for audit and regulatory review."
       />

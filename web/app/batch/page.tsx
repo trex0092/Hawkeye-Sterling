@@ -363,7 +363,7 @@ export default function BatchPage() {
     <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
       <div>
         <ModuleHero
-          eyebrow="Module 07 · Bulk Screening"
+          eyebrow=""
           title="Batch"
           titleEm="screening."
           intro={

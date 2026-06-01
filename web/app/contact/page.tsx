@@ -6,7 +6,7 @@ export default function ContactPage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="SUPPORT & ENQUIRIES"
+        eyebrow=""
         title="Contact"
         titleEm="us."
         intro="Reach the Hawkeye Sterling compliance team for technical support, licensing, regulatory enquiries, or to report an issue."

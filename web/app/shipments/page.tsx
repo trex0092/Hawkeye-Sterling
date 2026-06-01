@@ -1111,7 +1111,7 @@ export default function ShipmentsPage() {
     <ModuleLayout asanaModule="shipments" asanaLabel="Shipments" engineLabel="Bullion compliance engine">
       <ModuleHero
 
-        eyebrow="Module 24 · Bullion Logistics"
+        eyebrow=""
         title="Bullion chain-of-custody"
         titleEm="register."
         intro={

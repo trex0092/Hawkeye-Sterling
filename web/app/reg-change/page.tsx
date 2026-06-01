@@ -354,7 +354,7 @@ export default function RegChangePage() {
   return (
     <ModuleLayout engineLabel="Regulatory change engine" asanaModule="reg-change" asanaLabel="Regulatory Change Manager">
       <ModuleHero
-        eyebrow="Compliance · Regulatory Intelligence · Change Management"
+        eyebrow=""
         title="Regulatory"
         titleEm="changes."
 

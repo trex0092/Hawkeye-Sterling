@@ -200,7 +200,7 @@ export default function OutsourcingRegisterPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="🏢 Governance — FDL 10/2025 Art.18 · FATF R.2"
+        eyebrow=""
         title="Outsourcing"
         titleEm="register."
         intro="Third-party AML/CFT arrangements · Board approval · annual MLRO review · agreement currency"

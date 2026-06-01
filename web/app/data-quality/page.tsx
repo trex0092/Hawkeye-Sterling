@@ -122,7 +122,7 @@ export default function DataQualityPage() {
     <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality">
         <ModuleHero
 
-          eyebrow="Module 19 · Per-subject completeness"
+          eyebrow=""
           title="Data"
           titleEm="quality."
           intro={

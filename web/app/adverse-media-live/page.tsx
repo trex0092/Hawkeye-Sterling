@@ -403,7 +403,7 @@ export default function AdverseMediaLivePage() {
   return (
     <ModuleLayout asanaModule="adverse-media-live" asanaLabel="Live Adverse Media Feed">
       <ModuleHero
-        eyebrow="Module · Live Intelligence"
+        eyebrow=""
         title="Adverse media"
         titleEm="live monitor."
         intro={

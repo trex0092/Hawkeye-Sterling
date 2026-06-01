@@ -111,7 +111,7 @@ export default function ComtradePage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="TBML Intelligence"
+        eyebrow=""
         title="Comtrade TBML Risk Query"
         intro="UN Comtrade trade statistics lookup — identify trade-based money laundering risk by HS code, origin country, and transaction value"
       />

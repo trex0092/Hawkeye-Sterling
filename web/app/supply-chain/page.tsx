@@ -408,7 +408,7 @@ export default function SupplyChainPage() {
   return (
     <ModuleLayout engineLabel="Supply chain engine" asanaModule="supply-chain" asanaLabel="Supply Chain Risk">
       <ModuleHero
-        eyebrow="ESG · Responsible Sourcing · AML"
+        eyebrow=""
         title="Supply"
         titleEm="chain."
 

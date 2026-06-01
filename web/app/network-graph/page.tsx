@@ -602,7 +602,7 @@ export default function NetworkGraphPage() {
           {/* Page header */}
           <div className="mb-6">
             <div className="text-xs font-semibold uppercase tracking-widest text-brand mb-1">
-              Module · Intelligence
+              Intelligence
             </div>
             <h1 className="text-2xl font-bold text-ink-0">
               Network Relationship{" "}

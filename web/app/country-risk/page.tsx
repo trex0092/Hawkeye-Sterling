@@ -461,7 +461,7 @@ export default function CountryRiskPage() {
   return (
     <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk" asanaLabel="Country Risk">
       <ModuleHero
-        eyebrow="AML/CFT Intelligence · Basel AML · FATF · Sanctions"
+        eyebrow=""
         title="Country"
         titleEm="risk."
 

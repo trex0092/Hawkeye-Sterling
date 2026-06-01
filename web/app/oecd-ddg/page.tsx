@@ -180,7 +180,7 @@ export default function OecdDdgPage() {
   return (
     <ModuleLayout asanaModule="oecd-ddg" asanaLabel="OECD 5-Step DDG" engineLabel="Supply chain due diligence engine">
       <ModuleHero
-        eyebrow="Module 55 · OECD DDG"
+        eyebrow=""
         title="OECD 5-step due diligence"
         titleEm="assessments."
         kpis={[

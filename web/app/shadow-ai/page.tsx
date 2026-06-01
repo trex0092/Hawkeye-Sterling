@@ -156,7 +156,7 @@ export default function ShadowAIPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="👁️ UAE AI Governance — CBUAE Guidelines 2025"
+        eyebrow=""
         title="Shadow AI Detection"
         titleEm="register."
         intro="Unauthorized AI tool detection & remediation · Unregistered LLMs · No-DPA vendors · Data classification risk"

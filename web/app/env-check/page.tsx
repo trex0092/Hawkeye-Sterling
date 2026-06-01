@@ -60,7 +60,7 @@ export default function EnvCheckPage() {
   return (
     <ModuleLayout>
       <ModuleHero
-        eyebrow="Deployment"
+        eyebrow=""
         title="Environment Check"
         intro="Configuration status for all environment variables. No actual values are shown."
       />

@@ -596,7 +596,7 @@ export default function CountryRiskMapPage() {
   return (
     <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk-map" asanaLabel="Country Risk Map">
       <ModuleHero
-        eyebrow="AML/CFT Intelligence · FATF · Sanctions · Geopolitical"
+        eyebrow=""
         title="Country Risk"
         titleEm="Heat-Map."
         kpis={[

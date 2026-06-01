@@ -211,7 +211,7 @@ export default function SanctionsEvasionPage() {
   return (
     <ModuleLayout engineLabel="Sanctions engine" asanaModule="sanctions-evasion" asanaLabel="Sanctions Evasion">
       <ModuleHero
-        eyebrow="AI-Powered Sanctions Intelligence"
+        eyebrow=""
         title="Sanctions"
         titleEm="evasion."
 

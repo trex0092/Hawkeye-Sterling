@@ -155,7 +155,7 @@ export default function ResponsibleSourcingPage() {
     <ModuleLayout asanaModule="responsible-sourcing" asanaLabel="Responsible Sourcing MD 68/2024" engineLabel="Responsible sourcing engine">
       <ModuleHero
 
-        eyebrow="Module 54 · Responsible Sourcing"
+        eyebrow=""
         title="OECD 5-step due diligence"
         titleEm="workflow."
         kpis={[

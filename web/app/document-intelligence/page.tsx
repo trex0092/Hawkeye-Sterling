@@ -558,7 +558,7 @@ export default function DocumentIntelligencePage() {
     <ModuleLayout>
       <div className="p-6 max-w-5xl mx-auto">
         <ModuleHero
-          eyebrow="KYC"
+          eyebrow=""
           title="Document Intelligence"
           kpis={[
             { value: "7+", label: "Document types" },

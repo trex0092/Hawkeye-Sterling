@@ -156,7 +156,7 @@ export default function VendorAIAuditPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="🏢 UAE AI Governance — FATF R.18 · ADGM DPR 2021"
+        eyebrow=""
         title="Vendor AI Audit"
         titleEm="framework."
         intro="AI vendor due diligence · DPA · model card · penetration testing · bias audit · right-to-audit clause"

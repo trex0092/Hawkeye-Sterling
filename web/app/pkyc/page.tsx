@@ -184,7 +184,7 @@ export default function PKycPage() {
       {/* Hero */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <ModuleHero
-          eyebrow="pKYC · Perpetual Monitoring"
+          eyebrow=""
           title="Perpetual"
           titleEm="monitoring."
           intro="FDL 10/2025 Art.14 · CR 134/2025 §17 · FATF R.10 — continuous CDD lifecycle"

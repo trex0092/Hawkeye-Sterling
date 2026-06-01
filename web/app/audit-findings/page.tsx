@@ -193,7 +193,7 @@ export default function AuditFindingsPage() {
         ]}
       />
       <ModuleHero
-        eyebrow="📋 Governance — CBUAE §9 · IIA Standards"
+        eyebrow=""
         title="Audit Findings"
         titleEm="register."
         intro="Internal audit findings · remediation tracking · MLRO sign-off · Board Audit Committee"

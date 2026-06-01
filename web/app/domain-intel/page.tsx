@@ -71,7 +71,7 @@ export default function DomainIntelPage() {
     <ModuleLayout asanaModule="domain-intel" asanaLabel="Domain Intel" engineLabel="Domain Intel">
       <ModuleHero
 
-        eyebrow="Module · Counterparty Intelligence"
+        eyebrow=""
         title="Domain"
         titleEm="intelligence."
         intro="AML risk scoring via WHOIS age, malware flags, email security, SSL validity, and domain rank."

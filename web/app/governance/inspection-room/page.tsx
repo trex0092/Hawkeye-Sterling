@@ -368,7 +368,7 @@ export default function InspectionRoomPage() {
     <ModuleLayout asanaModule="inspection-room" asanaLabel="Inspection Room">
       <ModuleHero
 
-        eyebrow="Module · Inspection Room"
+        eyebrow=""
         title="Regulator-ready"
         titleEm="evidence."
         intro={

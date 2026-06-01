@@ -134,7 +134,7 @@ export default function BoardDashboardPage() {
   return (
     <ModuleLayout engineLabel="Board View">
       <ModuleHero
-        eyebrow="Leadership · Executive View"
+        eyebrow=""
         title="Board"
         titleEm="dashboard."
         intro={
