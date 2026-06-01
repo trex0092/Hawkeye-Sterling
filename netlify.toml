@@ -141,3 +141,12 @@
     Cross-Origin-Resource-Policy = "same-origin"
     Cache-Control = "no-store"
     X-Content-Type-Options = "nosniff"
+
+# MCP endpoint must be reachable by Anthropic's cloud (cross-origin server-to-server).
+# Override CORP to cross-origin for /api/mcp only.
+[[headers]]
+  for = "/api/mcp"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "no-store"
+    X-Content-Type-Options = "nosniff"
