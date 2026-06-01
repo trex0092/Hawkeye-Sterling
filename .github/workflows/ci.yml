@@ -207,17 +207,19 @@ jobs:
             || echo '{"bomFormat":"CycloneDX","specVersion":"1.4","metadata":{"component":{"type":"library","name":"hawkeye-sterling-web","version":"0.1.0"}},"components":[],"note":"SBOM incomplete — react-debounce-input peer-dep conflict with React 19"}' > /tmp/sbom-web.cdx.json
       - name: Upload SBOMs
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: sbom-${{ github.sha }}
           path: |
             /tmp/sbom-root.cdx.json
             /tmp/sbom-web.cdx.json
           retention-days: 365
+          overwrite: true
       - name: Trivy filesystem scan — critical/high CVEs
         # Scans the repository filesystem for known vulnerabilities in
         # dependencies. Fails on CRITICAL or HIGH severity unfixed CVEs.
         # ignore-unfixed=true prevents noise from CVEs with no upstream fix.
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
