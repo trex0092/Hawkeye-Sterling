@@ -121,29 +121,6 @@ function showBrowserNotification(alert: DesignationAlert): void {
   } catch { /* notification refused */ }
 }
 
-let titleFlashTimer: ReturnType<typeof setInterval> | null = null;
-let originalTitle = "";
-
-function flashTitle(unreadCount: number): void {
-  if (typeof document === "undefined") return;
-  if (!originalTitle) originalTitle = document.title.replace(/^\(\d+\)\s/, "");
-  if (unreadCount === 0) {
-    if (titleFlashTimer) { clearInterval(titleFlashTimer); titleFlashTimer = null; }
-    document.title = originalTitle;
-    return;
-  }
-  if (titleFlashTimer) clearInterval(titleFlashTimer);
-  let toggle = false;
-  const update = () => {
-    if (typeof document === "undefined") return;
-    document.title = toggle
-      ? `(${unreadCount}) ${originalTitle}`
-      : `🔔 ${unreadCount} alert${unreadCount === 1 ? "" : "s"} — ${originalTitle}`;
-    toggle = !toggle;
-  };
-  update();
-  titleFlashTimer = setInterval(update, 2000);
-}
 
 interface UseAlertsReturn {
   alerts: DesignationAlert[];
@@ -239,25 +216,6 @@ export function useAlerts(): UseAlertsReturn {
       window.removeEventListener("storage", onStorage);
     };
   }, [fetch_, remerge, onStorage]);
-
-  // Flash document title when there are unread alerts and the tab is hidden
-  useEffect(() => {
-    const onVisChange = () => {
-      if (typeof document === "undefined") return;
-      if (document.hidden && unreadCount > 0) flashTitle(unreadCount);
-      else flashTitle(0);
-    };
-    onVisChange();
-    if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", onVisChange);
-    }
-    return () => {
-      if (typeof document !== "undefined") {
-        document.removeEventListener("visibilitychange", onVisChange);
-      }
-      flashTitle(0);
-    };
-  }, [unreadCount]);
 
   const dismiss = useCallback(async (id: string) => {
     dismissedRef.current = new Set([...dismissedRef.current, id]);
