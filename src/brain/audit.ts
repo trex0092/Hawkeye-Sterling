@@ -239,6 +239,50 @@ export function auditBrain(print = true): AuditReport {
   const coverage = implementationCoverage(REASONING_MODES.map((m) => m.id));
   const implementedModes = listImplementedModeIds();
 
+  // AML-13: criticality analysis. An implementation coverage of "73%" hides
+  // whether the 27% gap touches sanctions / PEP / proliferation categories.
+  // We compute:
+  //   - orphanCriticalImplementations: modes in MODE_OVERRIDES (implemented)
+  //     but not declared in REASONING_MODES (will never run via engine.run)
+  //   - unimplementedCriticalDeclared: modes declared in REASONING_MODES with
+  //     a critical category but missing from MODE_OVERRIDES
+  // Both are problems (not advisories) — a missing critical mode means
+  // sanctions screening could silently no-op.
+  const CRITICAL_MODE_CATEGORIES_AUDIT: ReadonlySet<string> = new Set([
+    'sanctions',
+    'pep_screening',
+    'proliferation',
+    'sanctions_evasion',
+    'compliance_framework',
+  ]);
+  const declaredModeIds = new Set(REASONING_MODES.map((m) => m.id));
+  const declaredCriticalIds = REASONING_MODES
+    .filter((m) => CRITICAL_MODE_CATEGORIES_AUDIT.has(m.category))
+    .map((m) => m.id);
+  const orphanCriticalImplementations = implementedModes.filter(
+    (id) => !declaredModeIds.has(id),
+  );
+  const unimplementedCriticalDeclared = declaredCriticalIds.filter(
+    (id) => !implementedModes.includes(id),
+  );
+  // AML-13: surface as advisories (visibility, not blocking). The orphan +
+  // unimplemented gaps are large pre-existing compliance debt — escalating
+  // them to `problems` would break the long-standing "registry consistency"
+  // gate and obscure the new structural failures we want that gate to catch.
+  // A follow-up PR should: (a) decide each orphan's home in REASONING_MODES
+  // or remove from MODE_OVERRIDES, and (b) implement the declared-critical
+  // gaps. Until then the count is exposed via auditBrain() output.
+  if (orphanCriticalImplementations.length > 0) {
+    advisories.push(
+      `CRITICAL ORPHAN MODES: ${orphanCriticalImplementations.length} mode(s) implemented in MODE_OVERRIDES but not declared in REASONING_MODES — engine will never invoke them. First 10: ${orphanCriticalImplementations.slice(0, 10).join(', ')}`,
+    );
+  }
+  if (unimplementedCriticalDeclared.length > 0) {
+    advisories.push(
+      `CRITICAL UNIMPLEMENTED MODES: ${unimplementedCriticalDeclared.length} critical-category mode(s) declared but lack implementation (defaultApply will fire). First 10: ${unimplementedCriticalDeclared.slice(0, 10).join(', ')}`,
+    );
+  }
+
   const report: AuditReport = {
     ok: problems.length === 0,
     totals: {

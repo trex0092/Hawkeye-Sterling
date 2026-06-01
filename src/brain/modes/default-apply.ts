@@ -132,7 +132,12 @@ export function defaultApply(
         return {
           ...base,
           score: 0,
-          confidence: 0.3,
+          // AML-01: confidence:0 + verdict:inconclusive ensures the
+          // fusion.ts isContributor() filter excludes this no-evidence
+          // path. Without this, ~150 unimplemented-but-declared modes
+          // would all push 0.3-confidence inconclusives into fusion,
+          // collectively diluting genuine signals (fail-open against P1).
+          confidence: 0,
           verdict: 'inconclusive',
           rationale: `${description} — no jurisdiction in chain to evaluate.`,
           evidence: [],
@@ -160,7 +165,12 @@ export function defaultApply(
         return {
           ...base,
           score: 0,
-          confidence: 0.3,
+          // AML-01: confidence:0 + verdict:inconclusive ensures the
+          // fusion.ts isContributor() filter excludes this no-evidence
+          // path. Without this, ~150 unimplemented-but-declared modes
+          // would all push 0.3-confidence inconclusives into fusion,
+          // collectively diluting genuine signals (fail-open against P1).
+          confidence: 0,
           verdict: 'inconclusive',
           rationale: `${description} — no transactions available to analyse.`,
           evidence: [],
@@ -188,7 +198,12 @@ export function defaultApply(
         return {
           ...base,
           score: 0,
-          confidence: 0.3,
+          // AML-01: confidence:0 + verdict:inconclusive ensures the
+          // fusion.ts isContributor() filter excludes this no-evidence
+          // path. Without this, ~150 unimplemented-but-declared modes
+          // would all push 0.3-confidence inconclusives into fusion,
+          // collectively diluting genuine signals (fail-open against P1).
+          confidence: 0,
           verdict: 'inconclusive',
           rationale: `${description} — no UBO chain available to traverse.`,
           evidence: [],
@@ -213,7 +228,12 @@ export function defaultApply(
         return {
           ...base,
           score: 0,
-          confidence: 0.3,
+          // AML-01: confidence:0 + verdict:inconclusive ensures the
+          // fusion.ts isContributor() filter excludes this no-evidence
+          // path. Without this, ~150 unimplemented-but-declared modes
+          // would all push 0.3-confidence inconclusives into fusion,
+          // collectively diluting genuine signals (fail-open against P1).
+          confidence: 0,
           verdict: 'inconclusive',
           rationale: `${description} — narrative too thin (${text.length} chars).`,
           evidence: [`text_chars=${text.length}`],
@@ -242,7 +262,12 @@ export function defaultApply(
         return {
           ...base,
           score: 0,
-          confidence: 0.3,
+          // AML-01: confidence:0 + verdict:inconclusive ensures the
+          // fusion.ts isContributor() filter excludes this no-evidence
+          // path. Without this, ~150 unimplemented-but-declared modes
+          // would all push 0.3-confidence inconclusives into fusion,
+          // collectively diluting genuine signals (fail-open against P1).
+          confidence: 0,
           verdict: 'inconclusive',
           rationale: `${description} — need ≥2 confident priors (got ${usable.length}).`,
           evidence: [`prior_count=${usable.length}`],

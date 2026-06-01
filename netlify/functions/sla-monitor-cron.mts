@@ -138,7 +138,20 @@ async function writeBreachAudits(
   }
 }
 
-export default async (): Promise<Response> => {
+export default async (req: Request): Promise<Response> => {
+  // AML-11: make Netlify's implicit scheduled-function protection explicit
+  // in the handler. In production, refuse any invocation that lacks the
+  // x-netlify-scheduled-function header — even a legitimate operator
+  // hitting this URL by mistake should be redirected to the admin tooling
+  // rather than blindly triggering SLA recompute across all tenants.
+  const isScheduled = req.headers.get("x-netlify-scheduled-function") === "true";
+  if (process.env["NODE_ENV"] === "production" && !isScheduled) {
+    return new Response(
+      JSON.stringify({ ok: false, error: "unauthorized" }),
+      { status: 401, headers: { "content-type": "application/json" } },
+    );
+  }
+
   const startedAt = Date.now();
   const now = new Date();
   const tenants = await listTenants();

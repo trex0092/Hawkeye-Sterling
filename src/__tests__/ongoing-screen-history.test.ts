@@ -58,8 +58,20 @@ vi.mock("@/lib/server/audit-chain", () => ({
   writeAuditChainEntry: async () => undefined,
 }));
 
+// SANCT-001: the /api/ongoing/run route now guards on a healthy corpus
+// (refuses to screen when both OFAC SDN and UN Consolidated are missing).
+// Provide a minimal two-candidate corpus so the guard passes — quickScreen
+// is also mocked to return zero hits, preserving the zero-hit-history scenario.
+const _MIN_CANDIDATES = [
+  { listId: "ofac_sdn", listRef: "OFAC SDN", name: "Sanctioned Person 1" },
+  { listId: "un_consolidated", listRef: "UN 1267", name: "Sanctioned Person 2" },
+];
 vi.mock("@/lib/server/candidates-loader", () => ({
-  loadCandidates: async () => [],
+  loadCandidates: async () => _MIN_CANDIDATES,
+  loadCandidatesWithHealth: async () => ({
+    candidates: _MIN_CANDIDATES,
+    health: { healthy: true, failedAdapters: [] },
+  }),
 }));
 
 vi.mock("@/lib/data/adverse-keywords", () => ({

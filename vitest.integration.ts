@@ -10,7 +10,9 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     include: ['src/__integration__/**/*.test.ts'],
-    passWithNoTests: true,
+    // TEST-09: same rationale as vitest.config.ts — a typo'd include pattern
+    // or accidental deletion should fail loudly, not pass silently.
+    passWithNoTests: false,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],

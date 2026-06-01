@@ -44,7 +44,7 @@
     "vitest": "^4.0.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": "^22"
   },
   "overrides": {
     "tmp": ">=0.2.6",

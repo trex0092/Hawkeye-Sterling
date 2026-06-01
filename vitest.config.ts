@@ -19,7 +19,29 @@ export default defineConfig({
     // Exclude web API integration tests — they need Next.js path aliases and
     // are run separately with:  vitest run --config vitest.integration.ts
     exclude: ['src/__integration__/**'],
-    passWithNoTests: true,
+    // TEST-09: refuse to silently pass when include patterns match no files.
+    // A typo in include[] or accidental deletion of test files would have
+    // previously been masked by passWithNoTests:true.
+    passWithNoTests: false,
+    coverage: {
+      // TEST-02: enable v8 coverage collection so CI emits a measurable
+      // baseline. Thresholds intentionally OMITTED in this PR — a follow-up
+      // will set them after the baseline is observed. Without measurement
+      // we'd either set them too high (breaks CI) or too low (no signal).
+      // @vitest/coverage-v8 is already installed as a devDependency.
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'lcov'],
+      exclude: [
+        '**/node_modules/**',
+        'dist/**',
+        '**/__mocks__/**',
+        '**/__tests__/**',
+        '**/*.test.ts',
+        '**/*.d.ts',
+        'coverage/**',
+        'web/.next/**',
+      ],
+    },
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],

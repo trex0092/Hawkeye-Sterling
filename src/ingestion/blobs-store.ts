@@ -179,8 +179,15 @@ export async function getBlobsStore(): Promise<BlobsStore> {
                 `empty-overwrite refused at ${new Date().toISOString()}; priorEntityCount=${priorCount}`,
               ],
             });
-          } catch {
-            // Forensic write best-effort — never block the refusal on it.
+          } catch (forensicErr) {
+            // AML-03: forensic write best-effort, but the failure must NOT be
+            // silent — without this WARN an operator investigating corpus
+            // corruption sees no trace of the rejected report attempt.
+            console.warn(
+              `[blobs-store] forensic-write failed for rejected report listId=${listId} key=${rejectedKey}: ${
+                forensicErr instanceof Error ? forensicErr.message : String(forensicErr)
+              }`,
+            );
           }
           throw new EmptyOverwriteRefusedError(listId, priorCount);
         }
