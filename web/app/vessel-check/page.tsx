@@ -99,7 +99,7 @@ function VesselCheckInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mode, setMode] = useState<"single" | "batch">(
-    (searchParams.get("tab") as "single" | "batch") ?? "single"
+    (searchParams?.get("tab") as "single" | "batch") ?? "single"
   );
   const [imoNumber, setImoNumber] = useState("");
   const [batchImos, setBatchImos] = useState("");
