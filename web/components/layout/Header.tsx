@@ -120,7 +120,6 @@ export function Header() {
     { label: `🔎 ${strings.screening}`, href: "/screening" },
     { label: `🗂️ ${strings.cases}`, href: "/cases" },
     { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
-    { label: `📁 ${strings.strCases}`, href: "/str-cases" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
     { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
