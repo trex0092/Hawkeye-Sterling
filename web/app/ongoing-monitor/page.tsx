@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { writeAuditEvent } from "@/lib/audit";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -453,6 +454,14 @@ export default function OngoingMonitorPage() {
           { value: String(paused), label: "paused", tone: paused > 0 ? "amber" : undefined },
           { value: String(overdue), label: "overdue", tone: overdue > 0 ? "red" : undefined },
           { value: String(subjects.length), label: "total enrolled" },
+        ]}
+      />
+
+      <ModuleFamilyBar
+        suiteName="Case Management"
+        modules={[
+          { label: "Cases", href: "/cases", icon: "🗂️" },
+          { label: "Ongoing Monitor", href: "/ongoing-monitor", icon: "👁️" },
         ]}
       />
 

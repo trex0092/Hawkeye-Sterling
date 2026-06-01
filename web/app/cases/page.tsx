@@ -13,6 +13,7 @@ import { deleteCase, loadCases } from "@/lib/data/case-store";
 import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 
 interface TriagedCase {
   id: string;
@@ -209,6 +210,13 @@ export default function CasesPage() {
               </button>
             </div>
           </div>
+          <ModuleFamilyBar
+            suiteName="Case Management"
+            modules={[
+              { label: "Cases", href: "/cases", icon: "🗂️" },
+              { label: "Ongoing Monitor", href: "/ongoing-monitor", icon: "👁️" },
+            ]}
+          />
           <CasesToolbar query={query} onQueryChange={setQuery} />
           {triageError && (
             <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
