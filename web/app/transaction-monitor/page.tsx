@@ -432,7 +432,7 @@ export default function TransactionMonitorPage() {
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
-            subtitle="Module 08 · MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
+            subtitle="MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
             dotColor="amber"
             actions={
               <>

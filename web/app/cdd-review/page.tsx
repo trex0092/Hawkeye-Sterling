@@ -726,7 +726,7 @@ export default function CddReviewPage() {
       {/* ── Section 1: Module Header & KPIs ── */}
       <ModuleHero
 
-        eyebrow="Module 22 · CDD Lifecycle"
+        eyebrow="CDD Lifecycle"
         title="Periodic CDD"
         titleEm="review."
         intro={

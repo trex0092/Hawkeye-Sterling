@@ -116,7 +116,7 @@ export default function GleifPage() {
     <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI">
       <ModuleHero
 
-        eyebrow="Module · Entity Intelligence"
+        eyebrow="Entity Intelligence"
         title="GLEIF"
         titleEm="LEI lookup."
         intro="Beneficial ownership chain traversal via the Global Legal Entity Identifier Foundation (GLEIF) public API."

@@ -1006,7 +1006,7 @@ export default function RegulatoryPage() {
     <ModuleLayout asanaModule="regulatory" asanaLabel="Regulatory">
       <ModuleHero
 
-        eyebrow="Module 11 · Regulatory Intelligence"
+        eyebrow="Regulatory Intelligence"
         title="Regulatory"
         titleEm="library."
         kpis={kpis}

@@ -151,7 +151,7 @@ export default function BenfordPage() {
     <ModuleLayout asanaModule="benford" asanaLabel="Benford Analysis" engineLabel="Benford Analysis">
       <ModuleHero
 
-        eyebrow="Module · Forensic Accounting"
+        eyebrow="Forensic Accounting"
         title="Benford's Law"
         titleEm="analysis."
         intro="Chi-squared + MAD dual methodology (Nigrini 2012 / Ausloos 2025). Flags fabricated, rounded, or structured transaction amounts."

@@ -581,7 +581,7 @@ export default function OnboardingWizardPage() {
     <ModuleLayout asanaModule="onboarding" asanaLabel="Onboarding Wizard">
       <ModuleHero
 
-        eyebrow="Module · Onboarding Wizard"
+        eyebrow="Onboarding Wizard"
         title="Guided new-customer"
         titleEm="onboarding."
         intro={

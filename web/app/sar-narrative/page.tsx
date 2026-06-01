@@ -175,7 +175,7 @@ export default function SarNarrativePage() {
   return (
     <ModuleLayout engineLabel="SAR Narrative Generator" asanaModule="sar-narrative" asanaLabel="AI SAR Narrative">
       <ModuleHero
-        eyebrow="Module · Compliance Filing"
+        eyebrow="Compliance Filing"
         title="AI SAR"
         titleEm="Narrative Generator."
         kpis={[

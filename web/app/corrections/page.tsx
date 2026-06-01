@@ -74,7 +74,7 @@ export default function CorrectionsPage() {
       <div>
         <ModuleHero
 
-          eyebrow="Module · Data Subject Rights · FDL Art.30"
+          eyebrow="Data Subject Rights · FDL Art.30"
           title="Record correction"
           titleEm="request."
           intro={

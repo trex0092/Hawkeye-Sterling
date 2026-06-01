@@ -167,7 +167,7 @@ export default function CryptoRiskPage() {
     <ModuleLayout asanaModule="crypto-risk" asanaLabel="Crypto Risk" engineLabel="Crypto Risk">
       <ModuleHero
 
-        eyebrow="Module · Crypto AML"
+        eyebrow="Crypto AML"
         title="Crypto wallet"
         titleEm="risk."
         intro="AML taint analysis for ETH, BTC, and TRX wallets. Supports Januus, Chainalysis KYT, and Elliptic Lens."

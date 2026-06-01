@@ -211,7 +211,7 @@ export default function GoAmlExportPage() {
     <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">
       <ModuleHero
 
-        eyebrow="Module · goAML XML Export"
+        eyebrow="goAML XML Export"
         title="goAML"
         titleEm="export wizard."
         intro={

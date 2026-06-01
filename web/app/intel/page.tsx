@@ -628,7 +628,7 @@ export default function IntelPage() {
     <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
       <ModuleHero
 
-        eyebrow="Module 10 · Intelligence & Regulatory Feed"
+        eyebrow="Intelligence & Regulatory Feed"
         title="Intel"
         titleEm="feed."
         intro={
