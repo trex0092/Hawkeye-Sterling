@@ -54,8 +54,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
       { label: "📑 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
       { label: "📚 Typology Library & Playbook", href: "/typology-library", hint: "500+ ML typologies · AI search · step-by-step compliance playbooks" },
-      { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "AI evasion pattern detector · FATF typologies" },
-      { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "OFAC 50% walker · Crypto exposure · Synthetic-identity cluster" },
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
@@ -118,7 +116,6 @@ export function Header() {
   // language-neutral so they stay across all locales.
   const NAV_TABS_I18N = [
     { label: `🔎 ${strings.screening}`, href: "/screening" },
-    { label: `🗂️ ${strings.cases}`, href: "/cases" },
     { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },

@@ -660,6 +660,8 @@ export default function IntelPage() {
         { label: "Benford Analysis", href: "/benford", icon: "🔢" },
         { label: "Investigation", href: "/investigation", icon: "🕵️" },
         { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
+        { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
+        { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
       ]} />
 
       <div className="mt-6 space-y-6">
