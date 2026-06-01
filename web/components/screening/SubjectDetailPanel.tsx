@@ -90,7 +90,7 @@ import { caughtErrorMessage } from "@/lib/client/error-utils";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Adverse Media", "Intelligence", "Deep Intel", "CDD/EDD", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "Adverse Media", "Intelligence", "Deep Intel", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
@@ -1436,16 +1436,17 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
           />
         )}
 
-        {activeTab === "CDD/EDD" && (
-          <CddTab superBrain={superBrain} subject={subject} />
-        )}
-
         {activeTab === "Evidence" && (
           <EvidenceTab superBrain={superBrain} subject={subject} />
         )}
 
         {activeTab === "Adverse Media" && (
-          <AdverseMediaTab subject={subject} news={news} superBrain={superBrain} />
+          <AdverseMediaTab
+            subject={subject}
+            news={news}
+            superBrain={superBrain}
+            screeningAdverseMedia={screening.status === "success" ? screening.result.adverseMedia : undefined}
+          />
         )}
 
       </div>
@@ -1497,10 +1498,12 @@ function AdverseMediaTab({
   subject,
   news,
   superBrain,
+  screeningAdverseMedia,
 }: {
   subject: Subject;
   news: NewsSearchState;
   superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
+  screeningAdverseMedia?: import("@/lib/api/quickScreen.types").AdverseMediaSummary;
 }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [verdict, setVerdict] = useState<AmVerdict | null>(null);
@@ -1541,6 +1544,14 @@ function AdverseMediaTab({
 
   const tierStyle = TIER_STYLES[verdict?.riskTier ?? "unknown"] ?? TIER_STYLES["unknown"]!;
 
+  const amSevStyle: Record<string, string> = {
+    critical: "bg-red text-white",
+    high: "bg-red-dim text-red border border-red/20",
+    medium: "bg-amber-dim text-amber border border-amber/30",
+    low: "bg-blue-dim text-blue border border-blue/30",
+    none: "bg-bg-2 text-ink-3",
+  };
+
   return (
     <div className="space-y-4">
       {/* Header row */}
@@ -1557,6 +1568,76 @@ function AdverseMediaTab({
           {status === "loading" ? "Scanning…" : "↺ Rescan"}
         </button>
       </div>
+
+      {/* ── Worldwide Intel Feed (Lane C — live multi-source adverse media) ── */}
+      {screeningAdverseMedia && (
+        <div className="border border-hair-2 rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 bg-bg-1 border-b border-hair">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-10 uppercase tracking-wide-4 font-semibold text-ink-2">Worldwide Intel Feed</span>
+              <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9 font-bold uppercase ${amSevStyle[screeningAdverseMedia.severity] ?? amSevStyle["none"]!}`}>
+                {screeningAdverseMedia.severity}
+              </span>
+              {screeningAdverseMedia.found && (
+                <span className="text-9 font-mono text-ink-3">
+                  {screeningAdverseMedia.adverseCount} adverse · {screeningAdverseMedia.itemCount} items · via {screeningAdverseMedia.provider}
+                </span>
+              )}
+              {!screeningAdverseMedia.found && (
+                <span className="text-9 font-mono text-green">no adverse media detected</span>
+              )}
+            </div>
+          </div>
+          {screeningAdverseMedia.fatfPredicates.length > 0 && (
+            <div className="flex gap-1 flex-wrap px-3 pt-2">
+              {screeningAdverseMedia.fatfPredicates.map((p) => (
+                <span key={p} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9 bg-brand-dim text-brand">{p}</span>
+              ))}
+            </div>
+          )}
+          {screeningAdverseMedia.items.length > 0 ? (
+            <div className="divide-y divide-hair max-h-[360px] overflow-y-auto">
+              {screeningAdverseMedia.items.map((item) => (
+                <div key={item.id} className="px-3 py-2.5 hover:bg-bg-1 transition-colors">
+                  <div className="flex items-start gap-2 mb-1">
+                    <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-9 font-mono uppercase ${TIER_STYLES[item.severity] ?? TIER_STYLES["unknown"]!}`}>
+                      {item.severity}
+                    </span>
+                    {/^https?:\/\//i.test(item.url) ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-11 text-brand hover:underline leading-snug"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      <span className="text-11 text-ink-0 leading-snug">{item.title}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-9 font-mono text-ink-3">{item.source}</span>
+                    {item.publishedAt && (
+                      <span className="text-9 font-mono text-ink-3">{item.publishedAt.slice(0, 10)}</span>
+                    )}
+                    {item.language && item.language !== "en" && (
+                      <span className="text-9 font-mono text-amber bg-amber-dim px-1.5 py-px rounded-sm">{item.language}</span>
+                    )}
+                    {item.categories.map((c) => (
+                      <span key={c} className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9 bg-red-dim text-red">
+                        {c.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-3 py-3 text-11 text-ink-3">No adverse media articles found in live feed.</div>
+          )}
+        </div>
+      )}
 
       {status === "loading" && (
         <div className="text-11 text-ink-2 animate-pulse">Running MLRO-grade adverse media scan…</div>
@@ -2879,71 +2960,6 @@ function formatDoubleMetaphone(
   if (typeof dm === "string") return dm;
   if (Array.isArray(dm)) return dm.join(" / ");
   return [dm.primary, dm.alternate].filter(Boolean).join(" / ");
-}
-
-function CddTab({
-  superBrain,
-  subject,
-}: {
-  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState;
-  subject: Subject;
-}) {
-  const r = superBrain.status === "success" ? superBrain.result : null;
-  const runId = r?.audit?.runId ?? `run-${subject.id}`;
-  const modeIds = r?.typologies?.hits?.map((h) => h.id) ?? [];
-  const autoProposed = r?.redlines?.action ?? "D02_cleared_proceed";
-  const autoConfidence = r?.composite?.score != null ? r.composite.score / 100 : 0;
-
-  const pepList = r?.pep && r.pep.salience > 0
-    ? [{
-        role: r.pep.role,
-        tier: r.pep.tier as "national" | "supra_national" | "sub_national" | "regional_org" | "international_org" | null,
-        type: r.pep.type,
-        salience: r.pep.salience,
-        ...(r.pep.matchedRule ? { matchedRule: r.pep.matchedRule } : {}),
-        rationale: r.pep.rationale ?? "",
-      }]
-    : [];
-
-  return (
-    <div className="space-y-3">
-      <p className="text-11 text-ink-2">
-        Customer Due Diligence profile. PEP status and MLRO disposition are
-        drawn from the live brain result — no manual re-entry required.
-      </p>
-      {superBrain.status === "loading" && (
-        <div className="text-11 text-ink-2">Loading CDD data…</div>
-      )}
-      {pepList.length > 0 && <PepClassificationsList data={pepList} />}
-      {r?.pepAssessment?.isLikelyPEP && (
-        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2 text-xs">
-          <div className="text-ink-3 uppercase tracking-wide mb-1">PEP assessment</div>
-          <div className="flex flex-wrap gap-1">
-            {r.pepAssessment.matchedRoles.map((m, i) => (
-              <span
-                key={`${m.label}-${i}`}
-                className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-[10px] bg-violet-950/30 text-violet-300 border border-violet-500/40"
-              >
-                {m.label} · {m.tier}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      {r && (
-        <div className="rounded-md border border-hair-2 bg-bg-panel px-3 py-2">
-          <div className="text-xs uppercase tracking-wide text-ink-3 mb-2">MLRO disposition</div>
-          <DispositionButton
-            caseId={subject.id}
-            runId={runId}
-            modeIds={modeIds}
-            autoProposed={autoProposed}
-            autoConfidence={autoConfidence}
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 function EvidenceTab({
