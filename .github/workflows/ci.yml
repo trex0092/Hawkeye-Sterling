@@ -58,16 +58,7 @@ jobs:
       - name: Integration tests (API route handlers)
         # Imports Next.js route handlers directly with synthetic Request objects.
         # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
-        run: |
-          npx vitest run --config vitest.integration.ts --reporter=verbose 2>&1 | tee /tmp/integration-results.txt
-          EXIT=${PIPESTATUS[0]}
-          if [ "$EXIT" -ne 0 ]; then
-            echo "## Integration Test Failure" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            tail -100 /tmp/integration-results.txt >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit "$EXIT"
+        run: npx vitest run --config vitest.integration.ts --reporter=default
 
       - name: Brain audit
         run: npm run brain:audit
