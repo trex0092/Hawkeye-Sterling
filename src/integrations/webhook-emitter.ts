@@ -36,7 +36,8 @@ export type WebhookChannel =
   | 'audit_write_failure'
   | 'alert_four_eyes_orphan'
   | 'alert_four_eyes_tamper'
-  | 'alert_hallucination_gate_skip';
+  | 'alert_hallucination_gate_skip'
+  | 'alert_egress_gate_failure';
 
 const ENV_KEY: Record<WebhookChannel, string> = {
   verdict_escalate:              'WEBHOOK_VERDICT_ESCALATE',
@@ -50,6 +51,7 @@ const ENV_KEY: Record<WebhookChannel, string> = {
   alert_four_eyes_orphan:        'ALERT_WEBHOOK_URL',
   alert_four_eyes_tamper:        'ALERT_WEBHOOK_URL',
   alert_hallucination_gate_skip: 'ALERT_WEBHOOK_URL',
+  alert_egress_gate_failure:     'ALERT_WEBHOOK_URL',
 };
 
 const HMAC_SECRET_ENV = 'WEBHOOK_HMAC_SECRET';
