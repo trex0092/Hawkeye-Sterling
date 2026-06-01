@@ -722,7 +722,20 @@ export default function CddReviewPage() {
   const thStatic = "text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono";
 
   return (
-    <ModuleLayout asanaModule="cdd-review" asanaLabel="CDD Review">
+    <ModuleLayout
+      asanaModule="cdd-review"
+      asanaLabel="CDD Review"
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => { void runAdequacyCheck(); }}
+          disabled={adequacyLoading || enriched.length === 0}
+          className="text-13 font-semibold px-4 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors text-left"
+        >
+          {adequacyLoading ? "Assessing portfolio…" : "✦ AI Adequacy Check"}
+        </button>
+      }
+    >
       {/* ── Section 1: Module Header & KPIs ── */}
       <ModuleHero
 
@@ -745,25 +758,9 @@ export default function CddReviewPage() {
         ]}
       />
 
-      {/* ── Section 2: AI Adequacy Check ── */}
+      {/* ── Section 2: AI Adequacy Check — primary button moved to sidebar Actions ── */}
       <div className="mt-6 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => { void runAdequacyCheck(); }}
-            disabled={adequacyLoading || enriched.length === 0}
-            className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
-          >
-            {adequacyLoading ? (
-              <span className="flex items-center gap-1.5">
-                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Assessing portfolio…
-              </span>
-            ) : "✦ AI Adequacy Check"}
-          </button>
           {adequacy && (
             <button
               type="button"

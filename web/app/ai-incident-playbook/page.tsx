@@ -167,7 +167,17 @@ export default function AIIncidentPlaybookPage() {
   const playbook = selected ? (RESPONSE_PLAYBOOKS[selected.type] ?? DEFAULT_PLAYBOOK) : null;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-red-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-red-700 text-left"
+        >
+          {showForm ? "Cancel" : "Log AI Incident"}
+        </button>
+      }
+    >
       <ModuleFamilyBar
         suiteName="AI Governance"
         modules={[
@@ -185,8 +195,8 @@ export default function AIIncidentPlaybookPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Action bar */}
-        <div className="flex items-center justify-between">
+        {/* Action bar — Log AI Incident button moved to sidebar Actions */}
+        <div className="flex items-center justify-start">
           <div className="flex gap-4">
             <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
               <div className={`text-2xl font-bold ${openCount > 0 ? "text-red" : "text-emerald-400"}`}>{openCount}</div>
@@ -201,12 +211,6 @@ export default function AIIncidentPlaybookPage() {
               <div className="text-10 text-ink-2 mt-0.5">Total</div>
             </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
-          >
-            {showForm ? "Cancel" : "Log AI Incident"}
-          </button>
         </div>
 
         {/* Regulatory notice */}

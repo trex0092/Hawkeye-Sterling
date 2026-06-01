@@ -146,7 +146,17 @@ export default function VendorAIAuditPage() {
     score >= 80 ? "text-emerald-400" : score >= 60 ? "text-amber-400" : "text-red-400";
 
   return (
-    <ModuleLayout>
+    <ModuleLayout
+      sidebarActions={
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-indigo-700 text-left"
+        >
+          {showForm ? "Cancel" : "Assess New Vendor"}
+        </button>
+      }
+    >
       <ModuleFamilyBar
         suiteName="AI Governance"
         modules={[
@@ -164,15 +174,7 @@ export default function VendorAIAuditPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Action bar */}
-        <div className="flex items-center justify-end">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-          >
-            {showForm ? "Cancel" : "Assess New Vendor"}
-          </button>
-        </div>
+        {/* Assess New Vendor button moved to sidebar Actions */}
 
         {/* Regulatory notice */}
         <div className="bg-indigo-950/20 border border-indigo-500/30 rounded-lg p-4 text-sm text-indigo-300">
