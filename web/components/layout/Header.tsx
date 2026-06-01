@@ -25,8 +25,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
       { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
-      { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
-      { label: "🎓 Training", href: "/training", hint: "Staff AML certification tracker" },
+      { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan · training tracker" },
     ],
   },
   {
