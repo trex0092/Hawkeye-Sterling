@@ -174,7 +174,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[900px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
+                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[900px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (
