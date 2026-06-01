@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
@@ -375,6 +376,10 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
 }
 
 export default function CountryRiskPage() {
+  return <Suspense fallback={null}><CountryRiskInner /></Suspense>;
+}
+
+function CountryRiskInner() {
   const [query, setQuery] = useState("");
   const [depth, setDepth] = useState<"quick" | "full">("quick");
   const [loading, setLoading] = useState(false);
@@ -382,7 +387,11 @@ export default function CountryRiskPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Compare mode
-  const [mode, setMode] = useState<"single" | "compare">("single");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [mode, setMode] = useState<"single" | "compare">(
+    (searchParams.get("tab") as "single" | "compare") ?? "single"
+  );
   const [compareList, setCompareList] = useState<string[]>([]);
   const [compareInput, setCompareInput] = useState("");
   const [comparing, setComparing] = useState(false);
@@ -488,7 +497,7 @@ export default function CountryRiskPage() {
       <div className="flex items-center gap-2 mb-5">
         <button
           type="button"
-          onClick={() => setMode("single")}
+          onClick={() => { setMode("single"); router.replace("/country-risk?tab=single", { scroll: false }); }}
           className={`px-4 py-1.5 rounded text-12 font-medium transition-colors border ${
             mode === "single"
               ? "bg-brand text-white border-brand"
@@ -499,7 +508,7 @@ export default function CountryRiskPage() {
         </button>
         <button
           type="button"
-          onClick={() => setMode("compare")}
+          onClick={() => { setMode("compare"); router.replace("/country-risk?tab=compare", { scroll: false }); }}
           className={`px-4 py-1.5 rounded text-12 font-medium transition-colors border ${
             mode === "compare"
               ? "bg-brand text-white border-brand"

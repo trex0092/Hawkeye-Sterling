@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
@@ -60,7 +61,15 @@ const tabCls = (active: boolean) =>
   }`;
 
 export default function GleifPage() {
-  const [tab, setTab] = useState<"lookup" | "search">("lookup");
+  return <Suspense fallback={null}><GleifInner /></Suspense>;
+}
+
+function GleifInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [tab, setTab] = useState<"lookup" | "search">(
+    (searchParams.get("tab") as "lookup" | "search") ?? "lookup"
+  );
   const [lei, setLei] = useState("");
   const [query, setQuery] = useState("");
   const [depth, setDepth] = useState(5);
@@ -110,6 +119,7 @@ export default function GleifPage() {
 
   const switchTab = (t: "lookup" | "search") => {
     setTab(t); setLeiResult(null); setSearchResults([]); setError(null);
+    router.replace(`/gleif?tab=${t}`, { scroll: false });
   };
 
   return (

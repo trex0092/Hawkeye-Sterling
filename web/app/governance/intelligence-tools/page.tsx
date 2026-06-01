@@ -6,7 +6,8 @@
 // synthetic-identity cluster detector. No LLM dependency; everything
 // runs client-side.
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/ownershipChain";
@@ -48,7 +49,15 @@ const DEMO_TELEMETRY: IdentityTelemetry[] = [
 ];
 
 export default function IntelligenceToolsPage() {
-  const [tab, setTab] = useState<Tab>("ubo");
+  return <Suspense fallback={null}><IntelligenceToolsInner /></Suspense>;
+}
+
+function IntelligenceToolsInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>(
+    (searchParams.get("tab") as Tab) ?? "ubo"
+  );
   const [ownershipJson, setOwnershipJson] = useState<string>(JSON.stringify(DEMO_OWNERSHIP, null, 2));
   const [walletsJson, setWalletsJson] = useState<string>(JSON.stringify(DEMO_WALLETS, null, 2));
   const [telemetryJson, setTelemetryJson] = useState<string>(JSON.stringify(DEMO_TELEMETRY, null, 2));
@@ -113,7 +122,7 @@ export default function IntelligenceToolsPage() {
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); router.replace(`/governance/intelligence-tools?tab=${t.key}`, { scroll: false }); }}
             className={`px-4 py-2 text-12 font-medium border-b-2 -mb-px transition-colors ${
               tab === t.key
                 ? "border-brand text-brand bg-brand-dim"

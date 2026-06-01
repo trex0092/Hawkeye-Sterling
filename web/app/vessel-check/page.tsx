@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -91,7 +92,15 @@ const tabCls = (active: boolean) =>
   }`;
 
 export default function VesselCheckPage() {
-  const [mode, setMode] = useState<"single" | "batch">("single");
+  return <Suspense fallback={null}><VesselCheckInner /></Suspense>;
+}
+
+function VesselCheckInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [mode, setMode] = useState<"single" | "batch">(
+    (searchParams.get("tab") as "single" | "batch") ?? "single"
+  );
   const [imoNumber, setImoNumber] = useState("");
   const [batchImos, setBatchImos] = useState("");
   const [loading, setLoading] = useState(false);
@@ -184,7 +193,7 @@ export default function VesselCheckPage() {
               <button
                 key={m}
                 type="button"
-                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); setRiskProfile(null); }}
+                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); setRiskProfile(null); router.replace(`/vessel-check?tab=${m}`, { scroll: false }); }}
                 className={tabCls(mode === m)}
               >
                 {m === "single" ? "Single Vessel" : "Batch (CSV / list)"}
