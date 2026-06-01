@@ -22,6 +22,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -31,9 +34,11 @@ jobs:
           cache: npm
 
       - name: Install root dependencies
+        id: root_deps
         run: npm ci --include=dev --no-audit --no-fund
 
       - name: Install web dependencies
+        id: web_deps
         run: cd web && npm ci --include=dev --no-audit --no-fund
 
       - name: Cache TypeScript build output
@@ -47,43 +52,108 @@ jobs:
         # tsc must run before vitest so that any test importing dist/src/brain/*
         # (e.g. integration tests using @brain alias) resolves against the
         # freshly-compiled output, not a stale or absent dist/.
+        id: tsc
         run: npm run build
 
       - name: Type check
+        id: typecheck
         run: npm run typecheck
 
       - name: Tests
+        id: tests
         run: npx vitest run --reporter=default
 
       - name: Integration tests (API route handlers)
         # Imports Next.js route handlers directly with synthetic Request objects.
         # Requires: dist/ (compiled above) + web/node_modules (@/ aliases, next/server).
+        id: integration
         run: npx vitest run --config vitest.integration.ts --reporter=default
 
       - name: Brain audit
+        id: brain
         run: npm run brain:audit
 
       - name: Prefix extractor check
+        id: prefix
         run: node scripts/extract-prefixes.cjs > /tmp/prefixes.ts && test -s /tmp/prefixes.ts
 
       - name: Capabilities extractor check
+        id: caps
         run: test -f scripts/gen-capabilities.cjs
 
       - name: Red-flag extractor check
+        id: redflags
         run: test -f scripts/gen-redflags.cjs
 
       - name: Lethal-trifecta governance check (Control 5.08)
+        id: trifecta
         run: node scripts/lethal-trifecta-check.mjs
 
       - name: Prompt hash integrity check (FDL 10/2025 Art.18)
         # Ensures every SYSTEM_PROMPT constant matches the manifest hash.
         # Fails if prompt text changed without running --update (forces intentional tracking).
+        id: prompt_hashes
         run: node scripts/validate-prompt-hashes.mjs
 
       - name: Mode version governance check (FDL 10/2025 Art.16)
         # Fails in production if any reasoning mode lacks an explicit version pin with
         # MLRO/CO approval. Modes in 0.0.0-pending state are non-compliant.
+        id: mode_versions
         run: NODE_ENV=production node scripts/check-mode-versions.mjs
+
+      - name: Diagnose failure (posts PR comment showing which step failed)
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          STEP_ROOT_DEPS: ${{ steps.root_deps.outcome }}
+          STEP_WEB_DEPS: ${{ steps.web_deps.outcome }}
+          STEP_TSC: ${{ steps.tsc.outcome }}
+          STEP_TYPECHECK: ${{ steps.typecheck.outcome }}
+          STEP_TESTS: ${{ steps.tests.outcome }}
+          STEP_INTEGRATION: ${{ steps.integration.outcome }}
+          STEP_BRAIN: ${{ steps.brain.outcome }}
+          STEP_PREFIX: ${{ steps.prefix.outcome }}
+          STEP_CAPS: ${{ steps.caps.outcome }}
+          STEP_REDFLAGS: ${{ steps.redflags.outcome }}
+          STEP_TRIFECTA: ${{ steps.trifecta.outcome }}
+          STEP_PROMPT_HASHES: ${{ steps.prompt_hashes.outcome }}
+          STEP_MODE_VERSIONS: ${{ steps.mode_versions.outcome }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, urllib.request
+          sha = os.environ['GITHUB_SHA'][:8]
+          rows = [
+            ('root_deps',    os.environ['STEP_ROOT_DEPS']),
+            ('web_deps',     os.environ['STEP_WEB_DEPS']),
+            ('tsc',          os.environ['STEP_TSC']),
+            ('typecheck',    os.environ['STEP_TYPECHECK']),
+            ('tests',        os.environ['STEP_TESTS']),
+            ('integration',  os.environ['STEP_INTEGRATION']),
+            ('brain',        os.environ['STEP_BRAIN']),
+            ('prefix',       os.environ['STEP_PREFIX']),
+            ('caps',         os.environ['STEP_CAPS']),
+            ('redflags',     os.environ['STEP_REDFLAGS']),
+            ('trifecta',     os.environ['STEP_TRIFECTA']),
+            ('prompt_hashes',os.environ['STEP_PROMPT_HASHES']),
+            ('mode_versions',os.environ['STEP_MODE_VERSIONS']),
+          ]
+          icon = lambda o: 'x' if o == 'failure' else ('ok' if o == 'success' else '-')
+          body = f"Build diagnostic `{sha}` - step outcomes:\n\n| Step | Outcome |\n|------|---------|"
+          for name, outcome in rows:
+            body += f"\n| {name} | {icon(outcome)} {outcome} |"
+          data = json.dumps({'body': body}).encode()
+          repo = os.environ['GITHUB_REPOSITORY']
+          pr   = os.environ['PR_NUM']
+          req  = urllib.request.Request(
+            f'https://api.github.com/repos/{repo}/issues/{pr}/comments',
+            data=data,
+            headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                     'Content-Type': 'application/json'},
+          )
+          urllib.request.urlopen(req)
+          print('Diagnostic comment posted')
+          PYEOF
 
       - name: Build job summary
         if: always()
@@ -92,9 +162,19 @@ jobs:
             echo "## Build — \`${GITHUB_SHA:0:8}\`"
             echo "| Step | Result |"
             echo "|------|--------|"
-            echo "| TypeScript compile | completed |"
-            echo "| Unit + integration tests | completed |"
-            echo "| Governance (prompt-hash, lethal-trifecta, mode-versions) | completed |"
+            echo "| root_deps | ${{ steps.root_deps.outcome }} |"
+            echo "| web_deps | ${{ steps.web_deps.outcome }} |"
+            echo "| tsc | ${{ steps.tsc.outcome }} |"
+            echo "| typecheck | ${{ steps.typecheck.outcome }} |"
+            echo "| tests | ${{ steps.tests.outcome }} |"
+            echo "| integration | ${{ steps.integration.outcome }} |"
+            echo "| brain | ${{ steps.brain.outcome }} |"
+            echo "| prefix | ${{ steps.prefix.outcome }} |"
+            echo "| caps | ${{ steps.caps.outcome }} |"
+            echo "| redflags | ${{ steps.redflags.outcome }} |"
+            echo "| trifecta | ${{ steps.trifecta.outcome }} |"
+            echo "| prompt_hashes | ${{ steps.prompt_hashes.outcome }} |"
+            echo "| mode_versions | ${{ steps.mode_versions.outcome }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   security-audit:
