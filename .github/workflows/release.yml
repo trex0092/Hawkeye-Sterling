@@ -14,17 +14,17 @@ name: Release
 # An image is never signed before it has passed a CVE scan.
 #
 # pull_request trigger: satisfies the GitHub required-workflow check on PRs.
-# The pr-guard job below runs and exits 0 on non-tag events so GitHub counts
-# the workflow as success (not failure) even when build/sign jobs are skipped.
-# branches-ignore: ['**'] explicitly prevents branch pushes from triggering
-# this workflow (only v*.*.* tag pushes should run the build/sign pipeline).
+# The pr-guard job below runs and exits 0 on non-tag events (branch pushes
+# and PR runs) so GitHub counts the workflow as success instead of failure
+# when the build/sign jobs are all skipped.
+#
+# Note: GitHub fires the push trigger for branch pushes when no branches
+# filter is set. The pr-guard job catches those events via its if condition.
 
 on:
   push:
     tags:
       - 'v*.*.*'
-    branches-ignore:
-      - '**'
   pull_request:
     branches: [main]
 
