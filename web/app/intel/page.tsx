@@ -736,7 +736,10 @@ export default function IntelPage() {
           </div>
           <iframe
             key={activeModule.href}
-            src={activeModule.href}
+            // Append ?embed=1 so ModuleLayout strips the header, sidebar,
+            // regulatory ticker, and right-rail feed — otherwise the iframe
+            // renders the entire app chrome nested inside the panel.
+            src={`${activeModule.href}${activeModule.href.includes("?") ? "&" : "?"}embed=1`}
             title={activeModule.label}
             className="w-full border-0 bg-bg-0"
             style={{ minHeight: 720, display: "block" }}
