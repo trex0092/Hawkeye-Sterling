@@ -34,6 +34,35 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
   } catch { /* not available in this runtime */ }
 }
 
+// ── Secrets bundle loader ────────────────────────────────────────────────────
+// HAWKEYE_SECRETS is a single JSON object in Netlify env vars that holds all
+// optional vendor API keys. It is unpacked into individual process.env entries
+// at startup so the rest of the codebase reads them normally.
+//
+// Individual env vars always win — the bundle only fills gaps.
+// Keys already set explicitly are never overwritten.
+//
+// This keeps Netlify env var count low: ~20 required vars + 1 bundle,
+// instead of 60+ individual entries.
+
+function loadSecretsBundle(): void {
+  const raw = process.env['HAWKEYE_SECRETS'];
+  if (!raw?.trim()) return;
+  try {
+    const bundle = JSON.parse(raw) as Record<string, unknown>;
+    let loaded = 0;
+    for (const [key, value] of Object.entries(bundle)) {
+      if (typeof value === 'string' && value.trim() && !process.env[key]) {
+        process.env[key] = value;
+        loaded++;
+      }
+    }
+    console.info(`[startup] HAWKEYE_SECRETS bundle: ${loaded} keys loaded, ${Object.keys(bundle).length - loaded} skipped (already set)`);
+  } catch (err) {
+    console.error('[startup] HAWKEYE_SECRETS is not valid JSON — bundle not loaded:', err instanceof Error ? err.message : String(err));
+  }
+}
+
 // ── Startup environment validation ──────────────────────────────────────────
 // Validate required secrets at server startup so a misconfigured deploy
 // surfaces immediately in logs rather than silently failing on first request.
@@ -183,6 +212,7 @@ export async function register() {
   // was set after module evaluation (defensive — should already be set by now).
   if (process.env.NEXT_RUNTIME !== 'edge') {
     applySnapshotPolyfill((globalThis as Record<string, unknown>).AsyncLocalStorage)
+    loadSecretsBundle();  // must run before validateSecrets so bundled keys are visible
     validateSecrets();
   }
 
