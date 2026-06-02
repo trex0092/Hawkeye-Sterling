@@ -88,9 +88,18 @@ async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, Tria
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ items: compact }),
+    credentials: "same-origin",
   });
 
-  if (!res.ok) throw new Error(`Triage API error: ${res.status}`);
+  if (!res.ok) {
+    // Surface the actual upstream reason so the caller's UI message reflects
+    // what really failed (401/403 = session aged out; 5xx = upstream).
+    const body = await res.json().catch(() => ({} as { error?: string }));
+    const reason = (body as { error?: string }).error ?? `HTTP ${res.status}`;
+    const err = new Error(reason);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
   const data = await res.json().catch(() => ({})) as {
     ok: boolean;
     results: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
@@ -129,7 +138,16 @@ function RegulatoryFeedPanel() {
       setTriageMap(map);
     } catch (err) {
       console.error("Triage failed:", err);
-      if (mountedRef.current) setTriageError("AI triage unavailable — API key not configured.");
+      if (!mountedRef.current) return;
+      const status = (err as { status?: number }).status;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (status === 401 || status === 403) {
+        setTriageError("AI triage paused — please sign in again to refresh your session.");
+      } else if (status && status >= 500) {
+        setTriageError(`AI triage upstream error (HTTP ${status}) — retrying on next feed refresh.`);
+      } else {
+        setTriageError(`AI triage unavailable — ${msg}`);
+      }
     } finally {
       if (mountedRef.current) setTriageLoading(false);
     }
