@@ -40,60 +40,57 @@ jobs:
     timeout-minutes: 20
     needs: guard
     if: startsWith(github.ref, 'refs/tags/v')
-    outputs:
-      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          node-version: 22.x
-          cache: npm
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install root dependencies
-        run: npm ci --include=dev --no-audit --no-fund
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          sbom: true
+          provenance: true
 
-      - name: Install web dependencies
-        run: cd web && npm ci --include=dev --no-audit --no-fund
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
 
-      - name: Build TypeScript
-        run: npm run build
-
-      - name: Create dist tarball
+      - name: Sign image
         run: |
-          tar -czf hawkeye-sterling-${{ github.ref_name }}.tar.gz \
-            dist/ web/lib/ web/app/ package.json \
-            --exclude='**/node_modules' --exclude='**/.next'
+          cosign sign --yes \
+            ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
 
-      - name: Compute SHA-256 hashes
-        id: hash
-        run: |
-          sha256sum hawkeye-sterling-${{ github.ref_name }}.tar.gz > checksums.sha256
-          echo "hashes=$(base64 -w0 < checksums.sha256)" >> "$GITHUB_OUTPUT"
+      - name: Install Syft (SBOM)
+        uses: anchore/sbom-action/download-syft@v0
 
       - name: Generate SBOM
         run: |
-          npm sbom --sbom-format cyclonedx --sbom-type library --omit dev \
-            > hawkeye-sterling-${{ github.ref_name }}.cdx.json \
-            || npm sbom --sbom-format cyclonedx --sbom-type library \
-              > hawkeye-sterling-${{ github.ref_name }}.cdx.json
+          syft ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
+            -o spdx-json=sbom.spdx.json
 
-      - name: Upload release artifacts
+      - name: Attest SBOM
+        run: |
+          cosign attest --yes \
+            --predicate sbom.spdx.json \
+            --type spdxjson \
+            ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-artifacts-${{ github.ref_name }}
-          path: |
-            hawkeye-sterling-${{ github.ref_name }}.tar.gz
-            hawkeye-sterling-${{ github.ref_name }}.cdx.json
-            checksums.sha256
-
-      - name: Attach artifacts to GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            hawkeye-sterling-${{ github.ref_name }}.tar.gz
-            hawkeye-sterling-${{ github.ref_name }}.cdx.json
-            checksums.sha256
+          name: sbom-spdx
+          path: sbom.spdx.json
 
   scan-osint-bridge:
     name: Trivy scan — osint-bridge
@@ -101,77 +98,33 @@ jobs:
     timeout-minutes: 15
     needs: build-and-sign
     if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      security-events: write
-      packages: read
-      contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build image locally for scanning
-        uses: docker/build-push-action@v6
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          context: services/osint-bridge
-          push: false
-          load: true
-          tags: osint-bridge:scan-${{ github.ref_name }}
-
-      - name: Trivy container scan
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          image-ref: osint-bridge:scan-${{ github.ref_name }}
+          image-ref: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
           format: sarif
-          output: trivy-container.sarif
-          exit-code: '1'
+          output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          ignore-unfixed: false
+          exit-code: '1'
 
-      - name: Upload SARIF to Security tab
+      - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: trivy-container.sarif
-          category: trivy-container
+          sarif_file: trivy-results.sarif
 
   sign-osint-bridge:
     name: Cosign sign — osint-bridge
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     needs: [build-and-sign, scan-osint-bridge]
     if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      id-token: write
-      packages: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push osint-bridge image
-        id: docker-build
-        uses: docker/build-push-action@v6
-        with:
-          context: services/osint-bridge
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/osint-bridge:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/osint-bridge:latest
-
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
-      - name: Sign image with Cosign (keyless OIDC)
+      - name: Sign osint-bridge image
         run: |
           cosign sign --yes \
-            ghcr.io/${{ github.repository_owner }}/osint-bridge@${{ steps.docker-build.outputs.digest }}
+            ghcr.io/${{ github.repository }}/osint-bridge:${{ github.ref_name }}
