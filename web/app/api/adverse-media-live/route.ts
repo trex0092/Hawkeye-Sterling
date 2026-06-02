@@ -302,7 +302,7 @@ function buildFallbackSummary(
   riskRating: string,
 ): string {
   if (articles.length === 0) {
-    return `No adverse media identified for "${subjectName}" across the GDELT 10-year corpus (FDL 10/2025 Art.19 lookback). Ongoing monitoring per FATF R.10 and FDL 10/2025 Art.10 continues; document this negative finding to the Art.19 audit log.`;
+    return `No adverse media identified for "${subjectName}" across the multi-source adverse-media corpus (lifetime — GDELT + 12 vendor feeds, FDL 10/2025 Art.19). Ongoing monitoring per FATF R.10 and FDL 10/2025 Art.10 continues; document this negative finding to the Art.19 audit log.`;
   }
   const sourceList = [...new Set(articles.slice(0, 3).map((a) => a.source))].join(", ");
   return `Adverse media search for "${subjectName}" returned ${articles.length} article(s) (risk score: ${riskScore}/100 — ${riskRating}). ` +

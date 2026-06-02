@@ -570,7 +570,7 @@ const COMPLIANCE_MAP: Record<string, Array<{ fn: string; sev: "critical" | "majo
     { fn: "Real-time Google News RSS feed (multi-locale)",    sev: "minor"    },
   ],
   "gdelt-live-feed": [
-    { fn: "Adverse media auto-detection (GDELT 10-year lookback, Art.19)", sev: "major" },
+    { fn: "Adverse media auto-detection (GDELT lifetime corpus + 12-vendor fan-out, Art.19)", sev: "major" },
     { fn: "Weaponized Brain live news feed — auto-OSINT on every run",     sev: "major" },
   ],
 };
