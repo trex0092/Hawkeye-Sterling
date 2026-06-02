@@ -12,6 +12,7 @@
 
 import { freeRssAdapter } from "./freeRssAggregator";
 import { flagOn } from "./featureFlags";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -104,7 +105,7 @@ export const NULL_NEWS_ADAPTER: NewsAdapter = {
 
 // ── NewsAPI.org — free tier 100 req/day ─────────────────────────────────
 function newsApiAdapter(): NewsAdapter {
-  const key = process.env["NEWSAPI_API_KEY"];
+  const key = process.env["NEWSAPI_API_KEY"] ?? HS_DEFAULTS.NEWSAPI_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -152,7 +153,7 @@ function newsApiAdapter(): NewsAdapter {
 
 // ── MarketAux — free tier 100 req/day, financial news + sentiment ───────
 function marketAuxAdapter(): NewsAdapter {
-  const key = process.env["MARKETAUX_API_KEY"];
+  const key = process.env["MARKETAUX_API_KEY"] ?? HS_DEFAULTS.MARKETAUX_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -203,7 +204,7 @@ function marketAuxAdapter(): NewsAdapter {
 
 // ── GNews — free tier 100 req/day, Google News API ──────────────────────
 function gNewsAdapter(): NewsAdapter {
-  const key = process.env["GNEWS_API_KEY"];
+  const key = process.env["GNEWS_API_KEY"] ?? HS_DEFAULTS.GNEWS_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -250,7 +251,7 @@ function gNewsAdapter(): NewsAdapter {
 
 // ── Mediastack — free tier 500 req/month, multi-language ────────────────
 function mediaStackAdapter(): NewsAdapter {
-  const key = process.env["MEDIASTACK_API_KEY"];
+  const key = process.env["MEDIASTACK_API_KEY"] ?? HS_DEFAULTS.MEDIASTACK_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -294,7 +295,7 @@ function mediaStackAdapter(): NewsAdapter {
 
 // ── Currents API — free tier unlimited ──────────────────────────────────
 function currentsAdapter(): NewsAdapter {
-  const key = process.env["CURRENTS_API_KEY"];
+  const key = process.env["CURRENTS_API_KEY"] ?? HS_DEFAULTS.CURRENTS_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -337,7 +338,7 @@ function currentsAdapter(): NewsAdapter {
 
 // ── NewsCatcher — free tier 50 req/day ──────────────────────────────────
 function newsCatcherAdapter(): NewsAdapter {
-  const key = process.env["NEWSCATCHER_API_KEY"];
+  const key = process.env["NEWSCATCHER_API_KEY"] ?? HS_DEFAULTS.NEWSCATCHER_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -658,7 +659,7 @@ function guardianAdapter(): NewsAdapter {
 
 // ── New York Times Article Search — free tier ──────────────────────────
 function nytAdapter(): NewsAdapter {
-  const key = process.env["NYT_API_KEY"];
+  const key = process.env["NYT_API_KEY"] ?? HS_DEFAULTS.NYT_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -875,7 +876,7 @@ function polygonAdapter(): NewsAdapter {
 
 // ── Tiingo News — premium ──────────────────────────────────────────────
 function tiingoAdapter(): NewsAdapter {
-  const key = process.env["TIINGO_API_KEY"];
+  const key = process.env["TIINGO_API_KEY"] ?? HS_DEFAULTS.TIINGO_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -999,7 +1000,7 @@ function bbcNewsAdapter(): NewsAdapter {
 
 // ── NewsData.io — free key tier ────────────────────────────────────────
 function newsDataAdapter(): NewsAdapter {
-  const key = process.env["NEWSDATA_API_KEY"];
+  const key = process.env["NEWSDATA_API_KEY"] ?? HS_DEFAULTS.NEWSDATA_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -1042,7 +1043,7 @@ function newsDataAdapter(): NewsAdapter {
 
 // ── WorldNewsAPI — free key tier ───────────────────────────────────────
 function worldNewsAdapter(): NewsAdapter {
-  const key = process.env["WORLDNEWS_API_KEY"];
+  const key = process.env["WORLDNEWS_API_KEY"] ?? HS_DEFAULTS.WORLDNEWS_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -1084,7 +1085,7 @@ function worldNewsAdapter(): NewsAdapter {
 
 // ── AlphaVantage News & Sentiment — free key tier ─────────────────────
 function alphaVantageAdapter(): NewsAdapter {
-  const key = process.env["ALPHAVANTAGE_API_KEY"];
+  const key = process.env["ALPHAVANTAGE_API_KEY"] ?? HS_DEFAULTS.ALPHAVANTAGE_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,
@@ -1771,7 +1772,7 @@ function cryptopanicAdapter(): NewsAdapter {
 
 // ── MediaCloud — free academic / open news index ──────────────────────
 function mediaCloudAdapter(): NewsAdapter {
-  const key = process.env["MEDIACLOUD_API_KEY"];
+  const key = process.env["MEDIACLOUD_API_KEY"] ?? HS_DEFAULTS.MEDIACLOUD_API_KEY;
   if (!key) return NULL_NEWS_ADAPTER;
   return {
     isAvailable: () => true,

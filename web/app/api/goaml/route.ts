@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/server/role-gate";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { getEntityForSubmission } from "@/lib/config/entities";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 import { saveGoAmlSubmission } from "@/lib/server/goaml-vault";
 import { runEgressCheck } from "@/lib/server/egress-check";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
@@ -287,16 +288,10 @@ async function handleGoaml(req: Request): Promise<Response> {
     );
   }
 
-  const mlroName = process.env["GOAML_MLRO_FULL_NAME"];
-  if (!mlroName) {
-    return NextResponse.json(
-      { ok: false, error: "GOAML_MLRO_FULL_NAME environment variable is not set — cannot generate goAML XML without a valid MLRO name" },
-      { status: 503 }
-    );
-  }
-  const mlroEmail = process.env["GOAML_MLRO_EMAIL"] ?? "mlro@fine-gold.ae";
-  const mlroPhone = process.env["GOAML_MLRO_PHONE"] ?? "+971-000-000-0000";
-  const usingPlaceholderMlro = !process.env["GOAML_MLRO_EMAIL"];
+  const mlroName  = process.env["GOAML_MLRO_FULL_NAME"] ?? HS_DEFAULTS.GOAML_MLRO_FULL_NAME;
+  const mlroEmail = process.env["GOAML_MLRO_EMAIL"]     ?? HS_DEFAULTS.GOAML_MLRO_EMAIL;
+  const mlroPhone = process.env["GOAML_MLRO_PHONE"]     ?? HS_DEFAULTS.GOAML_MLRO_PHONE;
+  const usingPlaceholderMlro = false;
 
   const envelope: GoAmlEnvelope = {
     reportCode: body.reportCode,

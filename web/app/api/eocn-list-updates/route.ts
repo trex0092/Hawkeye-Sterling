@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 import { getJson, setJson } from "@/lib/server/store";
 import {
   fixturePayload,
@@ -231,10 +232,7 @@ async function fetchUpstream(): Promise<{
   url?: string;
   error?: string;
 }> {
-  const url = process.env["EOCN_FEED_URL"];
-  if (!url) {
-    return { ok: false, error: "EOCN_FEED_URL not configured" };
-  }
+  const url = process.env["EOCN_FEED_URL"] ?? HS_DEFAULTS.EOCN_FEED_URL;
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 12_000);

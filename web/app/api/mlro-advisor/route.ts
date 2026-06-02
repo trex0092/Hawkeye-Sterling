@@ -452,7 +452,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const groqKey = process.env["GROQ_API_KEY"];
   // Use Groq when: no Claude key available, OR GROQ_PREFERRED=1 and mode is speed.
   // EDD / multi_perspective / deep always falls through to Claude for full pipeline.
-  const groqPreferred = process.env["GROQ_PREFERRED"] === "1";
+  const groqPreferred = (process.env["GROQ_PREFERRED"] ?? "1") === "1";
 
   let body: Body;
   try {

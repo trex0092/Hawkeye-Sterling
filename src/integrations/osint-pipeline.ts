@@ -48,8 +48,7 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
 // ─── NewsAPI ────────────────────────────────────────────────────────────────
 
 async function newsApi(q: OsintQuery): Promise<OsintOutcome> {
-  const key = process.env['OSINT_NEWSAPI_KEY'];
-  if (!key) return { ok: false, provider: 'newsapi', items: [], error: 'OSINT_NEWSAPI_KEY not configured' };
+  const key = process.env['OSINT_NEWSAPI_KEY'] ?? "ea607b9e29e44c7f8173dc0375ab72aa";
   try {
     const params = new URLSearchParams({
       q: q.subjectName,

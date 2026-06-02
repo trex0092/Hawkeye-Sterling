@@ -181,7 +181,7 @@ async function extractArticle(
 export async function collectFromFeed(
   feed: PlaywrightFeedConfig,
 ): Promise<MediaArticle[]> {
-  if (process.env['PLAYWRIGHT_MEDIA_ENABLED'] !== '1') return [];
+  if ((process.env['PLAYWRIGHT_MEDIA_ENABLED'] ?? '1') !== '1') return [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let pw: any;

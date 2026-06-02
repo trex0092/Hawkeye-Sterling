@@ -23,7 +23,7 @@ export async function checkMarble(
   name: string,
   entityType?: string,
 ): Promise<MarbleResult | null> {
-  const base = process.env["MARBLE_API_URL"];
+  const base = process.env["MARBLE_API_URL"] ?? "https://api.marble.co";
   const key = process.env["MARBLE_API_KEY"];
   if (!base || !key) return null;
 

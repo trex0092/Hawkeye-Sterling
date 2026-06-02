@@ -30,13 +30,10 @@ const FETCH_TIMEOUT_MS = 20_000;
 // (comma-separated dataset IDs). Each ID is the slug from the OpenSanctions
 // dataset URL — e.g. `ae_local_terrorists` from
 // https://data.opensanctions.org/datasets/latest/ae_local_terrorists/.
-const DEFAULT_DATASETS = [
-  "ae_local_terrorists", // UAE Local Terrorist List — fills the existing UAE EOCN gap
-];
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 export function resolveDatasetList(): string[] {
-  const env = process.env["OPENSANCTIONS_DATASETS"];
-  if (!env) return DEFAULT_DATASETS;
+  const env = process.env["OPENSANCTIONS_DATASETS"] ?? HS_DEFAULTS.OPENSANCTIONS_DATASETS;
   return env.split(",").map((s: string) => s.trim()).filter(Boolean);
 }
 
