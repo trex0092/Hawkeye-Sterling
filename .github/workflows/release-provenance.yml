@@ -33,7 +33,7 @@ jobs:
       hashes: ${{ steps.read.outputs.hashes }}
     steps:
       - name: Download release artifacts from triggering run
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-artifacts-${{ github.event.workflow_run.head_branch }}
           run-id: ${{ github.event.workflow_run.id }}
