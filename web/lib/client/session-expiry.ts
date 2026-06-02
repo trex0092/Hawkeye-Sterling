@@ -23,8 +23,14 @@
 //   - Excludes /api/auth/me/logout-style negative results — only event-
 //     fires once per page lifetime (resets on navigation).
 
+import { verifySessionDead } from "./verify-session";
+
 const EVENT_NAME = "hawkeye:session-expired" as const;
 const PATCHED_FLAG = "__hawkeyeSessionExpiryPatched";
+// Debounce window after a watched 401 before re-checking /api/auth/me.
+// Long enough to swallow sign-in handshake / cookie-race transients,
+// short enough that a genuinely expired session prompts the user quickly.
+const VERIFY_DEBOUNCE_MS = 800;
 
 const EXCLUDED_PATHS: readonly string[] = [
   "/api/auth/login",
@@ -90,21 +96,44 @@ export function reportSessionExpired(): void {
   }
 }
 
-/** Idempotently install the same-origin /api 401 → session-expired interceptor. */
+/** Idempotently install the same-origin /api 401 → session-expired interceptor.
+ *
+ * Single 401s do NOT immediately fire the modal: they queue a debounced
+ * /api/auth/me re-check. Only when /api/auth/me ALSO returns 401/403 do we
+ * dispatch the session-expired event. This prevents the modal from popping
+ * during sign-in handshakes or transient route-level 401s that aren't
+ * actually session expiry. */
 export function installSessionExpiryInterceptor(): void {
   if (typeof window === "undefined") return;
   const w = window as PatchableWindow;
   if (w[PATCHED_FLAG]) return;
   w[PATCHED_FLAG] = true;
 
+  let pendingVerifyTimer: ReturnType<typeof setTimeout> | null = null;
+  let verifyInFlight = false;
+
+  const scheduleVerify = (): void => {
+    if (alreadyDispatched || verifyInFlight || pendingVerifyTimer !== null) return;
+    pendingVerifyTimer = setTimeout(() => {
+      pendingVerifyTimer = null;
+      verifyInFlight = true;
+      void verifySessionDead()
+        .then((dead) => {
+          if (dead) reportSessionExpired();
+        })
+        .finally(() => {
+          verifyInFlight = false;
+        });
+    }, VERIFY_DEBOUNCE_MS);
+  };
+
   const original = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const shouldWatch = isSameOriginApiUrl(input);
     const res = await original(input, init);
     if (shouldWatch && res.status === 401) {
-      // Fire-and-forget so we never delay the caller's resolution.
       try {
-        reportSessionExpired();
+        scheduleVerify();
       } catch {
         /* never bubble up — the original response goes through unchanged */
       }

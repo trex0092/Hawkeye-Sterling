@@ -33,7 +33,9 @@ export type MediaSourceType =
   | 'court_ruling'
   | 'interpol_notice'
   | 'government_press_release'
-  | 'financial_intelligence';
+  | 'financial_intelligence'
+  | 'playwright-web'
+  | 'social-media';
 
 export interface FeedConfig {
   id: string;

@@ -6,17 +6,43 @@
 // MLROs can force-refresh from the Screening page without needing to
 // paste a token.
 //
-// Calls runIngestionAll() directly from this Lambda — same code path
-// the cron functions use — and returns the per-adapter summary.
+// Previously this awaited runIngestionAll() synchronously, which blocked
+// the Lambda for 15-30 s. Netlify's edge inactivity timeout (~26 s) would
+// then kill the connection and the browser would see an HTML 504 page
+// even when the work was actually proceeding. To fix the user-visible
+// "Refresh failed (HTTP 504)" banner, the route now:
+//
+//   1. Generates a jobId and writes a "running" status record.
+//   2. Returns 202 { jobId, status: "running" } within a few ms.
+//   3. Continues runIngestionAll() in the background, writing the
+//      terminal status when it finishes.
+//
+// The Screening page polls /api/sanctions/refresh-status/[jobId] for
+// the outcome. If the background work outlives the Lambda's
+// maxDuration, the status will remain "running" until the next refresh
+// — the client gracefully shows a "still running, check back later"
+// message in that case instead of flashing an error.
 
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { withGuard, type RequestContext } from "@/lib/server/guard";
 import { invalidateCandidateCache } from "@/lib/server/candidates-loader";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { writeJobStatus, type SanctionsJobRecord } from "@/lib/server/sanctions-jobs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+interface IngestionResult {
+  ok: boolean;
+  at: string;
+  durationMs: number;
+  ok_count: number;
+  failed_count: number;
+  anyWriteFailed: boolean;
+  summary: Array<{ listId: string; recordCount: number; errors: string[] }>;
+}
 
 async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
   let runIngestionAll: (_label: string) => Promise<unknown>;
@@ -36,48 +62,91 @@ async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promis
     );
   }
 
+  const jobId = randomUUID();
   const triggeredAt = new Date().toISOString();
-  try {
-    const result = (await runIngestionAll("operator-refresh")) as {
-      ok: boolean;
-      at: string;
-      durationMs: number;
-      ok_count: number;
-      failed_count: number;
-      anyWriteFailed: boolean;
-      summary: Array<{ listId: string; recordCount: number; errors: string[] }>;
-    };
+  const initial: SanctionsJobRecord = {
+    jobId,
+    status: "running",
+    tenantId: ctx.tenantId,
+    startedAt: triggeredAt,
+  };
+  await writeJobStatus(initial);
 
-    // Drop the in-process candidate cache so the next screening request
-    // reloads fresh entities from the blobs we just wrote.
-    invalidateCandidateCache();
+  void writeAuditChainEntry(
+    { event: "sanctions.ingestion_triggered", actor: ctx.apiKey.id, meta: { jobId } },
+    ctx.tenantId,
+  ).catch((e: unknown) =>
+    console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)),
+  );
 
-    void writeAuditChainEntry(
-      { event: "sanctions.ingestion_triggered", actor: ctx.apiKey.id, meta: { ok_count: (result as { ok_count?: number }).ok_count, failed_count: (result as { failed_count?: number }).failed_count } },
-      ctx.tenantId,
-    ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
+  // Fire-and-forget the heavy work so the response can return inside
+  // the edge inactivity window. Writes the terminal status when
+  // runIngestionAll resolves OR rejects so the status endpoint always
+  // converges to a known state.
+  void (async () => {
+    try {
+      const result = (await runIngestionAll("operator-refresh")) as IngestionResult;
+      invalidateCandidateCache();
+      await writeJobStatus({
+        jobId,
+        status: "completed",
+        tenantId: ctx.tenantId,
+        startedAt: triggeredAt,
+        completedAt: new Date().toISOString(),
+        result: {
+          ok: result.ok,
+          durationMs: result.durationMs,
+          ok_count: result.ok_count,
+          failed_count: result.failed_count,
+          anyWriteFailed: result.anyWriteFailed,
+          summary: result.summary,
+        },
+      });
+      void writeAuditChainEntry(
+        {
+          event: "sanctions.ingestion_completed",
+          actor: ctx.apiKey.id,
+          meta: { jobId, ok_count: result.ok_count, failed_count: result.failed_count },
+        },
+        ctx.tenantId,
+      ).catch((e: unknown) =>
+        console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)),
+      );
+    } catch (err) {
+      console.error("[sanctions/operator-refresh] background ingestion failed:", err);
+      const detail = err instanceof Error ? err.message : String(err);
+      await writeJobStatus({
+        jobId,
+        status: "failed",
+        tenantId: ctx.tenantId,
+        startedAt: triggeredAt,
+        completedAt: new Date().toISOString(),
+        error: detail,
+      });
+      void writeAuditChainEntry(
+        {
+          event: "sanctions.ingestion_failed",
+          actor: ctx.apiKey.id,
+          meta: { jobId, error: detail },
+        },
+        ctx.tenantId,
+      ).catch((e: unknown) =>
+        console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)),
+      );
+    }
+  })();
 
-    return NextResponse.json(
-      {
-        triggeredAt,
-        ...result,
-        hint: result.ok
-          ? "Ingestion completed. Reload the page in ~10 s — ticker timestamps should update."
-          : "Ingestion completed with errors. Check /api/sanctions/last-errors for per-adapter detail.",
-      },
-      { status: result.ok ? 200 : 502 },
-    );
-  } catch (err) {
-    console.error("[sanctions/operator-refresh] runIngestionAll threw:", err);
-    return NextResponse.json(
-      {
-        ok: false,
-        triggeredAt,
-        error: "Ingestion run failed — see server logs for details.",
-      },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json(
+    {
+      ok: true,
+      jobId,
+      status: "running",
+      triggeredAt,
+      statusUrl: `/api/sanctions/refresh-status/${jobId}`,
+      hint: "Ingestion started — poll the statusUrl every few seconds until status is completed or failed.",
+    },
+    { status: 202 },
+  );
 }
 
 export const POST = withGuard(handleOperatorRefresh);
