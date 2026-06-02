@@ -38,7 +38,7 @@ export const maxDuration = 30;
 // ─── Shared types (must mirror sign/route.ts) ────────────────────────────────
 
 interface AuditActor {
-  role: "analyst" | "compliance_assistant" | "co" | "mlro" | "managing_director";
+  role: "compliance_assistant" | "co" | "mlro" | "managing_director";
   name?: string;
 }
 
@@ -220,7 +220,7 @@ function buildCognitiveDepthSidecar(
   const roles = new Set(entries.map((e) => e.actor.role));
   const actions = entries.map((e) => e.action);
   const hasFourEyes =
-    roles.has("analyst") &&
+    roles.has("compliance_assistant") &&
     (roles.has("co") || roles.has("mlro") || roles.has("managing_director"));
 
   return {

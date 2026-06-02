@@ -272,7 +272,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Audit event (best-effort — never block the main response)
   try {
-    writeAuditEvent("analyst", "correspondent-risk.assessed", body.bankName.trim());
+    writeAuditEvent("compliance_assistant", "correspondent-risk.assessed", body.bankName.trim());
   } catch (err) {
     console.warn("[correspondent-risk] writeAuditEvent failed:", err);
   }

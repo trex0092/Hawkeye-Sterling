@@ -425,7 +425,7 @@ describe("session cookie path", () => {
 
   it("valid session rate-limited returns 429", async () => {
     const now = Math.floor(Date.now() / 1000);
-    mocks.verifySession.mockReturnValue({ userId: "u2", username: "bob", role: "analyst", iat: now, exp: now + 28800 });
+    mocks.verifySession.mockReturnValue({ userId: "u2", username: "bob", role: "compliance_assistant", iat: now, exp: now + 28800 });
     mocks.consumeRateLimit.mockResolvedValue(rlDeny());
     const result = await enforce(makeReq({ cookie: "hs_session=valid-token" }));
     expect(result.ok).toBe(false);

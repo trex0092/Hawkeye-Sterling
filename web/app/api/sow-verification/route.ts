@@ -593,7 +593,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "sow-verification.checklist-generated", body.subjectName);
+    writeAuditEvent("compliance_assistant", "sow-verification.checklist-generated", body.subjectName);
   } catch (err) {
     console.warn("[hawkeye] sow-verification writeAuditEvent failed:", err);
   }

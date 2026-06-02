@@ -399,7 +399,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const subjectName = sanitizeField(body.subjectName, 500);
 
   try {
-    writeAuditEvent("analyst", "pf.risk-assessment", subjectName);
+    writeAuditEvent("compliance_assistant", "pf.risk-assessment", subjectName);
   } catch (err) {
     console.warn("[hawkeye] proliferation-risk writeAuditEvent failed:", err);
   }

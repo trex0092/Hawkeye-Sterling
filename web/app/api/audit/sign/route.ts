@@ -19,7 +19,7 @@ export const maxDuration = 15;
 //   {
 //     id: sha256 of payload,
 //     at: iso timestamp,
-//     actor: { role: 'analyst'|'mlro', name?: string },
+//     actor: { role: 'compliance_assistant'|'mlro', name?: string },
 //     action: 'clear'|'escalate'|'str'|'freeze'|'dispose'|'goaml_submit',
 //     target: string (e.g. subject id or case id),
 //     body: record,
@@ -42,7 +42,7 @@ const ALLOWED_ACTIONS = new Set([
   "freeze",
   "dispose",
   "goaml_submit",
-  // Portal-generated lifecycle events (analyst tier). These are fired
+  // Portal-generated lifecycle events (CO Assistant tier). These are fired
   // automatically from the screening UI so every subject-add and screening
   // result lands in the tamper-evident HMAC chain in Netlify Blobs —
   // not just the client-side localStorage copy.
@@ -53,24 +53,23 @@ const ALLOWED_ACTIONS = new Set([
 ]);
 
 const ACTION_MIN_ROLE: Record<string, string> = {
-  clear:               "analyst",
-  escalate:            "analyst",
+  clear:               "compliance_assistant",
+  escalate:            "compliance_assistant",
   str_read:            "co",
   str:                 "mlro",
   freeze:              "mlro",
   dispose:             "mlro",
   goaml_submit:        "mlro",
-  subject_added:       "analyst",
-  subject_removed:     "analyst",
-  screening_completed: "analyst",
-  ongoing_enrolled:    "analyst",
+  subject_added:       "compliance_assistant",
+  subject_removed:     "compliance_assistant",
+  screening_completed: "compliance_assistant",
+  ongoing_enrolled:    "compliance_assistant",
 };
 
-// Must mirror operator-role.ts ROLE_POWER. All 5 roles must be present —
+// Must mirror operator-role.ts ROLE_POWER. All 4 roles must be present —
 // any role missing from this map gets power undefined, which passes NaN
 // comparisons and would grant full MLRO access to lower roles.
 const ROLE_POWER: Record<string, number> = {
-  analyst:              1,
   compliance_assistant: 1,
   co:                   2,
   mlro:                 3,
@@ -86,7 +85,7 @@ interface SignBody {
   action: string;
   target: string;
   actor: {
-    role: "analyst" | "compliance_assistant" | "co" | "mlro" | "managing_director";
+    role: "compliance_assistant" | "co" | "mlro" | "managing_director";
     name?: string;
   };
   body?: Record<string, unknown>;
@@ -163,7 +162,7 @@ async function handleSign(req: Request, ctx: RequestContext): Promise<NextRespon
       { status: 400 },
     );
   }
-  const minRole = ACTION_MIN_ROLE[body.action] ?? "analyst";
+  const minRole = ACTION_MIN_ROLE[body.action] ?? "compliance_assistant";
   if ((ROLE_POWER[body.actor.role] ?? 0) < (ROLE_POWER[minRole] ?? 0)) {
     return NextResponse.json(
       {

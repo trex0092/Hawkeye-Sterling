@@ -87,13 +87,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   }));
 
   if (results.length === 0) {
-    writeAuditEvent("analyst", "batch.ai-priority-ranking", "no results — skipped");
+    writeAuditEvent("compliance_assistant", "batch.ai-priority-ranking", "no results — skipped");
     return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    writeAuditEvent("analyst", "batch.ai-priority-ranking", `no-api-key — ${results.length} results skipped`);
+    writeAuditEvent("compliance_assistant", "batch.ai-priority-ranking", `no-api-key — ${results.length} results skipped`);
     return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
@@ -121,7 +121,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.topThreats)) parsed.topThreats = [];
 
     writeAuditEvent(
-      "analyst",
+      "compliance_assistant",
       "batch.ai-priority-ranking",
       `${results.length} results ranked — immediate: ${parsed.immediateCount ?? 0} · urgent: ${parsed.urgentCount ?? 0} · topThreats: ${(parsed.topThreats ?? []).join(", ")}`,
     );
@@ -141,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("analyst", "batch.ai-priority-ranking", `error — ${msg}`);
+    writeAuditEvent("compliance_assistant", "batch.ai-priority-ranking", `error — ${msg}`);
     return NextResponse.json({ ok: false, error: "batch-rank temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

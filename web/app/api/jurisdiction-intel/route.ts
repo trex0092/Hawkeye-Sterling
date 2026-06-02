@@ -94,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "jurisdiction.ai-intelligence", body.country.trim());
+    writeAuditEvent("compliance_assistant", "jurisdiction.ai-intelligence", body.country.trim());
   } catch { /* non-blocking */ }
 
   void writeAuditChainEntry(

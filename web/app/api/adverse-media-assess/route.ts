@@ -53,7 +53,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const subject = sanitizeField(rawSubject, 300);
 
   // Non-blocking audit event
-  try { writeAuditEvent("analyst", "adverse-media.ai-assessment", subject); }
+  try { writeAuditEvent("compliance_assistant", "adverse-media.ai-assessment", subject); }
   catch (err) { console.warn("[hawkeye] adverse-media-assess writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

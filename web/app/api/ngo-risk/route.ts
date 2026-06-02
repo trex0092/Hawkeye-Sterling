@@ -390,7 +390,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const orgName = sanitizeField(body.organizationName, 500);
 
   try {
-    writeAuditEvent("analyst", "ngo.cft-risk-assessment", orgName);
+    writeAuditEvent("compliance_assistant", "ngo.cft-risk-assessment", orgName);
   } catch (err) {
     console.warn("[hawkeye] ngo-risk writeAuditEvent failed:", err);
   }

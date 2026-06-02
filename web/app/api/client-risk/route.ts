@@ -73,7 +73,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "entity.name is required" }, { status: 400 , headers: gate.headers });
   }
 
-  try { writeAuditEvent("analyst", "client-portal.ai-risk-assessment", entity.name); }
+  try { writeAuditEvent("compliance_assistant", "client-portal.ai-risk-assessment", entity.name); }
   catch (err) { console.warn("[hawkeye] client-risk writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

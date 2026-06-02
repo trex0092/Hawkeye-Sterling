@@ -1,24 +1,22 @@
 "use client";
 
-// Four-eyes role concept. Analyst proposes a disposition (clear / escalate /
-// STR); MLRO approves. The app gates high-impact actions (STR filing,
-// final disposition) behind the MLRO role so a single compromised login
-// can't bypass the four-eyes principle.
+// Four-eyes role concept. A front-line operator (CO Assistant) proposes a
+// disposition (clear / escalate / STR); MLRO approves. The app gates
+// high-impact actions (STR filing, final disposition) behind the MLRO role
+// so a single compromised login can't bypass the four-eyes principle.
 //
 // Role is stored in sessionStorage (cleared when the tab closes) so that
-// a shared workstation automatically reverts to the default "analyst" role
-// after the session ends. Real RBAC with a user store + server session lands
-// with the auth phase; this client-side shim is enough to enforce the
-// four-eyes UX today and the audit chain cares about the signed intent
-// anyway (see /api/audit/sign).
+// a shared workstation automatically reverts to the default
+// "compliance_assistant" role after the session ends. Real RBAC with a
+// user store + server session lands with the auth phase; this client-side
+// shim is enough to enforce the four-eyes UX today and the audit chain
+// cares about the signed intent anyway (see /api/audit/sign).
 
-// analyst              — front-line screening; may propose actions
-// compliance_assistant — supports CO; same action scope as analyst
+// compliance_assistant — front-line screening; supports CO; may propose actions
 // co                   — Compliance Officer; can view STR register, assist preparation
 // mlro                 — Money Laundering Reporting Officer; full authority, final sign-off
 // managing_director    — Executive authority; same action scope as MLRO
 export type OperatorRole =
-  | "analyst"
   | "compliance_assistant"
   | "co"
   | "mlro"
@@ -27,7 +25,6 @@ export type OperatorRole =
 const ROLE_STORAGE_KEY = "hawkeye.operator-role";
 
 const ALL_ROLES: OperatorRole[] = [
-  "analyst",
   "compliance_assistant",
   "co",
   "mlro",
@@ -70,7 +67,6 @@ export function saveOperatorRole(role: OperatorRole): void {
 }
 
 export const ROLE_LABEL: Record<OperatorRole, string> = {
-  analyst:              "Analyst",
   compliance_assistant: "CO Assistant",
   co:                   "CO",
   mlro:                 "CO / MLRO",
@@ -85,7 +81,6 @@ export const CARD_ROLES: OperatorRole[] = [
 ];
 
 export const ROLE_POWER: Record<OperatorRole, number> = {
-  analyst:              1,
   compliance_assistant: 1,
   co:                   2,
   mlro:                 3,
@@ -94,8 +89,8 @@ export const ROLE_POWER: Record<OperatorRole, number> = {
 
 // Action → minimum role required.
 export const ACTION_MIN_ROLE: Record<string, OperatorRole> = {
-  clear:         "analyst",
-  escalate:      "analyst",
+  clear:         "compliance_assistant",
+  escalate:      "compliance_assistant",
   str_read:      "co",
   str:           "mlro",
   freeze:        "mlro",
