@@ -102,10 +102,18 @@ async function fetchTriage(items: RegulatoryItem[]): Promise<Record<string, Tria
   }
   const data = await res.json().catch(() => ({})) as {
     ok: boolean;
-    results: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
+    results?: Array<{ id: string; relevance: number; impact: "high" | "medium" | "low"; actionRequired: string; deadline: string }>;
+    status?: string;
+    reason?: string;
     error?: string;
   };
   if (!data.ok) throw new Error(data.error ?? "Unknown error");
+
+  if (data.status === "degraded") {
+    const degradedErr = new Error(data.reason ?? "AI triage degraded");
+    (degradedErr as Error & { degraded?: boolean }).degraded = true;
+    throw degradedErr;
+  }
 
   const map: Record<string, TriageEntry> = {};
   for (const r of data.results ?? []) {
@@ -140,8 +148,11 @@ function RegulatoryFeedPanel() {
       console.error("Triage failed:", err);
       if (!mountedRef.current) return;
       const status = (err as { status?: number }).status;
+      const isDegraded = (err as { degraded?: boolean }).degraded;
       const msg = err instanceof Error ? err.message : String(err);
-      if (status === 401 || status === 403) {
+      if (isDegraded) {
+        setTriageError(`AI triage running in degraded mode — ${msg}`);
+      } else if (status === 401 || status === 403) {
         setTriageError("AI triage paused — please sign in again to refresh your session.");
       } else if (status && status >= 500) {
         setTriageError(`AI triage upstream error (HTTP ${status}) — retrying on next feed refresh.`);
