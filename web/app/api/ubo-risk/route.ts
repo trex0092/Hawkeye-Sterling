@@ -245,42 +245,47 @@ function mergeRiskTier(
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req);
-  if (!gate.ok) return gate.response;
-  let body: RequestBody;
+  // Top-level try/catch: prevents an ECONNRESET (or any uncaught throw) from
+  // the upstream Anthropic call or audit-chain writes from crashing the
+  // Lambda and surfacing the Netlify "This function has crashed" page in the
+  // Intelligence Tools / UBO Walker tab.
   try {
-    body = (await req.json()) as RequestBody;
-  } catch {
-    return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
-  }
+    const gate = await enforce(req);
+    if (!gate.ok) return gate.response;
+    let body: RequestBody;
+    try {
+      body = (await req.json()) as RequestBody;
+    } catch {
+      return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400, headers: gate.headers });
+    }
 
-  const { entity, registered, ubos } = body;
+    const { entity, registered, ubos } = body;
 
-  try { writeAuditEvent("analyst", "ubo.ai-risk-assessment", entity); }
-  catch (err) { console.warn("[hawkeye] ubo-risk writeAuditEvent failed:", err); }
+    try { writeAuditEvent("analyst", "ubo.ai-risk-assessment", entity); }
+    catch (err) { console.warn("[hawkeye] ubo-risk writeAuditEvent failed:", err); }
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
-  }
+    const apiKey = process.env["ANTHROPIC_API_KEY"];
+    if (!apiKey) {
+      return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
+    }
 
-  // Run rule-based scoring immediately (no network call needed).
-  const ruleScore = computeRuleBasedScore(body);
+    // Run rule-based scoring immediately (no network call needed).
+    const ruleScore = computeRuleBasedScore(body);
 
-  try {
-    const client = getAnthropicClient(apiKey, 4_500);
-    const res = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 700,
-      system:
-        "You are a UAE AML/CFT specialist in beneficial ownership and UBO risk assessment under FDL 10/2025 Art.10 and Cabinet Decision 58/2020. Assess this UBO declaration for money laundering risk, PEP exposure, ownership structure concerns, and CDD gaps. Output JSON (ONLY valid JSON, no markdown).",
-      messages: [
-        {
-          role: "user",
-          content: `Entity: ${sanitizeField(entity)}. Registered in: ${sanitizeField(registered)}. UBOs: ${JSON.stringify(ubos)}. Return ONLY this JSON: { "overallRisk": "critical"|"high"|"medium"|"low", "riskNarrative": "string", "ownershipStructureRisk": "string", "pepRiskFlags": ["string"], "nationalityRisks": ["string"], "cddGaps": ["string"], "recommendedActions": ["string"], "regulatoryBasis": "string", "eddRequired": boolean, "sanctionsScreeningRequired": boolean }`,
-        },
-      ],
-    });
+    try {
+      const client = getAnthropicClient(apiKey, 4_500);
+      const res = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 700,
+        system:
+          "You are a UAE AML/CFT specialist in beneficial ownership and UBO risk assessment under FDL 10/2025 Art.10 and Cabinet Decision 58/2020. Assess this UBO declaration for money laundering risk, PEP exposure, ownership structure concerns, and CDD gaps. Output JSON (ONLY valid JSON, no markdown).",
+        messages: [
+          {
+            role: "user",
+            content: `Entity: ${sanitizeField(entity)}. Registered in: ${sanitizeField(registered)}. UBOs: ${JSON.stringify(ubos)}. Return ONLY this JSON: { "overallRisk": "critical"|"high"|"medium"|"low", "riskNarrative": "string", "ownershipStructureRisk": "string", "pepRiskFlags": ["string"], "nationalityRisks": ["string"], "cddGaps": ["string"], "recommendedActions": ["string"], "regulatoryBasis": "string", "eddRequired": boolean, "sanctionsScreeningRequired": boolean }`,
+          },
+        ],
+      });
 
     const text = res.content[0]?.type === "text" ? res.content[0].text : "";
     const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
@@ -349,8 +354,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       },
       { headers: gate.headers },
     );
+    } catch (err) {
+      console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
+      return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
+    }
   } catch (err) {
-    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "ubo-risk temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[hawkeye] ubo-risk handler exception:", message);
+    return NextResponse.json(
+      { ok: false, error: message },
+      { status: 500 },
+    );
   }
 }
