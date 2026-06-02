@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const trimmedName = name.trim();
-  writeAuditEvent("analyst", "screening.name-variants", trimmedName);
+  writeAuditEvent("compliance_assistant", "screening.name-variants", trimmedName);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -129,7 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("analyst", "screening.name-variants.error", `${trimmedName} — ${msg}`);
+    writeAuditEvent("compliance_assistant", "screening.name-variants.error", `${trimmedName} — ${msg}`);
     return NextResponse.json({ ok: true, ...buildFallback(trimmedName) }, { headers: gate.headers });
   }
 }

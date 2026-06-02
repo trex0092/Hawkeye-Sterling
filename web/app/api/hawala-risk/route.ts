@@ -319,7 +319,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "hawala.ivts-risk-assessment", body.entityName);
+    writeAuditEvent("compliance_assistant", "hawala.ivts-risk-assessment", body.entityName);
   } catch (err) {
     console.warn("[hawkeye] hawala-risk writeAuditEvent failed:", err);
   }

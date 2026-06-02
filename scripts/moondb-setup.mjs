@@ -63,8 +63,8 @@ const SCHEMA = {
         display_name: "string required",
         role: {
           type: "enum",
-          values: ["mlro", "co", "analyst", "admin", "viewer"],
-          default: "analyst",
+          values: ["mlro", "co", "compliance_assistant", "admin", "viewer"],
+          default: "compliance_assistant",
         },
         tenant_id: "string required index",
         active: "bool default true",

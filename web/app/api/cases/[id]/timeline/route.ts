@@ -79,7 +79,7 @@ export async function GET(
     events.push({
       id: `${caseId}-timeline-${seq}`,
       timestamp: safeIso(entry.timestamp),
-      actor: "analyst",
+      actor: "compliance_assistant",
       eventType,
       title: entry.event,
       severity: severityFromText(entry.event ?? ""),
@@ -92,7 +92,7 @@ export async function GET(
     events.push({
       id: `${caseId}-evidence-${seq}`,
       timestamp: safeIso(found.opened),
-      actor: "analyst",
+      actor: "compliance_assistant",
       eventType: "document",
       title: ev.title ?? `${ev.category ?? "document"} evidence`,
       detail: ev.detail ?? undefined,

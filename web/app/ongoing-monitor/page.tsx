@@ -292,7 +292,7 @@ export default function OngoingMonitorPage() {
     };
     const next = [...subjects, subject];
     save(next); setSubjects(next); setDraft(BLANK);
-    writeAuditEvent(draft.enrolledBy || "analyst", "ongoing.enrolled", `${subject.name} — ${subject.cadence} cadence`);
+    writeAuditEvent(draft.enrolledBy || "compliance_assistant", "ongoing.enrolled", `${subject.name} — ${subject.cadence} cadence`);
     try {
       const res = await fetch("/api/ongoing", {
         method: "POST",

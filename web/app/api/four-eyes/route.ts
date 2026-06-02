@@ -182,7 +182,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   const subjectId = safeId(raw["subjectId"] ?? raw["caseId"]);
   const subjectName = stringField(raw["subjectName"]);
   const actionRaw = stringField(raw["action"]);
-  const initiatedBy = stringField(raw["initiatedBy"] ?? raw["actor"]) ?? "analyst";
+  const initiatedBy = stringField(raw["initiatedBy"] ?? raw["actor"]) ?? "compliance_assistant";
   const reason = stringField(raw["reason"] ?? raw["rationale"]) ?? "";
   if (!subjectId || !subjectName) {
     return NextResponse.json(

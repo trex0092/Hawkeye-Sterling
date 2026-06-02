@@ -763,29 +763,29 @@ export default function ScreeningPage() {
 
   const bulkApplyCdd = useCallback((posture: CDDPosture) => {
     setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, cddPosture: posture } : s));
-    writeAuditEvent("analyst", "bulk.cdd", `${selectedRowIds.size} subjects -> ${posture}`);
+    writeAuditEvent("compliance_assistant", "bulk.cdd", `${selectedRowIds.size} subjects -> ${posture}`);
   }, [selectedRowIds]);
 
   const bulkMarkCleared = useCallback(() => {
     setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, status: "cleared" } : s));
-    writeAuditEvent("analyst", "bulk.cleared", `${selectedRowIds.size} subjects marked cleared`);
+    writeAuditEvent("compliance_assistant", "bulk.cleared", `${selectedRowIds.size} subjects marked cleared`);
     setSelectedRowIds(new Set());
   }, [selectedRowIds]);
 
   const bulkAssign = useCallback((operator: string) => {
     setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, assignedTo: operator } : s));
-    writeAuditEvent("analyst", "bulk.assigned", `${selectedRowIds.size} subjects -> ${operator}`);
+    writeAuditEvent("compliance_assistant", "bulk.assigned", `${selectedRowIds.size} subjects -> ${operator}`);
   }, [selectedRowIds]);
 
   const bulkSnooze = useCallback((iso: string, reason: string) => {
     setSubjects((prev) => prev.map((s) => selectedRowIds.has(s.id) ? { ...s, snoozedUntil: iso, snoozeReason: reason } : s));
-    writeAuditEvent("analyst", "bulk.snoozed", `${selectedRowIds.size} subjects until ${iso} - ${reason}`);
+    writeAuditEvent("compliance_assistant", "bulk.snoozed", `${selectedRowIds.size} subjects until ${iso} - ${reason}`);
   }, [selectedRowIds]);
 
   const bulkDelete = useCallback(() => {
     if (!window.confirm(`Delete ${selectedRowIds.size} subject(s)? This cannot be undone.`)) return;
     setSubjects((prev) => prev.filter((s) => !selectedRowIds.has(s.id)));
-    writeAuditEvent("analyst", "bulk.deleted", `${selectedRowIds.size} subjects`);
+    writeAuditEvent("compliance_assistant", "bulk.deleted", `${selectedRowIds.size} subjects`);
     setSelectedRowIds(new Set());
   }, [selectedRowIds]);
 
@@ -884,7 +884,7 @@ export default function ScreeningPage() {
     a.download = `hawkeye-screening-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    writeAuditEvent("analyst", "queue.exported", `${filtered.length} subjects`);
+    writeAuditEvent("compliance_assistant", "queue.exported", `${filtered.length} subjects`);
   }, [filtered]);
 
   const handleSubmit = (data: ScreeningFormData, screen: boolean) => {
@@ -897,7 +897,7 @@ export default function ScreeningPage() {
 
     // Write audit event for every new subject added
     writeAuditEvent(
-      data.caseId ? `analyst (${data.caseId})` : "analyst",
+      data.caseId ? `compliance_assistant (${data.caseId})` : "compliance_assistant",
       "subject.added",
       `${subject.name} (${subject.id})`,
     );
@@ -908,7 +908,7 @@ export default function ScreeningPage() {
       body: JSON.stringify({
         action: "subject_added",
         target: `${subject.name} (${subject.id})`,
-        actor: { role: "analyst", name: data.caseId || undefined },
+        actor: { role: "compliance_assistant", name: data.caseId || undefined },
         body: { id: subject.id, name: subject.name, entityType: data.entityType, caseId: data.caseId },
       }),
     }).then((r) => { if (!r.ok) console.warn("[audit-sign] subject_added failed", r.status, r.error); });
@@ -1131,7 +1131,7 @@ export default function ScreeningPage() {
               body: JSON.stringify({
                 action: "screening_completed",
                 target: `${subject.name} (${capturedSubjectId})`,
-                actor: { role: "analyst" },
+                actor: { role: "compliance_assistant" },
                 body: { topScore: res.data.topScore, severity: res.data.severity },
               }),
             }).then((r) => { if (!r.ok) console.warn("[audit-sign] screening_completed failed", r.status, r.error); });
@@ -1224,7 +1224,7 @@ export default function ScreeningPage() {
         label: "Ongoing enrolment failed",
       });
       writeAuditEvent(
-        data.caseId ? `analyst (${data.caseId})` : "analyst",
+        data.caseId ? `compliance_assistant (${data.caseId})` : "compliance_assistant",
         "ongoing.enrolled",
         `${subject.name} (${subject.id}) — ${data.ongoingScreening ? "ongoing" : "once"}`,
       );
@@ -1235,7 +1235,7 @@ export default function ScreeningPage() {
         body: JSON.stringify({
           action: "ongoing_enrolled",
           target: `${subject.name} (${subject.id})`,
-          actor: { role: "analyst" },
+          actor: { role: "compliance_assistant" },
           body: { id: subject.id, name: subject.name },
         }),
       }).then((r) => { if (!r.ok) console.warn("[audit-sign] ongoing_enrolled failed", r.status, r.error); });
@@ -1268,14 +1268,14 @@ export default function ScreeningPage() {
     // HMAC chains so a regulator can prove the subject was screened
     // before being removed (no quiet drops).
     const target = removed ? `${removed.name} (${id})` : id;
-    writeAuditEvent("analyst", "subject.removed", target);
+    writeAuditEvent("compliance_assistant", "subject.removed", target);
     void fetchJson("/api/audit/sign", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         action: "subject_removed",
         target,
-        actor: { role: "analyst" },
+        actor: { role: "compliance_assistant" },
         body: { id, name: removed?.name ?? null },
       }),
     }).then((r) => { if (!r.ok) console.warn("[audit-sign] subject_removed failed", r.status, r.error); });
@@ -1302,7 +1302,7 @@ export default function ScreeningPage() {
       if (!mountedRef.current) return;
       if (data.ok) {
         setRescreenResult(data);
-        writeAuditEvent("analyst", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
+        writeAuditEvent("compliance_assistant", "bulk.rescreened", `${data.rescreened} subjects — ${data.newHits.length} new hits, ${data.cleared.length} cleared`);
       }
     } catch (err) {
       if (mountedRef.current) setRescreenError(caughtErrorMessage(err, "Request failed"));
@@ -1350,12 +1350,12 @@ export default function ScreeningPage() {
           subjectId: selected.id,
           subjectName: selected.name,
           action: "escalate",
-          initiatedBy: "analyst",
+          initiatedBy: "compliance_assistant",
           reason: `keyboard escalation - composite ${selected.riskScore}/100`,
         }),
         label: "Escalation enqueue failed",
       });
-      writeAuditEvent("analyst", "subject.keyboard-escalated", `${selected.name} (${selected.id})`);
+      writeAuditEvent("compliance_assistant", "subject.keyboard-escalated", `${selected.name} (${selected.id})`);
     },
   });
 
@@ -1903,7 +1903,7 @@ export default function ScreeningPage() {
             created.push(subj);
           }
           setSubjects((prev) => [...created, ...prev]);
-          writeAuditEvent("analyst", "bulk.imported", `${created.length} subjects via CSV`);
+          writeAuditEvent("compliance_assistant", "bulk.imported", `${created.length} subjects via CSV`);
           setBulkImportOpen(false);
         }}
       />

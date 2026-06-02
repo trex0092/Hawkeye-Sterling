@@ -277,7 +277,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Fire-and-forget so it never blocks the response.
     try {
       writeAuditEvent(
-        body.actor ?? "analyst",
+        body.actor ?? "compliance_assistant",
         "nlsearch.run",
         `query="${query}" → ${matchIds.length} matches · confidence ${(confidence * 100).toFixed(0)}%`,
       );

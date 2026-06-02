@@ -420,7 +420,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "sanctions-evasion.screen", body.entityName);
+    writeAuditEvent("compliance_assistant", "sanctions-evasion.screen", body.entityName);
   } catch (err) {
     console.warn("[hawkeye] sanctions-evasion writeAuditEvent failed:", err);
   }

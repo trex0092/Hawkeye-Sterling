@@ -453,7 +453,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "customer_risk_rating.assessment", body.customerId);
+    writeAuditEvent("compliance_assistant", "customer_risk_rating.assessment", body.customerId);
   } catch (err) {
     console.warn("[hawkeye] customer-risk-rating writeAuditEvent failed:", err);
   }

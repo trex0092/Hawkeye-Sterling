@@ -387,7 +387,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "vara-compliance.assessment", body.entityName);
+    writeAuditEvent("compliance_assistant", "vara-compliance.assessment", body.entityName);
   } catch (err) {
     console.warn("[hawkeye] vara-compliance writeAuditEvent failed:", err);
   }

@@ -391,7 +391,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "private-banking.risk-assessment", clientName);
+    writeAuditEvent("compliance_assistant", "private-banking.risk-assessment", clientName);
   } catch (err) {
     console.warn("[hawkeye] private-banking-risk writeAuditEvent failed:", err);
   }

@@ -169,7 +169,7 @@ function classifyItem(item: InboxItem): {
         timeToAct: isOverdue ? "today" : `${daysUntilDue} days`,
         action: "Initiate EDD refresh. Suspend high-risk transactions until complete.",
         basis: "FDL 10/2025 Art.8",
-        assignee: "analyst",
+        assignee: "compliance_assistant",
       };
 
     case "regulatory_enquiry":
@@ -200,7 +200,7 @@ function classifyItem(item: InboxItem): {
         timeToAct: "within 2 business days",
         action: "Review adverse media. Update customer risk classification if warranted. Consider EDD refresh.",
         basis: "FDL 10/2025 Art.8(6)",
-        assignee: "analyst",
+        assignee: "compliance_assistant",
       };
 
     case "transaction_alert":
@@ -210,7 +210,7 @@ function classifyItem(item: InboxItem): {
         timeToAct: (item.riskScore ?? 0) >= 75 ? "today" : "within 3 business days",
         action: "Review transaction context, customer profile, and determine if STR referral warranted",
         basis: "FDL 10/2025 Art.15",
-        assignee: (item.riskScore ?? 0) >= 75 ? "mlro" : "analyst",
+        assignee: (item.riskScore ?? 0) >= 75 ? "mlro" : "compliance_assistant",
       };
 
     case "staff_referral":
@@ -230,7 +230,7 @@ function classifyItem(item: InboxItem): {
         timeToAct: "within 5 business days",
         action: "Analyst review of alert context. Escalate to MLRO if STR indicators present.",
         basis: "FDL 10/2025 Art.13",
-        assignee: "analyst",
+        assignee: "compliance_assistant",
       };
 
     case "system_alert":

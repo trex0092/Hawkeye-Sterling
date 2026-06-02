@@ -77,7 +77,7 @@ export function ComparePanel({ subjectA, subjectB, onClose, onSelect }: Props): 
 
   useEffect(() => {
     writeAuditEvent(
-      "analyst",
+      "compliance_assistant",
       "subject.compare",
       `${subjectA.name} (${subjectA.id}) ↔ ${subjectB.name} (${subjectB.id})`,
     );
