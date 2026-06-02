@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
   // ── Risk distribution from cases ────────────────────────────────────────────
   const totalCases = cases.length;
-  const highCount  = cases.filter((c) => (c as { riskScore?: number }).riskScore != null && (c as { riskScore: number }).riskScore >= 0.75).length;
+  const highCount  = cases.filter((c) => (c as { riskScore?: number }).riskScore != null && (c as unknown as { riskScore: number }).riskScore >= 0.75).length;
   const medCount   = cases.filter((c) => {
     const s = (c as { riskScore?: number }).riskScore;
     return s != null && s >= 0.40 && s < 0.75;
@@ -75,11 +75,11 @@ export async function GET(req: NextRequest) {
   ];
 
   // ── Metrics from counters/gauges ─────────────────────────────────────────────
-  const biasRatio: number | null = gauges.get("hawkeye_bias_ratio") ?? null;
-  const driftScore: number | null = gauges.get("hawkeye_drift_score") ?? null;
-  const screeningTotal = counters.get("hawkeye_screening_requests_total") ?? 0;
-  const sarFiled  = counters.get("hawkeye_sar_filings_total") ?? 0;
-  const fpCount   = counters.get("hawkeye_false_positives_total") ?? 0;
+  const biasRatio: number | null = gauges.find(e => e.key === "hawkeye_bias_ratio")?.value ?? null;
+  const driftScore: number | null = gauges.find(e => e.key === "hawkeye_drift_score")?.value ?? null;
+  const screeningTotal = counters.find(e => e.key === "hawkeye_screening_requests_total")?.value ?? 0;
+  const sarFiled  = counters.find(e => e.key === "hawkeye_sar_filings_total")?.value ?? 0;
+  const fpCount   = counters.find(e => e.key === "hawkeye_false_positives_total")?.value ?? 0;
   const fpRate    = screeningTotal > 0 ? Math.round((fpCount / screeningTotal) * 100) : null;
 
   // ── KPI tiles ────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       id: "high-risk",
       label: "High Risk Cases",
       value: highCount,
-      unit: `${riskDistribution[0].pct}%`,
+      unit: `${riskDistribution[0]?.pct ?? 0}%`,
       status: highCount > 0 ? "red" : "green",
       trend: "stable",
       detail: "Risk score ≥ 0.75 — EDD required",
