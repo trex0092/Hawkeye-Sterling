@@ -18,6 +18,7 @@ import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAdverseMedia, type TaranisItem } from "../../../../src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../src/brain/adverse-media-analyser.js";
 import { type GdeltArticle, fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
+import { searchAllNews, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -289,6 +290,15 @@ function _parseSeen(s: string | undefined): string {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : s.slice(0, 10);
 }
 
+// Lightweight severity-category heuristic for vendor articles merged into the
+// GDELT corpus. The downstream Claude prompt + 737-keyword classifier still
+// do the authoritative severity rating; this is just a hint so the
+// articleBlock "[cats]" tag is non-empty for vendor articles.
+const ADVERSE_HIGH_RE = /\b(arrest|fraud|sanction|launder|indict|charged|raid|probe|investigat|seize|freeze|convict|jailed|ponzi|terror|bribery|corrupt|extradit)/i;
+function deriveSeverityCategories(title: string): string[] {
+  return ADVERSE_HIGH_RE.test(title) ? ["adverse_media", "high"] : ["adverse_media"];
+}
+
 // Convert a GDELT article to the TaranisItem shape so the deterministic
 // 737-keyword classifier can process it without requiring an LLM.
 function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
@@ -351,6 +361,63 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     }
   }
 
+  // Multi-source vendor news fan-out — runs in parallel with the GDELT path so
+  // a positive article from NewsAPI / GNews / NewsData / MediaStack / NYT /
+  // Currents / Mediacloud / WorldNews / AlphaVantage / Tiingo / MarketAux /
+  // NewsCatcher etc. always surfaces, even when GDELT's 10-year corpus
+  // happens to miss the story (the OZCAN HALAC 2025 Reuters article being
+  // the canonical example). Each adapter inside searchAllNews already has
+  // its own try/catch + abort timeout so this call never throws; missing
+  // env keys quietly degrade individual adapters to no-ops.
+  const vendorBudgetMs = Math.max(3_000, Math.min(8_000, _budgetMs - 5_000));
+  const vendorSettled = await Promise.allSettled([
+    Promise.race([
+      searchAllNews(subject, { limit: 25 }),
+      new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>((resolve) =>
+        setTimeout(() => resolve({ articles: [], providersUsed: [] }), vendorBudgetMs),
+      ),
+    ]),
+  ]);
+  if (vendorSettled[0]?.status === "fulfilled") {
+    const { articles: vendorArticles } = vendorSettled[0].value;
+    const seenUrls = new Set(items.map((a) => (a.url ?? "").toLowerCase()).filter(Boolean));
+    for (const va of vendorArticles) {
+      const key = va.url.toLowerCase();
+      if (!key || seenUrls.has(key)) continue;
+      seenUrls.add(key);
+      // Map vendor NewsArticle → GdeltArticle so the downstream
+      // articleBlock builder + keyword classifier can consume it uniformly.
+      let domain = va.outlet || va.source;
+      try { domain = new URL(va.url).hostname.replace(/^www\./, ""); } catch { /* keep outlet fallback */ }
+      const seendateFromIso = (() => {
+        const d = new Date(va.publishedAt);
+        if (Number.isNaN(d.getTime())) return undefined;
+        const z = d.toISOString();
+        const y = z.slice(0, 4); const mo = z.slice(5, 7); const da = z.slice(8, 10);
+        const h = z.slice(11, 13); const mi = z.slice(14, 16); const s = z.slice(17, 19);
+        return `${y}${mo}${da}T${h}${mi}${s}Z`;
+      })();
+      items.push({
+        url: va.url,
+        title: va.title,
+        domain,
+        ...(seendateFromIso ? { seendate: seendateFromIso } : {}),
+        ...(typeof va.sentiment === "number" ? { tone: va.sentiment * 10 } : { tone: 0 }),
+        ...(va.language ? { language: va.language } : {}),
+        riskCategories: deriveSeverityCategories(va.title),
+      });
+    }
+  }
+
+  // Sort the merged corpus by published date descending so the most recent
+  // (and most actionable) headlines appear first in the article block and
+  // dominate Claude's narrative window.
+  items.sort((a, b) => {
+    const ax = a.seendate ?? "";
+    const bx = b.seendate ?? "";
+    return bx.localeCompare(ax);
+  });
+
   // When no Anthropic key is configured, run the deterministic 737-keyword
   // classifier directly on the (possibly empty) cached articles.
   if (!apiKey) {
@@ -382,7 +449,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
             return `[${i + 1}] ${date} | ${a.domain ?? "unknown"}${srcScore}${cats} | tone:${tone} | "${a.title}"`;
           })
           .join("\n")
-      : "No articles found in GDELT 10-year corpus for this subject.";
+      : "No articles found across GDELT 10-year corpus + vendor news fan-out (NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
 
   const client = getAnthropicClient(apiKey, 6_000);
   const response = await client.messages.create({
