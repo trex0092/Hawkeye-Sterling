@@ -97,6 +97,16 @@
       "headers": {
         "Authorization": "Bearer ${OCTOPODA_API_KEY}"
       }
+    },
+
+    "codegraph": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@colbymchenry/codegraph@latest", "serve", "--root", "."],
+      "env": {
+        "CODEGRAPH_INDEX_DIR": ".codegraph",
+        "CODEGRAPH_PRIVACY": "local"
+      }
     }
   }
 }
