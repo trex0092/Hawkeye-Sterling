@@ -7,6 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import {
   MODEL_REGISTRY,
   computeAttestationStatus,
@@ -157,6 +158,8 @@ export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
+
+  void writeAuditChainEntry({ event: "rmf_status_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
 
   const rmfFunctions = computeRmfFunctions();
   const overallRmfScore = Math.round(

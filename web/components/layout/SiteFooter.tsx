@@ -4,12 +4,17 @@
 // Matches the pattern seen on institutional compliance platforms (e.g. LSEG
 // World-Check): a thin solid-colour strip with legal utility links.
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 
-export function SiteFooter() {
-  const year = new Date().getFullYear();
+function SiteFooterInner() {
+  const searchParams = useSearchParams();
   const { locale, strings, setLocale } = useLocale();
+  const year = new Date().getFullYear();
+
+  if (searchParams?.get("embed") === "1") return null;
   return (
     <footer className="w-full bg-brand border-t border-brand/60 print:hidden">
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 h-9 flex items-center justify-between gap-4">
@@ -40,6 +45,14 @@ export function SiteFooter() {
         </div>
       </div>
     </footer>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <Suspense fallback={null}>
+      <SiteFooterInner />
+    </Suspense>
   );
 }
 

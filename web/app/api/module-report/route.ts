@@ -24,6 +24,7 @@ function projectGidForModule(module: string): string {
     case "cases":
     case "goaml-submission":
     case "goaml":
+    case "sar-narrative":
       return asanaGids.sar();
     case "benford":
       return asanaGids.ffr();
@@ -36,6 +37,8 @@ function projectGidForModule(module: string): string {
     case "cdd-review":
     case "entity-graph":
     case "onboarding":
+    case "pep-profile":
+    case "ownership":
       return asanaGids.kyc();
     case "transaction-monitor":
       return asanaGids.tm();
@@ -44,6 +47,17 @@ function projectGidForModule(module: string): string {
     case "playbook":
     case "data-quality":
     case "corrections":
+    case "access-control":
+    case "maker-checker":
+    case "approvals":
+    case "profile":
+    case "cnmr":
+    case "dpmsr":
+    case "moe-survey":
+    case "oecd-ddg":
+    case "responsible-sourcing":
+    case "tfs-alerts":
+    case "typology-library":
       return asanaGids.complianceOps();
     case "shipments":
       return asanaGids.shipments();
@@ -56,6 +70,10 @@ function projectGidForModule(module: string): string {
     case "enforcement":
     case "responsible-ai":
     case "eval-kpi":
+    case "analytics-dashboard":
+    case "kri-dashboard":
+    case "incident-runbook":
+    case "reg-change":
       return asanaGids.governance();
     case "ongoing-monitor":
       return asanaGids.routines();
@@ -69,6 +87,14 @@ function projectGidForModule(module: string): string {
     case "telemetry":
     case "red-team":
     case "security-audit":
+    case "brain-map":
+    case "intelligence-hub":
+    case "intelligence-tools":
+    case "batch-screening":
+    case "country-risk":
+    case "country-risk-map":
+    case "sanctions-evasion":
+    case "supply-chain":
       return asanaGids.mlro();
     case "vessel-check":
     case "rmi":

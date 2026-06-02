@@ -7,6 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -206,6 +207,8 @@ export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
+
+  void writeAuditChainEntry({ event: "brain_map_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
 
   const body: BrainMapResponse = {
     ok: true,

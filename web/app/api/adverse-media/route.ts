@@ -79,7 +79,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Bound the upstream call so a hung Taranis can't burn the GDELT fallback
   // budget. Any timeout or thrown error short-circuits to the GDELT live-feed
   // fallback below — never a silent CLEAR verdict.
-  const TARANIS_TIMEOUT_MS = 2_000;
+  const TARANIS_TIMEOUT_MS = 8_000;
   const taranisResult = await Promise.race([
     searchAdverseMedia(subject, {
       ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
@@ -351,7 +351,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
       items = cached.articles;
     }
   } catch {
-    // Blobs unavailable or key not yet cached for this subject — fall through to live GDELT.
+    // Blobs unavailable — proceed with vendor-only path (no live GDELT in request path).
   }
 
   // No live GDELT call from the request path — gdelt-prefetch.mts (every 6 h)
@@ -376,9 +376,8 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           resolve => setTimeout(() => resolve({ articles: [], providersUsed: [] }), VENDOR_DEADLINE_MS),
         ),
       ]);
-  const vendorSettled = await Promise.allSettled([vendorWithDeadline]);
-  if (vendorSettled[0]?.status === "fulfilled") {
-    const { articles: vendorArticles } = vendorSettled[0].value;
+  const { articles: vendorArticles } = await vendorWithDeadline;
+  {
     const seenUrls = new Set(items.map((a) => (a.url ?? "").toLowerCase()).filter(Boolean));
     for (const va of vendorArticles) {
       const key = va.url.toLowerCase();
