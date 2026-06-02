@@ -14,13 +14,17 @@ name: Release
 # An image is never signed before it has passed a CVE scan.
 #
 # pull_request trigger: satisfies the GitHub required-workflow check on PRs.
-# Every job gates on startsWith(github.ref, 'refs/tags/v'), so all jobs are
-# skipped on PR runs — GitHub counts all-jobs-skipped as success.
+# The pr-guard job below runs and exits 0 on non-tag events so GitHub counts
+# the workflow as success (not failure) even when build/sign jobs are skipped.
+# branches-ignore: ['**'] explicitly prevents branch pushes from triggering
+# this workflow (only v*.*.* tag pushes should run the build/sign pipeline).
 
 on:
   push:
     tags:
       - 'v*.*.*'
+    branches-ignore:
+      - '**'
   pull_request:
     branches: [main]
 
@@ -30,10 +34,22 @@ permissions:
   packages: write      # required for ghcr.io image push
 
 jobs:
+  # Runs on every PR event (non-tag). Exits 0 so GitHub marks the overall
+  # workflow as success instead of failure when build/sign jobs are all skipped.
+  pr-guard:
+    name: Release (PR check — no-op)
+    runs-on: ubuntu-latest
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+    steps:
+      - name: Not a release tag — all release jobs skipped
+        run: echo "Release workflow skipped (not a v*.*.* tag push). This is expected on PRs."
+
   build-and-sign:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@v6
 
