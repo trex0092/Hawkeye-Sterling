@@ -9,9 +9,10 @@ name: Release
 # notification. No filter means every push creates real jobs so GitHub can
 # report a proper success conclusion.
 #
-# guard always runs and exits 0.  On non-tag events it is the only job that
-# runs, giving GitHub a successful result.  On tag pushes it also runs (no
-# harm) while the build/scan/sign jobs do the real work.
+# guard always runs unconditionally and exits 0.  On non-tag events it is
+# the only job that runs, giving GitHub a successful result.  On tag pushes
+# it also runs (no harm) while the build/scan/sign jobs do the real work.
+# Security gate order: build → scan (Trivy) → sign (Cosign).
 
 on:
   push:

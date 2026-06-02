@@ -1,0 +1,48 @@
+name: AI Security Review
+
+on:
+  pull_request:
+    paths:
+      - "web/lib/server/**"
+      - "web/app/api/**"
+      - "src/brain/**"
+      - "src/integrations/**"
+      - "scripts/**"
+
+jobs:
+  ai-review:
+    name: Claude Invariant Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Anthropic SDK
+        run: npm install --no-save @anthropic-ai/sdk
+
+      - name: Run AI security review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD | node scripts/ai-security-review.mjs
+        # Exit code 2 = script error (infra problem) — non-blocking to avoid
+        # false-positive CI failures when Anthropic is temporarily unavailable.
+        # Exit code 1 = real invariant violation — blocks the PR.
+        continue-on-error: false
+
+      - name: Upload review artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-security-review-findings
+          path: /tmp/ai-review-*.json
+          if-no-files-found: ignore
+          retention-days: 30

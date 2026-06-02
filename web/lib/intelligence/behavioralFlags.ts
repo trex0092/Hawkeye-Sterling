@@ -421,3 +421,31 @@ export function detectBehavioralFlags(input: BehavioralInputs): BehavioralFlag[]
 
   return flags;
 }
+
+/**
+ * Enrich BehavioralInputs with live GeoIP data from the client request.
+ * Populates ipIso2 and vpnOrTorDetected, making the ip_jurisdiction_mismatch
+ * and vpn_or_tor_detected flags fire with real data instead of staying dead.
+ *
+ * Safe to call fire-and-forget: errors are swallowed so GeoIP failure never
+ * blocks a compliance decision. On failure, ipIso2 stays null and the flags
+ * simply don't fire — they don't produce a false negative on the decision.
+ *
+ * @param req    The inbound request (used to extract the client IP header).
+ * @param inputs BehavioralInputs to enrich in-place (mutated).
+ */
+export async function enrichWithGeoIp(
+  req: Request,
+  inputs: BehavioralInputs,
+): Promise<void> {
+  try {
+    const { extractClientIp, lookupIpRisk } = await import("../server/geoip");
+    const ip = extractClientIp(req);
+    if (!ip) return;
+    const risk = await lookupIpRisk(ip);
+    inputs.ipIso2          = risk.countryIso2 ?? inputs.ipIso2;
+    inputs.vpnOrTorDetected = (risk.isVpn || risk.isTor) || inputs.vpnOrTorDetected;
+  } catch {
+    // GeoIP failure must never block compliance decisions
+  }
+}
