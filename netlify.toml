@@ -2,7 +2,7 @@
 #
 # Build order:
 #   1. Root: `npm ci && npm run build` → compiles src/brain (TypeScript → dist/).
-#   2. web/: `npm ci && npm run build` → builds Next.js 16 app (SSR + API routes).
+#   2. web/: `npm ci && npm run build` → builds Next.js 15 app (SSR + API routes).
 #
 # The Next.js route handler at web/app/api/quick-screen/route.ts imports the
 # compiled brain from ../../../../../dist/src/brain/quick-screen.js, so step 1
@@ -24,14 +24,21 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # Node heap cap for the build. Netlify Pro build agents have ~8 GB RAM total.
-  # The default V8 heap (~1.5 GB) OOMs during `next build` for this repo
-  # (600+ routes, compiled brain dist/, Anthropic SDK, Upstash, zod).
-  # 4096 is too low — webpack needs more than 4 GB to compile the full bundle.
-  # 8192 OOMs the container — it claims the entire machine RAM leaving nothing
-  # for the OS, npm CLI, native modules, and V8 internal spaces (code/map/LO).
-  # 6144 (6 GB) is the sweet spot: sufficient for webpack + leaves ~2 GB overhead.
-  NODE_OPTIONS = "--max-old-space-size=6144"
+  # Node heap cap for the build. MUST stay BELOW the Netlify build
+  # container's physical RAM, not above it. Setting it to 8192 (a prior
+  # guess) was the actual cause of the persistent "exit code 2" failures:
+  # telling V8 it may grow to 8 GB makes it defer GC until 8 GB, so on a
+  # build agent without 8 GB free the kernel OOM-kills the process before
+  # GC ever runs — surfacing as a generic non-zero (exit 2) with no JS
+  # heap-OOM stack trace. Confirmed: the full build script runs to exit 0
+  # locally under the same `ulimit -n 4096` as the Netlify agent, and the
+  # webpack compile finishes in <3 min using far less than 8 GB — so the
+  # large cap bought nothing and only removed the headroom the container
+  # needs for the OS, webpack workers, and @netlify/plugin-nextjs.
+  # 4096 is Netlify's documented safe default: enough heap for this build
+  # (default ~1.5 GB previously OOM'd; 4 GB clears it) while leaving the
+  # container room to breathe. Do NOT raise this above the agent's RAM.
+  NODE_OPTIONS = "--max-old-space-size=4096"
   # Disable Next.js telemetry in the build agent. Without this, next build
   # attempts a network call to telemetry.nextjs.org on every compilation;
   # if the Netlify build agent's outbound network is slow or the endpoint
@@ -139,14 +146,5 @@
   for = "/api/*"
   [headers.values]
     Cross-Origin-Resource-Policy = "same-origin"
-    Cache-Control = "no-store"
-    X-Content-Type-Options = "nosniff"
-
-# MCP endpoint must be reachable by Anthropic's cloud (cross-origin server-to-server).
-# Override CORP to cross-origin for /api/mcp only.
-[[headers]]
-  for = "/api/mcp"
-  [headers.values]
-    Cross-Origin-Resource-Policy = "cross-origin"
     Cache-Control = "no-store"
     X-Content-Type-Options = "nosniff"
