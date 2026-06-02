@@ -28,6 +28,32 @@ export interface BiasEntry {
   score:     number;       // 0–100
   severity:  string;       // clear|low|medium|high|critical
   hit:       boolean;      // any hit returned
+  listIds?:  string[];     // which lists triggered hits (per-list source tracking)
+}
+
+// ── Per-list source bias tracking ────────────────────────────────────────────
+// Tracks hit-rate per sanctions list so operators can detect which list is
+// driving disproportionate alerts (false-positive rate by source).
+
+export interface ListSourceBiasEntry {
+  ts:        number;
+  listId:    string;
+  script:    NameScript;
+  score:     number;
+  severity:  string;
+}
+
+export interface ListSourceBiasGroup {
+  listId:    string;
+  count:     number;
+  hitRate:   number;
+  meanScore: number;
+  biasRatio: number;  // meanScore / globalMean
+  flagged:   boolean;
+}
+
+function listBiasWindowKey(tenant: string): string {
+  return `hs-bias/${tenant.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 64)}/list-window.json`;
 }
 
 // ── PEP nationality bias tracking ────────────────────────────────────────────
@@ -159,19 +185,21 @@ export async function recordScreeningBias(
   score: number,
   severity: string,
   hitCount: number,
+  listIds?: string[],
 ): Promise<void> {
   try {
-    const key   = windowKey(tenant);
-    const now   = Date.now();
+    const key = windowKey(tenant);
+    const now = Date.now();
+    const script = detectScript(subjectName);
     const entry: BiasEntry = {
       ts: now,
-      script: detectScript(subjectName),
+      script,
       score,
       severity,
       hit: hitCount > 0,
+      ...(listIds && listIds.length > 0 ? { listIds } : {}),
     };
     const window = (await getJson<BiasEntry[]>(key).catch(() => null)) ?? [];
-    // Prune entries older than 30 days and cap at MAX_ENTRIES
     const pruned = window
       .filter((e) => now - e.ts < WINDOW_MS)
       .slice(-(MAX_ENTRIES - 1));
@@ -182,9 +210,68 @@ export async function recordScreeningBias(
     if (pruned.length % 100 === 0) {
       void computeBiasReport(tenant, pruned).catch(() => undefined);
     }
+
+    // Per-list source bias tracking — write one entry per triggering list.
+    // Fire-and-forget; failures don't affect the main bias window.
+    if (listIds && listIds.length > 0) {
+      void recordListSourceBias(tenant, listIds, script, score, severity).catch(() => undefined);
+    }
   } catch (err) {
     console.warn("[bias-monitor] recordScreeningBias failed (non-critical):", err instanceof Error ? err.message : String(err));
   }
+}
+
+async function recordListSourceBias(
+  tenant: string,
+  listIds: string[],
+  script: NameScript,
+  score: number,
+  severity: string,
+): Promise<void> {
+  const key = listBiasWindowKey(tenant);
+  const now = Date.now();
+  const existing = (await getJson<ListSourceBiasEntry[]>(key).catch(() => null)) ?? [];
+  const pruned = existing
+    .filter((e) => now - e.ts < WINDOW_MS)
+    .slice(-(MAX_ENTRIES - 1));
+  for (const listId of listIds) {
+    pruned.push({ ts: now, listId, script, score, severity });
+  }
+  await setJson(key, pruned);
+}
+
+/** Return per-list bias statistics for the current 30-day window. */
+export async function getListSourceBiasGroups(tenant: string): Promise<ListSourceBiasGroup[]> {
+  const key = listBiasWindowKey(tenant);
+  const entries = (await getJson<ListSourceBiasEntry[]>(key).catch(() => null)) ?? [];
+  if (entries.length === 0) return [];
+
+  const globalMean = entries.reduce((s, e) => s + e.score, 0) / entries.length;
+
+  const byList = new Map<string, ListSourceBiasEntry[]>();
+  for (const e of entries) {
+    const g = byList.get(e.listId) ?? [];
+    g.push(e);
+    byList.set(e.listId, g);
+  }
+
+  const groups: ListSourceBiasGroup[] = [];
+  for (const [listId, items] of byList) {
+    const count     = items.length;
+    const hitCount  = items.filter((e) => e.severity !== "clear").length;
+    const meanScore = items.reduce((s, e) => s + e.score, 0) / count;
+    const biasRatio = globalMean > 0 ? meanScore / globalMean : 1;
+    groups.push({
+      listId,
+      count,
+      hitRate:   count > 0 ? hitCount / count : 0,
+      meanScore: Math.round(meanScore * 10) / 10,
+      biasRatio: Math.round(biasRatio * 1000) / 1000,
+      flagged:   biasRatio > 1.15,
+    });
+  }
+
+  return groups.sort((a, b) => b.biasRatio - a.biasRatio);
 }
 
 /**
