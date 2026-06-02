@@ -36,6 +36,11 @@ export function SessionExpiryWatcher() {
   useEffect(() => {
     let dead = false;
 
+    // In embed mode (?embed=1) the page is an iframe inside /intel. The parent
+    // frame owns auth UX — skip the interceptor and proactive /api/auth/me
+    // check entirely so the session-expired modal never fires inside the iframe.
+    if (new URLSearchParams(window.location.search).get("embed") === "1") return;
+
     // (2) Reactive path: install the global same-origin /api 401 interceptor
     // before any panel kicks off its first fetch. Listen for the event.
     installSessionExpiryInterceptor();
