@@ -388,7 +388,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "insurance.aml-risk-assessment", body.policyType);
+    writeAuditEvent("compliance_assistant", "insurance.aml-risk-assessment", body.policyType);
   } catch (err) {
     console.warn("[hawkeye] insurance-risk writeAuditEvent failed:", err);
   }

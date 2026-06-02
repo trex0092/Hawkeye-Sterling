@@ -47,7 +47,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   writeAuditEvent(
-    "analyst",
+    "compliance_assistant",
     "crypto.ai-threat-analysis",
     `address=${body.address} chain=${body.chain} riskScore=${body.riskScore} riskLevel=${body.riskLevel}`,
   );

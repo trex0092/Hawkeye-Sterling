@@ -554,7 +554,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     // so the regulator sees both records — the four-eyes audit trail
     // and the draft itself. Future iteration: gate the Asana write on
     // the approval webhook.
-    const initiator = role === "analyst" ? "analyst" : role;
+    const initiator = role;
     const composite =
       superBrain.status === "success"
         ? superBrain.result.composite.score

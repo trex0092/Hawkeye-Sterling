@@ -120,7 +120,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "tm.explain", `${t.ref} → ${result.disposition}`);
+    writeAuditEvent("compliance_assistant", "tm.explain", `${t.ref} → ${result.disposition}`);
   } catch { /* non-blocking */ }
 
   void writeAuditChainEntry(

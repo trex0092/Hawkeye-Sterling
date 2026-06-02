@@ -415,7 +415,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Audit event (best-effort — never blocks main response)
   const auditEntity = body.iban ?? body.accountNumber ?? body.bankName ?? "unknown";
   try {
-    writeAuditEvent("analyst", "open-banking.risk-assessment", auditEntity);
+    writeAuditEvent("compliance_assistant", "open-banking.risk-assessment", auditEntity);
   } catch (err) {
     console.warn("[open-banking-check] writeAuditEvent failed:", err);
   }

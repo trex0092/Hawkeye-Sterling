@@ -44,7 +44,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   writeAuditEvent(
-    "analyst",
+    "compliance_assistant",
     "benford.ai-interpretation",
     `label=${body.label} n=${body.n} mad=${body.mad} risk=${body.risk}`,
   );

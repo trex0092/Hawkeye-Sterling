@@ -137,7 +137,7 @@ export interface OperatorRow {
   id: string;
   email: string;
   display_name: string;
-  role: "mlro" | "co" | "analyst" | "admin" | "viewer";
+  role: "mlro" | "co" | "compliance_assistant" | "admin" | "viewer";
   tenant_id: string;
   active: boolean;
   last_login_at?: string;

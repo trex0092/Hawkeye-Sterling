@@ -377,7 +377,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "ftz.risk-assessment", body.entityName);
+    writeAuditEvent("compliance_assistant", "ftz.risk-assessment", body.entityName);
   } catch (err) {
     console.warn("[hawkeye] ftz-risk writeAuditEvent failed:", err);
   }

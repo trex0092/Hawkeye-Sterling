@@ -356,7 +356,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "gold-dealer.aml-risk-assessment", body.dealerName);
+    writeAuditEvent("compliance_assistant", "gold-dealer.aml-risk-assessment", body.dealerName);
   } catch (err) {
     console.warn("[hawkeye] gold-dealer-risk writeAuditEvent failed:", err);
   }

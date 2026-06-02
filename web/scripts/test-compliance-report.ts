@@ -47,7 +47,7 @@ const nowFixed = new Date("2026-04-28T16:42:01Z");
 function clearFixture(): ReportInput {
   return {
     subject: baseSubject,
-    operator: { role: "analyst" },
+    operator: { role: "compliance_assistant" },
     result: { topScore: 0, severity: "clear", hits: [] },
     superBrain: {
       pep: null,
@@ -115,7 +115,7 @@ function pepFixture(): ReportInput {
 function amFixture(): ReportInput {
   return {
     subject: { ...baseSubject, name: "maria gonzalez", jurisdiction: "VE" },
-    operator: { role: "analyst" },
+    operator: { role: "compliance_assistant" },
     result: { topScore: 0, severity: "clear", hits: [] },
     superBrain: {
       pep: null,

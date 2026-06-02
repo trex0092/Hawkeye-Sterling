@@ -408,7 +408,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "identity.risk-assessment", body.subjectName);
+    writeAuditEvent("compliance_assistant", "identity.risk-assessment", body.subjectName);
   } catch (err) {
     console.warn("[hawkeye] identity-risk writeAuditEvent failed:", err);
   }

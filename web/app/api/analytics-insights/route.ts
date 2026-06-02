@@ -85,7 +85,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    writeAuditEvent("analyst", "analytics.ai-insights", `no-api-key — period: ${period}`);
+    writeAuditEvent("compliance_assistant", "analytics.ai-insights", `no-api-key — period: ${period}`);
     return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 
@@ -113,7 +113,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!Array.isArray(parsed.boardTalkingPoints)) parsed.boardTalkingPoints = [];
 
     writeAuditEvent(
-      "analyst",
+      "compliance_assistant",
       "analytics.ai-insights",
       `period: ${period} · trend: ${parsed.riskTrend} · insights: ${(parsed.insights ?? []).length}`,
     );
@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, ...parsed }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    writeAuditEvent("analyst", "analytics.ai-insights", `error — ${msg}`);
+    writeAuditEvent("compliance_assistant", "analytics.ai-insights", `error — ${msg}`);
     return NextResponse.json({ ok: false, error: "analytics-insights temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
   }
 }

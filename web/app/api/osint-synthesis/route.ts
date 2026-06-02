@@ -151,7 +151,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   try {
-    writeAuditEvent("analyst", "osint.ai-synthesis", body.target);
+    writeAuditEvent("compliance_assistant", "osint.ai-synthesis", body.target);
   } catch { /* non-blocking */ }
 
   void writeAuditChainEntry(

@@ -77,7 +77,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     notes: sanitizeLlmInput(s.notes, 2000),
   }));
 
-  try { writeAuditEvent("analyst", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
+  try { writeAuditEvent("compliance_assistant", "rmi.ai-supply-chain-assessment", "smelter-portfolio"); }
   catch (err) { console.warn("[hawkeye] rmi-assess writeAuditEvent failed:", err); }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];

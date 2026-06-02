@@ -102,7 +102,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  writeAuditEvent("analyst", "screening.nl-search", userQuery.slice(0, 100));
+  writeAuditEvent("compliance_assistant", "screening.nl-search", userQuery.slice(0, 100));
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
