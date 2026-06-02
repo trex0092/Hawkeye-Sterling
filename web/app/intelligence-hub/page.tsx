@@ -15,6 +15,7 @@ const TAB_IDS = [
   "telemetry",
   "red-team",
   "security-audit",
+  "governance",
   "status",
   "api-docs",
 ] as const;
@@ -28,6 +29,7 @@ const TAB_CONFIG: Record<TabId, { label: string; icon: string; hint: string }> =
   telemetry:       { label: "Telemetry",     icon: "📡", hint: "Mode firing counts · drift" },
   "red-team":      { label: "Red-Team",      icon: "🥷", hint: "Adversarial prompt catalogue" },
   "security-audit":{ label: "Security",      icon: "🛡️", hint: "AI code analyser · OWASP checklist" },
+  governance:      { label: "Governance",    icon: "⚖️",  hint: "NIST AI RMF · MITRE ATLAS · FDL 10/2025 Art.18" },
   status:          { label: "Status",        icon: "💚", hint: "Live endpoint & watchlist health" },
   "api-docs":      { label: "API Docs",      icon: "📘", hint: "OpenAPI reference" },
 };
@@ -75,6 +77,11 @@ const RedTeamSection = dynamic(
 
 const SecurityAuditSection = dynamic(
   () => import("@/components/intelligence-hub/SecurityAuditSection").then((m) => ({ default: m.SecurityAuditSection })),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+
+const GovernanceSection = dynamic(
+  () => import("@/components/intelligence-hub/GovernanceSection").then((m) => ({ default: m.GovernanceSection })),
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
 
@@ -210,6 +217,7 @@ function ActiveSection({ tab }: { tab: TabId }) {
     case "telemetry":       return <TelemetrySection />;
     case "red-team":        return <RedTeamSection />;
     case "security-audit":  return <SecurityAuditSection />;
+    case "governance":      return <GovernanceSection />;
     case "status":          return <StatusSection />;
     case "api-docs":        return <ApiDocsSection />;
     default:                return null;
@@ -236,13 +244,13 @@ function HubInner() {
       <div className="mb-6 border-b-2 border-ink-0 pb-4">
         <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">
           <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-          Intelligence Hub · 8 modules unified
+          Intelligence Hub · 9 modules unified
         </div>
         <h1 className="font-display text-36 text-ink-0 m-0 leading-tight">
           Intelligence <em className="italic text-brand">command centre.</em>
         </h1>
         <p className="text-13 text-ink-2 mt-1 max-w-[70ch]">
-          Analytics · Brain XAI · AI Workbench · Mode Telemetry · Red-Team · Security · Status · API Docs — unified in one view with cross-section health monitoring.
+          Analytics · Brain XAI · AI Workbench · Mode Telemetry · Red-Team · Security · Governance · Status · API Docs — unified in one view with cross-section health monitoring.
         </p>
       </div>
 
