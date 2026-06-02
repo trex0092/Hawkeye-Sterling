@@ -364,8 +364,8 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   // Multi-source vendor news fan-out — runs in parallel with the GDELT path so
   // a positive article from NewsAPI / GNews / NewsData / MediaStack / NYT /
   // Currents / Mediacloud / WorldNews / AlphaVantage / Tiingo / MarketAux /
-  // NewsCatcher etc. always surfaces, even when GDELT's 10-year corpus
-  // happens to miss the story (the OZCAN HALAC 2025 Reuters article being
+  // NewsCatcher etc. always surfaces, even when GDELT's default results
+  // happen to miss the story (the OZCAN HALAC 2025 Reuters article being
   // the canonical example). Each adapter inside searchAllNews already has
   // its own try/catch + abort timeout so this call never throws; missing
   // env keys quietly degrade individual adapters to no-ops.
@@ -449,7 +449,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
             return `[${i + 1}] ${date} | ${a.domain ?? "unknown"}${srcScore}${cats} | tone:${tone} | "${a.title}"`;
           })
           .join("\n")
-      : "No articles found across GDELT 10-year corpus + vendor news fan-out (NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
+      : "No articles found across multi-source adverse-media corpus (lifetime — GDELT + NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
 
   const client = getAnthropicClient(apiKey, 6_000);
   const response = await client.messages.create({
@@ -458,7 +458,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     system: [
       {
         type: "text",
-        text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from the GDELT global news corpus (Art.19 FDL 10/2025 — 10-year lookback).
+        text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from a multi-source adverse-media corpus (GDELT + 12 vendor feeds) covering the subject's entire lifetime (Art.19 FDL 10/2025).
 
 CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles provided by the user. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "unknown" (not "clear") with zero counts — "clear" means data was found and was clean; "unknown" means data was unavailable.
 

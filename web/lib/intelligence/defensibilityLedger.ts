@@ -116,7 +116,7 @@ export function buildBaselineLedger(): LedgerEntry[] {
     { id: "pep_rca", label: "PEP RCA expansion", category: "pep", fired: false, rationale: "Related-party / family expansion ran; no associated PEP found.", citation: "FATF R.12 Family & Close Associates" },
 
     { id: "am_classify", label: "Adverse media keyword classification", category: "adverse_media", fired: false, rationale: "1066-keyword AM classifier ran on subject text.", citation: "FATF R.20" },
-    { id: "am_live", label: "Live news / GDELT 10-year sweep", category: "adverse_media", fired: false, rationale: "GDELT 10-year Art.19 lookback; no findings.", citation: "FDL 10/2025 Art.19" },
+    { id: "am_live", label: "Live news / GDELT lifetime sweep", category: "adverse_media", fired: false, rationale: "GDELT lifetime sweep (multi-source, no date cap); no findings.", citation: "FDL 10/2025 Art.19" },
     { id: "am_context", label: "Adverse-media context analyzer", category: "adverse_media", fired: false, rationale: "Subject-vs-mentioned-vs-accused classifier ran on each article.", citation: "Hawkeye Sterling intelligence engine" },
 
     { id: "geo_jurisdiction", label: "Jurisdiction risk scoring", category: "geography", fired: false, rationale: "FATF black/grey, EU AML, CAHRA, secrecy-tier check.", citation: "FATF lists, EU 2015/849 Annex, OECD" },

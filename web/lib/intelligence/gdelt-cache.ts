@@ -48,7 +48,6 @@ export interface GdeltCachedResult {
 
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
 const FETCH_TIMEOUT_MS = 20_000;
-const ART19_LOOKBACK_YEARS = 10;
 const GDELT_MAX_RECORDS = 250;
 
 // In-memory cache TTL — 30 min. Short enough that a single warm Lambda doesn't
@@ -252,15 +251,6 @@ async function redisSet(key: string, value: MemEntry["value"]): Promise<void> {
 
 // ─── GDELT live fetch ───────────────────────────────────────────────────────
 
-function gdeltDateTime(d: Date): string {
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mi = String(d.getUTCMinutes()).padStart(2, "0");
-  const ss = String(d.getUTCSeconds()).padStart(2, "0");
-  return `${yyyy}${mm}${dd}${hh}${mi}${ss}`;
-}
 
 // ─── Multi-query strategy (Taranis-parity) ─────────────────────────────────
 //
@@ -542,7 +532,7 @@ function sourceScore(domain?: string): number {
   return 0.5;
 }
 
-function buildGdeltUrl(subjectName: string, query: RiskQueryDef, start: Date, end: Date): string {
+function buildGdeltUrl(subjectName: string, query: RiskQueryDef): string {
   const kw = query.keywords.join(" OR ");
   const rawQuery = `"${subjectName}" AND (${kw})`;
   const params = new URLSearchParams({
@@ -551,8 +541,6 @@ function buildGdeltUrl(subjectName: string, query: RiskQueryDef, start: Date, en
     maxrecords: String(GDELT_MAX_RECORDS),
     format: "json",
     sort: "DateDesc",
-    startdatetime: gdeltDateTime(start),
-    enddatetime: gdeltDateTime(end),
   });
   return `${GDELT_BASE}?${params.toString()}`;
 }
@@ -607,9 +595,6 @@ async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: n
   if (!breakerAllowsLive()) {
     return { articles: [], serviceError: true, breakerOpen: true };
   }
-  const end = new Date();
-  const start = new Date(end);
-  start.setUTCFullYear(start.getUTCFullYear() - ART19_LOOKBACK_YEARS);
 
   // Per-query timeout: honour the caller's remaining budget (leave 3 s for synthesis).
   // Never exceed FETCH_TIMEOUT_MS even if budget is generous.
@@ -625,8 +610,6 @@ async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: n
       maxrecords: String(GDELT_MAX_RECORDS),
       format: "json",
       sort: "DateDesc",
-      startdatetime: gdeltDateTime(start),
-      enddatetime: gdeltDateTime(end),
     });
     const url = `${GDELT_BASE}?${params.toString()}`;
     const articles = await fetchOneQuery(url, { label: "custom", keywords: [], categories: ["adverse_media"] }, perQueryMs);
@@ -635,8 +618,8 @@ async function liveFetch(subjectName: string, customQuery?: string, budgetMs?: n
     return { articles, serviceError: false };
   }
 
-  // Multi-query parallel strategy — fire all 6 risk queries simultaneously
-  const urls = RISK_QUERIES.map((q) => ({ q, url: buildGdeltUrl(subjectName, q, start, end) }));
+  // Multi-query parallel strategy — fire all risk queries simultaneously
+  const urls = RISK_QUERIES.map((q) => ({ q, url: buildGdeltUrl(subjectName, q) }));
   const results = await Promise.allSettled(urls.map(({ q, url }) => fetchOneQuery(url, q, perQueryMs)));
 
   const allArticles: GdeltArticle[] = [];
