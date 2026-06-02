@@ -57,10 +57,20 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
+  if (!apiKey) {
+    return NextResponse.json(
+      { ok: false, error: "ewra/threat-intel temporarily unavailable - please retry.", code: "no_api_key" },
+      { status: 503, headers: gate.headers },
+    );
+  }
 
+  const callStartedAt = Date.now();
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    // 14 s per-call budget — was 4.5 s, which produced frequent timeouts
+    // when Haiku generated typologies + regulatory changes + score
+    // adjustments + JSON in one shot. Still well inside Lambda
+    // maxDuration (60 s) and Netlify's ~26 s edge ceiling.
+    const client = getAnthropicClient(apiKey, 14_000);
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -132,7 +142,33 @@ Generate threat intelligence for the EWRA. Focus on the top 5 current ML/TF typo
     );
     return NextResponse.json(result, { headers: gate.headers });
   } catch (err) {
-    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ ok: false, error: "ewra/threat-intel temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
+    const latencyMs = Date.now() - callStartedAt;
+    const code = categorizeUpstreamError(err);
+    const detail = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `[ewra/threat-intel] upstream failure code=${code} latencyMs=${latencyMs} detail=${detail}`,
+    );
+    return NextResponse.json(
+      { ok: false, error: "ewra/threat-intel temporarily unavailable - please retry.", code, latencyMs },
+      { status: 503, headers: gate.headers },
+    );
   }
+}
+
+type UpstreamErrorCode = "timeout" | "upstream_5xx" | "upstream_4xx" | "parse_failed" | "unknown";
+
+function categorizeUpstreamError(err: unknown): UpstreamErrorCode {
+  if (err instanceof SyntaxError) return "parse_failed";
+  if (!(err instanceof Error)) return "unknown";
+  const msg = err.message.toLowerCase();
+  if (err.name === "AbortError" || msg.includes("aborted") || msg.includes("timeout")) {
+    return "timeout";
+  }
+  const status = (err as Error & { status?: number; upstreamStatus?: number }).status
+    ?? (err as Error & { status?: number; upstreamStatus?: number }).upstreamStatus;
+  if (typeof status === "number") {
+    if (status >= 500) return "upstream_5xx";
+    if (status >= 400) return "upstream_4xx";
+  }
+  return "unknown";
 }
