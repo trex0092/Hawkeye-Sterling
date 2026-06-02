@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Component, type ReactNode, Suspense } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { HubContextProvider, useHubContext } from "@/components/intelligence-hub/HubContext";
 
@@ -224,6 +224,41 @@ function ActiveSection({ tab }: { tab: TabId }) {
   }
 }
 
+// ── Section error boundary ───────────────────────────────────────────────────
+
+interface EBState { hasError: boolean; message: string }
+
+class SectionErrorBoundary extends Component<{ children: ReactNode }, EBState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(err: unknown): EBState {
+    return { hasError: true, message: err instanceof Error ? err.message : String(err) };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+          <span className="text-28">⚠️</span>
+          <p className="text-14 font-semibold text-ink-0">Section failed to load</p>
+          <p className="text-12 text-ink-3 max-w-[44ch]">{this.state.message || "An unexpected error occurred."}</p>
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false, message: "" })}
+            className="px-4 py-2 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ── Hub inner (uses useSearchParams, must be in Suspense on server routes) ──
 
 function HubInner() {
@@ -231,12 +266,23 @@ function HubInner() {
   const router = useRouter();
   const rawTab = searchParams?.get("tab") ?? null;
   const activeTab: TabId = isValidTab(rawTab) ? rawTab : "analytics";
+  const embedded = searchParams?.get("embed") === "1";
 
   const handleTabChange = (tab: TabId) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", tab);
     router.replace(`/intelligence-hub?${params.toString()}`, { scroll: false });
   };
+
+  if (embedded) {
+    return (
+      <ModuleLayout asanaModule="intelligence-hub" asanaLabel="Intelligence Hub">
+        <SectionErrorBoundary>
+          <ActiveSection tab={activeTab} />
+        </SectionErrorBoundary>
+      </ModuleLayout>
+    );
+  }
 
   return (
     <ModuleLayout asanaModule="intelligence-hub" asanaLabel="Intelligence Hub">
@@ -258,7 +304,9 @@ function HubInner() {
       <TabStrip activeTab={activeTab} onTabChange={handleTabChange} />
 
       <div role="tabpanel" aria-label={TAB_CONFIG[activeTab].label}>
-        <ActiveSection tab={activeTab} />
+        <SectionErrorBoundary>
+          <ActiveSection tab={activeTab} />
+        </SectionErrorBoundary>
       </div>
     </ModuleLayout>
   );

@@ -23,6 +23,8 @@ function ModuleFamilyBarInner({ suiteName, modules, onSelect, activeHref }: Prop
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  if (searchParams?.get("embed") === "1") return null;
+
   function isActive(mod: FamilyModule): boolean {
     // Inline-tab mode: highlight by activeHref
     if (onSelect) return mod.href === activeHref;
