@@ -38,6 +38,9 @@ export interface ApiKeyRecord {
   // Optional role for role-based access control on sensitive endpoints
   // (e.g. 'mlro' required for disposition recording per Cabinet Res 134/2025).
   role?: string;
+  // Optional organisation ID for org-level quota pool enforcement.
+  // When set, all keys sharing the same orgId draw from a shared monthly pool.
+  orgId?: string;
 }
 
 export interface IssuedKey {

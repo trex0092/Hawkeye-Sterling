@@ -18,7 +18,8 @@
 import { NextResponse } from "next/server";
 import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
 import { getJson } from "./store";
-import { consumeRateLimit, rateLimitHeaders } from "./rate-limit";
+import { consumeRateLimit, consumeOrgQuota, rateLimitHeaders } from "./rate-limit";
+import { routePolicyFor, applySunsetHeaders } from "./route-policies";
 import { tierFor } from "@/lib/data/tiers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { looksLikeJwt, verifyJwt } from "./jwt";
@@ -189,9 +190,13 @@ async function _enforce(
   // `opts = { requireAuth: true }` meant `enforce(req, { requireJsonBody: false })`
   // silently turned off auth — caught when the EOCN multipart upload route
   // tripped exactly that footgun. Always merge defaults at the property level.
+  const route         = new URL(req.url).pathname;
   const requireAuth = opts.requireAuth ?? true;
   const requireJsonBody = opts.requireJsonBody ?? true;
-  const cost = opts.cost ?? 1;
+  // Apply route policy cost multiplier on top of the per-call cost.
+  const routePolicy   = routePolicyFor(route);
+  const costMultiplier = routePolicy?.rateLimitPolicy?.costMultiplier ?? 1;
+  const cost = Math.max(1, Math.floor((opts.cost ?? 1) * costMultiplier));
   // 1 MiB default. Override with a larger value only for routes that legitimately
   // accept documents (e.g. trade-finance, EOCN ingest). Netlify's reverse proxy
   // strips content-length so this check is enforced on direct/k8s callers only
@@ -504,6 +509,26 @@ async function _enforce(
     };
   }
 
+  // Org-level quota check: keys with an orgId draw from a shared monthly pool.
+  if (record?.orgId) {
+    const orgCheck = await consumeOrgQuota(record.orgId, cost);
+    if (!orgCheck.allowed) {
+      logAuthFailure(req, "org_quota_exceeded", 429, { orgId: record.orgId.slice(0, 12) });
+      return {
+        ok: false,
+        response: NextResponse.json(
+          {
+            ok: false,
+            error: "Organisation monthly quota exceeded.",
+            code: "ORG_QUOTA_EXCEEDED",
+            retryAfterSec: 2_592_000,
+          },
+          { status: 429 },
+        ),
+      };
+    }
+  }
+
   span.setAttribute('auth.keyId', keyId);
   span.setAttribute('auth.tier', tierId);
   span.setAttribute('auth.outcome', 'allow');
@@ -513,11 +538,14 @@ async function _enforce(
     keyId,
     record,
     remainingMonthly,
-    headers: {
-      ...rateLimitHeaders(rl),
-      ...(remainingMonthly !== null
-        ? { "x-quota-remaining-monthly": String(remainingMonthly) }
-        : {}),
-    },
+    headers: applySunsetHeaders(
+      {
+        ...rateLimitHeaders(rl),
+        ...(remainingMonthly !== null
+          ? { "x-quota-remaining-monthly": String(remainingMonthly) }
+          : {}),
+      },
+      routePolicy,
+    ),
   };
 }

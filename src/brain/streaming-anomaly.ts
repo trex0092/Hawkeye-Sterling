@@ -22,6 +22,10 @@ export interface AnomalyFeatureVector {
   dayOfWeek: number;           // 0–6
   amountLog: number;           // log10(amount_usd)
   isRoundAmount: number;       // 0 or 1 — structuring signal
+  /** Count of distinct ISO-2 country codes in last 7 days for this entity,
+   *  clamped to [0, 10]. ≥5 signals FATF R.1/R.10 geographic dispersion.
+   *  0 = not provided / unknown. Optional for backward compatibility. */
+  geographicDispersion?: number;
 }
 
 export type AnomalyTier = 'pass' | 'flag' | 'hold';
@@ -217,7 +221,7 @@ export interface StreamingAnomalyGateOptions {
 
 const FEATURE_NAMES: (keyof AnomalyFeatureVector)[] = [
   'amountZscore', 'velocityRatio7d', 'counterpartyIsNew', 'countryRiskScore',
-  'hourOfDay', 'dayOfWeek', 'amountLog', 'isRoundAmount',
+  'hourOfDay', 'dayOfWeek', 'amountLog', 'isRoundAmount', 'geographicDispersion',
 ];
 
 export class StreamingAnomalyGate {
@@ -228,7 +232,7 @@ export class StreamingAnomalyGate {
   private observationCount: number;
 
   constructor(opts: StreamingAnomalyGateOptions = {}) {
-    const nFeatures = opts.nFeatures ?? 8;
+    const nFeatures = opts.nFeatures ?? 9;
     this.hst = new HalfSpaceTreesEnsemble(
       nFeatures,
       opts.nEstimators ?? 25,
@@ -252,6 +256,7 @@ export class StreamingAnomalyGate {
       (fv.dayOfWeek - 3) / 3,
       Math.max(0, Math.min(8, fv.amountLog)) / 8,
       fv.isRoundAmount,
+      Math.max(0, Math.min(10, fv.geographicDispersion ?? 0)) / 10,
     ];
   }
 
@@ -291,6 +296,9 @@ export function extractFeatures(tx: {
   counterpartyFirstSeen?: boolean;
   countryRiskScore?: number;
   timestampUtc?: string;
+  /** Number of distinct ISO-2 country codes seen in the last 7 days for this
+   *  entity (FATF R.1/R.10 geographic dispersion). 0 = not provided. */
+  distinctCountries7d?: number;
 }): AnomalyFeatureVector {
   const mean = tx.customerBaseline?.meanAmount ?? tx.amountUsd;
   const std = Math.max(1, tx.customerBaseline?.stdAmount ?? 1);
@@ -318,5 +326,6 @@ export function extractFeatures(tx: {
     dayOfWeek,
     amountLog,
     isRoundAmount,
+    geographicDispersion: tx.distinctCountries7d ?? 0,
   };
 }

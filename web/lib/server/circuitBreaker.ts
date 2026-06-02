@@ -15,13 +15,21 @@
 // not transactional — a brief disagreement between concurrent Lambdas
 // won't cause an outage, just slightly faster trip / reset behaviour.
 
-interface BreakerState { failures: number; openedAt: number | null }
+interface BreakerState {
+  failures: number;
+  openedAt: number | null;
+  /** Timestamp when we entered half-open state (RESET_MS elapsed). */
+  halfOpenAt: number | null;
+  /** True while one probe request is in-flight in half-open state. */
+  probeInFlight: boolean;
+}
 import { setGauge } from "./metrics-store";
 
 const breakers = new Map<string, BreakerState>();
 const hydrated = new Set<string>();
 const THRESHOLD = 5;
-const RESET_MS = 60_000; // 1 minute
+const RESET_MS = 60_000;      // 1 minute
+const JITTER_MAX_MS = 10_000; // max random back-off on half-open re-open
 // Redis key prefix and TTL for circuit breaker state entries.
 const REDIS_CB_PREFIX = "cb:";
 const REDIS_TTL_SEC = Math.ceil(RESET_MS / 1000) * 2; // 2× reset window
@@ -109,10 +117,21 @@ export function isBreakerOpen(key: string): boolean {
   hydrate(key);
   const s = breakers.get(key);
   if (!s || s.openedAt === null) return false;
-  if (Date.now() - s.openedAt > RESET_MS) {
-    s.failures = 0; s.openedAt = null;
-    persist(key, s);
-    return false;
+  const elapsed = Date.now() - s.openedAt;
+  if (elapsed > RESET_MS) {
+    // Transition to half-open: let exactly one probe request through.
+    const halfOpenAt = s.halfOpenAt ?? null;
+    if (halfOpenAt === null) {
+      s.halfOpenAt = Date.now();
+      s.probeInFlight = false;
+      persist(key, s);
+    }
+    if (!(s.probeInFlight ?? false)) {
+      s.probeInFlight = true;
+      persist(key, s);
+      return false; // this caller is the probe
+    }
+    return true; // block all others while probe runs
   }
   return s.failures >= THRESHOLD;
 }
@@ -120,20 +139,25 @@ export function isBreakerOpen(key: string): boolean {
 export function recordSuccess(key: string): void {
   hydrate(key);
   setGauge('hawkeye_circuit_breaker_open', 0, { service: key });
-  const s = breakers.get(key) ?? { failures: 0, openedAt: null };
-  s.failures = 0; s.openedAt = null;
+  const s = breakers.get(key) ?? { failures: 0, openedAt: null, halfOpenAt: null, probeInFlight: false };
+  s.failures = 0; s.openedAt = null; s.halfOpenAt = null; s.probeInFlight = false;
   breakers.set(key, s);
   persist(key, s);
 }
 
 export function recordFailure(key: string): void {
   hydrate(key);
-  const s = breakers.get(key) ?? { failures: 0, openedAt: null };
+  const s = breakers.get(key) ?? { failures: 0, openedAt: null, halfOpenAt: null, probeInFlight: false };
   s.failures++;
-  // Only stamp openedAt on the closed→open transition. Re-stamping on every
-  // subsequent failure would extend the RESET_MS window indefinitely, preventing
-  // recovery when a service fails intermittently above the threshold.
-  if (s.failures >= THRESHOLD && s.openedAt === null) {
+  if ((s.halfOpenAt ?? null) !== null) {
+    // Probe failed — re-open with jitter to prevent thundering herd on recovery.
+    s.openedAt = Date.now() + Math.floor(Math.random() * JITTER_MAX_MS);
+    s.halfOpenAt = null;
+    s.probeInFlight = false;
+    setGauge('hawkeye_circuit_breaker_open', 1, { service: key });
+  } else if (s.failures >= THRESHOLD && s.openedAt === null) {
+    // Closed→open transition — stamp openedAt once. Re-stamping on every
+    // subsequent failure would extend the RESET_MS window indefinitely.
     s.openedAt = Date.now();
     setGauge('hawkeye_circuit_breaker_open', 1, { service: key });
   }

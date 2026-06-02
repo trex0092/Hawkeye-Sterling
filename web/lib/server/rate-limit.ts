@@ -245,6 +245,73 @@ export async function consumeRateLimit(
   };
 }
 
+// ── Org-level quota pool ──────────────────────────────────────────────────────
+//
+// Spring-cloud-gateway inspired: multi-key organisations share a monthly pool
+// so they can't bypass per-key limits by fanning out across many API keys.
+// Enforcement is best-effort (last-writer-wins, same as Blobs rate limiter).
+// For hard enforcement, the same Redis pipeline pattern used above applies.
+
+export interface OrgQuotaResult {
+  allowed: boolean;
+  remaining: number;
+}
+
+const ORG_QUOTA_PREFIX = "org-quota/";
+
+function orgQuotaMonthKey(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+interface OrgQuotaState {
+  orgId: string;
+  monthKey: string;
+  used: number;
+  limit: number;
+}
+
+/**
+ * Check and decrement an org-level monthly quota pool. Returns allowed=false
+ * when the organisation has exhausted its monthly budget across all its keys.
+ *
+ * This is layered on top of per-key enforcement — both must pass. Keys without
+ * an orgId skip this check entirely and are governed only by per-key limits.
+ *
+ * @param orgId  Organisation identifier from ApiKeyRecord.orgId.
+ * @param cost   Request cost units to consume (same units as consumeRateLimit).
+ */
+export async function consumeOrgQuota(
+  orgId: string,
+  cost: number,
+): Promise<OrgQuotaResult> {
+  const limit   = parseInt(process.env["GATEWAY_ORG_MONTHLY_LIMIT"] ?? "1000000", 10);
+  const monthKey = orgQuotaMonthKey();
+  const key     = `${ORG_QUOTA_PREFIX}${orgId.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 64)}/${monthKey}.json`;
+
+  const existing = await getJson<OrgQuotaState>(key).catch(() => null);
+  const state: OrgQuotaState = existing ?? { orgId, monthKey, used: 0, limit };
+
+  // Reset if stored month key is stale (Lambda warm across month boundary)
+  if (state.monthKey !== monthKey) {
+    state.monthKey = monthKey;
+    state.used     = 0;
+    state.limit    = limit;
+  }
+
+  const projected = state.used + cost;
+  if (projected > state.limit) {
+    incrementCounter("hawkeye_org_quota_exceeded_total", 1, {
+      orgId: orgId.slice(0, 12),
+    });
+    return { allowed: false, remaining: Math.max(0, state.limit - state.used) };
+  }
+
+  state.used = projected;
+  void setJson(key, state).catch(() => undefined);
+  return { allowed: true, remaining: state.limit - projected };
+}
+
 export function rateLimitHeaders(r: RateLimitResult): Record<string, string> {
   // x-ratelimit-reset: Unix timestamp (seconds) when the most-constrained
   // window resets. Clients use this to schedule the next retry precisely.
