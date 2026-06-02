@@ -57,17 +57,22 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 ---
 
-## CG-4 — goAML reporting entity IDs are placeholder values
+## CG-4 — goAML reporting entity Rentity ID pending FIU assignment
 
 **Risk:** CRITICAL (regulatory)  
-**Description:** `.env.example` shows `"goamlRentityId": "REPLACE_ME"` for all 7 entities in `HAWKEYE_ENTITIES`. If these placeholders are deployed to production, every STR/SAR submitted via `/api/goaml-xml` will contain an invalid reporting entity ID, causing the UAE FIU to reject the filing.
+**Description:** The reporting entity is configured as **Hawkeye Sterling** (`id: hawkeye-sterling`, `jurisdiction: AE`) in `HAWKEYE_ENTITIES`. The `goamlRentityId` field is set to `"FIU_PENDING"` — a placeholder that the platform's `getEntityForSubmission()` guard (`web/lib/config/entities.ts:134`) actively rejects, so no live STR/SAR can be filed until the real ID is set.
 
 FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Action required (operator, not MLRO):**
-  1. Confirm the UAE FIU registration status of each entity
-  2. Replace each `REPLACE_ME` with the actual goAML Rentity ID in Netlify environment variables
-  3. Do not commit real goAML IDs to the repository
+**Action required (operator):**
+  1. Register Hawkeye Sterling at https://goaml.uaefiu.gov.ae (if not already registered)
+  2. Obtain the UAE FIU-assigned Rentity ID (format: numeric or alphanumeric string)
+  3. In Netlify → Site settings → Environment variables, update `HAWKEYE_ENTITIES` replacing `FIU_PENDING` with the real ID:
+     ```
+     [{"id":"hawkeye-sterling","name":"Hawkeye Sterling","goamlRentityId":"<REAL_ID>","jurisdiction":"AE"}]
+     ```
+  4. Trigger a Netlify redeploy for the change to take effect
+  5. Do not commit the real goAML ID to the repository — Netlify env vars only
 
 ---
 
@@ -255,7 +260,7 @@ The implementation is **more conservative** than the regulatory minimum. This is
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | — | Partially closed — whitelist implemented, workflow approval pending |
 | CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
-| CG-4 | Operator | — | Open |
+| CG-4 | Operator | — | Open — entity name set (Hawkeye Sterling); FIU Rentity ID pending registration |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
