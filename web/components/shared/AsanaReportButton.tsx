@@ -87,12 +87,12 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
         className={`${base} hover:opacity-80 no-underline`}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-green" />
-        Reported to Asana · <span className="underline">view task</span>
+        ASANA · <span className="underline">view task</span>
       </a>
     ) : (
       <span className={base}>
         <span className="w-1.5 h-1.5 rounded-full bg-green" />
-        Reported to Asana
+        ASANA ✓
       </span>
     );
   }
@@ -103,9 +103,9 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
         type="button"
         onClick={() => setState({ status: "idle" })}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-amber-dim text-amber border border-amber/30 hover:opacity-80"
-        title="Asana report failed — click to retry"
+        title="Asana task failed — click to retry"
       >
-        ⚠ Report failed · retry
+        ASANA ⚠ · retry
       </button>
     );
   }
@@ -117,23 +117,11 @@ export function AsanaReportButton({ payload, disabled = false }: Props) {
       disabled={disabled || state.status === "posting"}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-green-dim text-green border border-green/30 hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
     >
-      {state.status === "posting" ? (
-        <>
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
-            style={{ animation: "live-pulse 2s ease-in-out infinite" }}
-          />
-          Reporting…
-        </>
-      ) : (
-        <>
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
-            style={{ animation: "live-pulse 2s ease-in-out infinite" }}
-          />
-          Report to Asana
-        </>
-      )}
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-green shrink-0"
+        style={{ animation: "live-pulse 2s ease-in-out infinite" }}
+      />
+      ASANA
     </button>
   );
 }
