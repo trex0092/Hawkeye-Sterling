@@ -3,12 +3,14 @@
 // Auto-discover adverse-media references on a subject by querying:
 //   · NewsAPI / NewsData / GDELT (configurable; first available wins)
 //   · DuckDuckGo search → top 5 result URLs (fallback when no key)
+//   · Twitter/X v2 Recent Search (additive; requires TWITTER_BEARER_TOKEN)
 // Returns TaranisItem-shaped articles ready for analyseAdverseMediaItems.
 // Charter P2: items are emitted with their source URLs; the analyser
 // then classifies severity. Never synthesises news content.
 
 import { createHash } from 'node:crypto';
 import type { CorporateRegistryRecord } from '../brain/bo-graph-builder.js';
+import { searchTwitter } from './SocialMediaCollector.js';
 
 export interface OsintQuery {
   subjectName: string;
@@ -132,13 +134,26 @@ async function duckduckgo(q: OsintQuery): Promise<OsintOutcome> {
 }
 
 /** Discover adverse-media items for a subject. Tries providers in
- *  preference order; first successful (non-empty) wins. */
+ *  preference order; first successful (non-empty) wins. Twitter/X
+ *  SOCMINT runs in parallel and is merged additively into the result. */
 export async function discoverAdverseMedia(q: OsintQuery): Promise<OsintOutcome> {
+  // Start Twitter in parallel so it doesn't add latency to the primary path
+  const twitterP = process.env['TWITTER_BEARER_TOKEN']
+    ? searchTwitter(q).catch(() => null)
+    : Promise.resolve<null>(null);
+
+  let out: OsintOutcome = { ok: false, provider: 'none', items: [], error: 'no provider returned items' };
   for (const fn of [newsApi, gdelt, duckduckgo]) {
-    const out = await fn(q);
-    if (out.ok && out.items.length > 0) return out;
+    const result = await fn(q);
+    if (result.ok && result.items.length > 0) { out = result; break; }
   }
-  return { ok: false, provider: 'none', items: [], error: 'no provider returned items' };
+
+  const tw = await twitterP;
+  if (tw?.ok && tw.items.length > 0) {
+    out = { ...out, ok: true, items: [...out.items, ...tw.items] };
+  }
+
+  return out;
 }
 
 /** Convenience: derive OSINT query from a registry record. */
