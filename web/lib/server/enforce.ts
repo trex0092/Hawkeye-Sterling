@@ -190,6 +190,7 @@ async function _enforce(
   // `opts = { requireAuth: true }` meant `enforce(req, { requireJsonBody: false })`
   // silently turned off auth — caught when the EOCN multipart upload route
   // tripped exactly that footgun. Always merge defaults at the property level.
+  const route         = new URL(req.url).pathname;
   const requireAuth = opts.requireAuth ?? true;
   const requireJsonBody = opts.requireJsonBody ?? true;
   // Apply route policy cost multiplier on top of the per-call cost.
