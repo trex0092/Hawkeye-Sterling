@@ -1,4 +1,4 @@
-# Netlify — Hawkeye Sterling v5 monorepo.
+# Netlify — Hawkeye Sterling v5 monorepo. Build 2026-06-02.
 #
 # Build order:
 #   1. Root: `npm ci && npm run build` → compiles src/brain (TypeScript → dist/).
