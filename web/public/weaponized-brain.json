@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "generatedAt": "2026-06-02T06:49:57+00:00",
+  "generatedAt": "2026-06-02T22:05:30+04:00",
   "manifest": {
     "product": "Hawkeye Sterling",
     "version": "0.2.0",
-    "generatedAt": "2026-06-02T06:49:57+00:00",
+    "generatedAt": "2026-06-02T22:05:30+04:00",
     "charter": {
       "prohibitions": [
         {
@@ -324,13 +324,13 @@
         }
       ],
       "reasoningModes": {
-        "total": 1475,
+        "total": 1610,
         "byCategory": {
           "logic": 41,
           "cognitive_science": 44,
           "epistemic_quality": 30,
           "decision_theory": 40,
-          "forensic": 58,
+          "forensic": 67,
           "compliance_framework": 53,
           "legal_reasoning": 33,
           "strategic": 35,
@@ -338,32 +338,32 @@
           "statistical": 40,
           "graph_analysis": 32,
           "threat_modeling": 35,
-          "behavioral_signals": 27,
+          "behavioral_signals": 45,
           "data_quality": 33,
           "governance": 41,
           "crypto_defi": 39,
-          "sectoral_typology": 47,
+          "sectoral_typology": 76,
           "osint": 26,
-          "esg": 24,
-          "predicate_crime": 29,
-          "proliferation": 24,
-          "correspondent_banking": 24,
-          "hawala_ivt": 23,
-          "ftz_risk": 22,
-          "professional_ml": 23,
+          "esg": 25,
+          "predicate_crime": 36,
+          "proliferation": 35,
+          "correspondent_banking": 26,
+          "hawala_ivt": 27,
+          "ftz_risk": 23,
+          "professional_ml": 25,
           "regulatory_aml": 26,
           "behavioral_economics": 25,
           "intelligence_fusion": 26,
           "asset_recovery": 24,
           "conduct_risk": 23,
-          "identity_fraud": 25,
-          "digital_economy": 24,
-          "human_rights": 22,
+          "identity_fraud": 38,
+          "digital_economy": 25,
+          "human_rights": 25,
           "behavioral_science": 26,
           "network_science": 26,
-          "cryptoasset_forensics": 25,
+          "cryptoasset_forensics": 43,
           "geopolitical_risk": 33,
-          "corporate_intelligence": 24,
+          "corporate_intelligence": 29,
           "psychological_profiling": 24,
           "insider_threat": 24,
           "common_sense": 30,
@@ -373,14 +373,14 @@
           "forensic_accounting": 26,
           "technology_risk": 20,
           "climate_risk": 20,
-          "market_integrity": 20,
+          "market_integrity": 31,
           "systemic_risk": 20,
           "quantum_computing": 20
         },
         "byWave": {
           "wave1": 100,
           "wave2": 1201,
-          "wave3": 73,
+          "wave3": 208,
           "wave4": 29,
           "wave5": 37,
           "wave6": 35
@@ -1454,13 +1454,13 @@
     },
     "integrity": {
       "charterHash": "7da64b2e",
-      "catalogueHash": "c6b52732"
+      "catalogueHash": "3014bb85"
     }
   },
   "integrity": {
     "charterHash": "7da64b2e",
-    "catalogueHash": "c6b52732",
-    "compositeHash": "87dea311"
+    "catalogueHash": "3014bb85",
+    "compositeHash": "00d30e86"
   },
   "enhanced": {
     "extended": {
