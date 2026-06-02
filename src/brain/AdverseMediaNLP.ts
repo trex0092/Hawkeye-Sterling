@@ -64,6 +64,7 @@ export interface NLPExtractionResult {
   sarRelevant: boolean;
   confidenceScore: number;  // 0..1 — extraction quality
   extractedAt: string;
+  iocs?: import('./IOCExtractor.js').ExtractedIOC[];  // populated by IOCExtractor when text contains cyber-crime content
 }
 
 // ── Crime pattern library ─────────────────────────────────────────────────────
