@@ -177,7 +177,8 @@ export interface QuickScreenResult {
   // Weighted risk scoring across hits — accounts for regulatory importance of
   // each sanctions list (OFAC SDN, EOCN > bilateral > informational).
   totalWeightedScore?: number;       // 0..100 weighted composite across all hit lists
-  confidenceScore?: number;          // 0..100 aggregate discriminator confidence
+  confidenceScore?: number;          // 0..100 top-hit discriminator confidence (max across hits)
+  confidenceVariance?: number;       // variance of per-hit confidence values (spread indicator)
   listBreakdown?: Record<string, {   // per-list summary (only lists with hits)
     hits: number;
     topScore: number;                // 0..100
@@ -258,9 +259,12 @@ function applyAutoResolveRule(
   return true;
 }
 
-// Regulatory weight per sanctions list.  Higher = more consequential for
-// the UAE AML/CFT framework.  Unknown lists default to 10.
-const LIST_WEIGHTS: Record<string, number> = {
+// Regulatory weight per sanctions list.
+// Weights are configurable via SCREENING_LIST_WEIGHT_OVERRIDES env var
+// (JSON object mapping listId → weight 1–100).
+// Runtime resolution is lazy so the brain module stays isomorphic (no
+// direct Node.js env reads at import time in test environments).
+const _BASE_LIST_WEIGHTS: Record<string, number> = {
   un_consolidated: 40, un_1267: 40,
   ofac_sdn: 38, ofac_cons: 30,
   uae_eocn: 40, uae_ltl: 35,
@@ -270,8 +274,92 @@ const LIST_WEIGHTS: Record<string, number> = {
 };
 const DEFAULT_LIST_WEIGHT = 10;
 
+let _resolvedWeights: Record<string, number> | null = null;
+
+function resolveListWeights(): Record<string, number> {
+  if (_resolvedWeights) return _resolvedWeights;
+  const base: Record<string, number> = { ..._BASE_LIST_WEIGHTS };
+  try {
+    const raw =
+      (typeof process !== "undefined" && process.env?.["SCREENING_LIST_WEIGHT_OVERRIDES"]) ?? "";
+    if (raw) {
+      const overrides = JSON.parse(raw) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(overrides)) {
+        if (typeof v === "number" && isFinite(v) && v >= 1 && v <= 100) base[k] = v;
+      }
+    }
+  } catch { /* malformed JSON — silently use defaults */ }
+  _resolvedWeights = base;
+  return base;
+}
+
 function listWeight(listId: string): number {
-  return LIST_WEIGHTS[listId] ?? DEFAULT_LIST_WEIGHT;
+  return resolveListWeights()[listId] ?? DEFAULT_LIST_WEIGHT;
+}
+
+// ── Entity-type mismatch penalty table ───────────────────────────────────────
+// Defines the score multiplier applied when subject and candidate entity types
+// differ. Each entry covers an ordered pair [subjectType, candidateType].
+// Pairs not listed here receive a multiplier of 1.0 (no penalty).
+//
+// RATIONALE:
+//   person↔org: clear semantic mismatch — penalise.
+//   vessel/aircraft↔org: expected in practice (OFAC SDN vessel entries are
+//     typically held under an owning organisation name) — no penalty.
+//   vessel↔aircraft, vessel↔individual, aircraft↔individual: rare but
+//     treated as mismatches — moderate penalty.
+//
+// All multipliers are configurable via
+//   SCREENING_ENTITY_MISMATCH_OVERRIDES='[["individual","organisation",0.55]]'
+// (array of [subjectType, candidateType, multiplier] tuples).
+
+type EntityTypePair = `${EntityType}:${EntityType}`;
+
+const _BASE_ENTITY_MISMATCH: Record<EntityTypePair, number> = {
+  "individual:organisation": 0.60,
+  "organisation:individual": 0.60,
+  "individual:vessel":       0.75,
+  "vessel:individual":       0.75,
+  "individual:aircraft":     0.75,
+  "aircraft:individual":     0.75,
+  // vessel/aircraft ↔ organisation: expected (no penalty — see comment above)
+  "vessel:organisation":     1.00,
+  "organisation:vessel":     1.00,
+  "aircraft:organisation":   1.00,
+  "organisation:aircraft":   1.00,
+};
+
+let _resolvedEntityMismatch: Record<EntityTypePair, number> | null = null;
+
+function resolveEntityMismatchTable(): Record<EntityTypePair, number> {
+  if (_resolvedEntityMismatch) return _resolvedEntityMismatch;
+  const table: Record<EntityTypePair, number> = { ..._BASE_ENTITY_MISMATCH };
+  try {
+    const raw =
+      (typeof process !== "undefined" && process.env?.["SCREENING_ENTITY_MISMATCH_OVERRIDES"]) ?? "";
+    if (raw) {
+      const overrides = JSON.parse(raw) as unknown[];
+      for (const entry of overrides) {
+        if (Array.isArray(entry) && entry.length === 3) {
+          const [s, c, m] = entry as [unknown, unknown, unknown];
+          if (
+            typeof s === "string" && typeof c === "string" &&
+            typeof m === "number" && isFinite(m) && m >= 0 && m <= 1
+          ) {
+            table[`${s}:${c}` as EntityTypePair] = m;
+          }
+        }
+      }
+    }
+  } catch { /* malformed JSON — silently use defaults */ }
+  _resolvedEntityMismatch = table;
+  return table;
+}
+
+function entityMismatchMultiplier(subjectType: EntityType, candidateType: EntityType): number {
+  if (subjectType === candidateType) return 1.0;
+  const key = `${subjectType}:${candidateType}` as EntityTypePair;
+  return resolveEntityMismatchTable()[key] ?? 1.0;
 }
 
 function disambiguationConfidenceFor(
@@ -520,20 +608,15 @@ export function quickScreen(
       // Entity-type transparency — always record candidate entity type so
       // callers can distinguish direct designations from entity-association hits.
       if (cand.entityType !== undefined) hit.candidateEntityType = cand.entityType;
-      // Entity-type mismatch penalty — applies only to person↔organisation
-      // cross-type matches. Vessel/aircraft records are commonly held under an
-      // owning organisation's name in sanctions lists (e.g. OFAC SDN vessel
-      // entries), so vessel↔org or aircraft↔org are expected and must not be
-      // penalised; the 0.6× factor would otherwise drop them below the hit
-      // threshold and silently discard legitimate sanctions matches.
+      // Entity-type mismatch penalty — driven by the configurable mismatch table.
+      // Pairs with multiplier < 1.0 are labelled entity-association hits.
+      // Pairs with multiplier = 1.0 (e.g. vessel↔org) are not penalised.
       if (subject.entityType && cand.entityType && subject.entityType !== cand.entityType) {
-        const personVsOrg =
-          (subject.entityType === 'individual' && cand.entityType === 'organisation') ||
-          (subject.entityType === 'organisation' && cand.entityType === 'individual');
-        if (personVsOrg) {
-          hit.score = Math.round(hit.score * 0.6 * 1e6) / 1e6;
+        const multiplier = entityMismatchMultiplier(subject.entityType, cand.entityType);
+        if (multiplier < 1.0) {
+          hit.score = Math.round(hit.score * multiplier * 1e6) / 1e6;
           hit.entityTypeMismatch = true;
-          hit.reason = `entity-association · ${hit.reason}`;
+          hit.reason = `entity-association(×${multiplier.toFixed(2)}) · ${hit.reason}`;
         }
       }
 
@@ -651,16 +734,23 @@ export function quickScreen(
     totalWeightedScore = wTotal > 0 ? Math.round(wSum / wTotal) : topScore;
   }
 
-  // Aggregate confidence: mean of per-hit disambiguation confidences.
-  // Only include hits that actually have a computed discriminator confidence;
-  // defaulting absent values to 50 would produce a spuriously confident
-  // aggregate when no discriminators are available.
+  // Aggregate confidence: max of per-hit disambiguation confidences.
+  // Using max rather than mean prevents a portfolio of low-quality hits from
+  // masking one high-confidence match (e.g. 1×95 + 4×20 should report 95,
+  // not 31). confidenceVariance exposes the spread so reviewers can see
+  // whether scores are consistent or dominated by a single outlier.
   let confidenceScore: number | undefined;
+  let confidenceVariance: number | undefined;
   if (clipped.length > 0) {
-    const withConfidence = clipped.filter((h) => h.disambiguationConfidence !== undefined);
-    if (withConfidence.length > 0) {
-      const sum = withConfidence.reduce((acc, h) => acc + (h.disambiguationConfidence as number), 0);
-      confidenceScore = Math.round(sum / withConfidence.length);
+    const withConf = clipped.filter((h) => h.disambiguationConfidence !== undefined);
+    if (withConf.length > 0) {
+      const values = withConf.map((h) => h.disambiguationConfidence as number);
+      confidenceScore = Math.max(...values);
+      if (values.length >= 2) {
+        const mean = values.reduce((s, v) => s + v, 0) / values.length;
+        const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+        confidenceVariance = Math.round(variance * 10) / 10;
+      }
     }
   }
 
@@ -696,6 +786,7 @@ export function quickScreen(
     ...(lowConfidenceFlag ? { lowConfidenceFlag, ...(lowConfidenceReason !== undefined ? { lowConfidenceReason } : {}) } : {}),
     ...(totalWeightedScore !== undefined ? { totalWeightedScore } : {}),
     ...(confidenceScore !== undefined ? { confidenceScore } : {}),
+    ...(confidenceVariance !== undefined ? { confidenceVariance } : {}),
     ...(clipped.length > 0 ? { listBreakdown } : {}),
     ...(lookalikeClusters ? { lookalikeClusters } : {}),
     ...(likelyFalsePositiveCount > 0 ? { likelyFalsePositiveCount } : {}),

@@ -49,8 +49,9 @@ import { saveSubject, getSubject } from "../pkyc/_store";
 import type { CaseRecord } from "@/lib/types";
 import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichment-jobs";
 import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
-import { bloomPreScreen, isFilterStale, rebuildGlobalFilter } from "@/lib/server/bloom-filter";
+import { bloomPreScreen, isFilterStale, isFilterPreExpiry, rebuildGlobalFilter, schedulePreExpiryRebuild } from "@/lib/server/bloom-filter";
 import { LatencyBudget } from "@/lib/server/latency-budget";
+import { createHash } from "node:crypto";
 
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
@@ -169,7 +170,10 @@ async function fetchListHealth(): Promise<ListHealthSnapshot> {
         const ageHours = typeof fetchedAtMs === "number"
           ? Math.round((Date.now() - fetchedAtMs) / HOUR_MS * 10) / 10
           : null;
+        // A blob that loads but has zero entities is "degraded" — a clear verdict
+        // against an empty list is a false clear, not a real one.
         const status: ListHealthStatus =
+          entityCount === 0 ? "missing" :
           ageHours !== null && ageHours > STALE_HOURS ? "stale" : "healthy";
         snapshot[listId] = { entityCount, ageHours, status };
         return; // found data — skip fallback store
@@ -428,6 +432,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         "[quick-screen] whitelist lookup failed — falling through to full screen:",
         err instanceof Error ? err.message : err,
       );
+      // Record metric so operators can see when the whitelist gate is bypassed.
+      try {
+        const { incrementCounter } = await import("@/lib/server/metrics-store");
+        incrementCounter("hs_whitelist_unavailable_total", { tenant: tenantId ?? "unknown" });
+      } catch { /* non-critical */ }
     }
   }
 
@@ -552,6 +561,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  // Deterministic result ID — same SHA-256 approach as screening/run so
+  // quick-screen results can be correlated in audit logs and case management.
+  const qsTs = new Date().toISOString();
+  const qsResultId = (() => {
+    const normName = subject.name.trim().normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
+    const seed = [randomUUID(), normName, subject.entityType ?? "", qsTs].join("|");
+    return createHash("sha256").update(seed).digest("hex").slice(0, 32);
+  })();
+
   try {
     // Common-name detection — when subject name is in the high-frequency
     // registry (Mohamed Ali, John Smith, Wang, Kim, etc.) we expand every
@@ -585,10 +603,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     //   - The subject is a common name (filter FPR still small but we must
     //     not suppress screening of a populous name class)
     if (isFilterStale() && !Array.isArray(callerCandidates)) {
-      // Kick a background rebuild; don't await it.
+      // Filter fully expired — rebuild asynchronously for the next request.
       void loadCandidatesWithHealth()
         .then((r) => rebuildGlobalFilter(r.candidates))
         .catch(() => undefined);
+    } else if (isFilterPreExpiry() && !Array.isArray(callerCandidates)) {
+      // Filter approaching expiry (>80% of TTL consumed) — schedule a proactive
+      // background rebuild so the first post-expiry request hits a warm filter,
+      // not a synchronous cold-build latency spike.
+      schedulePreExpiryRebuild(() =>
+        loadCandidatesWithHealth().then((r) => r.candidates),
+      );
     }
     const bloomPass =
       Array.isArray(callerCandidates) ||
@@ -1166,6 +1191,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const fullPayload = {
       ok: true,
+      resultId: qsResultId,
       ...finalResult,
       reasoning,
         ...(openSanctionsResults.length > 0

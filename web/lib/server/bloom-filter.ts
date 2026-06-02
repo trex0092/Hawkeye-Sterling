@@ -154,6 +154,7 @@ declare global {
 }
 
 const BLOOM_MAX_AGE_MS = 6 * 60 * 1_000; // rebuild at most every 6 minutes
+const BLOOM_PRE_EXPIRY_FRACTION = 0.80;   // trigger proactive rebuild at 80% of TTL
 
 /** Return the current global filter (may be empty/unbuilt). */
 export function getGlobalFilter(): BloomFilter {
@@ -179,10 +180,50 @@ export function rebuildGlobalFilter(
   globalThis.__hs_bloom_built_at = Date.now();
 }
 
-/** True when the filter should be rebuilt (expired or never built). */
+/** True when the filter has expired and must be rebuilt before use. */
 export function isFilterStale(): boolean {
   const builtAt = globalThis.__hs_bloom_built_at ?? 0;
   return Date.now() - builtAt > BLOOM_MAX_AGE_MS;
+}
+
+/**
+ * True when the filter is approaching expiry (>80% of TTL consumed) but not
+ * yet stale. Used to trigger a proactive background rebuild so the first
+ * request after full expiry does not have to wait for a cold rebuild.
+ */
+export function isFilterPreExpiry(): boolean {
+  const builtAt = globalThis.__hs_bloom_built_at ?? 0;
+  if (builtAt === 0) return false; // never built — isFilterStale handles cold start
+  const age = Date.now() - builtAt;
+  return age > BLOOM_MAX_AGE_MS * BLOOM_PRE_EXPIRY_FRACTION && age <= BLOOM_MAX_AGE_MS;
+}
+
+/**
+ * Schedule a proactive background rebuild when the filter is approaching
+ * expiry. The rebuild runs asynchronously via the provided loader function;
+ * the current filter stays live until the rebuild completes so no request
+ * suffers a synchronous rebuild latency hit.
+ *
+ * @param loadCandidates  Async function that returns the fresh candidate list.
+ */
+export function schedulePreExpiryRebuild(
+  loadCandidates: () => Promise<ReadonlyArray<{ name: string; aliases?: string[] }>>,
+): void {
+  if (!isFilterPreExpiry()) return;
+  // Mark as non-pre-expiry immediately to prevent multiple concurrent rebuilds.
+  // We advance the builtAt by the pre-expiry fraction × TTL so the next check
+  // won't re-trigger until the new build completes.
+  const now = Date.now();
+  globalThis.__hs_bloom_built_at = now; // optimistic lock — rebuild will overwrite
+  void (async () => {
+    try {
+      const candidates = await loadCandidates();
+      rebuildGlobalFilter(candidates);
+    } catch {
+      // Rebuild failed — reset builtAt to original so the next request retries.
+      globalThis.__hs_bloom_built_at = now - BLOOM_MAX_AGE_MS * BLOOM_PRE_EXPIRY_FRACTION;
+    }
+  })();
 }
 
 /**
