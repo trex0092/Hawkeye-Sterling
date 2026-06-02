@@ -21,6 +21,7 @@ import { tippingOffScan, type TippingOffMatch } from '../brain/tipping-off-guard
 import type { DispositionCode } from '../brain/dispositions.js';
 import type { CaseReport } from '../reports/caseReport.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
+import { supportsAdaptiveThinking } from './modelCapabilities.js';
 
 export type Verdict = 'approved' | 'returned_for_revision' | 'blocked' | 'incomplete';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
@@ -474,7 +475,12 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   const systemContent = cacheSystem
     ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
     : system;
-  const thinkingBlock = thinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
+  // Gate on per-model capability — Haiku tiers 400 the request if `thinking`
+  // is present, so we silently drop it for those models even if the caller
+  // asked for it.
+  const thinkingBlock = (thinking && supportsAdaptiveThinking(model))
+    ? { thinking: { type: 'adaptive', display: 'summarized' } }
+    : {};
   const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
@@ -631,15 +637,16 @@ export async function invokeComplianceAgent(
   const user = buildComplianceUserMessage(req);
   const advStart = new Date().toISOString();
   const remaining = Math.max(1, hardCeiling - (Date.now() - t0));
+  const advModel = cfg.model ?? DEFAULT_MODEL;
   const { result: advRes, timedOut, thrownError: advThrown } = await withBudget(remaining, (signal) =>
     chat({
-      model: cfg.model ?? DEFAULT_MODEL,
+      model: advModel,
       system,
       user,
       maxTokens: cfg.maxTokens ?? 16_000,
       apiKey: cfg.apiKey,
       signal,
-      thinking: useThinking,
+      thinking: useThinking && supportsAdaptiveThinking(advModel),
       effort: 'xhigh',
       cacheSystem: useCache,
     }),
