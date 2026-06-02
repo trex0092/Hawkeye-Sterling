@@ -1,6 +1,7 @@
 import type { CaseReport } from '../reports/caseReport.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
+import { supportsAdaptiveThinking } from './modelCapabilities.js';
 
 export interface ClaudeAgentConfig {
   apiKey: string;
@@ -119,10 +120,14 @@ export async function generateNarrativeReport(
 
   const useThinking = config.enableThinking    !== false;
   const useCache    = config.cacheSystemPrompt !== false;
+  const effectiveModel = config.model || DEFAULT_MODEL;
   const systemContent = useCache
     ? [{ type: 'text' as const, text: payload.system, cache_control: { type: 'ephemeral' } }]
     : payload.system;
-  const thinkingBlock    = useThinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
+  // Gate on per-model capability — Haiku tiers reject the `thinking` block.
+  const thinkingBlock    = (useThinking && supportsAdaptiveThinking(effectiveModel))
+    ? { thinking: { type: 'adaptive', display: 'summarized' } }
+    : {};
   const outputConfigBlock = { output_config: { effort: 'xhigh' } };
 
   const result = await fetchAnthropicStreamText(
@@ -135,7 +140,7 @@ export async function generateNarrativeReport(
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: config.model || DEFAULT_MODEL,
+        model: effectiveModel,
         max_tokens: 16000,
         stream: true,
         system: systemContent,

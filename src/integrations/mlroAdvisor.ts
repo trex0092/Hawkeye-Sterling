@@ -10,6 +10,7 @@
 import { weaponizedSystemPrompt } from '../brain/weaponized.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
+import { supportsAdaptiveThinking } from './modelCapabilities.js';
 
 export type ReasoningMode = 'speed' | 'balanced' | 'multi_perspective';
 
@@ -332,7 +333,12 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   const systemContent = cacheSystem
     ? [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' } }]
     : system;
-  const thinkingBlock = thinking ? { thinking: { type: 'adaptive', display: 'summarized' } } : {};
+  // Gate on per-model capability — Haiku tiers 400 the request if `thinking`
+  // is present, so we silently drop it for those models even if the caller
+  // asked for it.
+  const thinkingBlock = (thinking && supportsAdaptiveThinking(model))
+    ? { thinking: { type: 'adaptive', display: 'summarized' } }
+    : {};
   const outputConfigBlock = effort ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
@@ -444,7 +450,7 @@ export async function invokeMlroAdvisor(
     // Speed mode caps output to 600 tokens (Haiku) to stay under the 5 s target.
     const execMaxTokens = cfg.maxTokens ?? (mode === 'speed' ? SPEED_EXECUTOR_TOKENS : EXECUTOR_DEFAULT_TOKENS);
     const { result: execRes, timedOut, thrownError: execThrown } = await withBudget(execBudget, (signal) =>
-      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: execMaxTokens, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'high', cacheSystem: useCache }),
+      chat({ model: execModel, system: executor.system, user: executor.user, maxTokens: execMaxTokens, apiKey: cfg.apiKey, signal, thinking: useThinking && supportsAdaptiveThinking(execModel), effort: 'high', cacheSystem: useCache }),
     );
     if (timedOut || !execRes?.ok) {
       trail.push({ stepNo: 1, actor: 'executor', modelId: execModel, at: execStart, summary: timedOut ? 'Executor budget exceeded — partial output.' : 'Executor failed.', body: execRes?.text ?? '', ...(execRes?.thinking !== undefined ? { thinkingSummary: execRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
@@ -467,7 +473,7 @@ export async function invokeMlroAdvisor(
   const remaining = Math.max(1, totalBudget - (Date.now() - t0));
   const advBudget = Math.min(budget.advisorMs ?? remaining, remaining);
   const { result: advRes, timedOut: advTimedOut, thrownError: advThrown } = await withBudget(advBudget, (signal) =>
-    chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? ADVISOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
+    chat({ model: advModel, system: advisor.system, user: advisor.user, maxTokens: cfg.maxTokens ?? ADVISOR_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking && supportsAdaptiveThinking(advModel), effort: 'xhigh', cacheSystem: useCache }),
   );
   if (advTimedOut || !advRes?.ok) {
     trail.push({ stepNo: trail.length + 1, actor: 'advisor', modelId: advModel, at: advStart, summary: advTimedOut ? 'Advisor budget exceeded — partial output.' : 'Advisor failed.', body: advRes?.text ?? '', ...(advRes?.thinking !== undefined ? { thinkingSummary: advRes.thinking } : {}), citedModeIds: [], citedDoctrineIds: [], citedRedFlagIds: [], citedEvidenceIds: [] });
@@ -489,7 +495,7 @@ export async function invokeMlroAdvisor(
     if (chalBudget > 5_000) {
       const challenger = buildChallengerRequest(req, executorBody, body);
       const { result: chalRes, timedOut: chalTimedOut, thrownError: _chalThrown } = await withBudget(chalBudget, (signal) =>
-        chat({ model: chalModel, system: challenger.system, user: challenger.user, maxTokens: cfg.maxTokens ?? CHALLENGER_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking, effort: 'xhigh', cacheSystem: useCache }),
+        chat({ model: chalModel, system: challenger.system, user: challenger.user, maxTokens: cfg.maxTokens ?? CHALLENGER_DEFAULT_TOKENS, apiKey: cfg.apiKey, signal, thinking: useThinking && supportsAdaptiveThinking(chalModel), effort: 'xhigh', cacheSystem: useCache }),
       );
       if (!chalTimedOut && chalRes?.ok) {
         const chalBody = chalRes.text ?? '';
