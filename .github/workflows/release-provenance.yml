@@ -46,6 +46,7 @@ jobs:
   # SLSA level 2 signed provenance (intoto envelope).
   provenance:
     needs: prepare
+    if: needs.prepare.result == 'success'
     permissions:
       actions: read
       id-token: write
