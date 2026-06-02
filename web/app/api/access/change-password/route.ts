@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     maxAge: 0,
     path: "/",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: isSecure,
   });
   return res;
