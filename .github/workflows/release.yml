@@ -25,6 +25,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
+    branches:
+      - '**'
   pull_request:
     branches: [main]
 
