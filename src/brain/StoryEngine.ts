@@ -97,8 +97,9 @@ function makeUF(ids: string[]): Map<string, string> {
 }
 
 function find(parent: Map<string, string>, x: string): string {
-  if (parent.get(x) !== x) parent.set(x, find(parent, parent.get(x)!));
-  return parent.get(x)!;
+  const px = parent.get(x);
+  if (px !== undefined && px !== x) parent.set(x, find(parent, px));
+  return parent.get(x) ?? x;
 }
 
 function union(parent: Map<string, string>, x: string, y: string): void {
@@ -120,20 +121,23 @@ function buildStoriesForGroup(
 
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      const a = itemMap.get(ids[i]!);
-      const b = itemMap.get(ids[j]!);
+      const idI = ids[i];
+      const idJ = ids[j];
+      if (idI === undefined || idJ === undefined) continue;
+      const a = itemMap.get(idI);
+      const b = itemMap.get(idJ);
       if (!a || !b) continue;
 
       const days = daysBetween(a.publishedAt, b.publishedAt);
       if (days > MAX_STORY_WINDOW_DAYS) continue;
 
-      const aNlp = nlpMap.get(ids[i]!);
-      const bNlp = nlpMap.get(ids[j]!);
+      const aNlp = nlpMap.get(idI);
+      const bNlp = nlpMap.get(idJ);
       const sameStory =
         entityOverlap(aNlp, bNlp) >= MIN_SHARED_ENTITIES ||
         titleSimilarity(a.title, b.title) >= TITLE_SIM_THRESHOLD;
 
-      if (sameStory) union(parent, ids[i]!, ids[j]!);
+      if (sameStory) union(parent, idI, idJ);
     }
   }
 
@@ -170,7 +174,8 @@ function buildStoriesForGroup(
         return { id, count: (nlp?.persons.length ?? 0) + (nlp?.entities.length ?? 0) };
       })
       .sort((a, b) => b.count - a.count)[0];
-    const headline = richest ? (itemMap.get(richest.id)?.title ?? arts[0]!.title) : arts[0]!.title;
+    const firstTitle = arts[0]?.title ?? '';
+    const headline = richest ? (itemMap.get(richest.id)?.title ?? firstTitle) : firstTitle;
 
     // Aggregate entity names across cluster
     const allEntities = new Set<string>();

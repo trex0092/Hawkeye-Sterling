@@ -27,7 +27,7 @@ function yearFrom(dateStr?: string): number | null {
   if (!dateStr) return null;
   const m = dateStr.match(/(\d{4})/);
   if (!m) return null;
-  const yr = parseInt(m[1]!, 10);
+  const yr = parseInt(m[1] ?? '0', 10);
   return yr >= 1990 && yr <= 2100 ? yr : null;
 }
 
@@ -83,7 +83,10 @@ export function groupArticles(
     let pairs = 0;
     for (let i = 0; i < bucket.length; i++) {
       for (let j = i + 1; j < bucket.length; j++) {
-        totalSim += jaccard(new Set(bucket[i]!.crimes), new Set(bucket[j]!.crimes));
+        const bi = bucket[i];
+        const bj = bucket[j];
+        if (bi === undefined || bj === undefined) continue;
+        totalSim += jaccard(new Set(bi.crimes), new Set(bj.crimes));
         pairs++;
       }
     }
