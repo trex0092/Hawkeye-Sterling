@@ -71,7 +71,7 @@ interface SubmissionState {
 const GOAML_ALLOWED_ROLES = new Set(["mlro", "co", "managing_director"]);
 
 export default function GoAmlExportPage() {
-  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");
+  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "compliance_assistant");
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<DraftEnvelope>(BLANK);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });

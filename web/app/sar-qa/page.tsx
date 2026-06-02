@@ -97,7 +97,7 @@ function saveReviews(r: Record<string, QaReview>) {
 export default function SarQaPage() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [reviews, setReviews] = useState<Record<string, QaReview>>({});
-  const [role, setRole] = useState<OperatorRole>("analyst");
+  const [role, setRole] = useState<OperatorRole>("compliance_assistant");
   const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});

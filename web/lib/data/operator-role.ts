@@ -39,7 +39,7 @@ export function isBrowser(): boolean {
 }
 
 export function loadOperatorRole(): OperatorRole {
-  if (!isBrowser()) return "analyst";
+  if (!isBrowser()) return "compliance_assistant";
   try {
     // Prefer sessionStorage (written by saveOperatorRole). Fall back to
     // localStorage for any pre-existing value so a page reload doesn't
@@ -49,9 +49,9 @@ export function loadOperatorRole(): OperatorRole {
       window.localStorage.getItem(ROLE_STORAGE_KEY);
     if (raw && (ALL_ROLES as string[]).includes(raw)) return raw as OperatorRole;
   } catch (err) {
-    console.warn("[hawkeye] operator-role load failed (storage disabled?) — defaulting to analyst:", err);
+    console.warn("[hawkeye] operator-role load failed (storage disabled?) — defaulting to CO Assistant:", err);
   }
-  return "analyst";
+  return "compliance_assistant";
 }
 
 export function saveOperatorRole(role: OperatorRole): void {
