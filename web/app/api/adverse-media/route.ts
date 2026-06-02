@@ -21,6 +21,12 @@ import { type GdeltArticle, fetchGdeltCached } from "@/lib/intelligence/gdelt-ca
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { extractIOCs, mergeIOCs } from "../../../../src/brain/IOCExtractor.js";
+import { classifyCybercrime } from "../../../../src/brain/CybercrimeClassifier.js";
+import { groupArticles } from "../../../../src/brain/ArticleGroupingEngine.js";
+import { buildStories } from "../../../../src/brain/StoryEngine.js";
+import type { OsintItem } from "../../../../src/integrations/osint-pipeline.js";
+import type { NLPExtractionResult } from "../../../../src/brain/AdverseMediaNLP.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,6 +161,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Run the weaponized analyser — full MLRO-grade intelligence pipeline
   const verdict = analyseAdverseMediaResult(subject, taranisResult);
 
+  // Enrich: IOC extraction, cybercrime classification, article grouping, story clustering.
+  // Bounded at 3 s; never blocks the verdict or the audit chain write.
+  const enrichment = await Promise.race([
+    buildEnrichment(taranisResult.items),
+    new Promise<null>(r => setTimeout(() => r(null), 3_000)),
+  ]).catch(() => null);
+
   // Write audit chain entry — every adverse-media query is a compliance action.
   // FDL 10/2025 Art.20 requires traceable records for SAR-triggering intelligence.
   void writeAuditChainEntry({
@@ -182,6 +195,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       highRelevanceCount: taranisResult.highRelevanceCount,
       // Weaponized analysis
       verdict,
+      // Taranis AI → Hawkeye enrichment layer (story clustering, IOC extraction, cybercrime labels)
+      ...(enrichment ? { enrichment } : {}),
       // Compliance disclosure: AI-generated content (FDL 10/2025 Art.22)
       aiGenerated: true,
       aiModel: "keyword-classifier+mlro-analyser",
@@ -195,6 +210,71 @@ export async function POST(req: Request): Promise<NextResponse> {
     },
     { status: 200, headers: { ...CORS, ...gateHeaders } },
   );
+}
+
+// ─── Enrichment: IOC extraction + cybercrime classification + story clustering ─
+// Converts TaranisItem[] into OsintItem[] and runs the Taranis-ported pipeline.
+// Called with a 3-second timeout ceiling; any failure returns null silently.
+
+function taranisToOsint(item: TaranisItem): OsintItem {
+  return {
+    id: item.id,
+    url: item.url ?? `https://taranis/${item.id}`,
+    title: item.title,
+    content: item.content,
+    ...(item.published ? { publishedAt: item.published } : {}),
+    language: item.language ?? "en",
+    source: item.source,
+  };
+}
+
+function taranisToMinimalNLP(item: TaranisItem): NLPExtractionResult {
+  return {
+    sourceText: item.content,
+    wordCount: item.content.split(/\s+/).length,
+    persons:  (item.entities ?? []).filter(e => e.type === "PERSON").map(e => ({ name: e.name, roles: [], mentions: 1 })),
+    entities: (item.entities ?? []).filter(e => e.type !== "PERSON").map(e => ({ name: e.name, types: [e.type.toLowerCase()], mentions: 1 })),
+    crimes: [],
+    penalties: [],
+    dates: [],
+    jurisdictions: [],
+    sanctionsMentioned: item.tags?.includes("sanction") ?? false,
+    convictionMentioned: false,
+    arrestMentioned: false,
+    sarRelevant: false,
+    confidenceScore: item.relevanceScore ?? 0.5,
+    extractedAt: new Date().toISOString(),
+  };
+}
+
+async function buildEnrichment(items: TaranisItem[]) {
+  if (!items.length) return null;
+
+  const osintItems = items.map(taranisToOsint);
+  const nlpMap = new Map<string, NLPExtractionResult>(
+    items.map(item => [item.id, taranisToMinimalNLP(item)]),
+  );
+
+  // IOC extraction: merge across all items
+  const iocs = mergeIOCs(items.map(item => extractIOCs(`${item.title} ${item.content}`, item.id)));
+
+  // Cybercrime classification per item
+  const cyberLabels = items.map(item => ({
+    itemId: item.id,
+    ...classifyCybercrime(`${item.title} ${item.content}`),
+  })).filter(c => c.hasAnyLabel);
+
+  // Article grouping + story clustering
+  const groups = groupArticles(osintItems, nlpMap);
+  const stories = buildStories(groups, osintItems, nlpMap);
+
+  return {
+    stories: stories.slice(0, 10),        // cap to keep response size manageable
+    articleGroups: groups.slice(0, 20),
+    iocs: iocs.slice(0, 50),
+    cyberLabels,
+    fatfR15Flag: cyberLabels.some(c => c.fatfR15Flag),
+  };
 }
 
 // ─── GDELT — served from Netlify Blobs cache only ────────────────────────────

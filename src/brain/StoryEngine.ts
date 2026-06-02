@@ -38,7 +38,9 @@ export interface Story {
 }
 
 const MIN_SHARED_ENTITIES = 1;
-const MAX_STORY_WINDOW_DAYS = 90;
+// AML investigations routinely span 12-18 months (arrest → charge → conviction);
+// 365 days lets StoryEngine track the full lifecycle of one case as one story.
+const MAX_STORY_WINDOW_DAYS = 365;
 const TITLE_SIM_THRESHOLD = 0.35;
 const STOP_WORDS = new Set([
   'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
