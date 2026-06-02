@@ -23,6 +23,7 @@ import { WAVE12_MODES, WAVE12_OVERRIDES } from './reasoning-modes-wave12.js';
 import { WAVE13_MODES, WAVE13_OVERRIDES } from './reasoning-modes-wave13.js';
 import { WAVE14_MODES, WAVE14_OVERRIDES } from './reasoning-modes-wave14.js';
 import { WAVE15_MODES, WAVE15_OVERRIDES } from './reasoning-modes-wave15.js';
+import { ORPHAN_MODES } from './reasoning-modes-orphans.js';
 
 const m = (
   id: string,
@@ -415,6 +416,23 @@ for (let i = 0; i < REASONING_MODES.length; i++) {
   const r = REASONING_MODES[i]; if (!r) continue;
   const w15override = WAVE15_OVERRIDES[r.id];
   if (w15override) REASONING_MODES[i] = w15override;
+}
+
+// Merge Orphan modes: 135 modes already implemented in MODE_OVERRIDES but
+// previously missing from REASONING_MODES declarations — brain engine now
+// invokes them. The real apply() from MODE_OVERRIDES takes precedence below.
+const existingIdsOrphans = new Set(REASONING_MODES.map((r) => r.id));
+for (const m of ORPHAN_MODES) {
+  if (!existingIdsOrphans.has(m.id)) {
+    REASONING_MODES.push(m);
+    existingIdsOrphans.add(m.id);
+  }
+}
+// Apply real implementations from MODE_OVERRIDES for the newly registered orphan modes.
+for (let i = 0; i < REASONING_MODES.length; i++) {
+  const r = REASONING_MODES[i]; if (!r) continue;
+  const override = MODE_OVERRIDES[r.id];
+  if (override) REASONING_MODES[i] = { ...r, apply: override };
 }
 
 export const REASONING_MODE_BY_ID: Map<string, ReasoningMode> = new Map(
