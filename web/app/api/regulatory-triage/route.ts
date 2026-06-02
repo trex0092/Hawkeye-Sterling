@@ -53,8 +53,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!apiKey) {
     return NextResponse.json(
-      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-      { status: 503, headers: gate.headers }
+      { ok: true, results: [], status: "degraded", reason: "AI triage key not configured — feed items displayed unscored." },
+      { status: 200, headers: gate.headers }
     );
   }
 
@@ -79,16 +79,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       return NextResponse.json(
-        { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
-        { status: 503, headers: gate.headers }
+        { ok: true, results: [], status: "degraded", reason: "AI triage response could not be parsed — feed items displayed unscored." },
+        { status: 200, headers: gate.headers }
       );
     }
     results = JSON.parse(jsonMatch[0]) as TriageResult[];
     if (!Array.isArray(results)) results = [];
   } catch (err) {
-    console.warn("[hawkeye] route handler failed:", err instanceof Error ? err.message : String(err));
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[hawkeye] regulatory-triage upstream error:", msg);
     return NextResponse.json(
-      { ok: false, error: "Regulatory triage unavailable — please retry. An empty list here is not a 'no items' finding." },
+      { ok: false, error: `Regulatory triage upstream error — ${msg}` },
       { status: 503, headers: gate.headers }
     );
   }
