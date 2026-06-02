@@ -64,7 +64,7 @@ export default function FourEyesPage() {
   const [signingDraft, setSigningDraft] = useState<SigningDraft | null>(null);
   const [lastAsanaUrl, setLastAsanaUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "analyst");
+  const [role, setRole] = useState<string>(() => typeof window !== "undefined" ? loadOperatorRole() : "compliance_assistant");
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
   useEffect(() => {

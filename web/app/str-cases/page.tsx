@@ -191,7 +191,7 @@ function AccessDeniedScreen({
 }
 
 export default function StrCasesPage() {
-  const [role, setRole] = useState<OperatorRole>("analyst");
+  const [role, setRole] = useState<OperatorRole>("compliance_assistant");
   const [roleLoaded, setRoleLoaded] = useState(false);
 
   useEffect(() => {

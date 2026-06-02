@@ -151,7 +151,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
   const [isRaisingSTR, setIsRaisingSTR] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSaved, setReportSaved] = useState(false);
-  const [role, setRole] = useState<OperatorRole>("analyst");
+  const [role, setRole] = useState<OperatorRole>("compliance_assistant");
 
   useEffect(() => {
     setRole(loadOperatorRole());
