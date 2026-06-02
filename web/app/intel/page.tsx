@@ -675,6 +675,7 @@ const INTEL_MODULES: FamilyModule[] = [
   { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
   { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
   { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
+  { label: "Board Dashboard", href: "/board", icon: "🎯" },
   { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
 ];
 
