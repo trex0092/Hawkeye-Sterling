@@ -294,10 +294,18 @@ export async function POST(req: Request) {
 
   const isSecure = process.env["NODE_ENV"] !== "development";
   const res = NextResponse.json({ ok: true, name: user.name, role: user.role });
+  // sameSite: "lax" (not "strict") so the session cookie is sent on
+  // top-level cross-site GET navigations — e.g. when an operator clicks a
+  // bookmark, follows a link from email, or returns to the tab after a
+  // redirect chain. Under "strict", the browser withholds the cookie on the
+  // first request after any external referrer, causing /api/* to 401 and the
+  // "Your session has expired" modal to pop on what is actually a still-
+  // valid session. "lax" is the modern default for first-party auth cookies
+  // and is what NextAuth, Auth.js, and the OWASP guidance recommend.
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: SESSION_TTL_S,
     path: "/",
     partitioned: isSecure,

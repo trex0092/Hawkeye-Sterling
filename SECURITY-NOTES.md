@@ -8,7 +8,7 @@
 ## 1. Authentication Model
 
 ### 1.1 — Session-based (browser portal)
-- Cookie: `HttpOnly; Secure; SameSite=Strict`
+- Cookie: `HttpOnly; Secure; SameSite=Lax`
 - HMAC-SHA256 signed with `SESSION_SECRET`
 - `/api/auth/login` → `/api/auth/me` → `/api/auth/logout`
 
