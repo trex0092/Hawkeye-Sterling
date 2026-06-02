@@ -1405,18 +1405,47 @@ export default function ScreeningPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  // Force a full sanctions list re-ingestion server-side.
-                  // Lists can take ~15-30 s to refresh; the response is awaited.
+                  // Sanctions refresh runs as a background job — kicks off
+                  // via /operator-refresh (returns 202 + jobId immediately),
+                  // then we poll /refresh-status/<jobId> every 3 s until the
+                  // job reaches a terminal state or we hit a 60 s cap.
                   try {
-                    const res = await fetch("/api/sanctions/operator-refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-                    if (res.ok) {
-                      const data = (await res.json().catch(() => null)) as { ok_count?: number; failed_count?: number } | null;
-                      const okCount = data?.ok_count ?? 0;
-                      const failedCount = data?.failed_count ?? 0;
-                      setRefreshMsg({ text: `Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`, type: "ok" });
-                    } else {
-                      setRefreshMsg({ text: `Refresh failed (HTTP ${res.status}). Check /api/sanctions/last-errors for detail.`, type: "error" });
+                    setRefreshMsg({ text: "Sanctions refresh started — gathering latest list versions…", type: "ok" });
+                    const kickoff = await fetch("/api/sanctions/operator-refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+                    if (!kickoff.ok) {
+                      setRefreshMsg({ text: `Refresh failed (HTTP ${kickoff.status}). Check /api/sanctions/last-errors for detail.`, type: "error" });
+                      return;
                     }
+                    const kickoffData = (await kickoff.json().catch(() => null)) as { jobId?: string; statusUrl?: string } | null;
+                    const jobId = kickoffData?.jobId;
+                    if (!jobId) {
+                      setRefreshMsg({ text: "Refresh kicked off but no jobId returned. Reload to verify.", type: "error" });
+                      return;
+                    }
+                    const pollUrl = kickoffData.statusUrl ?? `/api/sanctions/refresh-status/${jobId}`;
+                    const deadline = Date.now() + 60_000;
+                    let finalMsg: { text: string; type: "ok" | "error" } | null = null;
+                    while (Date.now() < deadline) {
+                      await new Promise((r) => setTimeout(r, 3_000));
+                      const statusRes = await fetch(pollUrl);
+                      if (!statusRes.ok) continue;
+                      const statusData = (await statusRes.json().catch(() => null)) as {
+                        status?: "running" | "completed" | "failed";
+                        result?: { ok_count?: number; failed_count?: number };
+                        error?: string;
+                      } | null;
+                      if (statusData?.status === "completed") {
+                        const okCount = statusData.result?.ok_count ?? 0;
+                        const failedCount = statusData.result?.failed_count ?? 0;
+                        finalMsg = { text: `Sanctions refresh complete — ${okCount} lists OK, ${failedCount} failed. Reload to see updated timestamps.`, type: "ok" };
+                        break;
+                      }
+                      if (statusData?.status === "failed") {
+                        finalMsg = { text: `Refresh failed: ${statusData.error ?? "ingestion error"}. Check /api/sanctions/last-errors for detail.`, type: "error" };
+                        break;
+                      }
+                    }
+                    setRefreshMsg(finalMsg ?? { text: "Sanctions refresh still running — reload in a minute or check the activity log.", type: "ok" });
                   } catch (err) {
                     setRefreshMsg({ text: caughtErrorMessage(err, "Sanctions refresh could not be reached — check your connection and try again."), type: "error" });
                   }
