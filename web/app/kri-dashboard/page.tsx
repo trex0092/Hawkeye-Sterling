@@ -35,8 +35,8 @@ function statusLabel(s: KriStatus): string {
   }
 }
 
-function fmtBand(b: [number, number], unit: string): string {
-  const hi = b[1] === Infinity ? "∞" : String(b[1]);
+function fmtBand(b: [number, number | null], unit: string): string {
+  const hi = b[1] == null || b[1] === Infinity ? "∞" : String(b[1]);
   return `${b[0]}–${hi} ${unit}`;
 }
 

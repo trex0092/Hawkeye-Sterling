@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Component, type ReactNode, Suspense } from "react";
+import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { HubContextProvider, useHubContext } from "@/components/intelligence-hub/HubContext";
 
@@ -236,6 +236,10 @@ class SectionErrorBoundary extends Component<{ children: ReactNode }, EBState> {
 
   static getDerivedStateFromError(err: unknown): EBState {
     return { hasError: true, message: err instanceof Error ? err.message : String(err) };
+  }
+
+  componentDidCatch(err: unknown, info: ErrorInfo) {
+    console.error("[SectionErrorBoundary]", err, info.componentStack);
   }
 
   render() {

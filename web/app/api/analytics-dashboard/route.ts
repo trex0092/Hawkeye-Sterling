@@ -9,6 +9,7 @@ import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getCounters, getGauges } from "@/lib/server/metrics-store";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +52,8 @@ export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
+
+  void writeAuditChainEntry({ event: "analytics_dashboard_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
 
   const [counters, gauges, cases] = await Promise.all([
     Promise.resolve(getCounters()),
