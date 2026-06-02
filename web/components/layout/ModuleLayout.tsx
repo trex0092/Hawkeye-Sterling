@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Header } from "./Header";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -10,6 +10,20 @@ import {
   SidebarShell,
   type SidebarFilterItem,
 } from "./SidebarParts";
+
+// Detect `?embed=1` so a page rendered inside an iframe (e.g. the Intel-Feed
+// inline preview panel) drops the Header, sidebar, regulatory ticker, and
+// right-rail activity feed. Without this every iframe nested the entire app
+// inside the panel, producing a duplicate header + sidebar + ticker.
+function useIsEmbedded(): boolean {
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setEmbedded(params.get("embed") === "1");
+  }, []);
+  return embedded;
+}
 
 // Unified module shell — Header + left sidebar (operator card / optional
 // queue filters) + main content. Mirrors the /screening layout pattern
@@ -55,6 +69,14 @@ export function ModuleLayout<K extends string = string>({
   asanaModule,
   asanaLabel,
 }: ModuleLayoutProps<K>) {
+  const embedded = useIsEmbedded();
+  if (embedded) {
+    return (
+      <main className="px-4 py-4 md:px-8 md:py-6">
+        {children}
+      </main>
+    );
+  }
   return (
     <>
       <Header />
