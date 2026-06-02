@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 import type {
   QuickScreenCandidate,
@@ -51,8 +51,6 @@ import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichmen
 import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
 import { bloomPreScreen, isFilterStale, isFilterPreExpiry, rebuildGlobalFilter, schedulePreExpiryRebuild } from "@/lib/server/bloom-filter";
 import { LatencyBudget } from "@/lib/server/latency-budget";
-import { createHash } from "node:crypto";
-
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
 // TTL: 60 seconds — reduced from 3 min to limit stale CLEAR results for recently
@@ -435,7 +433,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // Record metric so operators can see when the whitelist gate is bypassed.
       try {
         const { incrementCounter } = await import("@/lib/server/metrics-store");
-        incrementCounter("hs_whitelist_unavailable_total", { tenant: tenantId ?? "unknown" });
+        incrementCounter("hs_whitelist_unavailable_total", 1, { tenant: tenantId ?? "unknown" });
       } catch { /* non-critical */ }
     }
   }

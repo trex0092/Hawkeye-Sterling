@@ -315,7 +315,7 @@ function listWeight(listId: string): number {
 
 type EntityTypePair = `${EntityType}:${EntityType}`;
 
-const _BASE_ENTITY_MISMATCH: Record<EntityTypePair, number> = {
+const _BASE_ENTITY_MISMATCH: Partial<Record<EntityTypePair, number>> = {
   "individual:organisation": 0.60,
   "organisation:individual": 0.60,
   "individual:vessel":       0.75,
@@ -329,11 +329,11 @@ const _BASE_ENTITY_MISMATCH: Record<EntityTypePair, number> = {
   "organisation:aircraft":   1.00,
 };
 
-let _resolvedEntityMismatch: Record<EntityTypePair, number> | null = null;
+let _resolvedEntityMismatch: Partial<Record<EntityTypePair, number>> | null = null;
 
-function resolveEntityMismatchTable(): Record<EntityTypePair, number> {
+function resolveEntityMismatchTable(): Partial<Record<EntityTypePair, number>> {
   if (_resolvedEntityMismatch) return _resolvedEntityMismatch;
-  const table: Record<EntityTypePair, number> = { ..._BASE_ENTITY_MISMATCH };
+  const table: Partial<Record<EntityTypePair, number>> = { ..._BASE_ENTITY_MISMATCH };
   try {
     const raw =
       (typeof process !== "undefined" && process.env?.["SCREENING_ENTITY_MISMATCH_OVERRIDES"]) ?? "";

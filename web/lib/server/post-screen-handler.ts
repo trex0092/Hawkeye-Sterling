@@ -14,8 +14,7 @@
 // to the caller.
 
 import { recordScreeningBias } from "./bias-monitor";
-import type { QuickScreenSubject } from "@/lib/api/quickScreen.types";
-import type { QuickScreenResult } from "@/lib/api/quickScreen.types";
+import type { QuickScreenSubject, QuickScreenResult } from "@/lib/api/quickScreen.types";
 
 export interface PostScreenContext {
   subject:    QuickScreenSubject;

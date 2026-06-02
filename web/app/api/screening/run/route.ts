@@ -269,9 +269,10 @@ function firePepFamilyLookup(subjectName: string, tenantId: string): void {
       // Write a structured audit event so MLRO can see the RCA network.
       void writeAuditChainEntry({
         event: "pep.family_graph.fetched",
+        actor:     "system/pep-family-lookup",
         subjectName,
-        nodeCount: (network as Record<string, unknown>)["nodeCount"] ?? 0,
-        edgeCount: (network as Record<string, unknown>)["edgeCount"] ?? 0,
+        nodeCount: ((network as unknown) as Record<string, unknown>)["nodeCount"] ?? 0,
+        edgeCount: ((network as unknown) as Record<string, unknown>)["edgeCount"] ?? 0,
       }, tenantId).catch(() => undefined);
     } catch {
       // Non-critical — family graph is advisory only.
@@ -390,7 +391,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ── Adverse media relevance scoring + deduplication ────────────────────────
   // Raw articles from LLM/news adapters are scored by relevance to the subject,
   // filtered below the threshold, and deduplicated across adapter sources.
-  const rawAdverseArticles = (msResult.adverseMedia?.articles ?? []) as Array<Record<string, unknown>>;
+  const rawAdverseArticles = (msResult.adverseMedia?.items ?? []) as unknown as Array<Record<string, unknown>>;
   const scoredArticles = scoreAndFilterArticles(subject.name, rawAdverseArticles);
   const mediaSeverity  = aggregateMediaSeverity(scoredArticles);
   screeningTrace["adverseMediaRawCount"]    = rawAdverseArticles.length;
