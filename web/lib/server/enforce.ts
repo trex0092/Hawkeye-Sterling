@@ -155,6 +155,8 @@ export interface EnforcementAllow {
   ok: true;
   tier: ReturnType<typeof tierFor>;
   keyId: string;
+  /** JWT sub claim or keyId — the authenticated subject for audit entries. */
+  sub: string;
   record: ApiKeyRecord | null; // null when the caller is anonymous
   remainingMonthly: number | null;
   headers: Record<string, string>;
@@ -302,7 +304,7 @@ async function _enforce(
         ),
       };
     }
-    return { ok: true, tier: rl.tier, keyId: "portal_admin", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+    return { ok: true, tier: rl.tier, keyId: "portal_admin", sub: "portal_admin", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
   }
 
   // Cron bypass: SANCTIONS_CRON_TOKEN allows internal scheduled functions
@@ -325,7 +327,7 @@ async function _enforce(
         ),
       };
     }
-    return { ok: true, tier: rl.tier, keyId: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+    return { ok: true, tier: rl.tier, keyId: "cron_internal", sub: "cron_internal", record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
   }
 
   // Session cookie path: portal same-origin requests that arrive without an
@@ -360,7 +362,7 @@ async function _enforce(
         span.setAttribute('auth.keyId', sessionKeyId);
         span.setAttribute('auth.tier', 'enterprise');
         span.setAttribute('auth.outcome', 'allow_session');
-        return { ok: true, tier: rl.tier, keyId: sessionKeyId, record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
+        return { ok: true, tier: rl.tier, keyId: sessionKeyId, sub: sessionKeyId, record: null, remainingMonthly: null, headers: rateLimitHeaders(rl) };
       }
     }
   }
@@ -439,6 +441,7 @@ async function _enforce(
       ok: true,
       tier: rl.tier,
       keyId,
+      sub: keyId,
       record: null,
       remainingMonthly: null,
       headers: rateLimitHeaders(rl),
@@ -511,6 +514,7 @@ async function _enforce(
     ok: true,
     tier: rl.tier,
     keyId,
+    sub: keyId,
     record,
     remainingMonthly,
     headers: {
