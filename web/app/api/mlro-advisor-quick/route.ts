@@ -103,10 +103,15 @@ const MODEL = "claude-haiku-4-5-20251001";
 // 350 tokens targets sub-3 s end-to-end with Haiku at ~150 tok/s output
 // while still delivering 3-6 substantive paragraphs of compliance guidance.
 const MAX_TOKENS = 350;
-// Hard cap inside the Lambda. Haiku at 350 tokens targets ~3 s first-pass;
-// 8 s allows one retry pass while still enforcing near-3 s discipline.
-// Netlify's edge inactivity ceiling is ~26 s, so 8 s is well inside it.
-const HARD_TIMEOUT_MS = 8_000;
+// Hard cap inside the Lambda. Haiku usually responds in 1-3 s; the per-call
+// budget below absorbs tail-latency excursions (4-6 s) without flipping the
+// route into Offline Mode. Two passes (initial + optional rewrite) fit inside
+// HARD_TIMEOUT_MS, which stays well under Netlify's ~26 s edge ceiling.
+const HARD_TIMEOUT_MS = 12_000;
+// Per-call Anthropic client budget — was 4.5 s, which produced frequent
+// "MLRO Advisory — Offline Mode" fallbacks on Haiku tail-latency. 7 s gives
+// the model genuine headroom while leaving budget for the rewrite pass.
+const PER_CALL_TIMEOUT_MS = 7_000;
 
 
 interface ContextPair { q: string; a: string }
@@ -405,7 +410,7 @@ export async function POST(req: Request): Promise<Response> {
    *  or a follow-up rewrite prompt with defect feedback. Returns the
    *  full text or throws on upstream / network / abort errors. */
   async function callHaiku(userMessage: string): Promise<string> {
-    const client = getAnthropicClient(apiKey!, 4_500);
+    const client = getAnthropicClient(apiKey!, PER_CALL_TIMEOUT_MS);
     const upstream = await client.messages.create({
         model: MODEL,
         max_tokens: MAX_TOKENS,
