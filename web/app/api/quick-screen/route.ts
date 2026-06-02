@@ -1042,7 +1042,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         hitsByName.set(key, enriched);
         deduped.push(enriched);
       } else {
-        existing.matchedLists!.push(hit.listId);
+        (existing.matchedLists ??= []).push(hit.listId);
         if (hit.score > existing.score) {
           Object.assign(existing, { ...hit, matchedLists: existing.matchedLists });
         }

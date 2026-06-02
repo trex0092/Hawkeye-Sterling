@@ -55,8 +55,8 @@ spec:
     spec:
       containers:
         - name: yente
-          image: ghcr.io/opensanctions/yente:latest
-          imagePullPolicy: Always
+          image: ghcr.io/opensanctions/yente:3.13.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
               name: http

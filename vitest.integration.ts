@@ -13,6 +13,12 @@ export default defineConfig({
     // TEST-09: same rationale as vitest.config.ts — a typo'd include pattern
     // or accidental deletion should fail loudly, not pass silently.
     passWithNoTests: false,
+    // The brain (481 TypeScript files) is lazily loaded via a dynamic import()
+    // inside loadBrain() on the first happy-path screening request. On
+    // CI runners Vite's transform pipeline takes ~40s to process all 481
+    // files vs ~2s locally. Once loaded _brain is a module-level singleton
+    // so only the first test in a run pays this cost. 120 s gives 3× headroom.
+    testTimeout: 120_000,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],

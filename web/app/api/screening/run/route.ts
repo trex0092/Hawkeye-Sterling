@@ -266,6 +266,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
+  // Corpus unavailable — local corpus degraded with no lists loaded and no
+  // caller-supplied candidates. Return 503 so the caller can retry or alert ops
+  // rather than receiving a misleading "clear" result on an empty corpus.
+  if (msResult.listsChecked === 0 && msResult.laneHealth?.['local_corpus'] === 'degraded') {
+    return NextResponse.json(
+      { ok: false, error: 'corpus_unavailable', degraded: true, requestId: reqId, resultId, latencyMs: Date.now() - t0 },
+      { status: 503, headers: responseHeaders },
+    );
+  }
+
   const result = msResult;
   const listsLoaded = msResult.listsChecked;
 
