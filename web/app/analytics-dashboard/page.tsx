@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { AnalyticsDashboardResponse, KpiTile, RiskBucket, GoamlPipelineItem } from "@/app/api/analytics-dashboard/route";
 

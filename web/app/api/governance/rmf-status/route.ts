@@ -4,8 +4,7 @@
 // plus MITRE ATLAS probe coverage heatmap.
 // Used by the GovernanceSection in intelligence-hub.
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import {

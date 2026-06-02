@@ -4,8 +4,7 @@
 // screening volumes, risk distribution, goAML pipeline, bias ratio,
 // false-positive rate. Pulls from in-process metrics-store + case vault.
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getCounters, getGauges } from "@/lib/server/metrics-store";
