@@ -31,8 +31,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireJsonBody: false });
   if (!gate.ok) return gate.response;
 
-  const roleCheck = requireRole(gate, ["admin"]);
-  if (!roleCheck.ok) return roleCheck.response;
+  const roleCheck = await requireRole(req, ["admin"]);
+  if (roleCheck) return roleCheck;
 
   const tenantId = tenantIdFromGate(gate);
   const hooks = await getHooksForTenant(tenantId);
@@ -46,8 +46,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  const roleCheck = requireRole(gate, ["admin"]);
-  if (!roleCheck.ok) return roleCheck.response;
+  const roleCheck = await requireRole(req, ["admin"]);
+  if (roleCheck) return roleCheck;
 
   const body = await req.json() as {
     event?: unknown;
@@ -104,8 +104,8 @@ export async function DELETE(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireJsonBody: false });
   if (!gate.ok) return gate.response;
 
-  const roleCheck = requireRole(gate, ["admin"]);
-  if (!roleCheck.ok) return roleCheck.response;
+  const roleCheck = await requireRole(req, ["admin"]);
+  if (roleCheck) return roleCheck;
 
   const hookId = new URL(req.url).searchParams.get("id");
   if (!hookId) {
