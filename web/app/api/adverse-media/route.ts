@@ -76,10 +76,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   const subject = sanitizeField(body.subject.trim(), 300);
   const routeStartMs = Date.now();
 
-  // Bound the upstream call so a hung Taranis can't burn the whole 30s
-  // function budget. Any timeout or thrown error short-circuits to the
-  // GDELT live-feed fallback below — never a silent CLEAR verdict.
-  const TARANIS_TIMEOUT_MS = 18_000;
+  // Bound the upstream call so a hung Taranis can't burn the GDELT fallback
+  // budget. Any timeout or thrown error short-circuits to the GDELT live-feed
+  // fallback below — never a silent CLEAR verdict.
+  const TARANIS_TIMEOUT_MS = 2_000;
   const taranisResult = await Promise.race([
     searchAdverseMedia(subject, {
       ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
@@ -329,6 +329,17 @@ function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
 async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
+  // Multi-source vendor news fan-out — fires IMMEDIATELY so it runs in parallel
+  // with the GDELT/Blobs path. Hard 3 s cap: vendor APIs are best-effort; their
+  // results enrich the corpus but must never gate the response.
+  const VENDOR_DEADLINE_MS = 3_000;
+  const vendorPromise = Promise.race([
+    searchAllNews(subject, { limit: 25 }),
+    new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>((resolve) =>
+      setTimeout(() => resolve({ articles: [], providersUsed: [] }), VENDOR_DEADLINE_MS),
+    ),
+  ]).catch(() => ({ articles: [] as NewsArticle[], providersUsed: [] as string[] }));
+
   // 1. Read GDELT articles from Netlify Blobs cache.
   //    The gdelt-prefetch.mts scheduled function (every 6 h) pre-warms this cache.
   //    If no cached result exists for this subject, GDELT is skipped entirely —
@@ -348,11 +359,12 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   }
 
   // Blobs had nothing (new subject, not yet pre-warmed by the scheduled prefetch).
-  // Fall back to a live multi-query GDELT fetch so new subjects are never silently
-  // scored as "clear" just because the prefetch scheduler hasn't run yet.
+  // Fall back to a live GDELT fetch with a tight budget — vendor fan-out is already
+  // running in parallel above, so both resolve concurrently and we take whatever
+  // arrives within the deadline.
   if (items.length === 0) {
     try {
-      const gdelt = await fetchGdeltCached(subject, { budgetMs: Math.max(5_000, _budgetMs - 2_000) });
+      const gdelt = await fetchGdeltCached(subject, { budgetMs: 3_500 });
       if (!gdelt.serviceError && gdelt.articles.length > 0) {
         items = gdelt.articles;
       }
@@ -361,23 +373,8 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     }
   }
 
-  // Multi-source vendor news fan-out — runs in parallel with the GDELT path so
-  // a positive article from NewsAPI / GNews / NewsData / MediaStack / NYT /
-  // Currents / Mediacloud / WorldNews / AlphaVantage / Tiingo / MarketAux /
-  // NewsCatcher etc. always surfaces, even when GDELT's default results
-  // happen to miss the story (the OZCAN HALAC 2025 Reuters article being
-  // the canonical example). Each adapter inside searchAllNews already has
-  // its own try/catch + abort timeout so this call never throws; missing
-  // env keys quietly degrade individual adapters to no-ops.
-  const vendorBudgetMs = Math.max(3_000, Math.min(8_000, _budgetMs - 5_000));
-  const vendorSettled = await Promise.allSettled([
-    Promise.race([
-      searchAllNews(subject, { limit: 25 }),
-      new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>((resolve) =>
-        setTimeout(() => resolve({ articles: [], providersUsed: [] }), vendorBudgetMs),
-      ),
-    ]),
-  ]);
+  // Await vendor results (likely already resolved since it started in parallel).
+  const vendorSettled = await Promise.allSettled([vendorPromise]);
   if (vendorSettled[0]?.status === "fulfilled") {
     const { articles: vendorArticles } = vendorSettled[0].value;
     const seenUrls = new Set(items.map((a) => (a.url ?? "").toLowerCase()).filter(Boolean));
@@ -420,27 +417,23 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
 
   // When no Anthropic key is configured, run the deterministic 737-keyword
   // classifier directly on the (possibly empty) cached articles.
+  // No Anthropic key — run the deterministic 737-keyword classifier on ALL
+  // collected articles and include the full raw evidence in the response.
   if (!apiKey) {
-    const taranisItems = items.slice(0, 10).map(gdeltToTaranisItem);
+    const taranisItems = items.map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);
-    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
-  }
-
-  // When no Anthropic key is configured, run the deterministic 737-keyword
-  // classifier directly on the (possibly empty) cached articles.
-  if (!apiKey) {
-    const taranisItems = items.slice(0, 50).map(gdeltToTaranisItem);
-    const verdict = analyseAdverseMediaItems(subject, taranisItems);
-    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true };
+    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true, articles: items };
   }
 
   const now = new Date().toISOString();
 
-  // 2. Build article block — Claude analyses REAL headlines with enriched metadata
+  // Claude analyses the top 20 articles for the structured verdict; ALL collected
+  // articles are returned in the response payload for full MLRO evidence disclosure.
+  const CLAUDE_ARTICLE_WINDOW = 20;
   const articleBlock =
     items.length > 0
       ? items
-          .slice(0, 10)
+          .slice(0, CLAUDE_ARTICLE_WINDOW)
           .map((a, i) => {
             const date = _parseSeen(a.seendate);
             const tone = (a.tone ?? 0).toFixed(1);
@@ -451,10 +444,10 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           .join("\n")
       : "No articles found across multi-source adverse-media corpus (lifetime — GDELT + NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
 
-  const client = getAnthropicClient(apiKey, 6_000);
+  const client = getAnthropicClient(apiKey, 3_000);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 500, // 10 articles × ~40 tok/finding + summary ≈ 450 tok; 500 keeps response in <1.5s on Haiku
+    max_tokens: 1_200, // 20 articles × ~50 tok/finding + narrative ≈ 1100 tok
     system: [
       {
         type: "text",
@@ -510,8 +503,8 @@ Return ONLY valid JSON matching this exact shape (no markdown, no explanation):
       {
         role: "user",
         content: `Analyse adverse media for subject: "${subject}"
-GDELT lookback anchored to: ${now.slice(0, 10)}
-Live articles retrieved from GDELT (showing top ${Math.min(items.length, 10)} of ${items.length} total):
+Reference date: ${now.slice(0, 10)}
+Articles from multi-source corpus (showing top ${Math.min(items.length, CLAUDE_ARTICLE_WINDOW)} of ${items.length} total collected):
 ${articleBlock}`,
       },
     ],
@@ -534,13 +527,14 @@ ${articleBlock}`,
     const m = clean.match(/\{[\s\S]*\}/);
     return m ? tryParse(m[0]) : null;
   })();
-  if (parsed) return parsed;
+  if (parsed) return { ...parsed, articles: items };
 
   console.warn(`[adverse-media] Claude returned non-JSON (subject redacted) — surfacing degraded verdict`);
   const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
     gdeltSource: boolean;
     gdeltArticleCount: number;
     claudeParseFailed: boolean;
+    articles: GdeltArticle[];
   } = {
     subject,
     riskTier: "unknown",
@@ -565,6 +559,7 @@ ${articleBlock}`,
     gdeltSource: true,
     gdeltArticleCount: items.length,
     claudeParseFailed: true,
+    articles: items,
   };
   return degraded;
 }
