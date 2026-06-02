@@ -28,6 +28,21 @@ export interface FallbackResult<T> {
   source: "llm" | "groq" | "template";
 }
 
+/**
+ * Parse the retry-after wait time (ms) from an Anthropic 429 error.
+ * Anthropic embeds the header value in error messages as "retry-after: N"
+ * or "retry after N seconds". Returns null when unparseable.
+ */
+function parseRetryAfterMs(err: unknown): number | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  const match = msg.match(/retry[- ]after[:\s]+(\d+)/i);
+  if (match?.[1]) {
+    const secs = parseInt(match[1], 10);
+    if (!isNaN(secs) && secs > 0 && secs < 300) return secs * 1_000;
+  }
+  return null;
+}
+
 /** Returns true for Anthropic errors that indicate temporary overload/capacity issues. */
 function isRetryableAnthropicError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
@@ -74,6 +89,12 @@ export async function withLlmFallback<T>(opts: {
 
     // Try Groq if the error is retryable and a groqFallback was provided.
     if (opts.groqFallback && isRetryableAnthropicError(err)) {
+      // Honor Anthropic's retry-after before hitting Groq — avoids wasting Groq
+      // capacity on a request that Anthropic could serve after a brief wait.
+      const waitMs = parseRetryAfterMs(err);
+      if (waitMs && waitMs > 0) {
+        await new Promise((r) => setTimeout(r, Math.min(waitMs, 5_000)));
+      }
       console.warn(`[${opts.label}] Anthropic retryable error (${detail}) — trying Groq fallback.`);
       try {
         const groqResult = await Promise.race([

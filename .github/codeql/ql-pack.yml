@@ -1,0 +1,6 @@
+name: hawkeye-sterling-invariants
+version: 1.0.0
+description: Custom CodeQL queries enforcing Hawkeye Sterling architecture invariants
+library: false
+dependencies:
+  codeql/javascript-all: "*"

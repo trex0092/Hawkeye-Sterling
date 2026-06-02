@@ -94,7 +94,7 @@ const gateStore = new Map<string, StreamingAnomalyGate>();
 function getOrCreateGate(sessionId: string): StreamingAnomalyGate {
   if (!gateStore.has(sessionId)) {
     gateStore.set(sessionId, new StreamingAnomalyGate({
-      nFeatures: 8,
+      nFeatures: 9,
       nEstimators: 25,
       depth: 15,
       windowSize: 500,
@@ -839,12 +839,26 @@ export async function POST(req: Request): Promise<NextResponse> {
   const sessionId = body.sessionId?.trim() ?? "global";
   const streamingGate = getOrCreateGate(sessionId);
 
+  // Compute geographic dispersion: distinct ISO-2 country codes in last 7 days
+  // (FATF R.1/R.10). Include the current transaction's country if provided.
+  const nowMs = tx.timestampUtc ? new Date(tx.timestampUtc).getTime() : Date.now();
+  const sevenDaysMs = 7 * 24 * 3_600_000;
+  const recentCountries = new Set<string>();
+  if (tx.countryCode) recentCountries.add(tx.countryCode.toUpperCase());
+  for (const t of tx.recentTransactions ?? []) {
+    if (t.countryCode && nowMs - new Date(t.timestampUtc).getTime() <= sevenDaysMs) {
+      recentCountries.add(t.countryCode.toUpperCase());
+    }
+  }
+  const distinctCountries7d = recentCountries.size;
+
   const features = tx.features ?? extractFeatures({
     amountUsd: tx.amountUsd,
     customerBaseline: tx.customerBaseline,
     counterpartyFirstSeen: tx.counterpartyFirstSeen,
     countryRiskScore: tx.countryRiskScore,
     timestampUtc: tx.timestampUtc,
+    distinctCountries7d,
   });
 
   const mlResult = streamingGate.scoreAndUpdate(features);
