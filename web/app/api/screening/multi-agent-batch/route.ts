@@ -7,8 +7,7 @@
 // Each sub-batch result is independently audit-logged.
 // Fail-closed: any sub-batch failure returns a held_review entry.
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";

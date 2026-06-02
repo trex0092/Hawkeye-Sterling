@@ -17,7 +17,7 @@ import { enforce } from "@/lib/server/enforce";
 import { sanitizeField } from "@/lib/server/sanitize-prompt";
 import { searchAdverseMedia, type TaranisItem } from "../../../../src/integrations/taranisAi.js";
 import { analyseAdverseMediaResult, analyseAdverseMediaItems } from "../../../../src/brain/adverse-media-analyser.js";
-import { type GdeltArticle, fetchGdeltCached } from "@/lib/intelligence/gdelt-cache";
+import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 import { searchAllNews, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { getStore } from "@netlify/blobs";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -329,16 +329,12 @@ function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
 async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  // Multi-source vendor news fan-out — fires IMMEDIATELY so it runs in parallel
-  // with the GDELT/Blobs path. Hard 3 s cap: vendor APIs are best-effort; their
-  // results enrich the corpus but must never gate the response.
-  const VENDOR_DEADLINE_MS = 3_000;
-  const vendorPromise = Promise.race([
-    searchAllNews(subject, { limit: 25 }),
-    new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>((resolve) =>
-      setTimeout(() => resolve({ articles: [], providersUsed: [] }), VENDOR_DEADLINE_MS),
-    ),
-  ]).catch(() => ({ articles: [] as NewsArticle[], providersUsed: [] as string[] }));
+  // Multi-source vendor news fan-out — fires IMMEDIATELY in parallel with the
+  // Blobs cache check. Hard 2 s cap on cold-cache paths; 500 ms grace on warm
+  // paths (Blobs has articles — vendor is bonus, not gating).
+  const VENDOR_DEADLINE_MS = 2_000;
+  const vendorPromise = searchAllNews(subject, { limit: 25 })
+    .catch(() => ({ articles: [] as NewsArticle[], providersUsed: [] as string[] }));
 
   // 1. Read GDELT articles from Netlify Blobs cache.
   //    The gdelt-prefetch.mts scheduled function (every 6 h) pre-warms this cache.
@@ -358,23 +354,29 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     // Blobs unavailable or key not yet cached for this subject — fall through to live GDELT.
   }
 
-  // Blobs had nothing (new subject, not yet pre-warmed by the scheduled prefetch).
-  // Fall back to a live GDELT fetch with a tight budget — vendor fan-out is already
-  // running in parallel above, so both resolve concurrently and we take whatever
-  // arrives within the deadline.
-  if (items.length === 0) {
-    try {
-      const gdelt = await fetchGdeltCached(subject, { budgetMs: 3_500 });
-      if (!gdelt.serviceError && gdelt.articles.length > 0) {
-        items = gdelt.articles;
-      }
-    } catch {
-      // GDELT live fetch failed — proceed with empty items; Claude returns "unknown" not "clear".
-    }
-  }
+  // No live GDELT call from the request path — gdelt-prefetch.mts (every 6 h)
+  // pre-warms the Blobs cache in the background. This keeps the hot path at:
+  //   warm (Blobs hit):  Blobs ~50 ms + vendor grace 500 ms + Claude 2.5 s ≈ 3 s
+  //   cold (Blobs miss): vendor 2 s + Claude 2.5 s ≈ 4.5 s
+  // Both paths guaranteed ≤ 5 s.
 
-  // Await vendor results (likely already resolved since it started in parallel).
-  const vendorSettled = await Promise.allSettled([vendorPromise]);
+  // Await vendor: if Blobs already has articles take only a short 500 ms grace
+  // window (vendor is bonus enrichment). If Blobs missed, wait the full 2 s
+  // deadline — vendor may be the only source.
+  const vendorWithDeadline = items.length > 0
+    ? Promise.race([
+        vendorPromise,
+        new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>(
+          resolve => setTimeout(() => resolve({ articles: [], providersUsed: [] }), 500),
+        ),
+      ])
+    : Promise.race([
+        vendorPromise,
+        new Promise<{ articles: NewsArticle[]; providersUsed: string[] }>(
+          resolve => setTimeout(() => resolve({ articles: [], providersUsed: [] }), VENDOR_DEADLINE_MS),
+        ),
+      ]);
+  const vendorSettled = await Promise.allSettled([vendorWithDeadline]);
   if (vendorSettled[0]?.status === "fulfilled") {
     const { articles: vendorArticles } = vendorSettled[0].value;
     const seenUrls = new Set(items.map((a) => (a.url ?? "").toLowerCase()).filter(Boolean));
@@ -444,7 +446,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           .join("\n")
       : "No articles found across multi-source adverse-media corpus (lifetime — GDELT + NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
 
-  const client = getAnthropicClient(apiKey, 3_000);
+  const client = getAnthropicClient(apiKey, 2_500);
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1_200, // 20 articles × ~50 tok/finding + narrative ≈ 1100 tok

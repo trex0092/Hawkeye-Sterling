@@ -43,7 +43,7 @@ function parseCsvSubjects(csv: string): BatchSubject[] {
   const lines = csv.trim().split("\n").filter((l) => l.trim());
   if (lines.length === 0) return [];
 
-  const headers = lines[0].toLowerCase().split(",").map((h) => h.trim());
+  const headers = (lines[0] ?? "").toLowerCase().split(",").map((h) => h.trim());
   const nameIdx = headers.findIndex((h) => h.includes("name"));
   if (nameIdx === -1) {
     // Treat each line as a bare name
@@ -62,7 +62,7 @@ function parseCsvSubjects(csv: string): BatchSubject[] {
       name:        cols[nameIdx] ?? "",
       dob:         dobIdx >= 0  ? cols[dobIdx]   : undefined,
       nationality: natIdx >= 0  ? cols[natIdx]   : undefined,
-      entityType:  typeIdx >= 0 ? (cols[typeIdx]?.toLowerCase().includes("entity") ? "entity" : "individual") : "individual",
+      entityType:  (typeIdx >= 0 ? (cols[typeIdx]?.toLowerCase().includes("entity") ? "entity" : "individual") : "individual") as "individual" | "entity",
     };
   }).filter((s) => s.name);
 }

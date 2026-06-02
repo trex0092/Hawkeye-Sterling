@@ -4,8 +4,7 @@
 // auditor knowledge graph — faculty names, purposes, file counts,
 // and key component names for each of the 15 faculties.
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
