@@ -374,79 +374,93 @@ function computeIdentityRiskScore(body: RequestBody): ScoringResult {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const gate = await enforce(req, { cost: 5 });
-  if (!gate.ok) return gate.response;
-
-  let body: RequestBody;
+  // Top-level try/catch: any uncaught error inside the handler — including
+  // ECONNRESET from an upstream TCP reset propagated through enforce() /
+  // audit-chain writes — must surface as a 500 JSON instead of crashing the
+  // Netlify Lambda (which would render the "This function has crashed"
+  // full-screen error page in the iframe).
   try {
-    body = (await req.json()) as RequestBody;
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: "invalid JSON" },
-      { status: 400, headers: gate.headers },
-    );
-  }
+    const gate = await enforce(req, { cost: 5 });
+    if (!gate.ok) return gate.response;
 
-  // Basic required-field validation
-  if (
-    !body.subjectName ||
-    !body.documentType ||
-    !body.documentNumber ||
-    !body.dateOfBirth ||
-    !body.nationality ||
-    !body.address ||
-    !body.applicationChannel
-  ) {
-    return NextResponse.json(
+    let body: RequestBody;
+    try {
+      body = (await req.json()) as RequestBody;
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "invalid JSON" },
+        { status: 400, headers: gate.headers },
+      );
+    }
+
+    // Basic required-field validation
+    if (
+      !body.subjectName ||
+      !body.documentType ||
+      !body.documentNumber ||
+      !body.dateOfBirth ||
+      !body.nationality ||
+      !body.address ||
+      !body.applicationChannel
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Missing required fields: subjectName, documentType, documentNumber, dateOfBirth, nationality, address, applicationChannel",
+        },
+        { status: 422, headers: gate.headers },
+      );
+    }
+
+    try {
+      writeAuditEvent("analyst", "identity.risk-assessment", body.subjectName);
+    } catch (err) {
+      console.warn("[hawkeye] identity-risk writeAuditEvent failed:", err);
+    }
+
+    // Run scoring (pure rule-based — no LLM call required)
+    const { score, fraudIndicators, verificationActions } = computeIdentityRiskScore(body);
+    const riskLevel = scoreToRiskLevel(score);
+    const kycDecision = riskLevelToKycDecision(riskLevel);
+    const recommendation = buildRecommendation(riskLevel, fraudIndicators);
+
+    void writeAuditChainEntry(
       {
-        ok: false,
-        error:
-          "Missing required fields: subjectName, documentType, documentNumber, dateOfBirth, nationality, address, applicationChannel",
+        event: "identity.risk_assessed",
+        actor: gate.keyId,
+        subjectName: body.subjectName,
+        documentType: body.documentType,
+        applicationChannel: body.applicationChannel,
+        riskScore: score,
+        riskLevel,
+        kycDecision,
+        fraudIndicatorCount: fraudIndicators.length,
       },
-      { status: 422, headers: gate.headers },
+      tenantIdFromGate(gate),
+    ).catch((err) =>
+      console.warn(
+        "[identity-risk] audit chain write failed:",
+        err instanceof Error ? err.message : String(err),
+      ),
     );
-  }
 
-  try {
-    writeAuditEvent("analyst", "identity.risk-assessment", body.subjectName);
-  } catch (err) {
-    console.warn("[hawkeye] identity-risk writeAuditEvent failed:", err);
-  }
-
-  // Run scoring (pure rule-based — no LLM call required)
-  const { score, fraudIndicators, verificationActions } = computeIdentityRiskScore(body);
-  const riskLevel = scoreToRiskLevel(score);
-  const kycDecision = riskLevelToKycDecision(riskLevel);
-  const recommendation = buildRecommendation(riskLevel, fraudIndicators);
-
-  void writeAuditChainEntry(
-    {
-      event: "identity.risk_assessed",
-      actor: gate.keyId,
-      subjectName: body.subjectName,
-      documentType: body.documentType,
-      applicationChannel: body.applicationChannel,
+    const result: IdentityRiskResult = {
       riskScore: score,
       riskLevel,
+      fraudIndicators,
+      verificationActions,
+      recommendation,
       kycDecision,
-      fraudIndicatorCount: fraudIndicators.length,
-    },
-    tenantIdFromGate(gate),
-  ).catch((err) =>
-    console.warn(
-      "[identity-risk] audit chain write failed:",
-      err instanceof Error ? err.message : String(err),
-    ),
-  );
+    };
 
-  const result: IdentityRiskResult = {
-    riskScore: score,
-    riskLevel,
-    fraudIndicators,
-    verificationActions,
-    recommendation,
-    kycDecision,
-  };
-
-  return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+    return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[hawkeye] identity-risk handler exception:", message);
+    return NextResponse.json(
+      { ok: false, error: message },
+      { status: 500 },
+    );
+  }
 }
