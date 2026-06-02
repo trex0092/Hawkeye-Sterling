@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
 
-  void writeAuditChainEntry({ event: "analytics_dashboard_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
+  void writeAuditChainEntry({ event: "analytics_dashboard_viewed", actor: gate.keyId ?? "api" }, tenantId).catch(() => {});
 
   const [counters, gauges, cases] = await Promise.all([
     Promise.resolve(getCounters()),

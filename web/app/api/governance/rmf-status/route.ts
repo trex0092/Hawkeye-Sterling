@@ -159,7 +159,7 @@ export async function GET(req: NextRequest) {
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
 
-  void writeAuditChainEntry({ event: "rmf_status_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
+  void writeAuditChainEntry({ event: "rmf_status_viewed", actor: gate.keyId ?? "api" }, tenantId).catch(() => {});
 
   const rmfFunctions = computeRmfFunctions();
   const overallRmfScore = Math.round(

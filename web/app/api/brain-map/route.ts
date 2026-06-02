@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
   if (!gate.ok) return gate.response;
   const tenantId = tenantIdFromGate(gate);
 
-  void writeAuditChainEntry({ event: "brain_map_viewed", actor: gate.sub ?? "api" }, tenantId).catch(() => {});
+  void writeAuditChainEntry({ event: "brain_map_viewed", actor: gate.keyId ?? "api" }, tenantId).catch(() => {});
 
   const body: BrainMapResponse = {
     ok: true,
