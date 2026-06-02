@@ -242,6 +242,7 @@ class SectionErrorBoundary extends Component<{ children: ReactNode }, EBState> {
     console.error("[SectionErrorBoundary]", err, info.componentStack);
   }
 
+
   render() {
     if (this.state.hasError) {
       return (
