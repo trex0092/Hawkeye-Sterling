@@ -10,6 +10,17 @@ vi.spyOn(console, "warn").mockImplementation(() => undefined);
 vi.spyOn(console, "info").mockImplementation(() => undefined);
 vi.spyOn(console, "error").mockImplementation(() => undefined);
 
+// Prevent fetchUpstream() from hitting the real EOCN URL (HS_DEFAULTS
+// hardcodes https://www.uaeiec.gov.ae/...). On CI runners that can
+// reach it the test sees real rows and fails; on runners where DNS
+// resolves but the socket hangs, the test times out at 5s. A mocked
+// 503 makes fetchUpstream resolve to { ok: false }, contributing zero
+// rows from upstream — exactly the path the zero-row guard protects.
+const mockFetch = vi.fn().mockResolvedValue(
+  new Response("", { status: 503, statusText: "mocked-upstream-failure" }),
+);
+vi.stubGlobal("fetch", mockFetch);
+
 // --------------------------------------------------------------------------
 // Mock infrastructure
 // --------------------------------------------------------------------------
@@ -90,6 +101,7 @@ describe("eocn-list-updates POST — zero-row guard", () => {
     process.env["SANCTIONS_CRON_TOKEN"] = "test-cron-token";
     mockSetJson.mockClear();
     mockGetJson.mockClear();
+    mockFetch.mockClear();
     mockPriorData = null;
   });
 
