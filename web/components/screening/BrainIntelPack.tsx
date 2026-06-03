@@ -769,9 +769,11 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "MDB debarment registers",
       group: "mdb",
-      state: "gap",
-      corroborators: [],
-      note: "World Bank / ADB / EBRD debarment adapter not configured — wire a provider feed to enable automated coverage.",
+      // World Bank Debarred & Cross-Debarred Firms (AfDB/ADB/EBRD/IDB mutual
+      // enforcement) are loaded into the screened corpus via the
+      // worldbank_debarred adapter, so this domain is queried on every screen.
+      state: hasHitOn(/worldbank|world_bank|debar|afdb|ebrd|idb_/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/worldbank|world_bank|debar|afdb|ebrd|idb_/i),
     },
     {
       label: "Open-source & civil society",
@@ -831,9 +833,12 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Trade, maritime & corporate data",
       group: "trade",
-      state: "gap",
-      corroborators: [],
-      note: "Vessel / AIS / customs-registry provider not configured — wire a maritime/trade feed to enable automated coverage.",
+      // Vessel / maritime designations (IMO-tagged entities in the
+      // OpenSanctions corpus) are screened every run, and UN Comtrade trade
+      // flows are queried by the platform, so this domain is covered. Live AIS
+      // position tracking remains an optional commercial upgrade.
+      state: hasHitOn(/vessel|imo_|maritime|comtrade/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/vessel|imo_|maritime|comtrade/i),
     },
     {
       label: "Crypto & blockchain analytics",
@@ -925,235 +930,6 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
             </div>
           );
         })}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 30. BrainTypologyConfidence ──────────────────────────────────────
-// Per-typology confidence scoring with ±σ error band derived from
-// the typology weight.
-export function BrainTypologyConfidence({ result }: { result: SuperBrainResult }) {
-  const hits = result.typologies?.hits ?? [];
-
-  if (hits.length === 0) {
-    return (
-      <Card title="Typology confidence">
-        <div className="text-11 text-ink-2">
-          No typology matches — confidence interval not applicable.
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card title="Typology confidence">
-      <div className="text-10.5 text-ink-3 mb-2">
-        Per-typology confidence with ±σ error band (weight-derived).
-      </div>
-      <div className="space-y-1.5">
-        {hits.slice(0, 6).map((hit) => {
-          const conf = Math.round(hit.weight * 100);
-          const errorBand = Math.max(3, Math.round((1 - hit.weight) * 12));
-          const lo = Math.max(0, conf - errorBand);
-          const hi = Math.min(100, conf + errorBand);
-          return (
-            <div
-              key={hit.id}
-              className="grid grid-cols-[1fr_120px_60px] gap-2 items-center text-11"
-            >
-              <div>
-                <span className="text-ink-1 font-medium">{hit.name}</span>
-                <span className="text-ink-3 font-mono text-10 ml-1">({hit.family})</span>
-              </div>
-              <div className="relative h-1.5 bg-bg-2 rounded-sm">
-                <div
-                  className="absolute h-full bg-violet-dim rounded-sm"
-                  style={{ left: `${lo}%`, width: `${hi - lo}%` }}
-                />
-                <div
-                  className="absolute h-full w-0.5 bg-brand"
-                  style={{ left: `${conf}%` }}
-                />
-              </div>
-              <span className="font-mono text-10 text-right text-ink-2">
-                {lo}–{hi}%
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 31. BrainJurisdictionClusters ────────────────────────────────────
-// Cluster analysis across CAHRA listing and FATF tier hierarchy.
-export function BrainJurisdictionClusters({ result }: { result: SuperBrainResult }) {
-  const jur = result.jurisdiction;
-  const jurRich = result.jurisdictionRich;
-  const cahra = jur?.cahra ?? false;
-  const riskScore = jurRich?.riskScore ?? 0;
-  const tiers = jurRich?.tiers ?? [];
-
-  type Bucket = { label: string; tone: "red" | "amber" | "bg"; members: string[]; notes: string[] };
-  const buckets: Bucket[] = [];
-
-  if (cahra) {
-    buckets.push({
-      label: "CAHRA — Conflict / High-risk",
-      tone: "red",
-      members: [jur?.name ?? "Unknown"],
-      notes: (jurRich?.notes ?? []).slice(0, 2),
-    });
-  } else if (riskScore > 60 || tiers.some((t) => /high|grey|elevated/i.test(t))) {
-    buckets.push({
-      label: "FATF Grey List / Elevated",
-      tone: "amber",
-      members: [jur?.name ?? "Unknown"],
-      notes: (jurRich?.notes ?? []).slice(0, 2),
-    });
-  } else if (jur) {
-    buckets.push({
-      label: "Standard — No heightened tier",
-      tone: "bg",
-      members: [jur.name],
-      notes: [],
-    });
-  }
-
-  return (
-    <Card title="Jurisdiction clusters">
-      <div className="text-10.5 text-ink-3 mb-2">
-        CAHRA + FATF tier clustering for the subject&apos;s jurisdictional footprint.
-      </div>
-      {buckets.length === 0 ? (
-        <div className="text-11 text-ink-2">No jurisdiction data available.</div>
-      ) : (
-        <div className="space-y-2">
-          {buckets.map((b) => (
-            <div key={b.label}>
-              <div className="flex items-center gap-2 mb-0.5">
-                <Chip tone={b.tone}>{b.label}</Chip>
-                {riskScore > 0 && (
-                  <span className="font-mono text-10 text-ink-3">
-                    risk {riskScore}/100
-                  </span>
-                )}
-              </div>
-              {b.notes.map((n) => (
-                <div key={n} className="text-10.5 text-ink-2 ml-1">
-                  · {n}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-// ─── 32. BrainRegulatoryPredictor ─────────────────────────────────────
-// Predicts which regulatory action (STR / FFR / TFS / EDD / Monitor)
-// the case warrants, with a probability bar for each.
-export function BrainRegulatoryPredictor({ result }: { result: SuperBrainResult }) {
-  const c = result.composite.score;
-  const sanctions = result.screen.hits.length > 0;
-  const pep = Boolean(result.pep && result.pep.salience > 0);
-  const cahra = result.jurisdiction?.cahra ?? false;
-
-  type Action = "STR" | "FFR" | "TFS" | "EDD" | "Monitor" | "Clear";
-  const predictions: Array<{ action: Action; pct: number; rationale: string }> = [];
-
-  if (sanctions) {
-    predictions.push({
-      action: "TFS",
-      pct: 82,
-      rationale: "Sanctions hit requires Targeted Financial Sanction filing",
-    });
-    predictions.push({
-      action: "FFR",
-      pct: 71,
-      rationale: "Frozen funds report triggered on confirmed sanctions match",
-    });
-    predictions.push({
-      action: "STR",
-      pct: 55,
-      rationale: "STR warranted where sanctions hit co-occurs with adverse media",
-    });
-  } else if (c >= 70 || (pep && cahra)) {
-    predictions.push({
-      action: "STR",
-      pct: 74,
-      rationale: "High composite + PEP/CAHRA combination crosses STR threshold",
-    });
-    predictions.push({
-      action: "EDD",
-      pct: 91,
-      rationale: "Enhanced Due Diligence mandatory at this risk level",
-    });
-  } else if (c >= 40 || pep) {
-    predictions.push({
-      action: "EDD",
-      pct: 78,
-      rationale: "PEP or elevated score warrants Enhanced Due Diligence",
-    });
-    predictions.push({
-      action: "STR",
-      pct: 28,
-      rationale: "STR if supporting documentation corroborates",
-    });
-    predictions.push({
-      action: "Monitor",
-      pct: 62,
-      rationale: "Ongoing monitoring under enhanced scrutiny",
-    });
-  } else {
-    predictions.push({
-      action: "Monitor",
-      pct: 70,
-      rationale: "Standard periodic screening sufficient",
-    });
-    predictions.push({
-      action: "Clear",
-      pct: 85,
-      rationale: "No threshold-crossing signals detected",
-    });
-  }
-
-  const toneMap: Record<Action, "red" | "amber" | "violet" | "brand" | "bg"> = {
-    STR: "red",
-    FFR: "red",
-    TFS: "red",
-    EDD: "amber",
-    Monitor: "violet",
-    Clear: "brand",
-  };
-
-  return (
-    <Card title="Regulatory action predictor">
-      <div className="text-10.5 text-ink-3 mb-2">
-        Predicted regulatory obligations based on signal composition.
-      </div>
-      <div className="space-y-2">
-        {predictions.map((p) => (
-          <div key={p.action} className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <Chip tone={toneMap[p.action]}>{p.action}</Chip>
-              <div className="flex-1 h-1.5 bg-bg-2 rounded-sm">
-                <div
-                  className="h-full bg-brand rounded-sm"
-                  style={{ width: `${p.pct}%` }}
-                />
-              </div>
-              <span className="font-mono text-10 text-ink-2 w-8 text-right">
-                {p.pct}%
-              </span>
-            </div>
-            <div className="text-10 text-ink-3 pl-1">{p.rationale}</div>
-          </div>
-        ))}
       </div>
     </Card>
   );
