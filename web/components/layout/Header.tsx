@@ -74,7 +74,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🔢 Benford Analysis", href: "/benford", hint: "Benford's-law statistical anomaly test" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Case investigation workbench" },
       { label: "📍 Single Country", href: "/country-risk?tab=single", hint: "Single-country risk brief" },
-      { label: "⚖️ Compare", href: "/country-risk?tab=compare", hint: "Multi-country risk comparison" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "Sanctions evasion typology detection" },
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "UBO walker · crypto exposure · synthetic ID" },
       { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable decision audit trail" },
