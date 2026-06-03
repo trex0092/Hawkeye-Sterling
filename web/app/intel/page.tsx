@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar, type FamilyModule } from "@/components/layout/ModuleFamilyBar";
+import { type FamilyModule } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
@@ -668,7 +668,6 @@ const INTEL_MODULES: FamilyModule[] = [
   { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
   { label: "Board Dashboard", href: "/board-dashboard", icon: "🎯" },
   { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-  { label: "Board Dashboard", href: "/board-dashboard", icon: "🏛️" },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -711,12 +710,29 @@ export default function IntelPage() {
         ]}
       />
 
-      <ModuleFamilyBar
-        suiteName="Live Intelligence Feed"
-        modules={INTEL_MODULES}
-        onSelect={handleModuleSelect}
-        activeHref={activeModule?.href ?? "/intel"}
-      />
+      {/* Live Intelligence Feed — consolidated into a single dropdown.
+          Selecting a tool opens it in the inline preview panel below
+          (same behavior as the old tab row), pages/features untouched. */}
+      <div className="flex items-center gap-3 mb-6 flex-wrap rounded-lg border border-hair-2 bg-bg-panel px-3 py-2">
+        <span className="font-mono text-11 uppercase tracking-wide-3 text-brand">
+          Live Intelligence Feed
+        </span>
+        <select
+          value={activeModule?.href ?? "/intel"}
+          onChange={(e) => {
+            const mod = INTEL_MODULES.find((m) => m.href === e.target.value);
+            if (mod) handleModuleSelect(mod);
+          }}
+          className="text-12 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand cursor-pointer"
+          aria-label="Live Intelligence Feed tools"
+        >
+          {INTEL_MODULES.map((m) => (
+            <option key={m.href} value={m.href}>
+              {m.icon ? `${m.icon} ` : ""}{m.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Inline module panel — appears below the bar without navigation */}
       {activeModule && (
