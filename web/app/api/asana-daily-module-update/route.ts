@@ -8,7 +8,8 @@ import { ASANA_MODULE_TASKS } from "@/lib/server/asana-module-tasks";
 // scheduled function netlify/functions/asana-daily-module-update.mts.
 //
 // Auth: server-to-server only. Requires Authorization: Bearer
-// <ASANA_DAILY_CRON_TOKEN>. Returns 503 (disabled) if the token or the
+// <HAWKEYE_CRON_TOKEN> — the shared cron bearer already used by the other
+// scheduled functions. Returns 503 (disabled) if the token or the
 // ASANA_TOKEN are not configured, so it fails closed and never throws.
 
 export const runtime = "nodejs";
@@ -27,12 +28,12 @@ function attestation(label: string, date: string): string {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const cronToken = process.env["ASANA_DAILY_CRON_TOKEN"];
+  const cronToken = process.env["HAWKEYE_CRON_TOKEN"];
   const asanaToken = process.env["ASANA_TOKEN"];
 
   if (!cronToken || !asanaToken) {
     return NextResponse.json(
-      { ok: false, error: "asana_daily_update_disabled", detail: "Set ASANA_DAILY_CRON_TOKEN and ASANA_TOKEN." },
+      { ok: false, error: "asana_daily_update_disabled", detail: "Set HAWKEYE_CRON_TOKEN and ASANA_TOKEN." },
       { status: 503 },
     );
   }
