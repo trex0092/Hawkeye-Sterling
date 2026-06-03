@@ -30,6 +30,7 @@ import {
   saveCases,
 } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
@@ -614,15 +615,17 @@ export default function StrCasesPage() {
       asanaLabel="STR / SAR Cases"
       sidebarActions={
         <>
-          <Btn
-            variant="ghost"
+          <ActionButton
+            variant="ai"
+            type="button"
             onClick={() => void generateBriefing()}
             disabled={briefingLoading || cases.length === 0}
           >
             {briefingLoading ? "Generating…" : "✦AI Briefing"}
-          </Btn>
-          <Btn
-            variant="ghost"
+          </ActionButton>
+          <ActionButton
+            variant="screening"
+            type="button"
             onClick={() => {
               const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
               openReportWindow("/api/str-report", {
@@ -635,8 +638,8 @@ export default function StrCasesPage() {
             }}
           >
             PDF
-          </Btn>
-          <Btn variant="ghost">+ New case</Btn>
+          </ActionButton>
+          <ActionButton variant="add" type="button">+ New case</ActionButton>
         </>
       }
     >

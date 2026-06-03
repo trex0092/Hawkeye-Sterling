@@ -17,6 +17,7 @@ import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { PaymentScreen } from "@/components/screening/PaymentScreen";
 import {
@@ -426,18 +427,18 @@ export default function TransactionMonitorPage() {
       asanaLabel="Transaction Monitor"
       sidebarActions={
         <>
-          <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
+          <ActionButton variant="screening" type="button" onClick={runDailyScan} disabled={running}>
             {running ? "Running scan…" : "Run daily scan"}
-          </Btn>
-          <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
+          </ActionButton>
+          <ActionButton variant="ai" type="button" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
             {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
-          </Btn>
-          <Btn variant="ghost" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
+          </ActionButton>
+          <ActionButton variant="ai" type="button" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
             {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
-          </Btn>
-          <Btn variant="primary" onClick={focusForm}>
+          </ActionButton>
+          <ActionButton variant="add" type="button" onClick={focusForm}>
             + Add transaction
-          </Btn>
+          </ActionButton>
         </>
       }
     >

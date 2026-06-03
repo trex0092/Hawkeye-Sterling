@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -175,13 +176,9 @@ export default function CoiRegisterPage() {
   return (
     <ModuleLayout
       sidebarActions={
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="bg-brand text-white px-4 py-2 rounded text-13 font-semibold hover:opacity-90 text-left"
-        >
+        <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "New Declaration"}
-        </button>
+        </ActionButton>
       }
     >
       <ModuleFamilyBar
