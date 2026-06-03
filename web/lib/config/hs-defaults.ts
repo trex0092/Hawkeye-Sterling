@@ -44,4 +44,17 @@ export const HS_DEFAULTS = {
   OSINT_NEWSAPI_KEY:     "ea607b9e29e44c7f8173dc0375ab72aa",
   TIINGO_API_KEY:        "58033ca6ac27436a62c56bc789fe5d744143eeef",
   WORLDNEWS_API_KEY:     "8ee7710a2597468ebe94d1e1d10172c3",
+
+  // ── Non-secret deployment config ────────────────────────────────────────
+  // Inline these to drop the matching variable from Netlify's *runtime* scope
+  // and stay under the AWS Lambda 4 KB env-var limit (see
+  // docs/ENV_4KB_OPTIMIZATION.md §3b). They are NOT secrets.
+  //
+  // EMPTY string == "sourced from the environment variable" (current behavior,
+  // nothing changes). To inline: paste the value between the quotes, then
+  // delete the variable from Netlify. The environment variable ALWAYS wins
+  // when set, so inlining can never override a live deployment by surprise.
+  HAWKEYE_ENTITIES:        "",  // JSON array of reporting entities, single line
+  UPSTASH_REDIS_REST_URL:  "",  // e.g. https://<id>.upstash.io — the *_TOKEN stays in env
+  GMAIL_CLIENT_ID:         "",  // Google OAuth 2.0 client ID — public by design
 } as const;

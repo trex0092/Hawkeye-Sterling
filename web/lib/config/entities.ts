@@ -1,4 +1,5 @@
 import type { ReportingEntity } from "@/lib/types/entity";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 // HAWKEYE_ENTITIES is a JSON array of ReportingEntity. When unset, the
 // loader falls back to a single legacy entity built from the old
@@ -78,7 +79,9 @@ function legacyFallback(): ReportingEntity[] {
 /** Parses HAWKEYE_ENTITIES once per server lifetime; returns the array. */
 export function loadEntities(): ReportingEntity[] {
   if (cached) return cached;
-  const raw = process.env["HAWKEYE_ENTITIES"];
+  // Env var wins; falls back to the (optionally inlined) non-secret default.
+  // Empty default preserves the legacy-fallback path when neither is set.
+  const raw = process.env["HAWKEYE_ENTITIES"] ?? HS_DEFAULTS.HAWKEYE_ENTITIES;
   if (raw && raw.trim()) {
     try {
       cached = parseEntitiesJson(raw);

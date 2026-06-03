@@ -60,6 +60,10 @@ describe("hs-defaults privileged-secret guardrail", () => {
     "OSINT_NEWSAPI_KEY",
     "TIINGO_API_KEY",
     "WORLDNEWS_API_KEY",
+    // Non-secret deployment config (empty by default; inlined per deployment).
+    "HAWKEYE_ENTITIES",
+    "UPSTASH_REDIS_REST_URL",
+    "GMAIL_CLIENT_ID",
   ]);
 
   const keys = Object.keys(HS_DEFAULTS);
