@@ -28,6 +28,7 @@ export const maxDuration = 60;
 
 import { asanaGids } from "@/lib/server/asanaConfig";
 import { runEgressCheck } from "@/lib/server/egress-check";
+import { CHARTER_INTEGRITY_HASH } from "@/lib/server/deploy-constants";
 
 type FilingType =
   | "STR"
@@ -410,7 +411,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     ...(involvedEntities !== undefined ? { involvedEntities } : {}),
     internalReference: internalRef,
     generatedAt: now,
-    charterIntegrityHash: process.env["CHARTER_HASH"] ?? "hawkeye-sterling-v1",
+    charterIntegrityHash: CHARTER_INTEGRITY_HASH,
   };
 
   // Audit every draft attempt — even those that will fail validation — so

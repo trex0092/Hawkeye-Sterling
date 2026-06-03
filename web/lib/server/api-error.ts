@@ -11,6 +11,7 @@
 
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
+import { BRAIN_VERSION } from "@/lib/server/deploy-constants";
 
 export function httpError(
   message: string,
@@ -91,7 +92,7 @@ export function resolveCommitRef(): string {
 }
 
 export function resolveEngineVersion(): string {
-  return process.env["APP_VERSION"] ?? process.env["BRAIN_VERSION"] ?? "wave-5";
+  return process.env["APP_VERSION"] ?? BRAIN_VERSION;
 }
 
 export function makeError(

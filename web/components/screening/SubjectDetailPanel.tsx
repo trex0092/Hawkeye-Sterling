@@ -1833,19 +1833,46 @@ function AdverseMediaEvidenceSection({
       ? news.result.articles.slice(0, 15)
       : [];
 
+  // Live-retrieval health. A wholesale feed outage ("unavailable") or a hook
+  // error must NEVER be presented as a clean "no adverse media" result — that
+  // would be a false negative on a regulator-facing AML panel (FATF R.10).
+  const newsLoading = news.status === "loading";
+  const retrieval =
+    news.status === "success" ? (news.result.retrieval ?? "live") : null;
+  const newsUnavailable =
+    news.status === "error" || retrieval === "unavailable" || retrieval === "degraded";
+
   const hasEvidence =
     amCategories.length > 0 ||
     amKeywordGroups.length > 0 ||
     articles.length > 0;
 
   if (!hasEvidence) {
-    if (superBrain.status === "loading" || news.status === "loading") {
+    if (superBrain.status === "loading" || newsLoading) {
       return (
         <div className="mt-3 pt-3 border-t border-hair">
           <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
             Worldwide adverse media (100+ locales)
           </div>
           <div className="text-11 text-ink-3 italic">Scanning {NEWS_SEARCH_LOCALES}…</div>
+        </div>
+      );
+    }
+    // Feeds unreachable + no classifier signal → we genuinely do not know.
+    // Surface an honest "retrieval unavailable" state, not a green all-clear.
+    if (newsUnavailable) {
+      return (
+        <div className="mt-3 pt-3 border-t border-hair">
+          <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1.5">
+            Worldwide adverse media (100+ locales)
+          </div>
+          <div className="rounded border border-amber/40 bg-amber-dim px-2 py-1.5">
+            <div className="text-11 text-amber font-semibold">⚠ Live adverse-media retrieval unavailable</div>
+            <div className="text-10 text-ink-2 mt-0.5">
+              No news source could be reached — this is <span className="font-semibold">not</span> a confirmed
+              negative finding. Manual worldwide search required before clearing. (FATF R.10)
+            </div>
+          </div>
         </div>
       );
     }
@@ -1904,6 +1931,33 @@ function AdverseMediaEvidenceSection({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Corroboration status — when classifier signals exist but no live
+          article backs them, say so explicitly. A category chip is a keyword
+          match in supplied/reference text, NOT retrieved press; presenting it
+          as fully evidenced when retrieval failed is a false-confidence risk. */}
+      {articles.length === 0 && (amCategories.length > 0 || amKeywordGroups.length > 0) && (
+        newsLoading ? (
+          <div className="text-10 text-ink-3 italic">
+            Scanning {NEWS_SEARCH_LOCALES} for corroborating articles…
+          </div>
+        ) : newsUnavailable ? (
+          <div className="rounded border border-amber/40 bg-amber-dim px-2 py-1.5">
+            <div className="text-11 text-amber font-semibold">⚠ Signals uncorroborated — live retrieval unavailable</div>
+            <div className="text-10 text-ink-2 mt-0.5">
+              The classifier categor{amCategories.length === 1 ? "y" : "ies"} above
+              {" "}{amCategories.length === 1 ? "is" : "are"} keyword matches in reference text only.
+              No news source could be reached, so they are <span className="font-semibold">not</span> backed by
+              retrieved articles. Manual worldwide search required before relying on this disposition. (FATF R.10)
+            </div>
+          </div>
+        ) : (
+          <div className="text-10 text-ink-3">
+            0 live articles matched across {NEWS_SEARCH_LOCALES}. Classifier signals above are
+            uncorroborated by live press at this time.
+          </div>
+        )
       )}
 
       {/* Live news articles — all locales */}
@@ -3579,19 +3633,47 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
   // still render the neutral "no articles" empty state below rather
   // than leaking infra chatter into the MLRO's case file.
   if (state.status === "error") {
+    // The hook only reaches "error" after exhausting retries against a 5xx —
+    // an infrastructure outage, not a negative finding. Say so plainly.
     return (
       <Section title="Worldwide adverse-media dossier">
-        <div className="text-11 text-ink-2">
-          No articles found.
+        <div className="rounded border border-amber/40 bg-amber-dim px-2.5 py-2">
+          <div className="text-11 text-amber font-semibold">⚠ Live news retrieval unavailable</div>
+          <div className="text-10 text-ink-2 mt-0.5">
+            The news service could not be reached. This is <span className="font-semibold">not</span> a confirmed
+            negative finding — a manual worldwide adverse-media search is required before clearing this subject.
+          </div>
         </div>
         <div className="text-10 text-ink-3 font-mono mt-1">
-          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10 lookback applied
+          Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10
         </div>
       </Section>
     );
   }
   const r = state.result;
   if (r.articleCount === 0) {
+    // Distinguish a real "searched the world, found nothing" negative finding
+    // (retrieval:"live") from a wholesale feed outage (retrieval:"unavailable"
+    // / "degraded") that returned zero articles only because nothing could be
+    // reached. Only the former is a documentable clear.
+    const retrievalFailed = r.retrieval === "unavailable" || r.retrieval === "degraded";
+    if (retrievalFailed) {
+      return (
+        <Section title="Worldwide adverse-media dossier">
+          <div className="rounded border border-amber/40 bg-amber-dim px-2.5 py-2">
+            <div className="text-11 text-amber font-semibold">⚠ Live news retrieval unavailable for {r.subject}</div>
+            <div className="text-10 text-ink-2 mt-0.5">
+              No news source could be reached
+              {typeof r.feedsReachable === "number" && typeof r.feedsAttempted === "number"
+                ? ` (${r.feedsReachable}/${r.feedsAttempted} feeds reachable)`
+                : ""}
+              . Zero articles here reflects the outage, <span className="font-semibold">not</span> absence of
+              adverse media. Manual worldwide search required before clearing. (FATF R.10)
+            </div>
+          </div>
+        </Section>
+      );
+    }
     return (
       <Section title="Worldwide adverse-media dossier">
         <div className="text-11 text-green">✓ No adverse media found for {r.subject}</div>

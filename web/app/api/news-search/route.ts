@@ -6,7 +6,7 @@ import {
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-import { searchAllNewsWithStatus } from "@/lib/intelligence/newsAdapters";
+import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
@@ -346,6 +346,15 @@ interface NewsResponse {
   sourceDiversityScore: number;       // 0–100: unique root domains / total articles × 100
   crossCorroboratedCount: number;     // number of findings reported by ≥2 independent domains
   propagandaSourceCount: number;      // number of articles from known state-media/propaganda outlets
+  // Live-retrieval health. Distinguishes "searched the world, found nothing"
+  // (retrieval:"live" → a genuine, documentable negative finding) from "could
+  // not reach any news source" (retrieval:"unavailable" → an outage that must
+  // NOT be presented as a clean result). FATF R.10 / FDL 10/2025: a wholesale
+  // feed outage is not evidence of absence.
+  retrieval: "live" | "degraded" | "unavailable";
+  feedsAttempted: number;             // feeds we tried to fetch this request
+  feedsReachable: number;             // feeds that returned HTTP 2xx
+  degraded?: boolean;                 // convenience flag: retrieval !== "live"
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -665,10 +674,35 @@ const FEED_TIMEOUT_MS = 1_200;
 // 3.5s covers healthy feeds while guaranteeing end-to-end response in 3–5s.
 const OVERALL_TIMEBOX_MS = 3_500;
 
+// Live-retrieval health accounting. Each feed fetch records whether it actually
+// reached its upstream (HTTP 2xx). The handler uses the aggregate to tell a
+// genuine "found nothing" negative finding apart from a wholesale outage where
+// every news source was unreachable (e.g. blocked egress / upstream 403).
+type RetrievalStats = { attempted: number; reachable: number };
+function noteFeedOutcome(stats: RetrievalStats | undefined, reachable: boolean): void {
+  if (!stats) return;
+  stats.attempted += 1;
+  if (reachable) stats.reachable += 1;
+}
+
+// Google News RSS — and several mainstream outlets — return HTTP 403 to obvious
+// bot User-Agents (e.g. a "+https://…" crawler string). Egress on the serverless
+// runtime is open; the bot UA, not the network, is what blocked live retrieval.
+// Presenting a current real browser UA + Accept-Language is what lets the fetch
+// actually pull live adverse-media articles in production.
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const FEED_HEADERS: Record<string, string> = {
+  "user-agent": BROWSER_UA,
+  accept: "application/rss+xml,application/xml,text/xml,application/json;q=0.9,*/*;q=0.8",
+  "accept-language": "en-US,en;q=0.9",
+};
+
 async function fetchLocaleFeed(
   q: string,
   locale: (typeof LOCALES)[number],
   variants: string[],
+  stats?: RetrievalStats,
 ): Promise<Article[]> {
   // Post-fetch fuzzy scoring (fuzzyScore ≥ 75, or ≥ 55 + adverse keywords)
   // is the relevance gate. Do not quote the query — exact-phrase quoting
@@ -681,13 +715,10 @@ async function fetchLocaleFeed(
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {
     const res = await fetch(feed, {
-      headers: {
-        "user-agent":
-          "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
-        accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
-      },
+      headers: FEED_HEADERS,
       signal: controller.signal,
     } as RequestInit);
+    noteFeedOutcome(stats, res.ok);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
       return [];
@@ -695,6 +726,7 @@ async function fetchLocaleFeed(
     const xml = await res.text();
     return parseRss(xml, q, variants, locale.code);
   } catch (err) {
+    noteFeedOutcome(stats, false);
     console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} threw:`, err);
     return [];
   } finally {
@@ -851,20 +883,17 @@ const OCEANIA_FEEDS: Array<{
 // the 1.5s locale timeout since these are non-Google servers.
 const INVESTIGATIVE_FEED_TIMEOUT_MS = 2_000;
 
-async function fetchInvestigativeFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
+async function fetchInvestigativeFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
   const results = await Promise.allSettled(
     INVESTIGATIVE_FEEDS.map(async (feed) => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
         const res = await fetch(feed.url, {
-          headers: {
-            "user-agent":
-              "Mozilla/5.0 (compatible; HawkeyeSterling/0.2; +https://hawkeye-sterling.netlify.app)",
-            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
-          },
+          headers: FEED_HEADERS,
           signal: controller.signal,
         } as RequestInit);
+        noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
           console.warn(`[hawkeye] investigative-feed/${feed.name} HTTP ${res.status}`);
           return [] as Article[];
@@ -882,6 +911,7 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[]):
           source: a.source || feed.name,
         }));
       } catch (err) {
+        noteFeedOutcome(stats, false);
         console.warn(`[hawkeye] investigative-feed/${feed.name} threw:`, err);
         return [] as Article[];
       } finally {
@@ -958,6 +988,7 @@ async function fetchRegionalFeeds(
   subjectName: string,
   variants: string[],
   tag: string,
+  stats?: RetrievalStats,
 ): Promise<Article[]> {
   const results = await Promise.allSettled(
     feeds.map(async (feed) => {
@@ -965,13 +996,10 @@ async function fetchRegionalFeeds(
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
         const res = await fetch(feed.url, {
-          headers: {
-            "user-agent":
-              "Mozilla/5.0 (compatible; HawkeyeSterling/0.3; +https://hawkeye-sterling.netlify.app)",
-            accept: "application/rss+xml,application/xml,text/xml,*/*;q=0.8",
-          },
+          headers: FEED_HEADERS,
           signal: controller.signal,
         } as RequestInit);
+        noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
           console.warn(`[hawkeye] ${tag}/${feed.name} HTTP ${res.status}`);
           return [] as Article[];
@@ -986,6 +1014,7 @@ async function fetchRegionalFeeds(
           source: a.source || feed.name,
         }));
       } catch (err) {
+        noteFeedOutcome(stats, false);
         console.warn(`[hawkeye] ${tag}/${feed.name} threw:`, err);
         return [] as Article[];
       } finally {
@@ -1010,20 +1039,88 @@ async function fetchRegionalFeeds(
   return allArticles;
 }
 
-async function fetchAsianFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
-  return fetchRegionalFeeds(ASIAN_FEEDS, subjectName, variants, "asian-feed");
+async function fetchAsianFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
+  return fetchRegionalFeeds(ASIAN_FEEDS, subjectName, variants, "asian-feed", stats);
 }
 
-async function fetchAfricaFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
-  return fetchRegionalFeeds(AFRICA_FEEDS, subjectName, variants, "africa-feed");
+async function fetchAfricaFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
+  return fetchRegionalFeeds(AFRICA_FEEDS, subjectName, variants, "africa-feed", stats);
 }
 
-async function fetchLatamFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
-  return fetchRegionalFeeds(LATAM_FEEDS, subjectName, variants, "latam-feed");
+async function fetchLatamFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
+  return fetchRegionalFeeds(LATAM_FEEDS, subjectName, variants, "latam-feed", stats);
 }
 
-async function fetchOceaniaFeeds(subjectName: string, variants: string[]): Promise<Article[]> {
-  return fetchRegionalFeeds(OCEANIA_FEEDS, subjectName, variants, "oceania-feed");
+async function fetchOceaniaFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
+  return fetchRegionalFeeds(OCEANIA_FEEDS, subjectName, variants, "oceania-feed", stats);
+}
+
+// ── GDELT Doc 2.0 — keyless global news API ─────────────────────────────────
+// A second, fully independent live source so adverse-media retrieval no longer
+// depends on Google News alone. GDELT indexes worldwide press in 100+ languages,
+// requires no API key, and returns JSON. Results are mapped into the adapter
+// NewsArticle shape so they flow through the existing fuzzy-scoring / severity /
+// source-tiering pipeline with no duplicated logic.
+const GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc";
+const GDELT_TIMEOUT_MS = 2_500;
+
+function parseGdeltDate(seendate: string | undefined): string {
+  // GDELT seendate format: "20240115T120000Z" → ISO 8601.
+  if (!seendate || !/^\d{8}T\d{6}Z$/.test(seendate)) return new Date().toISOString();
+  const y = seendate.slice(0, 4), mo = seendate.slice(4, 6), d = seendate.slice(6, 8);
+  const h = seendate.slice(9, 11), mi = seendate.slice(11, 13), s = seendate.slice(13, 15);
+  return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
+}
+
+async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<NewsArticle[]> {
+  // Phrase-quote the query so a multi-token name is matched as a unit rather
+  // than OR'd across tokens (which would flood the result with noise).
+  const url =
+    `${GDELT_DOC_API}?format=json&mode=ArtList&maxrecords=75&sort=DateDesc` +
+    `&query=${encodeURIComponent(`"${q}"`)}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GDELT_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { headers: FEED_HEADERS, signal: controller.signal } as RequestInit);
+    noteFeedOutcome(stats, res.ok);
+    if (!res.ok) {
+      console.warn(`[hawkeye] news-search/gdelt HTTP ${res.status}`);
+      return [];
+    }
+    // GDELT returns text/plain on a rejected query and JSON on success.
+    const text = await res.text();
+    let data: { articles?: Array<Record<string, unknown>> };
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.warn("[hawkeye] news-search/gdelt non-JSON response (query likely rejected)");
+      return [];
+    }
+    if (!Array.isArray(data.articles)) return [];
+    const str = (v: unknown): string => (typeof v === "string" ? v : "");
+    return data.articles
+      .map((a): NewsArticle | null => {
+        const link = str(a["url"]);
+        const title = str(a["title"]);
+        if (!link || !title) return null;
+        return {
+          source: "gdelt",
+          outlet: str(a["domain"]),
+          title,
+          url: link,
+          publishedAt: parseGdeltDate(str(a["seendate"]) || undefined),
+          snippet: "",
+          language: str(a["language"]).slice(0, 2).toLowerCase() || "en",
+        };
+      })
+      .filter((a): a is NewsArticle => a !== null);
+  } catch (err) {
+    noteFeedOutcome(stats, false);
+    console.warn("[hawkeye] news-search/gdelt threw:", err);
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function tokens(title: string): Set<string> {
@@ -1088,7 +1185,12 @@ function clusterArticles(articles: Article[]): Article[] {
   });
 }
 
-function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live", latencyMs = 0): NewsResponse {
+function emptyResponse(
+  q: string,
+  fetchMode: NewsResponse["fetchMode"] = "live",
+  latencyMs = 0,
+  retrieval: NewsResponse["retrieval"] = "unavailable",
+): NewsResponse {
   return {
     ok: true,
     subject: q,
@@ -1105,6 +1207,13 @@ function emptyResponse(q: string, fetchMode: NewsResponse["fetchMode"] = "live",
     sourceDiversityScore: 0,
     crossCorroboratedCount: 0,
     propagandaSourceCount: 0,
+    // An empty dossier is only ever returned on the disabled-RSS path or the
+    // last-resort catch — neither of which performed a successful live crawl,
+    // so the honest default is "unavailable", never a clean "live" negative.
+    retrieval,
+    feedsAttempted: 0,
+    feedsReachable: 0,
+    degraded: retrieval !== "live",
   };
 }
 
@@ -1275,8 +1384,12 @@ export async function GET(req: Request): Promise<NextResponse> {
     // Fan out to all locales + all configured news API adapters in parallel.
     // allSettled + per-feed AbortSignal + overall timebox ensures the function
     // always returns within ~7.5s, well inside the 30s maxDuration budget.
+    // Shared retrieval-health accumulator — every instrumented feed fetch
+    // records whether it reached its upstream so we can tell a genuine
+    // negative finding apart from a wholesale outage.
+    const feedStats: RetrievalStats = { attempted: 0, reachable: 0 };
     const fanOut = Promise.allSettled(
-      LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants)),
+      LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)),
     );
     const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
       setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
@@ -1290,12 +1403,15 @@ export async function GET(req: Request): Promise<NextResponse> {
     }));
     // All specialised feed banks run in parallel inside the same 4s timebox —
     // no added latency regardless of how many continent feed banks we add.
-    const investigativeSearch = fetchInvestigativeFeeds(q, variants);
-    const asianSearch        = fetchAsianFeeds(q, variants);
-    const africaSearch       = fetchAfricaFeeds(q, variants);
-    const latamSearch        = fetchLatamFeeds(q, variants);
-    const oceaniaSearch      = fetchOceaniaFeeds(q, variants);
-    const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles] = await Promise.all([
+    const investigativeSearch = fetchInvestigativeFeeds(q, variants, feedStats);
+    const asianSearch        = fetchAsianFeeds(q, variants, feedStats);
+    const africaSearch       = fetchAfricaFeeds(q, variants, feedStats);
+    const latamSearch        = fetchLatamFeeds(q, variants, feedStats);
+    const oceaniaSearch      = fetchOceaniaFeeds(q, variants, feedStats);
+    // GDELT — keyless global second source. Runs in the same timebox so it adds
+    // no latency; provides live coverage even when Google News throttles us.
+    const gdeltSearch        = fetchGdeltArticles(q, feedStats);
+    const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles, gdeltArticles] = await Promise.all([
       Promise.race([fanOut, timebox]),
       adapterSearch,
       investigativeSearch,
@@ -1303,6 +1419,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       africaSearch,
       latamSearch,
       oceaniaSearch,
+      gdeltSearch,
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -1335,8 +1452,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       const key = oa.link || oa.title;
       if (!merged.has(key)) merged.set(key, oa);
     }
-    // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
-    for (const na of adapterResult.articles) {
+    // Convert NewsArticle (adapter + GDELT shape) → Article (internal shape)
+    // and merge. GDELT results ride the same enrichment path as the keyed
+    // adapters, so they get identical fuzzy scoring, severity and tiering.
+    for (const na of [...adapterResult.articles, ...gdeltArticles]) {
       const key = na.url || na.title;
       if (merged.has(key)) continue;
       const fullText = `${na.title} ${na.snippet ?? ""}`;
@@ -1470,6 +1589,21 @@ export async function GET(req: Request): Promise<NextResponse> {
     const groupCounts = adverseKeywordGroupCounts(allKw);
     const esgDomains = Array.from(new Set(parsed.flatMap((a) => a.esgCategories)));
     const langCoverage = Array.from(new Set(parsed.map((a) => a.lang))).sort();
+    // Retrieval health. Fold the news-API adapter outcomes into the RSS feed
+    // tally so a successful adapter still counts as a reachable source even if
+    // every RSS feed was blocked. "unavailable" = nothing was reachable at all
+    // (e.g. blocked egress / wholesale 403) → the caller must NOT treat zero
+    // articles as a confirmed negative finding. "degraded" = a severe partial
+    // outage (<20% of attempted feeds reachable).
+    const feedsReachable = feedStats.reachable + adapterResult.sourcesSucceeded.length;
+    const feedsAttempted =
+      feedStats.attempted + adapterResult.sourcesSucceeded.length + adapterResult.sourcesFailed.length;
+    const retrieval: NewsResponse["retrieval"] =
+      feedsReachable === 0
+        ? "unavailable"
+        : feedsAttempted > 0 && feedsReachable / feedsAttempted < 0.2
+          ? "degraded"
+          : "live";
     const payload: NewsResponse = {
       ok: true,
       subject: q,
@@ -1490,6 +1624,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       sourceDiversityScore: 0,
       crossCorroboratedCount: 0,
       propagandaSourceCount: 0,
+      retrieval,
+      feedsAttempted,
+      feedsReachable,
+      degraded: retrieval !== "live",
     };
     // Cache successful results for 2 minutes
     if (payload.articleCount > 0) {

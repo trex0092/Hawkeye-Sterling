@@ -8,6 +8,7 @@ import { getJson, isInMemoryFallback } from "@/lib/server/store";
 import { gdeltCacheStats, gdeltBreakerStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
 import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
+import { BRAIN_VERSION, BRAIN_REVIEWED_AT } from "@/lib/server/deploy-constants";
 
 // Brain modules are compiled separately; dynamic import so the route module
 // loads even when the dist/ folder hasn't been built yet (local dev).
@@ -990,7 +991,7 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   // reviewed — gives MLROs a self-service "I reviewed it today" action
   // without touching env vars; (2) BRAIN_REVIEWED_AT env var; (3) the
   // hardcoded floor below.
-  let brainReviewedAt = process.env["BRAIN_REVIEWED_AT"] ?? "2026-05-15";
+  let brainReviewedAt = BRAIN_REVIEWED_AT;
   try {
     const blobsMod = (await import("@netlify/blobs")) as unknown as {
       getStore: (_opts: { name: string; siteID?: string; token?: string; consistency?: string }) => {
@@ -1073,7 +1074,7 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     lsegLiveApiCount + lsegCfsIndexed + staticPepCount,
   );
   const feedVersions = {
-    brain: process.env["BRAIN_VERSION"] ?? "wave-5",
+    brain: BRAIN_VERSION,
     commitSha: process.env["NEXT_PUBLIC_COMMIT_SHA"] ?? process.env["NEXT_PUBLIC_COMMIT_REF"] ?? process.env["COMMIT_REF"] ?? process.env["NETLIFY_COMMIT_REF"] ?? "dev",
     adverseMediaCategories: ADVERSE_KEYWORDS.length,
     adverseMediaKeywords: ADVERSE_KEYWORDS.reduce((n, r) => n + r.terms.length, 0),
