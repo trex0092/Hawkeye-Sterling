@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
-interface Playbook {
+export interface Playbook {
   id: string;
   title: string;
   typology: string;
@@ -19,7 +19,7 @@ interface Playbook {
   }>;
 }
 
-const PLAYBOOKS: Playbook[] = [
+export const PLAYBOOKS: Playbook[] = [
   {
     id: "tbml",
     title: "Trade-Based Money Laundering (TBML)",

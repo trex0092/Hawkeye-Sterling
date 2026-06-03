@@ -5,6 +5,8 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { PLAYBOOKS } from "@/app/playbook/page";
+import type { Playbook } from "@/app/playbook/page";
 
 // FIU 2025 DPMS typology coverage matrix types (mirrors /api/fiu-typology-check)
 interface FiuTypologyEntry {
@@ -557,12 +559,131 @@ function DeepDiveModal({
   );
 }
 
+// Maps a typology card (name + category) to the best-matching playbook.
+const PLAYBOOK_RULES: Array<{ test: RegExp; id: string }> = [
+  { test: /tbml|trade.based|over.invoic|under.invoic|phantom.ship/i, id: "tbml" },
+  { test: /\bpep\b|politically.exposed/i, id: "pep" },
+  { test: /crypto|vasp|virtual.asset|bitcoin|ethereum|blockchain|defi/i, id: "vasp" },
+  { test: /real.estate|property|mortgage/i, id: "real-estate" },
+  { test: /shell.comp|beneficial.own|ubo|nominee|complex.struct/i, id: "shell-complex" },
+  { test: /hawala|informal.value.transfer|underground.bank/i, id: "hawala" },
+  { test: /structur|smurfing|placement/i, id: "structuring" },
+  { test: /proliferat|\bpf\b|dual.use|wmd|nuclear/i, id: "proliferation" },
+  { test: /conflict.miner|oecd.5|cahra|artisan/i, id: "conflict-minerals" },
+  { test: /correspondent|nested.relation|respondent.bank/i, id: "correspondent" },
+  { test: /dpms|precious.metal|gold.souk|bullion|diamond/i, id: "dpms-retail" },
+  { test: /digital.asset|nft|token|non.fungible/i, id: "digital-assets" },
+  { test: /human.traffick|forced.labour|modern.slave/i, id: "human-trafficking" },
+  { test: /insider|employee.fraud|staff.fraud/i, id: "insider-threat" },
+  { test: /sanction|tfs|eocn/i, id: "sanctions-match-triage" },
+  { test: /casino|gaming|gambling|junket/i, id: "gaming" },
+  { test: /luxury|high.value.dealer|auction|artwork/i, id: "luxury-goods" },
+  { test: /insurance.fraud|insurance/i, id: "insurance" },
+  { test: /wire.transfer|swift|cross.border.payment/i, id: "wire-transfer" },
+  { test: /bribery|corrupt/i, id: "bribery" },
+  { test: /tax.evasion|tax.fraud|offshore/i, id: "tax-evasion" },
+  { test: /enviro|wildlife|illegal.logging/i, id: "environmental-crime" },
+  { test: /ransomware|cyber.fraud|malware/i, id: "ransomware-proceeds" },
+  { test: /cash.intensive|cash.placement|bulk.cash/i, id: "cash-intensive" },
+  { test: /ngo|nonprofit|charity|non.profit/i, id: "ngo" },
+  { test: /remit|money.transfer/i, id: "remittance" },
+  { test: /trade.finance|letter.of.credit|documentary/i, id: "trade-finance" },
+  { test: /account.takeover|identity.theft|synthetic.id/i, id: "account-takeover" },
+];
+
+function findPlaybook(name: string, category: string): Playbook | null {
+  const combined = `${name} ${category}`;
+  for (const rule of PLAYBOOK_RULES) {
+    if (rule.test.test(combined)) {
+      return PLAYBOOKS.find((p) => p.id === rule.id) ?? null;
+    }
+  }
+  return null;
+}
+
+function PlaybookDrawer({ playbook, onClose }: { playbook: Playbook; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* backdrop */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      {/* panel */}
+      <div className="relative z-10 w-full max-w-md bg-bg-panel border-l border-hair shadow-2xl flex flex-col overflow-hidden">
+        {/* sticky header */}
+        <div className="sticky top-0 bg-bg-panel border-b border-hair px-5 py-4 flex items-start justify-between gap-4 shrink-0">
+          <div>
+            <div className="font-mono text-10 uppercase tracking-wide-4 text-brand mb-1">📖 Playbook</div>
+            <h2 className="font-display text-18 font-normal text-ink-0 leading-tight">{playbook.title}</h2>
+            {playbook.description && (
+              <p className="text-11.5 text-ink-2 mt-1.5 leading-relaxed line-clamp-3">{playbook.description}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 p-1.5 rounded hover:bg-bg-2 text-ink-2 hover:text-ink-0 transition-colors text-16"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* citations */}
+        {playbook.citations && playbook.citations.length > 0 && (
+          <div className="px-5 py-2 border-b border-hair bg-bg-1 flex flex-wrap gap-1.5 shrink-0">
+            {playbook.citations.map((c) => (
+              <span key={c} className="font-mono text-10 px-2 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* steps */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {playbook.steps.map((step, i) => (
+            <div key={i} className="border border-hair rounded-lg bg-bg-1 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hair bg-bg-2">
+                <span className="w-5 h-5 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center font-mono text-10 font-bold text-brand shrink-0">
+                  {i + 1}
+                </span>
+                <span className="font-semibold text-12.5 text-ink-0 flex-1">{step.title.replace(/^\d+\.\s*/, "")}</span>
+                {step.required && (
+                  <span className="font-mono text-10 px-1.5 py-0.5 rounded bg-red-dim text-red border border-red/20 shrink-0">
+                    Required
+                  </span>
+                )}
+              </div>
+              <ul className="px-4 py-3 space-y-1.5 list-none m-0 p-0">
+                {step.checks.map((check, j) => (
+                  <li key={j} className="flex items-start gap-2 px-4">
+                    <span className="text-brand text-10 shrink-0 mt-1">✓</span>
+                    <span className="text-12 text-ink-1 leading-relaxed">{check}</span>
+                  </li>
+                ))}
+              </ul>
+              {step.citation && (
+                <div className="px-4 py-1.5 border-t border-hair">
+                  <span className="font-mono text-10 text-ink-3">{step.citation}</span>
+                </div>
+              )}
+            </div>
+          ))}
+          <p className="text-10 text-ink-3 font-mono text-center pt-2">
+            View full playbook at <a href="/playbook" className="text-brand underline">Playbook →</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TypologyCard({
   typology,
   onDeepDive,
+  onViewPlaybook,
 }: {
   typology: TypologyResult;
   onDeepDive: (_name: string) => void;
+  onViewPlaybook: (_playbook: Playbook) => void;
 }) {
   return (
     <div className="border border-hair rounded-lg p-4 bg-bg-panel hover:border-brand/30 transition-colors">
@@ -609,13 +730,27 @@ function TypologyCard({
       {/* FATF ref + actions */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-hair">
         <span className="font-mono text-10 text-ink-3">{typology.fatfRef}</span>
-        <button
-          type="button"
-          onClick={() => onDeepDive(typology.name)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors shrink-0"
-        >
-          Deep Dive →
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {(() => {
+            const matched = findPlaybook(typology.name, typology.category);
+            return matched ? (
+              <button
+                type="button"
+                onClick={() => onViewPlaybook(matched)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
+              >
+                📖 Playbook
+              </button>
+            ) : null;
+          })()}
+          <button
+            type="button"
+            onClick={() => onDeepDive(typology.name)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors"
+          >
+            Deep Dive →
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -630,6 +765,7 @@ export default function TypologyLibraryPage() {
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [deepDiveTarget, setDeepDiveTarget] = useState<string | null>(null);
+  const [playbookTarget, setPlaybookTarget] = useState<Playbook | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -877,7 +1013,7 @@ export default function TypologyLibraryPage() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
             {results.results.map((t) => (
-              <TypologyCard key={t.id} typology={t} onDeepDive={setDeepDiveTarget} />
+              <TypologyCard key={t.id} typology={t} onDeepDive={setDeepDiveTarget} onViewPlaybook={setPlaybookTarget} />
             ))}
           </div>
         </>
@@ -931,6 +1067,14 @@ export default function TypologyLibraryPage() {
         <DeepDiveModal
           typologyName={deepDiveTarget}
           onClose={() => setDeepDiveTarget(null)}
+        />
+      )}
+
+      {/* Playbook Drawer */}
+      {playbookTarget && (
+        <PlaybookDrawer
+          playbook={playbookTarget}
+          onClose={() => setPlaybookTarget(null)}
         />
       )}
     </ModuleLayout>
