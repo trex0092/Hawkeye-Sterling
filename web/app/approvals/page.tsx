@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -355,17 +355,13 @@ export default function ApprovalsPage() {
         ) : null
       }
     >
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-10 font-semibold text-brand uppercase tracking-widest mb-0.5">
-              Hawkeye Sterling · Approvals
-            </p>
-            <h1 className="text-24 font-bold text-ink-0 leading-tight">Approvals</h1>
-          </div>
-        </div>
-
+      <ModuleHero
+        eyebrow=""
+        title="Approval"
+        titleEm="register."
+        intro="Entity onboarding approval tracker — decision status, risk score, and approved country destinations. All approval changes are logged in the immutable audit trail per UAE FDL 10/2025 Art.20."
+      />
+      <div className="max-w-3xl mx-auto px-4 pb-6 space-y-5">
         {/* Error */}
         {error && (
           <div className="px-4 py-2 rounded-lg bg-red/10 border border-red/30 text-12 text-red">

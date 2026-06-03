@@ -651,26 +651,8 @@ function JurisdictionIntelPanel() {
 }
 
 // ── Intelligence modules — rendered inline when selected ──────────────────────
-
-// KYC TOOLS — entity / identity verification tools, grouped into their own
-// bar on the Intel page. Redundant sub-tab shortcuts (LEI Lookup, Name
-// Search, Single/Batch Check, Synthetic ID, Analytics) were removed; the
-// main tools live here.
-const KYC_TOOLS: FamilyModule[] = [
-  { label: "OSINT", href: "/osint", icon: "🌐" },
-  { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
-  { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
-  { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
-  { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
-  { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
-  { label: "Benford Analysis", href: "/benford", icon: "🔢" },
-  { label: "Investigation", href: "/investigation", icon: "🕵️" },
-  { label: "Single Country", href: "/country-risk?tab=single", icon: "📍" },
-  { label: "Compare", href: "/country-risk?tab=compare", icon: "⚖️" },
-  { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
-  { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
-  { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-];
+// (KYC Tools moved to the global "More" mega-menu — see Header.tsx — so they
+// are not duplicated here.)
 
 const INTEL_MODULES: FamilyModule[] = [
   { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
@@ -735,13 +717,6 @@ export default function IntelPage() {
       <ModuleFamilyBar
         suiteName="Live Intelligence Feed"
         modules={INTEL_MODULES}
-        onSelect={handleModuleSelect}
-        activeHref={activeModule?.href ?? "/intel"}
-      />
-
-      <ModuleFamilyBar
-        suiteName="KYC Tools"
-        modules={KYC_TOOLS}
         onSelect={handleModuleSelect}
         activeHref={activeModule?.href ?? "/intel"}
       />
