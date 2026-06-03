@@ -28,6 +28,12 @@ export interface NewsDossier {
   articles: NewsArticle[];
   source: "google-news-rss" | "newsapi";
   languages: string[];
+  // Live-retrieval health (see news-search route). "unavailable" means no news
+  // source could be reached, so zero articles is NOT a confirmed negative
+  // finding. Optional for backward-compat with cached/legacy dossier shapes.
+  retrieval?: "live" | "degraded" | "unavailable";
+  feedsAttempted?: number;
+  feedsReachable?: number;
 }
 
 export type NewsSearchState =
@@ -51,6 +57,11 @@ function emptyDossier(subject: string): NewsDossier {
     articles: [],
     source: "google-news-rss",
     languages: [],
+    // Client-side fallback only runs when the backend was unreachable, so the
+    // honest signal is "unavailable" — never a clean "live" negative finding.
+    retrieval: "unavailable",
+    feedsAttempted: 0,
+    feedsReachable: 0,
   };
 }
 
