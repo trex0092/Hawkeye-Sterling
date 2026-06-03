@@ -656,9 +656,6 @@ function JurisdictionIntelPanel() {
 
 const INTEL_MODULES: FamilyModule[] = [
   { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-  { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
-  { label: "UBO Walker", href: "/governance/intelligence-tools?tab=ubo", icon: "🏢" },
-  { label: "Crypto Exposure", href: "/governance/intelligence-tools?tab=crypto", icon: "₿" },
   { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
   { label: "Workbench", href: "/intelligence-hub?tab=workbench", icon: "🔧" },
   { label: "Telemetry", href: "/intelligence-hub?tab=telemetry", icon: "📡" },
