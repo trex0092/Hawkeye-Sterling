@@ -95,7 +95,15 @@ export async function fetchJson<T = unknown>(
       // for same-origin portal requests so the credential is never included in
       // the browser bundle. Caller-supplied headers take precedence over the
       // middleware-injected value for routes that use a dedicated API key.
+      //
+      // credentials:"include" is explicit so the hs_session cookie is always
+      // attached on same-origin /api/* calls. The browser default for fetch()
+      // is "same-origin" which already includes cookies for same-origin
+      // requests, but being explicit removes the dependence on that default
+      // and matches the behaviour the panels need under every browser. Caller
+      // can override via opts.credentials if a future route ever requires it.
       const res = await fetch(input, {
+        credentials: "include",
         ...rest,
         headers: {
           accept: "application/json",

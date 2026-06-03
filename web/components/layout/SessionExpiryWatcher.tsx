@@ -16,7 +16,10 @@
 //
 // Both paths converge on the same modal so the user sees the same prompt
 // whether their session ran out cleanly (warning path) or was already
-// invalid when they opened the tab (interceptor path).
+// invalid when they opened the tab (interceptor path). The modal copy
+// switches between "expired" (had a session, now invalid) and "sign-in
+// required" (never sent a cookie) so unauthenticated visitors are not
+// told their non-existent session expired.
 
 import { useEffect, useRef, useState } from "react";
 import { pushToast } from "@/lib/toast-bus";
@@ -25,6 +28,8 @@ import {
   installSessionExpiryInterceptor,
   SESSION_EXPIRED_EVENT,
   reportSessionExpired,
+  SESSION_NO_COOKIE_EVENT,
+  reportNoSession,
 } from "@/lib/client/session-expiry";
 
 // Delay before re-checking /api/auth/me after a first 401 on the proactive
@@ -36,10 +41,12 @@ const PROACTIVE_VERIFY_DEBOUNCE_MS = 800;
 
 const WARN_AT_SECS = [15 * 60, 5 * 60] as const;
 
+type AuthPromptKind = "expired" | "no_session";
+
 export function SessionExpiryWatcher() {
   const expRef = useRef<number | null>(null);
   const firedRef = useRef<Set<number>>(new Set());
-  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<AuthPromptKind | null>(null);
 
   useEffect(() => {
     let dead = false;
@@ -52,16 +59,19 @@ export function SessionExpiryWatcher() {
     // (2) Reactive path: install the global same-origin /api 401 interceptor
     // before any panel kicks off its first fetch. Listen for the event.
     installSessionExpiryInterceptor();
-    const onExpired = () => setOpen(true);
+    const onExpired = () => setKind("expired");
+    const onNoSession = () => setKind((k) => k ?? "no_session");
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    window.addEventListener(SESSION_NO_COOKIE_EVENT, onNoSession);
 
     // (1) Proactive path: read sessionExp from /api/auth/me. If THIS call
-    // 401s with a real session-invalidation code, fire the modal immediately.
-    // If the 401 is "no_session" (no cookie was ever sent — operator is not
-    // signed in), stay silent: re-popping "Your session has expired" on a
-    // browser that never had one is what produced the "modal every page
-    // load" complaint.
-    fetch("/api/auth/me", { cache: "no-store" })
+    // 401s with a real session-invalidation code, fire the modal immediately
+    // with "expired" copy. If the 401 is "no_session" (no cookie was ever
+    // sent — operator is not signed in), fire the modal with "sign-in
+    // required" copy so they know they need to log in. The two cases used
+    // to share the same misleading "Your session has expired" headline,
+    // which made the never-signed-in case look like a bug.
+    fetch("/api/auth/me", { cache: "no-store", credentials: "include" })
       .then(async (r) => {
         if (dead) return null;
         if (r.status === 401 || r.status === 403) {
@@ -70,9 +80,13 @@ export function SessionExpiryWatcher() {
             const body = (await r.json()) as { code?: unknown };
             if (typeof body?.code === "string") code = body.code;
           } catch {
-            /* no JSON body — treat as a legacy 401 with no code, see below */
+            /* no JSON body — treat as a legacy 401, fall back to "expired" */
           }
-          if (code !== "no_session") reportSessionExpired();
+          if (code === "no_session") {
+            reportNoSession();
+          } else {
+            reportSessionExpired();
+          }
           return null;
         }
         try {
@@ -126,10 +140,11 @@ export function SessionExpiryWatcher() {
       dead = true;
       clearInterval(tick);
       window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+      window.removeEventListener(SESSION_NO_COOKIE_EVENT, onNoSession);
     };
   }, []);
 
-  if (!open) return null;
+  if (!kind) return null;
 
   // Build the return-to URL so re-login lands the operator back where
   // they were. Skip on /login itself to avoid loops.
@@ -138,6 +153,15 @@ export function SessionExpiryWatcher() {
       ? window.location.pathname + window.location.search
       : "/";
   const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
+
+  const isExpired = kind === "expired";
+  const title = isExpired ? "Your session has expired" : "Sign in required";
+  const body = isExpired
+    ? "Some panels could not load because your sign-in is no longer valid. Sign in again to continue — work-in-progress in local fields is preserved."
+    : "You are not signed in. Sign in to access screening data, sanctions feeds, and the case workspace.";
+  const eyebrow = isExpired
+    ? "Session · Authentication required"
+    : "Authentication · Sign in required";
 
   return (
     <div
@@ -148,26 +172,24 @@ export function SessionExpiryWatcher() {
     >
       <div className="max-w-md w-full mx-4 bg-bg-panel border border-hair-2 rounded-lg shadow-2xl p-6">
         <div className="font-mono text-11 tracking-wide-8 uppercase text-ink-3 mb-3">
-          Session · Authentication required
+          {eyebrow}
         </div>
         <h1
           id="session-expired-title"
           className="font-display font-normal text-24 text-ink-0 mb-3"
         >
-          Your session has expired
+          {title}
         </h1>
         <p
           id="session-expired-body"
           className="text-13 text-ink-2 mb-6 leading-relaxed"
         >
-          Some panels could not load because your sign-in is no longer
-          valid. Sign in again to continue — work-in-progress in local
-          fields is preserved.
+          {body}
         </p>
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => setKind(null)}
             className="px-4 py-2 text-13 font-semibold text-ink-2 hover:text-ink-0 transition-colors"
           >
             Dismiss

@@ -13,10 +13,10 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 // Build a Set-Cookie that clears the session cookie. Used on every 401/403
 // path where the operator sent a cookie that we rejected, so the next
 // /api/auth/me call returns `no_session` (silent) instead of re-firing the
-// "Your session has expired" modal on every page reload. The attributes
-// MUST match the login route's set-cookie (same path, sameSite, secure,
-// partitioned) so the browser actually overwrites the existing cookie
-// instead of creating a sibling.
+// "Your session has expired" modal on every page reload. Attributes mirror
+// the login route's set-cookie (same path, httpOnly, sameSite, secure — no
+// `partitioned`) so the browser actually overwrites the existing cookie
+// instead of creating a sibling entry that lingers in the cookie jar.
 function clearSessionCookie(res: NextResponse): void {
   const isSecure = process.env["NODE_ENV"] !== "development";
   res.cookies.set(SESSION_COOKIE, "", {
@@ -25,7 +25,6 @@ function clearSessionCookie(res: NextResponse): void {
     httpOnly: true,
     sameSite: "lax",
     secure: isSecure,
-    partitioned: isSecure,
   });
 }
 
