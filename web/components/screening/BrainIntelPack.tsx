@@ -48,36 +48,6 @@ export function BrainAdversarial({
   );
 }
 
-// ─── 2. BrainTypologyMap ───────────────────────────────────────────
-// Radar-style bar display of all matched typology weights, sorted
-// by severity. Empty-state if no typology hit.
-export function BrainTypologyMap({ result }: { result: SuperBrainResult }) {
-  const hits = result.typologies?.hits ?? [];
-  if (hits.length === 0) return null;
-  const sorted = [...hits].sort((a, b) => b.weight - a.weight).slice(0, 12);
-  const max = Math.max(...sorted.map((h) => h.weight), 1);
-  return (
-    <Card title={`Typology matches (${hits.length})`}>
-      <div className="space-y-1.5">
-        {sorted.map((h) => (
-          <div key={h.id} className="grid grid-cols-[150px_1fr_40px] items-center gap-2 text-11">
-            <span className="text-ink-1 truncate">{h.name}</span>
-            <div className="h-1.5 bg-bg-2 rounded-sm">
-              <div
-                className="h-full bg-red"
-                style={{ width: `${(h.weight / max) * 100}%` }}
-              />
-            </div>
-            <span className="font-mono text-10 text-ink-2 text-right">
-              {(h.weight * 100).toFixed(0)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 // ─── 3. BrainKeywordExplorer ───────────────────────────────────────
 // Shows the exact adverse-keyword hits with their group + offset,
 // not just the categories. Evidence-chain for every signal.
@@ -298,59 +268,6 @@ export function BrainScenarioMatcher({ result }: { result: SuperBrainResult }) {
   );
 }
 
-// ─── 10. BrainBiasCheck ────────────────────────────────────────────
-// Heuristic flags where the brain might be over- or under-weighting
-// given the input shape. Not a guarantee of bias — a sanity check.
-export function BrainBiasCheck({ result }: { result: SuperBrainResult }) {
-  const flags: Array<{ level: "info" | "warn"; text: string }> = [];
-  const composite = result.composite.score;
-  const signals = Object.values(result.composite.breakdown).filter((v) => v > 0).length;
-  const hasAdverseSignal =
-    result.adverseMedia.length > 0 || (result.adverseKeywordGroups?.length ?? 0) > 0;
-  if (composite >= 85 && signals <= 1 && !hasAdverseSignal) {
-    flags.push({
-      level: "warn",
-      text: "High composite with only 1 signal firing — corroborate before freeze.",
-    });
-  }
-  if (composite < 35 && hasAdverseSignal) {
-    flags.push({
-      level: "warn",
-      text: "Low composite despite adverse-media/keyword signals — verify classifier thresholds.",
-    });
-  }
-  if ((result.pep?.salience ?? 0) > 0.8 && result.jurisdiction?.cahra) {
-    flags.push({
-      level: "info",
-      text: "Tier-1 PEP in CAHRA jurisdiction — expect Board-level sign-off.",
-    });
-  }
-  if (result.screen.hits.length > 0 && (result.pep?.salience ?? 0) === 0) {
-    flags.push({
-      level: "info",
-      text: "Sanctions hit without PEP fire — investigate commercial-entity vs individual classification.",
-    });
-  }
-  if (flags.length === 0) {
-    flags.push({ level: "info", text: "No bias heuristics fired. Signals look consistent." });
-  }
-  return (
-    <Card title="Bias sanity-check">
-      <div className="space-y-1">
-        {flags.map((f) => (
-          <div
-            key={f.text}
-            className={`text-11 ${f.level === "warn" ? "text-amber" : "text-green"}`}
-          >
-            {f.level === "warn" ? "⚠ " : "✓ "}
-            {f.text}
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 // ─── 12. BrainDataFreshness ────────────────────────────────────────
 // Shows actual data-source freshness from the audit trail embedded in
 // the brain result. Every entry is real metadata produced by the
@@ -445,47 +362,6 @@ export function BrainModuleWeights() {
             <span className="text-ink-2 shrink-0">{w.note}</span>
           </div>
         ))}
-      </div>
-    </Card>
-  );
-}
-
-// ─── 16. BrainVerdictConsistency ───────────────────────────────────
-// Compares current verdict with the structural expectation from
-// signals. Flags paradoxical outputs.
-export function BrainVerdictConsistency({ result }: { result: SuperBrainResult }) {
-  const composite = result.composite.score;
-  // Only confirmed hits (identifier corroborated) are treated as actionable sanctions
-  // entanglement; name-only fuzzy matches are POSSIBLE matches, not designations.
-  const confirmedSanctionsHit = result.screen.hits.some(
-    (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
-  );
-  const hasAnyHit = result.screen.hits.length > 0;
-  const pepFired = Boolean(result.pep && result.pep.salience > 0);
-  const redline = result.redlines.fired.length > 0;
-
-  let expected = "clear";
-  if (confirmedSanctionsHit && composite >= 85) expected = "critical";
-  else if (confirmedSanctionsHit || redline) expected = "high";
-  else if (hasAnyHit) expected = "medium"; // unconfirmed name-only hit → review
-  else if (pepFired) expected = "medium";
-  else if (composite > 0) expected = "low";
-
-  const actual =
-    composite >= 85 ? "critical" : composite >= 60 ? "high" : composite >= 35 ? "medium" : composite > 0 ? "low" : "clear";
-  const consistent = actual === expected;
-  return (
-    <Card title="Verdict consistency">
-      <div className="flex items-baseline justify-between">
-        <span className="text-11 text-ink-1">
-          expected: <span className="font-mono text-ink-0">{expected}</span>
-        </span>
-        <span className="text-11 text-ink-1">
-          observed: <span className="font-mono text-ink-0">{actual}</span>
-        </span>
-      </div>
-      <div className={`mt-1.5 text-11 font-semibold ${consistent ? "text-green" : "text-amber"}`}>
-        {consistent ? "✓ Consistent" : "⚠ Divergent — MLRO review suggested"}
       </div>
     </Card>
   );
@@ -590,154 +466,6 @@ function _Slider({
         className="w-full accent-brand"
       />
     </div>
-  );
-}
-
-// ─── 18. BrainCoherenceCheck ───────────────────────────────────────
-// Does the subject profile internally hang together? Flags
-// implausible combinations (e.g. tier-1 PEP with unusually
-// clean jurisdiction exposure; individual + corporate-style name).
-export function BrainCoherenceCheck({
-  result,
-  subjectName,
-}: {
-  result: SuperBrainResult;
-  subjectName: string;
-}) {
-  const signals: string[] = [];
-  if (result.pep && result.pep.salience > 0 && !result.jurisdiction?.cahra) {
-    signals.push(
-      "Tier-1 PEP classified but jurisdiction not CAHRA-listed — verify exposure pathway.",
-    );
-  }
-  if (
-    result.screen.hits.length > 0 &&
-    result.adverseMedia.length === 0 &&
-    (result.adverseKeywordGroups?.length ?? 0) === 0
-  ) {
-    signals.push(
-      "Sanctions match with zero adverse-media footprint — possible stale list entry or false-match.",
-    );
-  }
-  if (subjectName.split(/\s+/).length < 2) {
-    signals.push(
-      "Single-token subject name — transliteration variance high; consider alias expansion.",
-    );
-  }
-  if (result.jurisdictionRich?.riskScore && result.jurisdictionRich.riskScore > 0.7 && result.composite.score < 40) {
-    signals.push(
-      "High-risk jurisdiction profile but low composite score — check if brain weighted the correct ISO code.",
-    );
-  }
-  if (signals.length === 0) {
-    return (
-      <Card title="Coherence check">
-        <div className="text-11 text-green">
-          ✓ Subject profile is internally coherent — no contradictions
-          detected across signals.
-        </div>
-      </Card>
-    );
-  }
-  return (
-    <Card title={`Coherence check (${signals.length})`}>
-      <ul className="list-none p-0 m-0 space-y-1">
-        {signals.map((s) => (
-          <li key={s} className="text-11 text-amber">
-            ⚠ {s}
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-// ─── 19. BrainRedFlagCombinator ────────────────────────────────────
-// Pattern-match combinations of red flags that together signify a
-// specific typology beyond what individual flags show.
-export function BrainRedFlagCombinator({ result }: { result: SuperBrainResult }) {
-  const patterns: Array<{ name: string; likelihood: number; rationale: string }> = [];
-  // Only count hits with identifier confirmation (disambiguationConfidence ≥ 75).
-  // Name-only fuzzy matches never reach "Confirmed" classification and must not
-  // be treated as confirmed sanctions entanglement in combinator logic.
-  const confirmedHitCount = result.screen.hits.filter(
-    (h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75,
-  ).length;
-  const pepFired = Boolean(result.pep && result.pep.salience > 0);
-  const amFired =
-    result.adverseMedia.length > 0 || (result.adverseKeywordGroups?.length ?? 0) > 0;
-  const cahra = Boolean(result.jurisdiction?.cahra);
-  const redlines = result.redlines.fired.length;
-  const typologies = result.typologies?.hits.length ?? 0;
-
-  if (confirmedHitCount > 0 && amFired && !pepFired) {
-    patterns.push({
-      name: "Sanctions-linked adverse-media",
-      likelihood: 0.88,
-      rationale:
-        "Sanctions match corroborated by adverse-media coverage — consistent with trade-based money laundering, sanctions evasion, or fraud. Adverse-media evidence strengthens the case for regulatory filing.",
-    });
-  }
-  if (pepFired && cahra && amFired) {
-    patterns.push({
-      name: "Kleptocracy pattern",
-      likelihood: 0.85,
-      rationale:
-        "PEP classification + CAHRA jurisdiction + adverse-media converge — classic kleptocracy pathway. Escalate to CEO/Board.",
-    });
-  }
-  if (confirmedHitCount > 0 && redlines >= 2) {
-    patterns.push({
-      name: "Active sanctions-evasion pattern",
-      likelihood: 0.92,
-      rationale:
-        "Confirmed sanctions designation × multiple redlines — consistent with active evasion via shell-company or nominee structure.",
-    });
-  }
-  if (typologies >= 3 && amFired) {
-    patterns.push({
-      name: "Multi-typology confluence",
-      likelihood: 0.72,
-      rationale:
-        "Three or more typology signatures + adverse-media — subject straddles multiple fraud / laundering patterns.",
-    });
-  }
-  if (pepFired && confirmedHitCount === 0 && !amFired) {
-    patterns.push({
-      name: "Clean PEP (EDD path)",
-      likelihood: 0.65,
-      rationale:
-        "PEP without sanctions or adverse-media — standard EDD suffices; no FIU filing required on PEP alone.",
-    });
-  }
-  if (patterns.length === 0) {
-    return (
-      <Card title="Red-flag combinator">
-        <div className="text-11 text-green">
-          ✓ No multi-flag patterns detected. Individual signals do not cluster
-          into a recognised typology.
-        </div>
-      </Card>
-    );
-  }
-  return (
-    <Card title={`Red-flag combinator (${patterns.length})`}>
-      <div className="space-y-2">
-        {patterns.map((p) => (
-          <div key={p.name} className="border-l-2 border-red pl-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-11 font-semibold text-ink-0">{p.name}</span>
-              <span className="font-mono text-10 text-red">
-                {(p.likelihood * 100).toFixed(0)}% likelihood
-              </span>
-            </div>
-            <div className="text-10.5 text-ink-2 leading-snug mt-0.5">
-              {p.rationale}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
   );
 }
 
@@ -914,105 +642,6 @@ export function BrainFATFAlignment({ result }: { result: SuperBrainResult }) {
   );
 }
 
-// ─── 23. BrainSanctionsPathway ─────────────────────────────────────
-// For sanctions hits, infer the pathway: direct / via UBO / via
-// parent / transitive.
-export function BrainSanctionsPathway({ result }: { result: SuperBrainResult }) {
-  if (result.screen.hits.length === 0) {
-    return (
-      <Card title="Sanctions pathway">
-        <div className="text-11 text-green">
-          ✓ No sanctions hit to trace.
-        </div>
-      </Card>
-    );
-  }
-  const topHit = result.screen.hits[0];
-  if (!topHit) return null;
-  const confidence = topHit.score;
-  const disambConf = topHit.disambiguationConfidence ?? 50;
-  const isConfirmed = disambConf >= 75; // at least one corroborating identifier
-  let pathway: string;
-  let action: string;
-  if (isConfirmed && confidence >= 0.85) {
-    // EXACT or STRONG match with identifier confirmation — per compliance-policy taxonomy
-    pathway = "Confirmed match";
-    action = "Freeze immediately — primary designation";
-  } else if (confidence >= 0.92) {
-    // High name-similarity but NO identifier confirmation — name-only match
-    pathway = "High-similarity name match (unconfirmed)";
-    action = "Analyst review required — name similarity alone does not confirm designation; provide DOB / ID / nationality to disambiguate";
-  } else if (confidence >= 0.82) {
-    pathway = "Possible match — insufficient identifiers";
-    action = "Analyst review required — possible alias or transliteration";
-  } else {
-    pathway = "Low-confidence fuzzy match";
-    action = "Likely false-positive — document rationale, do not freeze";
-  }
-  return (
-    <Card title="Sanctions pathway">
-      <div className="text-11 font-semibold text-ink-0 mb-1">{pathway}</div>
-      <div className="text-10 font-mono text-ink-3 mb-2">
-        [{topHit.listId}] {topHit.candidateName} · {Math.round(confidence * 100)}% · {topHit.method}
-      </div>
-      <div className="text-11 text-ink-1">{action}</div>
-    </Card>
-  );
-}
-
-// ─── 24. BrainSoWPlausibility ──────────────────────────────────────
-// Source-of-wealth plausibility heuristic — does the declared
-// wealth make sense given the subject's jurisdiction, age, and
-// declared activity?
-export function BrainSoWPlausibility({ result }: { result: SuperBrainResult }) {
-  const j = result.jurisdiction?.iso2 ?? "??";
-  // Heuristic checks — cheap to ship, regulator-plausible, not ML.
-  const checks: Array<{ ok: boolean; text: string }> = [
-    {
-      ok: true,
-      text: "Declared SoW must reconcile with FATF R.10 / FDL 10/2025 Art.10 documented identity",
-    },
-    {
-      ok: !result.jurisdiction?.cahra,
-      text: result.jurisdiction?.cahra
-        ? "CAHRA jurisdiction — require independent triangulation of declared SoW"
-        : "Non-CAHRA jurisdiction — standard SoW documentation suffices",
-    },
-    {
-      ok: !(result.pep && result.pep.salience > 0),
-      text:
-        result.pep && result.pep.salience > 0
-          ? "PEP classified — SoW must be cross-checked against public asset disclosures"
-          : "No PEP classification — SoW cross-check not mandated",
-    },
-    {
-      ok: !result.screen.hits.some((h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75),
-      text: (() => {
-        if (result.screen.hits.length === 0) return "No sanctions hit — SoW path is unconstrained";
-        if (result.screen.hits.some((h) => h.score >= 0.85 && (h.disambiguationConfidence ?? 50) >= 75))
-          return "Confirmed sanctions entanglement — freeze pathway applies regardless of declared source";
-        return "Unconfirmed name-similarity match only — SoW assessment not constrained pending identifier disambiguation";
-      })(),
-    },
-  ];
-  void j;
-  return (
-    <Card title="Source-of-wealth plausibility">
-      <ul className="list-none p-0 m-0 space-y-1">
-        {checks.map((c) => (
-          <li
-            key={c.text}
-            className={`text-11 flex items-start gap-1.5 ${c.ok ? "text-ink-1" : "text-amber"}`}
-          >
-            <span>{c.ok ? "✓" : "⚠"}</span>
-            <span>{c.text}</span>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
 // ─── 25. BrainAnomalyDetector ──────────────────────────────────────
 // Flags signals that are statistically unusual for the baseline.
 export function BrainAnomalyDetector({ result }: { result: SuperBrainResult }) {
@@ -1071,16 +700,32 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     /crypto|virtual|blockchain|digital.asset/i.test(h.id),
   );
 
+  const matchedListLabels = (pattern: RegExp): string[] =>
+    hits
+      .filter((h) => pattern.test(h.listId))
+      .slice(0, 2)
+      .map((h) => h.listId.replace(/_/g, " ").toUpperCase());
+
+  // Each source domain reports one of three honest states:
+  //   · "hit"     — the domain returned a corroborating signal on THIS subject.
+  //   · "covered" — the backing screening subsystem ran and was reachable but
+  //                 returned no match (the domain WAS queried — not a gap).
+  //   · "gap"     — the domain needs an external provider not wired in this
+  //                 deployment; surfaced explicitly so it is actionable.
+  // We never report "hit" without a real underlying signal, and never claim a
+  // domain is "covered" unless its screening subsystem actually executed.
+  type SourceState = "hit" | "covered" | "gap";
   const sources: Array<{
     label: string;
     group: string;
-    active: boolean;
+    state: SourceState;
     corroborators: string[];
+    note?: string;
   }> = [
     {
       label: "Commercial AML platforms",
       group: "commercial",
-      active: hits.length > 0,
+      state: hits.length > 0 ? "hit" : "covered",
       corroborators: hits.slice(0, 2).map((h) =>
         h.listId.replace(/_/g, " ").toUpperCase(),
       ),
@@ -1088,82 +733,52 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "US Gov't sanctions (OFAC / BIS / FinCEN)",
       group: "us-official",
-      active: hasHitOn(/ofac|fincen/i),
-      corroborators: hits
-        .filter((h) => /ofac|fincen/i.test(h.listId))
-        .slice(0, 2)
-        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+      state: hasHitOn(/ofac|bis|fincen/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/ofac|bis|fincen/i),
     },
     {
       label: "UN / INTERPOL / Multilateral",
       group: "un",
-      active: hasHitOn(/^un_|interpol/i),
-      corroborators: hits
-        .filter((h) => /^un_|interpol/i.test(h.listId))
-        .slice(0, 2)
-        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+      state: hasHitOn(/^un_|interpol/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/^un_|interpol/i),
     },
     {
       label: "EU / UK / European authorities",
       group: "eu-uk",
-      active: hasHitOn(/^eu_|^uk_|ofsi/i),
-      corroborators: hits
-        .filter((h) => /^eu_|^uk_|ofsi/i.test(h.listId))
-        .slice(0, 2)
-        .map((h) => h.listId.replace(/_/g, " ").toUpperCase()),
+      state: hasHitOn(/^eu_|^uk_|ofsi/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/^eu_|^uk_|ofsi/i),
     },
     {
       label: "APAC & Americas authorities",
       group: "apac",
-      active: (() => {
-        const iso = result.jurisdiction?.iso2 ?? "";
-        return /^(AU|CA|JP|SG|HK|NZ|IN|BR|MX|ZA|IL|KR|TW)$/.test(iso);
-      })(),
-      corroborators: (() => {
-        const iso = result.jurisdiction?.iso2 ?? "";
-        if (!iso) return [];
-        const map: Record<string, string[]> = {
-          AU: ["DFAT Consolidated", "AUSTRAC"],
-          CA: ["OSFI Consolidated", "SEMA"],
-          JP: ["METI End-User", "MoFA"],
-          SG: ["MAS TFS"],
-          HK: ["HKMA Customs"],
-          NZ: ["NZ Police Sanctions"],
-          IN: ["RBI Caution List"],
-          BR: ["COAF / CVM"],
-          MX: ["SAT Black List (69-B)"],
-          ZA: ["FIC TFS"],
-          IL: ["NBCTF"],
-        };
-        return map[iso] ?? [];
-      })(),
+      // The consolidated corpus carries CA/AU/JP/CH regional designations, so
+      // the domain is queried on every screen → "covered"; "hit" only on a real
+      // regional list match (jurisdiction alone is not a corroborating signal).
+      state: hasHitOn(/dfat|osfi|seco|jp_mof|jp_meti|austrac/i) ? "hit" : "covered",
+      corroborators: matchedListLabels(/dfat|osfi|seco|jp_mof|jp_meti|austrac/i),
     },
     {
       label: "UAE & GCC",
       group: "uae",
-      active:
-        hasHitOn(/uae/i) ||
-        result.jurisdiction?.iso2 === "AE" ||
-        hasHitOn(/eocn|cbuae/i),
+      state: hasHitOn(/uae|eocn|cbuae/i) ? "hit" : "covered",
       corroborators: [
         hasHitOn(/uae_eocn/i) ? "UAE EOCN" : null,
         hasHitOn(/uae_local/i) ? "UAE Cabinet Res. 74" : null,
-        result.jurisdiction?.iso2 === "AE" ? "CBUAE screened" : null,
       ].filter(Boolean) as string[],
     },
     {
       label: "MDB debarment registers",
       group: "mdb",
-      active: result.composite.score >= 60,
-      corroborators:
-        result.composite.score >= 60
-          ? ["World Bank", "ADB", "EBRD"]
-          : [],
+      state: "gap",
+      corroborators: [],
+      note: "World Bank / ADB / EBRD debarment adapter not configured — wire a provider feed to enable automated coverage.",
     },
     {
       label: "Open-source & civil society",
       group: "open",
-      active: result.adverseMedia.length > 0,
+      // Adverse-media classifier runs on every screen → covered. Live OCCRP /
+      // OpenSanctions retrieval is reported separately in the news dossier.
+      state: result.adverseMedia.length > 0 ? "hit" : "covered",
       corroborators:
         result.adverseMedia.length > 0
           ? ["OCCRP Aleph", "ICIJ Leaks", "OpenSanctions"]
@@ -1172,16 +787,21 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Business intelligence & identity",
       group: "biz",
-      active:
+      state:
         Boolean(result.pep && result.pep.salience > 0) ||
-        Boolean(result.pepAssessment?.isLikelyPEP),
+        Boolean(result.pepAssessment?.isLikelyPEP)
+          ? "hit"
+          : "covered",
       corroborators:
         result.pepAssessment?.matchedRoles?.slice(0, 2).map((r) => r.label) ?? [],
     },
     {
       label: "News & adverse media",
       group: "news",
-      active: result.adverseMedia.length > 0 || Boolean(result.adverseMediaScored),
+      state:
+        result.adverseMedia.length > 0 || Boolean(result.adverseMediaScored)
+          ? "hit"
+          : "covered",
       corroborators: adverseCategories.slice(0, 3).map((c) =>
         c.replace(/_/g, " "),
       ),
@@ -1189,9 +809,11 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Investigative leaks & financial journalism",
       group: "leaks",
-      active: hasAdverseCategory(
+      state: hasAdverseCategory(
         /financial_crime|corruption|money_launder|fraud|bribery/i,
-      ),
+      )
+        ? "hit"
+        : "covered",
       corroborators: hasAdverseCategory(
         /financial_crime|corruption|money_launder|fraud|bribery/i,
       )
@@ -1201,7 +823,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Regulatory enforcement registers",
       group: "reg",
-      active: result.redlines.fired.length > 0,
+      state: result.redlines.fired.length > 0 ? "hit" : "covered",
       corroborators: result.redlines.fired
         .slice(0, 2)
         .map((r) => (r.id ?? "").replace(/_/g, " ")),
@@ -1209,19 +831,16 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Trade, maritime & corporate data",
       group: "trade",
-      active:
-        Boolean(result.jurisdiction?.cahra) ||
-        (result.jurisdictionRich?.riskScore ?? 0) > 60,
-      corroborators:
-        Boolean(result.jurisdiction?.cahra) ||
-        (result.jurisdictionRich?.riskScore ?? 0) > 60
-          ? ["Vessel registries", "AIS / MarineTraffic", "Customs gazettes"]
-          : [],
+      state: "gap",
+      corroborators: [],
+      note: "Vessel / AIS / customs-registry provider not configured — wire a maritime/trade feed to enable automated coverage.",
     },
     {
       label: "Crypto & blockchain analytics",
       group: "crypto",
-      active: cryptoTypology,
+      // Internal typology engine runs on every screen → covered; "hit" on a
+      // crypto/virtual-asset typology match.
+      state: cryptoTypology ? "hit" : "covered",
       corroborators: cryptoTypology
         ? (result.typologies?.hits ?? [])
             .filter((h) =>
@@ -1234,56 +853,78 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
     {
       label: "Internal bureau lists",
       group: "internal",
-      active: hits.length > 0,
+      state: hits.length > 0 ? "hit" : "covered",
       corroborators: hits.length > 0
         ? ["Bureau denial list", "SCO register"]
         : [],
     },
   ];
 
-  const activeCount = sources.filter((s) => s.active).length;
-  const triangulated = activeCount >= 3;
+  const hitCount = sources.filter((s) => s.state === "hit").length;
+  const coveredCount = sources.filter((s) => s.state !== "gap").length;
+  const gapCount = sources.filter((s) => s.state === "gap").length;
 
   return (
-    <Card title={`Source triangulation · ${activeCount} / ${sources.length} groups active`}>
+    <Card title={`Source triangulation · ${coveredCount} / ${sources.length} domains queried`}>
       <div className="text-10.5 text-ink-3 mb-2">
-        Cross-validation across all 15 independent source domains.{" "}
-        {triangulated ? (
+        {coveredCount} of {sources.length} independent source domains queried this
+        subject{gapCount > 0 ? ` · ${gapCount} not configured` : ""}.{" "}
+        {hitCount >= 3 ? (
           <span className="text-green font-medium">
-            Signal corroborated across {activeCount} independent groups.
+            Signal corroborated across {hitCount} independent groups.
           </span>
-        ) : activeCount >= 1 ? (
+        ) : hitCount >= 1 ? (
           <span className="text-amber">
             Single-source signal — seek cross-group corroboration.
           </span>
         ) : (
-          <span className="text-ink-2">No active signals across any source group.</span>
+          <span className="text-ink-2">
+            No corroborating signal across the queried domains.
+          </span>
         )}
       </div>
       <div className="space-y-1">
-        {sources.map((s) => (
-          <div key={s.label} className="flex items-start gap-2 text-11">
-            <span
-              className={`font-mono text-10 mt-px ${s.active ? "text-red" : "text-ink-3"}`}
-            >
-              {s.active ? "●" : "○"}
-            </span>
-            <div className="flex-1">
-              <span className={s.active ? "text-ink-0 font-medium" : "text-ink-3"}>
-                {s.label}
+        {sources.map((s) => {
+          const marker =
+            s.state === "hit" ? "●" : s.state === "covered" ? "✓" : "!";
+          const markerCls =
+            s.state === "hit"
+              ? "text-red"
+              : s.state === "covered"
+                ? "text-green"
+                : "text-amber";
+          const labelCls =
+            s.state === "hit"
+              ? "text-ink-0 font-medium"
+              : s.state === "covered"
+                ? "text-ink-2"
+                : "text-ink-3";
+          return (
+            <div key={s.label} className="flex items-start gap-2 text-11">
+              <span className={`font-mono text-10 mt-px ${markerCls}`}>
+                {marker}
               </span>
-              {s.corroborators.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-0.5">
-                  {s.corroborators.map((c) => (
-                    <Chip key={c} tone="bg">
-                      {c}
-                    </Chip>
-                  ))}
-                </div>
-              )}
+              <div className="flex-1">
+                <span className={labelCls}>{s.label}</span>
+                {s.state === "covered" && s.corroborators.length === 0 && (
+                  <span className="text-ink-3 text-10"> — queried, no match</span>
+                )}
+                {s.note && (
+                  <div className="text-10 text-amber mt-0.5">{s.note}</div>
+                )}
+                {s.corroborators.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {s.corroborators.map((c) => (
+                      <Chip key={c} tone="bg">
+                        {c}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
@@ -1904,7 +1545,7 @@ export function BrainEscalationLadder({ result }: { result: SuperBrainResult }) 
 // confirm coverage against a list that is obligatory for this regime.
 const KNOWN_LIST_IDS = new Set([
   "ofac_sdn", "ofac_cons", "un_1267", "eu_consolidated",
-  "uk_ofsi", "uae_eocn", "uae_local_terrorist",
+  "uk_ofsi", "uae_eocn", "uae_local_terrorist", "tr_masak",
 ]);
 
 type MandatoryEntry = { source: string; listId?: string; note?: string };
@@ -2028,7 +1669,7 @@ const JURISDICTION_MANDATORY: Record<string, MandatoryEntry[]> = {
     { source: "UN Security Council", listId: "un_1267" },
     { source: "EU Consolidated",    listId: "eu_consolidated" },
     { source: "UK OFSI",            listId: "uk_ofsi" },
-    { source: "MASAK (Turkey FIU)", note: "manual query" },
+    { source: "MASAK (Turkey FIU)", listId: "tr_masak" },
   ],
   // ── Afghanistan ───────────────────────────────────────────────────────
   AF: [

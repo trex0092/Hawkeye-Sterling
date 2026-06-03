@@ -36,6 +36,7 @@ const ADAPTER_IDS = [
   "uk_ofsi",
   "uae_eocn",
   "uae_ltl",
+  "tr_masak",
   // LSEG supplements — only present if /api/admin/import-cfs has run.
   "lseg_un_consolidated",
   "lseg_ofac_sdn",
