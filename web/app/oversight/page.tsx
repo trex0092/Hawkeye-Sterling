@@ -5,10 +5,8 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { DateParts } from "@/components/ui/DateParts";
 import { formatDMY } from "@/lib/utils/dateFormat";
-import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
 import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
-import { openReportWindow } from "@/lib/reportOpen";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
@@ -734,19 +732,6 @@ const SEV_TONE: Record<string, string> = {
   low: "bg-bg-2 text-ink-2",
 };
 
-const PRI_TONE: Record<string, string> = {
-  immediate: "bg-red-dim text-red",
-  "short-term": "bg-amber-dim text-amber",
-  "medium-term": "bg-blue-dim text-blue",
-};
-
-const GRADE_TONE: Record<string, string> = {
-  A: "text-green",
-  B: "text-blue",
-  C: "text-amber",
-  D: "text-amber",
-  F: "text-red",
-};
 
 export default function OversightPage() {
   const [tab, setTab] = useState<Tab>("approvals");
@@ -770,12 +755,6 @@ export default function OversightPage() {
   const [editCircularNotes, setEditCircularNotes] = useState("");
   const [editCircularOwner, setEditCircularOwner] = useState("");
   const [editCircularDue, setEditCircularDue] = useState("");
-
-  // AI Gap Analysis state
-  const [gapLoading, setGapLoading] = useState(false);
-  const [gapResult, setGapResult] = useState<GovernanceGapResult | null>(null);
-  const [gapError, setGapError] = useState("");
-  const [gapOpen, setGapOpen] = useState(false);
 
   // Board Report state
   const [boardLoading, setBoardLoading] = useState(false);
@@ -1035,36 +1014,6 @@ export default function OversightPage() {
     return month >= 4 && month <= 6;
   }).length;
 
-  // ── AI Gap Analysis ───────────────────────────────────────────────────────
-  const runGapAnalysis = async () => {
-    setGapLoading(true);
-    setGapError("");
-    try {
-      const res = await fetch("/api/governance-gap", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          approvals: liveApprovals,
-          minutes: liveMinutes,
-          circulars: liveCirculars,
-          institutionName: "Hawkeye Sterling DMCC",
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Governance gap analysis failed (HTTP ${res.status}) — please retry`);
-      }
-      const data = await res.json().catch(() => ({})) as GovernanceGapResult;
-      if (!mountedRef.current) return;
-      setGapResult(data);
-      setGapOpen(true);
-    } catch (e) {
-      if (mountedRef.current) setGapError(caughtErrorMessage(e, "Gap analysis failed — please retry"));
-    } finally {
-      if (mountedRef.current) setGapLoading(false);
-    }
-  };
-
   // ── Board Report ──────────────────────────────────────────────────────────
   const generateBoardReport = async () => {
     setBoardLoading(true);
@@ -1105,7 +1054,6 @@ export default function OversightPage() {
           pendingApprovals,
           slaBreached,
           gaps,
-          gapGrade: gapResult?.overallGrade,
           kpiSnapshot: {
             "Approval SLA %": slaPct,
             "Open action items": openActionsCount,
@@ -1233,152 +1181,6 @@ export default function OversightPage() {
           { value: String(liveCirculars.filter((c) => c.disposition === "implemented").length), label: "circulars closed" },
         ]}
       />
-
-      {/* AI Gap Analysis panel */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <button
-            type="button"
-            onClick={() => void runGapAnalysis()}
-            disabled={gapLoading}
-            className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
-          >
-            {gapLoading ? "◌ Analysing…" : "✦AI"}
-          </button>
-          {gapOpen && gapResult && (
-            <button type="button" onClick={() => setGapOpen(false)} className="text-11 text-ink-2 hover:text-ink-0">
-              Hide report ▲
-            </button>
-          )}
-          {gapError && <span className="text-11 text-red">{gapError}</span>}
-          {gapResult && !gapLoading && !gapOpen && (
-            <span className="text-11 text-ink-3">
-              Overall grade:{" "}
-              <span className={`font-bold font-mono text-14 ${GRADE_TONE[gapResult.overallGrade] ?? "text-ink-0"}`}>
-                {gapResult.overallGrade}
-              </span>
-            </span>
-          )}
-        </div>
-
-        {gapOpen && gapResult && (
-          <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 flex flex-col gap-5">
-            {/* Grade + rationale */}
-            <div className="flex gap-4 items-start">
-              <div className={`text-48 font-bold font-mono leading-none ${GRADE_TONE[gapResult.overallGrade] ?? "text-ink-0"}`}>
-                {gapResult.overallGrade}
-              </div>
-              <div>
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-1">Overall governance grade</div>
-                <div className="text-12 text-ink-1 leading-relaxed">{gapResult.gradeRationale}</div>
-              </div>
-            </div>
-
-            {/* Critical gaps */}
-            {gapResult.criticalGaps.length > 0 && (
-              <div>
-                <div className="text-10 font-semibold uppercase tracking-wide-4 text-red mb-2">Critical gaps</div>
-                <ul className="flex flex-col gap-1.5">
-                  {gapResult.criticalGaps.map((g, i) => (
-                    <li key={i} className="flex gap-2 text-12 text-ink-1">
-                      <span className="shrink-0 text-red font-mono text-10 mt-0.5">!</span>
-                      {g}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Findings table */}
-            {gapResult.findings.length > 0 && (
-              <div>
-                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Findings</div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-11">
-                    <thead className="bg-bg-1 border-b border-hair-2">
-                      <tr>
-                        {["Area", "Finding", "Severity", "Regulatory ref"].map((h) => (
-                          <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono whitespace-nowrap">
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {gapResult.findings.map((f, i) => (
-                        <tr key={i} className="border-b border-hair last:border-0">
-                          <td className="px-3 py-2 font-medium text-ink-0 whitespace-nowrap">{f.area}</td>
-                          <td className="px-3 py-2 text-ink-1 max-w-xs">{f.finding}</td>
-                          <td className="px-3 py-2">
-                            <span className={`font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${SEV_TONE[f.severity] ?? ""}`}>
-                              {f.severity}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 font-mono text-10 text-ink-3">{f.regulatoryRef}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Recommendations */}
-            {gapResult.recommendations.length > 0 && (
-              <div>
-                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Recommendations</div>
-                <div className="flex flex-col gap-2">
-                  {gapResult.recommendations.map((r, i) => (
-                    <div key={i} className="flex gap-3 text-12">
-                      <span className={`shrink-0 font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm h-fit mt-0.5 ${PRI_TONE[r.priority] ?? ""}`}>
-                        {r.priority}
-                      </span>
-                      <div>
-                        <div className="text-ink-1">{r.action}</div>
-                        <div className="text-10 text-ink-3 font-mono mt-0.5">{r.owner} · {r.deadline}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Regulatory risks */}
-            {gapResult.regulatoryRisks.length > 0 && (
-              <div>
-                <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">Regulatory risks</div>
-                <div className="flex flex-col gap-2">
-                  {gapResult.regulatoryRisks.map((r, i) => (
-                    <div key={i} className="bg-bg-1 rounded p-3 text-11">
-                      <div className="flex gap-2 items-start mb-1">
-                        <span className={`shrink-0 font-mono text-10 font-semibold uppercase px-1.5 py-px rounded-sm ${SEV_TONE[r.likelihood] ?? ""}`}>
-                          {r.likelihood}
-                        </span>
-                        <span className="text-ink-1">{r.risk}</span>
-                      </div>
-                      <div className="text-10 text-ink-3 pl-0">{r.mitigant}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {gapResult.summary && (
-              <div className="border-t border-hair-2 pt-4 text-12 text-ink-2 italic">{gapResult.summary}</div>
-            )}
-            <div className="border-t border-hair-2 pt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={() => openReportWindow("/api/gap-report", { gapResult, institution: "Hawkeye Sterling DPMS" })}
-                className="text-11 font-mono"
-                style={{ color: "#7c3aed", fontWeight: 600 }}
-              >
-                PDF
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-hair-2 overflow-x-auto">
