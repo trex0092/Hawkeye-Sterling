@@ -205,7 +205,7 @@ export default function KriDashboardPage() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {data.kris.map((kri) => (
+            {(data.kris ?? []).map((kri) => (
               <KriCard key={kri.id} kri={kri} />
             ))}
           </div>

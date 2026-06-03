@@ -3,18 +3,21 @@
 import { useEffect, useState } from "react";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
-interface ShapValue {
+// Matches the shape returned by /api/score-explain (src/brain/shap-decomposer.ts).
+interface ShapContribution {
   feature: string;
-  contribution: number;
-  direction: "positive" | "negative";
-  percentageOfScore: number;
+  displayName?: string;
+  shapValue: number; // points contributed to total score
+  shapPercent?: number; // percentage of total score
+  direction: "increases_risk" | "neutral";
 }
 
 interface ScoreExplainResponse {
-  shapValues: ShapValue[];
-  totalScore: number;
-  baseline: number;
-  confidence: number;
+  ok?: boolean;
+  totalScore?: number;
+  baseline?: number;
+  contributions?: ShapContribution[];
+  dominantFeature?: string;
 }
 
 export interface BrainXAIPanelProps {
@@ -29,6 +32,9 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Stable key so an inline-changing breakdown object doesn't refetch forever.
+  const breakdownKey = JSON.stringify(breakdown);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -37,7 +43,8 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
     fetch("/api/score-explain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ composite: { score, breakdown }, runId }),
+      // API reads top-level { score, breakdown } — not { composite }.
+      body: JSON.stringify({ score, breakdown, runId }),
     })
       .then((res) => {
         if (!res.ok) throw new Error(apiErrorMessage(res.status, "Score explanation"));
@@ -54,7 +61,8 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
       });
 
     return () => { cancelled = true; };
-  }, [score, breakdown, runId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [score, breakdownKey, runId]);
 
   if (loading) {
     return (
@@ -71,50 +79,65 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
     );
   }
 
-  if (error || !data) {
+  if (error || !data || data.ok === false) {
     return (
       <div className={`rounded-lg border border-red-800 bg-slate-900 p-4 ${className}`}>
-        <span className="text-xs text-red-400 font-medium">⚠ XAI unavailable: {error}</span>
+        <span className="text-xs text-red-400 font-medium">⚠ XAI unavailable{error ? `: ${error}` : ""}</span>
       </div>
     );
   }
 
-  const sorted = [...data.shapValues].sort(
-    (a, b) => Math.abs(b.contribution) - Math.abs(a.contribution)
+  const contributions = Array.isArray(data.contributions) ? data.contributions : [];
+  const totalScore = data.totalScore ?? 0;
+  const baseline = data.baseline ?? 0;
+
+  if (contributions.length === 0) {
+    return (
+      <div className={`rounded-lg border border-slate-700 bg-slate-900 p-4 ${className}`}>
+        <h3 className="text-sm font-semibold text-slate-100 mb-1">SHAP Feature Contributions</h3>
+        <span className="text-xs text-slate-400">
+          No feature contributions to explain (score {totalScore.toFixed(1)}).
+        </span>
+      </div>
+    );
+  }
+
+  const sorted = [...contributions].sort(
+    (a, b) => Math.abs(b.shapValue) - Math.abs(a.shapValue)
   );
-  const maxAbs = Math.max(...sorted.map((s) => Math.abs(s.contribution)), 1);
+  const maxAbs = Math.max(...sorted.map((s) => Math.abs(s.shapValue)), 1);
+  const totalExplained = contributions.reduce((s, v) => s + v.shapValue, 0);
 
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-900 p-4 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-slate-100">SHAP Feature Contributions</h3>
         <span className="text-xs text-slate-400">
-          Score: <span className="text-slate-100 font-mono">{data.totalScore.toFixed(1)}</span>
-          {" | "}Baseline: <span className="text-slate-100 font-mono">{data.baseline.toFixed(1)}</span>
-          {" | "}Conf: <span className="text-slate-100 font-mono">{(data.confidence * 100).toFixed(0)}%</span>
+          Score: <span className="text-slate-100 font-mono">{totalScore.toFixed(1)}</span>
+          {" | "}Baseline: <span className="text-slate-100 font-mono">{baseline.toFixed(1)}</span>
         </span>
       </div>
 
       <div className="space-y-2">
         {sorted.map((sv) => {
-          const pct = Math.round((Math.abs(sv.contribution) / maxAbs) * 100);
-          const isPos = sv.direction === "positive";
+          const pct = Math.round((Math.abs(sv.shapValue) / maxAbs) * 100);
+          const raisesRisk = sv.direction === "increases_risk";
           return (
             <div key={sv.feature} className="flex items-center gap-2 text-xs">
-              <span className="w-32 shrink-0 text-slate-300 truncate" title={sv.feature}>
-                {sv.feature}
+              <span className="w-32 shrink-0 text-slate-300 truncate" title={sv.displayName ?? sv.feature}>
+                {sv.displayName ?? sv.feature}
               </span>
               <div className="flex-1 h-5 bg-slate-800 rounded overflow-hidden">
                 <div
-                  className={`h-full rounded transition-all ${isPos ? "bg-emerald-500" : "bg-red-500"}`}
+                  className={`h-full rounded transition-all ${raisesRisk ? "bg-red-500" : "bg-emerald-500"}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className={`w-14 text-right font-mono shrink-0 ${isPos ? "text-emerald-400" : "text-red-400"}`}>
-                {isPos ? "+" : ""}{sv.contribution.toFixed(2)}
+              <span className={`w-14 text-right font-mono shrink-0 ${raisesRisk ? "text-red-400" : "text-emerald-400"}`}>
+                {sv.shapValue >= 0 ? "+" : ""}{sv.shapValue.toFixed(2)}
               </span>
               <span className="w-10 text-right text-slate-500 shrink-0">
-                {sv.percentageOfScore.toFixed(0)}%
+                {(sv.shapPercent ?? 0).toFixed(0)}%
               </span>
             </div>
           );
@@ -122,10 +145,8 @@ export function BrainXAIPanel({ score, breakdown, runId, className = "" }: Brain
       </div>
 
       <p className="mt-3 text-xs text-slate-500">
-        Total explained: {data.shapValues.reduce((s, v) => s + v.contribution, 0).toFixed(2)} of {data.totalScore.toFixed(2)}
+        Total explained: {totalExplained.toFixed(2)} of {totalScore.toFixed(2)}
       </p>
     </div>
   );
 }
-
-export default BrainXAIPanel;
