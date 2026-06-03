@@ -10,6 +10,25 @@ import { loadUsers, ROLE_LABEL, updateSessionActivity } from "../../access/_stor
 import { cookies, headers } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
+// Build a Set-Cookie that clears the session cookie. Used on every 401/403
+// path where the operator sent a cookie that we rejected, so the next
+// /api/auth/me call returns `no_session` (silent) instead of re-firing the
+// "Your session has expired" modal on every page reload. The attributes
+// MUST match the login route's set-cookie (same path, sameSite, secure,
+// partitioned) so the browser actually overwrites the existing cookie
+// instead of creating a sibling.
+function clearSessionCookie(res: NextResponse): void {
+  const isSecure = process.env["NODE_ENV"] !== "development";
+  res.cookies.set(SESSION_COOKIE, "", {
+    maxAge: 0,
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isSecure,
+    partitioned: isSecure,
+  });
+}
+
 export async function GET(): Promise<NextResponse> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value ?? "";
@@ -27,25 +46,31 @@ export async function GET(): Promise<NextResponse> {
   }
   const session = verifySession(token);
   if (!session) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { ok: false, error: "Not authenticated", code: "session_invalid" },
       { status: 401 },
     );
+    clearSessionCookie(res);
+    return res;
   }
 
   const users = await loadUsers();
   const user = users.find((u) => u.id === session.userId);
   if (!user) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { ok: false, error: "Session invalidated — please log in again", code: "session_invalidated" },
       { status: 401 },
     );
+    clearSessionCookie(res);
+    return res;
   }
   if (!user.active) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { ok: false, error: "Account deactivated — contact your administrator", code: "account_deactivated" },
       { status: 403 },
     );
+    clearSessionCookie(res);
+    return res;
   }
 
   // Reject sessions issued before the most recent password change. This
@@ -53,19 +78,11 @@ export async function GET(): Promise<NextResponse> {
   // cleared server-side. Sessions missing pwv (pre-field legacy tokens)
   // are treated as version 0 — they match users who have never had a reset.
   if ((session.pwv ?? 0) !== (user.pwVersion ?? 0)) {
-    const isSecure = process.env["NODE_ENV"] !== "development";
     const res = NextResponse.json(
       { ok: false, error: "Session invalidated — please log in again", code: "session_invalidated" },
       { status: 401 },
     );
-    res.cookies.set(SESSION_COOKIE, "", {
-      maxAge: 0,
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: isSecure,
-      partitioned: isSecure,
-    });
+    clearSessionCookie(res);
     return res;
   }
 
