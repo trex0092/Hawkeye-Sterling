@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ASANA_MODULE_TASKS, MODULE_FREQUENCY, type AsanaModuleTask } from "@/lib/server/asana-module-tasks";
+import { gatherFindingSignals, findingsForModule } from "@/lib/server/module-findings";
 
 // Module compliance attestation poster.
 //
@@ -175,16 +176,22 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // ---- DAILY mode: full attestation to every module ----
-  const daily: ReportInput = {
-    kind: "DAILY",
-    status: "Operational",
-    findings: "No control exceptions, breaches or overdue items recorded in the audit chain.",
-    conclusion: "✅ Compliant — control operational, no action required.",
-  };
+  // Read the live stores ONCE, then derive each module's real 24h findings.
+  // Any failure degrades that module to the clean baseline (fail-safe).
+  const signals = await gatherFindingSignals().catch(() => null);
 
   const results = await Promise.allSettled(
     ASANA_MODULE_TASKS.map(async (m) => {
-      await postStory(m.taskGid, buildReport(m, date, daily), asanaToken);
+      const f = signals ? findingsForModule(m.key, signals) : null;
+      const input: ReportInput = {
+        kind: "DAILY",
+        status: f?.status ?? "Operational",
+        findings:
+          f?.findings ?? "No control exceptions, breaches or overdue items recorded in the audit chain.",
+        conclusion: f?.conclusion ?? "✅ Compliant — control operational, no action required.",
+        ...(f?.riskRating ? { riskRating: f.riskRating } : {}),
+      };
+      await postStory(m.taskGid, buildReport(m, date, input), asanaToken);
       return m.key;
     }),
   );
