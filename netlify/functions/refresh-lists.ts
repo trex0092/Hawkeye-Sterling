@@ -180,10 +180,25 @@ interface SanctionsStatusList { listId: string; displayName: string; status: 'he
 interface SanctionsStatusResponse { lists?: SanctionsStatusList[] }
 
 export default async (req: Request): Promise<Response> => {
-  // Auth guard — only Netlify scheduler (no body, no token) or callers with
+  // Auth guard — only the Netlify scheduler (no token) or callers with
   // ADMIN_TOKEN are permitted. Prevents unauthenticated manual HTTP triggers
   // from acquiring the idempotency lock and blocking scheduled runs.
-  const isScheduled = req.headers.get('x-netlify-scheduled-function') === 'true';
+  //
+  // Scheduled-invocation detection: Netlify's scheduler identifies cron-triggered
+  // calls with `x-nf-event: schedule` — this is the signal the other ingestion
+  // schedulers in this repo (sanctions-ingest, opensanctions-refresh,
+  // ofac-crypto-refresh, …) rely on. This function previously checked only the
+  // legacy `x-netlify-scheduled-function` header, which the scheduler does NOT
+  // send, so every nightly run hit the token branch with no Authorization and
+  // was 401'd — leaving the sanctions corpus unpopulated (screening fell back to
+  // the static seed). Accept BOTH headers so the scheduler authenticates itself
+  // and the daily refresh runs token-free. The ADMIN_TOKEN branch still gates
+  // manual HTTP triggers; a forged `x-nf-event` only triggers an idempotent,
+  // lock-protected public-list refresh (no data egress), matching the trust
+  // posture of the other scheduled ingestion functions.
+  const isScheduled =
+    req.headers.get('x-nf-event') === 'schedule' ||
+    req.headers.get('x-netlify-scheduled-function') === 'true';
   if (!isScheduled) {
     const adminToken = process.env['ADMIN_TOKEN'];
     const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
