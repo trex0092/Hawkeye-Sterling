@@ -549,8 +549,8 @@ export default function OngoingMonitorPage() {
             </button>
           </div>
 
-          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden mt-4">
-            <table className="w-full text-11">
+          <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-x-auto mt-4">
+            <table className="w-full min-w-[820px] text-11">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
                   {["Subject", "Case", "Tier", "Cadence", "Last Run / Result", "Next Due", "Status", "Enrolled by", ""].map((h) => (

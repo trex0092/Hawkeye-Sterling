@@ -222,8 +222,8 @@ function SessionMonitorTab() {
           <p className="text-11 text-ink-4 mt-1">Sessions are created on login and tracked here automatically.</p>
         </div>
       ) : (
-        <div className="border border-hair-2 rounded-md overflow-hidden">
-          <table className="w-full text-12">
+        <div className="border border-hair-2 rounded-md overflow-x-auto">
+          <table className="w-full min-w-[680px] text-12">
             <thead>
               <tr className="border-b border-hair bg-bg-2">
                 <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">User</th>
@@ -436,7 +436,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
         onClick={onClose}
         aria-label="Close panel"
       />
-      <aside className="relative w-[420px] bg-bg-panel border-l border-hair-2 h-full overflow-y-auto flex flex-col">
+      <aside className="relative w-full max-w-[420px] bg-bg-panel border-l border-hair-2 h-full overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-hair">
           <div>
@@ -898,8 +898,8 @@ export default function AccessControlPage() {
             </form>
           )}
 
-          <div className="border border-hair-2 rounded-md overflow-hidden">
-            <table className="w-full text-12">
+          <div className="border border-hair-2 rounded-md overflow-x-auto">
+            <table className="w-full min-w-[680px] text-12">
               <thead>
                 <tr className="border-b border-hair bg-bg-2">
                   <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">Name</th>
@@ -1024,8 +1024,8 @@ export default function AccessControlPage() {
               {loadingLog ? "…" : "↻"}
             </button>
           </div>
-          <div className="border border-hair-2 rounded-md overflow-hidden">
-            <table className="w-full text-12">
+          <div className="border border-hair-2 rounded-md overflow-x-auto">
+            <table className="w-full min-w-[680px] text-12">
               <thead>
                 <tr className="border-b border-hair bg-bg-2">
                   <th className="text-left px-4 py-2.5 text-10 font-mono uppercase tracking-wide-4 text-ink-2">

@@ -19,8 +19,8 @@ export function CasesTable({
   onOpenReport,
 }: CasesTableProps) {
   return (
-    <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-      <table className="w-full border-collapse text-12.5">
+    <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
+      <table className="w-full min-w-[640px] border-collapse text-12.5">
         <thead className="bg-bg-1 border-b border-hair-2">
           <tr>
             <Th width="100px">Case ID</Th>
