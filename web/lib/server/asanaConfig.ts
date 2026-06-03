@@ -62,27 +62,27 @@ function loadJsonMap(): AsanaGidMap {
 // + previous .env.example). When NO env var is set, the code routes
 // to these so screening/SAR/STR/TM still work without configuration.
 const HARDCODED: Required<AsanaGidMap> = {
-  master:         "1214828087238181",  // ASANA_PROJECT_GID
-  screening:      "1214828087238181",
-  sar:            "1214148631336502",
-  tm:             "1214148661083263",
-  escalations:    "1214148643568798",
-  mlro:           "1214148643197211",
-  mlroDaily:      "1214148643197211",
-  kyc:            "1214148630166524",
-  fourEyes:       "1214148660376942",
-  auditLog:       "1214148643197211",
-  complianceOps:  "1214148898610839",
-  governance:     "1214148855187093",
-  routines:       "1214148910147230",
-  ffr:            "1214148630166524",
-  employees:      "1214148854421310",
-  training:       "1214148854927671",
-  exportCtrl:     "1214148895117190",
-  shipments:      "1214148630166524",
-  supplyChain:    "1214148630166524",
-  regulator:      "1214148630166524",
-  incidents:      "1214148630166524",
+  master:         "1214828087238181",  // 00 · Hawkeye Inbox — Master Landing
+  screening:      "1214148660020527",  // 01 · Screening - Sanctions & Adverse Media
+  sar:            "1214148631336502",  // 05 · STR/SAR/CTR/PMR GoAML Filings
+  tm:             "1214148661083263",  // 08 · Transaction Monitoring
+  escalations:    "1214148643568798",  // 06 · FFR Incidents & Asset Freezes
+  mlro:           "1214148910059926",  // 15 · MLRO Workbench
+  mlroDaily:      "1214148631086118",  // 02 · Central MLRO Daily Digest
+  kyc:            "1214148898062562",  // 07 · CDD/SDD/EDD/KYC
+  fourEyes:       "1214148660376942",  // 04 · Four-Eyes Approvals
+  auditLog:       "1214148643197211",  // 03 · Audit Log 10-Year Trail
+  complianceOps:  "1214148898610839",  // 09 · Compliance Ops
+  governance:     "1214148855187093",  // 13 · Compliance Governance
+  routines:       "1214148910147230",  // 14 · Routines - Scheduled
+  ffr:            "1214148643568798",  // 06 · FFR Incidents & Asset Freezes
+  employees:      "1214148854421310",  // 11 · Employees
+  training:       "1214148854927671",  // 12 · Training
+  exportCtrl:     "1214148895117190",  // 17 · Export Control & Dual-Use
+  shipments:      "1214148898360626",  // 10 · Shipments - Tracking
+  supplyChain:    "1214148855758874",  // 16 · Supply Chain, ESG & LBMA Gold
+  regulator:      "1214148894992036",  // 18 · Regulator Portal Handoff
+  incidents:      "1214148895117145",  // 19 · Incidents & Grievances
   workspace:      "1213645083721316",  // ASANA_WORKSPACE_GID
   assignee:       "1213645083721304",  // default MLRO assignee
   cfSubject:      "",
