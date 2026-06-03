@@ -27,6 +27,10 @@ import { isEmbeddedDocument } from "./is-embedded";
 import { verifySessionDead } from "./verify-session";
 
 const EVENT_NAME = "hawkeye:session-expired" as const;
+// Distinct event for "no cookie was ever sent" — fires the same modal but
+// with sign-in-required copy instead of session-expired copy. Kept separate
+// so listeners (currently just SessionExpiryWatcher) can branch on intent.
+const NO_COOKIE_EVENT_NAME = "hawkeye:no-session" as const;
 const PATCHED_FLAG = "__hawkeyeSessionExpiryPatched";
 // Debounce window after a watched 401 before re-checking /api/auth/me.
 // Long enough to swallow sign-in handshake / cookie-race transients,
@@ -79,6 +83,29 @@ function isSameOriginApiUrl(input: RequestInfo | URL): boolean {
 }
 
 let alreadyDispatched = false;
+let noSessionAlreadyDispatched = false;
+
+/** Fire the "sign in required" event — operator never sent a cookie. Uses a
+ * separate dispatch latch from reportSessionExpired so an expired-session
+ * event can still upgrade the no-session prompt to the expired-session
+ * prompt within the same page lifetime if a stale cookie path triggers it
+ * later. */
+export function reportNoSession(): void {
+  if (noSessionAlreadyDispatched || alreadyDispatched) return;
+  if (isEmbeddedDocument()) return;
+  if (typeof window !== "undefined") {
+    const here = window.location.pathname;
+    if (EXCLUDED_LOCATIONS.some((p) => here === p || here.startsWith(`${p}/`))) {
+      return;
+    }
+  }
+  noSessionAlreadyDispatched = true;
+  try {
+    window.dispatchEvent(new CustomEvent(NO_COOKIE_EVENT_NAME));
+  } catch {
+    /* dispatchEvent unavailable — caller already in degraded state */
+  }
+}
 
 /** Manually fire the session-expired event. */
 export function reportSessionExpired(): void {
@@ -156,3 +183,6 @@ export function installSessionExpiryInterceptor(): void {
 
 /** Event name a UI component can subscribe to. */
 export const SESSION_EXPIRED_EVENT = EVENT_NAME;
+/** Event name for the "no cookie was ever sent" variant — sibling of
+ *  SESSION_EXPIRED_EVENT, fires the same modal with sign-in-required copy. */
+export const SESSION_NO_COOKIE_EVENT = NO_COOKIE_EVENT_NAME;

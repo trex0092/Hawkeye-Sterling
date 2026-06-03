@@ -302,13 +302,21 @@ export async function POST(req: Request) {
   // "Your session has expired" modal to pop on what is actually a still-
   // valid session. "lax" is the modern default for first-party auth cookies
   // and is what NextAuth, Auth.js, and the OWASP guidance recommend.
+  //
+  // No `partitioned` attribute. Partitioned (CHIPS) cookies are intended
+  // for cross-site embedded contexts and per the Chrome spec MUST pair
+  // with SameSite=None — combining Partitioned with SameSite=Lax produced
+  // inconsistent storage behaviour in production: the browser would set
+  // the cookie on /api/auth/login's response but then NOT send it back on
+  // subsequent /api/* fetches, leaving the operator silently signed-out.
+  // Hawkeye is a first-party top-level site; a plain Secure + Lax cookie
+  // is the correct shape for the portal session.
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: isSecure,
     sameSite: "lax",
     maxAge: SESSION_TTL_S,
     path: "/",
-    partitioned: isSecure,
   });
 
   // Persist last-login timestamp and IP hash for next-login geo-velocity check.
