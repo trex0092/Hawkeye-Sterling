@@ -96,33 +96,6 @@ export default function IntelStatusPage(): React.ReactElement {
 
       {data && (
         <>
-          {/* Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Coverage</div>
-              <div className="text-3xl font-bold text-ink-1">
-                {data.totalConfigured}<span className="text-ink-3 text-base">/{data.totalAvailable}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">{data.coveragePct}% active</div>
-            </div>
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Free toggles</div>
-              <div className="text-3xl font-bold text-emerald-300">
-                {data.providers.filter((p) => p.tier === "free-toggle" && p.configured).length}
-                <span className="text-ink-3 text-base">/{data.providers.filter((p) => p.tier === "free-toggle").length}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">no key needed</div>
-            </div>
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Free keys</div>
-              <div className="text-3xl font-bold text-sky-300">
-                {data.providers.filter((p) => p.tier === "free" && p.configured).length}
-                <span className="text-ink-3 text-base">/{data.providers.filter((p) => p.tier === "free").length}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">sign up + add</div>
-            </div>
-          </div>
-
           {/* Categories */}
           <div className="mb-6">
             <div className="text-10 uppercase tracking-wide text-ink-3 mb-2">By category</div>

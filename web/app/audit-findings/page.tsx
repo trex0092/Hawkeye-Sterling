@@ -177,10 +177,6 @@ export default function AuditFindingsPage() {
 
   const today = new Date().toISOString().slice(0, 10);
   const filtered = findings.filter((f) => activeTab === "all" || f.status === activeTab);
-  const totalCount = findings.length;
-  const openCount = findings.filter((f) => f.status === "open").length;
-  const overdueCount = findings.filter((f) => f.status === "overdue").length;
-  const resolvedCount = findings.filter((f) => f.status === "resolved").length;
 
   return (
     <ModuleLayout
@@ -207,28 +203,6 @@ export default function AuditFindingsPage() {
       />
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
-
-        {/* Stats — New Finding button moved to sidebar Actions */}
-        <div className="flex items-center justify-start gap-4">
-          <div className="flex gap-3">
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-ink-1">{totalCount}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Total</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-sky-400">{openCount}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Open</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className={`text-2xl font-bold ${overdueCount > 0 ? "text-red" : "text-ink-2"}`}>{overdueCount}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Overdue</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-emerald-400">{resolvedCount}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Resolved</div>
-            </div>
-          </div>
-        </div>
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
