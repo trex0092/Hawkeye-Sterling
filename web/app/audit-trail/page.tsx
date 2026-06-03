@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMYTimeSec } from "@/lib/utils/dateFormat";
@@ -170,27 +169,7 @@ export default function AuditTrailPage() {
     : null;
 
   return (
-    <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail">
-      <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
-        { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-        { label: "OSINT", href: "/osint", icon: "🌐" },
-        { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
-        { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
-        { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
-        { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
-        { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
-        { label: "Benford Analysis", href: "/benford", icon: "🔢" },
-        { label: "Investigation", href: "/investigation", icon: "🕵️" },
-        { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
-        { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
-        { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
-        { label: "Intelligence Hub", href: "/intelligence-hub", icon: "🔭" },
-        { label: "System Card", href: "/system-card", icon: "📋" },
-        { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
-        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
-        { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-      ]} />
+    <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail" hideDetailPanel>
       <div>
         <div className="mb-8">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
