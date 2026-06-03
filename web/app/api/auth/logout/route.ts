@@ -14,7 +14,6 @@ export async function POST() {
     httpOnly: true,
     sameSite: "lax",
     secure: isSecure,
-    partitioned: isSecure,
   });
   return res;
 }
