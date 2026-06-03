@@ -41,6 +41,7 @@ import {
 } from "@/components/screening/BrainIntelPack";
 import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
 import { PepClassificationsList } from "@/components/screening/PepClassificationsList";
 import { StrDraftPreview } from "@/components/screening/StrDraftPreview";
@@ -1401,11 +1402,13 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
         )}
 
         {activeTab === "Deep Intel" && (
-          <DeepIntelPanel
-            subject={subject}
-            screen={screening.status === "success" ? screening.result : null}
-            superBrain={superBrain.status === "success" ? superBrain.result : null}
-          />
+          <ErrorBoundary>
+            <DeepIntelPanel
+              subject={subject}
+              screen={screening.status === "success" ? screening.result : null}
+              superBrain={superBrain.status === "success" ? superBrain.result : null}
+            />
+          </ErrorBoundary>
         )}
 
         {activeTab === "Live reasoning" && (

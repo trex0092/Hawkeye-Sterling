@@ -1249,7 +1249,7 @@ export function BrainSourceTriangulation({ result }: { result: SuperBrainResult 
       <div className="text-10.5 text-ink-3 mb-2">
         Cross-validation across all 15 independent source domains.{" "}
         {triangulated ? (
-          <span className="text-red font-medium">
+          <span className="text-green font-medium">
             Signal corroborated across {activeCount} independent groups.
           </span>
         ) : activeCount >= 1 ? (

@@ -67,7 +67,6 @@ function IntelSection({
   icon,
   status,
   children,
-  onRun,
 }: {
   title: string;
   icon: string;
@@ -76,8 +75,6 @@ function IntelSection({
   onRun?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const onRunRef = useRef(onRun);
-  useEffect(() => { onRunRef.current?.(); }, []);
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
       <button
