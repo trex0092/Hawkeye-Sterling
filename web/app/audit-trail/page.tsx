@@ -347,8 +347,8 @@ export default function AuditTrailPage() {
           </div>
         )}
 
-        <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-          <table className="w-full border-collapse text-12.5">
+        <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse text-12.5">
             <thead className="bg-bg-1 border-b border-hair-2">
               <tr>
                 <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-36">
@@ -402,7 +402,7 @@ export default function AuditTrailPage() {
                       <td className={`px-4 py-2.5 text-12 text-ink-0 ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.target}
                       </td>
-                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-3 ${isLast ? "" : "border-b border-hair"}`}>
+                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-3 break-all ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.hash}
                       </td>
                       <td className={`px-2 py-2.5 text-right ${isLast ? "" : "border-b border-hair"}`}>

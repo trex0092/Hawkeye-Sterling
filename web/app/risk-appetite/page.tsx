@@ -234,7 +234,7 @@ export default function RiskAppetitePage() {
                 Scores are integers (0–100+). Must be strictly ascending:
                 auto-approve &lt; review-required &lt; auto-escalate.
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <NumInput
                   label="Auto-approve (≤)"
                   value={form.autoApprove}
@@ -316,7 +316,7 @@ export default function RiskAppetitePage() {
                   {weightSum.toFixed(2)}
                 </span>
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <NumInput
                   label="Adverse media weight"
                   value={form.adverseMediaWeight}

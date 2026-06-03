@@ -265,6 +265,10 @@ export default function CasesPage() {
             }}
             onOpenReport={(record) => setReportCase(record)}
           />
+          <footer className="mt-10 pt-5 border-t border-hair-2 flex flex-wrap items-center gap-3 print:hidden">
+            <span className="font-mono text-10 uppercase tracking-wide-4 text-ink-3">Report</span>
+            <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
+          </footer>
         </main>
 
         <div className="hidden lg:block">

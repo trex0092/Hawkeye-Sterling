@@ -421,7 +421,7 @@ export default function TmRulesPage() {
                       <tr key={`${record.id}-expanded`}>
                         <td colSpan={8} className="px-4 py-4 bg-bg-base border-b border-hair-2">
                           <div className="space-y-3">
-                            <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                               <div>
                                 <span className="font-medium text-ink-1">ID:</span>{" "}
                                 <span className="font-mono text-ink-2">{record.id}</span>

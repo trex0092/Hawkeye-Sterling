@@ -128,9 +128,9 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
 
   return (
     <div className="mb-5 space-y-2">
-      <div className="flex items-center gap-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
         {/* Search input */}
-        <div className="flex-1 relative">
+        <div className="flex-1 min-w-[180px] relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">
             ⌕
           </span>
