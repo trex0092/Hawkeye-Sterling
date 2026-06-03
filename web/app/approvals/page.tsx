@@ -341,11 +341,7 @@ export default function ApprovalsPage() {
     }
   };
 
-  // Stats
   const total = records.length;
-  const pending = records.filter((r) => r.underProcess).length;
-  const approved = records.filter((r) => !r.underProcess).length;
-  const highRisk = records.filter((r) => r.riskScore === "high").length;
 
   return (
     <ModuleLayout
@@ -368,21 +364,6 @@ export default function ApprovalsPage() {
             </p>
             <h1 className="text-24 font-bold text-ink-0 leading-tight">Approvals</h1>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3">
-          {[
-            { label: "Total", value: total, cls: "text-ink-0" },
-            { label: "Under Process", value: pending, cls: "text-amber" },
-            { label: "Approved", value: approved, cls: "text-green" },
-            { label: "High Risk", value: highRisk, cls: "text-red" },
-          ].map(({ label, value, cls }) => (
-            <div key={label} className="bg-bg-panel border border-hair-2 rounded-xl px-3 py-2.5 text-center">
-              <div className={`text-20 font-bold ${cls}`}>{value}</div>
-              <div className="text-10 text-ink-3 uppercase tracking-wide">{label}</div>
-            </div>
-          ))}
         </div>
 
         {/* Error */}
