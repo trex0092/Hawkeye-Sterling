@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
@@ -1390,7 +1391,21 @@ export default function ResponsibleAIPage() {
   };
 
   return (
-    <ModuleLayout engineLabel="AI governance engine" asanaModule="responsible-ai" asanaLabel="Responsible AI">
+    <ModuleLayout
+      engineLabel="AI governance engine"
+      asanaModule="responsible-ai"
+      asanaLabel="Responsible AI"
+      sidebarActions={
+        <ActionButton
+          variant="ai"
+          type="button"
+          onClick={() => void runAssessment()}
+          disabled={assessmentLoading}
+        >
+          {assessmentLoading ? "Running ethics assessment…" : "✦ Run AI Ethics Assessment"}
+        </ActionButton>
+      }
+    >
       <ModuleHero
         eyebrow=""
         title="Responsible AI"
@@ -1402,29 +1417,11 @@ export default function ResponsibleAIPage() {
             AI decisions logged with 10-year retention (FDL 10/2025 Art.24).
           </>
         }
-        kpis={[
-          { value: "4", label: "Models registered" },
-          { value: "0", label: "Incidents open" },
-          { value: "4", label: "Bias audits completed" },
-          { value: "100%", label: "UNESCO compliance" },
-        ]}
       />
 
-      {/* Ethics Assessment CTA */}
-      <div className="mb-6">
-        <button
-          type="button"
-          onClick={() => void runAssessment()}
-          disabled={assessmentLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          <span className="text-14">✦</span>
-          {assessmentLoading ? "Running ethics assessment…" : "Run AI Ethics Assessment"}
-        </button>
-        {assessmentError && (
-          <p className="mt-2 text-11 text-red">Assessment failed: {assessmentError}</p>
-        )}
-      </div>
+      {assessmentError && (
+        <p className="mb-6 text-11 text-red">Assessment failed: {assessmentError}</p>
+      )}
 
       {/* Assessment result panel */}
       {assessmentResult && (

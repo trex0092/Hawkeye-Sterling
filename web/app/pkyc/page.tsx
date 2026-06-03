@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -183,21 +184,21 @@ export default function PKycPage() {
     <ModuleLayout
       sidebarActions={
         <>
-          <button
+          <ActionButton
+            variant="add"
             type="button"
             onClick={() => setShowEnroll(true)}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-13 font-semibold rounded transition-colors text-left"
           >
             + Enroll Subject
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
+            variant="screening"
             type="button"
             onClick={handleRunAll}
             disabled={running}
-            className="px-4 py-2 bg-blue hover:bg-blue/80 text-white text-13 font-semibold rounded transition-colors disabled:opacity-50 text-left"
           >
             {running ? "Running…" : "▶ Run Due"}
-          </button>
+          </ActionButton>
         </>
       }
     >

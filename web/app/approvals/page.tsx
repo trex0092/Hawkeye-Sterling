@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -347,7 +348,17 @@ export default function ApprovalsPage() {
   const highRisk = records.filter((r) => r.riskScore === "high").length;
 
   return (
-    <ModuleLayout asanaModule="approvals" asanaLabel="Approvals">
+    <ModuleLayout
+      asanaModule="approvals"
+      asanaLabel="Approvals"
+      sidebarActions={
+        !showForm && editingId === null ? (
+          <ActionButton variant="add" type="button" onClick={() => setShowForm(true)}>
+            + Add
+          </ActionButton>
+        ) : null
+      }
+    >
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -357,15 +368,6 @@ export default function ApprovalsPage() {
             </p>
             <h1 className="text-24 font-bold text-ink-0 leading-tight">Approvals</h1>
           </div>
-          {!showForm && editingId === null && (
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="px-3 py-1.5 rounded-lg border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
-            >
-              + Add
-            </button>
-          )}
         </div>
 
         {/* Stats */}
