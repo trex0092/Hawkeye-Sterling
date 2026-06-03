@@ -366,31 +366,8 @@ function OpenBadge({ open }: { open: boolean }) {
 // ─── Tab: UNESCO Principles ──────────────────────────────────────────────────
 
 function PrinciplesTab() {
-  const compliantCount = UNESCO_PRINCIPLES.filter((p) => p.status === "compliant").length;
-  const partialCount = UNESCO_PRINCIPLES.filter((p) => p.status === "partial").length;
-  const gapCount = UNESCO_PRINCIPLES.filter((p) => p.status === "gap").length;
-
   return (
     <div>
-      <div className="flex gap-4 mb-6">
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Compliant</span>
-          <span className="text-20 font-semibold font-mono text-green">{compliantCount}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Partial</span>
-          <span className="text-20 font-semibold font-mono text-amber">{partialCount}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Gap</span>
-          <span className="text-20 font-semibold font-mono text-red">{gapCount}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total principles</span>
-          <span className="text-20 font-semibold font-mono text-ink-0">{UNESCO_PRINCIPLES.length}</span>
-        </div>
-      </div>
-
       <div className="space-y-3">
         {UNESCO_PRINCIPLES.map((p) => (
           <div key={p.num} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
@@ -774,23 +751,9 @@ function IncidentsTab() {
 
   if (!mounted) return null;
 
-  const openCount = incidents.filter((i) => i.open).length;
-
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-4">
-          <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-            <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Open incidents</span>
-            <span className={`text-18 font-semibold font-mono ${openCount > 0 ? "text-amber" : "text-green"}`}>
-              {openCount}
-            </span>
-          </div>
-          <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-            <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total logged</span>
-            <span className="text-18 font-semibold font-mono text-ink-0">{incidents.length}</span>
-          </div>
-        </div>
+      <div className="flex justify-end items-center mb-4">
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
@@ -945,30 +908,8 @@ function BiasTab() {
 // ─── Tab: Audit Trail ─────────────────────────────────────────────────────────
 
 function AuditTrailTab() {
-  const humanReviewed = AUDIT_TRAIL.filter((r) => r.reviewer !== "Auto").length;
-  const autoApproved = AUDIT_TRAIL.filter((r) => r.reviewer === "Auto").length;
-
   return (
     <div>
-      <div className="flex gap-4 mb-5">
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total logged</span>
-          <span className="text-18 font-semibold font-mono text-ink-0">{AUDIT_TRAIL.length}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Human reviewed</span>
-          <span className="text-18 font-semibold font-mono text-brand">{humanReviewed}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Auto-approved</span>
-          <span className="text-18 font-semibold font-mono text-ink-2">{autoApproved}</span>
-        </div>
-        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
-          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Retention policy</span>
-          <span className="text-18 font-semibold font-mono text-green">10 yr</span>
-        </div>
-      </div>
-
       <p className="text-11 text-ink-3 mb-3 font-mono">
         Read-only immutable log. FDL 10/2025 Art.24 — all AI decisions retained 10 years. Showing{" "}
         {AUDIT_TRAIL.length} most recent events.
