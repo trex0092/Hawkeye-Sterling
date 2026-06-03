@@ -6,8 +6,6 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
-  Kpi,
-  KpiGrid,
   Card,
   ActionRow,
   Btn,
@@ -324,11 +322,6 @@ export default function StrCasesPage() {
   const [sarBehavioralDrift, setSarBehavioralDrift] = useState(false);
   const [sarTypologyMatch, setSarTypologyMatch] = useState(false);
 
-  const open = cases.filter(
-    (c) => c.status !== "Submitted" && c.status !== "Closed",
-  ).length;
-  const submitted = cases.filter((c) => c.status === "Submitted").length;
-  const overdue = 0;
 
   const valid =
     title.trim().length > 0 &&
@@ -661,18 +654,6 @@ export default function StrCasesPage() {
           { label: "STR Cases", href: "/str-cases", icon: "📁" },
         ]}
       />
-
-      <KpiGrid cols={5}>
-            <Kpi value={cases.length} label="Total" tone="brand" />
-            <Kpi value={open} label="Open" tone="amber" />
-            <Kpi value={submitted} label="Submitted" tone="green" />
-            <Kpi value={overdue} label="Overdue" tone="red" />
-            <Kpi
-              value={patternResult ? `⚠️ ${patternResult.patterns.length}` : "—"}
-              label="Patterns detected"
-              tone={patternResult && patternResult.patterns.length > 0 ? "red" : undefined}
-            />
-      </KpiGrid>
 
       {briefingError && (
         <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">
