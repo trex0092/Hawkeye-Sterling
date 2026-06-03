@@ -23,7 +23,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { pushToast } from "@/lib/toast-bus";
-import { isEmbeddedDocument } from "@/lib/client/is-embedded";
 import {
   installSessionExpiryInterceptor,
   SESSION_EXPIRED_EVENT,
@@ -31,13 +30,6 @@ import {
   SESSION_NO_COOKIE_EVENT,
   reportNoSession,
 } from "@/lib/client/session-expiry";
-
-// Delay before re-checking /api/auth/me after a first 401 on the proactive
-// path. Mirrors VERIFY_DEBOUNCE_MS in session-expiry.ts: short enough that
-// a real expiry prompts quickly, long enough to swallow transient 401s
-// (route-level auth misconfig, brief cookie-jar races on first paint, etc.)
-// that would otherwise pop the modal on an unrelated blip.
-const PROACTIVE_VERIFY_DEBOUNCE_MS = 800;
 
 const WARN_AT_SECS = [15 * 60, 5 * 60] as const;
 

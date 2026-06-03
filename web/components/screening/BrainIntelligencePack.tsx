@@ -86,11 +86,6 @@ export function BrainIntelligencePack({ subject, screen, superBrain }: Props) {
     critical: "text-red",
   };
 
-  // Live server-side intelligence (phonetic / cultural / sub-national /
-  // stress tests / industry / geography). Populated by /api/super-brain.
-  const serverIntel = superBrain?.intelligence;
-  const degradation = superBrain?.degradation ?? [];
-
   return (
     <div className="space-y-5 mt-4">
       {/* HEADLINE */}

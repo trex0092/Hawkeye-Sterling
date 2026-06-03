@@ -5,8 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
-import { PLAYBOOKS } from "@/app/playbook/page";
-import type { Playbook } from "@/app/playbook/page";
+import { PLAYBOOKS, type Playbook } from "@/app/playbook/page";
 
 // FIU 2025 DPMS typology coverage matrix types (mirrors /api/fiu-typology-check)
 interface FiuTypologyEntry {
