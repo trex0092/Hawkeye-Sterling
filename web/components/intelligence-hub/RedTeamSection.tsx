@@ -9,6 +9,7 @@ import {
   type RedTeamPrompt,
 } from "@/lib/data/red-team-prompts";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { toCsv, downloadCsv } from "@/lib/client/csv";
 import { useHubSignal } from "./HubContext";
 
 type Verdict = "pass" | "fail" | "error" | "untested";
@@ -154,6 +155,23 @@ export function RedTeamSection() {
     if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE);
   };
 
+  const exportCsv = () => {
+    const rows = RED_TEAM_PROMPTS.map((p) => {
+      const r = results[p.id];
+      return [
+        p.id,
+        p.category,
+        r?.verdict ?? "untested",
+        r?.testedAt ? new Date(r.testedAt).toISOString() : "",
+        r?.responseExcerpt ?? "",
+      ];
+    });
+    downloadCsv(
+      `red-team-results-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv(["probe_id", "category", "verdict", "tested_at", "response_excerpt"], rows),
+    );
+  };
+
   return (
     <div>
       <ModuleHero
@@ -196,6 +214,13 @@ export function RedTeamSection() {
           className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50"
         >
           {runningAll ? "Running..." : `Run ${filter === "all" ? "all" : "filtered"}`}
+        </button>
+        <button
+          type="button"
+          onClick={exportCsv}
+          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-brand/60"
+        >
+          Export CSV
         </button>
         <button
           type="button"

@@ -307,7 +307,10 @@ export function AnalyticsSection() {
     try {
       const subjects = cases.map((c) => ({
         name: c.subject,
-        riskScore: 0,
+        // Derive a risk band from the case's own risk badge so the bias
+        // monitor receives real differentiated input (violet=escalated/high,
+        // orange=attention/medium, green=cleared/low) instead of all-zeros.
+        riskScore: c.badgeTone === "violet" ? 85 : c.badgeTone === "orange" ? 60 : 25,
         status: c.status,
       }));
       const res = await fetch("/api/ai-bias-monitor", {
