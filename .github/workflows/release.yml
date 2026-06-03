@@ -120,7 +120,7 @@ jobs:
           tags: osint-bridge:scan-${{ github.ref_name }}
 
       - name: Trivy container scan
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: osint-bridge:scan-${{ github.ref_name }}
           format: sarif
