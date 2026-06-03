@@ -4,9 +4,12 @@
 // Reads all unprocessed flag/hold records from Blob storage, runs typology-match
 // on each, and opens a case for high-severity hits.
 //
-// Protected by CRON_SECRET — only accepts requests with
-//   Authorization: Bearer <CRON_SECRET>
-// to prevent public triggering.
+// Protected by a bearer token. Accepts the SAME token set the scheduler
+// (netlify/functions/transaction-monitor.mts) sends, in the same fallback
+// order:  Authorization: Bearer <CRON_SECRET ?? ONGOING_RUN_TOKEN>
+// to prevent public triggering. The route and scheduler must agree on the
+// accepted tokens — otherwise a deployment that sets ONGOING_RUN_TOKEN but
+// not CRON_SECRET 401s on every scheduled run.
 
 import { NextResponse } from "next/server";
 import { listKeys, getJson, setJson } from "@/lib/server/store";
@@ -119,16 +122,26 @@ async function openCase(record: TxnFlagRecord, typology: TypologyResult): Promis
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const cronSecret = process.env["CRON_SECRET"] ?? "";
-  if (!cronSecret) {
+  // Accept the same token set the scheduler authenticates with, in the same
+  // fallback order (CRON_SECRET first, then ONGOING_RUN_TOKEN). At least one
+  // must be configured — fail closed if neither is set.
+  const acceptedTokens = [
+    process.env["CRON_SECRET"] ?? "",
+    process.env["ONGOING_RUN_TOKEN"] ?? "",
+  ].filter((t) => t.length > 0);
+  if (acceptedTokens.length === 0) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const got = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   const { createHmac, timingSafeEqual } = await import("node:crypto");
   const COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
-  const ha = createHmac("sha256", COMPARE_KEY).update(cronSecret).digest();
+  // Timing-safe: HMAC both sides to fixed-length digests, then compare.
   const hb = createHmac("sha256", COMPARE_KEY).update(got).digest();
-  if (!timingSafeEqual(ha, hb)) {
+  const authorized = acceptedTokens.some((token) => {
+    const ha = createHmac("sha256", COMPARE_KEY).update(token).digest();
+    return timingSafeEqual(ha, hb);
+  });
+  if (!authorized) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

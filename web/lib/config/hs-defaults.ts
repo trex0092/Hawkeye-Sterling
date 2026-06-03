@@ -1,7 +1,23 @@
-// Hawkeye Sterling — non-secret operational defaults.
-// Values are sourced from the operator's configuration and safe to ship in
-// the codebase. Any of these can be overridden at deploy time by setting the
-// corresponding environment variable in Netlify.
+// Hawkeye Sterling — operational defaults + low-privilege fallback keys.
+//
+// Values are sourced from the operator's configuration. Any of these can be
+// overridden at deploy time by setting the corresponding environment variable
+// in Netlify (env always wins — consumers read process.env first).
+//
+// ACCEPTED-RISK DECISION (operator-approved): the *News / market-data API keys*
+// below are inlined here ON PURPOSE. They are free-tier, read-only, and carry
+// no auth / audit / financial / data-access privilege — worst-case abuse is
+// third-party news-API quota exhaustion. They are inlined to stay within the
+// AWS Lambda 4 KB total environment-variable limit (see the commit that
+// introduced them: "inline HAWKEYE_SECRETS values as code defaults to unblock
+// Lambda 4KB limit"). Documented as an accepted deviation in SECURITY-NOTES.md;
+// rotate periodically since they are present in git history.
+//
+// HARD RULE — enforced by web/lib/config/__tests__/hs-defaults.test.ts:
+// NEVER inline a privileged secret here (session / JWT / audit-chain / admin /
+// Ed25519 / signing / HMAC / webhook / password / Anthropic / Groq / MoonDB,
+// etc). Privileged secrets MUST come from environment variables only. The
+// guardrail test fails CI if a privileged-looking key name is added here.
 export const HS_DEFAULTS = {
   GOAML_MLRO_FULL_NAME:  "HAWKEYE STERLING - MLRO",
   GOAML_MLRO_EMAIL:      "hawkeye.sterling.v2@gmail.com",

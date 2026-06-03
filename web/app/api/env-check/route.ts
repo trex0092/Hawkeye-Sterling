@@ -39,6 +39,9 @@ const ENV_SPECS: EnvSpec[] = [
   { id: "sanctions_cron_token", label: "SANCTIONS_CRON_TOKEN", group: "Core Required", required: true, vars: ["SANCTIONS_CRON_TOKEN"], hint: "Bearer token for scheduled sanctions refresh. Required for list ingestion." },
   { id: "app_url", label: "NEXT_PUBLIC_APP_URL", group: "Core Required", required: true, vars: ["NEXT_PUBLIC_APP_URL"], hint: "Public URL of this deployment. Required for CORS and webhook callbacks." },
 
+  // Scheduled Jobs
+  { id: "cron_secret", label: "CRON_SECRET", group: "Scheduled Jobs", required: false, vars: ["CRON_SECRET", "ONGOING_RUN_TOKEN"], hint: "Bearer token for scheduled cron routes. /api/cron/transaction-monitor also accepts ONGOING_RUN_TOKEN; /api/cron/sanctions-sweep requires CRON_SECRET specifically. Generate: openssl rand -hex 32" },
+
   // goAML / FIU Reporting
   { id: "goaml_entities", label: "HAWKEYE_ENTITIES", group: "goAML / FIU Reporting", required: true, vars: ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"], hint: "Reporting entity JSON array (or legacy GOAML_RENTITY_ID). Required for STR/SAR filing." },
   { id: "goaml_mlro_name", label: "GOAML_MLRO_FULL_NAME", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_FULL_NAME"], hint: "MLRO full name for STR filings." },
