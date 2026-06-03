@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import type { RegChangeResult, RegChange } from "@/app/api/reg-change/route";
+import type { RegChangeResult } from "@/app/api/reg-change/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { ImpactAssessmentResult } from "@/app/api/reg-change/impact/route";
 
@@ -70,41 +70,6 @@ function daysTo(dateStr: string): number | null {
     console.warn("[hawkeye] reg-change daysTo parse failed:", dateStr, err);
     return null;
   }
-}
-
-// ──────────────────────────────────────────────
-// Traffic light summary
-// ──────────────────────────────────────────────
-function TrafficLightSummary({ changes }: { changes: RegChange[] }) {
-  const critical = changes.filter((c) => c.impactLevel === "critical").length;
-  const high = changes.filter((c) => c.impactLevel === "high").length;
-  const medLow = changes.filter((c) => c.impactLevel === "medium" || c.impactLevel === "low").length;
-
-  return (
-    <div className="flex gap-4 mb-6">
-      <div className="flex items-center gap-3 bg-red/8 border border-red/25 rounded-lg px-5 py-3">
-        <span className="text-24">🔴</span>
-        <div>
-          <div className="font-mono text-28 font-bold text-red">{critical}</div>
-          <div className="text-11 uppercase tracking-wide-3 text-ink-2 font-medium">Critical</div>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 bg-amber/8 border border-amber/25 rounded-lg px-5 py-3">
-        <span className="text-24">🟡</span>
-        <div>
-          <div className="font-mono text-28 font-bold text-amber">{high}</div>
-          <div className="text-11 uppercase tracking-wide-3 text-ink-2 font-medium">High</div>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 bg-green-dim border border-green/20 rounded-lg px-5 py-3">
-        <span className="text-24">🟢</span>
-        <div>
-          <div className="font-mono text-28 font-bold text-green">{medLow}</div>
-          <div className="text-11 uppercase tracking-wide-3 text-ink-2 font-medium">Medium / Low</div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ──────────────────────────────────────────────
@@ -483,9 +448,6 @@ export default function RegChangePage() {
       {/* ── Results ── */}
       {result && (
         <div className="space-y-6">
-          {/* Traffic light summary */}
-          <TrafficLightSummary changes={result.upcomingChanges} />
-
           {/* Immediate actions */}
           {result.immediateActions.length > 0 && (
             <div className="bg-red/5 border border-red/20 rounded-lg p-4">

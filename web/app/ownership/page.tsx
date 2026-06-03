@@ -11,13 +11,6 @@ import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/owne
 // shell company risk assessment per FATF R.10, UAE FDL 10/2025 Art.11,
 // and CBUAE AML Standards.
 
-const SHELL_RISK_CONFIG = {
-  low: { label: "Low", color: "text-green", bg: "bg-green/10 border-green/30" },
-  medium: { label: "Medium", color: "text-amber", bg: "bg-amber/10 border-amber/30" },
-  high: { label: "High", color: "text-orange", bg: "bg-orange/10 border-orange/30" },
-  critical: { label: "Critical", color: "text-red", bg: "bg-red/10 border-red/30" },
-} as const;
-
 const ENTITY_TYPE_ICON: Record<string, string> = {
   individual: "👤",
   corporate: "🏢",
@@ -83,7 +76,6 @@ export default function OwnershipPage() {
     }
   };
 
-  const shellCfg = result ? SHELL_RISK_CONFIG[result.shellCompanyRisk] : null;
 
   // ── Deterministic OFAC 50% rule walker ────────────────────────────────
   // Parses the shareholders textarea into an ownership graph, treats any
@@ -223,49 +215,8 @@ export default function OwnershipPage() {
       </div>
 
       {/* Results */}
-      {result && shellCfg && (
+      {result && (
         <div className="flex flex-col gap-5">
-          {/* Summary stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col gap-1">
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">UBO Identified</div>
-              <div
-                className={`font-mono text-20 font-bold ${result.uboIdentified ? "text-green" : "text-red"}`}
-              >
-                {result.uboIdentified ? "Yes" : "No"}
-              </div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col gap-1">
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Ownership Layers</div>
-              <div
-                className={`font-mono text-20 font-bold ${
-                  result.ownershipLayers >= 4 ? "text-red" : result.ownershipLayers >= 2 ? "text-amber" : "text-ink-0"
-                }`}
-              >
-                {result.ownershipLayers}
-              </div>
-            </div>
-            <div className={`bg-bg-panel border rounded-xl p-4 flex flex-col gap-1 ${shellCfg.bg}`}>
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Shell Company Risk</div>
-              <div className={`font-mono text-20 font-bold ${shellCfg.color}`}>{shellCfg.label}</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col gap-1">
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">Jurisdictions</div>
-              <div className="font-mono text-20 font-bold text-ink-0">
-                {result.jurisdictionLayering.length > 0
-                  ? String(
-                      new Set(
-                        result.jurisdictionLayering[0]
-                          ?.split("→")
-                          .map((j) => j.trim())
-                          .filter(Boolean) ?? [],
-                      ).size,
-                    )
-                  : "—"}
-              </div>
-            </div>
-          </div>
-
           {/* Ownership tree — indented visual hierarchy (pure CSS) */}
           <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
             <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-4">
