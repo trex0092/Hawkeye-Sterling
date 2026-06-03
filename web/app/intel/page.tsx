@@ -688,6 +688,7 @@ const INTEL_MODULES: FamilyModule[] = [
   { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
   { label: "Board Dashboard", href: "/board-dashboard", icon: "🎯" },
   { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
+  { label: "Board Dashboard", href: "/board-dashboard", icon: "🏛️" },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
