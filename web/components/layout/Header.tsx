@@ -62,24 +62,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
     ],
   },
-  {
-    title: "KYC Tools",
-    items: [
-      { label: "🌐 OSINT", href: "/osint", hint: "Open-source intelligence — domain & username harvest" },
-      { label: "🆔 GLEIF / LEI", href: "/gleif", hint: "Legal Entity Identifier lookup & name search" },
-      { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "Relationship & ownership network graph" },
-      { label: "🌍 Domain Intel", href: "/domain-intel", hint: "Domain & web infrastructure intelligence" },
-      { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet & crypto exposure risk" },
-      { label: "🚢 Vessel Check", href: "/vessel-check", hint: "Vessel sanctions & dark-fleet screening" },
-      { label: "🔢 Benford Analysis", href: "/benford", hint: "Benford's-law statistical anomaly test" },
-      { label: "🕵️ Investigation", href: "/investigation", hint: "Case investigation workbench" },
-      { label: "📍 Single Country", href: "/country-risk?tab=single", hint: "Single-country risk brief" },
-      { label: "⚖️ Compare", href: "/country-risk?tab=compare", hint: "Multi-country risk comparison" },
-      { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "Sanctions evasion typology detection" },
-      { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "UBO walker · crypto exposure · synthetic ID" },
-      { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable decision audit trail" },
-    ],
-  },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -194,7 +176,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[1140px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
+                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[900px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (

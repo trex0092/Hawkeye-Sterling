@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { VendorAIAssessment, VendorAIChecklist, VendorAuditStatus } from "@/app/api/vendor-ai-audit/route";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -149,9 +148,13 @@ export default function VendorAIAuditPage() {
   return (
     <ModuleLayout
       sidebarActions={
-        <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-indigo-700 text-left"
+        >
           {showForm ? "Cancel" : "Assess New Vendor"}
-        </ActionButton>
+        </button>
       }
     >
       <ModuleFamilyBar

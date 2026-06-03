@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -166,14 +165,23 @@ export default function CoiRegisterPage() {
     }
   }
 
+  const totalCount = declarations.length;
+  const pendingCount = declarations.filter((d) => d.status === "pending_review").length;
+  const approvedManagedCount = declarations.filter((d) => d.status === "approved" || d.status === "managed").length;
+  const rejectedCount = declarations.filter((d) => d.status === "rejected").length;
+
   const inputCls = "w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0 placeholder:text-ink-2";
 
   return (
     <ModuleLayout
       sidebarActions={
-        <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-brand text-white px-4 py-2 rounded text-13 font-semibold hover:opacity-90 text-left"
+        >
           {showForm ? "Cancel" : "New Declaration"}
-        </ActionButton>
+        </button>
       }
     >
       <ModuleFamilyBar
@@ -191,6 +199,23 @@ export default function CoiRegisterPage() {
       />
 
       <div className="mx-auto max-w-6xl px-4 pb-16 space-y-5">
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: "Total", value: totalCount, colour: "text-ink-0" },
+            { label: "Pending Review", value: pendingCount, colour: pendingCount > 0 ? "text-amber-300" : "text-ink-0" },
+            { label: "Approved / Managed", value: approvedManagedCount, colour: "text-emerald-400" },
+            { label: "Rejected", value: rejectedCount, colour: "text-red" },
+          ].map((s) => (
+            <div key={s.label} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
+              <p className="text-xs text-ink-2">{s.label}</p>
+              <p className={`text-2xl font-bold mt-1 ${s.colour}`}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* New Declaration button moved to sidebar Actions */}
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>

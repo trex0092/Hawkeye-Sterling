@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { AIIncidentRecord, IncidentType, IncidentSeverity, IncidentStatus } from "@/app/api/ai-incident-playbook/route";
@@ -163,14 +162,20 @@ export default function AIIncidentPlaybookPage() {
     }
   }
 
+  const openCount = incidents.filter((i) => i.status === "open" || i.status === "investigating").length;
+  const criticalCount = incidents.filter((i) => i.severity === "critical").length;
   const playbook = selected ? (RESPONSE_PLAYBOOKS[selected.type] ?? DEFAULT_PLAYBOOK) : null;
 
   return (
     <ModuleLayout
       sidebarActions={
-        <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-red-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-red-700 text-left"
+        >
           {showForm ? "Cancel" : "Log AI Incident"}
-        </ActionButton>
+        </button>
       }
     >
       <ModuleFamilyBar
@@ -190,7 +195,23 @@ export default function AIIncidentPlaybookPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Stat tiles removed; Log AI Incident button lives in sidebar Actions */}
+        {/* Action bar — Log AI Incident button moved to sidebar Actions */}
+        <div className="flex items-center justify-start">
+          <div className="flex gap-4">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className={`text-2xl font-bold ${openCount > 0 ? "text-red" : "text-emerald-400"}`}>{openCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Open</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className={`text-2xl font-bold ${criticalCount > 0 ? "text-red" : "text-ink-2"}`}>{criticalCount}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Critical</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[100px]">
+              <div className="text-2xl font-bold text-ink-1">{incidents.length}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
+            </div>
+          </div>
+        </div>
 
         {/* Regulatory notice */}
         <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 text-sm text-amber-300">

@@ -5,7 +5,6 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
-import { ActionButton } from "@/components/shared/ActionButton";
 import type { CaseRecord } from "@/lib/types";
 import { formatDMY, parseDMY } from "@/lib/utils/dateFormat";
 import { SowVerificationPanel } from "@/components/cdd/SowVerificationPanel";
@@ -727,14 +726,14 @@ export default function CddReviewPage() {
       asanaModule="cdd-review"
       asanaLabel="CDD Review"
       sidebarActions={
-        <ActionButton
-          variant="ai"
+        <button
           type="button"
           onClick={() => { void runAdequacyCheck(); }}
           disabled={adequacyLoading || enriched.length === 0}
+          className="text-13 font-semibold px-4 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors text-left"
         >
           {adequacyLoading ? "Assessing portfolio…" : "✦ AI Adequacy Check"}
-        </ActionButton>
+        </button>
       }
     >
       {/* ── Section 1: Module Header & KPIs ── */}

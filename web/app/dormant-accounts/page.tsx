@@ -197,6 +197,10 @@ export default function DormantAccountsPage() {
     }
   }
 
+  const totalFlagged = accounts.filter((a) => a.status === "flagged").length;
+  const underReview = accounts.filter((a) => a.status === "under_review").length;
+  const reactivated = accounts.filter((a) => a.status === "reactivated").length;
+  const highRisk = accounts.filter((a) => a.riskRating === "high" && a.status !== "closed" && a.status !== "reactivated").length;
 
   return (
     <ModuleLayout>
@@ -218,8 +222,26 @@ export default function DormantAccountsPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Action bar */}
-        <div className="flex items-center justify-end gap-4">
+        {/* Stats + action bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-amber-400">{totalFlagged}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Flagged</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-sky-400">{underReview}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Under Review</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
+              <div className="text-2xl font-bold text-emerald-400">{reactivated}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Reactivated</div>
+            </div>
+            <div className={`border rounded-lg px-4 py-3 text-center min-w-[80px] ${highRisk > 0 ? "bg-red-950/20 border-red-500/30" : "bg-bg-panel border-hair-2"}`}>
+              <div className={`text-2xl font-bold ${highRisk > 0 ? "text-red" : "text-ink-1"}`}>{highRisk}</div>
+              <div className="text-10 text-ink-2 mt-0.5">High-Risk</div>
+            </div>
+          </div>
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"

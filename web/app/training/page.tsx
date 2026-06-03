@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
-import { ActionButton } from "@/components/shared/ActionButton";
 
 // ── Training Log ─────────────────────────────────────────────────────────────
 
@@ -292,14 +291,14 @@ export default function TrainingPage() {
       asanaLabel="Training"
       sidebarActions={
         activeTab === "log" ? (
-          <ActionButton
-            variant="add"
+          <button
             type="button"
             onClick={add}
             disabled={!draft.name || !draft.course}
+            className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors text-left"
           >
             + Log training
-          </ActionButton>
+          </button>
         ) : null
       }
     >

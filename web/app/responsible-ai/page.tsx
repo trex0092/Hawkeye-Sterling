@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
@@ -366,8 +365,31 @@ function OpenBadge({ open }: { open: boolean }) {
 // ─── Tab: UNESCO Principles ──────────────────────────────────────────────────
 
 function PrinciplesTab() {
+  const compliantCount = UNESCO_PRINCIPLES.filter((p) => p.status === "compliant").length;
+  const partialCount = UNESCO_PRINCIPLES.filter((p) => p.status === "partial").length;
+  const gapCount = UNESCO_PRINCIPLES.filter((p) => p.status === "gap").length;
+
   return (
     <div>
+      <div className="flex gap-4 mb-6">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Compliant</span>
+          <span className="text-20 font-semibold font-mono text-green">{compliantCount}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Partial</span>
+          <span className="text-20 font-semibold font-mono text-amber">{partialCount}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Gap</span>
+          <span className="text-20 font-semibold font-mono text-red">{gapCount}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total principles</span>
+          <span className="text-20 font-semibold font-mono text-ink-0">{UNESCO_PRINCIPLES.length}</span>
+        </div>
+      </div>
+
       <div className="space-y-3">
         {UNESCO_PRINCIPLES.map((p) => (
           <div key={p.num} className="bg-bg-panel border border-hair-2 rounded-lg p-4">
@@ -751,9 +773,23 @@ function IncidentsTab() {
 
   if (!mounted) return null;
 
+  const openCount = incidents.filter((i) => i.open).length;
+
   return (
     <div>
-      <div className="flex justify-end items-center mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-4">
+          <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+            <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Open incidents</span>
+            <span className={`text-18 font-semibold font-mono ${openCount > 0 ? "text-amber" : "text-green"}`}>
+              {openCount}
+            </span>
+          </div>
+          <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+            <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total logged</span>
+            <span className="text-18 font-semibold font-mono text-ink-0">{incidents.length}</span>
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
@@ -908,8 +944,30 @@ function BiasTab() {
 // ─── Tab: Audit Trail ─────────────────────────────────────────────────────────
 
 function AuditTrailTab() {
+  const humanReviewed = AUDIT_TRAIL.filter((r) => r.reviewer !== "Auto").length;
+  const autoApproved = AUDIT_TRAIL.filter((r) => r.reviewer === "Auto").length;
+
   return (
     <div>
+      <div className="flex gap-4 mb-5">
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Total logged</span>
+          <span className="text-18 font-semibold font-mono text-ink-0">{AUDIT_TRAIL.length}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Human reviewed</span>
+          <span className="text-18 font-semibold font-mono text-brand">{humanReviewed}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Auto-approved</span>
+          <span className="text-18 font-semibold font-mono text-ink-2">{autoApproved}</span>
+        </div>
+        <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex flex-col gap-0.5">
+          <span className="text-10 font-mono uppercase tracking-wide-3 text-ink-3">Retention policy</span>
+          <span className="text-18 font-semibold font-mono text-green">10 yr</span>
+        </div>
+      </div>
+
       <p className="text-11 text-ink-3 mb-3 font-mono">
         Read-only immutable log. FDL 10/2025 Art.24 — all AI decisions retained 10 years. Showing{" "}
         {AUDIT_TRAIL.length} most recent events.
@@ -1332,21 +1390,7 @@ export default function ResponsibleAIPage() {
   };
 
   return (
-    <ModuleLayout
-      engineLabel="AI governance engine"
-      asanaModule="responsible-ai"
-      asanaLabel="Responsible AI"
-      sidebarActions={
-        <ActionButton
-          variant="ai"
-          type="button"
-          onClick={() => void runAssessment()}
-          disabled={assessmentLoading}
-        >
-          {assessmentLoading ? "Running ethics assessment…" : "✦ Run AI Ethics Assessment"}
-        </ActionButton>
-      }
-    >
+    <ModuleLayout engineLabel="AI governance engine" asanaModule="responsible-ai" asanaLabel="Responsible AI">
       <ModuleHero
         eyebrow=""
         title="Responsible AI"
@@ -1358,11 +1402,29 @@ export default function ResponsibleAIPage() {
             AI decisions logged with 10-year retention (FDL 10/2025 Art.24).
           </>
         }
+        kpis={[
+          { value: "4", label: "Models registered" },
+          { value: "0", label: "Incidents open" },
+          { value: "4", label: "Bias audits completed" },
+          { value: "100%", label: "UNESCO compliance" },
+        ]}
       />
 
-      {assessmentError && (
-        <p className="mb-6 text-11 text-red">Assessment failed: {assessmentError}</p>
-      )}
+      {/* Ethics Assessment CTA */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => void runAssessment()}
+          disabled={assessmentLoading}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        >
+          <span className="text-14">✦</span>
+          {assessmentLoading ? "Running ethics assessment…" : "Run AI Ethics Assessment"}
+        </button>
+        {assessmentError && (
+          <p className="mt-2 text-11 text-red">Assessment failed: {assessmentError}</p>
+        )}
+      </div>
 
       {/* Assessment result panel */}
       {assessmentResult && (

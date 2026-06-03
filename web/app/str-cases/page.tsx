@@ -6,6 +6,8 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
+  Kpi,
+  KpiGrid,
   Card,
   ActionRow,
   Btn,
@@ -28,7 +30,6 @@ import {
   saveCases,
 } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { GoamlExportModal, type CasePrefill } from "@/components/goaml/GoamlExportModal";
 import {
   loadOperatorRole,
@@ -322,6 +323,11 @@ export default function StrCasesPage() {
   const [sarBehavioralDrift, setSarBehavioralDrift] = useState(false);
   const [sarTypologyMatch, setSarTypologyMatch] = useState(false);
 
+  const open = cases.filter(
+    (c) => c.status !== "Submitted" && c.status !== "Closed",
+  ).length;
+  const submitted = cases.filter((c) => c.status === "Submitted").length;
+  const overdue = 0;
 
   const valid =
     title.trim().length > 0 &&
@@ -608,17 +614,15 @@ export default function StrCasesPage() {
       asanaLabel="STR / SAR Cases"
       sidebarActions={
         <>
-          <ActionButton
-            variant="ai"
-            type="button"
+          <Btn
+            variant="ghost"
             onClick={() => void generateBriefing()}
             disabled={briefingLoading || cases.length === 0}
           >
             {briefingLoading ? "Generating…" : "✦AI Briefing"}
-          </ActionButton>
-          <ActionButton
-            variant="screening"
-            type="button"
+          </Btn>
+          <Btn
+            variant="ghost"
             onClick={() => {
               const open = cases.filter((c) => c.status === "open" || c.status === "under_review");
               openReportWindow("/api/str-report", {
@@ -631,8 +635,8 @@ export default function StrCasesPage() {
             }}
           >
             PDF
-          </ActionButton>
-          <ActionButton variant="add" type="button">+ New case</ActionButton>
+          </Btn>
+          <Btn variant="ghost">+ New case</Btn>
         </>
       }
     >
@@ -654,6 +658,18 @@ export default function StrCasesPage() {
           { label: "STR Cases", href: "/str-cases", icon: "📁" },
         ]}
       />
+
+      <KpiGrid cols={5}>
+            <Kpi value={cases.length} label="Total" tone="brand" />
+            <Kpi value={open} label="Open" tone="amber" />
+            <Kpi value={submitted} label="Submitted" tone="green" />
+            <Kpi value={overdue} label="Overdue" tone="red" />
+            <Kpi
+              value={patternResult ? `⚠️ ${patternResult.patterns.length}` : "—"}
+              label="Patterns detected"
+              tone={patternResult && patternResult.patterns.length > 0 ? "red" : undefined}
+            />
+      </KpiGrid>
 
       {briefingError && (
         <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">

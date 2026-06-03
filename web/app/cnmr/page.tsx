@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -263,9 +262,13 @@ export default function CnmrPage() {
       engineLabel="CNMR compliance engine"
       sidebarActions={
         !showNew ? (
-          <ActionButton variant="add" type="button" onClick={() => setShowNew(true)}>
+          <button
+            type="button"
+            onClick={() => setShowNew(true)}
+            className="px-4 py-2 rounded bg-red text-white text-13 font-semibold hover:bg-red/90 text-left"
+          >
             + New CNMR case
-          </ActionButton>
+          </button>
         ) : null
       }
     >

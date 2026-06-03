@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface Supplier {
@@ -188,13 +187,13 @@ export default function SupplierDdPage() {
       asanaModule="vendor-dd"
       asanaLabel="Vendor Due Diligence"
       sidebarActions={
-        <ActionButton
-          variant="add"
+        <button
           type="button"
           onClick={() => { setShowForm((s) => !s); setForm(EMPTY_FORM); }}
+          className="px-4 py-2 rounded text-13 font-semibold bg-brand text-white hover:bg-brand/90 transition-colors text-left"
         >
           {showForm ? "Cancel" : "+ Add Supplier"}
-        </ActionButton>
+        </button>
       }
     >
       <ModuleHero

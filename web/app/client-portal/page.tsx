@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface ClientRisk {
@@ -389,25 +388,29 @@ export default function ClientPortalPage() {
       asanaLabel="Client Portal"
       sidebarActions={
         <>
-          <ActionButton variant="add" type="button" onClick={addShareholder}>
+          <button
+            type="button"
+            onClick={addShareholder}
+            className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors text-left"
+          >
             + Add Individual
-          </ActionButton>
-          <ActionButton
-            variant="ai"
+          </button>
+          <button
             type="button"
             onClick={runClientRiskAssessment}
             disabled={!canRunRisk || clientRiskLoading}
+            className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors text-left"
           >
             {clientRiskLoading ? "Assessing…" : "✦AI"}
-          </ActionButton>
-          <ActionButton
-            variant="screening"
+          </button>
+          <button
             type="submit"
             form="client-portal-form"
             disabled={!entity.name || !sharesValid}
+            className="text-13 font-semibold px-5 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 text-left"
           >
             Submit for screening
-          </ActionButton>
+          </button>
         </>
       }
     >

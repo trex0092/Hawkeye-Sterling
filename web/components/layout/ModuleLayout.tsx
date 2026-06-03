@@ -31,9 +31,6 @@ interface ModuleLayoutProps<K extends string = string> {
   // actions placement.
   sidebarActions?: ReactNode | undefined;
   detailPanel?: ReactNode | undefined;
-  // Hide the right-hand activity/engine feed column entirely (reclaims its
-  // width). Used by pages that are themselves a live feed (e.g. /intel).
-  hideDetailPanel?: boolean | undefined;
   // Label shown on the live engine feed. Defaults to "Compliance engine".
   engineLabel?: string | undefined;
   // Pass a module key to show a "Report to Asana" button in the sidebar.
@@ -55,7 +52,6 @@ export function ModuleLayout<K extends string = string>({
   sidebarExtra,
   sidebarActions,
   detailPanel,
-  hideDetailPanel = false,
   engineLabel = "Compliance engine",
   asanaModule,
   asanaLabel,
@@ -72,7 +68,7 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
-      <div className={`grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line ${hideDetailPanel ? "" : "lg:grid-cols-[220px_1fr_360px]"}`}>
+      <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <SidebarShell>
             <SidebarSection title="Regulatory">
@@ -105,15 +101,13 @@ export function ModuleLayout<K extends string = string>({
           {children}
         </main>
 
-        {!hideDetailPanel && (
-          <div className="hidden lg:block">
-            {detailPanel ?? (
-              <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
-                <ActivityFeed label={engineLabel} />
-              </aside>
-            )}
-          </div>
-        )}
+        <div className="hidden lg:block">
+          {detailPanel ?? (
+            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
+              <ActivityFeed label={engineLabel} />
+            </aside>
+          )}
+        </div>
       </div>
     </>
   );
@@ -140,9 +134,7 @@ export function ModuleHero({
   eyebrow,
   title,
   titleEm,
-  // kpis intentionally ignored — the hero KPI tile bar was removed across
-  // all modules. The prop is kept on ModuleHeroProps so call sites still
-  // compile (and keep their derived metrics) without needing edits.
+  kpis,
   intro,
 }: ModuleHeroProps) {
   return (
@@ -160,11 +152,52 @@ export function ModuleHero({
           </>
         )}
       </h1>
+      {kpis && kpis.length > 0 && (
+        <div className="flex gap-8 mt-3 pt-3 border-t border-hair-pink flex-wrap">
+          {kpis.map((k) => (
+            <HeroStat
+              key={k.label}
+              value={k.value}
+              label={k.label}
+              {...(k.tone ? { tone: k.tone } : {})}
+            />
+          ))}
+        </div>
+      )}
       {intro && (
         <div className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] mt-3 border-l-2 border-brand pl-3.5">
           {intro}
         </div>
       )}
+    </div>
+  );
+}
+
+function HeroStat({
+  value,
+  label,
+  tone,
+}: {
+  value: string;
+  label: string;
+  tone?: "red" | "orange" | "amber";
+}) {
+  const valueColor =
+    tone === "red"
+      ? "text-red"
+      : tone === "orange"
+        ? "text-orange"
+        : tone === "amber"
+          ? "text-amber"
+          : "text-brand";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className={`font-mono text-20 font-semibold ${valueColor}`}>
+        {value}
+      </span>
+      <span className="text-11 uppercase tracking-wide-4 text-ink-2 font-medium">
+        {label}
+      </span>
     </div>
   );
 }

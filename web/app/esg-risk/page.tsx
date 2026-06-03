@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import type { EsgRiskResult, EsgRating, MlRiskLevel } from "@/app/api/esg-risk/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -571,31 +570,31 @@ export default function EsgRiskPage() {
       engineLabel="ESG risk engine"
       sidebarActions={
         <>
-          <ActionButton
-            variant="add"
+          <button
             type="button"
             onClick={fillSampleEntity}
+            className="px-4 py-2 rounded border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 transition-all text-left"
             title="Pre-fill with a sample entity profile"
           >
             + Add
-          </ActionButton>
-          <ActionButton
-            variant="ai"
+          </button>
+          <button
             type="button"
             onClick={() => void aiSuggestEntity()}
             disabled={loading}
+            className="px-4 py-2 rounded border-2 border-amber-400 bg-amber-400/10 text-amber-300 text-13 font-bold hover:bg-amber-400/20 transition-all disabled:opacity-50 text-left"
             title="AI-suggest a representative entity profile"
           >
             ✨ AI
-          </ActionButton>
-          <ActionButton
-            variant="import"
+          </button>
+          <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 rounded border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 transition-colors text-left"
             title="Import entities from CSV (entityName column required)"
           >
             📥 CSV Import
-          </ActionButton>
+          </button>
         </>
       }
     >

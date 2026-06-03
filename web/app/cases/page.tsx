@@ -205,8 +205,7 @@ export default function CasesPage() {
             <div className="mt-1 flex items-center gap-2">
               <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
               <button type="button" onClick={() => void runBatchTriage()} disabled={triageLoading || cases.length === 0}
-                className="inline-flex items-center gap-1.5 text-11 font-semibold px-3 py-1.5 rounded border border-brand/40 bg-brand-dim text-brand hover:bg-brand/20 disabled:opacity-40">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" style={{ animation: "live-pulse 2s ease-in-out infinite" }} />
+                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
                 {triageLoading ? "Triaging…" : "✦AI"}
               </button>
             </div>

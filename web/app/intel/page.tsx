@@ -651,14 +651,30 @@ function JurisdictionIntelPanel() {
 }
 
 // ── Intelligence modules — rendered inline when selected ──────────────────────
-// (KYC Tools moved to the global "More" mega-menu — see Header.tsx — so they
-// are not duplicated here.)
 
 const INTEL_MODULES: FamilyModule[] = [
   { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+  { label: "OSINT", href: "/osint", icon: "🌐" },
+  { label: "GLEIF / LEI", href: "/gleif", icon: "🆔" },
+  { label: "LEI Lookup", href: "/gleif?tab=lookup", icon: "🔍" },
+  { label: "Name Search", href: "/gleif?tab=search", icon: "🔎" },
+  { label: "Entity Graph", href: "/entity-graph", icon: "🕸️" },
+  { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
+  { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
+  { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
+  { label: "Single Check", href: "/vessel-check?tab=single", icon: "🔭" },
+  { label: "Batch Check", href: "/vessel-check?tab=batch", icon: "📦" },
+  { label: "Benford Analysis", href: "/benford", icon: "🔢" },
+  { label: "Investigation", href: "/investigation", icon: "🕵️" },
   { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
+  { label: "Single Country", href: "/country-risk?tab=single", icon: "📍" },
+  { label: "Compare", href: "/country-risk?tab=compare", icon: "⚖️" },
+  { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
+  { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
   { label: "UBO Walker", href: "/governance/intelligence-tools?tab=ubo", icon: "🏢" },
   { label: "Crypto Exposure", href: "/governance/intelligence-tools?tab=crypto", icon: "₿" },
+  { label: "Synthetic ID", href: "/governance/intelligence-tools?tab=synthetic", icon: "🧬" },
+  { label: "Analytics", href: "/intelligence-hub?tab=analytics", icon: "📈" },
   { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
   { label: "Workbench", href: "/intelligence-hub?tab=workbench", icon: "🔧" },
   { label: "Telemetry", href: "/intelligence-hub?tab=telemetry", icon: "📡" },
@@ -668,6 +684,7 @@ const INTEL_MODULES: FamilyModule[] = [
   { label: "API Docs", href: "/intelligence-hub?tab=api-docs", icon: "📘" },
   { label: "System Card", href: "/system-card", icon: "📋" },
   { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
+  { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
   { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
   { label: "Board Dashboard", href: "/board-dashboard", icon: "🎯" },
   { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
@@ -690,7 +707,7 @@ export default function IntelPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence" hideDetailPanel>
+    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
       <ModuleHero
         eyebrow=""
         title="Intel"

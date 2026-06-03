@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
+import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -341,27 +340,49 @@ export default function ApprovalsPage() {
     }
   };
 
+  // Stats
   const total = records.length;
+  const pending = records.filter((r) => r.underProcess).length;
+  const approved = records.filter((r) => !r.underProcess).length;
+  const highRisk = records.filter((r) => r.riskScore === "high").length;
 
   return (
-    <ModuleLayout
-      asanaModule="approvals"
-      asanaLabel="Approvals"
-      sidebarActions={
-        !showForm && editingId === null ? (
-          <ActionButton variant="add" type="button" onClick={() => setShowForm(true)}>
-            + Add
-          </ActionButton>
-        ) : null
-      }
-    >
-      <ModuleHero
-        eyebrow=""
-        title="Approval"
-        titleEm="register."
-        intro="Entity onboarding approval tracker — decision status, risk score, and approved country destinations. All approval changes are logged in the immutable audit trail per UAE FDL 10/2025 Art.20."
-      />
-      <div className="max-w-3xl mx-auto px-4 pb-6 space-y-5">
+    <ModuleLayout asanaModule="approvals" asanaLabel="Approvals">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-10 font-semibold text-brand uppercase tracking-widest mb-0.5">
+              Hawkeye Sterling · Approvals
+            </p>
+            <h1 className="text-24 font-bold text-ink-0 leading-tight">Approvals</h1>
+          </div>
+          {!showForm && editingId === null && (
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="px-3 py-1.5 rounded-lg border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
+            >
+              + Add
+            </button>
+          )}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: "Total", value: total, cls: "text-ink-0" },
+            { label: "Under Process", value: pending, cls: "text-amber" },
+            { label: "Approved", value: approved, cls: "text-green" },
+            { label: "High Risk", value: highRisk, cls: "text-red" },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className="bg-bg-panel border border-hair-2 rounded-xl px-3 py-2.5 text-center">
+              <div className={`text-20 font-bold ${cls}`}>{value}</div>
+              <div className="text-10 text-ink-3 uppercase tracking-wide">{label}</div>
+            </div>
+          ))}
+        </div>
+
         {/* Error */}
         {error && (
           <div className="px-4 py-2 rounded-lg bg-red/10 border border-red/30 text-12 text-red">

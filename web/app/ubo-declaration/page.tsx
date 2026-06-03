@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // ── UBO AI Risk types ─────────────────────────────────────────────────────────
@@ -241,9 +240,13 @@ export default function UboDeclarationPage() {
       asanaModule="ubo-declaration"
       asanaLabel="UBO Declaration"
       sidebarActions={
-        <ActionButton variant="add" type="button" onClick={addUbo}>
+        <button
+          type="button"
+          onClick={addUbo}
+          className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors text-left"
+        >
           + Add UBO
-        </ActionButton>
+        </button>
       }
     >
       <div>

@@ -395,6 +395,26 @@ export default function GeopoliticalPage() {
 
           {impactResult && (
             <>
+              {/* Summary bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border border-hair-2 rounded-lg p-4 bg-bg-1 text-center">
+                  <div className="text-28 font-semibold text-ink-0">{impactResult.exposedClients.length}</div>
+                  <div className="text-11 text-ink-3 font-mono uppercase tracking-wide">Exposed clients</div>
+                </div>
+                <div className="border border-hair-2 rounded-lg p-4 bg-bg-1 text-center">
+                  <div className="text-28 font-semibold text-red-400">
+                    AED {(impactResult.totalExposure / 1_000_000).toFixed(2)}M
+                  </div>
+                  <div className="text-11 text-ink-3 font-mono uppercase tracking-wide">Total exposure</div>
+                </div>
+                <div className="border border-hair-2 rounded-lg p-4 bg-bg-1 text-center">
+                  <div className="text-28 font-semibold text-amber">
+                    {impactResult.immediateActions.length}
+                  </div>
+                  <div className="text-11 text-ink-3 font-mono uppercase tracking-wide">Immediate actions</div>
+                </div>
+              </div>
+
               {/* Immediate Actions */}
               {impactResult.immediateActions.length > 0 && (
                 <div className="border border-red-500/30 bg-red-500/5 rounded-lg p-4">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { ShadowAIEntry, ShadowAIStatus } from "@/app/api/shadow-ai/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
@@ -65,7 +64,7 @@ interface StatsPayload {
 
 export default function ShadowAIPage() {
   const [entries, setEntries] = useState<ShadowAIEntry[]>([]);
-  const [, setStats] = useState<StatsPayload>({ total: 0, critical: 0, high: 0, open: 0, blocked: 0 });
+  const [stats, setStats] = useState<StatsPayload>({ total: 0, critical: 0, high: 0, open: 0, blocked: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -149,9 +148,13 @@ export default function ShadowAIPage() {
   return (
     <ModuleLayout
       sidebarActions={
-        <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-orange-600 text-white px-4 py-2 rounded text-13 font-semibold hover:bg-orange-700 text-left"
+        >
           {showForm ? "Cancel" : "Report Shadow AI"}
-        </ActionButton>
+        </button>
       }
     >
       <ModuleFamilyBar
@@ -171,7 +174,27 @@ export default function ShadowAIPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Stat tiles removed; Report Shadow AI button lives in sidebar Actions */}
+        {/* Stats — Report Shadow AI button moved to sidebar Actions */}
+        <div className="flex items-center justify-start gap-4">
+          <div className="flex gap-3">
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className="text-2xl font-bold text-ink-1">{stats.total}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Total</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className={`text-2xl font-bold ${stats.critical > 0 ? "text-red" : "text-ink-2"}`}>{stats.critical}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Critical</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className={`text-2xl font-bold ${stats.open > 0 ? "text-amber-400" : "text-emerald-400"}`}>{stats.open}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Open</div>
+            </div>
+            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[90px]">
+              <div className="text-2xl font-bold text-ink-1">{stats.blocked}</div>
+              <div className="text-10 text-ink-2 mt-0.5">Blocked</div>
+            </div>
+          </div>
+        </div>
 
         {/* Policy notice */}
         <div className="bg-sky-950/20 border border-sky-500/30 rounded-lg p-4 text-sm text-sky-300">

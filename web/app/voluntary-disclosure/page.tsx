@@ -177,6 +177,12 @@ export default function VoluntaryDisclosurePage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const total = records.length;
+  const draftCount = records.filter((r) => r.status === "draft").length;
+  const pendingCount = records.filter((r) => r.status === "pending_mlro" || r.status === "pending_legal").length;
+  const submittedCount = records.filter((r) => r.status === "submitted").length;
+  const acknowledgedCount = records.filter((r) => r.status === "acknowledged").length;
+
   return (
     <ModuleLayout>
       <ModuleFamilyBar suiteName="Governance & Ethics" modules={GOV_MODULES} />
@@ -213,6 +219,22 @@ export default function VoluntaryDisclosurePage() {
               {i < STATUS_FLOW.length - 1 && (
                 <span className="text-ink-2 mx-1 text-xs">→</span>
               )}
+            </div>
+          ))}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-5 gap-3">
+          {[
+            { label: "Total", value: total, colour: "text-ink-0" },
+            { label: "Draft", value: draftCount, colour: "text-ink-1" },
+            { label: "Pending Approval", value: pendingCount, colour: "text-amber-300" },
+            { label: "Submitted", value: submittedCount, colour: "text-sky-300" },
+            { label: "Acknowledged", value: acknowledgedCount, colour: "text-emerald-400" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-bg-panel border border-hair-2 rounded-lg p-4 text-center">
+              <div className={`text-2xl font-bold ${stat.colour}`}>{stat.value}</div>
+              <div className="text-xs text-ink-2 mt-1">{stat.label}</div>
             </div>
           ))}
         </div>
