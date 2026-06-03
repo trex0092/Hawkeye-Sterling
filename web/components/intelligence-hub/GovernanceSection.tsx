@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero } from "@/components/layout/ModuleLayout";
-import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { RmfStatusResponse, RmfFunctionScore, AtlasTactic } from "@/app/api/governance/rmf-status/route";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -171,8 +171,11 @@ export function GovernanceSection() {
 
   useEffect(() => {
     fetch("/api/governance/rmf-status")
-      .then((r) => r.json())
-      .then((d: RmfStatusResponse) => setData(d))
+      .then((r) => {
+        if (!r.ok) throw new Error(apiErrorMessage(r.status, "Governance"));
+        return r.json() as Promise<RmfStatusResponse>;
+      })
+      .then((d) => setData(d))
       .catch((e) => setError(caughtErrorMessage(e, "Failed to load governance data")))
       .finally(() => setLoading(false));
   }, []);
@@ -189,7 +192,7 @@ export function GovernanceSection() {
     );
   }
 
-  if (error || !data) {
+  if (error || !data || !Array.isArray(data.rmfFunctions) || !Array.isArray(data.models) || !Array.isArray(data.atlasTactics)) {
     return <div className="text-red-400 text-13 p-4 border border-red-500/30 rounded-xl bg-red-950/20">{error ?? "No data"}</div>;
   }
 

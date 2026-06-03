@@ -107,7 +107,11 @@ export default function SecurityScanPage() {
         setError(apiErrorMessage(res.status, "Security scan"));
         return;
       }
-      const data = (await res.json()) as SecurityScanResult & { ok?: boolean };
+      const data = (await res.json()) as SecurityScanResult & { ok?: boolean; error?: string };
+      if (data.ok === false) {
+        setError(data.error ?? "Security scan returned an error.");
+        return;
+      }
       setResult(data);
     } catch (e) {
       setError(caughtErrorMessage(e, "Scan failed — please try again."));

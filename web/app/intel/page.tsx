@@ -694,7 +694,7 @@ export default function IntelPage() {
         intro={
           <>
             <strong>Three live panels.</strong> The UAE Regulatory Feed polls
-            MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 30 minutes
+            MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 5 minutes
             for circulars, enforcement actions and guidance updates.
             The adverse-media panel sweeps any named subject across 7 language
             feeds and surfaces HIGH / CRITICAL items first.
