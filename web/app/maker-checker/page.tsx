@@ -65,31 +65,6 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-// ── Badge counts bar ───────────────────────────────────────────────────────────
-
-function BadgeBar({ items }: { items: Array<MakerCheckerRequest & { ageMs?: number }> }) {
-  const pending  = items.filter((i) => i.status === "pending").length;
-  const overdue  = items.filter((i) => i.status === "pending" && (i.ageMs ?? 0) > 86_400_000).length;
-  const critical = items.filter((i) => i.status === "pending" && ACTION_SEVERITY[i.actionType] === "critical").length;
-
-  return (
-    <div className="flex gap-4 flex-wrap mb-5">
-      <div className="flex flex-col gap-0.5">
-        <span className="font-mono text-20 font-semibold text-amber">{pending}</span>
-        <span className="text-11 uppercase tracking-wide-4 text-ink-2 font-medium">Pending</span>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <span className={`font-mono text-20 font-semibold ${overdue > 0 ? "text-red" : "text-ink-3"}`}>{overdue}</span>
-        <span className="text-11 uppercase tracking-wide-4 text-ink-2 font-medium">Overdue &gt;24h</span>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <span className={`font-mono text-20 font-semibold ${critical > 0 ? "text-red" : "text-ink-3"}`}>{critical}</span>
-        <span className="text-11 uppercase tracking-wide-4 text-ink-2 font-medium">Critical actions</span>
-      </div>
-    </div>
-  );
-}
-
 // ── Request card ───────────────────────────────────────────────────────────────
 
 interface RequestCardProps {
@@ -366,9 +341,6 @@ export default function MakerCheckerPage() {
           {loading ? "Loading…" : "Refresh"}
         </button>
       </div>
-
-      {/* Badge counts */}
-      {items.length > 0 && <BadgeBar items={items} />}
 
       {/* Error */}
       {(error || actionError) && (

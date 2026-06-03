@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { writeAuditEvent } from "@/lib/audit";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -436,7 +437,22 @@ export default function OngoingMonitorPage() {
   const overdue = subjects.filter((s) => s.status === "overdue").length;
 
   return (
-    <ModuleLayout asanaModule="ongoing-monitor" asanaLabel="Ongoing Monitor">
+    <ModuleLayout
+      asanaModule="ongoing-monitor"
+      asanaLabel="Ongoing Monitor"
+      sidebarActions={
+        section === "monitoring" ? (
+          <ActionButton
+            variant="ai"
+            type="button"
+            onClick={() => { void runAiMonitor(); }}
+            disabled={monitorAlertsLoading || subjects.length === 0}
+          >
+            {monitorAlertsLoading ? "Scanning…" : "✦AI"}
+          </ActionButton>
+        ) : null
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -478,18 +494,6 @@ export default function OngoingMonitorPage() {
       {/* ── Monitoring section ──────────────────────────────────────────────── */}
       {section === "monitoring" && (
         <>
-          {/* AI Pattern Scan */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <button
-              type="button"
-              onClick={() => { void runAiMonitor(); }}
-              disabled={monitorAlertsLoading || subjects.length === 0}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
-            >
-              {monitorAlertsLoading ? "Scanning…" : "✦AI"}
-            </button>
-          </div>
-
           {bgError && (
             <div className="mt-3 rounded-lg border border-red/30 bg-red-dim px-4 py-3 flex items-start gap-2">
               <span className="text-red text-14 shrink-0">⚠</span>

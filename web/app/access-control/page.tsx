@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -751,9 +750,6 @@ export default function AccessControlPage() {
 
   return (
     <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
-      <ModuleFamilyBar suiteName="Access Control" modules={[
-        { label: "Access Control", href: "/access-control", icon: "🔑" },
-      ]} />
       <ModuleHero
 
         eyebrow=""

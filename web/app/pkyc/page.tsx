@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -63,7 +64,7 @@ export default function PKycPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const [subjects, setSubjects] = useState<PKycSubject[]>([]);
-  const [stats, setStats] = useState<PKycStats | null>(null);
+  const [, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -183,21 +184,21 @@ export default function PKycPage() {
     <ModuleLayout
       sidebarActions={
         <>
-          <button
+          <ActionButton
+            variant="add"
             type="button"
             onClick={() => setShowEnroll(true)}
-            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-13 font-semibold rounded transition-colors text-left"
           >
             + Enroll Subject
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
+            variant="screening"
             type="button"
             onClick={handleRunAll}
             disabled={running}
-            className="px-4 py-2 bg-blue hover:bg-blue/80 text-white text-13 font-semibold rounded transition-colors disabled:opacity-50 text-left"
           >
             {running ? "Running…" : "▶ Run Due"}
-          </button>
+          </ActionButton>
         </>
       }
     >
@@ -211,22 +212,7 @@ export default function PKycPage() {
         />
       </div>
 
-      {/* Stats bar */}
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          {[
-            { label: "Enrolled",       value: stats.total,         cls: "text-blue" },
-            { label: "Active",         value: stats.active,        cls: "text-green" },
-            { label: "Pending Review", value: stats.pendingReview, cls: "text-amber" },
-            { label: "Due Now",        value: stats.dueNow,        cls: "text-brand" },
-          ].map((s) => (
-            <div key={s.label} className="bg-panel border border-hair-2 rounded-xl px-4 py-3">
-              <div className={`font-mono text-28 font-semibold ${s.cls}`}>{s.value}</div>
-              <div className="text-11 uppercase tracking-wide-4 text-ink-2 mt-0.5">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Stat tiles removed */}
 
       {/* Run result banner */}
       {runResult && (
