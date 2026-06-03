@@ -1431,7 +1431,20 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
       </div>
 
-      <NewsDossierPanel state={news} />
+      <NewsDossierPanel
+        state={news}
+        elevatedDisclosure={
+          // Disclose up to 10 distinct sources when the subject is positive in
+          // BOTH sanctions (≥1 watchlist hit) and adverse media (brain category
+          // or any non-clear article). Regulators expect corroborating breadth
+          // on a dual-flagged subject. FATF R.10.
+          (screening.status === "success" && screening.result.hits.length > 0) &&
+          (
+            (superBrain.status === "success" && (superBrain.result.adverseMedia?.length ?? 0) > 0) ||
+            (news.status === "success" && news.result.articles.some((a) => a.severity !== "clear"))
+          )
+        }
+      />
 
     </aside>
   );
@@ -3614,7 +3627,13 @@ function getContinentCoverage(languages: string[]): Record<string, boolean> {
 
 function severityOrder(s: string): number { return { clear: 0, low: 1, medium: 2, high: 3, critical: 4 }[s] ?? 0; }
 
-function NewsDossierPanel({ state }: { state: NewsSearchState }) {
+function NewsDossierPanel({
+  state,
+  elevatedDisclosure = false,
+}: {
+  state: NewsSearchState;
+  elevatedDisclosure?: boolean;
+}) {
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [tierFilter, setTierFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"relevance" | "date" | "severity">("relevance");
@@ -3700,8 +3719,75 @@ function NewsDossierPanel({ state }: { state: NewsSearchState }) {
     return 0;
   });
 
+  // Elevated disclosure: when the subject is positive in BOTH sanctions and
+  // adverse media, surface up to 10 articles from DISTINCT sources (the cluster
+  // representatives plus the cross-outlet corroborations that clustering folds
+  // away), deduped by outlet. Gives the MLRO independent-source breadth.
+  type DiverseRow = {
+    title: string; link: string; source: string; pubDate: string;
+    severity: "clear" | "low" | "medium" | "high" | "critical"; sourceTier?: string;
+  };
+  const ELEVATED_SOURCE_CAP = 10;
+  const diverseSources: DiverseRow[] = (() => {
+    if (!elevatedDisclosure) return [];
+    const rows: DiverseRow[] = [];
+    for (const a of r.articles) {
+      const baseSource = (a.source || "").replace(/\s*\+\s*\d+\s*more$/i, "").trim();
+      rows.push({ title: a.title, link: a.link, source: baseSource, pubDate: a.pubDate, severity: a.severity, sourceTier: a.sourceTier });
+      for (const cs of a.corroboratingSources ?? []) {
+        rows.push({ title: cs.title, link: cs.link, source: cs.source, pubDate: cs.pubDate, severity: cs.severity, sourceTier: cs.sourceTier });
+      }
+    }
+    const seen = new Set<string>();
+    const out: DiverseRow[] = [];
+    for (const row of rows) {
+      const key = row.source.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(row);
+      if (out.length >= ELEVATED_SOURCE_CAP) break;
+    }
+    return out;
+  })();
+  const dossierSev = (s: string) =>
+    s === "critical" || s === "high" ? "bg-red-dim text-red"
+      : s === "medium" ? "bg-amber-dim text-amber"
+        : s === "low" ? "bg-blue-dim text-blue" : "bg-bg-2 text-ink-3";
+
   return (
     <Section title={`Worldwide adverse-media dossier (${r.articleCount})`}>
+      {elevatedDisclosure && diverseSources.length > 0 && (
+        <div className="mb-3 rounded border border-red/40 bg-red-dim px-2.5 py-2">
+          <div className="text-11 font-semibold text-red mb-1.5">
+            ⚠ Elevated disclosure — sanctions + adverse media · {diverseSources.length} distinct source{diverseSources.length === 1 ? "" : "s"} (max {ELEVATED_SOURCE_CAP})
+          </div>
+          <ul className="space-y-1.5">
+            {diverseSources.map((row, i) => (
+              <li key={`${row.source}-${i}`} className="flex items-start gap-2">
+                <span className={`shrink-0 mt-0.5 inline-flex items-center px-1.5 py-px rounded-sm text-[9px] font-mono uppercase ${dossierSev(row.severity)}`}>
+                  {row.severity}
+                </span>
+                <div className="min-w-0">
+                  <a
+                    href={/^https?:\/\//i.test(row.link) ? row.link : "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-11 text-brand hover:underline leading-snug"
+                  >
+                    {row.title}
+                  </a>
+                  <div className="text-10 text-ink-3 font-mono">
+                    {row.source}{row.pubDate ? ` · ${row.pubDate.slice(0, 10)}` : ""}
+                    {row.sourceTier === "tier1" && (
+                      <span className="ml-1 rounded bg-emerald-950/30 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">T1</span>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {/* Filter controls */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {/* Severity filter tabs */}
