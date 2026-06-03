@@ -707,7 +707,7 @@ export default function IntelPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence">
+    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence" hideDetailPanel>
       <ModuleHero
         eyebrow=""
         title="Intel"
