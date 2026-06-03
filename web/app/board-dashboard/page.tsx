@@ -129,7 +129,11 @@ export default function BoardDashboardPage() {
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    const id = setInterval(() => { void load(); }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <ModuleLayout engineLabel="Board View">
