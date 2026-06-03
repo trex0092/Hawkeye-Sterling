@@ -1,151 +1,544 @@
-# Hawkeye Sterling — Module Compliance Register
+# Hawkeye Sterling — Module Compliance Register (MoE-aligned, audit-ready)
 
 **Status:** Compliance-reviewed · audit-ready · change-controlled
-**Purpose:** Authoritative compliance description for every operational module — its function, the control it enforces, the regulatory obligation it satisfies, and the evidence it produces. This is the canonical source for the per-module daily Asana attestation tasks.
-**Regulatory frame:** UAE FDL No.20/2018 (AML/CFT), FDL No.10/2025 (AI governance), Cabinet Decision No.10/2019 (STR/FIU), Cabinet Decision No.58/2020 (UBO), Cabinet Decision No.74/2020 (TFS), CR 134/2025, MoE Circular 08/AML/2021, FATF Recommendations & Methodology, OECD Due Diligence Guidance, LBMA Responsible Gold Guidance v9, ISO/IEC 42001, EU AI Act, UAE PDPL, SOC 2.
+**Supervisor:** UAE Ministry of Economy (MoE) — DNFBP / DPMS sector, via the National Anti-Money Laundering and Combating Financing of Terrorism Committee (NAMLCFTC) and the UAE FIU (goAML).
+**Regulatory frame:** Federal Decree-Law No.20/2018 & its Executive Regulation (Cabinet Decision No.10/2019); Federal Decree-Law No.10/2025 (AI governance); Cabinet Decision No.58/2020 (UBO); Cabinet Decision No.74/2020 (TFS); CR 134/2025; MoE Circular No.08/AML/2021 (DPMS cash-threshold reporting); MoE AML/CFT Guidance for DNFBPs; MoE AML/CFT Supervisory Survey (MOEC/AML/001/2026); FATF Recommendations & Methodology; OECD Due Diligence Guidance; LBMA Responsible Gold Guidance v9; ISO/IEC 42001; EU AI Act; UAE PDPL; SOC 2.
+**Record-keeping baseline:** 5 years minimum from end of relationship/transaction (FDL 20/2018 Art.16; Cabinet 10/2019); AI decisions & audit chain retained 10 years (FDL 10/2025 Art.24).
+
+> Each entry: **Purpose · MoE / UAE obligation · Control & enforcement · Frequency / SLA · Responsible role · Evidence & retention.**
 
 ---
 
-## 1. Onboarding & CDD
+## 1. Onboarding & Customer Due Diligence
 
-**Client Portal.** Provides self-service onboarding where an entity submits its legal identity, beneficial owners, and directors, which the compliance brain auto-screens against sanctions, PEP, adverse-media and jurisdiction databases before the MLRO renders a decision. Enforces risk-based Customer Due Diligence at the point of entry so no relationship is established without identification, verification and screening. *Regulatory basis:* FDL 10/2025 Art.10; Cabinet 58/2020; FATF R.10. *Evidence:* onboarding record + screening result + MLRO disposition written to the immutable audit chain.
+### Client Portal
+- **Purpose:** Self-service onboarding capturing legal identity, UBOs and directors, auto-screened against sanctions/PEP/adverse-media/jurisdiction data before MLRO decision.
+- **MoE / UAE obligation:** Risk-based CDD before establishing a business relationship — FDL 20/2018 Art.16; Cabinet 10/2019 Art.4–8; MoE AML/CFT Guidance for DNFBPs (CDD chapter); FATF R.10.
+- **Control & enforcement:** Identification + verification + screening enforced as a hard gate; relationship cannot activate without a recorded MLRO disposition (`enforce` fail-closed).
+- **Frequency / SLA:** Every new customer, at onboarding, before activation.
+- **Responsible:** Compliance Officer (intake) → MLRO (disposition).
+- **Evidence & retention:** Onboarding record + screening result + disposition in the immutable audit chain; **5 yrs** (CDD), decision log **10 yrs**.
 
-**UBO Declaration.** Captures and risk-rates every natural-person beneficial owner holding ≥25% ownership, control or voting rights, including layered and nominee structures. Enforces the statutory UBO-identification obligation and blocks activation where the true owner cannot be established. *Regulatory basis:* Cabinet 58/2020; FDL 10/2025 Art.19. *Evidence:* UBO register entry with ownership percentages and verification status.
+### UBO Declaration
+- **Purpose:** Capture and risk-rate every natural-person beneficial owner ≥25% ownership/control/voting, including layered/nominee structures.
+- **MoE / UAE obligation:** Beneficial-ownership identification & maintenance — Cabinet Decision 58/2020; FDL 10/2025 Art.19; MoE UBO filing requirements for DNFBPs.
+- **Control & enforcement:** Activation blocked where the true beneficial owner cannot be established; bearer-share/nominee triggers EDD.
+- **Frequency / SLA:** At onboarding and on any ownership change.
+- **Responsible:** Compliance Officer; MLRO sign-off on EDD cases.
+- **Evidence & retention:** UBO register with percentages + verification status; **5 yrs**.
 
-**PEP Profiles.** Establishes Politically Exposed Person tier, source of wealth/funds, relationship network and the enhanced due-diligence measures applied. Enforces senior-management approval and ongoing EDD for higher-risk relationships. *Regulatory basis:* FATF R.12; FDL 20/2018 Art.18. *Evidence:* PEP determination, SoW narrative and EDD checklist retained per file.
+### PEP Profiles
+- **Purpose:** Establish PEP tier, source of wealth/funds, relationship network and EDD measures.
+- **MoE / UAE obligation:** PEP identification + senior-management approval + enhanced ongoing monitoring — Cabinet 10/2019 Art.15; FATF R.12; MoE DNFBP guidance (PEPs).
+- **Control & enforcement:** Senior-management approval required before onboarding/continuing a PEP; EDD measures mandatory.
+- **Frequency / SLA:** At onboarding; re-assessed at each periodic review.
+- **Responsible:** MLRO + senior management.
+- **Evidence & retention:** PEP determination, SoW narrative, EDD checklist, approval; **5 yrs**.
 
-**CDD Review.** Runs risk-tiered periodic re-KYC (high-risk every 3 months, medium 6 months, low annually) with an AI adequacy check that flags incomplete or stale due diligence. Enforces the obligation to keep CDD current throughout the business relationship. *Regulatory basis:* FDL 10/2025 Art.11; FATF R.10. *Evidence:* review register with last-review date, outcome and next-due date.
+### CDD Review
+- **Purpose:** Risk-tiered periodic re-KYC with AI adequacy checking of file completeness.
+- **MoE / UAE obligation:** Ongoing CDD and keeping records current — Cabinet 10/2019 Art.7; FATF R.10; MoE DNFBP guidance (ongoing monitoring).
+- **Control & enforcement:** Cadence enforced — high-risk 3-monthly, medium 6-monthly, low annually; overdue files flagged.
+- **Frequency / SLA:** Per risk tier (3 / 6 / 12 months).
+- **Responsible:** Compliance Officer; MLRO escalation.
+- **Evidence & retention:** Review register with last/next-due dates; **5 yrs**.
 
-**Data Quality.** Monitors CDD record completeness across the portfolio and generates an AI remediation plan for deficient files. Enforces accurate, adequate and up-to-date customer data as a precondition for reliable screening and reporting. *Regulatory basis:* FDL 10/2025 Art.8; FATF R.10. *Evidence:* completeness scorecard and remediation log.
+### Data Quality
+- **Purpose:** Monitor CDD completeness portfolio-wide with AI remediation planning.
+- **MoE / UAE obligation:** Adequate, accurate, up-to-date records — Cabinet 10/2019; FDL 20/2018 Art.16; FATF R.10.
+- **Control & enforcement:** Deficient files flagged and routed to remediation before reliance for screening/reporting.
+- **Frequency / SLA:** Continuous; remediation per SLA.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Completeness scorecard + remediation log; **5 yrs**.
 
-**Ownership Explorer.** Maps UBO and ownership chains, detecting shell-company risk and jurisdiction-layering used to obscure control. Enforces look-through identification of complex structures. *Regulatory basis:* Cabinet 58/2020; FATF R.24/25. *Evidence:* ownership graph and shell-risk assessment.
+### Ownership Explorer
+- **Purpose:** Map UBO/ownership chains, detect shell-company and jurisdiction-layering risk.
+- **MoE / UAE obligation:** Understanding ownership & control structure — Cabinet 58/2020; FATF R.24/25.
+- **Control & enforcement:** Look-through to ultimate control; chains >4 layers / circular structures trigger EDD/legal review.
+- **Frequency / SLA:** At onboarding and on structure change.
+- **Responsible:** Compliance Officer; MLRO on complex structures.
+- **Evidence & retention:** Ownership graph + shell-risk assessment; **5 yrs**.
 
-**Employees.** Maintains the staff register with Emirates ID/passport expiry tracking and AML/CFT training currency per team member. Enforces fit-and-proper staffing and the training obligation. *Regulatory basis:* FDL 10/2025 Art.16. *Evidence:* staff record with document-expiry and training-completion status.
+### Employees
+- **Purpose:** Staff register with Emirates ID/passport expiry and AML/CFT training currency.
+- **MoE / UAE obligation:** Fit-and-proper staffing & screening of employees — Cabinet 10/2019 Art.21; FDL 10/2025 Art.16; MoE DNFBP guidance (internal controls).
+- **Control & enforcement:** Expiring/lapsed documents and overdue training auto-flagged.
+- **Frequency / SLA:** Continuous; documents flagged 30 days pre-expiry.
+- **Responsible:** Compliance Officer / HR.
+- **Evidence & retention:** Staff record with expiry/training status; **5 yrs**.
 
-**Approvals.** Tracks entity onboarding approvals — status, risk score and approved country destinations — under a four-eyes control. Enforces dual authorisation and segregation of duties for relationship acceptance. *Regulatory basis:* FDL 10/2025 Art.20; CBUAE AML Standards §6. *Evidence:* approval record with both signatories logged in the audit chain.
+### Approvals
+- **Purpose:** Onboarding approval tracker — status, risk score, approved country destinations — under four-eyes.
+- **MoE / UAE obligation:** Internal controls & segregation of duties — FDL 10/2025 Art.20; Cabinet 10/2019 Art.21; CBUAE AML Standards §6.
+- **Control & enforcement:** Dual authorisation required; both signatories recorded.
+- **Frequency / SLA:** Per onboarding decision.
+- **Responsible:** Compliance Officer (maker) + MLRO/senior (checker).
+- **Evidence & retention:** Approval record with both signatories in audit chain; **5 yrs**.
 
-**Supplier / Vendor Due Diligence.** Performs third-party and supplier due diligence with AI risk assessment and a tier-based re-assessment cadence. Enforces counterparty/vendor risk management across the supply relationship. *Regulatory basis:* FATF R.10; OECD DDG. *Evidence:* vendor assessment, score and next-review date.
+### Supplier / Vendor Due Diligence
+- **Purpose:** Third-party/supplier DD with AI risk and tiered re-assessment.
+- **MoE / UAE obligation:** Counterparty/third-party risk management — FATF R.10; OECD DDG; MoE DPMS supply-chain expectations.
+- **Control & enforcement:** Risk-tiered cadence (critical annual, significant 18-month, standard 24-month).
+- **Frequency / SLA:** Per tier.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Vendor assessment + next-review date; **5 yrs**.
 
-**Onboarding Wizard.** Guides the new-customer intake flow and routes the file to CDD, screening and MLRO review. Enforces a controlled, no-gaps intake path. *Regulatory basis:* FDL 10/2025 Art.10. *Evidence:* intake completion trail.
+### Onboarding Wizard
+- **Purpose:** Guided new-customer intake routing to CDD/screening/MLRO.
+- **MoE / UAE obligation:** Controlled CDD intake — Cabinet 10/2019 Art.4; FDL 10/2025 Art.10.
+- **Control & enforcement:** No-gaps path; cannot complete without required CDD fields.
+- **Frequency / SLA:** Per new customer.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Intake completion trail; **5 yrs**.
 
 ## 2. Risk & AML Operations
 
-**EWRA / BWRA.** Produces the enterprise- and business-wide money-laundering/terrorist-financing risk assessment with an AI-generated board report. Enforces the obligation to identify, assess and document ML/TF risk and to inform the risk-based approach. *Regulatory basis:* FATF R.1; FDL 10/2025. *Evidence:* dated EWRA approved by the Board.
+### EWRA / BWRA
+- **Purpose:** Enterprise/business-wide ML/TF risk assessment with AI board report.
+- **MoE / UAE obligation:** Documented business risk assessment — Cabinet 10/2019 Art.2–3; FATF R.1; MoE DNFBP guidance (risk assessment).
+- **Control & enforcement:** Risk-based approach derived from the EWRA; Board approval required.
+- **Frequency / SLA:** At least annually and on material change.
+- **Responsible:** MLRO → Board approval.
+- **Evidence & retention:** Dated Board-approved EWRA; **5 yrs**.
 
-**STR/SAR QA.** Applies a four-eyes quality review to suspicious-transaction reports before filing and exports goAML-compliant XML. Enforces report accuracy and the dual-control gate prior to FIU submission. *Regulatory basis:* Cabinet 10/2019; FATF R.20. *Evidence:* QA sign-off and exported filing artifact.
+### STR/SAR QA
+- **Purpose:** Four-eyes quality review of STRs before filing + goAML XML export.
+- **MoE / UAE obligation:** Suspicious-transaction reporting to the FIU — Cabinet 10/2019 Art.17–18; FDL 20/2018 Art.15; FATF R.20.
+- **Control & enforcement:** Dual-control gate before submission; report accuracy verified.
+- **Frequency / SLA:** Per report; file without delay on suspicion.
+- **Responsible:** MLRO (sole filing authority).
+- **Evidence & retention:** QA sign-off + exported filing; **5 yrs**.
 
-**SAR Narrative.** Generates suspicious-activity narratives under a tipping-off egress gate that withholds output if disclosure risk is detected. Enforces the prohibition on tipping off while supporting timely reporting. *Regulatory basis:* FDL 10/2025 Art.17; Cabinet 10/2019. *Evidence:* egress-check result attached to the narrative.
+### SAR Narrative
+- **Purpose:** Generate STR/SAR narratives under a tipping-off egress gate.
+- **MoE / UAE obligation:** Prohibition on tipping off — FDL 20/2018 Art.25; Cabinet 10/2019; FDL 10/2025 Art.17.
+- **Control & enforcement:** Egress gate fail-closed — output withheld (`held_review`) if disclosure risk detected.
+- **Frequency / SLA:** Per report.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Egress-check result attached; **5 yrs**.
 
-**Supply Chain / Responsible Sourcing.** Assesses geographic and human-rights supply-chain risk (CSDDD/UFLPA) using the OECD five-step due-diligence framework. Enforces responsible-sourcing due diligence for minerals and high-risk supply chains. *Regulatory basis:* OECD DDG; LBMA RGG v9; MD 68/2024. *Evidence:* five-step DD record and CAHRA exposure assessment.
+### Supply Chain / Responsible Sourcing
+- **Purpose:** Geographic + human-rights (CSDDD/UFLPA) supply-chain risk via OECD 5-step DD.
+- **MoE / UAE obligation:** Responsible sourcing for DPMS — MoE/OECD DDG alignment; LBMA RGG v9; MD 68/2024.
+- **Control & enforcement:** Five-step DD with CAHRA exposure assessment.
+- **Frequency / SLA:** Per supplier; annual review.
+- **Responsible:** Compliance Officer / DPMS compliance.
+- **Evidence & retention:** Five-step record + CAHRA assessment; **5 yrs**.
 
-**RMI / RMAP.** Tracks Responsible Minerals Initiative assurance and Step-4 third-party audit history of smelters/refiners. Enforces upstream/downstream assurance obligations. *Regulatory basis:* OECD DDG Annex II; LBMA RGG v9. *Evidence:* RMAP audit status per supplier.
+### RMI / RMAP
+- **Purpose:** Responsible-minerals assurance + Step-4 audit history.
+- **MoE / UAE obligation:** Upstream/downstream assurance — OECD DDG Annex II; LBMA RGG v9.
+- **Control & enforcement:** RMAP audit status tracked per smelter/refiner.
+- **Frequency / SLA:** Per supplier; annual.
+- **Responsible:** DPMS compliance.
+- **Evidence & retention:** RMAP status records; **5 yrs**.
 
-**OECD DDG.** Tracks conformance to the OECD Due Diligence Guidance for responsible mineral supply chains. Enforces the recognised five-step due-diligence standard. *Regulatory basis:* OECD DDG. *Evidence:* conformance checklist.
+### OECD DDG
+- **Purpose:** Conformance tracking to OECD Due Diligence Guidance for minerals.
+- **MoE / UAE obligation:** Recognised 5-step standard for DPMS supply chains.
+- **Control & enforcement:** Conformance checklist maintained.
+- **Frequency / SLA:** Annual.
+- **Responsible:** DPMS compliance.
+- **Evidence & retention:** Conformance checklist; **5 yrs**.
 
-**Reg Changes.** Maintains a regulatory-change roadmap with an AI-built month-by-month implementation calendar. Enforces horizon-scanning and timely adoption of new obligations. *Regulatory basis:* FATF Methodology; FDL 10/2025. *Evidence:* change log with implementation deadlines and owners.
+### Reg Changes
+- **Purpose:** Regulatory-change roadmap + AI implementation calendar.
+- **MoE / UAE obligation:** Keeping the programme current with MoE/FATF changes — FDL 10/2025; FATF Methodology.
+- **Control & enforcement:** Each change has an owner and implementation deadline.
+- **Frequency / SLA:** Continuous horizon-scan.
+- **Responsible:** MLRO / Compliance Officer.
+- **Evidence & retention:** Change log with deadlines/owners; **5 yrs**.
 
-**Shipments.** Tracks bullion chain-of-custody from origin refinery through transit to vault settlement with AI trade-based money-laundering scanning; held shipments trigger automatic MLRO review. Enforces WORM-logged custody integrity for precious-metals flows. *Regulatory basis:* LBMA RGG v9; OECD 5-step DD. *Evidence:* WORM custody log per consignment.
+### Shipments
+- **Purpose:** Bullion chain-of-custody origin→vault with AI TBML scan; held shipments trigger MLRO review.
+- **MoE / UAE obligation:** DPMS supply-chain integrity & TBML controls — MoE DPMS guidance; LBMA RGG v9; OECD 5-step DD.
+- **Control & enforcement:** WORM-logged custody transfers; held status pauses settlement pending MLRO.
+- **Frequency / SLA:** Per consignment / custody transfer.
+- **Responsible:** DPMS compliance; MLRO on holds.
+- **Evidence & retention:** WORM custody log; **5 yrs**.
 
-**EOCN.** Handles UAE targeted financial sanctions registration, NAS/ARS processing and local control-list screening. Enforces mandatory TFS screening and the 24-hour freeze SLA. *Regulatory basis:* Cabinet 74/2020; UNSC Consolidated List. *Evidence:* screening result and freeze/no-match decision.
+### EOCN
+- **Purpose:** UAE targeted financial sanctions registration, NAS/ARS, local control-list screening.
+- **MoE / UAE obligation:** Mandatory TFS screening & freezing — Cabinet 74/2020; UNSC Consolidated List; EOCN executive office guidance.
+- **Control & enforcement:** Freeze without delay on confirmed match; 24-hour SLA.
+- **Frequency / SLA:** On every customer/transaction and on list updates; freeze **≤24h**.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Screening result + freeze/no-match decision; **5 yrs**.
 
-**TFS Alerts.** Monitors EOCN subscription alert emails and creates Asana compliance tasks automatically on new designations. Enforces continuous monitoring against the local terrorist and UN consolidated lists. *Regulatory basis:* TFS Mandatory Screening; Cabinet 74/2020. *Evidence:* alert log and resulting task/disposition.
+### TFS Alerts
+- **Purpose:** Monitor EOCN alert emails; auto-create Asana compliance tasks on new designations.
+- **MoE / UAE obligation:** Continuous monitoring of local terrorist & UN lists — Cabinet 74/2020; TFS mandatory screening.
+- **Control & enforcement:** New designations generate a tracked task and re-screen trigger.
+- **Frequency / SLA:** Continuous; act on designation **≤24h**.
+- **Responsible:** MLRO / Compliance Officer.
+- **Evidence & retention:** Alert log + disposition; **5 yrs**.
 
-**CNMR / PNMR.** Manages the confirmed and potential name-match queue and FIU notification workflow. Enforces adjudication of every potential match and notification where confirmed. *Regulatory basis:* Cabinet 74/2020; Cabinet 10/2019. *Evidence:* match adjudication record.
+### CNMR / PNMR
+- **Purpose:** Confirmed/potential name-match queue + FIU notification.
+- **MoE / UAE obligation:** Adjudicate matches & notify — Cabinet 74/2020; Cabinet 10/2019.
+- **Control & enforcement:** Every potential match adjudicated; confirmed matches notified.
+- **Frequency / SLA:** On each alert; without delay.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Match adjudication record; **5 yrs**.
 
-**DPMSR.** Reports designated precious-metals-and-stones cash transactions at or above the AED 55,000 threshold via goAML. Enforces the amount-triggered DPMS reporting obligation independent of suspicion. *Regulatory basis:* CR 134/2025 Art.3; MoE Circular 08/AML/2021. *Evidence:* DPMSR filing within 24h, MLRO-approved.
+### DPMSR
+- **Purpose:** DPMS cash-transaction reporting at/above AED 55,000 via goAML.
+- **MoE / UAE obligation:** **MoE Circular No.08/AML/2021** & CR 134/2025 Art.3 — DPMS report for any single or linked cash transaction ≥ AED 55,000, regardless of suspicion; fine for non-filing up to AED 200,000 (CR 71/2024).
+- **Control & enforcement:** Amount-triggered filing; MLRO approval before submission.
+- **Frequency / SLA:** Per qualifying transaction; file **≤24h** via goAML.
+- **Responsible:** MLRO.
+- **Evidence & retention:** DPMSR filing + approval; **5 yrs**.
 
-**MoE Survey.** Tracks completion of the mandatory AML/CFT survey for all DNFBPs. Enforces the supervisory reporting obligation. *Regulatory basis:* MOEC/AML/001/2026. *Evidence:* survey submission confirmation.
+### MoE Survey
+- **Purpose:** Track completion of the mandatory MoE AML/CFT supervisory survey.
+- **MoE / UAE obligation:** **MoE AML/CFT Survey (MOEC/AML/001/2026)** — mandatory for all DNFBPs.
+- **Control & enforcement:** Completion tracked to submission deadline.
+- **Frequency / SLA:** Per MoE survey cycle.
+- **Responsible:** MLRO / Compliance Officer.
+- **Evidence & retention:** Submission confirmation; **5 yrs**.
 
-**Enforcement.** Tracks regulatory deadlines and corrective actions to closure. Enforces remediation accountability and SLA adherence. *Regulatory basis:* FDL 10/2025; SOC2 CC7.4. *Evidence:* action tracker with owner, due date and status.
+### Enforcement
+- **Purpose:** Regulatory deadline + corrective-action tracker to closure.
+- **MoE / UAE obligation:** Remediation of supervisory findings — FDL 10/2025; SOC2 CC7.4.
+- **Control & enforcement:** Owner + due date per action; overdue escalates to MLRO.
+- **Frequency / SLA:** Per finding/deadline.
+- **Responsible:** MLRO / Compliance Officer.
+- **Evidence & retention:** Action tracker; **5 yrs**.
 
-**Oversight.** Captures board/management four-eyes sign-off, committee minutes and regulatory-circular disposition. Enforces governance oversight and segregation of duties at the senior level. *Regulatory basis:* FDL 10/2025 Art.20; CBUAE AML Standards §6. *Evidence:* signed minutes and disposition record.
+### Oversight
+- **Purpose:** Board/management four-eyes sign-off, committee minutes, circular disposition.
+- **MoE / UAE obligation:** Governance & senior oversight — FDL 10/2025 Art.20; Cabinet 10/2019 Art.21; CBUAE AML §6.
+- **Control & enforcement:** Two independent signatories; SLA breaches escalate to MLRO.
+- **Frequency / SLA:** Per approval; periodic committee cadence.
+- **Responsible:** Board / senior management / MLRO.
+- **Evidence & retention:** Signed minutes + disposition; **5 yrs**.
 
-**Maker-Checker.** Provides a dual-control workflow for regulated actions where a second authorised user must approve. Enforces segregation of duties / four-eyes on sensitive operations with TOCTOU protection. *Regulatory basis:* FDL 10/2025 Art.20. *Evidence:* maker and checker identities logged.
+### Maker-Checker
+- **Purpose:** Dual-control workflow for regulated actions with TOCTOU protection.
+- **MoE / UAE obligation:** Segregation of duties — FDL 10/2025 Art.20; Cabinet 10/2019 Art.21.
+- **Control & enforcement:** Second authorised user must approve; record re-read under lock before commit.
+- **Frequency / SLA:** Per sensitive action.
+- **Responsible:** Two authorised users.
+- **Evidence & retention:** Maker + checker identities logged; **5 yrs**.
 
-**goAML Export / Submission.** Generates and submits FIU goAML reports with entity-ID validation before transmission. Enforces correct, complete regulatory filing. *Regulatory basis:* Cabinet 10/2019; FATF R.20. *Evidence:* validated XML and submission receipt.
+### goAML Export / Submission
+- **Purpose:** FIU goAML report generation/submission with entity-ID validation.
+- **MoE / UAE obligation:** FIU reporting via goAML — Cabinet 10/2019; FATF R.20; UAE FIU registration (Rentity ID).
+- **Control & enforcement:** Entity-ID validated before transmission; placeholder IDs blocked.
+- **Frequency / SLA:** Per report; without delay.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Validated XML + receipt; **5 yrs**.
 
-**Batch Screening.** Screens the portfolio in bulk against consolidated sanctions/PEP lists on list updates. Enforces re-screening of the book whenever watchlists change. *Regulatory basis:* FDL 20/2018 Art.18; FATF R.6. *Evidence:* batch run report with hits.
+### Batch Screening
+- **Purpose:** Bulk portfolio screening on list updates.
+- **MoE / UAE obligation:** Re-screening on watchlist change — FDL 20/2018 Art.18; Cabinet 74/2020; FATF R.6.
+- **Control & enforcement:** Whole book re-screened when consolidated lists change.
+- **Frequency / SLA:** On list update / scheduled.
+- **Responsible:** Compliance Officer; MLRO on hits.
+- **Evidence & retention:** Batch run report; **5 yrs**.
 
 ## 3. Governance & Audit
 
-**Responsible AI.** Governs AI use under UNESCO/EU-AI-Act ethics principles with mandatory human oversight on every adverse customer disposition. Enforces accountable, explainable AI and the human-in-the-loop control. *Regulatory basis:* FDL 10/2025 Art.24; EU AI Act; ISO/IEC 42001. *Evidence:* model registry, human-review record, 10-year AI decision log.
+### Responsible AI
+- **Purpose:** Govern AI under ethics principles with mandatory human oversight on adverse dispositions.
+- **MoE / UAE obligation:** AI governance & accountability — FDL 10/2025 Art.24; EU AI Act; ISO/IEC 42001.
+- **Control & enforcement:** Human-in-the-loop on every adverse customer decision; model registry with risk tier + approval.
+- **Frequency / SLA:** Continuous; per AI decision.
+- **Responsible:** MLRO / AI governance owner.
+- **Evidence & retention:** Model registry + human-review records + AI decision log; **10 yrs**.
 
-**Inspection Room.** Aggregates a regulator-ready evidence pack (policies, EWRA, cases, audit chain, training, onboarding) on demand. Enforces examination readiness. *Regulatory basis:* FDL 10/2025; SOC2. *Evidence:* exported evidence pack with timestamps.
+### Inspection Room
+- **Purpose:** Regulator-ready evidence pack (policies, EWRA, cases, audit chain, training).
+- **MoE / UAE obligation:** Examination readiness & record production to MoE — Cabinet 10/2019 Art.24; FDL 10/2025.
+- **Control & enforcement:** One-click aggregated pack for inspectors.
+- **Frequency / SLA:** On demand / examination.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Exported pack with timestamps; **10 yrs**.
 
-**Regulatory Library.** Provides a searchable UAE/FATF regulatory reference with framework tagging. Enforces access to current obligations supporting decisions. *Regulatory basis:* FATF Methodology. *Evidence:* citation references used in dispositions.
+### Regulatory Library
+- **Purpose:** Searchable UAE/FATF/MoE regulatory reference with framework tagging.
+- **MoE / UAE obligation:** Access to current obligations supporting decisions — FATF Methodology; MoE guidance.
+- **Control & enforcement:** Citations referenced in dispositions.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Citation references; **5 yrs**.
 
-**Policies & SOPs.** Maintains the AML programme charter and procedures, versioned and bound to the audit chain so each decision references the policy in force. Enforces a documented, board-approved compliance programme. *Regulatory basis:* FDL 10/2025 Art.24. *Evidence:* versioned policy with effective dates.
+### Policies & SOPs
+- **Purpose:** AML programme charter + procedures, versioned and bound to the audit chain.
+- **MoE / UAE obligation:** Documented, approved AML/CFT programme — Cabinet 10/2019 Art.21; FDL 10/2025 Art.24.
+- **Control & enforcement:** Each decision references the policy version in force.
+- **Frequency / SLA:** Reviewed at least annually.
+- **Responsible:** MLRO → Board.
+- **Evidence & retention:** Versioned policy with effective dates; **10 yrs**.
 
-**Typology Library.** Catalogues 500+ ML/TF typologies with AI search and UAE-localised context. Enforces typology-informed detection and analyst guidance. *Regulatory basis:* FATF Typologies. *Evidence:* typology references in case files.
+### Typology Library
+- **Purpose:** 500+ ML/TF typologies with AI search and UAE/DPMS context.
+- **MoE / UAE obligation:** Typology-informed detection — FATF Typologies; MoE DPMS red-flags.
+- **Control & enforcement:** Typology references attached to detections.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Typology references in cases; **5 yrs**.
 
-**Playbook.** Provides step-by-step AML/CFT compliance playbooks where each mandated step generates an audit-chain entry. Enforces consistent, evidenced execution of regulated procedures. *Regulatory basis:* FATF Methodology; FDL 10/2025. *Evidence:* per-step audit entries.
+### Playbook
+- **Purpose:** Step-by-step AML/CFT playbooks; each step writes an audit entry.
+- **MoE / UAE obligation:** Consistent, evidenced procedure execution — Cabinet 10/2019; FATF Methodology.
+- **Control & enforcement:** Mandated steps cannot be skipped silently.
+- **Frequency / SLA:** Per procedure.
+- **Responsible:** Compliance Officer / MLRO.
+- **Evidence & retention:** Per-step audit entries; **10 yrs**.
 
-**Corrections.** Handles data-subject access and correction requests. Enforces data-protection rights. *Regulatory basis:* UAE PDPL; GDPR (where applicable). *Evidence:* request log with resolution.
+### Corrections
+- **Purpose:** Data-subject access and correction request handling.
+- **MoE / UAE obligation:** Data-protection rights — UAE PDPL; GDPR where applicable.
+- **Control & enforcement:** Requests logged and resolved within statutory window.
+- **Frequency / SLA:** Per request; statutory deadline.
+- **Responsible:** Compliance Officer / DPO.
+- **Evidence & retention:** Request log + resolution; **5 yrs**.
 
-**AI Incident Playbook.** Provides structured response to AI failures — hallucination, bias spike, data poisoning, prompt injection — reportable to CBUAE/FSRA within 72 hours, plus Shadow-AI register and Vendor-AI audit. Enforces AI incident governance and mandatory disclosure. *Regulatory basis:* FDL 10/2025 Art.24. *Evidence:* incident record with containment and root-cause.
+### AI Incident Playbook
+- **Purpose:** Structured response to AI failures (hallucination, bias, poisoning, prompt injection); Shadow-AI register; Vendor-AI audit.
+- **MoE / UAE obligation:** AI incident governance & disclosure to CBUAE/FSRA **≤72h** — FDL 10/2025 Art.24.
+- **Control & enforcement:** Containment + root-cause + mandatory reporting workflow.
+- **Frequency / SLA:** Per incident; report **≤72h**.
+- **Responsible:** MLRO / AI governance owner.
+- **Evidence & retention:** Incident record; **10 yrs**.
 
-**Incident Runbook.** Provides the AML/security incident response runbook with retention. Enforces documented incident handling. *Regulatory basis:* SOC2 CC7.4; FDL 10/2025 Art.24. *Evidence:* incident timeline and closure.
+### Incident Runbook
+- **Purpose:** AML/security incident response runbook with retention.
+- **MoE / UAE obligation:** Documented incident handling — SOC2 CC7.4; FDL 10/2025 Art.24.
+- **Control & enforcement:** Defined response steps + closure.
+- **Frequency / SLA:** Per incident.
+- **Responsible:** MLRO / security.
+- **Evidence & retention:** Incident timeline + closure; **10 yrs**.
 
-**Eval KPI.** Tracks model/brain evaluation KPIs against governance thresholds (calibration, drift, mode effectiveness). Enforces ongoing AI performance assurance. *Regulatory basis:* FDL 10/2025 Art.18. *Evidence:* evaluation dashboard with thresholds.
+### Eval KPI
+- **Purpose:** Model/brain evaluation KPIs vs governance thresholds (calibration, drift, mode effectiveness).
+- **MoE / UAE obligation:** Ongoing AI performance assurance — FDL 10/2025 Art.18.
+- **Control & enforcement:** Threshold breaches flagged for review.
+- **Frequency / SLA:** Continuous / per evaluation window.
+- **Responsible:** AI governance owner.
+- **Evidence & retention:** Evaluation dashboard records; **10 yrs**.
 
-**Audit Trail.** Maintains the immutable, tamper-evident decision chain with 10-year retention, exportable to goAML/FIU. Enforces the record-keeping and traceability obligation underpinning every other control. *Regulatory basis:* FDL 10/2025 Art.24. *Evidence:* hash-linked chain with integrity status.
+### Audit Trail
+- **Purpose:** Immutable, tamper-evident decision chain with FIU export.
+- **MoE / UAE obligation:** Record-keeping & traceability — FDL 20/2018 Art.16; Cabinet 10/2019 Art.24; FDL 10/2025 Art.24.
+- **Control & enforcement:** Hash-linked append-only chain; integrity verified.
+- **Frequency / SLA:** Per event; continuous.
+- **Responsible:** MLRO / CTO.
+- **Evidence & retention:** Hash-linked chain; **10 yrs** (WORM backup).
 
 ## 4. Intelligence & KYC Tools
 
-**Live Intelligence Feed.** Polls UAE regulatory bodies and global news on a live cadence and sweeps adverse media across seven languages, surfacing HIGH/CRITICAL items with AI triage. Enforces ongoing adverse-media and regulatory monitoring. *Regulatory basis:* FDL 20/2018 Art.18; FATF R.6. *Evidence:* triaged feed items with severity.
+### Live Intelligence Feed
+- **Purpose:** Live UAE regulatory + 7-language adverse-media feed with AI triage.
+- **MoE / UAE obligation:** Ongoing adverse-media / negative-news monitoring — FDL 20/2018 Art.18; FATF R.6; MoE DNFBP guidance.
+- **Control & enforcement:** HIGH/CRITICAL items surfaced and triaged.
+- **Frequency / SLA:** Live (5-min refresh).
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Triaged items with severity; **5 yrs**.
 
-**Intelligence Hub.** Unifies the AI-brain, security, governance and operational intelligence views in one command centre. Enforces a consolidated, governed intelligence workspace. *Regulatory basis:* FDL 10/2025 Art.18. *Evidence:* per-section health and usage signals.
+### Intelligence Hub
+- **Purpose:** Unified AI-brain / security / governance / ops command centre.
+- **MoE / UAE obligation:** Governed, transparent intelligence tooling — FDL 10/2025 Art.18.
+- **Control & enforcement:** Consolidated, access-controlled workspace.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** Compliance Officer / MLRO.
+- **Evidence & retention:** Section health/usage signals; **5 yrs**.
 
-**OSINT.** Harvests open-source signals from public infrastructure, social platforms and domain records to support enhanced due diligence. *Regulatory basis:* FATF R.10 (EDD). *Evidence:* OSINT findings attached to subject.
+### OSINT
+- **Purpose:** Open-source signal harvesting for EDD.
+- **MoE / UAE obligation:** Enhanced due diligence — FATF R.10; Cabinet 10/2019 Art.15.
+- **Control & enforcement:** Findings attached to subject file.
+- **Frequency / SLA:** On EDD trigger.
+- **Responsible:** Compliance Officer / investigator.
+- **Evidence & retention:** OSINT findings; **5 yrs**.
 
-**GLEIF / LEI.** Resolves Legal Entity Identifiers and performs counterparty name search for entity verification. *Regulatory basis:* FATF R.16. *Evidence:* LEI record.
+### GLEIF / LEI
+- **Purpose:** LEI lookup + counterparty name search for entity verification.
+- **MoE / UAE obligation:** Counterparty identification — FATF R.16.
+- **Control & enforcement:** LEI captured where available.
+- **Frequency / SLA:** At onboarding / on demand.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** LEI record; **5 yrs**.
 
-**Entity Graph.** Builds the relationship and ownership network graph for complex or opaque structures. *Regulatory basis:* FATF R.24/25. *Evidence:* graph snapshot.
+### Entity Graph
+- **Purpose:** Relationship/ownership network graph for opaque structures.
+- **MoE / UAE obligation:** Understanding control structures — FATF R.24/25; Cabinet 58/2020.
+- **Control & enforcement:** Graph used in EDD of complex entities.
+- **Frequency / SLA:** On complex-structure review.
+- **Responsible:** Investigator / MLRO.
+- **Evidence & retention:** Graph snapshot; **5 yrs**.
 
-**Domain Intel.** Assesses domain and web-infrastructure intelligence including email-spoofing/phishing risk. *Regulatory basis:* FATF R.10. *Evidence:* domain risk report.
+### Domain Intel
+- **Purpose:** Domain/web-infra intelligence + email-spoofing risk.
+- **MoE / UAE obligation:** EDD / fraud-risk signals — FATF R.10.
+- **Control & enforcement:** Domain risk recorded in subject file.
+- **Frequency / SLA:** On EDD trigger.
+- **Responsible:** Investigator.
+- **Evidence & retention:** Domain risk report; **5 yrs**.
 
-**Crypto Risk / Exposure.** Assesses wallet and virtual-asset exposure risk. *Regulatory basis:* FATF R.15; VARA. *Evidence:* wallet exposure score.
+### Crypto Risk / Exposure
+- **Purpose:** Wallet / virtual-asset exposure risk.
+- **MoE / UAE obligation:** VA exposure assessment — FATF R.15; VARA.
+- **Control & enforcement:** Exposure score informs risk rating.
+- **Frequency / SLA:** On VA-linked subject.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Wallet exposure score; **5 yrs**.
 
-**Vessel Check.** Screens vessels for sanctions and dark-fleet indicators relevant to trade exposure. *Regulatory basis:* FATF R.6; OFAC SDN. *Evidence:* vessel screening result.
+### Vessel Check
+- **Purpose:** Vessel sanctions + dark-fleet screening for trade exposure.
+- **MoE / UAE obligation:** Sanctions screening — Cabinet 74/2020; OFAC SDN; FATF R.6.
+- **Control & enforcement:** Vessel hits routed to MLRO.
+- **Frequency / SLA:** On trade-related screening.
+- **Responsible:** Compliance Officer / MLRO.
+- **Evidence & retention:** Vessel screening result; **5 yrs**.
 
-**Benford Analysis.** Runs Benford's-law statistical anomaly testing on transaction data to surface manipulation. *Regulatory basis:* FATF R.20 (analytics). *Evidence:* anomaly report.
+### Benford Analysis
+- **Purpose:** Benford's-law anomaly testing on transactions.
+- **MoE / UAE obligation:** Transaction analytics for suspicion — FATF R.20.
+- **Control & enforcement:** Anomalies feed investigation.
+- **Frequency / SLA:** On dataset analysis.
+- **Responsible:** Analyst.
+- **Evidence & retention:** Anomaly report; **5 yrs**.
 
-**Investigation.** Provides the case investigation workbench with evidence vault and timeline. Enforces structured, evidenced investigations. *Regulatory basis:* Cabinet 10/2019. *Evidence:* investigation case file.
+### Investigation
+- **Purpose:** Case workbench with evidence vault + timeline.
+- **MoE / UAE obligation:** Structured, evidenced investigation supporting STR decisions — Cabinet 10/2019.
+- **Control & enforcement:** Evidence + timeline captured per case.
+- **Frequency / SLA:** Per case.
+- **Responsible:** Investigator / MLRO.
+- **Evidence & retention:** Investigation case file; **5 yrs**.
 
-**Country & Geopolitical Risk.** Scores country-level ML/TF risk using the Basel AML Index, TI CPI, FATF grey/black lists, OFAC/EU/UN sanctions and political stability, and determines the correct CDD obligation (standard/enhanced/senior approval). *Regulatory basis:* FATF R.19; FDL 10/2025. *Evidence:* country risk determination.
+### Country & Geopolitical Risk
+- **Purpose:** Country ML/TF risk (Basel AML Index, CPI, FATF lists, sanctions, stability) → correct CDD obligation.
+- **MoE / UAE obligation:** Country/jurisdiction risk in the risk-based approach — FATF R.19; Cabinet 10/2019; MoE high-risk-jurisdiction guidance.
+- **Control & enforcement:** Determines standard / enhanced / senior-approval CDD.
+- **Frequency / SLA:** At onboarding & review; lists refreshed continuously.
+- **Responsible:** Compliance Officer / MLRO.
+- **Evidence & retention:** Country risk determination; **5 yrs**.
 
-**Sanctions Evasion.** Detects sanctions-evasion typologies. *Regulatory basis:* FATF R.6; OFAC. *Evidence:* evasion-pattern findings.
+### Sanctions Evasion
+- **Purpose:** Sanctions-evasion typology detection.
+- **MoE / UAE obligation:** Sanctions compliance — Cabinet 74/2020; OFAC; FATF R.6.
+- **Control & enforcement:** Evasion patterns flagged to MLRO.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Evasion-pattern findings; **5 yrs**.
 
-**Intelligence Tools.** Bundles UBO walker, crypto exposure and synthetic-ID detection for investigators. *Regulatory basis:* FATF R.10/24. *Evidence:* tool output per subject.
+### Intelligence Tools
+- **Purpose:** UBO walker + crypto exposure + synthetic-ID detection.
+- **MoE / UAE obligation:** EDD / UBO verification — FATF R.10/24; Cabinet 58/2020.
+- **Control & enforcement:** Tool output attached to subject.
+- **Frequency / SLA:** On EDD trigger.
+- **Responsible:** Investigator.
+- **Evidence & retention:** Tool output; **5 yrs**.
 
-**Adverse-Media (Live / Lookback).** Performs real-time and historical adverse-media screening across seven languages. Enforces negative-news due diligence. *Regulatory basis:* FATF R.6; FDL 20/2018 Art.18. *Evidence:* adverse-media hits with classification.
+### Adverse-Media (Live / Lookback)
+- **Purpose:** Real-time + historical adverse-media screening across 7 languages.
+- **MoE / UAE obligation:** Negative-news due diligence — FATF R.6; FDL 20/2018 Art.18.
+- **Control & enforcement:** Hits classified by severity; HIGH/CRITICAL escalate.
+- **Frequency / SLA:** At onboarding, ongoing, and on demand.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Adverse-media hits classified; **5 yrs**.
 
-**Analyst Behavior.** Applies User & Entity Behaviour Analytics to compliance staff — bulk exports, off-hours access, verdict-override rates, audit-trail reconnaissance — to surface insider-threat signals before they become findings. Enforces the segregation/monitoring control over privileged users. *Regulatory basis:* SOC2 CC7.4; FDL 10/2025 Art.20. *Evidence:* UEBA alert log (CSV-exportable).
+### Analyst Behavior (UEBA)
+- **Purpose:** UEBA over compliance staff (bulk exports, off-hours, override rates, audit recon).
+- **MoE / UAE obligation:** Internal controls / insider-threat monitoring — FDL 10/2025 Art.20; SOC2 CC7.4.
+- **Control & enforcement:** Insider-threat alerts surfaced before findings; CSV export for evidence.
+- **Frequency / SLA:** Continuous; configurable window.
+- **Responsible:** MLRO / security.
+- **Evidence & retention:** UEBA alert log (CSV); **5 yrs**.
 
-**Brain Map.** Exposes the reasoning-faculty catalogue and integrity view of the compliance brain. Enforces transparency of the AI decision engine. *Regulatory basis:* FDL 10/2025 Art.18. *Evidence:* faculty/version manifest.
+### Brain Map
+- **Purpose:** Reasoning-faculty catalogue + integrity view of the AI engine.
+- **MoE / UAE obligation:** AI transparency/explainability — FDL 10/2025 Art.18.
+- **Control & enforcement:** Faculty/version manifest exposed.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** AI governance owner.
+- **Evidence & retention:** Faculty/version manifest; **10 yrs**.
 
-**Intel Status.** Monitors live intelligence-source and watchlist health. Enforces assurance that screening sources are current and operational. *Regulatory basis:* FATF R.6. *Evidence:* source health snapshot.
+### Intel Status
+- **Purpose:** Live intelligence-source + watchlist health monitoring.
+- **MoE / UAE obligation:** Assurance screening sources are current — FATF R.6; Cabinet 74/2020.
+- **Control & enforcement:** Source health surfaced; stale sources flagged.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Source health snapshot; **5 yrs**.
 
 ## 5. Screening, Monitoring & Core
 
-**Screening.** Screens names/entities against UNSC, OFAC, EU CFSP and local lists with risk scoring and disambiguation. Enforces mandatory sanctions/PEP/adverse-media screening at onboarding and on an ongoing basis. *Regulatory basis:* FDL 20/2018 Art.18; FATF R.6. *Evidence:* screening result with match scores.
+### Screening
+- **Purpose:** Name/entity screening vs UNSC/OFAC/EU CFSP/local lists with scoring + disambiguation.
+- **MoE / UAE obligation:** Mandatory sanctions/PEP/adverse-media screening — FDL 20/2018 Art.18; Cabinet 74/2020; FATF R.6.
+- **Control & enforcement:** Screening at onboarding and ongoing; hits route to MLRO.
+- **Frequency / SLA:** At onboarding, on transactions, on list updates.
+- **Responsible:** Compliance Officer; MLRO on hits.
+- **Evidence & retention:** Screening result + match scores; **5 yrs**.
 
-**Transaction Monitor.** Performs behavioural transaction monitoring with DPMS-threshold and typology flagging, auto-opening cases for critical alerts. Enforces ongoing monitoring of transactions for suspicious activity. *Regulatory basis:* MoE Circular 08/AML/2021; FATF R.20. *Evidence:* alert and disposition record.
+### Transaction Monitor
+- **Purpose:** Behavioural TM with DPMS-threshold + typology flagging; auto-opens cases on critical alerts.
+- **MoE / UAE obligation:** Ongoing transaction monitoring — **MoE Circular 08/AML/2021**; Cabinet 10/2019 Art.7; FATF R.20.
+- **Control & enforcement:** Threshold/typology rules; critical alerts open cases.
+- **Frequency / SLA:** Continuous / per transaction.
+- **Responsible:** Compliance Officer; MLRO on escalation.
+- **Evidence & retention:** Alert + disposition; **5 yrs**.
 
-**Ongoing Monitor.** Re-screens enrolled subjects on a schedule (high-risk twice-daily) with an AI pattern scan, writing results to the case timeline. Enforces perpetual, risk-based ongoing monitoring. *Regulatory basis:* FDL 10/2025 Art.12; FATF R.10. *Evidence:* per-subject run history.
+### Ongoing Monitor
+- **Purpose:** Scheduled re-screening (high-risk twice-daily) + AI pattern scan to the case timeline.
+- **MoE / UAE obligation:** Ongoing/perpetual monitoring — Cabinet 10/2019 Art.7; FDL 10/2025 Art.12; FATF R.10.
+- **Control & enforcement:** Cadence enforced; results written to case.
+- **Frequency / SLA:** Per cadence (twice-daily / daily / weekly).
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Per-subject run history; **5 yrs**.
 
-**STR Cases.** Manages the STR/SAR case lifecycle from first screening through MLRO disposition to FIU filing. Enforces end-to-end case governance and reporting. *Regulatory basis:* Cabinet 10/2019; FATF R.20. *Evidence:* case timeline with disposition and filing reference.
+### STR Cases
+- **Purpose:** STR/SAR case lifecycle from screening → MLRO disposition → FIU filing.
+- **MoE / UAE obligation:** Suspicious-activity case governance & reporting — Cabinet 10/2019 Art.17; FATF R.20.
+- **Control & enforcement:** Full lifecycle with disposition + filing reference.
+- **Frequency / SLA:** Per case; file without delay.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Case timeline + filing reference; **5 yrs**.
 
-**MLRO Advisor.** Provides AI-assisted MLRO advisory across executor/advisor/challenger modes with a full audit trail. Enforces decision support that preserves MLRO independence and documents reasoning. *Regulatory basis:* FDL 10/2025 Art.18/24. *Evidence:* advisory record in the audit chain.
+### MLRO Advisor
+- **Purpose:** AI advisory (executor/advisor/challenger) with full audit trail.
+- **MoE / UAE obligation:** Decision support preserving MLRO independence — FDL 10/2025 Art.18/24; Cabinet 10/2019 Art.20 (MLRO).
+- **Control & enforcement:** Advisory logged; MLRO retains decision authority.
+- **Frequency / SLA:** On demand.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Advisory record in audit chain; **10 yrs**.
 
-**Access Control.** Manages platform users, roles and module permissions with an immutable permission audit trail. Enforces logical access control and segregation of duties. *Regulatory basis:* FDL 10/2025 Art.20; SOC2 CC6.1. *Evidence:* permission change log.
+### Access Control
+- **Purpose:** Users/roles/module permissions with immutable permission audit trail.
+- **MoE / UAE obligation:** Logical access control & segregation of duties — FDL 10/2025 Art.20; SOC2 CC6.1; Cabinet 10/2019 Art.21.
+- **Control & enforcement:** RBAC + every change logged immutably.
+- **Frequency / SLA:** Per change; continuous.
+- **Responsible:** Administrator / MLRO.
+- **Evidence & retention:** Permission change log; **10 yrs**.
 
-**Analytics Dashboard.** Provides the MLRO digest, bias monitoring and risk forecast. Enforces non-discrimination monitoring and management oversight of the programme. *Regulatory basis:* FATF R.10 (non-discrimination); FDL 10/2025. *Evidence:* bias-ratio and digest reports.
+### Analytics Dashboard
+- **Purpose:** MLRO digest, bias monitoring, risk forecast.
+- **MoE / UAE obligation:** Non-discrimination + management oversight — FATF R.10; FDL 10/2025.
+- **Control & enforcement:** Bias ratio monitored vs threshold; digest to MLRO.
+- **Frequency / SLA:** Continuous / periodic digest.
+- **Responsible:** MLRO.
+- **Evidence & retention:** Bias-ratio + digest reports; **5 yrs**.
 
-**KRI Dashboard.** Tracks key risk indicators against risk-appetite bands. Enforces risk-appetite monitoring and escalation. *Regulatory basis:* FATF R.1. *Evidence:* KRI readings vs thresholds.
+### KRI Dashboard
+- **Purpose:** Key risk indicators vs risk-appetite bands.
+- **MoE / UAE obligation:** Risk-appetite monitoring — FATF R.1.
+- **Control & enforcement:** Breaches escalate.
+- **Frequency / SLA:** Continuous.
+- **Responsible:** MLRO / Board.
+- **Evidence & retention:** KRI readings vs thresholds; **5 yrs**.
 
-**Training.** Logs AML/CFT staff training completion with expiry tracking and the annual programme. Enforces the staff-training obligation. *Regulatory basis:* FDL 10/2025 Art.16. *Evidence:* training completion register.
+### Training
+- **Purpose:** AML/CFT training completion + expiry + annual programme.
+- **MoE / UAE obligation:** Staff training — Cabinet 10/2019 Art.21; FDL 10/2025 Art.16; MoE DNFBP guidance.
+- **Control & enforcement:** Completion tracked; lapses flagged.
+- **Frequency / SLA:** At least annually.
+- **Responsible:** Compliance Officer.
+- **Evidence & retention:** Training completion register; **5 yrs**.
 
 ---
 
-*Change-controlled: any new module must be added here with its compliance description, regulatory basis and a daily Asana attestation task before go-live.*
+*Change-controlled: any new module must be added here with its six-field MoE-aligned entry and a daily Asana attestation task before go-live.*
