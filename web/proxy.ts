@@ -171,11 +171,19 @@ function hostnameOf(value: string): string | null {
 
 // CORS headers attached to every OPTIONS preflight and real API response.
 // Origin policy:
-//   - If NEXT_PUBLIC_APP_URL is set (production deployment), restrict to that domain.
-//   - Otherwise fall back to "*" (local dev / preview — all routes require auth anyway).
+//   - If NEXT_PUBLIC_APP_URL is set, restrict to that domain.
+//   - Else in production, restrict to the canonical deployment URL baked in below
+//     (DEFAULT_PROD_APP_URL) rather than "*", so a missing env var can never
+//     silently open the API to any origin.
+//   - Else (local dev / preview) fall back to "*" — all routes require auth anyway.
 // Regulators call the API server-to-server (no browser CORS needed); the primary
 // browser caller is the portal itself (same-origin). Third-party integrations should
 // use server-side proxy calls and API keys, not browser-to-API CORS.
+//
+// Canonical production origin. Used as the CORS default when NEXT_PUBLIC_APP_URL
+// is not set in a production deploy. Setting NEXT_PUBLIC_APP_URL still overrides
+// this (e.g. for a custom domain) — this is only the safe fallback.
+const DEFAULT_PROD_APP_URL = "https://hawkeye-sterling.netlify.app";
 function resolveAllowedOrigin(): string {
   const appUrl = process.env["NEXT_PUBLIC_APP_URL"];
   if (appUrl) {
@@ -183,12 +191,16 @@ function resolveAllowedOrigin(): string {
       const { origin } = new URL(appUrl.startsWith("http") ? appUrl : `https://${appUrl}`);
       return origin;
     } catch {
-      // Malformed NEXT_PUBLIC_APP_URL — fall through to wildcard.
-      console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL is set but malformed — falling back to wildcard origin. Set a valid URL (e.g. https://hawkeye-sterling-v2.netlify.app).");
+      // Malformed NEXT_PUBLIC_APP_URL — fall back to the canonical production origin
+      // (not wildcard) so a typo can't open the API to every origin.
+      console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL is set but malformed — falling back to canonical production origin. Set a valid URL (e.g. https://hawkeye-sterling.netlify.app).");
+      return DEFAULT_PROD_APP_URL;
     }
   } else if (process.env["NODE_ENV"] === "production") {
-    console.warn("[middleware] CORS: NEXT_PUBLIC_APP_URL not set in production — falling back to wildcard origin. This allows any origin to call the API. Set NEXT_PUBLIC_APP_URL to restrict access.");
+    // Production with no env var: restrict to the baked-in canonical origin.
+    return DEFAULT_PROD_APP_URL;
   }
+  // Local dev / preview only.
   return "*";
 }
 const CORS_ALLOWED_ORIGIN = resolveAllowedOrigin();
