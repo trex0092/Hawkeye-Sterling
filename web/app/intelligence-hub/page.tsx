@@ -18,6 +18,11 @@ const TAB_IDS = [
   "governance",
   "status",
   "api-docs",
+  "system-card",
+  "security-scan",
+  "analyst-behavior",
+  "board-dashboard",
+  "kri-dashboard",
 ] as const;
 
 type TabId = (typeof TAB_IDS)[number];
@@ -32,6 +37,21 @@ const TAB_CONFIG: Record<TabId, { label: string; icon: string; hint: string }> =
   governance:      { label: "Governance",    icon: "⚖️",  hint: "NIST AI RMF · MITRE ATLAS · FDL 10/2025 Art.18" },
   status:          { label: "Status",        icon: "💚", hint: "Live endpoint & watchlist health" },
   "api-docs":      { label: "API Docs",      icon: "📘", hint: "OpenAPI reference" },
+  "system-card":     { label: "System Card",      icon: "📋", hint: "Model/system card disclosure" },
+  "security-scan":   { label: "Security Scan",    icon: "🛡️", hint: "Dependency & code security scan" },
+  "analyst-behavior":{ label: "Analyst Behavior", icon: "👁️", hint: "Analyst activity & behaviour monitoring" },
+  "board-dashboard": { label: "Board Dashboard",  icon: "🎯", hint: "Single-screen board & committee view" },
+  "kri-dashboard":   { label: "KRI Dashboard",    icon: "📊", hint: "Key risk indicators dashboard" },
+};
+
+// Map embedded-tool tabs to their standalone page routes. Each renders the
+// tool's own page (via ?embed=1) so its features and engine are untouched.
+const EMBED_ROUTES: Partial<Record<TabId, string>> = {
+  "system-card": "/system-card",
+  "security-scan": "/security-scan",
+  "analyst-behavior": "/analyst-behavior",
+  "board-dashboard": "/board-dashboard",
+  "kri-dashboard": "/kri-dashboard",
 };
 
 function isValidTab(s: string | null): s is TabId {
@@ -209,7 +229,27 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (
 
 // ── Active section renderer ──────────────────────────────────────────────────
 
+// Renders a standalone tool's own page inside the hub via ?embed=1, so the
+// tool's features/engine run unchanged — we only host it in a tab.
+function EmbeddedTool({ src, label }: { src: string; label: string }) {
+  const url = `${src}${src.includes("?") ? "&" : "?"}embed=1`;
+  return (
+    <div className="border border-hair-2 rounded-xl overflow-hidden">
+      <iframe
+        key={url}
+        src={url}
+        title={label}
+        className="w-full border-0 bg-bg-0"
+        style={{ minHeight: 760, display: "block" }}
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
 function ActiveSection({ tab }: { tab: TabId }) {
+  const embedSrc = EMBED_ROUTES[tab];
+  if (embedSrc) return <EmbeddedTool src={embedSrc} label={TAB_CONFIG[tab].label} />;
   switch (tab) {
     case "analytics":       return <AnalyticsSection />;
     case "brain":           return <BrainIntelSection />;
@@ -295,7 +335,7 @@ function HubInner() {
       <div className="mb-6 border-b-2 border-ink-0 pb-4">
         <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">
           <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-          Intelligence Hub · 9 modules unified
+          Intelligence Hub · 14 modules unified
         </div>
         <h1 className="font-display text-36 text-ink-0 m-0 leading-tight">
           Intelligence <em className="italic text-brand">command centre.</em>
