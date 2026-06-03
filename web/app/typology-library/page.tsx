@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { TypologyResult, TypologySearchResponse } from "@/app/api/typology-library/search/route";
 import type { TypologyDetailResult } from "@/app/api/typology-library/detail/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
@@ -731,10 +730,6 @@ export default function TypologyLibraryPage() {
         ]}
         intro="Search and explore 500+ AML/CFT money laundering typologies powered by Claude AI. Each typology includes red flags, real-world examples, FATF references, detection methods, and UAE-specific context."
       />
-      <ModuleFamilyBar suiteName="Typology Library & Playbook" modules={[
-        { label: "Typology Library", href: "/typology-library", icon: "📚" },
-        { label: "Playbook", href: "/playbook", icon: "📖" },
-      ]} />
 
       {/* Search Bar */}
       <div className="mb-6">
