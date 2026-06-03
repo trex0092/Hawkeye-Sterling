@@ -96,22 +96,6 @@ export default function IntelStatusPage(): React.ReactElement {
 
       {data && (
         <>
-          {/* Categories */}
-          <div className="mb-6">
-            <div className="text-10 uppercase tracking-wide text-ink-3 mb-2">By category</div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {data.categories.map((c) => (
-                <div key={c.category} className="rounded-md bg-bg-panel border border-hair-2 px-3 py-2">
-                  <div className="text-11 text-ink-3 capitalize">{c.category.replace(/-/g, " ")}</div>
-                  <div className="text-13 font-mono">
-                    <span className="text-emerald-300">{c.configured}</span>
-                    <span className="text-ink-3"> / {c.total}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Recommendations */}
           {data.recommendations.length > 0 && (
             <div className="mb-6 rounded-lg bg-bg-panel border border-amber-500/20 p-4">
