@@ -67,13 +67,17 @@ function IntelSection({
   icon,
   status,
   children,
+  onRun,
 }: {
   title: string;
   icon: string;
   status: SectionStatus;
   children: React.ReactNode;
+  onRun?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const onRunRef = useRef(onRun);
+  useEffect(() => { onRunRef.current?.(); }, []);
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
       <button
@@ -155,7 +159,7 @@ function NameVariantSection({ subject, screen }: { subject: Subject; screen: Qui
   );
 
   return (
-    <IntelSection title="Name Variant Engine" icon="🔤" status={status}>
+    <IntelSection onRun={run} title="Name Variant Engine" icon="🔤" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Generate all phonetic / transliteration / patronymic / alias forms of the subject name and flag which ones already hit on current screening.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -273,7 +277,7 @@ function NetworkExpansionSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Network Expansion" icon="🕸️" status={status}>
+    <IntelSection onRun={run} title="Network Expansion" icon="🕸️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map associates, shell companies, and network connections for the subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -378,7 +382,7 @@ function TransactionOverlaySection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Transaction Behavioral Overlay" icon="💹" status={status}>
+    <IntelSection onRun={run} title="Transaction Behavioral Overlay" icon="💹" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Analyze velocity, structuring, and behavioral anomalies in transaction history for this subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -463,7 +467,7 @@ function AdversarialRedTeamSection({ subject, screen: _screen }: { subject: Subj
   }
 
   return (
-    <IntelSection title="Adversarial Red-Team Mode" icon="🎯" status={status}>
+    <IntelSection onRun={run} title="Adversarial Red-Team Mode" icon="🎯" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Challenge the current screening decision by enumerating failure scenarios, warning signs, and required mitigations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -541,7 +545,7 @@ function GeoRiskSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Geopolitical Risk Pulse" icon="🌍" status={status}>
+    <IntelSection onRun={run} title="Geopolitical Risk Pulse" icon="🌍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Fetch active geopolitical risk events for <span className="font-mono text-ink-1">{country || "subject country"}</span>.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -625,7 +629,7 @@ function CorporateRegistrySection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Corporate Registry" icon="🏢" status={status}>
+    <IntelSection onRun={run} title="Corporate Registry" icon="🏢" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify linked companies, political connections, and PEP corporate exposure.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -783,7 +787,7 @@ function DocumentIntelSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Document Intelligence" icon="📄" status={status}>
+    <IntelSection onRun={run} title="Document Intelligence" icon="📄" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Upload a document (PDF, image, DOCX) for AI-powered fraud and authenticity analysis.</div>
         <div className="flex items-center gap-2">
@@ -997,7 +1001,7 @@ function PepNetworkSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="PEP Network Map" icon="👤" status={status}>
+    <IntelSection onRun={run} title="PEP Network Map" icon="👤" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map PEP family members, associates, and linked entities requiring screening.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1087,7 +1091,7 @@ function DispositionPredictorSection({ subject, screen, superBrain }: { subject:
   }
 
   return (
-    <IntelSection title="ML Disposition Predictor" icon="🤖" status={status}>
+    <IntelSection onRun={run} title="ML Disposition Predictor" icon="🤖" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Heuristic ML prediction of likely disposition outcome based on risk profile.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1163,7 +1167,7 @@ function DarkWebBreachSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Dark Web / Breach Monitor" icon="🕵️" status={status}>
+    <IntelSection onRun={run} title="Dark Web / Breach Monitor" icon="🕵️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Check for data breach exposure associated with subject name in breach monitoring corpus.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1242,7 +1246,7 @@ function VesselAircraftSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Vessel & Aircraft Ownership" icon="🚢" status={status}>
+    <IntelSection onRun={run} title="Vessel & Aircraft Ownership" icon="🚢" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">
           Check vessel / aircraft sanctions exposure and ownership chain.
@@ -1302,7 +1306,7 @@ function RealEstateSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Real Estate Registry" icon="🏠" status={status}>
+    <IntelSection onRun={run} title="Real Estate Registry" icon="🏠" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Analyze real estate transaction patterns and ML risk indicators for the subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1381,7 +1385,7 @@ function SanctionsNarrativeSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="UN Panel / OFAC Narrative Mining" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="UN Panel / OFAC Narrative Mining" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Extract narrative intelligence from sanctions lists and run breach analysis with FATF-based mitigations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1459,7 +1463,7 @@ function CrossCasePatternSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Cross-Case Pattern Detection" icon="🔍" status={status}>
+    <IntelSection onRun={run} title="Cross-Case Pattern Detection" icon="🔍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect similar risk profiles across the case store and identify clustering patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1702,7 +1706,7 @@ function IndustryTypologySection({ subject: _subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Industry Typology Matching" icon="📊" status={status}>
+    <IntelSection onRun={run} title="Industry Typology Matching" icon="📊" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Match subject industry to FIU DPMS Sept 2025 typologies and identify applicable red flags.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1902,7 +1906,7 @@ function OsintSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="OSINT Digital Footprint" icon="🌐" status={status}>
+    <IntelSection onRun={run} title="OSINT Digital Footprint" icon="🌐" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Search for digital presence, social profiles, and web intelligence associated with the subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -1953,7 +1957,7 @@ function EmailRepSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Email & Domain Reputation" icon="📧" status={status}>
+    <IntelSection onRun={run} title="Email & Domain Reputation" icon="📧" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Domain age, MX record analysis, disposable email check, and fraud score.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2023,7 +2027,7 @@ function SmartDisambiguateSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Smart Identity Disambiguation" icon="🧬" status={status}>
+    <IntelSection onRun={run} title="Smart Identity Disambiguation" icon="🧬" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Alias deduplication and identity clustering — distinguish true matches from false positives.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2078,7 +2082,7 @@ function IbanRiskSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="IBAN Risk Assessment" icon="🏦" status={status}>
+    <IntelSection onRun={run} title="IBAN Risk Assessment" icon="🏦" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Parse IBAN country code and assess jurisdiction risk, FATF status, and sanctions exposure.</div>
         <input
@@ -2157,7 +2161,7 @@ function SwiftLcSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="SWIFT / LC Analyzer" icon="🏛️" status={status}>
+    <IntelSection onRun={run} title="SWIFT / LC Analyzer" icon="🏛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">SWIFT/BIC lookup, correspondent banking chain analysis, and LC red flag detection.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2222,7 +2226,7 @@ function CryptoTracingSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Crypto Wallet Tracing" icon="₿" status={status}>
+    <IntelSection onRun={run} title="Crypto Wallet Tracing" icon="₿" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Wallet cluster analysis, tainted fund tracing, and exchange attribution.</div>
         <input
@@ -2271,7 +2275,7 @@ function CryptoMixingSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Crypto Mixer / DeFi Exposure" icon="🔀" status={status}>
+    <IntelSection onRun={run} title="Crypto Mixer / DeFi Exposure" icon="🔀" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect mixing service usage, DeFi protocol exposure, and obfuscation techniques.</div>
         <input
@@ -2319,7 +2323,7 @@ function TradeFinanceSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Trade Finance Red Flags" icon="🚢" status={status}>
+    <IntelSection onRun={run} title="Trade Finance Red Flags" icon="🚢" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect TBML patterns: over/under-invoicing, phantom shipments, multiple invoicing.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2367,7 +2371,7 @@ function ShellDetectorSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Shell Company Detector" icon="🐚" status={status}>
+    <IntelSection onRun={run} title="Shell Company Detector" icon="🐚" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Score shell company probability based on structural, director, and geographic indicators.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2424,7 +2428,7 @@ function HawalaDetectorSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Hawala / Informal Value Transfer" icon="💱" status={status}>
+    <IntelSection onRun={run} title="Hawala / Informal Value Transfer" icon="💱" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect hawala network indicators and informal value transfer system usage.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2465,7 +2469,7 @@ function LayeringDetectorSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Layering / Loan-Back Detection" icon="🔄" status={status}>
+    <IntelSection onRun={run} title="Layering / Loan-Back Detection" icon="🔄" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify loan-back schemes, round-trip transactions, and complex layering patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2506,7 +2510,7 @@ function CashIntensiveSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Cash-Intensive Business Overlay" icon="💵" status={status}>
+    <IntelSection onRun={run} title="Cash-Intensive Business Overlay" icon="💵" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess whether the subject operates in a cash-intensive sector and overlay associated ML risks.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2547,7 +2551,7 @@ function GhostCompanySection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Ghost / Dormant Company Detection" icon="👻" status={status}>
+    <IntelSection onRun={run} title="Ghost / Dormant Company Detection" icon="👻" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect dormant company reactivation, shelf company indicators, and sudden activity spikes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2592,7 +2596,7 @@ function SanctionsIndirectSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Secondary Sanctions Exposure" icon="⚡" status={status}>
+    <IntelSection onRun={run} title="Secondary Sanctions Exposure" icon="⚡" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess secondary and indirect sanctions exposure through network links and correspondent relationships.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2633,7 +2637,7 @@ function SanctionsExposureMapperSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Sanctions Regime Mapper" icon="🗺️" status={status}>
+    <IntelSection onRun={run} title="Sanctions Regime Mapper" icon="🗺️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map exposure across OFAC, EU, UN, UK HMT, OFSI, and UAE TFS sanctions regimes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2674,7 +2678,7 @@ function DeRiskingImpactSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="De-risking Impact Assessment" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="De-risking Impact Assessment" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess sector and jurisdiction de-risking exposure and correspondent banking withdrawal risk.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2715,7 +2719,7 @@ function RmiAssessSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Conflict Minerals / CAHRA Exposure" icon="⛏️" status={status}>
+    <IntelSection onRun={run} title="Conflict Minerals / CAHRA Exposure" icon="⛏️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess conflict mineral supply chain exposure and CAHRA (Conflict-Affected High-Risk Areas) linkages.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2756,7 +2760,7 @@ function JurisdictionIntelSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Jurisdiction Intelligence" icon="🌍" status={status}>
+    <IntelSection onRun={run} title="Jurisdiction Intelligence" icon="🌍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Country risk profile, FATF status, regulatory regime, and AML/CFT framework assessment.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2797,7 +2801,7 @@ function SanctionsEvasionSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Sanctions Evasion Typology" icon="🚨" status={status}>
+    <IntelSection onRun={run} title="Sanctions Evasion Typology" icon="🚨" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Match subject against known sanctions evasion typologies: name morphing, front companies, re-routing.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2857,7 +2861,7 @@ function SarNarrativeSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="SAR Narrative Generator" icon="📝" status={status}>
+    <IntelSection onRun={run} title="SAR Narrative Generator" icon="📝" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Auto-draft a FATF R.20-compliant Suspicious Activity Report narrative from subject evidence.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2927,7 +2931,7 @@ function EddQuestionnaireSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="EDD Questionnaire / Interrogation Script" icon="🎤" status={status}>
+    <IntelSection onRun={run} title="EDD Questionnaire / Interrogation Script" icon="🎤" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Generate tailored Enhanced Due Diligence interview questions based on subject risk profile.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -2990,7 +2994,7 @@ function MlroAdvisorSection() {
   }
 
   return (
-    <IntelSection title="MLRO Regulatory Q&A" icon="🧠" status={status}>
+    <IntelSection onRun={run} title="MLRO Regulatory Q&A" icon="🧠" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Ask the MLRO AI advisor any AML/CFT regulatory question — FATF, CBUAE, FCA, FinCEN.</div>
         <textarea
@@ -3042,7 +3046,7 @@ function OsintSynthesisSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="OSINT Synthesis Narrative" icon="🔮" status={status}>
+    <IntelSection onRun={run} title="OSINT Synthesis Narrative" icon="🔮" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Synthesize all OSINT intelligence into a coherent narrative profile for the subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3091,7 +3095,7 @@ function TypologyMatchSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Typology / Peer Comparison" icon="📊" status={status}>
+    <IntelSection onRun={run} title="Typology / Peer Comparison" icon="📊" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Compare subject risk profile to similar peers in the same industry and jurisdiction.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3155,7 +3159,7 @@ function ReScreenSchedulerSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Predictive Re-Screen Scheduler" icon="📆" status={status}>
+    <IntelSection onRun={run} title="Predictive Re-Screen Scheduler" icon="📆" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Predict optimal re-screening date based on historical screening patterns and risk evolution.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3196,7 +3200,7 @@ function FourEyesSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Four-Eyes Review" icon="👁️" status={status}>
+    <IntelSection onRun={run} title="Four-Eyes Review" icon="👁️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Submit the current screening for mandatory second-reviewer approval under four-eyes control.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3239,7 +3243,7 @@ function WhistleblowerSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Whistleblower Tip" icon="📣" status={status}>
+    <IntelSection onRun={run} title="Whistleblower Tip" icon="📣" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Submit a confidential whistleblower tip linked to this subject. Anonymised and encrypted at rest.</div>
         <textarea
@@ -3286,7 +3290,7 @@ function InterAgencyReferralSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Inter-Agency Referral" icon="🏛️" status={status}>
+    <IntelSection onRun={run} title="Inter-Agency Referral" icon="🏛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Initiate a referral to UAEFIU, CBUAE, police, or customs as appropriate for the risk profile.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3327,7 +3331,7 @@ function InvestigationExpandSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Investigation Expansion" icon="🔭" status={status}>
+    <IntelSection onRun={run} title="Investigation Expansion" icon="🔭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Expand the investigation to all linked subjects, associates, and counterparties identified in the network.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3381,7 +3385,7 @@ function EntityGraphSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Director Network" icon="🕸️" status={status}>
+    <IntelSection onRun={run} title="Director Network" icon="🕸️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map director network, all linked companies, and cross-jurisdiction registrations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3453,7 +3457,7 @@ function OwnershipSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="UBO Ownership Chain" icon="🔗" status={status}>
+    <IntelSection onRun={run} title="UBO Ownership Chain" icon="🔗" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Trace Ultimate Beneficial Owner chain and identify all ownership tiers above 25%.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3494,7 +3498,7 @@ function TrustStructuresSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Trust / Foundation Structures" icon="🏰" status={status}>
+    <IntelSection onRun={run} title="Trust / Foundation Structures" icon="🏰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify trust, nominee, and foundation arrangements that may obscure beneficial ownership.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3535,7 +3539,7 @@ function NomineeRiskSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Nominee Director / Shareholder Risk" icon="🎭" status={status}>
+    <IntelSection onRun={run} title="Nominee Director / Shareholder Risk" icon="🎭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Score risk of nominee arrangements concealing true controllers and beneficial owners.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3572,7 +3576,7 @@ function EocnListSection() {
   }
 
   return (
-    <IntelSection title="EOCN / Regulatory Licence Check" icon="📋" status={status}>
+    <IntelSection onRun={run} title="EOCN / Regulatory Licence Check" icon="📋" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Check EOCN registration, regulatory licences, and Designated Non-Financial Business status.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3613,7 +3617,7 @@ function CorruptionRiskSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Corruption / Bribery Risk" icon="💰" status={status}>
+    <IntelSection onRun={run} title="Corruption / Bribery Risk" icon="💰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess corruption and bribery risk using CPI scores, sector exposure, and political connections.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3654,7 +3658,7 @@ function HighNetWorthSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="High Net Worth Indicators" icon="💎" status={status}>
+    <IntelSection onRun={run} title="High Net Worth Indicators" icon="💎" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify HNW wealth indicators, unexplained wealth flags, and source of wealth signals.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3695,7 +3699,7 @@ function SowCalculatorSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Source of Wealth Calculator" icon="📐" status={status}>
+    <IntelSection onRun={run} title="Source of Wealth Calculator" icon="📐" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Calculate plausible source of wealth based on known career history, business activities, and disclosed assets.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3747,7 +3751,7 @@ function AssetTracerSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Asset Tracer" icon="🗺️" status={status}>
+    <IntelSection onRun={run} title="Asset Tracer" icon="🗺️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Trace assets across jurisdictions: real estate, vehicles, bank accounts, beneficial interests.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3808,7 +3812,7 @@ function FreezeSeizureSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Freeze / Seizure Order" icon="🔒" status={status}>
+    <IntelSection onRun={run} title="Freeze / Seizure Order" icon="🔒" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Initiate asset freeze or seizure order workflow with CBUAE / UAEFIU / judicial authority.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3853,7 +3857,7 @@ function EvidencePackSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Evidence Pack Report" icon="📦" status={status}>
+    <IntelSection onRun={run} title="Evidence Pack Report" icon="📦" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Generate a court-ready expert witness evidence pack compiling all intelligence findings.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3894,7 +3898,7 @@ function LegalPrivilegeSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Legal Privilege Checker" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="Legal Privilege Checker" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assert or check legal professional privilege over documents and communications in the case.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -3936,7 +3940,7 @@ function DomainIntelSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Domain Intelligence" icon="🌐" status={status}>
+    <IntelSection onRun={run} title="Domain Intelligence" icon="🌐" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Email domain reputation, MX records, WHOIS age, registrar analysis, and fraud scoring.</div>
         <input
@@ -3988,7 +3992,7 @@ function InsiderThreatSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Insider Threat Screen" icon="🔍" status={status}>
+    <IntelSection onRun={run} title="Insider Threat Screen" icon="🔍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Screen for insider threat indicators: unusual access patterns, financial stress, behavioural anomalies.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4029,7 +4033,7 @@ function HumanTraffickingSection({ subject }: { subject: Subject }) {
   }
 
   return (
-    <IntelSection title="Human Trafficking Risk Indicators" icon="🚨" status={status}>
+    <IntelSection onRun={run} title="Human Trafficking Risk Indicators" icon="🚨" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify human trafficking risk indicators: recruitment patterns, exploitation venues, financial flows.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4059,7 +4063,7 @@ function BehavioralBaselineSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Behavioral Anomaly Baseline" icon="🧠" status={status}>
+    <IntelSection onRun={run} title="Behavioral Anomaly Baseline" icon="🧠" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Establish a behavioral baseline for the subject type and flag deviations — transaction timing, counterparty diversity, channel mix, geographic spread vs. declared profile.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4087,7 +4091,7 @@ function LinguisticRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Linguistic Deception Markers" icon="🗣️" status={status}>
+    <IntelSection onRun={run} title="Linguistic Deception Markers" icon="🗣️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Analyse written statements, narrative text, and KYC documentation for linguistic deception markers: vagueness, hedging, temporal inconsistency, SCAN indicators.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4115,7 +4119,7 @@ function LifestyleWealthGapSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Lifestyle / Wealth Gap Analysis" icon="💸" status={status}>
+    <IntelSection onRun={run} title="Lifestyle / Wealth Gap Analysis" icon="💸" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Compare declared income and source of wealth against observable lifestyle indicators (property, vehicles, travel, social media) to surface unexplained wealth gaps.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4143,7 +4147,7 @@ function PlausibilityScoreSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Plausibility Score Engine" icon="🎯" status={status}>
+    <IntelSection onRun={run} title="Plausibility Score Engine" icon="🎯" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">10-dimension common-sense plausibility scoring: Does the business model make sense? Are stated relationships credible? Does the risk profile fit the declared activity?</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4171,7 +4175,7 @@ function AssociationTimelineSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Association Timeline" icon="📅" status={status}>
+    <IntelSection onRun={run} title="Association Timeline" icon="📅" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Date-sorted timeline of significant events involving the subject and their associates, highlighting proximity to sanctions designations, enforcement actions, and typology events.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4199,7 +4203,7 @@ function ConfidenceDecaySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Confidence Decay Calculator" icon="📉" status={status}>
+    <IntelSection onRun={run} title="Confidence Decay Calculator" icon="📉" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Model how confidence in the current risk assessment degrades over time as KYC data ages. Outputs decay curve, current confidence level, and recommended re-review date.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4227,7 +4231,7 @@ function ExaminerSimSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Examiner Simulation" icon="🔬" status={status}>
+    <IntelSection onRun={run} title="Examiner Simulation" icon="🔬" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Simulate how a CBUAE / DFSA / FATF examiner would scrutinise this case: what questions they would ask, what evidence gaps they would flag, what findings they would record.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4255,7 +4259,7 @@ function BenfordSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Benford's Law Analysis" icon="📊" status={status}>
+    <IntelSection onRun={run} title="Benford's Law Analysis" icon="📊" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Apply Benford&apos;s Law to transaction amounts to detect structured / artificial round-number patterns that deviate significantly from natural first-digit distribution.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4285,7 +4289,7 @@ function LitigationScanSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Litigation Scan" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="Litigation Scan" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Scan for civil and criminal proceedings, court judgments, arbitration awards, insolvency filings, and enforcement actions across primary jurisdictions.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4313,7 +4317,7 @@ function EnforcementActionsSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Enforcement Actions History" icon="🚨" status={status}>
+    <IntelSection onRun={run} title="Enforcement Actions History" icon="🚨" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Retrieve FCA, SEC, CBUAE, DFSA, FinCEN, and other regulatory enforcement actions, fines, prohibition orders, and deferred prosecution agreements.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4341,7 +4345,7 @@ function TaxAuthoritySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Tax Authority Flags" icon="🏦" status={status}>
+    <IntelSection onRun={run} title="Tax Authority Flags" icon="🏦" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Check CRS/FATCA reportable account flags, tax haven usage, TIN inconsistencies, offshore disclosure scheme participation, and treaty abuse patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4369,7 +4373,7 @@ function ExtraditionMapSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Extradition Treaty Map" icon="🗺️" status={status}>
+    <IntelSection onRun={run} title="Extradition Treaty Map" icon="🗺️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map extradition treaty status between subject&apos;s jurisdiction and UAE / key partner states. Flag no-treaty or non-cooperative jurisdictions used as safe havens.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4397,7 +4401,7 @@ function StatuteLimitationsSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Statute of Limitations" icon="⏱️" status={status}>
+    <IntelSection onRun={run} title="Statute of Limitations" icon="⏱️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Calculate applicable limitation periods for AML/CFT offences across relevant jurisdictions. Flag near-expiry situations that create urgency for filing or asset freezing.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4425,7 +4429,7 @@ function RegArbitrageSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Regulatory Arbitrage Detection" icon="⚡" status={status}>
+    <IntelSection onRun={run} title="Regulatory Arbitrage Detection" icon="⚡" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify regulatory arbitrage patterns: deliberate jurisdiction selection to exploit lighter AML/CFT regimes, licensing gaps, or supervisory blind spots.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4453,7 +4457,7 @@ function AuditReadinessSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Audit Readiness Score" icon="📋" status={status}>
+    <IntelSection onRun={run} title="Audit Readiness Score" icon="📋" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Score how audit-ready this case file is (0-100). Checks documentation completeness, evidence quality, rationale clarity, and CBUAE / DFSA examination expectations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4481,7 +4485,7 @@ function AmlProgrammeGapSection() {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="AML Programme Gap Analysis" icon="🔎" status={status}>
+    <IntelSection onRun={run} title="AML Programme Gap Analysis" icon="🔎" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify gaps in the AML/CFT programme against FATF Recommendations, CBUAE standards, and DNFBP obligations. Prioritised remediation roadmap.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4511,7 +4515,7 @@ function ArtMarketSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Art Market Risk" icon="🎨" status={status}>
+    <IntelSection onRun={run} title="Art Market Risk" icon="🎨" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess art market AML risk: provenance opacity, valuation anomalies, anonymous buyer patterns, free-port storage, and known high-value art laundering typologies.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4539,7 +4543,7 @@ function LuxuryGoodsSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Luxury Goods Risk" icon="💎" status={status}>
+    <IntelSection onRun={run} title="Luxury Goods Risk" icon="💎" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect luxury goods value transfer risk: high-value watches, jewellery, handbags, and Dubai re-export patterns used as portable stores of illicit wealth.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4567,7 +4571,7 @@ function AviationIntelSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Aviation & Aircraft Intel" icon="✈️" status={status}>
+    <IntelSection onRun={run} title="Aviation & Aircraft Intel" icon="✈️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Aircraft ownership registration, sanctioned airport routing patterns, private jet financing structures, and charter company beneficial ownership analysis.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4595,7 +4599,7 @@ function FreeZoneRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="UAE Free Zone Risk" icon="🏭" status={status}>
+    <IntelSection onRun={run} title="UAE Free Zone Risk" icon="🏭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">UAE free zone risk profiling: JAFZA, DMCC, RAKEZ, UAQ, SAIF Zone, IFZA risk ratings, supervisory oversight quality, and known typologies per zone.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4623,7 +4627,7 @@ function GamingRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Gaming / Gambling Risk" icon="🎰" status={status}>
+    <IntelSection onRun={run} title="Gaming / Gambling Risk" icon="🎰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess gaming and gambling sector risk: chip dumping, smurfing via online platforms, unlicensed operators, and match-fixing proceeds laundering patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4651,7 +4655,7 @@ function GoldPreciousMetalsSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Gold & Precious Metals Risk" icon="🥇" status={status}>
+    <IntelSection onRun={run} title="Gold & Precious Metals Risk" icon="🥇" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">UAE LBMA/DMCC gold chain heuristics: conflict gold sourcing, refinery by-pass, cash-for-gold smurfing, suspicious provenance declarations, and DMCC compliance flags.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4679,7 +4683,7 @@ function NpoRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="NPO / Charity Risk" icon="🤝" status={status}>
+    <IntelSection onRun={run} title="NPO / Charity Risk" icon="🤝" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Non-profit and charitable organisation AML/CFT/TF risk: donor anonymity, geographic diversion, links to designated entities, registration status, and FATF Recommendation 8 indicators.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4707,7 +4711,7 @@ function VaspRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="VASP / Crypto Exchange Risk" icon="🔐" status={status}>
+    <IntelSection onRun={run} title="VASP / Crypto Exchange Risk" icon="🔐" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Virtual Asset Service Provider risk: VARA licensing status, Travel Rule compliance, dark market exposure, unhosted wallet concentration, and FATF R.15 compliance gaps.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4735,7 +4739,7 @@ function EnvironmentalCrimeSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Environmental Crime Risk" icon="🌿" status={status}>
+    <IntelSection onRun={run} title="Environmental Crime Risk" icon="🌿" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Environmental crime proceeds: illegal logging, wildlife trafficking, carbon credit fraud, illegal waste disposal, and green-washing scam indicators per FATF guidance.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4765,7 +4769,7 @@ function SixDegreesSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Six Degrees to Sanctions" icon="🕸️" status={status}>
+    <IntelSection onRun={run} title="Six Degrees to Sanctions" icon="🕸️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Graph traversal to find the shortest path between the subject and any OFAC / UN / EU / HMT sanctioned entity. Flag hop count, path, and intermediate nodes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4793,7 +4797,7 @@ function HiddenControllerSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Hidden Controller Detection" icon="🎭" status={status}>
+    <IntelSection onRun={run} title="Hidden Controller Detection" icon="🎭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify concealed control mechanisms: nominee directors, power of attorney chains, trust-behind-trust structures, and informal control arrangements masking the true beneficial owner.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4821,7 +4825,7 @@ function ClusterContaminationSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Cluster Contamination Analysis" icon="🔴" status={status}>
+    <IntelSection onRun={run} title="Cluster Contamination Analysis" icon="🔴" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Model risk propagation across linked entity cluster: if one node is designated/convicted, how does risk spread through the network and which other entities are at risk of contamination?</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4849,7 +4853,7 @@ function TimingCorrelationSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Timing Correlation Engine" icon="⏰" status={status}>
+    <IntelSection onRun={run} title="Timing Correlation Engine" icon="⏰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Correlate corporate actions (incorporation, capital changes, director changes) against external sanctions events, regulatory announcements, and enforcement timelines to detect evasion timing patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4877,7 +4881,7 @@ function DarkMoneyFlowSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Dark Money Flow Analysis" icon="🌑" status={status}>
+    <IntelSection onRun={run} title="Dark Money Flow Analysis" icon="🌑" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Structural capacity estimation for dark money flows: shell chain depth, opacity index, correspondent banking pathways, and estimated value-at-risk through the entity structure.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4905,7 +4909,7 @@ function BeneficialOwnerVerifySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Beneficial Owner Verification" icon="✅" status={status}>
+    <IntelSection onRun={run} title="Beneficial Owner Verification" icon="✅" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Cross-verify declared beneficial owners against registry data, LEI records, corporate filings, and open-source intelligence. Flag discrepancies and unverified ownership claims.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4933,7 +4937,7 @@ function PepCorporateNexusSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="PEP Corporate Nexus" icon="🏛️" status={status}>
+    <IntelSection onRun={run} title="PEP Corporate Nexus" icon="🏛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map PEP connections to corporate structures: companies where PEPs hold directorships, shareholdings, or are beneficial owners — including family members and close associates.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4961,7 +4965,7 @@ function CrossBorderWireSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Cross-Border Wire Analysis" icon="🌐" status={status}>
+    <IntelSection onRun={run} title="Cross-Border Wire Analysis" icon="🌐" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Analyse cross-border wire transfer patterns: corridor risk, SWIFT message anomalies, R-16 round-trip indicators, and high-risk correspondent banking pathway detection.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -4989,7 +4993,7 @@ function CtrStructuringSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="CTR Structuring Detection" icon="💰" status={status}>
+    <IntelSection onRun={run} title="CTR Structuring Detection" icon="💰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect cash transaction report structuring (smurfing): sub-threshold splitting, multiple-branch coordination, periodic clustering just below AED 40,000 / USD 10,000 reporting thresholds.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5019,7 +5023,7 @@ function CaseAnalogySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Case Analogy Matching" icon="🔗" status={status}>
+    <IntelSection onRun={run} title="Case Analogy Matching" icon="🔗" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Tag-based similarity matching against real enforcement cases, FIU typologies, and regulatory precedents. Surfaces the most analogous historical cases and their outcomes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5047,7 +5051,7 @@ function EvidenceSufficiencySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Evidence Sufficiency Checker" icon="✔️" status={status}>
+    <IntelSection onRun={run} title="Evidence Sufficiency Checker" icon="✔️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Evaluate whether the evidence assembled is sufficient to support the proposed disposition (Clear / Monitor / EDD / STR / Reject). Checklist against FATF and UAE filing standards.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5075,7 +5079,7 @@ function RedlineMonitorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Redline Monitor" icon="🔴" status={status}>
+    <IntelSection onRun={run} title="Redline Monitor" icon="🔴" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Define absolute redline conditions (sanctions match, PEP + cash + high-risk jurisdiction, etc.) that trigger immediate escalation regardless of overall risk score.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5103,7 +5107,7 @@ function ProbabilityTreeSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Probability Tree Builder" icon="🌳" status={status}>
+    <IntelSection onRun={run} title="Probability Tree Builder" icon="🌳" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Bayesian scenario probability tree: branch the case into explanatory hypotheses (legitimate / suspicious / high-risk), assign prior/posterior probabilities, and identify the most likely true scenario.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5131,7 +5135,7 @@ function AutonomousInvestigateSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Autonomous Investigation" icon="🤖" status={status}>
+    <IntelSection onRun={run} title="Autonomous Investigation" icon="🤖" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">AI-driven autonomous investigation: multi-step reasoning chain, hypothesis formation, evidence gathering plan, gap identification, and structured intelligence report — without human direction at each step.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5159,7 +5163,7 @@ function CompetitorScreenSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Peer / Competitor Screen" icon="👥" status={status}>
+    <IntelSection onRun={run} title="Peer / Competitor Screen" icon="👥" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Screen peer entities in the same industry/sector. If competitors are flagged, assess contagion risk. If the subject is notably cleaner than peers, assess whether that itself is anomalous.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5187,7 +5191,7 @@ function AdverseClassifySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Adverse Media Classifier" icon="📰" status={status}>
+    <IntelSection onRun={run} title="Adverse Media Classifier" icon="📰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">AI classification of adverse media hits: fraud, corruption, sanctions, terrorism financing, drug trafficking, human trafficking — with relevance scoring and false-positive probability.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5215,7 +5219,7 @@ function FalsePositiveOptimizerSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="False Positive Optimizer" icon="🎛️" status={status}>
+    <IntelSection onRun={run} title="False Positive Optimizer" icon="🎛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Estimate false positive probability for this case: common name disambiguation, legitimate business explanations, base-rate calibration, and recommended tuning actions to reduce future false positives.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5243,7 +5247,7 @@ function MixedFundsSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Mixed Funds Detector" icon="🫧" status={status}>
+    <IntelSection onRun={run} title="Mixed Funds Detector" icon="🫧" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect commingling of legitimate and illicit funds: blending ratios, co-mingling through operating accounts, legitimate business revenue used to disguise proceeds of crime.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5271,7 +5275,7 @@ function MlPredicateSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="ML Predicate Offence Classifier" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="ML Predicate Offence Classifier" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">AI classification of the most likely predicate offence(s) underlying suspected money laundering: fraud, corruption, drug trafficking, tax evasion, cybercrime — with probability distribution.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5299,7 +5303,7 @@ function EsgRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="ESG Risk Overlay" icon="🌱" status={status}>
+    <IntelSection onRun={run} title="ESG Risk Overlay" icon="🌱" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Environmental, Social, and Governance risk overlay: UNPRI red flags, ESG controversies, greenwashing indicators, forced labour supply chain exposure, and governance failures correlated with AML risk.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5327,7 +5331,7 @@ function CustomerLifecycleSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Customer Lifecycle Risk" icon="🔄" status={status}>
+    <IntelSection onRun={run} title="Customer Lifecycle Risk" icon="🔄" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map the full customer lifecycle risk profile: onboarding quality, CDD refresh history, risk tier changes, incident history, and predicted future risk trajectory based on entity type and activity pattern.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5355,7 +5359,7 @@ function OnboardingRiskTierSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Onboarding Risk Tier" icon="🎚️" status={status}>
+    <IntelSection onRun={run} title="Onboarding Risk Tier" icon="🎚️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assign the correct onboarding risk tier (Standard / Enhanced / PEP / Prohibited) based on all available intelligence, and generate the minimum required CDD documentation checklist.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5383,7 +5387,7 @@ function CddAdequacySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="CDD Adequacy Check" icon="📁" status={status}>
+    <IntelSection onRun={run} title="CDD Adequacy Check" icon="📁" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Assess completeness and adequacy of current Customer Due Diligence file against the required standard for the assigned risk tier. Highlight document gaps, expiries, and re-verification obligations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5411,7 +5415,7 @@ function PepEddGeneratorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="PEP Enhanced Due Diligence Generator" icon="📝" status={status}>
+    <IntelSection onRun={run} title="PEP Enhanced Due Diligence Generator" icon="📝" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Generate a bespoke EDD framework for PEP subjects: senior management approval checklist, source of wealth verification plan, transaction monitoring parameters, and annual review triggers.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5439,7 +5443,7 @@ function VendorRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Vendor / Third-Party Risk" icon="🤝" status={status}>
+    <IntelSection onRun={run} title="Vendor / Third-Party Risk" icon="🤝" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Third-party and vendor risk assessment: supply chain AML exposure, sub-contractor screening, outsourced function risk, and third-party due diligence gaps per CBUAE and FATF guidance.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5469,7 +5473,7 @@ function SyntheticIdentitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Synthetic Identity Detector" icon="🧬" status={status}>
+    <IntelSection onRun={run} title="Synthetic Identity Detector" icon="🧬" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">AI detection of fabricated or composite identities blending real data elements — synthetic DOB, inconsistent document numbers, address–name–DOB mismatch patterns associated with identity fraud.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5497,7 +5501,7 @@ function PhoneIntelSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Phone Number Intelligence" icon="📱" status={status}>
+    <IntelSection onRun={run} title="Phone Number Intelligence" icon="📱" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Carrier, country of registration, VoIP / burner phone flag, SIM-swap history, dark web exposure, and GSMA fraud-signal checks for all phone numbers associated with the subject.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5525,7 +5529,7 @@ function SocialMediaIdentitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Social Media Identity Analysis" icon="📲" status={status}>
+    <IntelSection onRun={run} title="Social Media Identity Analysis" icon="📲" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Account age, follower authenticity scores, narrative consistency across platforms, botnet markers, political messaging patterns, and lifestyle disclosures that contradict declared profile.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5553,7 +5557,7 @@ function AddressHistorySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Address History Timeline" icon="📍" status={status}>
+    <IntelSection onRun={run} title="Address History Timeline" icon="📍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Chronological address chain — gap detection, address reuse across unrelated entities, high-risk address clusters (registered agents, mail drops, known fraud addresses).</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5581,7 +5585,7 @@ function PassportDocRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Passport / ID Document Risk" icon="🪪" status={status}>
+    <IntelSection onRun={run} title="Passport / ID Document Risk" icon="🪪" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Document type risk scoring, issuing authority integrity, forged document pattern indicators, INTERPOL lost/stolen travel document (SLTD) database proximity check.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5609,7 +5613,7 @@ function NationalityRiskMatrixSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Nationality Risk Matrix" icon="🌍" status={status}>
+    <IntelSection onRun={run} title="Nationality Risk Matrix" icon="🌍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Multi-nationality risk scoring, stateless person flags, citizenship-by-investment programme risk, dual-national PEP exposure, and passport shopping patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5637,7 +5641,7 @@ function DigitalShadowSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Digital Shadow Profile" icon="👤" status={status}>
+    <IntelSection onRun={run} title="Digital Shadow Profile" icon="👤" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Aggregated digital footprint across data brokers, leaked credential databases, Pastebin, dark web marketplaces, and public records — surfaces undisclosed identifiers and associations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5665,7 +5669,7 @@ function AliasNetworkMapperSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Alias Network Mapper" icon="🗂️" status={status}>
+    <IntelSection onRun={run} title="Alias Network Mapper" icon="🗂️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Graph of all known aliases cross-referenced against other subjects in the case database — surfaces shared aliases, alias reuse across entities, and alias clusters pointing to the same individual.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5693,7 +5697,7 @@ function CorporateIdentityTheftSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Corporate Identity Theft" icon="🏴‍☠️" status={status}>
+    <IntelSection onRun={run} title="Corporate Identity Theft" icon="🏴‍☠️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect use of stolen or cloned company registration details — lookalike company names, recycled registration numbers, hijacked dormant entities, and impersonation of legitimate businesses.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5721,7 +5725,7 @@ function NameFrequencySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Name Frequency Score" icon="📏" status={status}>
+    <IntelSection onRun={run} title="Name Frequency Score" icon="📏" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">How common is this name in the relevant population? Calibrates false-positive probability for screening hits — rare names warrant high confidence, common names require additional disambiguation.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5749,7 +5753,7 @@ function EntityDualitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Entity Duality Detector" icon="🔀" status={status}>
+    <IntelSection onRun={run} title="Entity Duality Detector" icon="🔀" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect the same individual operating simultaneously as both natural person and corporate entity — used to create self-dealing structures, obscure beneficial ownership, or multiply risk-rating thresholds.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5779,7 +5783,7 @@ function FatfGreyBlackSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="FATF Grey / Black List Exposure" icon="⚠️" status={status}>
+    <IntelSection onRun={run} title="FATF Grey / Black List Exposure" icon="⚠️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Real-time FATF ICRG listing status across all subject jurisdictions — Jurisdictions Under Increased Monitoring (grey list) and High-Risk Jurisdictions Subject to a Call for Action (black list).</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5807,7 +5811,7 @@ function KleptocracyProximitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Kleptocracy Network Proximity" icon="👑" status={status}>
+    <IntelSection onRun={run} title="Kleptocracy Network Proximity" icon="👑" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Closeness to known kleptocracy networks — post-Soviet oligarchs, West African grand corruption, Southeast Asian political dynasties. Uses OCCRP, ICIJ, and OpenSanctions graph data.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5835,7 +5839,7 @@ function StateOwnedEnterpriseSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="State-Owned Enterprise Risk" icon="🏛️" status={status}>
+    <IntelSection onRun={run} title="State-Owned Enterprise Risk" icon="🏛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">SOE ownership/control chain analysis — implicit government backing, sovereign immunity considerations, sanctions risk via state links, and cross-border SOE investment risk per FATF guidance.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5863,7 +5867,7 @@ function DualUseExportSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Dual-Use Export Control Risk" icon="🚀" status={status}>
+    <IntelSection onRun={run} title="Dual-Use Export Control Risk" icon="🚀" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">ECCN / Military List control screening, prohibited end-user and end-use risk, transshipment hub exposure, and UNSCR 1540 procurement network proximity for WMD-related dual-use goods.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5891,7 +5895,7 @@ function WarCrimesFinanceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="War Crimes / Atrocity Finance Risk" icon="⚔️" status={status}>
+    <IntelSection onRun={run} title="War Crimes / Atrocity Finance Risk" icon="⚔️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Proximity to entities designated for atrocity financing per UNSC resolutions, ICC arrest warrants, Kimberley Process violations, and conflict-zone resource extraction financing.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5919,7 +5923,7 @@ function PoliticalInstabilitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Political Instability Index" icon="🌋" status={status}>
+    <IntelSection onRun={run} title="Political Instability Index" icon="🌋" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Composite country instability score combining Fragile States Index, EIU Political Risk, V-Dem democracy index, and ACLED conflict data — predicts AML risk trajectory from deteriorating governance.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5947,7 +5951,7 @@ function FiuActivitySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Financial Intelligence Unit Activity" icon="🔭" status={status}>
+    <IntelSection onRun={run} title="Financial Intelligence Unit Activity" icon="🔭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">FIU STR/SAR submission intensity by jurisdiction, current examiner focus areas, recent typology advisories, and cross-border FIU intelligence sharing capacity per Egmont Group data.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -5975,7 +5979,7 @@ function DiplomaticRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Diplomatic / Embassy Risk" icon="🏴" status={status}>
+    <IntelSection onRun={run} title="Diplomatic / Embassy Risk" icon="🏴" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Sovereign immunity exploitation risk, diplomatic pouch misuse typologies, embassy account abuse patterns, and accredited diplomat involvement in AML/CFT evasion schemes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6003,7 +6007,7 @@ function OligarchOverlaySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Oligarch Overlay" icon="💼" status={status}>
+    <IntelSection onRun={run} title="Oligarch Overlay" icon="💼" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Proximity to named oligarchs across OFSI Oligarch Register, OFAC SDN, EU Annex lists, and HMT Asset Freeze. Includes family and close-associate network expansion.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6031,7 +6035,7 @@ function ProliferationFinanceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Proliferation Finance Screen" icon="☢️" status={status}>
+    <IntelSection onRun={run} title="Proliferation Finance Screen" icon="☢️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">WMD-related procurement network screening per UNSCR 1540, FATF Recommendation 7. Identifies front companies, financial intermediaries, and transshipment nodes linked to proliferation programmes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6059,7 +6063,7 @@ function NcctMonitorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="NCCT / High-Risk Jurisdiction Monitor" icon="🚩" status={status}>
+    <IntelSection onRun={run} title="NCCT / High-Risk Jurisdiction Monitor" icon="🚩" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Live FATF, FATF-Style Regional Body (MENAFATF, ESAAMLG, GIABA), and OFAC country-level alerts for non-cooperative territories — triggers enhanced monitoring obligations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6087,7 +6091,7 @@ function DeforestationFinanceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Deforestation Finance Risk" icon="🌳" status={status}>
+    <IntelSection onRun={run} title="Deforestation Finance Risk" icon="🌳" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Links to illegal deforestation concessions (Amazon, Congo Basin, Borneo), agribusiness money laundering, illegal timber trade chains, and land-grabbing proceeds typologies.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6117,7 +6121,7 @@ function RoundTripDetectorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Round-Trip Transaction Detector" icon="🔁" status={status}>
+    <IntelSection onRun={run} title="Round-Trip Transaction Detector" icon="🔁" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect funds leaving the subject via one channel/jurisdiction and returning through a different one — classic layering technique used to create the appearance of legitimate income.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6145,7 +6149,7 @@ function MirrorTradingSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Mirror Trading Detection" icon="🪞" status={status}>
+    <IntelSection onRun={run} title="Mirror Trading Detection" icon="🪞" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Simultaneous buy/sell of the same asset in different markets to move value across borders — the Deutsche Bank typology. Detects linked buy/sell orders, broker pairs, and currency conversion patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6173,7 +6177,7 @@ function OverUnderInvoicingSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Over / Under Invoicing (TBML)" icon="📄" status={status}>
+    <IntelSection onRun={run} title="Over / Under Invoicing (TBML)" icon="📄" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Trade invoice price anomalies benchmarked against WTO / UN Comtrade reference prices. Flags systematic over-invoicing (capital flight) or under-invoicing (duty evasion / value transfer).</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6201,7 +6205,7 @@ function VelocityAnomalySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Velocity Anomaly Engine" icon="⚡" status={status}>
+    <IntelSection onRun={run} title="Velocity Anomaly Engine" icon="⚡" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Transaction frequency spikes, dormant-then-suddenly-active patterns, burst behaviour around key dates, and intra-day velocity anomalies compared to entity-type baseline.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6229,7 +6233,7 @@ function PrepaidCardAbuseSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Prepaid Card / E-Money Abuse" icon="💳" status={status}>
+    <IntelSection onRun={run} title="Prepaid Card / E-Money Abuse" icon="💳" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Prepaid card loading/unloading patterns, IBAN-less value transfer, cross-border e-money remittance abuse, anonymous e-wallet clustering, and AML Directive prepaid threshold breaches.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6257,7 +6261,7 @@ function PayrollStructuringSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Salary / Payroll Structuring" icon="💵" status={status}>
+    <IntelSection onRun={run} title="Salary / Payroll Structuring" icon="💵" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Payroll used as a layering vehicle: fictitious employees, inflated salaries to PEP family members, salary-splitting to evade DPMSR thresholds, and reverse-payroll money laundering schemes.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6285,7 +6289,7 @@ function InsuranceFraudSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Insurance Fraud Indicators" icon="🛡️" status={status}>
+    <IntelSection onRun={run} title="Insurance Fraud Indicators" icon="🛡️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Premium structuring, early surrender of policies for cash, annuity conversion abuse, single-premium insurance as placement vehicle, and suspicious claims patterns associated with ML proceeds.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6313,7 +6317,7 @@ function CarbonCreditFraudSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Carbon Credit / Emissions Fraud" icon="🌫️" status={status}>
+    <IntelSection onRun={run} title="Carbon Credit / Emissions Fraud" icon="🌫️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Carbon credit double-counting, phantom offset project registration, EU ETS VAT carousel fraud, and voluntary carbon market integrity issues used to launder proceeds or evade tax obligations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6341,7 +6345,7 @@ function MicroTransactionStructuringSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Micro-Transaction Structuring" icon="🔢" status={status}>
+    <IntelSection onRun={run} title="Micro-Transaction Structuring" icon="🔢" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">High-volume sub-threshold micro-payments aggregating to significant sums — fintech/neobank payment rail abuse, peer-to-peer platform structuring, and API-driven automated structuring patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6369,7 +6373,7 @@ function CorrespondentAccountMisuseSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Correspondent Account Misuse" icon="🏛️" status={status}>
+    <IntelSection onRun={run} title="Correspondent Account Misuse" icon="🏛️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Nested correspondent banking, payable-through account abuse, SWIFT message anomalies, high-risk respondent bank relationships, and black-hole jurisdiction routing patterns.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6397,7 +6401,7 @@ function FundFlowReconstructionSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Fund Flow Reconstruction" icon="🗺️" status={status}>
+    <IntelSection onRun={run} title="Fund Flow Reconstruction" icon="🗺️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Automated tracing of fund movements across multiple hops and entities — reconstructs the full financial trail from placement through layering to integration, identifying each step in the laundering cycle.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6425,7 +6429,7 @@ function PensionFundRiskSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Pension / Retirement Fund Risk" icon="🏦" status={status}>
+    <IntelSection onRun={run} title="Pension / Retirement Fund Risk" icon="🏦" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Pension liberation fraud, defined-benefit fund raiding, early withdrawal patterns, pension fund misappropriation by trustees, and SIPP investment into illiquid/fraudulent assets.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6453,7 +6457,7 @@ function InvoiceFactoringFraudSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Invoice Factoring Fraud" icon="📋" status={status}>
+    <IntelSection onRun={run} title="Invoice Factoring Fraud" icon="📋" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Duplicate invoice factoring, phantom receivables, circular factoring across related entities, and trade finance facility abuse used to extract cash or layer illicit proceeds through legitimate-looking commercial transactions.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6481,7 +6485,7 @@ function AtmWithdrawalPatternSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="ATM / Cash Withdrawal Pattern" icon="🏧" status={status}>
+    <IntelSection onRun={run} title="ATM / Cash Withdrawal Pattern" icon="🏧" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">ATM geographic dispersion patterns, mule network withdrawal signatures, coordinated multi-card simultaneous withdrawals, and just-below-limit ATM transaction series indicative of money mule activity.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6511,7 +6515,7 @@ function MultiModelConsensusSection({ subject, superBrain }: { subject: Subject;
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Multi-Model Consensus Score" icon="🧮" status={status}>
+    <IntelSection onRun={run} title="Multi-Model Consensus Score" icon="🧮" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Run the subject through multiple independent AI reasoning passes and aggregate results. Flag divergence between models as epistemic uncertainty — high divergence = case needs human review.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6539,7 +6543,7 @@ function ContradictoryEvidenceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Contradictory Evidence Resolver" icon="⚔️" status={status}>
+    <IntelSection onRun={run} title="Contradictory Evidence Resolver" icon="⚔️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">AI identifies conflicting facts in the case file — inconsistent dates, contradictory ownership claims, competing source narratives — and proposes resolutions with confidence scores.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6567,7 +6571,7 @@ function CounterfactualScenarioSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Counterfactual Scenario Builder" icon="🔄" status={status}>
+    <IntelSection onRun={run} title="Counterfactual Scenario Builder" icon="🔄" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">&quot;What if this subject is entirely legitimate?&quot; — builds the strongest possible counter-narrative to the current risk assessment, testing whether the suspicious hypothesis is actually the most parsimonious explanation.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6595,7 +6599,7 @@ function HypothesisGeneratorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Automated Hypothesis Generator" icon="💡" status={status}>
+    <IntelSection onRun={run} title="Automated Hypothesis Generator" icon="💡" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Generates a ranked list of explanatory hypotheses for all observed anomalies — from most to least probable — with the evidence that supports and contradicts each hypothesis.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6623,7 +6627,7 @@ function ChainOfThoughtAuditSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Chain-of-Thought Audit Trail" icon="🔍" status={status}>
+    <IntelSection onRun={run} title="Chain-of-Thought Audit Trail" icon="🔍" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Step-by-step explainability log for every AI conclusion in the case: what information was considered, what was weighted, what was discarded, and why each inference was drawn — for regulator and audit review.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6651,7 +6655,7 @@ function AiEthicsComplianceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="AI Ethics Compliance Check" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="AI Ethics Compliance Check" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Bias audit on the AI-generated risk score — protected-characteristic exposure check, demographic disparity analysis, and compliance with UAE AI Ethics guidelines and GDPR Article 22 automated decision-making obligations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6679,7 +6683,7 @@ function HallucinationCalibrationSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Hallucination / Confidence Calibration" icon="🎯" status={status}>
+    <IntelSection onRun={run} title="Hallucination / Confidence Calibration" icon="🎯" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect overconfident AI assertions not supported by evidence. Calibrates stated vs. actual reliability — flags AI conclusions that are expressed with high confidence but rest on thin or unverified data.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6707,7 +6711,7 @@ function AdversarialStressTestSection({ subject, screen }: { subject: Subject; s
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Adversarial Stress Test" icon="💣" status={status}>
+    <IntelSection onRun={run} title="Adversarial Stress Test" icon="💣" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Try to break the current risk conclusion using the strongest possible counter-arguments — plays the role of defence counsel challenging every element of the prosecution hypothesis before it reaches the MLRO.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6735,7 +6739,7 @@ function NarrativeConsistencySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Narrative Consistency Checker" icon="📖" status={status}>
+    <IntelSection onRun={run} title="Narrative Consistency Checker" icon="📖" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Cross-checks all text narratives in the case file for internal contradictions — dates, names, amounts, and stated facts that conflict with each other or with external data sources.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6763,7 +6767,7 @@ function RegulatoryQaChallengerSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Regulatory Q&A Challenger" icon="🥊" status={status}>
+    <IntelSection onRun={run} title="Regulatory Q&A Challenger" icon="🥊" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">A second AI model plays devil&apos;s advocate — challenges every MLRO conclusion, tests the legal basis for each finding, and flags any conclusions that would not survive regulatory scrutiny before sign-off.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6793,7 +6797,7 @@ function BoardAmlReportSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Board-Level AML Report Generator" icon="📊" status={status}>
+    <IntelSection onRun={run} title="Board-Level AML Report Generator" icon="📊" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Auto-generate board / senior management AML report — KPIs, risk heat map, typology exposure, resource gaps, and regulatory horizon — formatted to CBUAE and DFSA board governance expectations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6821,7 +6825,7 @@ function RegExamPrepSection() {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Regulatory Exam Prep Simulator" icon="🎓" status={status}>
+    <IntelSection onRun={run} title="Regulatory Exam Prep Simulator" icon="🎓" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Simulate a CBUAE / DFSA on-site examination: pre-emptive finding list, likely document requests, expected interview questions, and remediation actions to complete before the examiner arrives.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6849,7 +6853,7 @@ function PolicyComplianceCheckerSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Policy Compliance Auto-Checker" icon="✅" status={status}>
+    <IntelSection onRun={run} title="Policy Compliance Auto-Checker" icon="✅" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Verify this case was handled in accordance with internal AML policy — escalation timelines, mandatory fields, approval requirements, documentation standards — and flag any policy breaches for remediation.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6877,7 +6881,7 @@ function PrecedentCaseLawSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Precedent Case Law Analyzer" icon="⚖️" status={status}>
+    <IntelSection onRun={run} title="Precedent Case Law Analyzer" icon="⚖️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Match to the most relevant UAE, UK, US, and EU court judgments and enforcement decisions for AML/CFT matters. Surfaces applicable legal precedents, sentencing benchmarks, and recovery rates.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6905,7 +6909,7 @@ function TrainingGapSection() {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Training Gap Identifier" icon="📚" status={status}>
+    <IntelSection onRun={run} title="Training Gap Identifier" icon="📚" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Identify analyst skill gaps from case handling patterns — typologies missed, decisions reversed on review, SLA breaches — and generate a targeted training plan aligned to ACAMS, ICA, and CBUAE certification standards.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6933,7 +6937,7 @@ function GovernanceFailureSection() {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Governance Failure Pattern Detector" icon="🏚️" status={status}>
+    <IntelSection onRun={run} title="Governance Failure Pattern Detector" icon="🏚️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Detect signs of institutional governance failure: tone-from-top breakdown, three-lines-of-defence collapse, systemic override of compliance controls, and cultural red flags that precede major regulatory enforcement actions.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6961,7 +6965,7 @@ function ScenarioStressNarrativeSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Scenario-Based Risk Narrative" icon="🎭" status={status}>
+    <IntelSection onRun={run} title="Scenario-Based Risk Narrative" icon="🎭" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Stress-test the risk score against three macro scenarios: geopolitical shock (new sanctions regime), political change (government falls), and sanctions expansion (new designations). How does the risk profile change under each?</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -6989,7 +6993,7 @@ function CrossBorderRegulatoryMappingSection({ subject }: { subject: Subject }) 
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Cross-Border Regulatory Mapping" icon="🗺️" status={status}>
+    <IntelSection onRun={run} title="Cross-Border Regulatory Mapping" icon="🗺️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Map which regulators have jurisdiction over this subject and what specific AML/CFT obligations apply in each — filing requirements, reporting thresholds, CDD standards, and cross-border information sharing obligations.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7017,7 +7021,7 @@ function AutomatedStrDraftSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Automated STR Drafting Assistant" icon="📝" status={status}>
+    <IntelSection onRun={run} title="Automated STR Drafting Assistant" icon="📝" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Full draft STR/SAR narrative with all mandatory goAML fields pre-populated — subject details, transaction summaries, grounds for suspicion, and supporting narrative — ready for MLRO review and submission.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7047,7 +7051,7 @@ function CausalInferenceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Causal Inference Engine" icon="🔗" status={status}>
+    <IntelSection onRun={run} title="Causal Inference Engine" icon="🔗" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Distinguish correlation from causation in the evidence chain. Uses do-calculus reasoning to identify which risk factors are truly causal versus merely correlating, and isolates the true root drivers of the risk score.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7075,7 +7079,7 @@ function MonteCarloSimSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Monte Carlo Risk Simulation" icon="🎲" status={status}>
+    <IntelSection onRun={run} title="Monte Carlo Risk Simulation" icon="🎲" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">10,000-run Monte Carlo simulation on the risk score — output: confidence interval, 5th/95th percentile range, tail risk probability, and sensitivity analysis showing which input variables drive the most variance.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7103,7 +7107,7 @@ function GameTheorySection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Game Theory / Strategic Behaviour" icon="♟️" status={status}>
+    <IntelSection onRun={run} title="Game Theory / Strategic Behaviour" icon="♟️" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Model how a rational, informed bad actor would behave given this subject&apos;s profile, resources, and exposure. Predicts likely next moves, evasion strategies, and asset concealment approaches — informs monitoring priorities.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7131,7 +7135,7 @@ function TemporalReasoningSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Temporal Reasoning Engine" icon="⏳" status={status}>
+    <IntelSection onRun={run} title="Temporal Reasoning Engine" icon="⏳" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Check all dates in the case for chronological consistency — impossible sequences (company incorporated after first transaction), suspicious precision (dates that are too round), and timeline gaps that suggest document fabrication.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7159,7 +7163,7 @@ function MultiAgentDebateSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Multi-Agent AI Debate" icon="🎤" status={status}>
+    <IntelSection onRun={run} title="Multi-Agent AI Debate" icon="🎤" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Two AI agents argue prosecution vs. defence on this case. Agent A builds the strongest suspicious hypothesis; Agent B mounts the strongest defence. A structured verdict emerges from the debate — more robust than single-model analysis.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7187,7 +7191,7 @@ function InductivePatternSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Inductive Pattern Recognition" icon="🧩" status={status}>
+    <IntelSection onRun={run} title="Inductive Pattern Recognition" icon="🧩" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Surface latent patterns across all evidence items that no single rule covers — inductive reasoning from specific observations to general conclusions, identifying emergent risk signals invisible to rule-based systems.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7215,7 +7219,7 @@ function AbductiveInferenceSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Abductive Inference Engine" icon="🔮" status={status}>
+    <IntelSection onRun={run} title="Abductive Inference Engine" icon="🔮" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">&quot;Best explanation&quot; reasoning — given all available evidence, what is the single most probable true account? Inference to the best explanation, ranking competing hypotheses by explanatory power and parsimony.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7243,7 +7247,7 @@ function RiskCrystallizationSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Risk Crystallization Predictor" icon="💎" status={status}>
+    <IntelSection onRun={run} title="Risk Crystallization Predictor" icon="💎" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Forecast when and how latent risk is most likely to crystallise into actual harm — timeline prediction, trigger event identification, probability-weighted scenario calendar, and early warning indicators to watch.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7271,7 +7275,7 @@ function RegulatoryPenaltyEstimatorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Regulatory Penalty Estimator" icon="💰" status={status}>
+    <IntelSection onRun={run} title="Regulatory Penalty Estimator" icon="💰" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Estimate potential regulatory fines, sanctions, and penalties if the risk crystallises and is reported late or not at all — benchmarked against comparable enforcement actions from CBUAE, FCA, FinCEN, and OFAC.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
@@ -7299,7 +7303,7 @@ function DeductiveLogicValidatorSection({ subject }: { subject: Subject }) {
     } catch (e) { if (mountedRef.current) setError(String(e)); if (mountedRef.current) setStatus("error"); }
   }
   return (
-    <IntelSection title="Deductive Logic Validator" icon="🧮" status={status}>
+    <IntelSection onRun={run} title="Deductive Logic Validator" icon="🧮" status={status}>
       <div className="space-y-3">
         <div className="text-11 text-ink-3">Verify that every conclusion in the case file follows logically from its stated premises. Flag circular reasoning, unsupported leaps of inference, and conclusions that rest on assumptions rather than stated evidence.</div>
         <RunBtn onClick={run} disabled={status === "loading"} />
