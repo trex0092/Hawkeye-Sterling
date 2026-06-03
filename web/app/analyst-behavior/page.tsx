@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { toCsv, downloadCsv } from "@/lib/client/csv";
 import type { UEBAReport, UEBAAlert, AnalystProfile, UEBASeverity } from "../../../src/monitoring/analyst-behavior";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -146,6 +147,14 @@ export default function AnalystBehaviorPage() {
   const totalAlerts = report?.alerts.length ?? 0;
   const criticalAlerts = report?.alerts.filter((a) => a.severity === "critical").length ?? 0;
 
+  const exportCsv = () => {
+    const rows = (report?.alerts ?? []).map((a) => [a.at, a.severity, a.ruleId, a.actor, a.title, a.detail]);
+    downloadCsv(
+      `ueba-alerts-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv(["at", "severity", "rule_id", "actor", "title", "detail"], rows),
+    );
+  };
+
   return (
     <ModuleLayout asanaModule="analyst-behavior" asanaLabel="UEBA Alerts" engineLabel="UEBA Engine">
       <ModuleHero
@@ -199,13 +208,22 @@ export default function AnalystBehaviorPage() {
             </button>
           ))}
         </div>
-        <button
-          onClick={() => void load(windowDays)}
-          disabled={loading}
-          className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Loading…" : "↺ Refresh"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCsv}
+            disabled={totalAlerts === 0}
+            className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-40 transition-colors"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => void load(windowDays)}
+            disabled={loading}
+            className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Loading…" : "↺ Refresh"}
+          </button>
+        </div>
       </div>
 
       {loading && !data ? (
