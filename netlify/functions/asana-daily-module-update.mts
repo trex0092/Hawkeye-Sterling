@@ -6,22 +6,24 @@
 //
 // Keeps the cron a dumb tickler — all Asana logic lives in the API route
 // (one place, covered by the same env gate). No-op (logs) when the
-// ASANA_DAILY_CRON_TOKEN / ASANA_TOKEN env vars are unset.
+// HAWKEYE_CRON_TOKEN / ASANA_TOKEN env vars are unset.
 //
 // Schedule: 06:00 UTC daily = 10:00 Asia/Dubai — start of the UAE
 // business day, so the MLRO sees a fresh per-module status each morning.
 //
-// Auth: ASANA_DAILY_CRON_TOKEN (server-to-server bearer).
+// Auth: HAWKEYE_CRON_TOKEN — the shared server-to-server cron bearer
+// already used by the other scheduled functions (e.g. freeze-sla-monitor),
+// so no new env var is needed.
 
 import type { Config } from "@netlify/functions";
 
 export default async (_req: Request): Promise<Response> => {
-  const token = process.env["ASANA_DAILY_CRON_TOKEN"];
+  const token = process.env["HAWKEYE_CRON_TOKEN"];
   const base =
     process.env["URL"] ?? process.env["DEPLOY_PRIME_URL"] ?? "https://hawkeye-sterling.netlify.app";
 
   if (!token) {
-    console.warn("[asana-daily] ASANA_DAILY_CRON_TOKEN unset — skipping daily module attestation.");
+    console.warn("[asana-daily] HAWKEYE_CRON_TOKEN unset — skipping daily module attestation.");
     return new Response("skipped: no cron token", { status: 200 });
   }
 
