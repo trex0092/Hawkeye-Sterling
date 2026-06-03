@@ -6,7 +6,7 @@ import {
   type AdverseKeywordGroup,
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
-import { searchAllNewsWithStatus } from "@/lib/intelligence/newsAdapters";
+import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
@@ -1055,6 +1055,74 @@ async function fetchOceaniaFeeds(subjectName: string, variants: string[], stats?
   return fetchRegionalFeeds(OCEANIA_FEEDS, subjectName, variants, "oceania-feed", stats);
 }
 
+// ── GDELT Doc 2.0 — keyless global news API ─────────────────────────────────
+// A second, fully independent live source so adverse-media retrieval no longer
+// depends on Google News alone. GDELT indexes worldwide press in 100+ languages,
+// requires no API key, and returns JSON. Results are mapped into the adapter
+// NewsArticle shape so they flow through the existing fuzzy-scoring / severity /
+// source-tiering pipeline with no duplicated logic.
+const GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc";
+const GDELT_TIMEOUT_MS = 2_500;
+
+function parseGdeltDate(seendate: string | undefined): string {
+  // GDELT seendate format: "20240115T120000Z" → ISO 8601.
+  if (!seendate || !/^\d{8}T\d{6}Z$/.test(seendate)) return new Date().toISOString();
+  const y = seendate.slice(0, 4), mo = seendate.slice(4, 6), d = seendate.slice(6, 8);
+  const h = seendate.slice(9, 11), mi = seendate.slice(11, 13), s = seendate.slice(13, 15);
+  return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
+}
+
+async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<NewsArticle[]> {
+  // Phrase-quote the query so a multi-token name is matched as a unit rather
+  // than OR'd across tokens (which would flood the result with noise).
+  const url =
+    `${GDELT_DOC_API}?format=json&mode=ArtList&maxrecords=75&sort=DateDesc` +
+    `&query=${encodeURIComponent(`"${q}"`)}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GDELT_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { headers: FEED_HEADERS, signal: controller.signal } as RequestInit);
+    noteFeedOutcome(stats, res.ok);
+    if (!res.ok) {
+      console.warn(`[hawkeye] news-search/gdelt HTTP ${res.status}`);
+      return [];
+    }
+    // GDELT returns text/plain on a rejected query and JSON on success.
+    const text = await res.text();
+    let data: { articles?: Array<Record<string, unknown>> };
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.warn("[hawkeye] news-search/gdelt non-JSON response (query likely rejected)");
+      return [];
+    }
+    if (!Array.isArray(data.articles)) return [];
+    const str = (v: unknown): string => (typeof v === "string" ? v : "");
+    return data.articles
+      .map((a): NewsArticle | null => {
+        const link = str(a["url"]);
+        const title = str(a["title"]);
+        if (!link || !title) return null;
+        return {
+          source: "gdelt",
+          outlet: str(a["domain"]),
+          title,
+          url: link,
+          publishedAt: parseGdeltDate(str(a["seendate"]) || undefined),
+          snippet: "",
+          language: str(a["language"]).slice(0, 2).toLowerCase() || "en",
+        };
+      })
+      .filter((a): a is NewsArticle => a !== null);
+  } catch (err) {
+    noteFeedOutcome(stats, false);
+    console.warn("[hawkeye] news-search/gdelt threw:", err);
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function tokens(title: string): Set<string> {
   return new Set(
     title
@@ -1340,7 +1408,10 @@ export async function GET(req: Request): Promise<NextResponse> {
     const africaSearch       = fetchAfricaFeeds(q, variants, feedStats);
     const latamSearch        = fetchLatamFeeds(q, variants, feedStats);
     const oceaniaSearch      = fetchOceaniaFeeds(q, variants, feedStats);
-    const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles] = await Promise.all([
+    // GDELT — keyless global second source. Runs in the same timebox so it adds
+    // no latency; provides live coverage even when Google News throttles us.
+    const gdeltSearch        = fetchGdeltArticles(q, feedStats);
+    const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles, gdeltArticles] = await Promise.all([
       Promise.race([fanOut, timebox]),
       adapterSearch,
       investigativeSearch,
@@ -1348,6 +1419,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       africaSearch,
       latamSearch,
       oceaniaSearch,
+      gdeltSearch,
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -1380,8 +1452,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       const key = oa.link || oa.title;
       if (!merged.has(key)) merged.set(key, oa);
     }
-    // Convert NewsArticle (adapter shape) → Article (internal shape) and merge.
-    for (const na of adapterResult.articles) {
+    // Convert NewsArticle (adapter + GDELT shape) → Article (internal shape)
+    // and merge. GDELT results ride the same enrichment path as the keyed
+    // adapters, so they get identical fuzzy scoring, severity and tiering.
+    for (const na of [...adapterResult.articles, ...gdeltArticles]) {
       const key = na.url || na.title;
       if (merged.has(key)) continue;
       const fullText = `${na.title} ${na.snippet ?? ""}`;
