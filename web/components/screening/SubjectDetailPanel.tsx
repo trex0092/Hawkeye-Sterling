@@ -18,36 +18,23 @@ import { formatDMY } from "@/lib/utils/dateFormat";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
-import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
 import {
-  BrainAdversarial,
   BrainTypologyMap,
-  BrainKeywordExplorer,
   BrainCapabilityAudit,
   BrainChainOfCustody,
-  BrainRegimeExposure,
   BrainScenarioMatcher,
   BrainBiasCheck,
-  BrainInputValidator,
   BrainModuleWeights,
   BrainVerdictConsistency,
-  BrainCrossReference,
   BrainCoherenceCheck,
   BrainRedFlagCombinator,
-  BrainPolicyCitation,
   BrainFATFAlignment,
   BrainSanctionsPathway,
   BrainSoWPlausibility,
-  BrainAnomalyDetector,
   BrainSourceTriangulation,
-
   BrainTypologyConfidence,
   BrainJurisdictionClusters,
   BrainRegulatoryPredictor,
-  BrainContextualEnrichment,
-  BrainChainAttribution,
-  BrainDefensibility,
-  BrainSignalInterference,
   BrainEscalationLadder,
   BrainDataCoverage,
   BrainCoverageGap,
@@ -3261,7 +3248,6 @@ function SuperBrainPanel({
       <BrainSoWPlausibility result={r} />
       <BrainTypologyMap result={r} />
       <BrainScenarioMatcher result={r} />
-      <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
       <BrainCoverageGap result={r} />
