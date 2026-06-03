@@ -7,8 +7,6 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
-  Kpi,
-  KpiGrid,
   Card,
   ActionRow,
   Btn,
@@ -287,11 +285,6 @@ export default function TransactionMonitorPage() {
   };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
-  const alerts = txs.filter((t) => t.behaviouralFlags.length > 0).length;
-  const reportable = txs.filter((t) => {
-    const amt = Number.parseFloat(t.amount.replace(/,/g, "")) || 0;
-    return t.channel === "Cash (DPMS)" && amt >= THRESHOLD_AED;
-  }).length;
 
   const valid = counterparty.trim().length > 0 && parsedAmount > 0;
 
@@ -462,12 +455,6 @@ export default function TransactionMonitorPage() {
           { label: "STR Cases", href: "/str-cases", icon: "📁" },
         ]}
       />
-
-      <KpiGrid cols={3}>
-            <Kpi value={txs.length} label="Transactions" tone="brand" />
-            <Kpi value={alerts} label="Alerts" tone="amber" />
-            <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
-      </KpiGrid>
 
       {tagError && (
         <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">

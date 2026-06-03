@@ -64,7 +64,7 @@ export default function PKycPage() {
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const [subjects, setSubjects] = useState<PKycSubject[]>([]);
-  const [stats, setStats] = useState<PKycStats | null>(null);
+  const [, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -212,22 +212,7 @@ export default function PKycPage() {
         />
       </div>
 
-      {/* Stats bar */}
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          {[
-            { label: "Enrolled",       value: stats.total,         cls: "text-blue" },
-            { label: "Active",         value: stats.active,        cls: "text-green" },
-            { label: "Pending Review", value: stats.pendingReview, cls: "text-amber" },
-            { label: "Due Now",        value: stats.dueNow,        cls: "text-brand" },
-          ].map((s) => (
-            <div key={s.label} className="bg-panel border border-hair-2 rounded-xl px-4 py-3">
-              <div className={`font-mono text-28 font-semibold ${s.cls}`}>{s.value}</div>
-              <div className="text-11 uppercase tracking-wide-4 text-ink-2 mt-0.5">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Stat tiles removed */}
 
       {/* Run result banner */}
       {runResult && (
