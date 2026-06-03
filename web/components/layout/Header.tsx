@@ -80,6 +80,17 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable decision audit trail" },
     ],
   },
+  {
+    title: "Intelligence",
+    items: [
+      { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Live regulatory & 7-language adverse-media feed" },
+      { label: "🧠 AI Brain", href: "/intelligence-hub?tab=brain", hint: "Brain Intel · Workbench · Telemetry · Analytics" },
+      { label: "🛡️ Security", href: "/intelligence-hub?tab=security-audit", hint: "AI code analysis · dependency scan · red-team" },
+      { label: "📊 Executive Dashboards", href: "/intelligence-hub?tab=board-dashboard", hint: "Board dashboard · KRI dashboard" },
+      { label: "📋 System & Reference", href: "/intelligence-hub?tab=system-card", hint: "System card · API docs · status · governance" },
+      { label: "👁️ Analyst Behavior", href: "/intelligence-hub?tab=analyst-behavior", hint: "Analyst activity & behaviour monitoring" },
+    ],
+  },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -194,7 +205,7 @@ export function Header() {
                   aria-hidden="true"
                 />
                 <div
-                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[1140px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
+                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[940px] lg:w-[1320px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4"
                   style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 >
                   {MORE_GROUPS.map((g) => (
