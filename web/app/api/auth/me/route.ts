@@ -13,18 +13,39 @@ import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 export async function GET(): Promise<NextResponse> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value ?? "";
+  // Distinguish "no cookie was sent at all" from "cookie was sent but
+  // failed verification" so the client can keep the "Your session has
+  // expired" modal silent for unauthenticated visitors. Without this split,
+  // every page load on a browser that has never logged in (or whose cookie
+  // was cleared) pops the expiry modal — the operator sees it "all the time"
+  // even though there was no session to expire.
+  if (!token) {
+    return NextResponse.json(
+      { ok: false, error: "Not authenticated", code: "no_session" },
+      { status: 401 },
+    );
+  }
   const session = verifySession(token);
   if (!session) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Not authenticated", code: "session_invalid" },
+      { status: 401 },
+    );
   }
 
   const users = await loadUsers();
   const user = users.find((u) => u.id === session.userId);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "Session invalidated — please log in again" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Session invalidated — please log in again", code: "session_invalidated" },
+      { status: 401 },
+    );
   }
   if (!user.active) {
-    return NextResponse.json({ ok: false, error: "Account deactivated — contact your administrator" }, { status: 403 });
+    return NextResponse.json(
+      { ok: false, error: "Account deactivated — contact your administrator", code: "account_deactivated" },
+      { status: 403 },
+    );
   }
 
   // Reject sessions issued before the most recent password change. This
@@ -34,7 +55,7 @@ export async function GET(): Promise<NextResponse> {
   if ((session.pwv ?? 0) !== (user.pwVersion ?? 0)) {
     const isSecure = process.env["NODE_ENV"] !== "development";
     const res = NextResponse.json(
-      { ok: false, error: "Session invalidated — please log in again" },
+      { ok: false, error: "Session invalidated — please log in again", code: "session_invalidated" },
       { status: 401 },
     );
     res.cookies.set(SESSION_COOKIE, "", {

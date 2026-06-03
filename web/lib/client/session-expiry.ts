@@ -23,6 +23,7 @@
 //   - Excludes /api/auth/me/logout-style negative results — only event-
 //     fires once per page lifetime (resets on navigation).
 
+import { isEmbeddedDocument } from "./is-embedded";
 import { verifySessionDead } from "./verify-session";
 
 const EVENT_NAME = "hawkeye:session-expired" as const;
@@ -82,6 +83,11 @@ let alreadyDispatched = false;
 /** Manually fire the session-expired event. */
 export function reportSessionExpired(): void {
   if (alreadyDispatched) return;
+  // Belt-and-braces gate: even if a future caller bypasses the watcher /
+  // interceptor and calls reportSessionExpired() directly inside an iframe,
+  // we suppress here. The parent frame owns the auth UX — re-prompting
+  // inside each iframe would produce N stacked modals.
+  if (isEmbeddedDocument()) return;
   if (typeof window !== "undefined") {
     const here = window.location.pathname;
     if (EXCLUDED_LOCATIONS.some((p) => here === p || here.startsWith(`${p}/`))) {
@@ -105,6 +111,12 @@ export function reportSessionExpired(): void {
  * actually session expiry. */
 export function installSessionExpiryInterceptor(): void {
   if (typeof window === "undefined") return;
+  // Embedded iframes (Intel-Feed inline preview, etc.) inherit the same
+  // Next.js bundle, so this interceptor would otherwise patch the iframe's
+  // window.fetch too. Any 401 hitting an /api/* call from inside the iframe
+  // would then debounce-verify and fire the modal even though the parent
+  // frame already has its own watcher. Skip install entirely when embedded.
+  if (isEmbeddedDocument()) return;
   const w = window as PatchableWindow;
   if (w[PATCHED_FLAG]) return;
   w[PATCHED_FLAG] = true;
