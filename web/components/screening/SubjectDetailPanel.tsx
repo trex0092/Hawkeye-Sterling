@@ -3252,26 +3252,15 @@ function SuperBrainPanel({
       <BrainTypologyConfidence result={r} />
       <BrainJurisdictionClusters result={r} />
       <BrainRegulatoryPredictor result={r} />
-      <BrainContextualEnrichment result={r} />
-      <BrainChainAttribution result={r} />
-      <BrainDefensibility result={r} subjectName={subjectName} />
-      <BrainSignalInterference result={r} />
       <BrainEscalationLadder result={r} />
-      <BrainDecomposition result={r} />
       <BrainVerdictConsistency result={r} />
       <BrainCoherenceCheck result={r} subjectName={subjectName} />
       <BrainBiasCheck result={r} />
-      <BrainAnomalyDetector result={r} />
       <BrainRedFlagCombinator result={r} />
       <BrainSanctionsPathway result={r} />
       <BrainSoWPlausibility result={r} />
       <BrainTypologyMap result={r} />
       <BrainScenarioMatcher result={r} />
-      <BrainRegimeExposure result={r} />
-      <BrainAdversarial result={r} subjectName={subjectName} />
-      <BrainKeywordExplorer result={r} />
-      <BrainCrossReference result={r} />
-      <BrainInputValidator result={r} subjectName={subjectName} />
       <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
