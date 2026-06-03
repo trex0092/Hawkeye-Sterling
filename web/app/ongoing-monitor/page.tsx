@@ -484,8 +484,9 @@ export default function OngoingMonitorPage() {
               type="button"
               onClick={() => { void runAiMonitor(); }}
               disabled={monitorAlertsLoading || subjects.length === 0}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1.5 text-11 font-semibold px-3 py-1.5 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 disabled:opacity-40 transition-colors"
             >
+              <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" style={{ animation: "live-pulse 2s ease-in-out infinite" }} />
               {monitorAlertsLoading ? "Scanning…" : "✦AI"}
             </button>
           </div>
