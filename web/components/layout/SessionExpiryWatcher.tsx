@@ -20,11 +20,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { pushToast } from "@/lib/toast-bus";
+import { isEmbeddedDocument } from "@/lib/client/is-embedded";
 import {
   installSessionExpiryInterceptor,
   SESSION_EXPIRED_EVENT,
   reportSessionExpired,
 } from "@/lib/client/session-expiry";
+
+// Delay before re-checking /api/auth/me after a first 401 on the proactive
+// path. Mirrors VERIFY_DEBOUNCE_MS in session-expiry.ts: short enough that
+// a real expiry prompts quickly, long enough to swallow transient 401s
+// (route-level auth misconfig, brief cookie-jar races on first paint, etc.)
+// that would otherwise pop the modal on an unrelated blip.
+const PROACTIVE_VERIFY_DEBOUNCE_MS = 800;
 
 const WARN_AT_SECS = [15 * 60, 5 * 60] as const;
 
@@ -48,13 +56,23 @@ export function SessionExpiryWatcher() {
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
 
     // (1) Proactive path: read sessionExp from /api/auth/me. If THIS call
-    // 401s, the session is already dead — fire the modal immediately
-    // instead of staying silent like the prior implementation did.
+    // 401s with a real session-invalidation code, fire the modal immediately.
+    // If the 401 is "no_session" (no cookie was ever sent — operator is not
+    // signed in), stay silent: re-popping "Your session has expired" on a
+    // browser that never had one is what produced the "modal every page
+    // load" complaint.
     fetch("/api/auth/me", { cache: "no-store" })
       .then(async (r) => {
         if (dead) return null;
         if (r.status === 401 || r.status === 403) {
-          reportSessionExpired();
+          let code: string | undefined;
+          try {
+            const body = (await r.json()) as { code?: unknown };
+            if (typeof body?.code === "string") code = body.code;
+          } catch {
+            /* no JSON body — treat as a legacy 401 with no code, see below */
+          }
+          if (code !== "no_session") reportSessionExpired();
           return null;
         }
         try {

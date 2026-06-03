@@ -5,18 +5,34 @@ const stubFetch = (impl: typeof fetch): void => {
   vi.stubGlobal("fetch", impl);
 };
 
+const jsonResponse = (status: number, body: unknown): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("verifySessionDead", () => {
-  it("returns true when /api/auth/me returns 401", async () => {
-    stubFetch(async () => new Response(null, { status: 401 }));
+  it("returns true when /api/auth/me returns 401 with a real-invalidation code", async () => {
+    stubFetch(async () => jsonResponse(401, { ok: false, code: "session_invalid" }));
     expect(await verifySessionDead()).toBe(true);
   });
 
-  it("returns true when /api/auth/me returns 403", async () => {
-    stubFetch(async () => new Response(null, { status: 403 }));
+  it("returns true when /api/auth/me returns 403 (deactivated account)", async () => {
+    stubFetch(async () => jsonResponse(403, { ok: false, code: "account_deactivated" }));
+    expect(await verifySessionDead()).toBe(true);
+  });
+
+  it("returns false on 401 with code:no_session (operator was never signed in — no modal)", async () => {
+    stubFetch(async () => jsonResponse(401, { ok: false, code: "no_session" }));
+    expect(await verifySessionDead()).toBe(false);
+  });
+
+  it("returns true on a legacy 401 with no JSON body (back-compat)", async () => {
+    stubFetch(async () => new Response(null, { status: 401 }));
     expect(await verifySessionDead()).toBe(true);
   });
 
