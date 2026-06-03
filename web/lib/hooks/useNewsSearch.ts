@@ -17,6 +17,16 @@ export interface NewsArticle {
   lang: string;
   sourceTier?: "tier1" | "tier2" | "tier3" | "unknown";
   sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "other";
+  // Distinct outlets that independently reported the same story (preserved
+  // through cross-source clustering). Surfaced for elevated-risk subjects.
+  corroboratingSources?: Array<{
+    title: string;
+    link: string;
+    source: string;
+    pubDate: string;
+    sourceTier?: "tier1" | "tier2" | "tier3" | "unknown";
+    severity: NewsArticle["severity"];
+  }>;
 }
 
 export interface NewsDossier {

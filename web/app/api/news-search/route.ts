@@ -107,6 +107,18 @@ interface Article {
   sourceAuthority?: "established" | "new" | "unknown";  // authority proxy based on tier lists
   paywallLimited?: boolean;  // true when article description indicates a paywall
   recencyWeight?: number;    // multiplier applied to this article's severity weight
+  // Distinct-source coverage of the SAME underlying story, preserved when
+  // clusterArticles() collapses cross-outlet restatements into one rep. Lets
+  // the UI disclose up to N independent sources for elevated-risk subjects
+  // (positive in sanctions AND adverse media) — corroboration evidence.
+  corroboratingSources?: Array<{
+    title: string;
+    link: string;
+    source: string;
+    pubDate: string;
+    sourceTier: Article["sourceTier"];
+    severity: Article["severity"];
+  }>;
 }
 
 // ── Source credibility tiers ────────────────────────────────────────────────
@@ -1142,8 +1154,27 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 function tierOrder(t: string): number { return t === "tier1" ? 3 : t === "tier2" ? 2 : 1; }
 
+// Max distinct-source restatements retained per cluster for corroboration
+// disclosure. 12 leaves headroom above the UI's 10-source elevated cap while
+// keeping the payload bounded.
+const MAX_CORROBORATING_SOURCES = 12;
+
 function clusterArticles(articles: Article[]): Article[] {
-  const clusters: Array<{ rep: Article; tokens: Set<string>; sources: Set<string> }> = [];
+  const clusters: Array<{
+    rep: Article;
+    tokens: Set<string>;
+    sources: Set<string>;
+    // Full per-distinct-source records of the absorbed restatements.
+    members: Array<NonNullable<Article["corroboratingSources"]>[number]>;
+  }> = [];
+  const asMember = (a: Article): NonNullable<Article["corroboratingSources"]>[number] => ({
+    title: a.title,
+    link: a.link,
+    source: a.source,
+    pubDate: a.pubDate,
+    sourceTier: a.sourceTier,
+    severity: a.severity,
+  });
   for (const a of articles) {
     const toks = tokens(a.title);
     let absorbed = false;
@@ -1162,25 +1193,42 @@ function clusterArticles(articles: Article[]): Article[] {
           const oldRep = c.rep;
           c.rep = a;
           if (oldRep.source) c.sources.add(oldRep.source);
+          if (oldRep.source && c.members.length < MAX_CORROBORATING_SOURCES) c.members.push(asMember(oldRep));
         } else {
           if (a.source) c.sources.add(a.source);
+          if (a.source && c.members.length < MAX_CORROBORATING_SOURCES) c.members.push(asMember(a));
         }
         absorbed = true;
         break;
       }
     }
     if (!absorbed) {
-      clusters.push({ rep: a, tokens: toks, sources: new Set(a.source ? [a.source] : []) });
+      clusters.push({
+        rep: a,
+        tokens: toks,
+        sources: new Set(a.source ? [a.source] : []),
+        members: [],
+      });
     }
   }
   return clusters.map((c) => {
     const extras = Array.from(c.sources).filter((s) => s && s !== c.rep.source);
-    if (extras.length === 0) return c.rep;
+    // Dedupe corroborations by source so each distinct outlet appears once.
+    const seenSrc = new Set<string>([c.rep.source]);
+    const corroboratingSources = c.members.filter((m) => {
+      if (!m.source || seenSrc.has(m.source)) return false;
+      seenSrc.add(m.source);
+      return true;
+    });
+    if (extras.length === 0) {
+      return corroboratingSources.length > 0 ? { ...c.rep, corroboratingSources } : c.rep;
+    }
     return {
       ...c.rep,
       source: c.rep.source
         ? `${c.rep.source} + ${extras.length} more`
         : extras.join(", "),
+      ...(corroboratingSources.length > 0 ? { corroboratingSources } : {}),
     };
   });
 }
