@@ -129,10 +129,10 @@ export default function BrainMapPage() {
 
   useEffect(() => {
     fetch("/api/brain-map")
-      .then((r) => r.json())
-      .then((d: BrainMapResponse) => {
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<BrainMapResponse>; })
+      .then((d) => {
         setData(d);
-        setSelectedId(d.faculties[0]?.id ?? null);
+        setSelectedId(d.faculties?.[0]?.id ?? null);
       })
       .catch((e) => setError(caughtErrorMessage(e, "Failed to load brain map")))
       .finally(() => setLoading(false));

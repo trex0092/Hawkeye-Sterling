@@ -103,6 +103,18 @@ export function ModuleLayout<K extends string = string>({
 
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           {children}
+          {asanaModule && (
+            <footer className="mt-10 pt-5 border-t border-hair-2 flex flex-wrap items-center gap-3 print:hidden">
+              <span className="font-mono text-10 uppercase tracking-wide-4 text-ink-3">Report</span>
+              <AsanaReportButton
+                payload={{
+                  module: asanaModule,
+                  label: asanaLabel ?? asanaModule,
+                  summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
+                }}
+              />
+            </footer>
+          )}
         </main>
 
         {!hideDetailPanel && (
