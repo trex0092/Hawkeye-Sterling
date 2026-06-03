@@ -35,7 +35,7 @@ export default async (_req: Request): Promise<Response> => {
     });
     clearTimeout(timer);
     const body = await res.json().catch(() => ({}));
-    console.log("[asana-daily] result:", res.status, JSON.stringify(body));
+    console.info("[asana-daily] result:", res.status, JSON.stringify(body));
   } catch (err) {
     // Always 200 — a failed daily attestation must not mark the scheduled
     // function as hard-failed; it retries next day and logs the cause.
