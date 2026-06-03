@@ -1315,17 +1315,14 @@ export async function GET(req: Request): Promise<NextResponse> {
   // MLRO is worse than surfacing zero articles with the neutral
   // "No articles found" empty state.
 
-  // GOOGLE_NEWS_RSS_ENABLED can be set to "false" to disable live RSS fetches
-  // (e.g. during testing or when rate-limited). Defaults to enabled.
+  // GOOGLE_NEWS_RSS_ENABLED can be set to "false" to disable the Google News
+  // RSS locale fan-out specifically (e.g. when Google rate-limits / 403s this
+  // deployment's datacenter IP). It does NOT disable adverse-media retrieval:
+  // GDELT (keyless), the keyed news-API adapters, and the investigative /
+  // regional feed banks still run so a blocked Google News path never silently
+  // collapses the whole dossier to "unavailable". Defaults to enabled.
   const rssEnabled = process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false";
   const fetchedAt = new Date().toISOString();
-
-  if (!rssEnabled) {
-    return NextResponse.json(
-      { ...emptyResponse(q, "static_fallback", Date.now() - t0), fetchedAt },
-      { headers: gateHeaders },
-    );
-  }
 
   function arabicToLatinVariants(name: string): string[] {
     const variants: string[] = [];
@@ -1436,9 +1433,15 @@ export async function GET(req: Request): Promise<NextResponse> {
     // records whether it reached its upstream so we can tell a genuine
     // negative finding apart from a wholesale outage.
     const feedStats: RetrievalStats = { attempted: 0, reachable: 0 };
-    const fanOut = Promise.allSettled(
-      LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)),
-    );
+    // Google News RSS locale fan-out — skipped when GOOGLE_NEWS_RSS_ENABLED is
+    // "false"; the other reachable providers below still run regardless.
+    const fanOut = rssEnabled
+      ? Promise.allSettled(
+          LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)),
+        )
+      : Promise.resolve(
+          LOCALES.map(() => ({ status: "fulfilled", value: [] as Article[] })) as PromiseSettledResult<Article[]>[],
+        );
     const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
       setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
     });

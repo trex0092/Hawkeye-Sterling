@@ -19,18 +19,11 @@ import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import {
-  BrainTypologyMap,
   BrainCapabilityAudit,
   BrainChainOfCustody,
   BrainScenarioMatcher,
-  BrainBiasCheck,
   BrainModuleWeights,
-  BrainVerdictConsistency,
-  BrainCoherenceCheck,
-  BrainRedFlagCombinator,
   BrainFATFAlignment,
-  BrainSanctionsPathway,
-  BrainSoWPlausibility,
   BrainSourceTriangulation,
   BrainTypologyConfidence,
   BrainJurisdictionClusters,
@@ -3301,13 +3294,6 @@ function SuperBrainPanel({
       <BrainJurisdictionClusters result={r} />
       <BrainRegulatoryPredictor result={r} />
       <BrainEscalationLadder result={r} />
-      <BrainVerdictConsistency result={r} />
-      <BrainCoherenceCheck result={r} subjectName={subjectName} />
-      <BrainBiasCheck result={r} />
-      <BrainRedFlagCombinator result={r} />
-      <BrainSanctionsPathway result={r} />
-      <BrainSoWPlausibility result={r} />
-      <BrainTypologyMap result={r} />
       <BrainScenarioMatcher result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />

@@ -21,6 +21,7 @@ import { interpolRedAdapter } from './sources/interpol.js';
 import { bisEntityAdapter } from './sources/bis-entity.js';
 import { uaeMoeDesignatedAdapter } from './sources/uae-moe-designated.js';
 import { fincen314aAdapter } from './sources/fincen-314a.js';
+import { trMasakAdapter } from './sources/tr-masak.js';
 
 // Registry consumed by netlify/functions/refresh-lists.ts cron.
 // Order is informational; each adapter runs independently.
@@ -38,6 +39,7 @@ import { fincen314aAdapter } from './sources/fincen-314a.js';
 //   · UAE (EOCN + Local Terrorist List + MoE Designated)
 //   · Interpol (Red Notices)
 //   · FinCEN (314a advisories)
+//   · TR (MASAK domestic terror/proliferation freeze — Law 6415/7262)
 export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   unConsolidatedAdapter,
   ofacSdnAdapter,
@@ -56,4 +58,5 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   interpolRedAdapter,         // live: Interpol public Red Notice API (no key required)
   bisEntityAdapter,           // opt-in: set FEED_BIS_ENTITY for live BIS Entity List CSV
   fincen314aAdapter,          // opt-in: set FINCEN_314A_API_KEY + FINCEN_314A_ENDPOINT
+  trMasakAdapter,             // live via FEED_TR_MASAK; curated static seed otherwise
 ];
