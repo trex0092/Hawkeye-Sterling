@@ -10,6 +10,7 @@ import type {
   ScreeningDataSourceHealth,
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
+import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { loadCandidatesWithHealth, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
 import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
@@ -195,6 +196,48 @@ function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
     }
   }
   return warnings;
+}
+
+// Verdict reliability guard (CG / FATF R.10 / FDL 10/2025 Art.18).
+// A clean ("clear") verdict is only a documentable negative finding when it was
+// produced against a fresh, fully-loaded corpus. Returns an explicit
+// machine-readable reliability flag + human qualifier so a stale/static-seed
+// "clear" can never be silently trusted. Applied on EVERY verdict-producing
+// return path — including the bloom and deadline fast-paths — not just the
+// fully-enriched response.
+interface VerdictReliability {
+  clearVerdictReliable: boolean;
+  verdictQualifier?: string;
+  maxListAgeHours: number | null;
+  corpusDegraded: boolean;
+}
+function computeVerdictReliability(
+  severity: string,
+  hitCount: number,
+  listHealth: ListHealthSnapshot | null,
+  corpusHealth: CandidateLoadHealth | null,
+): VerdictReliability {
+  const entries = listHealth ? Object.entries(listHealth) : [];
+  const missing = entries.filter(([, e]) => e.status === "missing").length;
+  const stale = entries.filter(([, e]) => e.status === "stale").length;
+  const empty = entries.filter(([, e]) => e.entityCount === 0 && e.status !== "missing").length;
+  const maxListAgeHours = listHealth
+    ? Object.values(listHealth).reduce((mx, e) => (e.ageHours !== null && e.ageHours > mx ? e.ageHours : mx), 0)
+    : null;
+  const corpusDegraded = !!(corpusHealth && !corpusHealth.healthy);
+  const verdictIsClear = severity === "clear" && hitCount === 0;
+  const clearVerdictReliable = !verdictIsClear
+    ? true
+    : missing === 0 && stale === 0 && empty === 0 && !corpusDegraded;
+  const verdictQualifier = clearVerdictReliable
+    ? undefined
+    : [
+        stale > 0 ? `${stale} list(s) stale` : null,
+        missing > 0 ? `${missing} list(s) missing` : null,
+        empty > 0 ? `${empty} list(s) empty` : null,
+        corpusDegraded ? "corpus served from static seed" : null,
+      ].filter(Boolean).join("; ") || "verdict could not be fully corroborated";
+  return { clearVerdictReliable, verdictQualifier, maxListAgeHours, corpusDegraded };
 }
 
 type QuickScreenFn = (
@@ -653,10 +696,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       }).catch((err: unknown) =>
         console.warn("[quick-screen] bloom fast-path audit write failed:", err instanceof Error ? err.message : String(err)),
       );
+      // Reliability guard: a bloom "no token overlap" clear is still a "clear"
+      // verdict — if the corpus is the static seed (or lists are stale/empty)
+      // this clear is NOT a documentable negative finding. Peek listHealth
+      // without adding latency.
+      const bloomHealth = await Promise.race([listHealthPromise, Promise.resolve(null)]);
+      const bloomReliability = computeVerdictReliability("clear", 0, bloomHealth, corpusHealth);
+      setGauge("hawkeye_screening_corpus_degraded", bloomReliability.corpusDegraded ? 1 : 0);
+      incrementCounter("hawkeye_screening_requests_total", 1, {
+        verdict: "clear",
+        reliable: String(bloomReliability.clearVerdictReliable),
+      });
       return respond(200, {
         ok: true,
         ...bloomResult,
         _bloomFastPath: true,
+        clearVerdictReliable: bloomReliability.clearVerdictReliable,
+        ...(bloomReliability.verdictQualifier ? { verdictQualifier: bloomReliability.verdictQualifier } : {}),
+        ...(bloomReliability.maxListAgeHours !== null ? { maxListAgeHours: bloomReliability.maxListAgeHours } : {}),
+        dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
       } as QuickScreenResponse & { _bloomFastPath: boolean }, gateHeaders);
     }
 
@@ -779,11 +837,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       }).catch((err: unknown) => console.warn("[quick-screen] audit write failed:", err instanceof Error ? err.message : String(err)));
       const newJobId1 = `hwk-e-${randomUUID()}`;
       void saveEnrichmentJob(newJobId1, subject, { ok: true, ...result } as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] saveEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
+      const reliability1 = computeVerdictReliability(result.severity, result.hits.length, peekHealth1, corpusHealth);
+      incrementCounter("hawkeye_screening_requests_total", 1, {
+        verdict: result.severity === "clear" && result.hits.length === 0 ? "clear" : result.severity,
+        reliable: String(reliability1.clearVerdictReliable),
+      });
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
         enrichJobId: newJobId1,
         latencyMs: Date.now() - t0,
+        clearVerdictReliable: reliability1.clearVerdictReliable,
+        ...(reliability1.verdictQualifier ? { verdictQualifier: reliability1.verdictQualifier } : {}),
+        ...(reliability1.maxListAgeHours !== null ? { maxListAgeHours: reliability1.maxListAgeHours } : {}),
         dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -897,11 +963,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       if (!enrichJobId) {
         void saveEnrichmentJob(newJobId2, subject, { ok: true, ...result } as Record<string, unknown>).catch((err: unknown) => console.warn("[quick-screen] saveEnrichmentJob failed:", err instanceof Error ? err.message : String(err)));
       }
+      const reliability2 = computeVerdictReliability(result.severity, result.hits.length, peekHealth2, corpusHealth);
+      incrementCounter("hawkeye_screening_requests_total", 1, {
+        verdict: result.severity === "clear" && result.hits.length === 0 ? "clear" : result.severity,
+        reliable: String(reliability2.clearVerdictReliable),
+      });
       return respond(200, {
         ok: true, ...result,
         enrichmentPending: true,
         enrichJobId: newJobId2,
         latencyMs: Date.now() - t0,
+        clearVerdictReliable: reliability2.clearVerdictReliable,
+        ...(reliability2.verdictQualifier ? { verdictQualifier: reliability2.verdictQualifier } : {}),
+        ...(reliability2.maxListAgeHours !== null ? { maxListAgeHours: reliability2.maxListAgeHours } : {}),
         dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
       } as QuickScreenResponse, gateHeaders);
     }
@@ -1038,6 +1112,27 @@ export async function POST(req: Request): Promise<NextResponse> {
     const listsCheckedWithData = listHealth
       ? Object.values(listHealth).filter((e) => e.entityCount !== null && (e.entityCount ?? 0) > 0).length
       : result.listsChecked;
+
+    // Hard staleness guard. The empty/missing-critical-list paths above already
+    // fail-loud, but a *partially* stale corpus still yields a confident "clear".
+    // A clean verdict is only reliable when every list had fresh data and the
+    // corpus loaded from the live source. When it isn't, surface an explicit
+    // machine-readable reliability flag + qualifier so a downstream UI / MLRO
+    // cannot mistake "we didn't see anything (against stale lists)" for a
+    // documentable negative finding (FATF R.10 / FDL 10/2025 Art.18).
+    const { clearVerdictReliable, verdictQualifier, maxListAgeHours, corpusDegraded } =
+      computeVerdictReliability(result.severity, result.hits.length, listHealth, corpusHealth);
+    const verdictIsClear = result.severity === "clear" && result.hits.length === 0;
+    // Observability: oldest sanctions-list age at screening time. Lets an
+    // operator alert when the refresh cron has lagged before it degrades verdicts.
+    if (maxListAgeHours !== null) {
+      setGauge("hawkeye_sanctions_list_max_age_hours", maxListAgeHours);
+    }
+    setGauge("hawkeye_screening_corpus_degraded", corpusDegraded ? 1 : 0);
+    incrementCounter("hawkeye_screening_requests_total", 1, {
+      verdict: verdictIsClear ? "clear" : result.severity,
+      reliable: String(clearVerdictReliable),
+    });
 
     // riskLevel — AML risk tier based on FATF/UAE country classification
     // for the subject's nationality and/or jurisdiction. Distinct from
@@ -1238,6 +1333,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         // is a false clear, not a real one.
         ...(listHealth ? { listHealthAtScreeningTime: listHealth } : {}),
         ...(screeningWarnings.length > 0 ? { screeningWarnings } : {}),
+        // Reliability of a clean verdict. `false` means the "clear" was produced
+        // against stale/missing/empty lists or a static-seed corpus and must NOT
+        // be treated as a documentable negative finding without remediation.
+        clearVerdictReliable,
+        ...(verdictQualifier ? { verdictQualifier } : {}),
+        ...(maxListAgeHours !== null ? { maxListAgeHours } : {}),
         // Data source health provenance — always present so clients and audit
         // tools can verify whether a screen ran against live or static data.
         dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,

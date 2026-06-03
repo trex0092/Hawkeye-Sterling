@@ -7,6 +7,8 @@ import {
 } from "@/lib/data/adverse-keywords";
 import { classifyEsg } from "@/lib/data/esg";
 import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
+import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
+import { getJson, setJson } from "@/lib/server/store";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
@@ -367,6 +369,7 @@ interface NewsResponse {
   feedsAttempted: number;             // feeds we tried to fetch this request
   feedsReachable: number;             // feeds that returned HTTP 2xx
   degraded?: boolean;                 // convenience flag: retrieval !== "live"
+  googleNewsRssEnabled?: boolean;     // false when GOOGLE_NEWS_RSS_ENABLED=false (datacenter-IP 403 workaround)
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -689,6 +692,29 @@ const FEED_TIMEOUT_MS = 1_200;
 // (GDELT + RSS + investigative/regional banks) room to actually respond while
 // staying well inside the 30s maxDuration budget.
 const OVERALL_TIMEBOX_MS = 9_000;
+
+// Belt-and-suspenders global branch deadline. Every parallel retrieval branch
+// (GDELT, the regional/investigative feed banks, and the keyed news-API
+// adapters) is internally bounded by its own per-feed AbortSignal — but a
+// single hung upstream (slow TLS, a commercial adapter that never resolves)
+// would otherwise drag the awaited Promise.all toward the 30s maxDuration and
+// surface as a 504 with zero articles. Wrapping each branch in withDeadline
+// guarantees no branch can exceed the overall timebox regardless of how its
+// internal timeouts behave. The fallback value is returned if the deadline
+// fires first, so the dossier still assembles from whatever did resolve.
+function withDeadline<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+// Early-exit threshold for the Google News locale fan-out. Once this many
+// articles have accumulated across settled locales we resolve the fan-out
+// immediately instead of waiting out the full OVERALL_TIMEBOX_MS — most
+// adverse-media subjects with real press surface well before every one of the
+// 100+ locales responds, so this cuts p50 latency without losing coverage.
+const FANOUT_EARLY_EXIT_COUNT = 40;
 
 // Live-retrieval health accounting. Each feed fetch records whether it actually
 // reached its upstream (HTTP 2xx). The handler uses the aggregate to tell a
@@ -1274,8 +1300,34 @@ function emptyResponse(
 
 const MAX_Q_LENGTH = 500;
 
-// 2-minute in-memory cache to avoid hammering Google News RSS for repeated queries
+// 2-minute in-memory cache to avoid hammering Google News RSS for repeated queries.
+// This is the L1 cache — process-local, so on serverless each warm instance keeps
+// its own copy. L2 (NEWS_BLOB_CACHE_*) is a cross-instance Blobs-backed cache so a
+// result fetched by one Lambda is reused by sibling instances, lifting the hit rate.
 const NEWS_CACHE = new Map<string, { data: NewsResponse; expires: number }>();
+const NEWS_CACHE_TTL_MS = 2 * 60 * 1000;
+const NEWS_BLOB_CACHE_PREFIX = "news-cache/";
+
+// Cross-instance (L2) cache backed by Netlify Blobs. Fully fail-soft: getJson /
+// setJson already swallow and log their own errors, and we additionally guard
+// against any throw so a Blobs outage never breaks adverse-media retrieval.
+function newsBlobCacheKey(cacheKey: string): string {
+  // Hash-free, filesystem-safe key: lowercased query is already normalised; encode
+  // to keep the blob path well-formed for arbitrary subject names.
+  return `${NEWS_BLOB_CACHE_PREFIX}${encodeURIComponent(cacheKey)}.json`;
+}
+async function readNewsBlobCache(cacheKey: string): Promise<NewsResponse | null> {
+  try {
+    const entry = await getJson<{ data: NewsResponse; expires: number }>(newsBlobCacheKey(cacheKey));
+    if (entry && entry.expires > Date.now() && entry.data) return entry.data;
+  } catch { /* fail-soft — treat as a miss */ }
+  return null;
+}
+async function writeNewsBlobCache(cacheKey: string, data: NewsResponse): Promise<void> {
+  try {
+    await setJson(newsBlobCacheKey(cacheKey), { data, expires: Date.now() + NEWS_CACHE_TTL_MS });
+  } catch { /* fail-soft — L1 still serves */ }
+}
 
 export async function GET(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
@@ -1313,7 +1365,16 @@ export async function GET(req: Request): Promise<NextResponse> {
   const cacheKey = q.toLowerCase().trim();
   const cached = NEWS_CACHE.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
+    incrementCounter("hawkeye_news_requests_total", 1, { result: "cache_hit_l1" });
     return NextResponse.json({ ...cached.data, fetchMode: "cached" as const }, { headers: gateHeaders });
+  }
+  // L2: cross-instance Blobs cache. A sibling Lambda may have already paid the
+  // 9s fan-out cost for this subject within the TTL window.
+  const l2 = await readNewsBlobCache(cacheKey);
+  if (l2) {
+    NEWS_CACHE.set(cacheKey, { data: l2, expires: Date.now() + NEWS_CACHE_TTL_MS });
+    incrementCounter("hawkeye_news_requests_total", 1, { result: "cache_hit_l2" });
+    return NextResponse.json({ ...l2, fetchMode: "cached" as const }, { headers: gateHeaders });
   }
 
   // From here down, any internal failure returns a well-formed empty
@@ -1442,16 +1503,51 @@ export async function GET(req: Request): Promise<NextResponse> {
     const feedStats: RetrievalStats = { attempted: 0, reachable: 0 };
     // Google News RSS locale fan-out — skipped when GOOGLE_NEWS_RSS_ENABLED is
     // "false"; the other reachable providers below still run regardless.
-    const fanOut = rssEnabled
-      ? Promise.allSettled(
-          LOCALES.map((loc) => fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)),
-        )
+    // Google News locale fan-out with early-exit. Each locale settles
+    // independently; we resolve as soon as either (a) every locale settles,
+    // (b) FANOUT_EARLY_EXIT_COUNT articles have accumulated, or (c) the overall
+    // timebox fires — whichever comes first. The early-exit path trims p50
+    // latency for well-covered subjects without sacrificing the genuine
+    // "searched the world, found nothing" negative finding.
+    const fanOut: Promise<PromiseSettledResult<Article[]>[]> = rssEnabled
+      ? (() => {
+          const results: PromiseSettledResult<Article[]>[] = new Array(LOCALES.length);
+          let settledCount = 0;
+          let articleTally = 0;
+          return new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
+            let done = false;
+            const finish = () => {
+              if (done) return;
+              done = true;
+              // Fill any not-yet-settled slots with empty results so the shape
+              // is always LOCALES.length entries.
+              for (let i = 0; i < LOCALES.length; i++) {
+                if (!results[i]) results[i] = { status: "fulfilled", value: [] };
+              }
+              resolve(results);
+            };
+            setTimeout(finish, OVERALL_TIMEBOX_MS);
+            LOCALES.forEach((loc, i) => {
+              fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)
+                .then((value) => {
+                  results[i] = { status: "fulfilled", value };
+                  articleTally += value.length;
+                })
+                .catch((reason) => {
+                  results[i] = { status: "rejected", reason };
+                })
+                .finally(() => {
+                  settledCount += 1;
+                  if (settledCount === LOCALES.length || articleTally >= FANOUT_EARLY_EXIT_COUNT) {
+                    finish();
+                  }
+                });
+            });
+          });
+        })()
       : Promise.resolve(
           LOCALES.map(() => ({ status: "fulfilled", value: [] as Article[] })) as PromiseSettledResult<Article[]>[],
         );
-    const timebox = new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
-      setTimeout(() => resolve(LOCALES.map(() => ({ status: "fulfilled", value: [] }))), OVERALL_TIMEBOX_MS);
-    });
     // Run news API adapters (NewsAPI, GNews, Mediastack, OCCRP, etc.) in parallel
     // with the Google News RSS fan-out. Falls back to empty if no keys configured.
     const adapterSearch = searchAllNewsWithStatus(q, { limit: 30 }).catch(() => ({
@@ -1459,8 +1555,9 @@ export async function GET(req: Request): Promise<NextResponse> {
       sourcesSucceeded: [] as string[],
       sourcesFailed: [] as Array<{ name: string; error: string }>,
     }));
-    // All specialised feed banks run in parallel inside the same 4s timebox —
-    // no added latency regardless of how many continent feed banks we add.
+    // All specialised feed banks run in parallel. Each is internally bounded by
+    // its own per-feed AbortSignal; withDeadline below adds a hard ceiling so no
+    // single hung upstream can push the awaited Promise.all past the timebox.
     const investigativeSearch = fetchInvestigativeFeeds(q, variants, feedStats);
     const asianSearch        = fetchAsianFeeds(q, variants, feedStats);
     const africaSearch       = fetchAfricaFeeds(q, variants, feedStats);
@@ -1469,15 +1566,16 @@ export async function GET(req: Request): Promise<NextResponse> {
     // GDELT — keyless global second source. Runs in the same timebox so it adds
     // no latency; provides live coverage even when Google News throttles us.
     const gdeltSearch        = fetchGdeltArticles(q, feedStats);
+    const EMPTY_ADAPTER = { articles: [] as NewsArticle[], sourcesSucceeded: [] as string[], sourcesFailed: [] as Array<{ name: string; error: string }> };
     const [settled, adapterResult, investigativeArticles, asianArticles, africaArticles, latamArticles, oceaniaArticles, gdeltArticles] = await Promise.all([
-      Promise.race([fanOut, timebox]),
-      adapterSearch,
-      investigativeSearch,
-      asianSearch,
-      africaSearch,
-      latamSearch,
-      oceaniaSearch,
-      gdeltSearch,
+      withDeadline(fanOut, OVERALL_TIMEBOX_MS, LOCALES.map(() => ({ status: "fulfilled", value: [] as Article[] })) as PromiseSettledResult<Article[]>[]),
+      withDeadline(adapterSearch, OVERALL_TIMEBOX_MS, EMPTY_ADAPTER),
+      withDeadline(investigativeSearch, OVERALL_TIMEBOX_MS, [] as Article[]),
+      withDeadline(asianSearch, OVERALL_TIMEBOX_MS, [] as Article[]),
+      withDeadline(africaSearch, OVERALL_TIMEBOX_MS, [] as Article[]),
+      withDeadline(latamSearch, OVERALL_TIMEBOX_MS, [] as Article[]),
+      withDeadline(oceaniaSearch, OVERALL_TIMEBOX_MS, [] as Article[]),
+      withDeadline(gdeltSearch, OVERALL_TIMEBOX_MS, [] as NewsArticle[]),
     ]);
     const perLocale: Article[][] = settled.map((r) =>
       r.status === "fulfilled" ? r.value : [],
@@ -1686,15 +1784,27 @@ export async function GET(req: Request): Promise<NextResponse> {
       feedsAttempted,
       feedsReachable,
       degraded: retrieval !== "live",
+      googleNewsRssEnabled: rssEnabled,
     };
-    // Cache successful results for 2 minutes
+    // Observability: retrieval health + reachability ratio so a wholesale news
+    // outage (retrieval:"unavailable") pages an operator instead of silently
+    // surfacing zero articles as a clean negative finding.
+    incrementCounter("hawkeye_news_requests_total", 1, { result: retrieval });
+    setGauge(
+      "hawkeye_news_feeds_reachable_ratio",
+      feedsAttempted > 0 ? feedsReachable / feedsAttempted : 0,
+    );
+    setGauge("hawkeye_news_retrieval_unavailable", retrieval === "unavailable" ? 1 : 0);
+    // Cache successful results for 2 minutes (L1 in-memory + L2 cross-instance Blobs).
     if (payload.articleCount > 0) {
-      NEWS_CACHE.set(cacheKey, { data: payload, expires: Date.now() + 2 * 60 * 1000 });
+      NEWS_CACHE.set(cacheKey, { data: payload, expires: Date.now() + NEWS_CACHE_TTL_MS });
       // Evict oldest entries if cache grows too large
       if (NEWS_CACHE.size > 500) {
         const oldest = Array.from(NEWS_CACHE.entries()).sort((a, b) => a[1].expires - b[1].expires)[0];
         if (oldest) NEWS_CACHE.delete(oldest[0]);
       }
+      // Fire-and-forget L2 write — never blocks the response, never throws.
+      void writeNewsBlobCache(cacheKey, payload);
     }
     const responseTimeMs = Date.now() - t0;
     return NextResponse.json(payload, {

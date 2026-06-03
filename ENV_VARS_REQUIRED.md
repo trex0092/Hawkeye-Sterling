@@ -103,6 +103,15 @@ These default to enabled where shown. Setting to blank disables.
 | `ICIJ_OFFSHORE_LEAKS_ENABLED` | `1` | ICIJ Offshore Leaks |
 | `GOOGLE_NEWS_RSS_ENABLED` | `1` | Google News RSS |
 
+> **Datacenter-IP note (`GOOGLE_NEWS_RSS_ENABLED`):** Google News RSS frequently
+> returns HTTP 403 to cloud/datacenter IPs (Netlify) regardless of User-Agent.
+> If `/api/news-search/health` reports the `google_news_rss` source as
+> `unreachable` in production, set `GOOGLE_NEWS_RSS_ENABLED=false` to skip the
+> locale fan-out cleanly — adverse-media retrieval then leans on GDELT (keyless),
+> the investigative/regional feed banks, and any keyed news-API adapters. This
+> does **not** disable adverse media; it only removes a source that is 403-ing.
+> Probe live reachability any time via `GET /api/news-search/health`.
+
 ---
 
 ## Tier 5 — Optional Intelligence Vendors (Missing = that vendor's data unavailable)
