@@ -18,36 +18,23 @@ import { formatDMY } from "@/lib/utils/dateFormat";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
-import { BrainDecomposition } from "@/components/screening/BrainDecomposition";
 import {
-  BrainAdversarial,
   BrainTypologyMap,
-  BrainKeywordExplorer,
   BrainCapabilityAudit,
   BrainChainOfCustody,
-  BrainRegimeExposure,
   BrainScenarioMatcher,
   BrainBiasCheck,
-  BrainInputValidator,
   BrainModuleWeights,
   BrainVerdictConsistency,
-  BrainCrossReference,
   BrainCoherenceCheck,
   BrainRedFlagCombinator,
-  BrainPolicyCitation,
   BrainFATFAlignment,
   BrainSanctionsPathway,
   BrainSoWPlausibility,
-  BrainAnomalyDetector,
   BrainSourceTriangulation,
-
   BrainTypologyConfidence,
   BrainJurisdictionClusters,
   BrainRegulatoryPredictor,
-  BrainContextualEnrichment,
-  BrainChainAttribution,
-  BrainDefensibility,
-  BrainSignalInterference,
   BrainEscalationLadder,
   BrainDataCoverage,
   BrainCoverageGap,
@@ -3252,27 +3239,15 @@ function SuperBrainPanel({
       <BrainTypologyConfidence result={r} />
       <BrainJurisdictionClusters result={r} />
       <BrainRegulatoryPredictor result={r} />
-      <BrainContextualEnrichment result={r} />
-      <BrainChainAttribution result={r} />
-      <BrainDefensibility result={r} subjectName={subjectName} />
-      <BrainSignalInterference result={r} />
       <BrainEscalationLadder result={r} />
-      <BrainDecomposition result={r} />
       <BrainVerdictConsistency result={r} />
       <BrainCoherenceCheck result={r} subjectName={subjectName} />
       <BrainBiasCheck result={r} />
-      <BrainAnomalyDetector result={r} />
       <BrainRedFlagCombinator result={r} />
       <BrainSanctionsPathway result={r} />
       <BrainSoWPlausibility result={r} />
       <BrainTypologyMap result={r} />
       <BrainScenarioMatcher result={r} />
-      <BrainRegimeExposure result={r} />
-      <BrainAdversarial result={r} subjectName={subjectName} />
-      <BrainKeywordExplorer result={r} />
-      <BrainCrossReference result={r} />
-      <BrainInputValidator result={r} subjectName={subjectName} />
-      <BrainPolicyCitation result={r} />
       <BrainFATFAlignment result={r} />
       <BrainCapabilityAudit result={r} />
       <BrainCoverageGap result={r} />
