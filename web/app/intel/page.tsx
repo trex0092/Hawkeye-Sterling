@@ -380,13 +380,17 @@ function AdverseMediaPanel() {
   const sweep = async () => {
     setLoading(true);
     try {
+      // Sweep all watched subjects in parallel; one failure never blocks the rest.
+      const settled = await Promise.allSettled(
+        watch.map(async (name) => {
+          const res = await fetch(`/api/news-search?q=${encodeURIComponent(name)}`, { headers: { accept: "application/json" } });
+          if (!res.ok) return [] as Article[];
+          const body = await res.json().catch(() => ({})) as { articles?: Article[] };
+          return body.articles ?? [];
+        }),
+      );
       const all: Article[] = [];
-      for (const name of watch) {
-        const res = await fetch(`/api/news-search?q=${encodeURIComponent(name)}`, { headers: { accept: "application/json" } });
-        if (!res.ok) continue;
-        const body = await res.json().catch(() => ({})) as { articles?: Article[] };
-        for (const a of body.articles ?? []) all.push(a);
-      }
+      for (const r of settled) if (r.status === "fulfilled") all.push(...r.value);
       all.sort((a, b) => {
         const order = ["clear", "low", "medium", "high", "critical"];
         return order.indexOf(b.severity) - order.indexOf(a.severity);

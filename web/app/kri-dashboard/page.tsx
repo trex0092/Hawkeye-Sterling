@@ -144,7 +144,11 @@ export default function KriDashboardPage() {
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    const id = setInterval(() => { void load(); }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <ModuleLayout asanaModule="kri-dashboard" asanaLabel="KRI Dashboard" engineLabel="Risk Indicators">

@@ -57,7 +57,6 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "📑 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · UAE-specific localised content" },
       { label: "📖 Playbook", href: "/playbook", hint: "Step-by-step AML/CFT compliance playbooks" },
-      { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Intelligence & regulatory feed · live triage · 7-language adverse media · GDELT real-time news" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
       { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
     ],
@@ -83,12 +82,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
   {
     title: "Intelligence",
     items: [
-      { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Live regulatory & 7-language adverse-media feed" },
-      { label: "🧠 AI Brain", href: "/intelligence-hub?tab=brain", hint: "Brain Intel · Workbench · Telemetry · Analytics" },
-      { label: "🛡️ Security", href: "/intelligence-hub?tab=security-audit", hint: "AI code analysis · dependency scan · red-team" },
-      { label: "📊 Executive Dashboards", href: "/intelligence-hub?tab=board-dashboard", hint: "Board dashboard · KRI dashboard" },
-      { label: "📋 System & Reference", href: "/intelligence-hub?tab=system-card", hint: "System card · API docs · status · governance" },
-      { label: "👁️ Analyst Behavior", href: "/intelligence-hub?tab=analyst-behavior", hint: "Analyst activity & behaviour monitoring" },
+      { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Live regulatory & 7-language adverse-media feed · unified intelligence hub" },
     ],
   },
 ];

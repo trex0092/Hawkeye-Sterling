@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "./Header";
 import { ActivityFeed } from "@/components/screening/ActivityFeed";
@@ -136,7 +136,7 @@ interface ModuleHeroProps {
   intro?: ReactNode | undefined;
 }
 
-export function ModuleHero({
+function ModuleHeroInner({
   eyebrow,
   title,
   titleEm,
@@ -145,6 +145,11 @@ export function ModuleHero({
   // compile (and keep their derived metrics) without needing edits.
   intro,
 }: ModuleHeroProps) {
+  // When a module page is rendered embedded inside another view (e.g. the
+  // Intelligence Hub iframe tabs, ?embed=1), its own page hero is redundant
+  // with the host's hero — suppress it so there is no doubled header.
+  const searchParams = useSearchParams();
+  if (searchParams?.get("embed") === "1") return null;
   return (
     <div className="mb-8">
       <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
@@ -166,5 +171,13 @@ export function ModuleHero({
         </div>
       )}
     </div>
+  );
+}
+
+export function ModuleHero(props: ModuleHeroProps) {
+  return (
+    <Suspense fallback={null}>
+      <ModuleHeroInner {...props} />
+    </Suspense>
   );
 }
