@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   loadAlerts,
@@ -72,33 +73,6 @@ function csvEscape(val: string | null | undefined): string {
 }
 
 // ── Stat Card ─────────────────────────────────────────────────────────────────
-
-function StatCard({
-  value,
-  label,
-  tone,
-}: {
-  value: number;
-  label: string;
-  tone?: "red" | "orange" | "blue" | "green";
-}) {
-  const color =
-    tone === "red"
-      ? "text-red"
-      : tone === "orange"
-        ? "text-orange"
-        : tone === "blue"
-          ? "text-blue"
-          : tone === "green"
-            ? "text-green"
-            : "text-brand";
-  return (
-    <div className="flex flex-col gap-1 p-4 rounded-lg border border-hair-2 bg-bg-0">
-      <span className={`font-mono text-28 font-semibold leading-none ${color}`}>{value}</span>
-      <span className="text-11 uppercase tracking-wide-4 text-ink-2 font-medium">{label}</span>
-    </div>
-  );
-}
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
 
@@ -412,19 +386,9 @@ export default function TFSAlertsPage() {
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 
-  const thisMonth = new Date();
-  thisMonth.setDate(1);
-  thisMonth.setHours(0, 0, 0, 0);
-
   const totalAlerts = alerts.length;
-  const alertsThisMonth = alerts.filter(
-    (a) => new Date(a.dateReceived) >= thisMonth,
-  ).length;
   const pendingAction = alerts.filter(
     (a) => a.status === "NEW" || a.status === "SCREENING_IN_PROGRESS",
-  ).length;
-  const fullyActioned = alerts.filter(
-    (a) => a.status === "NO_MATCH" || a.status === "REPORTED",
   ).length;
 
   // ── Gmail search & Asana task creation ──────────────────────────────────
@@ -712,24 +676,14 @@ export default function TFSAlertsPage() {
       asanaModule="tfs-alerts"
       asanaLabel="TFS Alerts"
       sidebarActions={
-        <button
+        <ActionButton
+          variant="screening"
           type="button"
           onClick={() => void checkForAlerts()}
           disabled={loading}
-          className="inline-flex items-center justify-start gap-2 px-4 py-2 rounded bg-brand text-white hover:bg-brand-hover transition-colors text-13 font-semibold disabled:opacity-60 border border-brand-hover text-left"
         >
-          {loading ? (
-            <>
-              <span
-                className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin"
-                aria-hidden="true"
-              />
-              <span>{loadingMsg}</span>
-            </>
-          ) : (
-            <><span>🔍</span><span>Check for New TFS Alerts</span></>
-          )}
-        </button>
+          {loading ? loadingMsg : "🔍 Check for New TFS Alerts"}
+        </ActionButton>
       }
     >
       <ModuleHero
@@ -794,26 +748,7 @@ export default function TFSAlertsPage() {
       </div>
 
       {/* ── Check button + result ────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        <button
-          type="button"
-          onClick={() => void checkForAlerts()}
-          disabled={loading}
-          className="inline-flex items-center gap-3 px-6 py-3 rounded-lg bg-brand text-white hover:bg-brand-hover transition-colors text-14 font-semibold shadow-lg disabled:opacity-60 border border-brand-hover"
-        >
-          {loading ? (
-            <>
-              <span
-                className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
-                aria-hidden="true"
-              />
-              <span>{loadingMsg}</span>
-            </>
-          ) : (
-            <><span>🔍</span><span>Check for New TFS Alerts</span></>
-          )}
-        </button>
-
+      <div className="flex flex-wrap items-center gap-4 mb-6 empty:mb-0">
         {resultMsg && !loading && (
           <span
             className={`text-12 font-medium ${resultMsg.includes("No new") ? "text-green" : "text-brand"}`}
@@ -856,18 +791,6 @@ export default function TFSAlertsPage() {
           </a>
         </div>
       )}
-
-      {/* ── Stats panel ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard value={totalAlerts} label="Total Alerts (All Time)" />
-        <StatCard value={alertsThisMonth} label="Alerts This Month" tone="blue" />
-        <StatCard
-          value={pendingAction}
-          label="Pending Action"
-          tone={pendingAction > 0 ? "red" : undefined}
-        />
-        <StatCard value={fullyActioned} label="Fully Actioned" tone="green" />
-      </div>
 
       {/* ── Alerts table ─────────────────────────────────────────────────────── */}
       <div className="mb-6">

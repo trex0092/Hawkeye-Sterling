@@ -7,8 +7,6 @@ import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
-  Kpi,
-  KpiGrid,
   Card,
   ActionRow,
   Btn,
@@ -19,6 +17,7 @@ import { DateParts } from "@/components/ui/DateParts";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { PaymentScreen } from "@/components/screening/PaymentScreen";
 import {
@@ -287,11 +286,6 @@ export default function TransactionMonitorPage() {
   };
 
   const parsedAmount = Number.parseFloat(amount.replace(/,/g, "")) || 0;
-  const alerts = txs.filter((t) => t.behaviouralFlags.length > 0).length;
-  const reportable = txs.filter((t) => {
-    const amt = Number.parseFloat(t.amount.replace(/,/g, "")) || 0;
-    return t.channel === "Cash (DPMS)" && amt >= THRESHOLD_AED;
-  }).length;
 
   const valid = counterparty.trim().length > 0 && parsedAmount > 0;
 
@@ -433,18 +427,18 @@ export default function TransactionMonitorPage() {
       asanaLabel="Transaction Monitor"
       sidebarActions={
         <>
-          <Btn variant="ghost" onClick={runDailyScan} disabled={running}>
+          <ActionButton variant="screening" type="button" onClick={runDailyScan} disabled={running}>
             {running ? "Running scan…" : "Run daily scan"}
-          </Btn>
-          <Btn variant="ghost" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
+          </ActionButton>
+          <ActionButton variant="ai" type="button" onClick={() => void autoTagTypologies()} disabled={tagging || txs.length === 0}>
             {tagging ? "Tagging…" : "🏷️ Auto-Tag Typologies"}
-          </Btn>
-          <Btn variant="ghost" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
+          </ActionButton>
+          <ActionButton variant="ai" type="button" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
             {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
-          </Btn>
-          <Btn variant="primary" onClick={focusForm}>
+          </ActionButton>
+          <ActionButton variant="add" type="button" onClick={focusForm}>
             + Add transaction
-          </Btn>
+          </ActionButton>
         </>
       }
     >
@@ -462,12 +456,6 @@ export default function TransactionMonitorPage() {
           { label: "STR Cases", href: "/str-cases", icon: "📁" },
         ]}
       />
-
-      <KpiGrid cols={3}>
-            <Kpi value={txs.length} label="Transactions" tone="brand" />
-            <Kpi value={alerts} label="Alerts" tone="amber" />
-            <Kpi value={reportable} label="Reportable (DPMS ≥ 55k)" tone="red" />
-      </KpiGrid>
 
       {tagError && (
         <div className="mt-4 mb-2 rounded-lg border border-red/30 bg-red-dim px-4 py-3 text-12 text-red">

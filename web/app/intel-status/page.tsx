@@ -96,49 +96,6 @@ export default function IntelStatusPage(): React.ReactElement {
 
       {data && (
         <>
-          {/* Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Coverage</div>
-              <div className="text-3xl font-bold text-ink-1">
-                {data.totalConfigured}<span className="text-ink-3 text-base">/{data.totalAvailable}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">{data.coveragePct}% active</div>
-            </div>
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Free toggles</div>
-              <div className="text-3xl font-bold text-emerald-300">
-                {data.providers.filter((p) => p.tier === "free-toggle" && p.configured).length}
-                <span className="text-ink-3 text-base">/{data.providers.filter((p) => p.tier === "free-toggle").length}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">no key needed</div>
-            </div>
-            <div className="rounded-lg bg-bg-panel border border-hair-2 p-4">
-              <div className="text-10 uppercase text-ink-3">Free keys</div>
-              <div className="text-3xl font-bold text-sky-300">
-                {data.providers.filter((p) => p.tier === "free" && p.configured).length}
-                <span className="text-ink-3 text-base">/{data.providers.filter((p) => p.tier === "free").length}</span>
-              </div>
-              <div className="text-11 text-ink-3 mt-1">sign up + add</div>
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div className="mb-6">
-            <div className="text-10 uppercase tracking-wide text-ink-3 mb-2">By category</div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {data.categories.map((c) => (
-                <div key={c.category} className="rounded-md bg-bg-panel border border-hair-2 px-3 py-2">
-                  <div className="text-11 text-ink-3 capitalize">{c.category.replace(/-/g, " ")}</div>
-                  <div className="text-13 font-mono">
-                    <span className="text-emerald-300">{c.configured}</span>
-                    <span className="text-ink-3"> / {c.total}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Recommendations */}
           {data.recommendations.length > 0 && (
             <div className="mb-6 rounded-lg bg-bg-panel border border-amber-500/20 p-4">
