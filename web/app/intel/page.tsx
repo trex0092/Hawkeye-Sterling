@@ -663,17 +663,18 @@ const KYC_TOOLS: FamilyModule[] = [
   { label: "Domain Intel", href: "/domain-intel", icon: "🌍" },
   { label: "Crypto Risk", href: "/crypto-risk", icon: "₿" },
   { label: "Vessel Check", href: "/vessel-check", icon: "🚢" },
-];
-
-const INTEL_MODULES: FamilyModule[] = [
-  { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
   { label: "Benford Analysis", href: "/benford", icon: "🔢" },
   { label: "Investigation", href: "/investigation", icon: "🕵️" },
-  { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
   { label: "Single Country", href: "/country-risk?tab=single", icon: "📍" },
   { label: "Compare", href: "/country-risk?tab=compare", icon: "⚖️" },
   { label: "Sanctions Evasion", href: "/sanctions-evasion", icon: "🚫" },
   { label: "Intelligence Tools", href: "/governance/intelligence-tools", icon: "🧪" },
+  { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
+];
+
+const INTEL_MODULES: FamilyModule[] = [
+  { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
+  { label: "Country & Geopolitical Risk", href: "/country-risk", icon: "🌍" },
   { label: "UBO Walker", href: "/governance/intelligence-tools?tab=ubo", icon: "🏢" },
   { label: "Crypto Exposure", href: "/governance/intelligence-tools?tab=crypto", icon: "₿" },
   { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
@@ -685,7 +686,6 @@ const INTEL_MODULES: FamilyModule[] = [
   { label: "API Docs", href: "/intelligence-hub?tab=api-docs", icon: "📘" },
   { label: "System Card", href: "/system-card", icon: "📋" },
   { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
-  { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
   { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
   { label: "Board Dashboard", href: "/board-dashboard", icon: "🎯" },
   { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
