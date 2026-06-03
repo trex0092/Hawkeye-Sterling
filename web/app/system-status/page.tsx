@@ -103,10 +103,10 @@ export default function SystemStatusPage() {
     setLoading(true);
     try {
       const [sysRes, fourEyesRes, ongoingRes, regFeedRes] = await Promise.allSettled([
-        fetch("/api/system-status").then((r) => r.json()),
-        fetch("/api/four-eyes?status=pending&pageSize=50").then((r) => r.json()),
-        fetch("/api/ongoing").then((r) => r.json()),
-        fetch("/api/regulatory-feed?limit=1").then((r) => r.json()),
+        fetch("/api/system-status").then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        fetch("/api/four-eyes?status=pending&pageSize=50").then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        fetch("/api/ongoing").then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        fetch("/api/regulatory-feed?limit=1").then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
       ]);
 
       if (!mountedRef.current) return;
@@ -174,7 +174,7 @@ export default function SystemStatusPage() {
       <div className="flex items-center justify-between mb-6 px-1">
         <div className="flex items-center gap-3">
           <span className={`text-sm font-semibold ${overallColor}`}>
-            {ss ? ss.overallStatus.toUpperCase() : "LOADING"}
+            {ss?.overallStatus ? ss.overallStatus.toUpperCase() : "LOADING"}
           </span>
           {ss && (
             <span className="text-xs text-ink-3">
