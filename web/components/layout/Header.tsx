@@ -75,6 +75,7 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
       { label: "🕵️ Investigation", href: "/investigation", hint: "Case investigation workbench" },
       { label: "📍 Single Country", href: "/country-risk?tab=single", hint: "Single-country risk brief" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "Sanctions evasion typology detection" },
+      { label: "🏢 UBO Walker", href: "/governance/intelligence-tools?tab=ubo", hint: "Beneficial-ownership chain walker" },
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "UBO walker · crypto exposure · synthetic ID" },
       { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable decision audit trail" },
     ],
