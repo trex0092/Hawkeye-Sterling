@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { formatDMYTime } from "@/lib/utils/dateFormat";
 import {
   buildHtmlDoc,
@@ -370,21 +371,12 @@ export default function InspectionRoomPage() {
       asanaLabel="Inspection Room"
       sidebarActions={
         <>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="text-13 font-mono px-4 py-2 rounded border font-semibold text-left"
-            style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
-          >
+          <ActionButton variant="import" type="button" onClick={handlePrint}>
             PDF
-          </button>
-          <button
-            type="button"
-            onClick={refresh}
-            className="text-13 font-mono px-4 py-2 border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 text-left"
-          >
+          </ActionButton>
+          <ActionButton variant="asana" type="button" onClick={refresh}>
             ↻ Refresh
-          </button>
+          </ActionButton>
         </>
       }
     >
