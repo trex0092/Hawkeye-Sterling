@@ -1,7 +1,23 @@
-// Hawkeye Sterling — non-secret operational defaults.
-// Values are sourced from the operator's configuration and safe to ship in
-// the codebase. Any of these can be overridden at deploy time by setting the
-// corresponding environment variable in Netlify.
+// Hawkeye Sterling — operational defaults + low-privilege fallback keys.
+//
+// Values are sourced from the operator's configuration. Any of these can be
+// overridden at deploy time by setting the corresponding environment variable
+// in Netlify (env always wins — consumers read process.env first).
+//
+// ACCEPTED-RISK DECISION (operator-approved): the *News / market-data API keys*
+// below are inlined here ON PURPOSE. They are free-tier, read-only, and carry
+// no auth / audit / financial / data-access privilege — worst-case abuse is
+// third-party news-API quota exhaustion. They are inlined to stay within the
+// AWS Lambda 4 KB total environment-variable limit (see the commit that
+// introduced them: "inline HAWKEYE_SECRETS values as code defaults to unblock
+// Lambda 4KB limit"). Documented as an accepted deviation in SECURITY-NOTES.md;
+// rotate periodically since they are present in git history.
+//
+// HARD RULE — enforced by web/lib/config/__tests__/hs-defaults.test.ts:
+// NEVER inline a privileged secret here (session / JWT / audit-chain / admin /
+// Ed25519 / signing / HMAC / webhook / password / Anthropic / Groq / MoonDB,
+// etc). Privileged secrets MUST come from environment variables only. The
+// guardrail test fails CI if a privileged-looking key name is added here.
 export const HS_DEFAULTS = {
   GOAML_MLRO_FULL_NAME:  "HAWKEYE STERLING - MLRO",
   GOAML_MLRO_EMAIL:      "hawkeye.sterling.v2@gmail.com",
@@ -28,4 +44,17 @@ export const HS_DEFAULTS = {
   OSINT_NEWSAPI_KEY:     "ea607b9e29e44c7f8173dc0375ab72aa",
   TIINGO_API_KEY:        "58033ca6ac27436a62c56bc789fe5d744143eeef",
   WORLDNEWS_API_KEY:     "8ee7710a2597468ebe94d1e1d10172c3",
+
+  // ── Non-secret deployment config ────────────────────────────────────────
+  // Inline these to drop the matching variable from Netlify's *runtime* scope
+  // and stay under the AWS Lambda 4 KB env-var limit (see
+  // docs/ENV_4KB_OPTIMIZATION.md §3b). They are NOT secrets.
+  //
+  // EMPTY string == "sourced from the environment variable" (current behavior,
+  // nothing changes). To inline: paste the value between the quotes, then
+  // delete the variable from Netlify. The environment variable ALWAYS wins
+  // when set, so inlining can never override a live deployment by surprise.
+  HAWKEYE_ENTITIES:        "",  // JSON array of reporting entities, single line
+  UPSTASH_REDIS_REST_URL:  "",  // e.g. https://<id>.upstash.io — the *_TOKEN stays in env
+  GMAIL_CLIENT_ID:         "",  // Google OAuth 2.0 client ID — public by design
 } as const;

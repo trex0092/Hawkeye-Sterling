@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { getJson, setJson, del } from "@/lib/server/store";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 const REDIRECT_URI = "https://hawkeye-sterling.netlify.app/api/auth/gmail/callback";
 const OAUTH_STATE_KEY = "hawkeye-gmail-oauth-state/v1.json";
@@ -64,7 +65,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=state_check_failed`);
   }
 
-  const clientId = process.env["GMAIL_CLIENT_ID"];
+  const clientId = process.env["GMAIL_CLIENT_ID"] ?? HS_DEFAULTS.GMAIL_CLIENT_ID;
   const clientSecret = process.env["GMAIL_CLIENT_SECRET"];
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(`${BASE}/tfs-alerts?gmail=error&reason=missing_credentials`);

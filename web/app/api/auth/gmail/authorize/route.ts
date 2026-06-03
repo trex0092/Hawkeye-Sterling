@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { randomBytes } from "node:crypto";
 import { setJson } from "@/lib/server/store";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 // MUST match exactly what is registered in Google Cloud Console → Authorized redirect URIs
 const REDIRECT_URI = "https://hawkeye-sterling.netlify.app/api/auth/gmail/callback";
@@ -19,7 +20,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.redirect("https://hawkeye-sterling.netlify.app/login?next=/api/auth/gmail/authorize");
   }
 
-  const clientId = process.env["GMAIL_CLIENT_ID"];
+  const clientId = process.env["GMAIL_CLIENT_ID"] ?? HS_DEFAULTS.GMAIL_CLIENT_ID;
   const clientSecret = process.env["GMAIL_CLIENT_SECRET"];
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(

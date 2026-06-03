@@ -24,6 +24,7 @@ interface BreakerState {
   probeInFlight: boolean;
 }
 import { setGauge } from "./metrics-store";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 const breakers = new Map<string, BreakerState>();
 const hydrated = new Set<string>();
@@ -47,7 +48,7 @@ function redisKeyFor(key: string): string {
 
 // F-17: Read circuit breaker state from Upstash Redis if configured.
 async function redisGet(key: string): Promise<BreakerState | null> {
-  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const url = process.env["UPSTASH_REDIS_REST_URL"] ?? HS_DEFAULTS.UPSTASH_REDIS_REST_URL;
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
   if (!url || !token) return null;
   try {
@@ -64,7 +65,7 @@ async function redisGet(key: string): Promise<BreakerState | null> {
 
 // F-17: Write circuit breaker state to Upstash Redis with auto-expiry TTL.
 async function redisSet(key: string, state: BreakerState): Promise<void> {
-  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const url = process.env["UPSTASH_REDIS_REST_URL"] ?? HS_DEFAULTS.UPSTASH_REDIS_REST_URL;
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
   if (!url || !token) return;
   try {

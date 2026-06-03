@@ -15,6 +15,7 @@
 //   GMAIL_REFRESH_TOKEN   — long-lived refresh token (OR use the OAuth flow above)
 
 import { getJson, setJson, del } from "@/lib/server/store";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 const TOKEN_CACHE_KEY = "hawkeye-gmail-token/v1.json";
 // Written by /api/auth/gmail/callback
@@ -72,7 +73,7 @@ async function refreshAccessToken(
 }
 
 export async function getGmailAccessToken(): Promise<string> {
-  const clientId = process.env["GMAIL_CLIENT_ID"];
+  const clientId = process.env["GMAIL_CLIENT_ID"] ?? HS_DEFAULTS.GMAIL_CLIENT_ID;
   const clientSecret = process.env["GMAIL_CLIENT_SECRET"];
   const envRefreshToken = process.env["GMAIL_REFRESH_TOKEN"];
   const staticToken = process.env["GMAIL_ACCESS_TOKEN"];

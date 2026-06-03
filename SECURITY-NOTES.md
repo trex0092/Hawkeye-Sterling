@@ -147,11 +147,21 @@ Scheduled functions that call internal API routes use token-based auth:
 
 | Function | Token Variable |
 |---------|---------------|
-| `ongoing-screen.mts` | `ONGOING_RUN_TOKEN` |
+| `ongoing-screen.mts` → `/api/ongoing/run` | `ONGOING_RUN_TOKEN` |
 | `sanctions-daily-*.mts` / `refresh-lists.ts` | `SANCTIONS_CRON_TOKEN` |
 | `health-monitor.mts` | `ADMIN_TOKEN` |
+| `transaction-monitor.mts` → `/api/cron/transaction-monitor` | `CRON_SECRET` **or** `ONGOING_RUN_TOKEN` |
+| (manual) `/api/cron/sanctions-sweep` | `CRON_SECRET` |
 
-Cron functions check `X-Netlify-Scheduled-Function: true` header (set by Netlify runtime) as a secondary guard.
+Cron functions check `X-Netlify-Scheduled-Function: true` header (set by Netlify runtime) as a secondary guard (enforced in production).
+
+**Token-contract rule:** a scheduled function and the route it calls must agree
+on the accepted token set. `transaction-monitor.mts` sends
+`Bearer ${CRON_SECRET ?? ONGOING_RUN_TOKEN}`, so `/api/cron/transaction-monitor`
+accepts **either** (timing-safe compare). A prior mismatch — route accepted only
+`CRON_SECRET` while the scheduler fell back to `ONGOING_RUN_TOKEN` — caused every
+hourly run to 401 on deployments without `CRON_SECRET` set. Locked by
+`web/lib/server/__tests__/cron-transaction-monitor-auth.test.ts`.
 
 ---
 
@@ -173,6 +183,7 @@ Cron functions check `X-Netlify-Scheduled-Function: true` header (set by Netlify
 | PostCSS moderate CVE | Low (no untrusted HTML via PostCSS) | Track Next.js upgrade |
 | No CSP violation reporting endpoint | Blind to injection attempts | Add `report-to` directive and collector |
 | CFS file upload not virus-scanned | Malicious XLSX payload risk | Add ClamAV scan step on upload |
+| Free-tier news/market API keys inlined in `web/lib/config/hs-defaults.ts` | **Low — accepted risk.** Read-only, no auth/audit/financial privilege; worst case is third-party news-API quota abuse | **Accepted deviation (operator-approved):** inlined to stay within the AWS Lambda 4 KB env-var limit. Privileged secrets are forbidden here and CI-enforced by `web/lib/config/__tests__/hs-defaults.test.ts`. Keys are in git history → rotate periodically. `env` always overrides the inline default. |
 
 ---
 

@@ -18,6 +18,7 @@
 import { getJson, setJson } from "./store";
 import { tierFor, type TierDefinition } from "@/lib/data/tiers";
 import { incrementCounter } from "./metrics-store";
+import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 
 // ── Upstash Redis path ────────────────────────────────────────────────────────
 //
@@ -33,7 +34,7 @@ import { incrementCounter } from "./metrics-store";
 async function redisPipeline(
   commands: Array<readonly [string, ...string[]]>,
 ): Promise<Array<number | null>> {
-  const url = process.env["UPSTASH_REDIS_REST_URL"];
+  const url = process.env["UPSTASH_REDIS_REST_URL"] ?? HS_DEFAULTS.UPSTASH_REDIS_REST_URL;
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
   if (!url || !token) return commands.map(() => null);
   try {
