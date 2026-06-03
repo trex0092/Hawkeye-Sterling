@@ -22,6 +22,7 @@ import { bisEntityAdapter } from './sources/bis-entity.js';
 import { uaeMoeDesignatedAdapter } from './sources/uae-moe-designated.js';
 import { fincen314aAdapter } from './sources/fincen-314a.js';
 import { trMasakAdapter } from './sources/tr-masak.js';
+import { worldBankDebarredAdapter } from './sources/worldbank-debarred.js';
 
 // Registry consumed by netlify/functions/refresh-lists.ts cron.
 // Order is informational; each adapter runs independently.
@@ -59,4 +60,5 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   bisEntityAdapter,           // opt-in: set FEED_BIS_ENTITY for live BIS Entity List CSV
   fincen314aAdapter,          // opt-in: set FINCEN_314A_API_KEY + FINCEN_314A_ENDPOINT
   trMasakAdapter,             // live via FEED_TR_MASAK; curated static seed otherwise
+  worldBankDebarredAdapter,   // MDB debarment — live via FEED_WORLDBANK_DEBARRED; seed otherwise
 ];

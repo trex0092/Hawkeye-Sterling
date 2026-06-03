@@ -25,9 +25,6 @@ import {
   BrainModuleWeights,
   BrainFATFAlignment,
   BrainSourceTriangulation,
-  BrainTypologyConfidence,
-  BrainJurisdictionClusters,
-  BrainRegulatoryPredictor,
   BrainEscalationLadder,
   BrainDataCoverage,
   BrainCoverageGap,
@@ -3290,9 +3287,6 @@ function SuperBrainPanel({
       />
       <BrainReasoningChain result={r} />
       <BrainSourceTriangulation result={r} />
-      <BrainTypologyConfidence result={r} />
-      <BrainJurisdictionClusters result={r} />
-      <BrainRegulatoryPredictor result={r} />
       <BrainEscalationLadder result={r} />
       <BrainScenarioMatcher result={r} />
       <BrainFATFAlignment result={r} />
