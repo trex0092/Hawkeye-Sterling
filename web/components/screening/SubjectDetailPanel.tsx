@@ -39,7 +39,6 @@ import {
   BrainDataCoverage,
   BrainCoverageGap,
 } from "@/components/screening/BrainIntelPack";
-import { BrainIntelligencePack } from "@/components/screening/BrainIntelligencePack";
 import { DeepIntelPanel } from "@/components/screening/DeepIntelPanel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CrossRegimeConflictCard } from "@/components/screening/CrossRegimeConflictCard";
@@ -77,7 +76,7 @@ import { caughtErrorMessage } from "@/lib/client/error-utils";
 // which made it visually identical to the Screening tab. Real
 // per-event timeline can return as its own panel when the engine
 // is wired.
-const TABS = ["Screening", "Adverse Media", "Intelligence", "Deep Intel", "Live reasoning", "Evidence"] as const;
+const TABS = ["Screening", "Adverse Media", "Deep Intel", "Live reasoning", "Evidence"] as const;
 type Tab = (typeof TABS)[number];
 
 // Disambiguate tab removed — its types were removed alongside it.
@@ -1390,14 +1389,6 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             }}
             superBrain={superBrain}
             news={news}
-          />
-        )}
-
-        {activeTab === "Intelligence" && (
-          <BrainIntelligencePack
-            subject={subject}
-            screen={screening.status === "success" ? screening.result : null}
-            superBrain={superBrain.status === "success" ? superBrain.result : null}
           />
         )}
 

@@ -16,6 +16,7 @@
 //   const gate = await enforce(req, { requireAuth: false });
 
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { extractKey, validateAndConsume, type ApiKeyRecord } from "./api-keys";
 import { getJson } from "./store";
 import { consumeRateLimit, consumeOrgQuota, rateLimitHeaders } from "./rate-limit";
@@ -342,12 +343,22 @@ async function _enforce(
   // This is the fallback that makes the portal work correctly regardless of
   // whether ADMIN_TOKEN is configured in Netlify env vars.
   if (anonymous) {
-    const cookieHeader = req.headers.get("cookie") ?? "";
-    const sessionToken = cookieHeader
-      .split(";")
-      .map((s) => s.trim())
-      .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
-      ?.slice(SESSION_COOKIE.length + 1) ?? "";
+    // Prefer next/headers cookies() (reliable in App Router route handlers)
+    // over req.headers.get("cookie") which can be stripped in some Next.js 15
+    // Lambda environments. Fall back to raw header parse when cookies() throws
+    // (e.g. when called outside a request context in tests).
+    let sessionToken = "";
+    try {
+      const jar = await cookies();
+      sessionToken = jar.get(SESSION_COOKIE)?.value ?? "";
+    } catch {
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      sessionToken = cookieHeader
+        .split(";")
+        .map((s) => s.trim())
+        .find((s) => s.startsWith(`${SESSION_COOKIE}=`))
+        ?.slice(SESSION_COOKIE.length + 1) ?? "";
+    }
     if (sessionToken) {
       let sessionPayload: ReturnType<typeof verifySession> = null;
       try { sessionPayload = verifySession(sessionToken); } catch { /* SESSION_SECRET missing or invalid */ }
