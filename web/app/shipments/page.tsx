@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -1115,21 +1116,17 @@ export default function ShipmentsPage() {
       sidebarActions={
         showAdd ? null : (
           <>
-            <button
-              type="button"
-              onClick={() => setShowAdd(true)}
-              className="text-13 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors text-left"
-            >
+            <ActionButton variant="add" type="button" onClick={() => setShowAdd(true)}>
               + Add
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
+              variant="ai"
               type="button"
               disabled={tbmlLoading}
               onClick={() => void runTbmlScan(visible)}
-              className="text-13 font-semibold px-4 py-2 rounded border border-amber/60 text-amber bg-amber-dim hover:bg-amber/20 transition-colors disabled:opacity-50 text-left"
             >
               {tbmlLoading ? "Scanning…" : "✦AI"}
-            </button>
+            </ActionButton>
             {tbml && (
               <button
                 type="button"

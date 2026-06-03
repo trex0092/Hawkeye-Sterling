@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { DateParts } from "@/components/ui/DateParts";
 import { formatDMY } from "@/lib/utils/dateFormat";
 import type { BoardAmlReportResult } from "@/app/api/board-aml-report/route";
@@ -1160,7 +1161,18 @@ export default function OversightPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="oversight" asanaLabel="Oversight" engineLabel="Governance engine">
+    <ModuleLayout
+      asanaModule="oversight"
+      asanaLabel="Oversight"
+      engineLabel="Governance engine"
+      sidebarActions={
+        tab === "action-tracker" ? (
+          <ActionButton variant="add" type="button" onClick={() => setShowAddAction((v) => !v)}>
+            {showAddAction ? "Cancel" : "+ Add Action Item"}
+          </ActionButton>
+        ) : null
+      }
+    >
       <ModuleHero
 
         eyebrow=""
@@ -1526,13 +1538,6 @@ export default function OversightPage() {
                 {openActionsCount} open · {allActionItems.length - openActionsCount} closed · {allActionItems.length} total
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddAction((v) => !v)}
-              className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-            >
-              {showAddAction ? "Cancel" : "+ Add Action Item"}
-            </button>
           </div>
 
           <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">

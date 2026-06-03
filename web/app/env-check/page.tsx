@@ -88,12 +88,6 @@ export default function EnvCheckPage() {
                   {data.ok ? "All required variables configured" : `${data.summary.requiredMissing} required variable(s) missing`}
                 </strong>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <Stat label="Required ✓" value={data.summary.requiredConfigured} color="green" />
-                <Stat label="Required ✗" value={data.summary.requiredMissing} color={data.summary.requiredMissing > 0 ? "red" : "gray"} />
-                <Stat label="Optional ✓" value={data.summary.optionalConfigured} color="blue" />
-                <Stat label="Optional ✗" value={data.summary.optionalMissing} color="gray" />
-              </div>
             </div>
 
             {/* Per-group tables */}
@@ -164,20 +158,5 @@ export default function EnvCheckPage() {
         )}
       </div>
     </ModuleLayout>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  const colorMap: Record<string, string> = {
-    green: "text-emerald-300 bg-emerald-950/30 border border-emerald-500/40",
-    red: "text-red-300 bg-red-950/30 border border-red-500/40",
-    blue: "text-sky-300 bg-sky-950/30 border border-sky-500/40",
-    gray: "text-ink-2 bg-bg-base border border-hair-2",
-  };
-  return (
-    <div className={`rounded p-2 text-center ${colorMap[color] ?? colorMap["gray"]}`}>
-      <div className="text-xl font-bold">{value}</div>
-      <div className="text-xs">{label}</div>
-    </div>
   );
 }

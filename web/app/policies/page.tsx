@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 
 // Policies (SOP vault) — your charter, redlines, risk appetite, sector
 // policies. Brain cites these inline on every disposition. Versioned
@@ -800,13 +801,9 @@ export default function PoliciesPage() {
       asanaLabel="Policies"
       sidebarActions={
         !adding ? (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded bg-brand text-white text-13 font-semibold hover:bg-brand/90 transition-colors text-left"
-          >
-            <span className="text-14 leading-none">+</span> Add policy
-          </button>
+          <ActionButton variant="add" type="button" onClick={() => setAdding(true)}>
+            + Add policy
+          </ActionButton>
         ) : null
       }
     >

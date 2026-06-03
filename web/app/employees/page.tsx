@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
+import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface CriticalExpiry {
@@ -326,21 +327,21 @@ export default function EmployeesPage() {
       asanaLabel="Employees"
       sidebarActions={
         <>
-          <button
+          <ActionButton
+            variant="ai"
             type="button"
             onClick={runEmployeeRiskScan}
             disabled={employees.length === 0 || empRiskLoading}
-            className="text-13 font-semibold px-4 py-2 rounded border border-amber text-amber hover:bg-amber-dim disabled:opacity-40 transition-colors text-left"
           >
             {empRiskLoading ? "Scanning…" : "✦AI"}
-          </button>
-          <button
+          </ActionButton>
+          <ActionButton
+            variant="add"
             type="button"
             onClick={() => setAdding((v) => !v)}
-            className="text-13 font-semibold px-4 py-2 rounded bg-brand-dim text-brand border border-brand/40 hover:bg-brand/20 transition-colors text-left"
           >
             {adding ? "Cancel" : "+ Add employee"}
-          </button>
+          </ActionButton>
         </>
       }
     >

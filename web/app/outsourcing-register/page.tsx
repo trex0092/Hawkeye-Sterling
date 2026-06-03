@@ -184,8 +184,6 @@ export default function OutsourcingRegisterPage() {
   }
 
   const amlCftArrangements = arrangements.filter((a) => a.amlCftRelevant);
-  const dueForReview = arrangements.filter((a) => a.status === "under_review");
-  const boardApproved = arrangements.filter((a) => a.boardApproved);
   const hasWarning = amlCftArrangements.some((a) => a.status === "under_review" || !a.boardApproved);
 
   return (
@@ -208,26 +206,8 @@ export default function OutsourcingRegisterPage() {
 
       <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
 
-        {/* Stats + action bar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-3">
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-ink-1">{arrangements.length}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Total</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-sky-400">{amlCftArrangements.length}</div>
-              <div className="text-10 text-ink-2 mt-0.5">AML/CFT</div>
-            </div>
-            <div className={`border rounded-lg px-4 py-3 text-center min-w-[80px] ${dueForReview.length > 0 ? "bg-amber-950/20 border-amber-500/30" : "bg-bg-panel border-hair-2"}`}>
-              <div className={`text-2xl font-bold ${dueForReview.length > 0 ? "text-amber-400" : "text-ink-1"}`}>{dueForReview.length}</div>
-              <div className="text-10 text-ink-2 mt-0.5">For Review</div>
-            </div>
-            <div className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-3 text-center min-w-[80px]">
-              <div className="text-2xl font-bold text-emerald-400">{boardApproved.length}</div>
-              <div className="text-10 text-ink-2 mt-0.5">Board OK</div>
-            </div>
-          </div>
+        {/* Action bar */}
+        <div className="flex items-center justify-end gap-4">
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
