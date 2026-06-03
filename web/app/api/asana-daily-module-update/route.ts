@@ -48,7 +48,7 @@ function escalationPath(owner: string): string {
 // Standing UAE / international framework every module is governed under,
 // in addition to the module-specific legal basis.
 const STANDING_FRAMEWORK =
-  "FDL 20/2018 & Cabinet Decision 10/2019; FDL 10/2025 (AI governance); " +
+  "Federal Decree-Law No.10/2025 & Cabinet Decision No.10/2019; " +
   "FATF Recommendations & Methodology; MoE AML/CFT Guidance for DNFBPs/DPMS.";
 
 // Builds the full, sectioned audit-ready compliance report posted to a
@@ -105,7 +105,7 @@ function buildReport(m: AsanaModuleTask, date: string, input: ReportInput): stri
     ``,
     `§8 · EVIDENCE & RETENTION`,
     `Evidence: Control outputs, dispositions and approvals for ${m.label}, preserved in the immutable, tamper-evident audit chain.`,
-    `Retention: ${m.retention} (FDL 20/2018 Art.16; FDL 10/2025 Art.24).`,
+    `Retention: ${m.retention} (FDL 10/2025 Art.24).`,
     ``,
     `§9 · ATTESTATION STATEMENT`,
     `For the reporting period stated above, the ${m.label} control operated in accordance with the Hawkeye Sterling Module Compliance Register. ` +
