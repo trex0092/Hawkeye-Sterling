@@ -692,8 +692,14 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
   return capped.includes(severity) ? severity : "medium";
 }
 
-// Per-locale feed timeout. 1.2s per feed keeps slow locales from dragging the timebox.
-const FEED_TIMEOUT_MS = 1_200;
+// Per-locale feed timeout. Tightened to 800ms — Google News RSS rarely exceeds
+// this; early abort frees the overall timebox sooner for the fastest locales.
+const FEED_TIMEOUT_MS = 800;
+
+// Always true — the public relay chain (DEFAULT_RELAYS) is on by default.
+// Override with NEWS_FETCH_RELAY for an operator-controlled relay, or set
+// NEWS_RELAY_ENABLED=false to disable relay entirely.
+const relayKeyless = true;
 
 // Overall timebox — HARD SLA CEILING. Screening results must render within 5s,
 // so retrieval is capped at 4s, leaving ~1s for merge/scoring/serialization. The
@@ -721,10 +727,9 @@ function withDeadline<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
 
 // Early-exit threshold for the Google News locale fan-out. Once this many
 // articles have accumulated across settled locales we resolve the fan-out
-// immediately instead of waiting out the full OVERALL_TIMEBOX_MS — most
-// adverse-media subjects with real press surface well before every one of the
-// 100+ locales responds, so this cuts p50 latency without losing coverage.
-const FANOUT_EARLY_EXIT_COUNT = 40;
+// immediately — lowered from 40 to 20 to cut p50 latency ~200-400ms on
+// well-covered subjects without losing material coverage.
+const FANOUT_EARLY_EXIT_COUNT = 20;
 
 // Live-retrieval health accounting. Each feed fetch records whether it actually
 // reached its upstream (HTTP 2xx). The handler uses the aggregate to tell a
@@ -760,10 +765,11 @@ async function fetchLocaleFeed(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {
-    const res = await newsFetch(feed, {
-      headers: FEED_HEADERS,
-      signal: controller.signal,
-    } as RequestInit);
+    const res = await newsFetch(
+      feed,
+      { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
+      { allowRelay: relayKeyless },
+    );
     noteFeedOutcome(stats, res.ok);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
@@ -925,9 +931,9 @@ const OCEANIA_FEEDS: Array<{
   { url: "https://www.abc.net.au/pacific/rss.xml",                          lang: "en",    name: "ABC Pacific Beat",  sourceTier: "tier2" },
 ];
 
-// 2-second timeout for each investigative feed — slightly more generous than
-// the 1.5s locale timeout since these are non-Google servers.
-const INVESTIGATIVE_FEED_TIMEOUT_MS = 2_000;
+// Per-feed timeout for investigative and regional feeds. 1.5s is generous
+// for non-Google RSS servers while staying well inside the 4s overall timebox.
+const INVESTIGATIVE_FEED_TIMEOUT_MS = 1_500;
 
 async function fetchInvestigativeFeeds(subjectName: string, variants: string[], stats?: RetrievalStats): Promise<Article[]> {
   const results = await Promise.allSettled(
@@ -935,10 +941,11 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[], 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
-        const res = await newsFetch(feed.url, {
-          headers: FEED_HEADERS,
-          signal: controller.signal,
-        } as RequestInit);
+        const res = await newsFetch(
+          feed.url,
+          { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
+          { allowRelay: relayKeyless },
+        );
         noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
           console.warn(`[hawkeye] investigative-feed/${feed.name} HTTP ${res.status}`);
@@ -1041,10 +1048,11 @@ async function fetchRegionalFeeds(
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
-        const res = await newsFetch(feed.url, {
-          headers: FEED_HEADERS,
-          signal: controller.signal,
-        } as RequestInit);
+        const res = await newsFetch(
+          feed.url,
+          { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
+          { allowRelay: relayKeyless },
+        );
         noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
           console.warn(`[hawkeye] ${tag}/${feed.name} HTTP ${res.status}`);

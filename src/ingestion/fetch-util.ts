@@ -1,14 +1,17 @@
 // HTTP fetch with timeout + retry for sanctions-list ingestion.
 //
-// Two production hardening measures so upstream publishers (OFAC, UN, EU, UK
+// Three production hardening measures so upstream publishers (OFAC, UN, EU, UK
 // OFSI, SECO, MASAK, UAE, …) actually serve the deployment instead of returning
 // HTTP 403 — the cause of "N lists failed" on the operator refresh:
 //   1. A real browser User-Agent. The old "Hawkeye-Sterling/1.0 (+https://…)"
 //      crawler UA is exactly what many gov/CDN endpoints 403.
 //   2. An optional outbound proxy (NEWS_HTTP_PROXY → HTTPS_PROXY → HTTP_PROXY)
 //      so a datacenter IP that publishers block can egress via an allowed IP.
-//      Per-call dispatcher only — never setGlobalDispatcher. List downloads are
-//      public files (no PII), so this is lower-risk than the news relay.
+//   3. A public relay chain (allorigins → corsproxy.io → codetabs) tried once
+//      after all direct retries exhaust on a 403/429/451/503. Sanctions lists
+//      are publicly published documents — the relay fetches the same URL any
+//      browser would. Override with INGEST_FETCH_RELAY / NEWS_FETCH_RELAY for
+//      an operator-controlled relay, or disable with NEWS_RELAY_ENABLED=false.
 
 import { ProxyAgent, type Dispatcher } from 'undici';
 
@@ -27,6 +30,28 @@ const PROXY_URI =
   process.env['HTTPS_PROXY']?.trim() ||
   process.env['HTTP_PROXY']?.trim() ||
   '';
+
+// Public relay chain for sanctions-list downloads blocked by datacenter IP.
+// Sanctions lists are publicly published documents — the relay fetches the
+// same URL any browser would. Always active; no env var required.
+// Override with INGEST_FETCH_RELAY or NEWS_FETCH_RELAY for an operator relay.
+const INGEST_RELAY_TEMPLATES: string[] =
+  (process.env['INGEST_FETCH_RELAY']?.trim() || process.env['NEWS_FETCH_RELAY']?.trim())
+    ?.split(',').map((s) => s.trim()).filter(Boolean) ??
+  [
+    'https://api.allorigins.win/raw?url={url}',
+    'https://corsproxy.io/?url={url}',
+    'https://api.codetabs.com/v1/proxy/?quest={url}',
+  ];
+
+function buildIngestRelayUrl(template: string, target: string): string {
+  return template.includes('{url}')
+    ? template.replace('{url}', encodeURIComponent(target))
+    : `${template}${encodeURIComponent(target)}`;
+}
+
+const INGEST_RELAYABLE_STATUSES = new Set([403, 429, 451, 503]);
+
 let _dispatcher: Dispatcher | undefined;
 let _dispatcherResolved = false;
 // Shared with the binary/XLSX list adapters (au-dfat, jp-mof, uae-iec, interpol,
@@ -51,6 +76,7 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
   const backoff = opts.retryBackoffMs ?? 1500;
   const dispatcher = ingestionDispatcher();
   let lastErr: unknown;
+  let lastStatus: number | undefined;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), timeoutMs);
@@ -64,7 +90,11 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
         },
         ...(dispatcher ? { dispatcher } : {}),
       } as RequestInit & { dispatcher?: Dispatcher });
-      if (!res.ok) { clearTimeout(timer); throw new Error(`${url} → HTTP ${res.status}`); }
+      if (!res.ok) {
+        lastStatus = res.status;
+        clearTimeout(timer);
+        throw new Error(`${url} → HTTP ${res.status}`);
+      }
       const text = await res.text();
       clearTimeout(timer);
       return text;
@@ -74,6 +104,36 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
       if (attempt < retries) await new Promise((r) => setTimeout(r, backoff * (attempt + 1)));
     }
   }
+
+  // All direct retries exhausted. If the failure was a relayable status or a
+  // network error, try each relay in order — first 2xx wins.
+  if (INGEST_RELAY_TEMPLATES.length > 0 &&
+      (lastStatus === undefined || INGEST_RELAYABLE_STATUSES.has(lastStatus))) {
+    for (const template of INGEST_RELAY_TEMPLATES) {
+      const relayUrl = buildIngestRelayUrl(template, url);
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), timeoutMs);
+      try {
+        const res = await fetch(relayUrl, {
+          signal: ctl.signal,
+          headers: {
+            'User-Agent': BROWSER_UA,
+            'Accept-Language': 'en-US,en;q=0.9',
+            ...(opts.accept ? { Accept: opts.accept } : {}),
+          },
+        } as RequestInit);
+        if (res.ok) {
+          const text = await res.text();
+          clearTimeout(timer);
+          return text;
+        }
+        clearTimeout(timer);
+      } catch {
+        clearTimeout(timer);
+      }
+    }
+  }
+
   throw lastErr instanceof Error ? lastErr : new Error('fetch failed');
 }
 

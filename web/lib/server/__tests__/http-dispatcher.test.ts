@@ -103,30 +103,33 @@ describe("newsFetch relay fallback", () => {
     vi.stubEnv("NEWS_FETCH_RELAY", "");
   }
 
-  it("is OFF by default (opt-in) — a 403 is returned as-is, no relay call", async () => {
+  it("is ON by default — 3 built-in public relays always active", async () => {
     clearProxyEnv();
     clearRelayEnv();
     const m = await loadFresh();
-    expect(m.newsRelayInfo()).toEqual({ enabled: false, count: 0 });
-    const fetchMock = vi.fn().mockResolvedValue(new Response("nope", { status: 403 }));
+    expect(m.newsRelayInfo()).toEqual({ enabled: true, count: 3 });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("blocked", { status: 403 })) // direct
+      .mockResolvedValueOnce(new Response("<rss>ok</rss>", { status: 200 })); // relay 1
     vi.stubGlobal("fetch", fetchMock);
     const res = await m.newsFetch("https://news.example/feed", undefined, { allowRelay: true });
-    expect(res.status).toBe(403);
-    expect(fetchMock).toHaveBeenCalledTimes(1); // no relay retry when off
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // direct + one relay
   });
 
-  it("enables the built-in chain only with NEWS_RELAY_ENABLED=1", async () => {
+  it("uses the built-in chain when no NEWS_FETCH_RELAY override is set", async () => {
     clearProxyEnv();
-    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    clearRelayEnv();
     const m = await loadFresh();
     const info = m.newsRelayInfo();
     expect(info.enabled).toBe(true);
     expect(info.count).toBeGreaterThanOrEqual(2);
   });
 
-  it("retries through the relay on a 403 when enabled and allowRelay is set", async () => {
+  it("retries through the relay on a 403 when allowRelay is set", async () => {
     clearProxyEnv();
-    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    clearRelayEnv();
     const m = await loadFresh();
     const fetchMock = vi
       .fn()
@@ -142,7 +145,7 @@ describe("newsFetch relay fallback", () => {
 
   it("advances to the next relay when the first relay also fails", async () => {
     clearProxyEnv();
-    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    clearRelayEnv();
     const m = await loadFresh();
     const fetchMock = vi
       .fn()
@@ -155,9 +158,9 @@ describe("newsFetch relay fallback", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("does NOT relay when allowRelay is unset, even with the relay enabled (API-key calls never relay)", async () => {
+  it("does NOT relay when allowRelay is unset — API-key calls never relay", async () => {
     clearProxyEnv();
-    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    clearRelayEnv();
     const m = await loadFresh();
     const fetchMock = vi.fn().mockResolvedValue(new Response("blocked", { status: 403 }));
     vi.stubGlobal("fetch", fetchMock);

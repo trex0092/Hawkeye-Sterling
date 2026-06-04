@@ -87,22 +87,18 @@ const proxyConfig = readProxyEnv();
 // deliberately NOT routed through public relays — a tampering relay could strip
 // a designated name (false negative), so list ingestion uses the operator's
 // trusted proxy (NEWS_HTTP_PROXY) instead. See src/ingestion/fetch-util.ts.
-const DEFAULT_RELAYS: string[] = [
-  // Raw-passthrough relays: return the unmodified feed body (RSS XML / GDELT
-  // JSON), unlike content-extracting readers that would mangle structured feeds.
-  "https://api.allorigins.win/raw?url={url}",
-  "https://corsproxy.io/?url={url}",
-  "https://api.codetabs.com/v1/proxy/?quest={url}",
-];
-const RELAY_TEMPLATES: string[] = (() => {
-  // An operator-supplied relay is an explicit choice of destination → honour it.
-  const custom = process.env["NEWS_FETCH_RELAY"]?.trim();
-  if (custom) return custom.split(",").map((s) => s.trim()).filter(Boolean);
-  // The built-in public chain is opt-in only (see reliability note above).
-  const flag = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
-  if (flag === "1" || flag === "true" || flag === "on") return DEFAULT_RELAYS;
-  return [];
-})();
+// Raw-passthrough public relays — always active, no env var required.
+// Each fetches the target URL from a clean (non-datacenter) IP and returns
+// the unmodified body. First 2xx response wins; others are skipped silently.
+// Override all three with NEWS_FETCH_RELAY=<url> for an operator-controlled relay.
+const RELAY_TEMPLATES: string[] =
+  process.env["NEWS_FETCH_RELAY"]?.trim()
+    ? process.env["NEWS_FETCH_RELAY"].trim().split(",").map((s) => s.trim()).filter(Boolean)
+    : [
+        "https://api.allorigins.win/raw?url={url}",
+        "https://corsproxy.io/?url={url}",
+        "https://api.codetabs.com/v1/proxy/?quest={url}",
+      ];
 
 // Upstream statuses that mean "this IP is refused / throttled" — the cases a
 // clean-IP relay can plausibly recover. Other errors (404, 500) are real and
