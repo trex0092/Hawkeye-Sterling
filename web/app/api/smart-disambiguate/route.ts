@@ -181,7 +181,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   if (!apiKey) {
     incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_no_key" });
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    const tpl = buildTemplate();
+    for (const h of tpl.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
+    return NextResponse.json({ ok: true, ...tpl, degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 
   const sanitizedClient = {
@@ -243,6 +245,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     } catch {
       console.warn("[smart-disambiguate] JSON parse failed (likely truncated response) — using template fallback");
       incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_parse_failed" });
+      const tplPf = buildTemplate();
+      for (const h of tplPf.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
       void writeAuditChainEntry(
         {
           event: "screening.disambiguation_degraded",
@@ -252,7 +256,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
         tenantIdFromGate(gate),
       ).catch(() => undefined);
-      return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM response truncated — deterministic template used", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+      return NextResponse.json({ ok: true, ...tplPf, degraded: true, degradedReason: "LLM response truncated — deterministic template used", latencyMs: Date.now() - t0 }, { headers: gate.headers });
     }
 
     // Normalize arrays — LLM occasionally returns null instead of [].
@@ -294,7 +298,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       tenantIdFromGate(gate),
     ).catch(() => undefined);
     incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_llm_error" });
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    const tplErr = buildTemplate();
+    for (const h of tplErr.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
+    return NextResponse.json({ ok: true, ...tplErr, degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }
 
