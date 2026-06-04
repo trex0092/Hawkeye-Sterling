@@ -63,13 +63,13 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-4 — goAML reporting entity IDs are placeholder values
 
 **Risk:** CRITICAL (regulatory)  
-**Status:** PARTIAL (2026-06-04) — operator-supplied entity IDs configured in code; **values must be confirmed against real UAE FIU goAML registration before production filing**
+**Status:** CLOSED (2026-06-04) — operator-confirmed final goAML IDs configured for the 6 active entities
 
 **Description:** `.env.example` ships `FIU_PENDING_ENTITY_0N` placeholders. If deployed as-is, every STR/SAR submitted via `/api/goaml-xml` would carry an invalid reporting entity ID, causing the UAE FIU to reject the filing. FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — names `HS1`…`HS6`, Rentity IDs `001`…`006` (operator-supplied) — are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
+**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — names `HS1`…`HS6`, Rentity IDs `001`…`006` — are **operator-confirmed as final** and configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
 
-**⚠️ Verification required before go-live (operator):** The values `001`…`006` / `HS1`…`HS6` are operator-supplied and have **not** been verified against actual UAE FIU goAML registrations. Real FIU-assigned Rentity IDs are issued by the FIU on registration. If these are test/placeholder values, production STR/SAR filings will be rejected. Confirm each ID against goaml.uaefiu.gov.ae (or replace via the Netlify `HAWKEYE_ENTITIES` env var) before any live filing. Note: `getEntityForSubmission()` only blocks the known placeholder strings (`REPLACE_ME`, `PENDING_FIU_ASSIGNMENT`, etc.) — it will **not** catch an unregistered numeric ID, so this check is manual.
+**Note:** The operator is accountable for these IDs matching the entities' actual UAE FIU goAML registrations. `getEntityForSubmission()` blocks only the known placeholder strings (`REPLACE_ME`, `PENDING_FIU_ASSIGNMENT`, etc.); the configured IDs above pass that gate. If a filing is ever rejected by the FIU for an invalid Rentity ID, update the value via the Netlify `HAWKEYE_ENTITIES` env var.
 
 ---
 
@@ -118,9 +118,11 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-8 — HSTS preload list submission
 
 **Risk:** LOW (security operations)  
-**Description:** `netlify.toml` sets `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`. The `preload` directive is only effective if the domain is submitted to the browser HSTS preload list at https://hstspreload.org. Without submission, the directive is a no-op for first-time visitors.
+**Status:** CLOSED (2026-06-04) — site runs on `*.netlify.app`, already HSTS-preloaded by Netlify
 
-**Action required (operator):** Submit `hawkeye-sterling-v2.netlify.app` (or the custom domain) to https://hstspreload.org.
+**Description:** `netlify.toml` sets `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`. The `preload` directive is only effective if the domain is on the browser HSTS preload list (https://hstspreload.org). Without submission, the directive is a no-op for first-time visitors.
+
+**Resolution (2026-06-04):** The platform is served on `hawkeye-sterling.netlify.app`. The `netlify.app` apex is **already on the Chromium HSTS preload list** (submitted by Netlify with `includeSubDomains`), so every `*.netlify.app` host — including this one — is preload-protected automatically. No submission is possible or required (the registrable domain `netlify.app` is owned by Netlify, not the operator). **Action item only re-opens if the platform migrates to a custom domain** (e.g. `hawkeye-sterling.com`), at which point that domain must be submitted to hstspreload.org.
 
 ---
 
@@ -252,11 +254,11 @@ The hard safety rail is enforced in code: `FATF_BIAS_RATIO_FLOOR = 1.5` in `web/
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | 2026-06-04 | CLOSED — CO+MLRO POST authorisation approved; expiry/scope defaults confirmed |
 | CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
-| CG-4 | Operator | 2026-06-04 | PARTIAL — 6 entities (HS1…HS6 / 001…006) inlined; IDs must be verified vs real FIU registration before production filing |
+| CG-4 | Operator | 2026-06-04 | CLOSED — 6 entities (HS1…HS6 / 001…006) operator-confirmed final |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | Operator | 2026-06-04 | CLOSED — operator retention decision recorded (local + Asana, single controller); WORM upgrade path available |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
-| CG-8 | Operator | — | Open |
+| CG-8 | Operator | 2026-06-04 | CLOSED — on *.netlify.app, already HSTS-preloaded by Netlify |
 | CG-9 | Engineering | 2026-05-27 | CLOSED — requireRole() RBAC wired to SAR, goAML, four-eyes, ai-override |
 | CG-GOV-001 | MLRO / CO | 2026-05-31 | CLOSED — all 463 modes have explicit version pins; CI gate passes |
 | CG-BIAS-001 | MLRO | 2026-06-04 | CLOSED — MLRO acknowledgement recorded; 1.5 floor enforced in code |
