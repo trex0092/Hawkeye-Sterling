@@ -695,14 +695,13 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
 // Per-locale feed timeout. 1.2s per feed keeps slow locales from dragging the timebox.
 const FEED_TIMEOUT_MS = 1_200;
 
-// Overall timebox: all 100+ locale feeds + 5 continent feed banks run in parallel.
-// 3.5s/9s were too tight for datacenter egress — Google News RSS frequently 403s
-// cloud IPs and GDELT's round-trip alone can exceed 9s under load, so live
-// retrieval was returning zero articles (or dropping GDELT) even when press
-// existed. 12s gives the keyless sources (GDELT + RSS + investigative/regional
-// banks) room to actually respond while staying well inside the 30s maxDuration
-// budget. Worst-case added screening latency vs 9s is ~3s.
-const OVERALL_TIMEBOX_MS = 12_000;
+// Overall timebox — HARD SLA CEILING. Screening results must render within 5s,
+// so retrieval is capped at 4s, leaving ~1s for merge/scoring/serialization. The
+// fast primary sources easily fit (Google News RSS ~0.7s, regional banks ≤2s);
+// the slow secondary source (GDELT, whose round-trip can exceed 4s) is best-effort
+// within this window and otherwise covered by its background prefetch cache. This
+// supersedes the earlier "give GDELT more time" tuning — the 5s SLA takes priority.
+const OVERALL_TIMEBOX_MS = 4_000;
 
 // Belt-and-suspenders global branch deadline. Every parallel retrieval branch
 // (GDELT, the regional/investigative feed banks, and the keyed news-API
@@ -1109,11 +1108,12 @@ async function fetchOceaniaFeeds(subjectName: string, variants: string[], stats?
 // NewsArticle shape so they flow through the existing fuzzy-scoring / severity /
 // source-tiering pipeline with no duplicated logic.
 const GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc";
-// GDELT is the most reliable keyless source from datacenter IPs (an API, not
-// scraped RSS). 2.5s/8s were clipping it before it could respond; 10s lets it
-// return within the wider overall timebox (GDELT round-trips can exceed 8s under
-// load, which surfaced as a false "unreachable" in the egress health probe).
-const GDELT_TIMEOUT_MS = 10_000;
+// GDELT is a keyless SECONDARY source (Google News RSS is primary). Bounded by
+// the 4s screening SLA window — if GDELT can't answer that fast it's dropped from
+// the live merge (Google News still carries worldwide coverage) and picked up
+// from the background prefetch cache instead. Don't raise this past
+// OVERALL_TIMEBOX_MS or it can't help anyway.
+const GDELT_TIMEOUT_MS = 4_000;
 
 function parseGdeltDate(seendate: string | undefined): string {
   // GDELT seendate format: "20240115T120000Z" → ISO 8601.
@@ -1569,7 +1569,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
     // Fan out to all locales + all configured news API adapters in parallel.
     // allSettled + per-feed AbortSignal + overall timebox ensures the function
-    // always returns within ~12s, well inside the 30s maxDuration budget.
+    // always returns within ~4s (the 5s screening SLA), far inside maxDuration=30.
     // Shared retrieval-health accumulator — every instrumented feed fetch
     // records whether it reached its upstream so we can tell a genuine
     // negative finding apart from a wholesale outage.

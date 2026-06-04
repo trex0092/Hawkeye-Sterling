@@ -25,11 +25,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
-// Match the dossier's real GDELT budget (GDELT_TIMEOUT_MS) so the probe reflects
-// what a live screening actually tolerates. 4s was stricter than the dossier and
-// reported GDELT as "unreachable" even though screenings gave it 8–10s and
-// succeeded. Probes run in parallel, so this stays well inside maxDuration=15.
-const PROBE_TIMEOUT_MS = 10_000;
+// Match the dossier's real per-source budget under the 5s screening SLA
+// (OVERALL_TIMEBOX_MS / GDELT_TIMEOUT_MS = 4s) so the probe reflects what a live
+// screening actually tolerates: a source that can't answer in ~4s is effectively
+// unreachable for screening, and the probe should say so rather than flatter it.
+const PROBE_TIMEOUT_MS = 4_000;
 
 type SourceStatus = "reachable" | "unreachable" | "skipped";
 
