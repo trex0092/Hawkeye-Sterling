@@ -9,7 +9,7 @@ import { classifyEsg } from "@/lib/data/esg";
 import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { getJson, setJson } from "@/lib/server/store";
-import { newsFetch, newsProxyInfo, newsRelayInfo, newsOperatorRelayEnabled, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
 import { getStore } from "@netlify/blobs";
 import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
@@ -695,11 +695,10 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
 // Per-locale feed timeout. 1.2s per feed keeps slow locales from dragging the timebox.
 const FEED_TIMEOUT_MS = 1_200;
 
-// Resolved once at module load (env is immutable after process start). True only
-// when NEWS_FETCH_RELAY is set — i.e. the operator's own trusted Cloudflare Worker
-// relay. The built-in public chain (NEWS_RELAY_ENABLED) is intentionally excluded
-// here — it's too flaky for bulk parallel locale/investigative/regional fan-out.
-const relayKeyless = newsOperatorRelayEnabled();
+// Always true — the public relay chain (DEFAULT_RELAYS) is on by default.
+// Override with NEWS_FETCH_RELAY for an operator-controlled relay, or set
+// NEWS_RELAY_ENABLED=false to disable relay entirely.
+const relayKeyless = true;
 
 // Overall timebox — HARD SLA CEILING. Screening results must render within 5s,
 // so retrieval is capped at 4s, leaving ~1s for merge/scoring/serialization. The

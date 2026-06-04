@@ -19,7 +19,7 @@
 // probe exposes no regulated data — only upstream reachability booleans).
 
 import { NextResponse } from "next/server";
-import { newsFetch, newsProxyInfo, newsRelayInfo, newsOperatorRelayEnabled, FEED_HEADERS, drainResponse } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS, drainResponse } from "@/lib/server/http-dispatcher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,7 +91,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const rssEnabled = process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false";
   const proxy = newsProxyInfo();
   const relay = newsRelayInfo();
-  const operatorRelayEnabled = newsOperatorRelayEnabled();
+  const operatorRelayEnabled = relay.enabled; // relay is always on unless NEWS_RELAY_ENABLED=false
   const via: "proxy" | "direct" = proxy.configured ? "proxy" : "direct";
   const verbose = new URL(req.url).searchParams.get("verbose") === "1";
 

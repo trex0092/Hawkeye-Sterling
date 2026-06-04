@@ -95,13 +95,14 @@ const DEFAULT_RELAYS: string[] = [
   "https://api.codetabs.com/v1/proxy/?quest={url}",
 ];
 const RELAY_TEMPLATES: string[] = (() => {
-  // An operator-supplied relay is an explicit choice of destination → honour it.
+  // Operator-supplied relay takes precedence — use it exclusively.
   const custom = process.env["NEWS_FETCH_RELAY"]?.trim();
   if (custom) return custom.split(",").map((s) => s.trim()).filter(Boolean);
-  // The built-in public chain is opt-in only (see reliability note above).
+  // Fall back to the built-in public chain (always on — no env var needed).
+  // NEWS_RELAY_ENABLED=false/0/off lets an operator explicitly disable it.
   const flag = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
-  if (flag === "1" || flag === "true" || flag === "on") return DEFAULT_RELAYS;
-  return [];
+  if (flag === "false" || flag === "0" || flag === "off") return [];
+  return DEFAULT_RELAYS;
 })();
 
 // Upstream statuses that mean "this IP is refused / throttled" — the cases a
