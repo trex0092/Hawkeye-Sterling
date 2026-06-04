@@ -30,7 +30,6 @@ import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { pushBellEvent } from "@/lib/bell-events";
 import { loadColumnVisibility, persistColumnVisibility } from "@/components/screening/ColumnChooser";
 import { ComtradePanel } from "@/components/tbml/ComtradePanel";
-import { WorldwideNewsFeed } from "@/components/screening/WorldwideNewsFeed";
 
 // ── Bulk Re-Screen types ──────────────────────────────────────────────────────
 
@@ -1851,11 +1850,6 @@ export default function ScreeningPage() {
             return (
               <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
                 <ActivityFeed />
-                {/* Worldwide AML News — relocated from the main column into the
-                    Screening engine rail. */}
-                <div className="mt-6">
-                  <WorldwideNewsFeed />
-                </div>
               </aside>
             );
           })()}
