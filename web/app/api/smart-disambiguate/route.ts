@@ -207,8 +207,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     matchScore: h.matchScore,
     additionalInfo: sanitizeText(h.additionalInfo),
   }));
-  const userMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess: ${JSON.stringify(sanitizedHits)}`;
-
   try {
     const modelChoice = pickModel({ kind: "classification", costSensitivity: "balanced", latencyBudgetMs: 6_000 });
     const anthropic = getAnthropicClient(apiKey, 6_000);
