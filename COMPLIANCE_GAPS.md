@@ -63,11 +63,13 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-4 — goAML reporting entity IDs are placeholder values
 
 **Risk:** CRITICAL (regulatory)  
-**Status:** CLOSED (2026-06-04) — real FIU Rentity IDs configured for the 6 active entities
+**Status:** PARTIAL (2026-06-04) — operator-supplied entity IDs configured in code; **values must be confirmed against real UAE FIU goAML registration before production filing**
 
 **Description:** `.env.example` ships `FIU_PENDING_ENTITY_0N` placeholders. If deployed as-is, every STR/SAR submitted via `/api/goaml-xml` would carry an invalid reporting entity ID, causing the UAE FIU to reject the filing. FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — registered names `HS1`…`HS6`, FIU-assigned Rentity IDs `001`…`006` (operator-confirmed) — are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
+**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — names `HS1`…`HS6`, Rentity IDs `001`…`006` (operator-supplied) — are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
+
+**⚠️ Verification required before go-live (operator):** The values `001`…`006` / `HS1`…`HS6` are operator-supplied and have **not** been verified against actual UAE FIU goAML registrations. Real FIU-assigned Rentity IDs are issued by the FIU on registration. If these are test/placeholder values, production STR/SAR filings will be rejected. Confirm each ID against goaml.uaefiu.gov.ae (or replace via the Netlify `HAWKEYE_ENTITIES` env var) before any live filing. Note: `getEntityForSubmission()` only blocks the known placeholder strings (`REPLACE_ME`, `PENDING_FIU_ASSIGNMENT`, etc.) — it will **not** catch an unregistered numeric ID, so this check is manual.
 
 ---
 
@@ -250,7 +252,7 @@ The hard safety rail is enforced in code: `FATF_BIAS_RATIO_FLOOR = 1.5` in `web/
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | 2026-06-04 | CLOSED — CO+MLRO POST authorisation approved; expiry/scope defaults confirmed |
 | CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
-| CG-4 | Operator | 2026-06-04 | CLOSED — 6 entities (names HS1…HS6, Rentity IDs 001…006) inlined |
+| CG-4 | Operator | 2026-06-04 | PARTIAL — 6 entities (HS1…HS6 / 001…006) inlined; IDs must be verified vs real FIU registration before production filing |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | Operator | 2026-06-04 | CLOSED — operator retention decision recorded (local + Asana, single controller); WORM upgrade path available |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
