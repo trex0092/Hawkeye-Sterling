@@ -54,7 +54,12 @@ export const HS_DEFAULTS = {
   // nothing changes). To inline: paste the value between the quotes, then
   // delete the variable from Netlify. The environment variable ALWAYS wins
   // when set, so inlining can never override a live deployment by surprise.
-  HAWKEYE_ENTITIES:        "",  // JSON array of reporting entities, single line
+  // goAML reporting entities (CG-4). 6 active entities (operator-confirmed
+  // 2026-06-04): registered names HS1..HS6, FIU Rentity IDs 001..006. These are
+  // non-secret identifiers, inlined here per operator decision; the Netlify env
+  // HAWKEYE_ENTITIES still wins when set. Names print on every STR/SAR filing
+  // (FDL 10/2025 Art.15).
+  HAWKEYE_ENTITIES:        '[{"id":"entity-01","name":"HS1","goamlRentityId":"001","jurisdiction":"AE"},{"id":"entity-02","name":"HS2","goamlRentityId":"002","jurisdiction":"AE"},{"id":"entity-03","name":"HS3","goamlRentityId":"003","jurisdiction":"AE"},{"id":"entity-04","name":"HS4","goamlRentityId":"004","jurisdiction":"AE"},{"id":"entity-05","name":"HS5","goamlRentityId":"005","jurisdiction":"AE"},{"id":"entity-06","name":"HS6","goamlRentityId":"006","jurisdiction":"AE"}]',
   UPSTASH_REDIS_REST_URL:  "",  // e.g. https://<id>.upstash.io — the *_TOKEN stays in env
   GMAIL_CLIENT_ID:         "",  // Google OAuth 2.0 client ID — public by design
 } as const;

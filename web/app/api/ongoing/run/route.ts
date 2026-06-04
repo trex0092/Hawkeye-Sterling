@@ -16,6 +16,8 @@ import {
   type CustomerRiskTier,
   MONITORING_FREQUENCIES,
   isNewsCheckDue,
+  isScreenDueWithFloor,
+  nextScreenAtWithFloor,
   loadAlertThresholds,
   meetsAdverseMediaThreshold as _meetsAdverseMediaThreshold,
   detectChanges,
@@ -295,9 +297,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       const riskSchedule = await getJson<RiskBasedSchedule>(`ongoing/risk-schedule/${s.id}`);
 
       if (riskSchedule?.nextScreenAt) {
-        // Risk-based schedule takes precedence over the legacy cadence schedule.
-        const nextScreenMs = Date.parse(riskSchedule.nextScreenAt);
-        if (Number.isFinite(nextScreenMs) && nextScreenMs > nowMs) return; // not due yet
+        // Global 3×/day floor (MLRO mandate 2026-06-04): a subject is due when
+        // its risk-tier cadence is due OR a global-floor slot has elapsed since
+        // the last screen — keyed off lastScreenAt rather than the stored
+        // nextScreenAt, so even subjects scheduled far out under a low-risk tier
+        // (or enrolled before this change) are pulled into at-least-3×/day
+        // monitoring. Tighter risk-tier cadences (PEP/prohibited) still apply.
+        const lastScreenMs = riskSchedule.lastScreenAt
+          ? Date.parse(riskSchedule.lastScreenAt)
+          : null;
+        if (!isScreenDueWithFloor(riskTier, lastScreenMs, nowMs)) return; // not due yet
       } else {
         // Legacy cadence-based schedule fallback for subjects enrolled before
         // risk-based scheduling was introduced.
@@ -921,7 +930,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       // 1. Risk-based schedule: compute next screen / news-check timestamps from
       //    the subject's risk tier interval. This is the authoritative schedule
       //    used by the queue endpoint and the isScreenDue helper.
-      const nextScreenAtMs = nowMs + freq.screenIntervalDays * 24 * 60 * 60 * 1_000;
+      // Apply the global 3×/day floor: never schedule the next screen later than
+      // the next global-floor slot, regardless of the risk-tier interval.
+      const nextScreenAtMs = nextScreenAtWithFloor(riskTier, nowMs, nowMs);
       const nextNewsCheckAtMs = nowMs + freq.newsCheckIntervalDays * 24 * 60 * 60 * 1_000;
       const updatedRiskSchedule: RiskBasedSchedule = {
         subjectId: s.id,

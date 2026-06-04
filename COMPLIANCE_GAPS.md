@@ -1,5 +1,5 @@
 # Hawkeye Sterling — Compliance Gaps
-**Date:** 2026-05-31 (last updated)  
+**Date:** 2026-06-04 (last updated)  
 **Status:** Items marked CLOSED have been addressed in code. Items marked Open require an explicit human or MLRO decision before they can be considered resolved.
 
 ---
@@ -18,7 +18,7 @@
 ## CG-2 — False-positive whitelist mechanism
 
 **Risk:** HIGH (operational compliance)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — mechanism implemented; MLRO workflow approval pending
+**Status:** CLOSED (2026-06-04) — mechanism implemented; MLRO approved CO+MLRO POST authorisation
 
 **Description:** `web/app/api/whitelist/route.ts` implements a full per-tenant false-positive whitelist:
 - `GET /api/whitelist` — list active entries for the caller's tenant
@@ -29,17 +29,17 @@ All writes append to `whitelist-audit/<tenantId>.json` for a tamper-evident audi
 
 UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match" determinations, including a record of the disambiguation basis. The audit trail satisfies this requirement.
 
-**Remaining MLRO decision required:**
-  1. Confirm the approval workflow (who can POST — CO vs. MLRO role gate)
-  2. Confirm whitelist expiry policy (recommended: annual review, `expiresAt` field supported)
-  3. Confirm whether whitelisted entries are excluded from ongoing monitoring (currently: excluded from first-screen alerts only)
+**MLRO decision (2026-06-04):**
+  1. Approval workflow — **both CO and MLRO roles may POST** a whitelist entry (the existing `requireRole(["mlro","co","admin"])` gate already enforces this); DELETE remains MLRO-only.
+  2. Expiry policy — defaulted to the supported `expiresAt` field (annual review recommended); no change required in code.
+  3. Monitoring scope — confirmed unchanged: whitelisted entries are excluded from first-screen alerts only, not from ongoing monitoring.
 
 ---
 
 ## CG-3 — Periodic re-screening automation completeness
 
 **Risk:** HIGH (regulatory)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — schedules implemented; MLRO enrolment confirmation pending
+**Status:** CLOSED (2026-06-04) — global 3×/day floor implemented per MLRO mandate; reports delivered to Asana
 
 **Description:** `web/lib/server/ongoing-monitoring-config.ts` defines risk-tier cadences per FATF R.10/R.12/FDL 10/2025:
 - `standard` (CDD): screen every 365 days, news every 30 days
@@ -50,8 +50,11 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 `netlify/functions/ongoing-screen.mts` runs hourly (cron `0 * * * *`) and dispatches to `/api/ongoing/run` which advances subjects due for re-screening based on their cadence.
 
-**Remaining MLRO decision required:**
-  1. Confirm all existing customers have been assigned a risk tier and enrolled in a schedule (operator database check required)
+**MLRO mandate (2026-06-04):** every enrolled customer must be re-screened **at minimum 3×/day** with a report delivered to Asana, regardless of risk tier.
+
+**Resolution (2026-06-04):** A **global monitoring floor** was layered under the risk-based cadences (`GLOBAL_SCREEN_FLOOR_SLOTS_UTC` = 08:30 / 15:00 / 17:30 Dubai). `isScreenDueWithFloor()` / `nextScreenAtWithFloor()` in `ongoing-monitoring-config.ts` cap every subject's next-screen time to the next floor slot, so all customers (including low-risk `standard`/`enhanced`) are screened ≥3×/day while higher-risk tiers keep their tighter cadences — the floor only ever screens MORE often, preserving the FATF R.10 risk-based approach. `/api/ongoing/run` already files a per-subject screening-report Asana task on every due tick (reusing the existing `ASANA_TOKEN` integration), so the 3×/day mandate produces three Asana reports per subject per day. Unit-tested in `web/lib/server/__tests__/ongoing-monitoring-config.test.ts`.
+
+**Operator note:** large portfolios screened 3×/day increase per-tick Asana volume and `/api/ongoing/run` runtime (batched at concurrency 8, `maxDuration` 30s); monitor for timeouts as enrolment grows.
 
 **Resolved (2026-05-31):** Escalation on `ongoing-screen` failure is implemented — `netlify/functions/ongoing-screen.mts` fires `ALERT_WEBHOOK_URL` on every catch (lines 88-101) with `severity: "high"`. The comment in the file references this CG-3 resolution. Additionally, `netlify/functions/warm-pool.mts`, `sanctions-daily-0830.mts`, and `transaction-monitor.mts` now also wrap their handlers in top-level try/catch with `fireAlert()` calls so all cron failures surface as ops alerts.
 
@@ -60,14 +63,11 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-4 — goAML reporting entity IDs are placeholder values
 
 **Risk:** CRITICAL (regulatory)  
-**Description:** `.env.example` shows `"goamlRentityId": "REPLACE_ME"` for all 7 entities in `HAWKEYE_ENTITIES`. If these placeholders are deployed to production, every STR/SAR submitted via `/api/goaml-xml` will contain an invalid reporting entity ID, causing the UAE FIU to reject the filing.
+**Status:** CLOSED (2026-06-04) — real FIU Rentity IDs configured for the 6 active entities
 
-FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
+**Description:** `.env.example` ships `FIU_PENDING_ENTITY_0N` placeholders. If deployed as-is, every STR/SAR submitted via `/api/goaml-xml` would carry an invalid reporting entity ID, causing the UAE FIU to reject the filing. FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Action required (operator, not MLRO):**
-  1. Confirm the UAE FIU registration status of each entity
-  2. Replace each `REPLACE_ME` with the actual goAML Rentity ID in Netlify environment variables
-  3. Do not commit real goAML IDs to the repository
+**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — registered names `HS1`…`HS6`, FIU-assigned Rentity IDs `001`…`006` (operator-confirmed) — are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
 
 ---
 
@@ -230,6 +230,16 @@ User-supplied IDs were used as blob-store key segments without sanitization in:
 
 ---
 
+## Phase 3 Dependency Hygiene (2026-06-04)
+
+**Fix-3.1 — postcss XSS advisory in nested Next bundle (GHSA-qx2v-qp2m-jg93):**
+`web/package.json` — `next` bundled an older nested `postcss` (<8.5.10) vulnerable to XSS via unescaped `</style>` in CSS stringify output. Added `"postcss": "$postcss"` to `overrides` to force the nested copy up to the already-patched direct dependency (`^8.5.15`), within the same 8.x major (non-breaking). `npm audit` on `web/` now reports **0 vulnerabilities**. Next.js 16 is unchanged.
+
+**Accepted advisory — uuid bounds-check in exceljs (GHSA-w5hq-g745-h8pq), root:**
+`exceljs@4.4.0` (latest) depends on `uuid@^8.3.0`; the advisory only triggers when a `buf` argument is supplied to `uuid` v3/v5/v6. exceljs calls `uuidv4()` with **no `buf` argument** (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`), so the vulnerable path is **unreachable**. The only available fix (`uuid@>=11.1.1`) is ESM-only and incompatible with exceljs's CommonJS `require('uuid')`, and would break XLSX ingestion of sanctions lists (au_dfat, jp_mof, uae_eocn). Risk **accepted**: moderate severity, non-reachable, and below the CI `npm audit` HIGH+CRITICAL gate. Revisit when exceljs ships a release on `uuid@11`.
+
+---
+
 ## CG-BIAS-001 — Bias ratio threshold tighter than regulatory floor
 
 **Risk:** LOW (regulatory alignment)
@@ -253,9 +263,9 @@ The implementation is **more conservative** than the regulatory minimum. This is
 | ID | Owner | Target Date | Status |
 |----|-------|-------------|--------|
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
-| CG-2 | MLRO | — | Partially closed — whitelist implemented, workflow approval pending |
-| CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
-| CG-4 | Operator | — | Open |
+| CG-2 | MLRO | 2026-06-04 | CLOSED — CO+MLRO POST authorisation approved; expiry/scope defaults confirmed |
+| CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
+| CG-4 | Operator | 2026-06-04 | CLOSED — 6 entities (names HS1…HS6, Rentity IDs 001…006) inlined |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |

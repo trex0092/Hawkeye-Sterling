@@ -99,6 +99,64 @@ export function isNewsCheckDue(
   return nowMs >= nextRunTimestamp(lastNewsCheckMs, freq.newsCheckIntervalDays);
 }
 
+// ── Global monitoring floor (3×/day) ──────────────────────────────────────────
+// MLRO mandate (2026-06-04): every enrolled customer is re-screened AT MINIMUM
+// three times per day, regardless of risk tier. This is a FLOOR layered under
+// the risk-based cadences above — it never screens LESS often, so the FATF R.10
+// risk-based approach is preserved: PEP/prohibited tiers keep their tighter
+// intervals; standard/enhanced subjects are pulled UP to 3×/day.
+//
+// Slots: 08:30 / 15:00 / 17:30 Dubai (UTC+4, no DST) → 04:30 / 11:00 / 13:30 UTC.
+// These mirror the thrice_daily cadence slots used by /api/ongoing/run so the
+// per-subject Asana reports land at the same three times the MLRO board expects.
+export const GLOBAL_SCREEN_FLOOR_SLOTS_UTC: ReadonlyArray<readonly [number, number]> = [
+  [4, 30],
+  [11, 0],
+  [13, 30],
+];
+
+/** Next global-floor slot strictly after `fromMs` (epoch ms). */
+export function nextGlobalFloorSlot(fromMs: number): number {
+  const candidates = GLOBAL_SCREEN_FLOOR_SLOTS_UTC.map(([h, m]) => {
+    const d = new Date(fromMs);
+    d.setUTCHours(h, m, 0, 0);
+    if (d.getTime() <= fromMs) d.setUTCDate(d.getUTCDate() + 1);
+    return d.getTime();
+  });
+  return Math.min(...candidates);
+}
+
+/**
+ * Floor-aware "is a re-screen due?" check. A subject is due when EITHER its
+ * risk-tier cadence is due (isScreenDue) OR a global-floor slot has elapsed
+ * since the last screen. Subjects with no prior screen are always due.
+ */
+export function isScreenDueWithFloor(
+  riskTier: CustomerRiskTier,
+  lastScreenMs: number | null | undefined,
+  nowMs: number = Date.now(),
+): boolean {
+  if (lastScreenMs == null) return true;
+  if (isScreenDue(riskTier, lastScreenMs, nowMs)) return true;
+  return nowMs >= nextGlobalFloorSlot(lastScreenMs);
+}
+
+/**
+ * Next scheduled screen timestamp with the global 3×/day floor applied:
+ * the SOONER of the risk-tier interval and the next global-floor slot.
+ */
+export function nextScreenAtWithFloor(
+  riskTier: CustomerRiskTier,
+  lastRunMs: number,
+  nowMs: number = Date.now(),
+): number {
+  const tierNext = nextRunTimestamp(
+    lastRunMs,
+    MONITORING_FREQUENCIES[riskTier].screenIntervalDays,
+  );
+  return Math.min(tierNext, nextGlobalFloorSlot(nowMs));
+}
+
 // ── Alert threshold configuration ─────────────────────────────────────────────
 
 export type AdverseMediaSeverityThreshold = "low" | "medium" | "high" | "critical";
