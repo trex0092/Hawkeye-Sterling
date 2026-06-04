@@ -1,18 +1,23 @@
-// Interpol Red Notices adapter — B1.
+// Interpol notices adapter — Red, Blue and Green.
 //
-// Fetches active Red Notices from the Interpol public API.
-// Endpoint: https://ws-public.interpol.int/notices/v1/red
+// Red:   wanted persons (criminal arrest warrants)
+// Blue:  persons of interest (information gathering, not arrest)
+// Green: persons with criminal history / warning notices
 //
-// API is public and free. Returns paginated JSON with notice detail
-// for each wanted person. No API key required.
+// All three use the same Interpol public API (no key required):
+//   https://ws-public.interpol.int/notices/v1/{red|blue|green}
 //
-// Override URL via FEED_INTERPOL (useful for staging / self-hosted mirror).
+// Override URLs via FEED_INTERPOL / FEED_INTERPOL_BLUE / FEED_INTERPOL_GREEN.
 
 import { type SourceAdapter, type NormalisedEntity, mkListing } from '../types.js';
 import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_INTERPOL']
   ?? 'https://ws-public.interpol.int/notices/v1/red?resultPerPage=200&page=1';
+const SOURCE_URL_BLUE = process.env['FEED_INTERPOL_BLUE']
+  ?? 'https://ws-public.interpol.int/notices/v1/blue?resultPerPage=200&page=1';
+const SOURCE_URL_GREEN = process.env['FEED_INTERPOL_GREEN']
+  ?? 'https://ws-public.interpol.int/notices/v1/green?resultPerPage=200&page=1';
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_PAGES = 50; // cap at 10 000 notices per ingestion run
 
@@ -83,43 +88,71 @@ function noticeToEntity(notice: InterpolNotice): NormalisedEntity {
   };
 }
 
+async function fetchAllNotices(
+  startUrl: string,
+  sourceId: string,
+  program: string,
+): Promise<{ entities: NormalisedEntity[]; rawChecksum: string }> {
+  const entities: NormalisedEntity[] = [];
+  let nextUrl: string | undefined = startUrl;
+  let pages = 0;
+
+  while (nextUrl && pages < MAX_PAGES) {
+    pages++;
+    let page: InterpolPage | null = null;
+    try {
+      page = await fetchPage(nextUrl);
+    } catch {
+      break;
+    }
+    if (!page) break;
+
+    for (const notice of page._embedded?.notices ?? []) {
+      try {
+        const e = noticeToEntity(notice);
+        // Override id/source/listing for non-red types.
+        if (sourceId !== 'interpol_red') {
+          e.id = `${sourceId}:${notice.entity_id}`;
+          e.source = sourceId;
+          e.listings = [mkListing(sourceId, {
+            program,
+            reference: notice.entity_id,
+            reason: e.listings[0]?.reason,
+          })];
+        }
+        entities.push(e);
+      } catch {
+        // skip malformed notices
+      }
+    }
+
+    nextUrl = page._links?.next?.href ?? undefined;
+  }
+
+  const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
+  return { entities, rawChecksum };
+}
+
 export const interpolRedAdapter: SourceAdapter = {
   id: 'interpol_red',
   displayName: 'Interpol Red Notices',
   sourceUrl: SOURCE_URL,
   isEnabled: () => true,
-  async fetch() {
-    const entities: NormalisedEntity[] = [];
-    const errors: string[] = [];
-    let nextUrl: string | undefined = SOURCE_URL;
-    let pages = 0;
+  fetch: () => fetchAllNotices(SOURCE_URL, 'interpol_red', 'RED_NOTICE'),
+};
 
-    while (nextUrl && pages < MAX_PAGES) {
-      pages++;
-      let page: InterpolPage | null = null;
-      try {
-        page = await fetchPage(nextUrl);
-      } catch (err) {
-        errors.push(`Page ${pages}: ${err instanceof Error ? err.message : String(err)}`);
-        break;
-      }
-      if (!page) break;
+export const interpolBlueAdapter: SourceAdapter = {
+  id: 'interpol_blue',
+  displayName: 'Interpol Blue Notices',
+  sourceUrl: SOURCE_URL_BLUE,
+  isEnabled: () => true,
+  fetch: () => fetchAllNotices(SOURCE_URL_BLUE, 'interpol_blue', 'BLUE_NOTICE'),
+};
 
-      const notices = page._embedded?.notices ?? [];
-      for (const notice of notices) {
-        try {
-          entities.push(noticeToEntity(notice));
-        } catch (err) {
-          errors.push(`Notice ${notice.entity_id}: ${err instanceof Error ? err.message : String(err)}`);
-        }
-      }
-
-      // Follow pagination
-      const nextHref = page._links?.next?.href;
-      nextUrl = nextHref ?? undefined;
-    }
-
-    const rawChecksum = await sha256Hex(entities.map((e) => e.id).join(','));
-    return { entities, rawChecksum };
-  },
+export const interpolGreenAdapter: SourceAdapter = {
+  id: 'interpol_green',
+  displayName: 'Interpol Green Notices',
+  sourceUrl: SOURCE_URL_GREEN,
+  isEnabled: () => true,
+  fetch: () => fetchAllNotices(SOURCE_URL_GREEN, 'interpol_green', 'GREEN_NOTICE'),
 };
