@@ -66,18 +66,29 @@ const proxyConfig = readProxyEnv();
 // feeds (never the API-key vendor adapters, which would leak credentials to a
 // third party).
 //
-// OFF BY DEFAULT — opt-in only. Routing a customer's screening NAME (PII, on a
-// regulated AML platform) to a third-party relay is an egress/data-handling
-// decision the operator must make explicitly, so nothing is sent to any public
-// relay unless the operator turns it on:
-//   - NEWS_RELAY_ENABLED=1|true|on  → use the built-in public relay chain below
+// ON BY DEFAULT. GOVERNANCE RATIONALE (operator-accepted):
+//   - These are PUBLIC news feeds. Querying public news for a name is NOT
+//     "tipping off" under FATF / Cabinet Decision 10/2019 — tipping-off requires
+//     disclosing the existence of a SAR/investigation to the subject or a third
+//     party. The subject never sees the query, and the relay has no knowledge of
+//     any filing. So the tipping-off control is not engaged here.
+//   - The screened name is personal data, but it ALREADY egresses directly to
+//     ~200 news feeds on every dossier; the relay only adds one intermediary hop
+//     on feeds that refused us (403/429/451/503). The operator has accepted this
+//     residual third-party-processor exposure.
+//   - Credentialed vendor adapters are NEVER relayed (see `allowRelay`), so no
+//     API key is ever exposed to a relay.
+// Operator controls:
 //   - NEWS_FETCH_RELAY=<tmpl[,tmpl]> → use ONLY the operator's own relay(s)
-// Each template must contain "{url}". When off, refused feeds simply surface as
-// the true upstream status (the FATF R.10 fail-safe is preserved).
+//   - NEWS_RELAY_DISABLED=1|true|on (or NEWS_RELAY_ENABLED=0|false|off) → direct
+//     egress only; refused feeds then surface as the true upstream status (the
+//     FATF R.10 fail-safe is preserved).
+// Each template must contain "{url}".
 //
-// GOVERNANCE NOTE: with the built-in chain enabled, the subject NAME transits
-// public third-party services (allorigins / corsproxy / codetabs). Prefer
-// NEWS_FETCH_RELAY pointed at a relay you control where policy requires it.
+// NOTE: this public chain is for NEWS only. Sanctions/PEP LIST downloads are
+// deliberately NOT routed through public relays — a tampering relay could strip
+// a designated name (false negative), so list ingestion uses the operator's
+// trusted proxy (NEWS_HTTP_PROXY) instead. See src/ingestion/fetch-util.ts.
 const DEFAULT_RELAYS: string[] = [
   // Raw-passthrough relays: return the unmodified feed body (RSS XML / GDELT
   // JSON), unlike content-extracting readers that would mangle structured feeds.
@@ -89,10 +100,14 @@ const RELAY_TEMPLATES: string[] = (() => {
   // An operator-supplied relay is an explicit choice of destination → honour it.
   const custom = process.env["NEWS_FETCH_RELAY"]?.trim();
   if (custom) return custom.split(",").map((s) => s.trim()).filter(Boolean);
-  // The built-in public chain is opt-in only.
-  const flag = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
-  if (flag === "1" || flag === "true" || flag === "on") return DEFAULT_RELAYS;
-  return [];
+  // Kill-switch: operators who require direct-only news egress can opt out.
+  // Honour both the explicit NEWS_RELAY_DISABLED and a legacy NEWS_RELAY_ENABLED=off.
+  const off = process.env["NEWS_RELAY_DISABLED"]?.trim().toLowerCase();
+  if (off === "1" || off === "true" || off === "on") return [];
+  const legacy = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
+  if (legacy === "0" || legacy === "false" || legacy === "off") return [];
+  // Default: the built-in public relay chain is ON (see governance note above).
+  return DEFAULT_RELAYS;
 })();
 
 // Upstream statuses that mean "this IP is refused / throttled" — the cases a
