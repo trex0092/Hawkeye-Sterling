@@ -35,6 +35,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { listCases } from "@/lib/server/hs-case-store";
 import { stats as feedbackStats, listFeedback as _listFeedback } from "@/lib/server/feedback";
 import { getJson, listKeys, isInMemoryFallback } from "@/lib/server/store";

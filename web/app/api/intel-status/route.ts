@@ -8,6 +8,9 @@
 // Cache-Control: no-store — env vars can change per deploy.
 
 import { NextResponse } from "next/server";
+import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { activeNewsProviders } from "@/lib/intelligence/newsAdapters";
 import { activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
 import { activeRegistryProviders } from "@/lib/intelligence/registryAdapters";
@@ -213,7 +216,6 @@ function isKeySet(envKey: string): boolean {
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const { enforce } = await import("@/lib/server/enforce");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   void writeAuditChainEntry(

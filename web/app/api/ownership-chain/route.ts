@@ -16,6 +16,7 @@ import { EntityGraph } from '../../../../src/brain/entity-graph';
 import { buildBoGraphFromRegistry, type CorporateRegistryRecord } from '../../../../src/brain/bo-graph-builder';
 import { enforce } from '@/lib/server/enforce';
 import { tenantIdFromGate } from '@/lib/server/tenant';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 
 export async function POST(req: NextRequest) {
   // Top-level try/catch: catches any uncaught throw (e.g. ECONNRESET from

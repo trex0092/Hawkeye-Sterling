@@ -20,6 +20,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { serialiseGoamlXml } from "../../../../../src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope, type GoAmlEnvelope } from "../../../../../src/brain/goaml-shapes.js";
 

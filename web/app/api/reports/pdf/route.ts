@@ -26,6 +26,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { renderEvidencePack } from "../../../../../src/brain/pdf-evidence-pack.js";
 import type { BrainVerdict } from "../../../../../src/brain/types.js";
 
