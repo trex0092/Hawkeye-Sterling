@@ -27,6 +27,24 @@ const PROXY_URI =
   process.env['HTTPS_PROXY']?.trim() ||
   process.env['HTTP_PROXY']?.trim() ||
   '';
+
+// Operator relay for sanctions-list downloads blocked by datacenter IP.
+// INGEST_FETCH_RELAY takes precedence; falls back to NEWS_FETCH_RELAY so a single
+// env var covers both news and ingestion. NEVER uses the built-in public chain —
+// a tampering relay could strip a designated name (false negative => FATF risk).
+const INGEST_RELAY_TEMPLATE: string =
+  process.env['INGEST_FETCH_RELAY']?.trim() ||
+  process.env['NEWS_FETCH_RELAY']?.trim() ||
+  '';
+
+function buildIngestRelayUrl(template: string, target: string): string {
+  return template.includes('{url}')
+    ? template.replace('{url}', encodeURIComponent(target))
+    : `${template}${encodeURIComponent(target)}`;
+}
+
+const INGEST_RELAYABLE_STATUSES = new Set([403, 429, 451, 503]);
+
 let _dispatcher: Dispatcher | undefined;
 let _dispatcherResolved = false;
 // Shared with the binary/XLSX list adapters (au-dfat, jp-mof, uae-iec, interpol,
@@ -51,6 +69,7 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
   const backoff = opts.retryBackoffMs ?? 1500;
   const dispatcher = ingestionDispatcher();
   let lastErr: unknown;
+  let lastStatus: number | undefined;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), timeoutMs);
@@ -64,7 +83,11 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
         },
         ...(dispatcher ? { dispatcher } : {}),
       } as RequestInit & { dispatcher?: Dispatcher });
-      if (!res.ok) { clearTimeout(timer); throw new Error(`${url} → HTTP ${res.status}`); }
+      if (!res.ok) {
+        lastStatus = res.status;
+        clearTimeout(timer);
+        throw new Error(`${url} → HTTP ${res.status}`);
+      }
       const text = await res.text();
       clearTimeout(timer);
       return text;
@@ -74,6 +97,38 @@ export async function fetchText(url: string, opts: FetchOptions = {}): Promise<s
       if (attempt < retries) await new Promise((r) => setTimeout(r, backoff * (attempt + 1)));
     }
   }
+
+  // All direct retries exhausted. If the failure was a relayable status (or a
+  // network error) and the operator has configured a relay, attempt once through it.
+  // The relay hop does NOT use ingestionDispatcher — the relay IS the clean-IP
+  // egress path; routing proxy→relay would double-hop unnecessarily.
+  const shouldRelay =
+    INGEST_RELAY_TEMPLATE &&
+    (lastStatus === undefined || INGEST_RELAYABLE_STATUSES.has(lastStatus));
+  if (shouldRelay) {
+    const relayUrl = buildIngestRelayUrl(INGEST_RELAY_TEMPLATE, url);
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    try {
+      const res = await fetch(relayUrl, {
+        signal: ctl.signal,
+        headers: {
+          'User-Agent': BROWSER_UA,
+          'Accept-Language': 'en-US,en;q=0.9',
+          ...(opts.accept ? { Accept: opts.accept } : {}),
+        },
+      } as RequestInit);
+      if (res.ok) {
+        const text = await res.text();
+        clearTimeout(timer);
+        return text;
+      }
+      clearTimeout(timer);
+    } catch {
+      clearTimeout(timer);
+    }
+  }
+
   throw lastErr instanceof Error ? lastErr : new Error('fetch failed');
 }
 

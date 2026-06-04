@@ -19,7 +19,7 @@
 // probe exposes no regulated data — only upstream reachability booleans).
 
 import { NextResponse } from "next/server";
-import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS, drainResponse } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, newsOperatorRelayEnabled, FEED_HEADERS, drainResponse } from "@/lib/server/http-dispatcher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,12 +91,15 @@ export async function GET(req: Request): Promise<NextResponse> {
   const rssEnabled = process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false";
   const proxy = newsProxyInfo();
   const relay = newsRelayInfo();
+  const operatorRelayEnabled = newsOperatorRelayEnabled();
   const via: "proxy" | "direct" = proxy.configured ? "proxy" : "direct";
   const verbose = new URL(req.url).searchParams.get("verbose") === "1";
 
   // Core keyless sources the dossier always depends on. `relayable` mirrors
-  // which sources the dossier route retries through the free public relay (GDELT).
-  const targets: Array<{ name: string; url: string; gatedByRss?: boolean; relayable?: boolean }> = [
+  // which sources the dossier route retries through the relay on 403/network error.
+  // `operatorRelayOnly` restricts relay to NEWS_FETCH_RELAY (operator's Cloudflare
+  // Worker) — not the flaky public chain — matching dossier behaviour for bulk feeds.
+  const targets: Array<{ name: string; url: string; gatedByRss?: boolean; relayable?: boolean; operatorRelayOnly?: boolean }> = [
     {
       name: "google_news_rss",
       url: "https://news.google.com/rss/search?q=test&hl=en-US&gl=US&ceid=US:en",
@@ -113,8 +116,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   // operator sees the full egress picture, not just the two primary sources.
   if (verbose) {
     targets.push(
-      { name: "occrp_investigative", url: "https://www.occrp.org/feed/" },
-      { name: "bbc_regional", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
+      { name: "occrp_investigative", url: "https://www.occrp.org/feed/", relayable: true, operatorRelayOnly: true },
+      { name: "bbc_regional", url: "https://feeds.bbci.co.uk/news/world/rss.xml", relayable: true, operatorRelayOnly: true },
       { name: "opensanctions", url: "https://api.opensanctions.org/healthz" },
     );
   }
@@ -129,7 +132,12 @@ export async function GET(req: Request): Promise<NextResponse> {
             detail: "GOOGLE_NEWS_RSS_ENABLED=false",
             via,
           })
-        : probe(t.name, t.url, via, Boolean(t.relayable && relay.enabled)),
+        : probe(
+            t.name,
+            t.url,
+            via,
+            Boolean(t.relayable && (t.operatorRelayOnly ? operatorRelayEnabled : relay.enabled)),
+          ),
     ),
   );
 

@@ -119,6 +119,13 @@ export function newsRelayInfo(): { enabled: boolean; count: number } {
   return { enabled: RELAY_TEMPLATES.length > 0, count: RELAY_TEMPLATES.length };
 }
 
+// Returns true when the operator has configured their own relay via NEWS_FETCH_RELAY.
+// Use this (not newsRelayInfo().enabled) to opt keyless bulk feeds into relay — the
+// built-in public chain (NEWS_RELAY_ENABLED) is too flaky for parallel fan-out.
+export function newsOperatorRelayEnabled(): boolean {
+  return Boolean(process.env["NEWS_FETCH_RELAY"]?.trim());
+}
+
 let cachedDispatcher: Dispatcher | undefined;
 let dispatcherResolved = false;
 
