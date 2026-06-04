@@ -12,10 +12,47 @@
 
 import type { Config } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
+import { ProxyAgent, type Dispatcher } from "undici";
 import { writeHeartbeat } from "../lib/heartbeat.js";
 
 const STORE_NAME = "gdelt-cache";
 const GDELT_BASE = "https://api.gdeltproject.org/api/v2/doc/doc";
+
+// Optional outbound proxy for GDELT egress — mirrors web/lib/server/http-dispatcher.
+// GDELT 403s datacenter IPs; routing through NEWS_HTTP_PROXY lets this scheduled
+// prefetch actually warm the cache from a Netlify runtime. Inlined (not imported
+// from web/lib) because this function is bundled separately. Per-call dispatcher
+// only — never setGlobalDispatcher (would also proxy Blobs/MoonDB).
+const NEWS_PROXY_URI =
+  process.env["NEWS_HTTP_PROXY"]?.trim() ||
+  process.env["HTTPS_PROXY"]?.trim() ||
+  process.env["HTTP_PROXY"]?.trim() ||
+  "";
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+let _newsDispatcher: Dispatcher | undefined;
+let _newsDispatcherResolved = false;
+function newsDispatcher(): Dispatcher | undefined {
+  if (_newsDispatcherResolved) return _newsDispatcher;
+  _newsDispatcherResolved = true;
+  if (NEWS_PROXY_URI) {
+    try {
+      _newsDispatcher = new ProxyAgent({ uri: NEWS_PROXY_URI });
+    } catch (err) {
+      console.warn("[gdelt-prefetch] failed to build proxy agent, using direct egress:", err);
+    }
+  }
+  return _newsDispatcher;
+}
+function gdeltFetch(url: string, init: RequestInit): Promise<Response> {
+  const dispatcher = newsDispatcher();
+  const merged = {
+    ...init,
+    headers: { "user-agent": BROWSER_UA, ...(init.headers as Record<string, string> | undefined) },
+    ...(dispatcher ? { dispatcher } : {}),
+  } as RequestInit;
+  return fetch(url, merged);
+}
 const FETCH_TIMEOUT_MS = 25_000;
 const GDELT_MAX_RECORDS = 250;
 const ART19_LOOKBACK_YEARS = 10;
@@ -132,7 +169,7 @@ async function fetchGdeltForSubject(subjectName: string): Promise<GdeltArticle[]
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
       try {
-        const res = await fetch(`${GDELT_BASE}?${params}`, { signal: ctrl.signal, headers: { accept: "application/json" } });
+        const res = await gdeltFetch(`${GDELT_BASE}?${params}`, { signal: ctrl.signal, headers: { accept: "application/json" } });
         clearTimeout(t);
         if (!res.ok) return [] as GdeltArticle[];
         const data = (await res.json()) as { articles?: GdeltArticle[] };

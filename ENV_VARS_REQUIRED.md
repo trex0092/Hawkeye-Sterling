@@ -102,6 +102,11 @@ These default to enabled where shown. Setting to blank disables.
 | `SEC_EDGAR_ENABLED` | `1` | US SEC EDGAR |
 | `ICIJ_OFFSHORE_LEAKS_ENABLED` | `1` | ICIJ Offshore Leaks |
 | `GOOGLE_NEWS_RSS_ENABLED` | `1` | Google News RSS |
+| `NEWS_HTTP_PROXY` | _(unset)_ | Outbound proxy for news/feed egress only (defeats datacenter-IP 403s) |
+| `NEWS_PROXY_CA` | _(unset)_ | PEM CA bundle for a TLS-intercepting news proxy |
+| `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` | `true` | Set `false` to accept a trusted internal proxy's self-signed cert |
+| `NEWS_RELAY_ENABLED` | _(unset, OFF)_ | Set `1`/`true`/`on` to opt into the built-in free public-relay chain for the keyless GDELT query (**off by default** — routes subject names to public third parties) |
+| `NEWS_FETCH_RELAY` | _(unset)_ | Comma-separated relay template(s) you control, each containing `{url}` — enables relaying through ONLY your destinations (preferred over the public chain) |
 
 > **Datacenter-IP note (`GOOGLE_NEWS_RSS_ENABLED`):** Google News RSS frequently
 > returns HTTP 403 to cloud/datacenter IPs (Netlify) regardless of User-Agent.
@@ -111,6 +116,38 @@ These default to enabled where shown. Setting to blank disables.
 > the investigative/regional feed banks, and any keyed news-API adapters. This
 > does **not** disable adverse media; it only removes a source that is 403-ing.
 > Probe live reachability any time via `GET /api/news-search/health`.
+
+> **News egress proxy (`NEWS_HTTP_PROXY`):** A cleaner fix than disabling a
+> source — when the runtime egresses from a datacenter IP and feeds 403
+> regardless of User-Agent, point `NEWS_HTTP_PROXY` at an outbound HTTP/HTTPS
+> proxy whose egress IP is not 403'd. **Only** news/feed fetches route through
+> it; the sanctions/PEP path, Netlify Blobs, Upstash Redis, Anthropic and MoonDB
+> egress directly. Falls back to `HTTPS_PROXY` / `HTTP_PROXY` when unset.
+> `NEWS_PROXY_CA` / `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` tune TLS for an internal
+> intercepting proxy. Verify with `GET /api/news-search/health?verbose=1`: each
+> source reports `via:"proxy"` and the top-level `proxy` block names the env var
+> that supplied it (never the URL/credentials). If live feeds remain
+> unreachable, `/api/news-search` now degrades to the most recent cached dossier
+> (`fetchMode:"cached"`, `retrieval:"degraded"`) instead of a bare outage, while
+> a true outage with nothing cached still surfaces as `unavailable` (FATF R.10).
+
+> **Free relay fallback (`NEWS_RELAY_ENABLED`, OFF by default — opt-in) — no API
+> key, no paid proxy:** If the keyless **GDELT** worldwide query is refused
+> (403/429/451/503) from the deployment's IP, the request can be retried through
+> a **chain of free public relays** (allorigins → corsproxy → codetabs) that
+> fetch from their own clean IPs and return the raw feed — the first that
+> responds 2xx wins, so one relay being blocked/down does not sink the fallback.
+> **This is OFF unless you opt in** with `NEWS_RELAY_ENABLED=1`, because it routes
+> the customer's screening *name* (PII) through public third-party services — an
+> egress decision the operator must make deliberately. It is **best-effort**
+> (public relays are rate-limited / intermittently down — no substitute for a
+> residential proxy or clean-IP host) and applied **only** to GDELT (one keyless
+> call, up to 75 worldwide articles) — never to the API-key vendor adapters,
+> which would leak credentials to a third party. Where policy requires it, set
+> `NEWS_FETCH_RELAY` to a relay **you control** instead of the public chain.
+> Confirm status in `GET /api/news-search/health` → `relay.enabled` /
+> `relay.count`. The screening UI's "retrieval unavailable" banner links straight
+> to this health probe.
 
 ---
 
