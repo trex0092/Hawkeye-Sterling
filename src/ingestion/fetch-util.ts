@@ -31,18 +31,18 @@ const PROXY_URI =
   process.env['HTTP_PROXY']?.trim() ||
   '';
 
-// Public relay chain for sanctions-list downloads blocked by datacenter IP.
-// Sanctions lists are publicly published documents — the relay fetches the
-// same URL any browser would. Always active; no env var required.
-// Override with INGEST_FETCH_RELAY or NEWS_FETCH_RELAY for an operator relay.
+// Internal Netlify Edge Function relay for sanctions-list downloads blocked by
+// datacenter IP. Runs on Cloudflare edge (clean IP). Always active.
+// Override with INGEST_FETCH_RELAY or NEWS_FETCH_RELAY for a custom relay.
+const _INGEST_SITE_ORIGIN: string =
+  process.env['NEXT_PUBLIC_APP_URL']?.trim() ||
+  process.env['URL']?.trim() ||
+  'http://localhost:3000';
+
 const INGEST_RELAY_TEMPLATES: string[] =
   (process.env['INGEST_FETCH_RELAY']?.trim() || process.env['NEWS_FETCH_RELAY']?.trim())
     ?.split(',').map((s) => s.trim()).filter(Boolean) ??
-  [
-    'https://api.allorigins.win/raw?url={url}',
-    'https://corsproxy.io/?url={url}',
-    'https://api.codetabs.com/v1/proxy/?quest={url}',
-  ];
+  [`${_INGEST_SITE_ORIGIN}/.netlify/edge-functions/fetch-relay?url={url}`];
 
 function buildIngestRelayUrl(template: string, target: string): string {
   return template.includes('{url}')

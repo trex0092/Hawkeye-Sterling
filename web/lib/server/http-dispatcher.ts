@@ -56,59 +56,39 @@ function readProxyEnv(): { uri: string; source: string } | null {
 // Resolved once at module load — proxy config is process-wide and immutable.
 const proxyConfig = readProxyEnv();
 
-// Free public-relay fallback CHAIN. A "reader" / CORS relay fetches the target
-// URL from ITS OWN (clean, non-datacenter) IP and returns the raw body, which
-// often defeats the datacenter-IP 403 with no API key and no paid proxy. We try
-// several independent free relays in order so that one being blocked/down/rate-
-// limited does not sink the fallback — the first that returns 2xx wins.
-//
-// Best-effort only — public relays are flaky — and applied ONLY to keyless public
-// feeds (never the API-key vendor adapters, which would leak credentials to a
-// third party).
-//
-// OFF BY DEFAULT — opt-in. Two reasons it must NOT be default-on:
-//   1. RELIABILITY (the hard one): public relays are flaky, and a dropped/reset
-//      connection from one surfaces as an UNHANDLED socket error (read
-//      ECONNRESET at TCP.onStreamRead — no app frame to catch it) that crashes
-//      the whole serverless function. A default-on public chain therefore turned
-//      the news health probe / dossier from a clean "unavailable" into a 500
-//      crash in production. Opt-in keeps the FATF R.10 fail-safe intact.
-//   2. DATA HANDLING: the screened name transits a third-party relay. Querying
-//      public news is not "tipping off" (the subject never sees it), but the
-//      processor hop is still an operator decision.
-// Operators who want public-relay fallback opt in explicitly, and should prefer
-// a relay they control:
-//   - NEWS_FETCH_RELAY=<tmpl[,tmpl]> → use ONLY the operator's own relay(s)
-//   - NEWS_RELAY_ENABLED=1|true|on   → use the built-in public chain below
-// Each template must contain "{url}". When off, refused feeds simply surface as
-// the true upstream status.
-//
-// NOTE: this public chain is for NEWS only. Sanctions/PEP LIST downloads are
-// deliberately NOT routed through public relays — a tampering relay could strip
-// a designated name (false negative), so list ingestion uses the operator's
-// trusted proxy (NEWS_HTTP_PROXY) instead. See src/ingestion/fetch-util.ts.
-// Raw-passthrough public relays — always active, no env var required.
-// Each fetches the target URL from a clean (non-datacenter) IP and returns
-// the unmodified body. First 2xx response wins; others are skipped silently.
-// Override all three with NEWS_FETCH_RELAY=<url> for an operator-controlled relay.
+// Internal Netlify Edge Function relay — runs on Cloudflare's edge network
+// (NOT AWS Lambda), so its egress IP is a clean CDN IP that bypasses the
+// datacenter-IP 403s that Netlify Functions and Next.js API routes receive.
+// The edge function validates the target against an allowlist (no SSRF risk)
+// and proxies the raw response body back verbatim.
+// Template uses {url} placeholder — same convention as the old public chain.
 const RELAY_TEMPLATES: string[] =
   process.env["NEWS_FETCH_RELAY"]?.trim()
     ? process.env["NEWS_FETCH_RELAY"].trim().split(",").map((s) => s.trim()).filter(Boolean)
-    : [
-        "https://api.allorigins.win/raw?url={url}",
-        "https://corsproxy.io/?url={url}",
-        "https://api.codetabs.com/v1/proxy/?quest={url}",
-      ];
+    : ["/.netlify/edge-functions/fetch-relay?url={url}"];
 
 // Upstream statuses that mean "this IP is refused / throttled" — the cases a
 // clean-IP relay can plausibly recover. Other errors (404, 500) are real and
 // must NOT be retried through the relay.
 const RELAYABLE_STATUSES = new Set([403, 429, 451, 503]);
 
+// Netlify injects URL (canonical site URL) at runtime. Used to resolve the
+// internal edge-function relay path to an absolute URL for server-side fetch.
+const SITE_ORIGIN: string =
+  process.env["NEXT_PUBLIC_APP_URL"]?.trim() ||
+  process.env["URL"]?.trim() ||
+  "http://localhost:3000";
+
 function buildRelayUrl(template: string, target: string): string {
-  return template.includes("{url}")
+  const filled = template.includes("{url}")
     ? template.replace("{url}", encodeURIComponent(target))
     : `${template}${encodeURIComponent(target)}`;
+  // Resolve relative relay paths (e.g. /.netlify/edge-functions/…) to absolute
+  // so server-side fetch can reach them. Absolute templates (https://…) pass through.
+  if (filled.startsWith("/")) {
+    return `${SITE_ORIGIN}${filled}`;
+  }
+  return filled;
 }
 
 export function newsRelayInfo(): { enabled: boolean; count: number } {
