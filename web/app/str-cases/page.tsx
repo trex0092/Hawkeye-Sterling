@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
   Card,
@@ -645,14 +644,6 @@ export default function StrCasesPage() {
               label: "FDL Art. 26–27 · File without delay",
               tone: "critical",
             }}
-      />
-
-      <ModuleFamilyBar
-        suiteName="Transaction Tools"
-        modules={[
-          { label: "Transaction Monitor", href: "/transaction-monitor", icon: "💸" },
-          { label: "STR Cases", href: "/str-cases", icon: "📁" },
-        ]}
       />
 
       {briefingError && (

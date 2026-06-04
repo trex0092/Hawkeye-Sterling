@@ -476,8 +476,8 @@ export default function OngoingMonitorPage() {
       <ModuleFamilyBar
         suiteName="Case Management"
         modules={[
-          { label: "Cases", href: "/cases", icon: "🗂️" },
           { label: "Ongoing Monitor", href: "/ongoing-monitor", icon: "👁️" },
+          { label: "Cases", href: "/cases", icon: "🗂️" },
         ]}
       />
 
@@ -876,7 +876,7 @@ export default function OngoingMonitorPage() {
               This action is recorded in the audit trail (FDL 10/2025 Art.16).
             </p>
             <label className="block text-11 font-medium text-ink-2 mb-1">
-              Reason <span className="text-red">*</span> <span className="text-ink-3">(min 10 characters)</span>
+              Reason <span className="text-red">*</span> <span className="text-ink-3">(min 5 characters)</span>
             </label>
             <input
               className="w-full px-3 py-2 border border-hair-2 rounded text-12 bg-bg-1 focus:outline-none focus:border-brand text-ink-0 mb-4"
@@ -884,7 +884,7 @@ export default function OngoingMonitorPage() {
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter" && removeReason.trim().length >= 10) confirmRemove(); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && removeReason.trim().length >= 5) confirmRemove(); }}
             />
             <div className="flex justify-end gap-3">
               <button
@@ -895,7 +895,7 @@ export default function OngoingMonitorPage() {
               </button>
               <button
                 className="px-4 py-2 text-12 rounded bg-red text-white font-medium disabled:opacity-40"
-                disabled={removeReason.trim().length < 10}
+                disabled={removeReason.trim().length < 5}
                 onClick={confirmRemove}
               >
                 Unenrol

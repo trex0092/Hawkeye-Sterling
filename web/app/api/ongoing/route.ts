@@ -205,11 +205,11 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     );
   }
 
-  // Mandatory reason field — min 10 chars (FDL 10/2025 Art.16, audit trail).
+  // Mandatory reason field — min 5 chars (FDL 10/2025 Art.16, audit trail).
   const reason = url.searchParams.get("reason")?.trim() ?? "";
-  if (reason.length < 10) {
+  if (reason.length < 5) {
     return NextResponse.json(
-      { ok: false, error: "reason required (min 10 characters)" },
+      { ok: false, error: "reason required (min 5 characters)" },
       { status: 400 },
     );
   }

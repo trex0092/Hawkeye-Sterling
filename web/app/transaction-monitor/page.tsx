@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { pushBellEvent } from "@/lib/bell-events";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   ModuleHeader,
   Card,
@@ -447,14 +446,6 @@ export default function TransactionMonitorPage() {
             titleEm="Monitor"
             subtitle="MoE Circular 08/AML/2021 · DPMS threshold AED 55,000 · FATF Rec. 20"
             dotColor="amber"
-      />
-
-      <ModuleFamilyBar
-        suiteName="Transaction Tools"
-        modules={[
-          { label: "Transaction Monitor", href: "/transaction-monitor", icon: "💸" },
-          { label: "STR Cases", href: "/str-cases", icon: "📁" },
-        ]}
       />
 
       {tagError && (

@@ -1386,9 +1386,6 @@ export default function ScreeningPage() {
           {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
           <EocnSlaWidget />
 
-          {/* ── Worldwide AML News Feed ───────────────────────────────────── */}
-          <WorldwideNewsFeed />
-
           {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
           <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">
             <div className="flex items-center gap-3 flex-wrap">
@@ -1854,6 +1851,11 @@ export default function ScreeningPage() {
             return (
               <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
                 <ActivityFeed />
+                {/* Worldwide AML News — relocated from the main column into the
+                    Screening engine rail. */}
+                <div className="mt-6">
+                  <WorldwideNewsFeed />
+                </div>
               </aside>
             );
           })()}

@@ -33,6 +33,21 @@ import {
 
 const WARN_AT_SECS = [15 * 60, 5 * 60] as const;
 
+// Once the operator dismisses the auth prompt we remember it for the rest of
+// the browser session, so the same "session expired / sign in" modal does not
+// re-fire on every navigation or background 401. A fresh valid session (a
+// successful /api/auth/me) clears the flag so future expiries still warn.
+const AUTH_PROMPT_DISMISSED_KEY = "hawkeye.auth-prompt-dismissed";
+function authPromptDismissed(): boolean {
+  try { return sessionStorage.getItem(AUTH_PROMPT_DISMISSED_KEY) === "1"; } catch { return false; }
+}
+function setAuthPromptDismissed(dismissed: boolean): void {
+  try {
+    if (dismissed) sessionStorage.setItem(AUTH_PROMPT_DISMISSED_KEY, "1");
+    else sessionStorage.removeItem(AUTH_PROMPT_DISMISSED_KEY);
+  } catch { /* sessionStorage unavailable — ignore */ }
+}
+
 type AuthPromptKind = "expired" | "no_session";
 
 export function SessionExpiryWatcher() {
@@ -51,8 +66,8 @@ export function SessionExpiryWatcher() {
     // (2) Reactive path: install the global same-origin /api 401 interceptor
     // before any panel kicks off its first fetch. Listen for the event.
     installSessionExpiryInterceptor();
-    const onExpired = () => setKind("expired");
-    const onNoSession = () => setKind((k) => k ?? "no_session");
+    const onExpired = () => { if (!authPromptDismissed()) setKind("expired"); };
+    const onNoSession = () => { if (!authPromptDismissed()) setKind((k) => k ?? "no_session"); };
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     window.addEventListener(SESSION_NO_COOKIE_EVENT, onNoSession);
 
@@ -95,6 +110,8 @@ export function SessionExpiryWatcher() {
         if (!d || dead) return;
         if (!d.ok || !d.user?.sessionExp) return;
         expRef.current = d.user.sessionExp;
+        // Valid session — re-enable future expiry prompts.
+        setAuthPromptDismissed(false);
         // IP change detection is logged server-side to the audit chain.
         // The front-end toast is suppressed — VPN/mobile networks change
         // IP legitimately and the alert caused false-positive anxiety.
@@ -181,7 +198,7 @@ export function SessionExpiryWatcher() {
         <div className="flex items-center justify-end gap-2">
           <button
             type="button"
-            onClick={() => setKind(null)}
+            onClick={() => { setAuthPromptDismissed(true); setKind(null); }}
             className="px-4 py-2 text-13 font-semibold text-ink-2 hover:text-ink-0 transition-colors"
           >
             Dismiss
