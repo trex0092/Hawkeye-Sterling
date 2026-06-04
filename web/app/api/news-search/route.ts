@@ -9,7 +9,7 @@ import { classifyEsg } from "@/lib/data/esg";
 import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { getJson, setJson } from "@/lib/server/store";
-import { newsFetch, newsProxyInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
 import { getStore } from "@netlify/blobs";
 import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
@@ -379,6 +379,7 @@ interface NewsResponse {
   retrievalNote?: string;
   cachedAt?: string;                  // ISO timestamp of the cached payload served on the fallback path
   proxyConfigured?: boolean;          // true when news egress routes through NEWS_HTTP_PROXY / HTTPS_PROXY
+  relayEnabled?: boolean;             // true when the free public-relay fallback (NEWS_RELAY_ENABLED) is active
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -1129,7 +1130,14 @@ async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<Ne
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GDELT_TIMEOUT_MS);
   try {
-    const res = await newsFetch(url, { headers: FEED_HEADERS, signal: controller.signal } as RequestInit);
+    // allowRelay: GDELT is keyless and a single worldwide call, so it is the one
+    // high-value source worth retrying through the free public relay when the
+    // datacenter IP is 403'd (no API key / paid proxy required).
+    const res = await newsFetch(
+      url,
+      { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
+      { allowRelay: true },
+    );
     noteFeedOutcome(stats, res.ok);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/gdelt HTTP ${res.status}`);
@@ -1849,6 +1857,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       degraded: retrieval !== "live",
       googleNewsRssEnabled: rssEnabled,
       proxyConfigured: newsProxyInfo().configured,
+      relayEnabled: newsRelayInfo().enabled,
     };
     // FATF R.10 graceful degradation. When live retrieval reached nothing at all
     // (every feed blocked / 403), fall back to the most recent cached dossier —

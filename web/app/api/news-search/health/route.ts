@@ -19,7 +19,7 @@
 // probe exposes no regulated data — only upstream reachability booleans).
 
 import { NextResponse } from "next/server";
-import { newsFetch, newsProxyInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,15 +41,21 @@ interface SourceCheck {
   via: "proxy" | "direct";
 }
 
-async function probe(name: string, url: string, via: "proxy" | "direct"): Promise<SourceCheck> {
+async function probe(
+  name: string,
+  url: string,
+  via: "proxy" | "direct",
+  allowRelay = false,
+): Promise<SourceCheck> {
   const t0 = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
-    const res = await newsFetch(url, {
-      headers: FEED_HEADERS,
-      signal: controller.signal,
-    } as RequestInit);
+    const res = await newsFetch(
+      url,
+      { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
+      { allowRelay },
+    );
     return {
       name,
       url,
@@ -76,11 +82,13 @@ async function probe(name: string, url: string, via: "proxy" | "direct"): Promis
 export async function GET(req: Request): Promise<NextResponse> {
   const rssEnabled = process.env["GOOGLE_NEWS_RSS_ENABLED"] !== "false";
   const proxy = newsProxyInfo();
+  const relay = newsRelayInfo();
   const via: "proxy" | "direct" = proxy.configured ? "proxy" : "direct";
   const verbose = new URL(req.url).searchParams.get("verbose") === "1";
 
-  // Core keyless sources the dossier always depends on.
-  const targets: Array<{ name: string; url: string; gatedByRss?: boolean }> = [
+  // Core keyless sources the dossier always depends on. `relayable` mirrors
+  // which sources the dossier route retries through the free public relay (GDELT).
+  const targets: Array<{ name: string; url: string; gatedByRss?: boolean; relayable?: boolean }> = [
     {
       name: "google_news_rss",
       url: "https://news.google.com/rss/search?q=test&hl=en-US&gl=US&ceid=US:en",
@@ -89,6 +97,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     {
       name: "gdelt",
       url: "https://api.gdeltproject.org/api/v2/doc/doc?query=test&mode=artlist&maxrecords=1&format=json",
+      relayable: true,
     },
   ];
 
@@ -112,7 +121,7 @@ export async function GET(req: Request): Promise<NextResponse> {
             detail: "GOOGLE_NEWS_RSS_ENABLED=false",
             via,
           })
-        : probe(t.name, t.url, via),
+        : probe(t.name, t.url, via, Boolean(t.relayable && relay.enabled)),
     ),
   );
 
@@ -140,6 +149,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       googleNewsRssEnabled: rssEnabled,
       // Echoes only WHICH env var supplied the proxy — never the URL/credentials.
       proxy,
+      // Whether the free public-relay fallback is enabled (NEWS_RELAY_ENABLED / NEWS_FETCH_RELAY).
+      relay,
       ts: new Date().toISOString(),
       sources: checks,
     },

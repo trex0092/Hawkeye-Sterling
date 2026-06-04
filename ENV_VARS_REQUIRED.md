@@ -105,6 +105,8 @@ These default to enabled where shown. Setting to blank disables.
 | `NEWS_HTTP_PROXY` | _(unset)_ | Outbound proxy for news/feed egress only (defeats datacenter-IP 403s) |
 | `NEWS_PROXY_CA` | _(unset)_ | PEM CA bundle for a TLS-intercepting news proxy |
 | `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` | `true` | Set `false` to accept a trusted internal proxy's self-signed cert |
+| `NEWS_RELAY_ENABLED` | _(unset)_ | `1` enables the free public-relay fallback for the keyless GDELT query (no API key / no paid proxy) |
+| `NEWS_FETCH_RELAY` | _(unset)_ | Custom relay template containing `{url}` (overrides the built-in default) |
 
 > **Datacenter-IP note (`GOOGLE_NEWS_RSS_ENABLED`):** Google News RSS frequently
 > returns HTTP 403 to cloud/datacenter IPs (Netlify) regardless of User-Agent.
@@ -128,6 +130,21 @@ These default to enabled where shown. Setting to blank disables.
 > unreachable, `/api/news-search` now degrades to the most recent cached dossier
 > (`fetchMode:"cached"`, `retrieval:"degraded"`) instead of a bare outage, while
 > a true outage with nothing cached still surfaces as `unavailable` (FATF R.10).
+
+> **Free relay fallback (`NEWS_RELAY_ENABLED`) — no API key, no paid proxy:**
+> When you have neither a proxy nor vendor API keys, set `NEWS_RELAY_ENABLED=1`.
+> If the keyless **GDELT** worldwide query is refused (403/429/451/503) from the
+> deployment's IP, the request is retried once through a free public "reader"
+> relay that fetches from its own clean IP and returns the raw feed — often
+> defeating the datacenter-IP block at zero cost. This is **best-effort**:
+> public relays are rate-limited and intermittently down, so it is no substitute
+> for a residential proxy or a clean-IP host. It is applied **only** to GDELT
+> (one keyless call returning up to 75 worldwide articles) — never to the
+> API-key vendor adapters, which would leak credentials to a third party.
+> **Governance:** with the relay on, the subject *name* transits a third-party
+> service — enable only where that fits your data-handling policy. Override the
+> relay with `NEWS_FETCH_RELAY=https://your-relay/?url={url}` to use a relay you
+> control. Confirm status in `GET /api/news-search/health` → `relay.enabled`.
 
 ---
 

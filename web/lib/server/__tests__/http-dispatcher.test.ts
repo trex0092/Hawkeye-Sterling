@@ -84,3 +84,46 @@ describe("newsFetch", () => {
     expect(init.dispatcher).toBe(m.getNewsDispatcher());
   });
 });
+
+describe("newsFetch relay fallback", () => {
+  it("is disabled by default — a 403 is returned as-is, no relay call", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_RELAY_ENABLED", "");
+    vi.stubEnv("NEWS_FETCH_RELAY", "");
+    const m = await loadFresh();
+    expect(m.newsRelayInfo()).toEqual({ enabled: false });
+    const fetchMock = vi.fn().mockResolvedValue(new Response("nope", { status: 403 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await m.newsFetch("https://news.example/feed", undefined, { allowRelay: true });
+    expect(res.status).toBe(403);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // no relay retry
+  });
+
+  it("retries through the relay on a 403 when enabled and allowRelay is set", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    const m = await loadFresh();
+    expect(m.newsRelayInfo()).toEqual({ enabled: true });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("blocked", { status: 403 }))
+      .mockResolvedValueOnce(new Response("<rss>ok</rss>", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await m.newsFetch("https://api.gdeltproject.org/x", undefined, { allowRelay: true });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const relayCall = fetchMock.mock.calls[1][0] as string;
+    expect(relayCall).toContain(encodeURIComponent("https://api.gdeltproject.org/x"));
+  });
+
+  it("does NOT relay when allowRelay is unset, even if a relay is configured", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_RELAY_ENABLED", "1");
+    const m = await loadFresh();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("blocked", { status: 403 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await m.newsFetch("https://newsapi.org/v2/everything?apiKey=secret");
+    expect(res.status).toBe(403);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // API-key calls never relay
+  });
+});

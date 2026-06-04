@@ -56,6 +56,46 @@ function readProxyEnv(): { uri: string; source: string } | null {
 // Resolved once at module load — proxy config is process-wide and immutable.
 const proxyConfig = readProxyEnv();
 
+// Free public-relay fallback. A "reader" / CORS relay fetches the target URL
+// from ITS OWN (clean, non-datacenter) IP and returns the raw body, which often
+// defeats the datacenter-IP 403 with no API key and no paid proxy. Best-effort
+// only — public relays are rate-limited and flaky — so it is OFF by default and
+// applied ONLY to keyless public feeds (never the API-key vendor adapters, which
+// would leak credentials to a third party). Enable with NEWS_RELAY_ENABLED=1
+// (uses a built-in raw-passthrough default) or set NEWS_FETCH_RELAY to a custom
+// template containing "{url}".
+//
+// GOVERNANCE NOTE: when enabled, the subject NAME (as a query string) transits a
+// third-party relay. Acceptable only where that is compatible with the operator's
+// data-handling policy — hence opt-in.
+const RELAY_TEMPLATE: string | null = (() => {
+  const explicit = process.env["NEWS_FETCH_RELAY"]?.trim();
+  if (explicit) return explicit;
+  const flag = process.env["NEWS_RELAY_ENABLED"]?.trim();
+  if (flag && flag !== "false" && flag !== "0") {
+    // Raw-passthrough relay: returns the unmodified feed body (RSS XML / GDELT
+    // JSON), unlike content-extracting readers that would mangle structured feeds.
+    return "https://api.allorigins.win/raw?url={url}";
+  }
+  return null;
+})();
+
+// Upstream statuses that mean "this IP is refused / throttled" — the cases a
+// clean-IP relay can plausibly recover. Other errors (404, 500) are real and
+// must NOT be retried through the relay.
+const RELAYABLE_STATUSES = new Set([403, 429, 451, 503]);
+
+function buildRelayUrl(target: string): string | null {
+  if (!RELAY_TEMPLATE) return null;
+  return RELAY_TEMPLATE.includes("{url}")
+    ? RELAY_TEMPLATE.replace("{url}", encodeURIComponent(target))
+    : `${RELAY_TEMPLATE}${encodeURIComponent(target)}`;
+}
+
+export function newsRelayInfo(): { enabled: boolean } {
+  return { enabled: Boolean(RELAY_TEMPLATE) };
+}
+
 let cachedDispatcher: Dispatcher | undefined;
 let dispatcherResolved = false;
 
@@ -100,13 +140,57 @@ export function newsProxyInfo(): NewsProxyInfo {
 // not, so we widen the type locally rather than casting away safety everywhere.
 type DispatcherRequestInit = RequestInit & { dispatcher?: Dispatcher };
 
+function targetUrl(input: string | URL | Request): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
+}
+
 // Drop-in replacement for `fetch` for all news/feed egress. Behaves exactly like
 // global fetch when no proxy is configured; otherwise routes the single request
 // through the proxy dispatcher. Caller-supplied headers/signal/etc. are passed
 // through untouched.
-export function newsFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+//
+// `opts.allowRelay` opts a call into the free public-relay fallback (see
+// RELAY_TEMPLATE): if the direct fetch is refused (403/429/451/503) or throws,
+// AND a relay is configured, the request is retried once through the relay.
+// Only keyless public feeds should set this — NEVER an API-key adapter.
+export async function newsFetch(
+  input: string | URL | Request,
+  init?: RequestInit,
+  opts?: { allowRelay?: boolean },
+): Promise<Response> {
   const dispatcher = getNewsDispatcher();
-  if (!dispatcher) return fetch(input as RequestInfo, init);
-  const withDispatcher: DispatcherRequestInit = { ...init, dispatcher };
-  return fetch(input as RequestInfo, withDispatcher as RequestInit);
+  const directInit: RequestInit = dispatcher
+    ? ({ ...init, dispatcher } as DispatcherRequestInit as RequestInit)
+    : (init ?? {});
+
+  const relayEnabled = Boolean(opts?.allowRelay) && Boolean(RELAY_TEMPLATE);
+
+  let directRes: Response | null = null;
+  try {
+    directRes = await fetch(input as RequestInfo, directInit);
+    if (!relayEnabled || !RELAYABLE_STATUSES.has(directRes.status)) return directRes;
+  } catch (err) {
+    if (!relayEnabled) throw err;
+    // Network-level failure — fall through and try the relay.
+  }
+
+  const relayUrl = buildRelayUrl(targetUrl(input));
+  if (!relayUrl) return directRes ?? Promise.reject(new Error("news fetch failed"));
+  try {
+    const relayInit: RequestInit = {
+      headers: FEED_HEADERS,
+      ...(init?.signal ? { signal: init.signal } : {}),
+      ...(dispatcher ? ({ dispatcher } as DispatcherRequestInit) : {}),
+    };
+    const relayed = await fetch(relayUrl, relayInit);
+    // Prefer the relay only when it actually succeeded; otherwise hand back the
+    // original response so callers see the true upstream status.
+    if (relayed.ok) return relayed;
+    return directRes ?? relayed;
+  } catch {
+    if (directRes) return directRes;
+    throw new Error("news fetch failed (direct and relay)");
+  }
 }
