@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { WorkbenchSidebar } from "@/components/workbench/WorkbenchSidebar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { WorkbenchToolbar } from "@/components/workbench/WorkbenchToolbar";
 import { PresetsCard } from "@/components/workbench/PresetsCard";
@@ -75,7 +74,7 @@ export function WorkbenchSection() {
   const [tab, setTab] = useState<TabKey>("screening");
   const [hypotheticalOpen, setHypotheticalOpen] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState<FacultyFilterKey>("all");
+  const [activeFilter] = useState<FacultyFilterKey>("all");
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(DEFAULT_SELECTED_MODE_IDS),
@@ -219,24 +218,8 @@ export function WorkbenchSection() {
     }
   };
 
-  const showFacultySidebar = tab === "screening";
-
   return (
-    <div
-      className="grid min-h-0 grid-cols-1 md:grid-cols-[var(--workbench-sidebar)_1fr]"
-      style={{ ["--workbench-sidebar" as never]: showFacultySidebar ? "220px" : "0px" }}
-    >
-      {showFacultySidebar ? (
-        <WorkbenchSidebar
-          filters={FACULTY_FILTERS}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
-      ) : (
-        <div />
-      )}
-
-      <main className="px-6 py-6 overflow-y-auto">
+    <main className="px-6 py-6 overflow-y-auto">
         {/* Hero */}
         <div className="mb-6">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
@@ -600,7 +583,6 @@ export function WorkbenchSection() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </main>
   );
 }

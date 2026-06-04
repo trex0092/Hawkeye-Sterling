@@ -9,8 +9,6 @@ import { HubContextProvider } from "@/components/intelligence-hub/HubContext";
 // ── Tab configuration ────────────────────────────────────────────────────────
 
 const TAB_IDS = [
-  "analytics",
-  "brain",
   "workbench",
   "telemetry",
   "red-team",
@@ -28,8 +26,6 @@ const TAB_IDS = [
 type TabId = (typeof TAB_IDS)[number];
 
 const TAB_CONFIG: Record<TabId, { label: string; icon: string; hint: string }> = {
-  analytics:       { label: "Analytics",     icon: "📈", hint: "MLRO digest · bias · risk forecast" },
-  brain:           { label: "Brain Intel",   icon: "🧠", hint: "XAI · forecast · heatmap · responsible AI" },
   workbench:       { label: "Workbench",     icon: "🔧", hint: "Multi-mode AI · super-brain · manifest" },
   telemetry:       { label: "Telemetry",     icon: "📡", hint: "Mode firing counts · drift" },
   "red-team":      { label: "Red-Team",      icon: "🥷", hint: "Adversarial prompt catalogue" },
@@ -69,16 +65,6 @@ function SectionSkeleton() {
     </div>
   );
 }
-
-const AnalyticsSection = dynamic(
-  () => import("@/components/intelligence-hub/AnalyticsSection").then((m) => ({ default: m.AnalyticsSection })),
-  { ssr: false, loading: () => <SectionSkeleton /> },
-);
-
-const BrainIntelSection = dynamic(
-  () => import("@/components/intelligence-hub/BrainIntelSection").then((m) => ({ default: m.BrainIntelSection })),
-  { ssr: false, loading: () => <SectionSkeleton /> },
-);
 
 const WorkbenchSection = dynamic(
   () => import("@/components/intelligence-hub/WorkbenchSection").then((m) => ({ default: m.WorkbenchSection })),
@@ -120,7 +106,7 @@ const ApiDocsSection = dynamic(
 function TabStrip({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (_t: TabId) => void }) {
   return (
     <div
-      className="flex gap-1 mb-6 overflow-x-auto pb-1"
+      className="flex flex-wrap gap-1 mb-6 pb-1"
       role="tablist"
       aria-label="Intelligence Hub sections"
     >
@@ -174,8 +160,6 @@ function ActiveSection({ tab }: { tab: TabId }) {
   const embedSrc = EMBED_ROUTES[tab];
   if (embedSrc) return <EmbeddedTool src={embedSrc} label={TAB_CONFIG[tab].label} />;
   switch (tab) {
-    case "analytics":       return <AnalyticsSection />;
-    case "brain":           return <BrainIntelSection />;
     case "workbench":       return <WorkbenchSection />;
     case "telemetry":       return <TelemetrySection />;
     case "red-team":        return <RedTeamSection />;
@@ -233,7 +217,7 @@ function HubInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const rawTab = searchParams?.get("tab") ?? null;
-  const activeTab: TabId = isValidTab(rawTab) ? rawTab : "analytics";
+  const activeTab: TabId = isValidTab(rawTab) ? rawTab : "workbench";
   const embedded = searchParams?.get("embed") === "1";
 
   const handleTabChange = (tab: TabId) => {
