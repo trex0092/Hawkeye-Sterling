@@ -191,11 +191,18 @@ export async function newsFetch(
   // Try each free relay in order; the first that returns 2xx wins. A relay that
   // is itself blocked/down/rate-limited just advances to the next.
   const target = targetUrl(input);
+  // Use a FRESH AbortController for the relay hop — the caller's signal may
+  // already be aborted (e.g. GDELT direct fetch timed out, firing the signal),
+  // which would cause the relay attempt to abort immediately before it runs.
+  // Give the relay the same budget as the original timeout, or 8s if unknown.
+  const relayController = new AbortController();
+  const relayTimeout = setTimeout(() => relayController.abort(), 8_000);
   const relayInit: RequestInit = {
     headers: FEED_HEADERS,
-    ...(init?.signal ? { signal: init.signal } : {}),
+    signal: relayController.signal,
     ...(dispatcher ? ({ dispatcher } as DispatcherRequestInit) : {}),
   };
+  try {
   for (const template of RELAY_TEMPLATES) {
     try {
       const relayed = await fetch(buildRelayUrl(template, target), relayInit);
@@ -209,6 +216,9 @@ export async function newsFetch(
     } catch {
       // This relay failed — try the next one.
     }
+  }
+  } finally {
+    clearTimeout(relayTimeout);
   }
   // Every relay failed: hand back the true upstream response so callers see the
   // real status, or surface the outage if the direct call also threw.
