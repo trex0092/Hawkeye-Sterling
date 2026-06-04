@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { AdverseMediaLiveResult } from "@/app/api/adverse-media-live/route";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
@@ -419,10 +418,6 @@ export default function AdverseMediaLivePage() {
         }
         kpis={kpis}
       />
-      <ModuleFamilyBar suiteName="Live Intelligence Feed" modules={[
-        { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-        { label: "Live Adverse Media", href: "/adverse-media-live", icon: "📰" },
-      ]} />
 
       {/* Search form */}
       <form

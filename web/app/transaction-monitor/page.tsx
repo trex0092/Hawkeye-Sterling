@@ -293,11 +293,6 @@ export default function TransactionMonitorPage() {
     window.setTimeout(() => setFlash(null), 2500);
   };
 
-  const focusForm = () => {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.setTimeout(() => counterpartyRef.current?.focus(), 250);
-  };
-
   const clear = () => {
     setRef(`TXN-2026-${String(Date.now()).slice(-4)}`);
     setCounterparty("");
@@ -434,9 +429,6 @@ export default function TransactionMonitorPage() {
           </ActionButton>
           <ActionButton variant="ai" type="button" onClick={() => void runStructuringAnalysis()} disabled={structuringLoading || txs.length === 0}>
             {structuringLoading ? "Analysing…" : "🔍 Structuring Analysis"}
-          </ActionButton>
-          <ActionButton variant="add" type="button" onClick={focusForm}>
-            + Add transaction
           </ActionButton>
         </>
       }
