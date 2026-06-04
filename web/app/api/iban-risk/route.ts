@@ -4,6 +4,8 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 interface CountryRiskEntry {
   name: string;
@@ -56,6 +58,11 @@ function parseIban(iban: string): { countryCode: string; bban: string; valid: bo
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "iban-risk_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   let body: { iban: string };
   try {
     body = (await req.json()) as { iban: string };

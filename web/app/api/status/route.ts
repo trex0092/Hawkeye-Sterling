@@ -8,6 +8,8 @@ import { getJson, isInMemoryFallback } from "@/lib/server/store";
 import { gdeltCacheStats, gdeltBreakerStats } from "@/lib/intelligence/gdelt-cache";
 import { isRedisConfigured } from "@/lib/cache/redis";
 import { enforce, type EnforcementAllow } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { BRAIN_VERSION, BRAIN_REVIEWED_AT } from "@/lib/server/deploy-constants";
 
 // Brain modules are compiled separately; dynamic import so the route module
@@ -890,6 +892,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   try {
     const gate = await enforce(req);
     if (!gate.ok) return gate.response;
+    void writeAuditChainEntry(
+      { event: "status.accessed", actor: (gate as EnforcementAllow).keyId },
+      tenantIdFromGate(gate as EnforcementAllow),
+    ).catch(() => undefined);
     const okGate = gate as EnforcementAllow;
     // Admin = portal callers (same-origin, middleware-injected ADMIN_TOKEN) or
     // explicit enterprise-tier API keys. Only admins see env-var names, brain

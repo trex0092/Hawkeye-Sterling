@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -29,6 +31,11 @@ const HIGH_RISK_JURISDICTIONS = ["Iran", "North Korea", "Syria", "Cuba", "Russia
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "dark-money-flow_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;

@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJournal } from "../../../../../src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../src/brain/feedback-journal-blobs.js";
 import { brierScore, logScore } from "../../../../../src/brain/bayesian-update.js";
@@ -89,6 +91,11 @@ function computeECE(records: Array<{ autoConfidence: number; truth: 0 | 1 }>): n
 async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "mlro.brier_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const gateHeaders = gate.headers;
 
   const url = new URL(req.url);

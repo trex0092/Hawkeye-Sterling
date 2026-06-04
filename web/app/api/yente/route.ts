@@ -7,6 +7,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 import { yenteMatch, type YenteMatchQuery, type YenteMatchOptions } from "../../../../src/integrations/yente.js";
 
@@ -28,6 +30,11 @@ interface YenteRequestBody {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "yente_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const origin = req.headers.get("origin");
   const cors = corsHeaders(origin);

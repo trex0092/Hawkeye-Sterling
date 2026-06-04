@@ -8,6 +8,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { adminAuth } from "@/lib/server/admin-auth";
 
 export const runtime = "nodejs";
@@ -26,6 +28,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (deny) return deny;
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "admin.lseg-status_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   // Check credential presence — never expose values.
   const apiKeySet = Boolean(process.env["LSEG_WORLDCHECK_API_KEY"]);

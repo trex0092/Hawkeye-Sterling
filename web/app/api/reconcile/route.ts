@@ -9,6 +9,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { enforce } from '@/lib/server/enforce';
+import { tenantIdFromGate } from '@/lib/server/tenant';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 
 const SERVICE_MANIFEST = {
   name: 'Hawkeye Sterling Reconciliation',
@@ -87,6 +89,10 @@ async function reconcileQuery(query: ReconcileQuery): Promise<ReconcileResponse>
 export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "reconcile.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   return NextResponse.json(SERVICE_MANIFEST);
 }
 

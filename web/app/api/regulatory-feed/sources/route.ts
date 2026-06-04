@@ -23,6 +23,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { REGULATORY_SOURCES, getSource } from "@/lib/regulatorySources";
 import { corsHeaders, corsPreflight } from "@/lib/api/cors";
 
@@ -74,6 +76,11 @@ export async function OPTIONS(req: Request): Promise<Response> {
 export async function GET(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "regulatory-feed.sources_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const cors = corsHeaders(req.headers.get("origin"));
   return NextResponse.json(
     {
@@ -89,6 +96,11 @@ export async function GET(req: Request): Promise<Response> {
 export async function POST(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "regulatory-feed.sources_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const cors = corsHeaders(req.headers.get("origin"));
 
   let body: PostBody = {};

@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listKeys } from "@/lib/server/store";
 
 export const runtime = "nodejs";
@@ -21,6 +23,11 @@ export const maxDuration = 15;
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "ongoing-screen_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   // Count enrolled subjects from the ongoing blob store.
   const enrolledCount = await listKeys("ongoing/subject/")

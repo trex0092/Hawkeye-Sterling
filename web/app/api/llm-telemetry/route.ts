@@ -4,6 +4,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listCalls, getSummary } from "@/lib/server/llm-telemetry";
 
 export const runtime = "nodejs";
@@ -13,6 +15,11 @@ export const maxDuration = 30;
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "llm-telemetry_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const { searchParams } = new URL(req.url);
   const rawLimit = parseInt(searchParams.get("limit") ?? "", 10);

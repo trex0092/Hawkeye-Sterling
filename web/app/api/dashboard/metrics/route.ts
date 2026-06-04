@@ -718,6 +718,10 @@ async function deriveCoverage(): Promise<CoverageMetrics | null> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "dashboard.metrics_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const tenant = tenantIdFromGate(gate);
 
   let partialData = false;

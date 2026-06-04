@@ -3,6 +3,8 @@
 // calculated from the current date at request time.
 
 import { NextResponse } from "next/server";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -142,6 +144,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   const { enforce } = await import("@/lib/server/enforce");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "regulatory_calendar.live_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const today = new Date();
 
   const events: CalendarEvent[] = RAW_EVENTS.map((raw): CalendarEvent => {

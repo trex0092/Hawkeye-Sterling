@@ -28,8 +28,9 @@
 import { NextResponse } from "next/server";
 import { createHmac, randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry, getChainSecret } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJson, listKeys } from "@/lib/server/store";
-import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -250,6 +251,11 @@ async function handleGet(req: Request): Promise<NextResponse | Response> {
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "audit.view_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   gateHeaders = gate.headers;
 
   const url = new URL(req.url);

@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { buildStixBundle, buildNavigatorLayer, type AmlTypology } from '../../../../src/integrations/stix-export';
 
 export const runtime = "nodejs";
@@ -143,6 +145,11 @@ const HAWKEYE_TYPOLOGIES: AmlTypology[] = [
 export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "stix-export_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const format = req.nextUrl.searchParams.get('format') ?? 'bundle';
 

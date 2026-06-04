@@ -8,8 +8,9 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
-import { requireRole } from "@/lib/server/role-gate";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { requireRole } from "@/lib/server/role-gate";
 import {
   getHooksForTenant,
   saveHooksForTenant,
@@ -31,6 +32,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireJsonBody: false });
   if (!gate.ok) return gate.response;
 
+  void writeAuditChainEntry(
+    { event: "hooks_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
+
   const roleCheck = await requireRole(req, ["admin"]);
   if (roleCheck) return roleCheck;
 
@@ -45,6 +51,11 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "hooks_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const roleCheck = await requireRole(req, ["admin"]);
   if (roleCheck) return roleCheck;
@@ -103,6 +114,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function DELETE(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireJsonBody: false });
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "hooks_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const roleCheck = await requireRole(req, ["admin"]);
   if (roleCheck) return roleCheck;

@@ -5,6 +5,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export interface MapNode {
   id: string;
   name: string;
@@ -75,6 +77,11 @@ function getCountryRisk(country: string): { level: "low" | "medium" | "high" | "
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "supply-chain.map_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   let body: {
     company?: string;
     suppliers?: Array<{ name: string; country: string; riskLevel?: string }>;

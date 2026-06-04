@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { auditBrain } from "../../../../../src/brain/audit.js";
 import { weaponizedIntegrity } from "../../../../../src/brain/weaponized.js";
 
@@ -19,6 +21,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       // of swallowing non-429 failures and falling through to auditBrain.
       return gate.response;
     }
+    void writeAuditChainEntry(
+      { event: "weaponized_brain.audit_accessed", actor: gate.keyId },
+      tenantIdFromGate(gate),
+    ).catch(() => undefined);
     const gateHeaders: Record<string, string> = gate.headers;
     try {
       const report = auditBrain(false);

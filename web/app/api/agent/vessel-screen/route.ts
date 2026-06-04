@@ -16,6 +16,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { vesselAisGapApply } from "../../../../../src/brain/modes/wave3-vessel-ais-gap.js";
 import type { BrainContext } from "../../../../../src/brain/types.js";
 
@@ -279,6 +281,11 @@ function composeRiskScore(
 async function handlePost(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "agent.vessel-screen_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const gateHeaders: Record<string, string> = gate.ok ? gate.headers : {};
 
   let body: Body;

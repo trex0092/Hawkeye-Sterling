@@ -11,6 +11,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getJournal } from "../../../../../src/brain/feedback-journal-instance.js";
 import { hydrateJournalFromBlobs } from "../../../../../src/brain/feedback-journal-blobs.js";
 import { brierScore, logScore } from "../../../../../src/brain/bayesian-update.js";
@@ -78,6 +80,11 @@ function buildWindowMetrics(
 async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "mlro.drift-alerts_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const gateHeaders = gate.headers;
 
   // Cold-start hydration from Blobs — idempotent after first call.

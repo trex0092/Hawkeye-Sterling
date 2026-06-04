@@ -94,6 +94,10 @@ interface DashboardPanel {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "dashboard.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const tenant = tenantIdFromGate(gate);
   const t = tenant.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
 

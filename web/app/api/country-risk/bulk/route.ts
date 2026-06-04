@@ -4,6 +4,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { isCahra, getCountryRisk } from "@/lib/server/high-risk-countries";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── Static data mirrors from parent route ─────────────────────────────────────
 // These data structures are inlined here to avoid circular imports since the
@@ -193,6 +195,11 @@ function resolveCountry(iso2Upper: string): { score: number; tier: string; fatfS
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "country_risk.bulk_lookup", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: { countries?: unknown };
   try {

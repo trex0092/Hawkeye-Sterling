@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { asanaGids } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
@@ -174,6 +176,11 @@ async function delay(ms: number) {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "asana-rebuild-sections_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const token = process.env["ASANA_TOKEN"];
   if (!token) {
     return NextResponse.json({

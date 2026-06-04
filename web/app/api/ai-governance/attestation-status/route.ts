@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   MODEL_REGISTRY,
   computeAttestationStatus,
@@ -25,6 +27,11 @@ export const maxDuration = 10;
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "ai-governance.attestation-status_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   if (gate.keyId !== "portal_admin" && gate.keyId !== "cron_internal") {
     return NextResponse.json(
       { ok: false, error: "Forbidden — AI governance data requires admin access." },

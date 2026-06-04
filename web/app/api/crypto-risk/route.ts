@@ -12,6 +12,8 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { scoreWallet, type CryptoChain, type WalletRiskResult } from "../../../../src/integrations/cryptoRisk.js";
 
 export const runtime = "nodejs";
@@ -477,6 +479,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "crypto-risk_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const gateHeaders = gate.ok ? gate.headers : {};
 
   let body: CryptoRiskBody;

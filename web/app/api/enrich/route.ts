@@ -13,6 +13,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { lookupLei, searchGleif } from "../../../../src/integrations/gleif.js";
 import { domainIntel } from "../../../../src/integrations/webCheck.js";
 import { spiderFootScan } from "../../../../src/integrations/spiderfoot.js";
@@ -45,6 +47,11 @@ interface EnrichBody {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "enrich_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const gateHeaders = gate.ok ? gate.headers : {};
 
   let body: EnrichBody;

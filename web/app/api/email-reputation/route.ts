@@ -4,6 +4,8 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const DISPOSABLE_DOMAINS = new Set([
   "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
@@ -50,6 +52,10 @@ function getFraudScore(domain: string, email?: string): number {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "email_reputation.checked", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   let body: { email?: string; domain?: string };
   try {
     body = (await req.json()) as { email?: string; domain?: string };
