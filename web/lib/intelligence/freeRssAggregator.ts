@@ -11,6 +11,7 @@
 import { NULL_NEWS_ADAPTER, type NewsArticle, type NewsAdapter } from "./newsAdapters";
 import { textMentionsAml, matchAmlKeywords } from "./amlKeywords";
 import { flagOn } from "./featureFlags";
+import { newsFetch } from "@/lib/server/http-dispatcher";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
@@ -2406,7 +2407,7 @@ async function fetchOne(feed: RssFeed): Promise<string | null> {
     // AbortSignal.timeout() actually cancels the underlying fetch when the
     // deadline fires — unlike Promise.race + setTimeout which left the fetch
     // running in the background, leaking sockets and Lambda CPU budget.
-    const res = await fetch(feed.url, {
+    const res = await newsFetch(feed.url, {
       headers: { accept: "application/rss+xml,application/atom+xml,application/xml,text/xml,*/*", "user-agent": "HawkeyeSterling/1.0 (compatible; adverse-media)" },
       redirect: "follow",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),

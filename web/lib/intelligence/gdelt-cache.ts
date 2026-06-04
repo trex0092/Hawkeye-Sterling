@@ -22,6 +22,7 @@
 // downgrade confidence based on the flag.
 
 import { getRedis } from "@/lib/cache/redis";
+import { newsFetch } from "@/lib/server/http-dispatcher";
 
 export interface GdeltArticle {
   url?: string;
@@ -556,13 +557,20 @@ async function fetchOneQuery(
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), perQueryTimeoutMs);
     try {
-      const res = await fetch(url, {
-        headers: {
-          "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; gdelt-cache)",
-          accept: "application/json",
+      const res = await newsFetch(
+        url,
+        {
+          headers: {
+            // Real-browser UA — GDELT/CDNs 403 obvious bot UAs. allowRelay retries
+            // a refused datacenter IP through the free public relay.
+            "user-agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            accept: "application/json",
+          },
+          signal: ctrl.signal,
         },
-        signal: ctrl.signal,
-      });
+        { allowRelay: true },
+      );
       clearTimeout(timer);
       if (res.status === 429) continue; // rate-limited, retry once
       if (!res.ok) {
@@ -809,7 +817,7 @@ export async function queryGdeltGkg(subjectName: string): Promise<GkgResult | nu
   const timer = setTimeout(() => controller.abort(), GKG_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url.toString(), { signal: controller.signal });
+    const res = await newsFetch(url.toString(), { signal: controller.signal }, { allowRelay: true });
     if (!res.ok) return null;
     const data = await res.json() as { articles?: Array<{ tone?: string; themes?: string; persons?: string }> };
 

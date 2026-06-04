@@ -3642,6 +3642,14 @@ function NewsDossierPanel({
             The news service could not be reached. This is <span className="font-semibold">not</span> a confirmed
             negative finding — a manual worldwide adverse-media search is required before clearing this subject.
           </div>
+          <a
+            href="/api/news-search/health?verbose=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-10 text-amber underline mt-1 inline-block"
+          >
+            Check live news egress health →
+          </a>
         </div>
         <div className="text-10 text-ink-3 font-mono mt-1">
           Worldwide search · 100+ locales · All 7 continents · {NEWS_SEARCH_LOCALES} · FATF R.10
@@ -3669,6 +3677,14 @@ function NewsDossierPanel({
               . Zero articles here reflects the outage, <span className="font-semibold">not</span> absence of
               adverse media. Manual worldwide search required before clearing. (FATF R.10)
             </div>
+            <a
+              href="/api/news-search/health?verbose=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-10 text-amber underline mt-1 inline-block"
+            >
+              Check live news egress health →
+            </a>
           </div>
         </Section>
       );

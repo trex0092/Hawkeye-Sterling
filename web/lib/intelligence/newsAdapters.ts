@@ -13,6 +13,7 @@
 import { freeRssAdapter } from "./freeRssAggregator";
 import { flagOn } from "./featureFlags";
 import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
+import { newsFetch } from "@/lib/server/http-dispatcher";
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -119,7 +120,7 @@ function newsApiAdapter(): NewsAdapter {
           apiKey: key,
           ...(opts?.since ? { from: opts.since } : {}),
         });
-        const res = await abortable(fetch(`https://newsapi.org/v2/everything?${params.toString()}`));
+        const res = await abortable(newsFetch(`https://newsapi.org/v2/everything?${params.toString()}`));
         if (!res.ok) {
           console.warn(`[newsapi] HTTP ${res.status}`);
           return [];
@@ -166,7 +167,7 @@ function marketAuxAdapter(): NewsAdapter {
           sort: "published_at",
           ...(opts?.since ? { published_after: opts.since } : {}),
         });
-        const res = await abortable(fetch(`https://api.marketaux.com/v1/news/all?${params.toString()}`));
+        const res = await abortable(newsFetch(`https://api.marketaux.com/v1/news/all?${params.toString()}`));
         if (!res.ok) {
           console.warn(`[marketaux] HTTP ${res.status}`);
           return [];
@@ -217,7 +218,7 @@ function gNewsAdapter(): NewsAdapter {
           token: key,
           ...(opts?.since ? { from: opts.since } : {}),
         });
-        const res = await abortable(fetch(`https://gnews.io/api/v4/search?${params.toString()}`));
+        const res = await abortable(newsFetch(`https://gnews.io/api/v4/search?${params.toString()}`));
         if (!res.ok) {
           console.warn(`[gnews] HTTP ${res.status}`);
           return [];
@@ -264,7 +265,7 @@ function mediaStackAdapter(): NewsAdapter {
           sort: "published_desc",
           ...(opts?.since ? { date: `${opts.since},now` } : {}),
         });
-        const res = await abortable(fetch(`http://api.mediastack.com/v1/news?${params.toString()}`));
+        const res = await abortable(newsFetch(`http://api.mediastack.com/v1/news?${params.toString()}`));
         if (!res.ok) { console.warn(`[mediastack] HTTP ${res.status}`); return []; }
         const articles = validateNewsResponseArray<{
           source?: string;
@@ -307,7 +308,7 @@ function currentsAdapter(): NewsAdapter {
           page_size: String(opts?.limit ?? 25),
           language: "en",
         });
-        const res = await abortable(fetch(`https://api.currentsapi.services/v1/search?${params.toString()}`));
+        const res = await abortable(newsFetch(`https://api.currentsapi.services/v1/search?${params.toString()}`));
         if (!res.ok) { console.warn(`[currents] HTTP ${res.status}`); return []; }
         const articles = validateNewsResponseArray<{
           title?: string;
@@ -351,7 +352,7 @@ function newsCatcherAdapter(): NewsAdapter {
           sort_by: "date",
         });
         const res = await abortable(
-          fetch(`https://api.newscatcherapi.com/v2/search?${params.toString()}`, {
+          newsFetch(`https://api.newscatcherapi.com/v2/search?${params.toString()}`, {
             headers: { "x-api-key": key },
           }),
         );
@@ -402,7 +403,7 @@ function reutersAdapter(): NewsAdapter {
     if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) return cachedToken.token;
     try {
       const res = await abortable(
-        fetch("https://api.refinitiv.com/auth/oauth2/v1/token", {
+        newsFetch("https://api.refinitiv.com/auth/oauth2/v1/token", {
           method: "POST",
           headers: { "content-type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
@@ -437,7 +438,7 @@ function reutersAdapter(): NewsAdapter {
           limit: String(opts?.limit ?? 25),
         });
         const res = await abortable(
-          fetch(`https://api.refinitiv.com/data/news/v1/headlines?${params.toString()}`, {
+          newsFetch(`https://api.refinitiv.com/data/news/v1/headlines?${params.toString()}`, {
             headers: { Authorization: `Bearer ${token}`, accept: "application/json" },
           }),
         );
@@ -479,7 +480,7 @@ function complyAdvantageAdapter(): NewsAdapter {
     search: async (subjectName, opts) => {
       try {
         const res = await abortable(
-          fetch("https://api.complyadvantage.com/searches", {
+          newsFetch("https://api.complyadvantage.com/searches", {
             method: "POST",
             headers: { Authorization: `Token ${key}`, "content-type": "application/json" },
             body: JSON.stringify({
@@ -542,7 +543,7 @@ function factsetAdapter(): NewsAdapter {
           paginationLimit: String(opts?.limit ?? 25),
         });
         const res = await abortable(
-          fetch(`https://api.factset.com/news/v1/news-search?${params.toString()}`, {
+          newsFetch(`https://api.factset.com/news/v1/news-search?${params.toString()}`, {
             headers: { Authorization: `Basic ${auth}`, accept: "application/json" },
           }),
         );
@@ -575,7 +576,7 @@ function spGlobalAdapter(): NewsAdapter {
     search: async (subjectName, opts) => {
       try {
         const res = await abortable(
-          fetch("https://api.spglobal.com/news/v1/search", {
+          newsFetch("https://api.spglobal.com/news/v1/search", {
             method: "POST",
             headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
             body: JSON.stringify({ query: subjectName, limit: opts?.limit ?? 25 }),
@@ -633,7 +634,7 @@ function guardianAdapter(): NewsAdapter {
           "api-key": key,
         });
         const res = await abortable(
-          fetch(`https://content.guardianapis.com/search?${params.toString()}`),
+          newsFetch(`https://content.guardianapis.com/search?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -672,7 +673,7 @@ function nytAdapter(): NewsAdapter {
           "api-key": key,
         });
         const res = await abortable(
-          fetch(`https://api.nytimes.com/svc/search/v2/articlesearch.json?${params.toString()}`),
+          newsFetch(`https://api.nytimes.com/svc/search/v2/articlesearch.json?${params.toString()}`),
         );
         if (!res.ok) { console.warn(`[nyt] HTTP ${res.status}`); return []; }
         const docs = validateNewsResponseArray<{
@@ -719,7 +720,7 @@ function aylienAdapter(): NewsAdapter {
           language: "en",
         });
         const res = await abortable(
-          fetch(`https://api.aylien.com/news/stories?${params.toString()}`, {
+          newsFetch(`https://api.aylien.com/news/stories?${params.toString()}`, {
             headers: {
               "X-AYLIEN-NewsAPI-Application-ID": appId,
               "X-AYLIEN-NewsAPI-Application-Key": apiKey,
@@ -764,7 +765,7 @@ function webzAdapter(): NewsAdapter {
           size: String(opts?.limit ?? 25),
         });
         const res = await abortable(
-          fetch(`https://api.webz.io/newsApiLite?${params.toString()}`),
+          newsFetch(`https://api.webz.io/newsApiLite?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -805,7 +806,7 @@ function eventRegistryAdapter(): NewsAdapter {
           apiKey: key,
         };
         const res = await abortable(
-          fetch("https://eventregistry.org/api/v1/article/getArticles", {
+          newsFetch("https://eventregistry.org/api/v1/article/getArticles", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify(body),
@@ -850,7 +851,7 @@ function polygonAdapter(): NewsAdapter {
           apiKey: key,
         });
         const res = await abortable(
-          fetch(`https://api.polygon.io/v2/reference/news?${params.toString()}`),
+          newsFetch(`https://api.polygon.io/v2/reference/news?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -889,7 +890,7 @@ function tiingoAdapter(): NewsAdapter {
           token: key,
         });
         const res = await abortable(
-          fetch(`https://api.tiingo.com/tiingo/news?${params.toString()}`, {
+          newsFetch(`https://api.tiingo.com/tiingo/news?${params.toString()}`, {
             headers: { accept: "application/json" },
           }),
         );
@@ -931,7 +932,7 @@ function apNewsAdapter(): NewsAdapter {
           apikey: key,
         });
         const res = await abortable(
-          fetch(`https://api.ap.org/media/v/content/search?${params.toString()}`, {
+          newsFetch(`https://api.ap.org/media/v/content/search?${params.toString()}`, {
             headers: { accept: "application/json" },
           }),
         );
@@ -972,7 +973,7 @@ function bbcNewsAdapter(): NewsAdapter {
           api_key: key,
         });
         const res = await abortable(
-          fetch(`https://api.bbc.co.uk/news/search?${params.toString()}`, {
+          newsFetch(`https://api.bbc.co.uk/news/search?${params.toString()}`, {
             headers: { accept: "application/json" },
           }),
         );
@@ -1013,7 +1014,7 @@ function newsDataAdapter(): NewsAdapter {
           size: String(Math.min(50, opts?.limit ?? 25)),
         });
         const res = await abortable(
-          fetch(`https://newsdata.io/api/1/news?${params.toString()}`),
+          newsFetch(`https://newsdata.io/api/1/news?${params.toString()}`),
         );
         if (!res.ok) { console.warn(`[newsdata] HTTP ${res.status}`); return []; }
         const results = validateNewsResponseArray<{
@@ -1058,7 +1059,7 @@ function worldNewsAdapter(): NewsAdapter {
           "sort-direction": "desc",
         });
         const res = await abortable(
-          fetch(`https://api.worldnewsapi.com/search-news?${params.toString()}`),
+          newsFetch(`https://api.worldnewsapi.com/search-news?${params.toString()}`),
         );
         if (!res.ok) { console.warn(`[worldnews] HTTP ${res.status}`); return []; }
         const news = validateNewsResponseArray<{
@@ -1098,7 +1099,7 @@ function alphaVantageAdapter(): NewsAdapter {
           apikey: key,
         });
         const res = await abortable(
-          fetch(`https://www.alphavantage.co/query?${params.toString()}`),
+          newsFetch(`https://www.alphavantage.co/query?${params.toString()}`),
         );
         if (!res.ok) { console.warn(`[alphavantage] HTTP ${res.status}`); return []; }
         const feed = validateNewsResponseArray<{
@@ -1144,7 +1145,7 @@ function serpApiAdapter(): NewsAdapter {
           api_key: key,
         });
         const res = await abortable(
-          fetch(`https://serpapi.com/search.json?${params.toString()}`),
+          newsFetch(`https://serpapi.com/search.json?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -1183,7 +1184,7 @@ function diffbotAdapter(): NewsAdapter {
           size: String(opts?.limit ?? 25),
         });
         const res = await abortable(
-          fetch(`https://kg.diffbot.com/kg/v3/dql?${params.toString()}`),
+          newsFetch(`https://kg.diffbot.com/kg/v3/dql?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -1223,7 +1224,7 @@ function meltwaterAdapter(): NewsAdapter {
           page_size: opts?.limit ?? 25,
         };
         const res = await abortable(
-          fetch("https://api.meltwater.com/v3/search/articles", {
+          newsFetch("https://api.meltwater.com/v3/search/articles", {
             method: "POST",
             headers: {
               authorization: `Bearer ${key}`,
@@ -1267,7 +1268,7 @@ function signalAiAdapter(): NewsAdapter {
       try {
         const body = { query: subjectName, size: opts?.limit ?? 25 };
         const res = await abortable(
-          fetch("https://api.signal-ai.com/v1/articles/search", {
+          newsFetch("https://api.signal-ai.com/v1/articles/search", {
             method: "POST",
             headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -1312,7 +1313,7 @@ function factivaAdapter(): NewsAdapter {
           paging: { offset: 0, limit: opts?.limit ?? 25 },
         };
         const res = await abortable(
-          fetch("https://api.dowjones.com/content/search", {
+          newsFetch("https://api.dowjones.com/content/search", {
             method: "POST",
             headers: {
               "X-API-VERSION": "3.0",
@@ -1362,7 +1363,7 @@ function lexisNexisNewsdeskAdapter(): NewsAdapter {
           sort: "publishedAt:desc",
         });
         const res = await abortable(
-          fetch(`https://api.newsdesk.lexisnexis.com/v1/articles?${params.toString()}`, {
+          newsFetch(`https://api.newsdesk.lexisnexis.com/v1/articles?${params.toString()}`, {
             headers: { authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -1403,7 +1404,7 @@ function cisionAdapter(): NewsAdapter {
           sort: "date_desc",
         });
         const res = await abortable(
-          fetch(`https://api.cision.com/v1/articles?${params.toString()}`, {
+          newsFetch(`https://api.cision.com/v1/articles?${params.toString()}`, {
             headers: { "x-api-key": key, accept: "application/json" },
           }),
         );
@@ -1440,7 +1441,7 @@ function alphaSenseAdapter(): NewsAdapter {
       try {
         const body = { query: subjectName, size: opts?.limit ?? 25, contentType: "news" };
         const res = await abortable(
-          fetch("https://api.alpha-sense.com/v1/search", {
+          newsFetch("https://api.alpha-sense.com/v1/search", {
             method: "POST",
             headers: { "x-api-key": key, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -1479,7 +1480,7 @@ function quidAdapter(): NewsAdapter {
       try {
         const body = { query: { keyword: subjectName }, size: opts?.limit ?? 25, sort: "newest" };
         const res = await abortable(
-          fetch("https://api.quid.com/v3/news/search", {
+          newsFetch("https://api.quid.com/v3/news/search", {
             method: "POST",
             headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -1524,7 +1525,7 @@ function brandwatchAdapter(): NewsAdapter {
           orderDirection: "desc",
         });
         const res = await abortable(
-          fetch(`https://api.brandwatch.com/projects/${projectId}/data/mentions?${params.toString()}`, {
+          newsFetch(`https://api.brandwatch.com/projects/${projectId}/data/mentions?${params.toString()}`, {
             headers: { authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -1561,7 +1562,7 @@ function talkwalkerAdapter(): NewsAdapter {
       try {
         const body = { query: `"${subjectName}"`, size: opts?.limit ?? 25, sort_by: "date", sort_order: "desc" };
         const res = await abortable(
-          fetch("https://api.talkwalker.com/api/v1/search", {
+          newsFetch("https://api.talkwalker.com/api/v1/search", {
             method: "POST",
             headers: { "x-tw-api-key": key, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -1602,7 +1603,7 @@ function dataminrAdapter(): NewsAdapter {
     if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) return cachedToken.token;
     try {
       const res = await abortable(
-        fetch("https://gateway.dataminr.com/auth/2/token", {
+        newsFetch("https://gateway.dataminr.com/auth/2/token", {
           method: "POST",
           headers: { "content-type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({ grant_type: "api_key", client_id: clientId, client_secret: clientSecret }).toString(),
@@ -1625,7 +1626,7 @@ function dataminrAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ query: `"${subjectName}"`, num: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://gateway.dataminr.com/api/3/alerts?${params.toString()}`, {
+          newsFetch(`https://gateway.dataminr.com/api/3/alerts?${params.toString()}`, {
             headers: { authorization: `Dmauth ${token}`, accept: "application/json" },
           }),
         );
@@ -1660,7 +1661,7 @@ function zignalAdapter(): NewsAdapter {
       try {
         const body = { search: `"${subjectName}"`, size: opts?.limit ?? 25, sort: { time: "desc" } };
         const res = await abortable(
-          fetch("https://api.zignallabs.com/v1/stories/search", {
+          newsFetch("https://api.zignallabs.com/v1/stories/search", {
             method: "POST",
             headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -1706,7 +1707,7 @@ function contextualWebAdapter(): NewsAdapter {
           toPublishedDate: "",
         });
         const res = await abortable(
-          fetch(`https://contextualwebsearch-websearch-v1.p.rapidapi.com/api/Search/NewsSearchAPI?${params.toString()}`, {
+          newsFetch(`https://contextualwebsearch-websearch-v1.p.rapidapi.com/api/Search/NewsSearchAPI?${params.toString()}`, {
             headers: { "x-rapidapi-key": key, "x-rapidapi-host": "contextualwebsearch-websearch-v1.p.rapidapi.com" },
           }),
         );
@@ -1747,7 +1748,7 @@ function cryptopanicAdapter(): NewsAdapter {
           public: "true",
         });
         const res = await abortable(
-          fetch(`https://cryptopanic.com/api/v1/posts/?${params.toString()}`),
+          newsFetch(`https://cryptopanic.com/api/v1/posts/?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -1785,7 +1786,7 @@ function mediaCloudAdapter(): NewsAdapter {
           key,
         });
         const res = await abortable(
-          fetch(`https://api.mediacloud.org/api/v2/stories_public/list?${params.toString()}`),
+          newsFetch(`https://api.mediacloud.org/api/v2/stories_public/list?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as Array<{
@@ -1822,7 +1823,7 @@ function reutersConnectAdapter(): NewsAdapter {
           sort: "date_desc",
         });
         const res = await abortable(
-          fetch(`https://api.reutersconnect.com/content/v1/search?${params.toString()}`, {
+          newsFetch(`https://api.reutersconnect.com/content/v1/search?${params.toString()}`, {
             headers: { authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -1864,7 +1865,7 @@ function bingNewsAdapter(): NewsAdapter {
           freshness: "Month",
         });
         const res = await abortable(
-          fetch(`https://api.bing.microsoft.com/v7.0/news/search?${params.toString()}`, {
+          newsFetch(`https://api.bing.microsoft.com/v7.0/news/search?${params.toString()}`, {
             headers: { "Ocp-Apim-Subscription-Key": key, accept: "application/json" },
           }),
         );
@@ -1913,7 +1914,7 @@ function googleNewsRssAdapter(): NewsAdapter {
     const q = `"${subjectName}" (${locale.mod})`;
     const params = new URLSearchParams({ q, hl: locale.hl, gl: locale.gl, ceid: locale.ceid });
     const res = await abortable(
-      fetch(`https://news.google.com/rss/search?${params.toString()}`, {
+      newsFetch(`https://news.google.com/rss/search?${params.toString()}`, {
         headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml" },
       }),
       8_000,
@@ -1981,7 +1982,7 @@ function hackerNewsAdapter(): NewsAdapter {
           hitsPerPage: String(opts?.limit ?? 25),
         });
         const res = await abortable(
-          fetch(`https://hn.algolia.com/api/v1/search_by_date?${params.toString()}`),
+          newsFetch(`https://hn.algolia.com/api/v1/search_by_date?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -2018,7 +2019,7 @@ function redditAdapter(): NewsAdapter {
     try {
       const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
       const res = await abortable(
-        fetch("https://www.reddit.com/api/v1/access_token", {
+        newsFetch("https://www.reddit.com/api/v1/access_token", {
           method: "POST",
           headers: { Authorization: `Basic ${auth}`, "content-type": "application/x-www-form-urlencoded", "user-agent": "HawkeyeSterling/1.0" },
           body: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
@@ -2039,7 +2040,7 @@ function redditAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, sort: "new", limit: String(opts?.limit ?? 25), restrict_sr: "false", type: "link" });
         const res = await abortable(
-          fetch(`https://oauth.reddit.com/search?${params.toString()}`, {
+          newsFetch(`https://oauth.reddit.com/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${token}`, "user-agent": "HawkeyeSterling/1.0", accept: "application/json" },
           }),
         );
@@ -2076,7 +2077,7 @@ function benzingaAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ token: key, tickers: subjectName, pageSize: String(opts?.limit ?? 25), sort: "created:desc" });
         const res = await abortable(
-          fetch(`https://api.benzinga.com/api/v2/news?${params.toString()}`, { headers: { accept: "application/json" } }),
+          newsFetch(`https://api.benzinga.com/api/v2/news?${params.toString()}`, { headers: { accept: "application/json" } }),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as Array<{ title?: string; url?: string; created?: string; teaser?: string; channels?: Array<{ name?: string }> }>;
@@ -2108,7 +2109,7 @@ function seekingAlphaAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ id: subjectName, size: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://seeking-alpha.p.rapidapi.com/news/v2/list-by-symbol?${params.toString()}`, {
+          newsFetch(`https://seeking-alpha.p.rapidapi.com/news/v2/list-by-symbol?${params.toString()}`, {
             headers: { "x-rapidapi-key": key, "x-rapidapi-host": "seeking-alpha.p.rapidapi.com" },
           }),
         );
@@ -2148,7 +2149,7 @@ function ftAdapter(): NewsAdapter {
           resultContext: { maxResults: opts?.limit ?? 25, sortOrder: "DESC", sortField: "lastPublishDateTime", aspects: ["title", "lifecycle", "summary", "location"] },
         };
         const res = await abortable(
-          fetch("https://api.ft.com/content/search/v1", {
+          newsFetch("https://api.ft.com/content/search/v1", {
             method: "POST",
             headers: { "X-Api-Key": key, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -2187,7 +2188,7 @@ function economistAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.economist.com/v1/content/search?${params.toString()}`, {
+          newsFetch(`https://api.economist.com/v1/content/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2223,7 +2224,7 @@ function yahooFinanceAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ symbols: subjectName, count: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://yfapi.net/news/v2/list?${params.toString()}`, {
+          newsFetch(`https://yfapi.net/news/v2/list?${params.toString()}`, {
             headers: { "x-api-key": key, accept: "application/json" },
           }),
         );
@@ -2259,7 +2260,7 @@ function stockNewsAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ tickers: subjectName, items: String(opts?.limit ?? 25), token: key, sortby: "trending" });
         const res = await abortable(
-          fetch(`https://stocknewsapi.com/api/v1?${params.toString()}`),
+          newsFetch(`https://stocknewsapi.com/api/v1?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -2294,7 +2295,7 @@ function theNewsApiAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ api_token: key, search: `"${subjectName}"`, limit: String(opts?.limit ?? 25), language: "en", sort: "published_at" });
         const res = await abortable(
-          fetch(`https://api.thenewsapi.com/v1/news/all?${params.toString()}`),
+          newsFetch(`https://api.thenewsapi.com/v1/news/all?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as {
@@ -2328,7 +2329,7 @@ function iceConnectAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.theice.com/connect/v1/news/search?${params.toString()}`, {
+          newsFetch(`https://api.theice.com/connect/v1/news/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2353,7 +2354,7 @@ function stocktwitsAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ access_token: key, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.stocktwits.com/api/2/streams/symbol/${encodeURIComponent(subjectName)}.json?${params.toString()}`),
+          newsFetch(`https://api.stocktwits.com/api/2/streams/symbol/${encodeURIComponent(subjectName)}.json?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as { messages?: Array<{ id?: number; body?: string; created_at?: string; user?: { username?: string }; entities?: { sentiment?: { basic?: string } }; links?: Array<{ url?: string }> }> };
@@ -2380,7 +2381,7 @@ function investingComAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ symbol: subjectName, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://investing-com.p.rapidapi.com/news/search?${params.toString()}`, {
+          newsFetch(`https://investing-com.p.rapidapi.com/news/search?${params.toString()}`, {
             headers: { "x-rapidapi-key": key, "x-rapidapi-host": "investing-com.p.rapidapi.com" },
           }),
         );
@@ -2405,7 +2406,7 @@ function lexologyAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, max: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.lexology.com/v1/articles/search?${params.toString()}`, {
+          newsFetch(`https://api.lexology.com/v1/articles/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2430,7 +2431,7 @@ function proPublicaAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://www.propublica.org/api/v1/search?${params.toString()}`, {
+          newsFetch(`https://www.propublica.org/api/v1/search?${params.toString()}`, {
             headers: { "x-api-key": key, accept: "application/json" },
           }),
         );
@@ -2455,7 +2456,7 @@ function alephAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25), filter: "schema:Article" });
         const res = await abortable(
-          fetch(`https://aleph.occrp.org/api/2/entities?${params.toString()}`, {
+          newsFetch(`https://aleph.occrp.org/api/2/entities?${params.toString()}`, {
             headers: { Authorization: `ApiKey ${key}`, accept: "application/json" },
           }),
         );
@@ -2482,7 +2483,7 @@ function mentionAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.mention.com/api/accounts/${accountId}/alerts/${alertId}/mentions?${params.toString()}`, {
+          newsFetch(`https://api.mention.com/api/accounts/${accountId}/alerts/${alertId}/mentions?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2509,7 +2510,7 @@ function buzzSumoAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, num_results: String(opts?.limit ?? 25), api_key: key });
         const res = await abortable(
-          fetch(`https://api.buzzsumo.com/search/articles.json?${params.toString()}`),
+          newsFetch(`https://api.buzzsumo.com/search/articles.json?${params.toString()}`),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as { results?: Array<{ title?: string; url?: string; published_date?: number; domain_name?: string }> };
@@ -2532,7 +2533,7 @@ function onclusiveAdapter(): NewsAdapter {
       try {
         const body = { keyword: `"${subjectName}"`, limit: opts?.limit ?? 25, sort: "publishDate desc" };
         const res = await abortable(
-          fetch("https://api.onclusive.com/v2/coverage/search", {
+          newsFetch("https://api.onclusive.com/v2/coverage/search", {
             method: "POST",
             headers: { Authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
             body: JSON.stringify(body),
@@ -2561,7 +2562,7 @@ function newsRiverAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ query: `text:"${subjectName}"`, sortBy: "discoveredAt", sortOrder: "DESC", limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.newsriver.io/v2/search?${params.toString()}`, {
+          newsFetch(`https://api.newsriver.io/v2/search?${params.toString()}`, {
             headers: { Authorization: key, accept: "application/json" },
           }),
         );
@@ -2588,7 +2589,7 @@ function brand24Adapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ keywords: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.brand24.com/v3/projects/${projectId}/mentions?${params.toString()}`, {
+          newsFetch(`https://api.brand24.com/v3/projects/${projectId}/mentions?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2615,7 +2616,7 @@ function raneAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.ranenetwork.com/v1/insights/search?${params.toString()}`, {
+          newsFetch(`https://api.ranenetwork.com/v1/insights/search?${params.toString()}`, {
             headers: { "x-api-key": key, accept: "application/json" },
           }),
         );
@@ -2642,7 +2643,7 @@ function maplecroftAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, limit: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.maplecroft.com/v2/risk-alerts/search?${params.toString()}`, {
+          newsFetch(`https://api.maplecroft.com/v2/risk-alerts/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2669,7 +2670,7 @@ function janesAdapter(): NewsAdapter {
       try {
         const params = new URLSearchParams({ q: `"${subjectName}"`, max: String(opts?.limit ?? 25) });
         const res = await abortable(
-          fetch(`https://api.janes.com/v2/content/search?${params.toString()}`, {
+          newsFetch(`https://api.janes.com/v2/content/search?${params.toString()}`, {
             headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           }),
         );
@@ -2698,7 +2699,7 @@ function mastodonAdapter(): NewsAdapter {
         const tok = process.env["MASTODON_ACCESS_TOKEN"];
         if (tok) headers.Authorization = `Bearer ${tok}`;
         const res = await abortable(
-          fetch(`https://${instance}/api/v2/search?${params.toString()}`, { headers }),
+          newsFetch(`https://${instance}/api/v2/search?${params.toString()}`, { headers }),
         );
         if (!res.ok) return [];
         const json = (await res.json()) as { statuses?: Array<{ url?: string; content?: string; created_at?: string; account?: { acct?: string } }> };
@@ -2733,7 +2734,7 @@ function bingWebAdapter(): NewsAdapter {
           freshness: "Month",
         });
         const res = await abortable(
-          fetch(`https://api.bing.microsoft.com/v7.0/search?${params.toString()}`, {
+          newsFetch(`https://api.bing.microsoft.com/v7.0/search?${params.toString()}`, {
             headers: { "Ocp-Apim-Subscription-Key": key, accept: "application/json" },
           }),
         );
@@ -2768,7 +2769,7 @@ function makeNewsAdapter(opts: {
           accept: "application/json",
           ...(opts.authHeader ? opts.authHeader(key) : { Authorization: `Bearer ${key}` }),
         };
-        const res = await abortable(fetch(`${opts.baseUrl}?${params.toString()}`, { headers }));
+        const res = await abortable(newsFetch(`${opts.baseUrl}?${params.toString()}`, { headers }));
         if (!res.ok) return [];
         const items = opts.parser(await res.json());
         return items.filter((i) => i.title && i.url).map((i) => ({
@@ -2980,7 +2981,7 @@ const taranisAdapter = (): NewsAdapter => {
           offset: "0",
         });
         if (opts?.since) params.set("date_from", opts.since.slice(0, 10));
-        const res = await fetch(`${endpoint}?${params}`, {
+        const res = await newsFetch(`${endpoint}?${params}`, {
           headers: { Authorization: `Bearer ${key}`, accept: "application/json" },
           signal: AbortSignal.timeout(12_000),
         });
@@ -3033,7 +3034,7 @@ const tavilyAdapter = (): NewsAdapter => {
     isAvailable: () => true,
     search: async (name, opts) => {
       try {
-        const res = await fetch("https://api.tavily.com/search", {
+        const res = await newsFetch("https://api.tavily.com/search", {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
           body: JSON.stringify({
@@ -3079,7 +3080,7 @@ const exaAdapter = (): NewsAdapter => {
     isAvailable: () => true,
     search: async (name, opts) => {
       try {
-        const res = await fetch("https://api.exa.ai/search", {
+        const res = await newsFetch("https://api.exa.ai/search", {
           method: "POST",
           headers: { "content-type": "application/json", "x-api-key": key },
           body: JSON.stringify({
@@ -3123,7 +3124,7 @@ const perplexityAdapter = (): NewsAdapter => {
     isAvailable: () => true,
     search: async (name) => {
       try {
-        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+        const res = await newsFetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
           body: JSON.stringify({
@@ -3194,7 +3195,7 @@ function fetchAfricanFeeds(): NewsAdapter {
       async function fetchOneFeed(feed: (typeof AFRICAN_FEEDS)[number]): Promise<NewsArticle[]> {
         try {
           const res = await abortable(
-            fetch(feed.url, {
+            newsFetch(feed.url, {
               headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml, application/xml, text/xml" },
             }),
             AFRICAN_FEED_TIMEOUT_MS,
@@ -3278,7 +3279,7 @@ function fetchSouthAsianFeeds(): NewsAdapter {
       async function fetchOneFeed(feed: (typeof SOUTH_ASIAN_FEEDS)[number]): Promise<NewsArticle[]> {
         try {
           const res = await abortable(
-            fetch(feed.url, {
+            newsFetch(feed.url, {
               headers: { "user-agent": "HawkeyeSterling/1.0", accept: "application/rss+xml, application/xml, text/xml" },
             }),
             SOUTH_ASIAN_FEED_TIMEOUT_MS,
