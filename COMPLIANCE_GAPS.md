@@ -1,5 +1,5 @@
 # Hawkeye Sterling — Compliance Gaps
-**Date:** 2026-05-31 (last updated)  
+**Date:** 2026-06-04 (last updated)  
 **Status:** Items marked CLOSED have been addressed in code. Items marked Open require an explicit human or MLRO decision before they can be considered resolved.
 
 ---
@@ -60,13 +60,13 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-4 — goAML reporting entity IDs are placeholder values
 
 **Risk:** CRITICAL (regulatory)  
-**Description:** `.env.example` shows `"goamlRentityId": "REPLACE_ME"` for all 7 entities in `HAWKEYE_ENTITIES`. If these placeholders are deployed to production, every STR/SAR submitted via `/api/goaml-xml` will contain an invalid reporting entity ID, causing the UAE FIU to reject the filing.
+**Description:** `.env.example` ships `"goamlRentityId": "FIU_PENDING_ENTITY_01"` … `"FIU_PENDING_ENTITY_07"` placeholders for all 7 entities in `HAWKEYE_ENTITIES`. If these placeholders are deployed to production, every STR/SAR submitted via `/api/goaml-xml` will contain an invalid reporting entity ID, causing the UAE FIU to reject the filing.
 
 FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
 **Action required (operator, not MLRO):**
   1. Confirm the UAE FIU registration status of each entity
-  2. Replace each `REPLACE_ME` with the actual goAML Rentity ID in Netlify environment variables
+  2. Replace each `FIU_PENDING_ENTITY_0N` placeholder with the actual goAML Rentity ID in Netlify environment variables
   3. Do not commit real goAML IDs to the repository
 
 ---
@@ -227,6 +227,16 @@ User-supplied IDs were used as blob-store key segments without sanitization in:
 
 **Fix-2.5 — batch-screen-stream missing audit chain:**
 `web/app/api/batch-screen-stream/route.ts` — Added `writeAuditChainEntry` (event: `batch.screen_completed`) at stream completion, matching the non-streaming batch-screen endpoint. Previously, any batch screening run via the streaming endpoint left no trace in the tamper-evident audit chain.
+
+---
+
+## Phase 3 Dependency Hygiene (2026-06-04)
+
+**Fix-3.1 — postcss XSS advisory in nested Next bundle (GHSA-qx2v-qp2m-jg93):**
+`web/package.json` — `next` bundled an older nested `postcss` (<8.5.10) vulnerable to XSS via unescaped `</style>` in CSS stringify output. Added `"postcss": "$postcss"` to `overrides` to force the nested copy up to the already-patched direct dependency (`^8.5.15`), within the same 8.x major (non-breaking). `npm audit` on `web/` now reports **0 vulnerabilities**. Next.js 16 is unchanged.
+
+**Accepted advisory — uuid bounds-check in exceljs (GHSA-w5hq-g745-h8pq), root:**
+`exceljs@4.4.0` (latest) depends on `uuid@^8.3.0`; the advisory only triggers when a `buf` argument is supplied to `uuid` v3/v5/v6. exceljs calls `uuidv4()` with **no `buf` argument** (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`), so the vulnerable path is **unreachable**. The only available fix (`uuid@>=11.1.1`) is ESM-only and incompatible with exceljs's CommonJS `require('uuid')`, and would break XLSX ingestion of sanctions lists (au_dfat, jp_mof, uae_eocn). Risk **accepted**: moderate severity, non-reachable, and below the CI `npm audit` HIGH+CRITICAL gate. Revisit when exceljs ships a release on `uuid@11`.
 
 ---
 

@@ -62,6 +62,7 @@
   "overrides": {
     "react-copy-to-clipboard": "5.1.1",
     "qs": ">=6.15.2",
-    "tmp": ">=0.2.6"
+    "tmp": ">=0.2.6",
+    "postcss": "$postcss"
   }
 }
