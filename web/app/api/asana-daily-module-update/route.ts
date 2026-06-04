@@ -139,12 +139,28 @@ function buildReport(m: AsanaModuleTask, date: string, input: ReportInput): stri
 }
 
 async function postStory(taskGid: string, text: string, asanaToken: string): Promise<void> {
-  const res = await fetch(`${ASANA_API}/tasks/${taskGid}/stories`, {
-    method: "POST",
-    headers: { authorization: `Bearer ${asanaToken}`, "content-type": "application/json" },
-    body: JSON.stringify({ data: { text } }),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // Asana enforces a per-token burst/concurrency limit (~15 simultaneous) and
+  // returns 429 for the overflow. Retry 429 / 5xx with backoff (honouring the
+  // Retry-After header when present) so a busy moment never silently drops a
+  // module's daily attestation. Combined with the batched dispatch below, this
+  // guarantees every module receives its report within the 60s function budget.
+  const MAX_ATTEMPTS = 5;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const res = await fetch(`${ASANA_API}/tasks/${taskGid}/stories`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${asanaToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ data: { text } }),
+    });
+    if (res.ok) return;
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt === MAX_ATTEMPTS) throw new Error(`HTTP ${res.status}`);
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs =
+      Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(8000, 500 * 2 ** (attempt - 1));
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -197,21 +213,32 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Any failure degrades that module to the clean baseline (fail-safe).
   const signals = await gatherFindingSignals().catch(() => null);
 
-  const results = await Promise.allSettled(
-    ASANA_MODULE_TASKS.map(async (m) => {
-      const f = signals ? findingsForModule(m.key, signals) : null;
-      const input: ReportInput = {
-        kind: "DAILY",
-        status: f?.status ?? "Operational",
-        findings:
-          f?.findings ?? "No control exceptions, breaches or overdue items recorded in the audit chain.",
-        conclusion: f?.conclusion ?? "✅ Compliant — control operational, no action required.",
-        ...(f?.riskRating ? { riskRating: f.riskRating } : {}),
-      };
-      await postStory(m.taskGid, buildReport(m, date, input), asanaToken);
-      return m.key;
-    }),
-  );
+  // Dispatch in small concurrency-limited batches rather than firing all ~66
+  // posts at once. Asana caps concurrent requests per token (~15) and 429s the
+  // overflow; an unbounded Promise.all previously let only the first ~15 land
+  // and silently dropped the rest. Batches of 4 (+ postStory's 429 retry) keep
+  // us under the burst ceiling so every module is attested each day.
+  const CONCURRENCY = 4;
+  const results: PromiseSettledResult<string>[] = [];
+  for (let i = 0; i < ASANA_MODULE_TASKS.length; i += CONCURRENCY) {
+    const batch = ASANA_MODULE_TASKS.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (m) => {
+        const f = signals ? findingsForModule(m.key, signals) : null;
+        const input: ReportInput = {
+          kind: "DAILY",
+          status: f?.status ?? "Operational",
+          findings:
+            f?.findings ?? "No control exceptions, breaches or overdue items recorded in the audit chain.",
+          conclusion: f?.conclusion ?? "✅ Compliant — control operational, no action required.",
+          ...(f?.riskRating ? { riskRating: f.riskRating } : {}),
+        };
+        await postStory(m.taskGid, buildReport(m, date, input), asanaToken);
+        return m.key;
+      }),
+    );
+    results.push(...batchResults);
+  }
 
   const posted = results.filter((r) => r.status === "fulfilled").length;
   const failed = results
