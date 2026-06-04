@@ -3,6 +3,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 // Mock fetch-util (sha256Hex used for checksum)
 vi.mock('../../fetch-util.js', () => ({
   sha256Hex: vi.fn(async (_s: string) => 'aabbccddee'),
+  BROWSER_UA: 'test-ua',
+  ingestionDispatcher: () => undefined,
 }));
 
 // ── ExcelJS mock factory ──────────────────────────────────────────────────────
