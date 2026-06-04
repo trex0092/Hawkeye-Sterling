@@ -31,24 +31,18 @@ const PROXY_URI =
   process.env['HTTP_PROXY']?.trim() ||
   '';
 
-// Relay chain for sanctions-list downloads blocked by datacenter IP.
-// Sanctions lists are publicly published documents — the relay just fetches
-// the same URL any browser would. INGEST_FETCH_RELAY / NEWS_FETCH_RELAY take
-// precedence (operator's own relay); otherwise falls back to the built-in
-// public chain. Set NEWS_RELAY_ENABLED=false to disable entirely.
-const INGEST_RELAY_TEMPLATES: string[] = (() => {
-  const custom =
-    process.env['INGEST_FETCH_RELAY']?.trim() ||
-    process.env['NEWS_FETCH_RELAY']?.trim();
-  if (custom) return custom.split(',').map((s) => s.trim()).filter(Boolean);
-  const flag = process.env['NEWS_RELAY_ENABLED']?.trim().toLowerCase();
-  if (flag === 'false' || flag === '0' || flag === 'off') return [];
-  return [
+// Public relay chain for sanctions-list downloads blocked by datacenter IP.
+// Sanctions lists are publicly published documents — the relay fetches the
+// same URL any browser would. Always active; no env var required.
+// Override with INGEST_FETCH_RELAY or NEWS_FETCH_RELAY for an operator relay.
+const INGEST_RELAY_TEMPLATES: string[] =
+  (process.env['INGEST_FETCH_RELAY']?.trim() || process.env['NEWS_FETCH_RELAY']?.trim())
+    ?.split(',').map((s) => s.trim()).filter(Boolean) ??
+  [
     'https://api.allorigins.win/raw?url={url}',
     'https://corsproxy.io/?url={url}',
     'https://api.codetabs.com/v1/proxy/?quest={url}',
   ];
-})();
 
 function buildIngestRelayUrl(template: string, target: string): string {
   return template.includes('{url}')
