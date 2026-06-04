@@ -11,6 +11,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { pickModel } from "../../../../src/integrations/model-router";
+import { incrementCounter } from "@/lib/server/metrics-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -179,6 +180,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_no_key" });
     return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 
@@ -240,6 +242,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       parsed = JSON.parse(stripped) as DisambiguationResult;
     } catch {
       console.warn("[smart-disambiguate] JSON parse failed (likely truncated response) — using template fallback");
+      incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_parse_failed" });
       void writeAuditChainEntry(
         {
           event: "screening.disambiguation_degraded",
@@ -269,7 +272,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     ).catch((err) =>
       console.warn("[smart-disambiguate] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
-    return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    // Record per-verdict hit counts for compliance dashboard.
+    for (const hit of parsed.hits) {
+      if (hit.verdict) {
+        incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: hit.verdict });
+      }
+    }
+    const latencyMs = Date.now() - t0;
+    // Latency histogram bucket (coarse: <1s, 1–3s, 3–6s, >6s).
+    const bucket =
+      latencyMs < 1_000 ? "lt1s" :
+      latencyMs < 3_000 ? "lt3s" :
+      latencyMs < 6_000 ? "lt6s" : "gt6s";
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "success", latency_bucket: bucket });
+    return NextResponse.json({ ok: true, ...parsed, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[smart-disambiguate] LLM call failed:", msg);
@@ -277,6 +293,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { event: "screening.disambiguation_error", actor: gate.keyId, clientName: sanitizedClient?.name ?? (body.client ?? body.profile)?.name ?? "unknown", reason: msg },
       tenantIdFromGate(gate),
     ).catch(() => undefined);
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_llm_error" });
     return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }
