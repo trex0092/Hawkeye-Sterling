@@ -19,6 +19,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getCountryRisk } from "@/lib/server/high-risk-countries";
 
 const CORS: Record<string, string> = {
@@ -519,6 +521,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
+  void writeAuditChainEntry(
+    { event: "lei-lookup_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
+
   const { searchParams } = new URL(req.url);
   const lei = searchParams.get("lei")?.trim().toUpperCase();
   const legalName =
@@ -599,6 +606,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const gate = await enforce(req);
     if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "lei-lookup_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
     let body: LeiLookupBody;
     try {

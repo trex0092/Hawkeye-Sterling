@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { isRedisConfigured } from "@/lib/cache/redis";
 import { gdeltCacheStats } from "@/lib/intelligence/gdelt-cache";
 import { getCounters, getGauges } from "@/lib/server/metrics-store";
@@ -93,6 +95,11 @@ function buildPrometheusText(uptimeMs: number, redisConfigured: boolean): string
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "metrics_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const uptimeMs = Date.now() - new Date(STARTED_AT).getTime();
   const redisConfigured = isRedisConfigured();

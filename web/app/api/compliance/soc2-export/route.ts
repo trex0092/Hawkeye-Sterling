@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getStore } from "@netlify/blobs";
 import { createHmac, createHash } from "node:crypto";
@@ -78,6 +79,11 @@ function inWindow(at: string | undefined, since: number, until: number): boolean
 async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "compliance.soc2_export_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const tenant = tenantIdFromGate(gate);
 
   const url = new URL(req.url);

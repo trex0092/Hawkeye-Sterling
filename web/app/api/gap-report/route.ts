@@ -2,6 +2,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import type { GovernanceGapResult } from "@/app/api/governance-gap/route";
 import {
   buildHtmlDoc, hsPage, hsCover, hsSection, hsPill, hsKvGrid, hsNarrative,
@@ -11,6 +13,11 @@ import {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "gap-report_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: { gapResult: GovernanceGapResult; institution: string };
   try { body = await req.json() as typeof body; }

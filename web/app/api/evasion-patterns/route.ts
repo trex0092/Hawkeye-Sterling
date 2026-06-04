@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   EXTENDED_EVASION_PATTERNS,
   matchEvasionPatterns,
@@ -31,6 +33,11 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "evasion-patterns_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: MatchContext;
   try {

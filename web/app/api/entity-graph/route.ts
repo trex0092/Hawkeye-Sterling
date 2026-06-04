@@ -9,6 +9,8 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { searchAllRegistries } from "@/lib/intelligence/registryAdapters";
 import { searchCountryRegistries } from "@/lib/intelligence/countryRegistries";
 import { bestCommercialAdapter } from "@/lib/intelligence/commercialAdapters";
@@ -399,6 +401,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "entity-graph_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: EntityGraphBody;
   try {

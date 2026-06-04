@@ -1,6 +1,8 @@
 import { getJson, listKeys } from "@/lib/server/store";
 
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
@@ -45,6 +47,11 @@ function escape(s: string): string {
 export async function GET(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "status.feed_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const origin = new URL(req.url).origin;
 
   let incidents: Incident[] = [];

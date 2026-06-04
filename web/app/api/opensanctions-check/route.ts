@@ -14,6 +14,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   enrichSubject,
   openSanctionsStats,
@@ -34,6 +36,11 @@ interface Body {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "opensanctions-check_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: Body;
   try {
@@ -86,5 +93,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "opensanctions-check_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   return NextResponse.json({ ok: true, corpus: await openSanctionsStats() }, { headers: gate.headers });
 }

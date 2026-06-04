@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EntityGraph } from '../../../../src/brain/entity-graph';
 import { buildBoGraphFromRegistry, type CorporateRegistryRecord } from '../../../../src/brain/bo-graph-builder';
 import { enforce } from '@/lib/server/enforce';
+import { tenantIdFromGate } from '@/lib/server/tenant';
 
 export async function POST(req: NextRequest) {
   // Top-level try/catch: catches any uncaught throw (e.g. ECONNRESET from
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
   try {
     const gate = await enforce(req);
     if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "ownership_chain.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
     let body: unknown;
     try {

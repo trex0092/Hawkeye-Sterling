@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listBatchRuns, getBatchRun } from "@/lib/server/batch-history";
 
 export const runtime = "nodejs";
@@ -8,6 +10,11 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "batch-history_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const url = new URL(req.url);
   const runId = url.searchParams.get("runId");

@@ -13,10 +13,17 @@ export const maxDuration = 30;
 import { NextRequest, NextResponse } from 'next/server';
 import { buildSenzingExport, toSenzingJsonl, type HawkeyeSubject } from '../../../../src/integrations/senzing-export';
 import { enforce } from '@/lib/server/enforce';
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export async function POST(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "senzing_export.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: unknown;
   try {

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { FIU_DPMS_TYPOLOGIES_2025, getCoverageMatrix } from "../../../../src/brain/registry/fiu-dpms-typologies-2025.js";
 
 export const runtime = "nodejs";
@@ -51,6 +53,11 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
+  void writeAuditChainEntry(
+    { event: "fiu-typology-check_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
+
   const matrix = getCoverageMatrix() as CoverageEntry[];
   const overallCoverage = Math.round(matrix.reduce((sum: number, m: CoverageEntry) => sum + m.coverageScore, 0) / matrix.length);
   const fullyCoveredCount = matrix.filter((m: CoverageEntry) => m.coverageScore >= 80).length;
@@ -75,6 +82,11 @@ export async function GET(req: Request): Promise<NextResponse> {
 export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "fiu-typology-check_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: { typologyId?: string };
   try { body = (await req.json()) as { typologyId?: string }; }

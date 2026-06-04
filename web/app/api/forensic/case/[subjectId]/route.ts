@@ -12,6 +12,8 @@
 
 import { NextResponse } from 'next/server';
 import { enforce } from '@/lib/server/enforce';
+import { tenantIdFromGate } from '@/lib/server/tenant';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 import { getJson, listKeys } from '@/lib/server/store';
 import {
   buildForensicBundle,
@@ -57,6 +59,10 @@ export async function GET(
 ): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "forensic.case_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const rid = getRequestId(req);
   const { subjectId } = await params;

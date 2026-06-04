@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import {
   buildComplianceReport,
   buildComplianceReportStructured,
@@ -757,6 +759,11 @@ async function handleComplianceReport(req: Request): Promise<Response> {
   // between NEXT_PUBLIC_ADMIN_TOKEN and ADMIN_TOKEN shouldn't block MLRO
   // officers from generating compliance reports.
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "compliance-report_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   gateHeaders = gate.ok ? gate.headers : {};
 
   const url = new URL(req.url);

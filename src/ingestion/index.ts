@@ -17,7 +17,7 @@ import { chSecoAdapter } from './sources/ch-seco.js';
 import { auDfatAdapter } from './sources/au-dfat.js';
 import { jpMofAdapter } from './sources/jp-mof.js';
 import { jpMetiAdapter } from './sources/jp-meti.js';
-import { interpolRedAdapter } from './sources/interpol.js';
+import { interpolRedAdapter, interpolBlueAdapter, interpolGreenAdapter } from './sources/interpol.js';
 import { bisEntityAdapter } from './sources/bis-entity.js';
 import { uaeMoeDesignatedAdapter } from './sources/uae-moe-designated.js';
 import { fincen314aAdapter } from './sources/fincen-314a.js';
@@ -38,7 +38,7 @@ import { worldBankDebarredAdapter } from './sources/worldbank-debarred.js';
 //   · JP (MOF sanctions + METI export controls)
 //   · FATF (call-for-action / monitoring)
 //   · UAE (EOCN + Local Terrorist List + MoE Designated)
-//   · Interpol (Red Notices)
+//   · Interpol (Red + Blue + Green Notices)
 //   · FinCEN (314a advisories)
 //   · TR (MASAK domestic terror/proliferation freeze — Law 6415/7262)
 export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
@@ -57,6 +57,8 @@ export const SOURCE_ADAPTERS: readonly SourceAdapter[] = [
   uaeLtlXlsxAdapter,          // opt-in: XLSX-fetched UAE Terrorist List
   uaeMoeDesignatedAdapter,    // opt-in: set FEED_UAE_MOE_DESIGNATED for live data
   interpolRedAdapter,         // live: Interpol public Red Notice API (no key required)
+  interpolBlueAdapter,        // live: Interpol Blue Notices (persons of interest)
+  interpolGreenAdapter,       // live: Interpol Green Notices (criminal history / warning)
   bisEntityAdapter,           // opt-in: set FEED_BIS_ENTITY for live BIS Entity List CSV
   fincen314aAdapter,          // opt-in: set FINCEN_314A_API_KEY + FINCEN_314A_ENDPOINT
   trMasakAdapter,             // live via FEED_TR_MASAK; curated static seed otherwise

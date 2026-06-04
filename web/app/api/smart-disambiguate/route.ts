@@ -11,6 +11,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
 import { pickModel } from "../../../../src/integrations/model-router";
+import { incrementCounter } from "@/lib/server/metrics-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -179,7 +180,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
 
   if (!apiKey) {
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_no_key" });
+    const tpl = buildTemplate();
+    for (const h of tpl.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
+    return NextResponse.json({ ok: true, ...tpl, degraded: true, degradedReason: "ANTHROPIC_API_KEY not configured — deterministic template used.", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 
   const sanitizedClient = {
@@ -240,6 +244,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       parsed = JSON.parse(stripped) as DisambiguationResult;
     } catch {
       console.warn("[smart-disambiguate] JSON parse failed (likely truncated response) — using template fallback");
+      incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_parse_failed" });
+      const tplPf = buildTemplate();
+      for (const h of tplPf.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
       void writeAuditChainEntry(
         {
           event: "screening.disambiguation_degraded",
@@ -249,7 +256,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         },
         tenantIdFromGate(gate),
       ).catch(() => undefined);
-      return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM response truncated — deterministic template used", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+      return NextResponse.json({ ok: true, ...tplPf, degraded: true, degradedReason: "LLM response truncated — deterministic template used", latencyMs: Date.now() - t0 }, { headers: gate.headers });
     }
 
     // Normalize arrays — LLM occasionally returns null instead of [].
@@ -269,7 +276,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     ).catch((err) =>
       console.warn("[smart-disambiguate] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
-    return NextResponse.json({ ok: true, ...parsed, latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    // Record per-verdict hit counts for compliance dashboard.
+    for (const hit of parsed.hits) {
+      if (hit.verdict) {
+        incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: hit.verdict });
+      }
+    }
+    const latencyMs = Date.now() - t0;
+    // Latency histogram bucket (coarse: <1s, 1–3s, 3–6s, >6s).
+    const bucket =
+      latencyMs < 1_000 ? "lt1s" :
+      latencyMs < 3_000 ? "lt3s" :
+      latencyMs < 6_000 ? "lt6s" : "gt6s";
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "success", latency_bucket: bucket });
+    return NextResponse.json({ ok: true, ...parsed, latencyMs }, { headers: gate.headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[smart-disambiguate] LLM call failed:", msg);
@@ -277,7 +297,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       { event: "screening.disambiguation_error", actor: gate.keyId, clientName: sanitizedClient?.name ?? (body.client ?? body.profile)?.name ?? "unknown", reason: msg },
       tenantIdFromGate(gate),
     ).catch(() => undefined);
-    return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
+    incrementCounter("hawkeye_disambiguation_requests_total", 1, { outcome: "degraded_llm_error" });
+    const tplErr = buildTemplate();
+    for (const h of tplErr.hits) incrementCounter("hawkeye_disambiguation_verdicts_total", 1, { verdict: h.verdict });
+    return NextResponse.json({ ok: true, ...tplErr, degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }
 

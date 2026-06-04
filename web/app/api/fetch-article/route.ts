@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 const ALLOWED_PROTOCOLS = ["https:", "http:"];
 
@@ -74,6 +76,10 @@ function extractArticleText(html: string): string {
 export async function POST(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "fetch_article.requested", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: { url: string };
   try {

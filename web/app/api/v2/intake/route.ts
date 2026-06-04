@@ -23,6 +23,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { asanaGids } from "@/lib/server/asanaConfig";
 import type {
@@ -218,6 +220,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "v2.intake_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let body: IntakeBody;
   try {

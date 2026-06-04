@@ -25,6 +25,7 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { renderEvidencePack } from "../../../../../src/brain/pdf-evidence-pack.js";
 import type { BrainVerdict } from "../../../../../src/brain/types.js";
 
@@ -80,6 +81,10 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "reports.pdf_generated", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let raw: unknown;
   try {

@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
@@ -305,6 +306,11 @@ function computeStatus(score: number, findings: ScanFinding[]): ScanStatus {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "security-scan_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const tenantId = tenantIdFromGate(gate);
 

@@ -22,6 +22,14 @@ const FETCH_TIMEOUT_MS = 30_000;
 const DEFAULT_FEED_URL =
   "https://data.opensanctions.org/datasets/latest/peps/entities.ftm.json";
 
+// AfricaPEP supplementary feed — OpenSanctions Africa-specific dataset.
+// Augments the main PEPs corpus with deeper coverage of African PEPs
+// not yet in Wikidata/EveryPolitician. Same FTM line-delimited JSON format.
+// Override via FEED_AFRICAPEP_URL; disable by setting it to "disabled".
+const AFRICAPEP_FEED_URL =
+  process.env["FEED_AFRICAPEP_URL"] ??
+  "https://data.opensanctions.org/datasets/latest/africapep/entities.ftm.json";
+
 // If OPENSANCTIONS_DATA_TOKEN is set, use the authenticated Data Delivery Service
 // endpoint. If unset, fall back to the public URL (requires a commercial license
 // for business use — see https://www.opensanctions.org/licensing/).
@@ -150,6 +158,30 @@ export default async function handler(_req: Request): Promise<Response> {
     return jsonResponse({ ok: false, label: RUN_LABEL, error: "feed parse yielded zero records", durationMs: Date.now() - startedAt }, 502);
   }
 
+  // Supplementary AfricaPEP feed — merge net-new records (by ID) into corpus.
+  let africaPepAdded = 0;
+  if (AFRICAPEP_FEED_URL !== "disabled") {
+    const africaRes = await fetchWithTimeout(AFRICAPEP_FEED_URL, FETCH_TIMEOUT_MS, feedHeaders);
+    if (africaRes?.ok) {
+      const africaText = await africaRes.text();
+      const existingIds = new Set(records.map((r) => r.id));
+      for (const line of africaText.split(/\n+/)) {
+        if (!line.trim()) continue;
+        const rec = normalisePepLine(line);
+        if (rec && !existingIds.has(rec.id)) {
+          records.push(rec);
+          existingIds.add(rec.id);
+          africaPepAdded++;
+        }
+      }
+      if (africaPepAdded > 0) {
+        console.info(`[${RUN_LABEL}] AfricaPEP: merged ${africaPepAdded} net-new records`);
+      }
+    } else {
+      console.warn(`[${RUN_LABEL}] AfricaPEP feed unavailable (${africaRes?.status ?? "no-response"}) — skipping supplementary load`);
+    }
+  }
+
   // Read prior snapshot for delta computation.
   let previous: PepRecord[] = [];
   try {
@@ -243,6 +275,7 @@ export default async function handler(_req: Request): Promise<Response> {
     additions: additions.length,
     removals: removals.length,
     archived: archive.length,
+    africaPepAdded,
     retentionMonths: 12,
     durationMs: Date.now() - startedAt,
   });

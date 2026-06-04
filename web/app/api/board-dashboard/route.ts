@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
 import type { CaseRecord } from "@/lib/types";
@@ -233,6 +234,11 @@ function buildAlertPanel(cases: CaseRecord[]): BoardPanel {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "board-dashboard_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const tenantId = tenantIdFromGate(gate);
 

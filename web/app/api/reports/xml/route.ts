@@ -19,6 +19,7 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { enforce } from "@/lib/server/enforce";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { serialiseGoamlXml } from "../../../../../src/integrations/goaml-xml.js";
 import { validateGoamlEnvelope, type GoAmlEnvelope } from "../../../../../src/brain/goaml-shapes.js";
 
@@ -40,6 +41,10 @@ export async function POST(req: Request): Promise<NextResponse | Response> {
   const t0 = Date.now();
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "reports.xml_generated", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   let raw: unknown;
   try {

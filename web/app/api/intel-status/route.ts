@@ -216,6 +216,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   const { enforce } = await import("@/lib/server/enforce");
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "intel_status.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   try {
   // Resolve `configured` per provider
   const providers = PROVIDER_CATALOG.map((p) => {

@@ -13,10 +13,16 @@ export const maxDuration = 15;
 import { NextRequest, NextResponse } from 'next/server';
 import { parseRule, evaluateRuleString, evaluateAllRules, BUILTIN_RULES, type RuleContext } from '../../../../src/brain/rule-engine';
 import { enforce } from '@/lib/server/enforce';
+import { tenantIdFromGate } from '@/lib/server/tenant';
+import { writeAuditChainEntry } from '@/lib/server/audit-chain';
 
 export async function GET(req: NextRequest) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+  void writeAuditChainEntry(
+    { event: "rule_engine.accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   return NextResponse.json({ ok: true, rules: BUILTIN_RULES, count: BUILTIN_RULES.length }, { headers: gate.headers });
 }
 

@@ -16,6 +16,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { listAlerts, type DesignationAlert } from "@/lib/server/alerts-store";
 
 export const runtime = "nodejs";
@@ -206,6 +208,11 @@ async function fetchFatfRssDelta(since: string): Promise<DesignationAlert[]> {
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "designation-alerts_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const url = new URL(req.url);
   const limitParam = url.searchParams.get("limit");

@@ -16,6 +16,8 @@ import { detectCrossRegimeConflict, type RegimeStatus } from "../../../../../src
 import { classifyPepRole } from "../../../../../src/brain/pep-classifier.js";
 import { loadCandidates } from "@/lib/server/candidates-loader";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +38,11 @@ function sse(data: unknown, event = "message"): string {
 export async function GET(req: Request): Promise<Response> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "agent.stream-screen_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");

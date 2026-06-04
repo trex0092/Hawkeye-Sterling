@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | **System ID** | HS-001 |
-| **Version** | v2.3.1 |
+| **Version** | v2.4.0 |
 | **Status** | Production |
 | **Classification** | AML/CFT Decision-Support Tool |
 | **Owner** | Data Science (primary) / MLRO (accountability) |
-| **Last Updated** | 2026-05-06 |
-| **Next Review** | 2026-11-06 |
+| **Last Updated** | 2026-06-04 |
+| **Next Review** | 2026-12-04 |
 | **Regulatory Framework** | UAE Federal Decree-Law 20/2018 (as amended by FDL 10/2025); Cabinet Decision 10/2019; Cabinet Decision 74/2020; FATF Recommendations R.10, R.12, R.15 |
 
 ---
@@ -22,6 +22,8 @@ The pipeline operates in three tiers with short-circuit logic that promotes to t
 1. **Identifier-exact** — shared strong identifier (passport number, LEI, IMO number, registration number) across same-type entities.
 2. **Name-exact** — normalised-name equality corroborated by at least one contextual or strong disambiguator.
 3. **Fuzzy + matrix** — ensemble name matching combined with disambiguator calibration via the entity-resolution and confidence-calibration modules.
+
+From v2.4.0, the **Smart Hit Disambiguation Engine** (`/api/smart-disambiguate`) provides an additional post-screening layer for high-frequency names (e.g. Mohamed, Ahmed, Wang Wei). It applies a 10-rule deterministic priority order (gender → ID exact → DOB year conflict → nationality conflict → score threshold → profession mismatch → temporal impossibility) and emits per-hit verdicts across four tiers (`confirmed_false_positive`, `likely_false_positive`, `possible_match`, `likely_true_match`), enabling bulk auto-disposal of false positives under UAE FDL 10/2025 Art.18 and FATF R.10.
 
 ---
 
@@ -61,11 +63,17 @@ HS-001 does not use a trained ML model for its core verdict logic. All sanctione
 | 5 | UK OFSI Consolidated List | `uk_ofsi` | XML | Daily |
 | 6 | UAE Executive Office for Control and Non-Proliferation (EOCN) | `uae_eocn` | PDF | Daily |
 | 7 | UAE Local Terrorist List | `uae_local_terrorist` | PDF | Daily |
-| 8 | OpenSanctions PEP dataset | `opensanctions_pep` | JSON | Weekly |
-| 9 | NewsAPI adverse-media feed | `newsapi` | REST/JSON | 30-min rolling |
-| 10 | GDELT adverse-media event stream | `gdelt` | REST/JSON | 30-min rolling |
+| 8 | OpenSanctions PEP dataset | `opensanctions_pep` | JSON | Daily |
+| 9 | AfricaPEP supplementary dataset (via OpenSanctions) | `africapep` | JSON | Daily |
+| 10 | INTERPOL Red Notices | `interpol_red` | REST/JSON | Daily |
+| 11 | INTERPOL Blue Notices | `interpol_blue` | REST/JSON | Daily |
+| 12 | INTERPOL Green Notices | `interpol_green` | REST/JSON | Daily |
+| 13 | NewsAPI adverse-media feed | `newsapi` | REST/JSON | 30-min rolling |
+| 14 | GDELT adverse-media event stream | `gdelt` | REST/JSON | 30-min rolling |
 
 Additional contextual inputs (Google CSE, RSS feeds) supplement adverse-media checks but do not constitute watchlist authority.
+
+INTERPOL Blue Notices (persons of interest) and Green Notices (criminal history / warning) are ingested alongside Red Notices (arrest warrants) and contribute to the screening corpus as risk indicators, not arrest-warrant equivalents. Hits against Blue or Green notices are classified as `POSSIBLE` tier and escalated for MLRO review.
 
 > **Charter P1 enforcement**: Sanctions assertions are permitted only when the relevant list appears in the current input. Training-data knowledge is explicitly prohibited as a current source (P8).
 
@@ -219,11 +227,11 @@ Performance is disaggregated across four axes to detect systematic disparities:
 
 | Role | Name | Signature | Date |
 |---|---|---|---|
-| **MLRO** | [MLRO Name] | [Signature on file] | 2026-05-06 |
-| **Head of Data Science** | [DS Lead Name] | [Signature on file] | 2026-05-06 |
+| **MLRO** | [MLRO Name] | [Signature on file] | 2026-06-04 |
+| **Head of Data Science** | [DS Lead Name] | [Signature on file] | 2026-06-04 |
 
 > This model card is reviewed and re-signed at every major version increment (x.y.0) and at minimum annually. The current signed copy is stored in the AI Governance folder within the secure document management system.
 
 ---
 
-*Document ID: MC-HS-001-v2.3.1 | Classification: Internal — Regulatory*
+*Document ID: MC-HS-001-v2.4.0 | Classification: Internal — Regulatory*

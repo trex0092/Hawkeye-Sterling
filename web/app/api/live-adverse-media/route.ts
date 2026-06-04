@@ -10,11 +10,18 @@ export const maxDuration = 45;
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // GET — convenience wrapper so dashboard panels can query by URL param
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "live-adverse-media_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const url = new URL(req.url);
   const subjectName = (url.searchParams.get("subject") ?? "").trim();
   if (!subjectName) {

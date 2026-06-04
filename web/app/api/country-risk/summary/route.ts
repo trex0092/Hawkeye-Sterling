@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 
 // ── Top 20 highest-risk countries (hardcoded, static data) ────────────────────
 // Scores derived from the composite scoring engine in the parent route.
@@ -56,6 +58,11 @@ const GLOBAL_DISTRIBUTION = {
 export async function GET(req: Request) {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "country_risk.summary_read", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
 
   return NextResponse.json(
     {

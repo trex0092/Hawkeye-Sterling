@@ -8,6 +8,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import { promptRegistry } from "@/lib/server/prompt-registry";
 
 export const runtime = "nodejs";
@@ -17,6 +19,11 @@ export const maxDuration = 10;
 export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "ai-governance.prompts_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   if (gate.keyId !== "portal_admin") {
     return NextResponse.json(
       { ok: false, error: "Forbidden — prompt registry requires admin access." },

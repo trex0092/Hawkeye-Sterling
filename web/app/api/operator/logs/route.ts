@@ -7,6 +7,8 @@
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
+import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { tenantIdFromGate } from "@/lib/server/tenant";
 import type { ConsequenceLevel } from "@/lib/mcp/tool-manifest";
 
 export const runtime = "nodejs";
@@ -46,6 +48,11 @@ async function getStore() {
 async function handleGet(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
+
+  void writeAuditChainEntry(
+    { event: "operator.logs_accessed", actor: gate.keyId },
+    tenantIdFromGate(gate),
+  ).catch(() => undefined);
   const url = new URL(req.url);
   const exportCsv = url.searchParams.get("export") === "csv";
   const limit = Math.min(500, parseInt(url.searchParams.get("limit") ?? "200", 10));
