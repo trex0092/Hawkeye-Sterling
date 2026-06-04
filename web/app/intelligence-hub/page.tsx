@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { HubContextProvider } from "@/components/intelligence-hub/HubContext";
@@ -101,41 +101,6 @@ const ApiDocsSection = dynamic(
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
 
-// ── Tab strip ────────────────────────────────────────────────────────────────
-
-function TabStrip({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (_t: TabId) => void }) {
-  return (
-    <div
-      className="flex flex-wrap gap-1 mb-6 pb-1"
-      role="tablist"
-      aria-label="Intelligence Hub sections"
-    >
-      {TAB_IDS.map((id) => {
-        const cfg = TAB_CONFIG[id];
-        const isActive = id === activeTab;
-        return (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={isActive}
-            type="button"
-            onClick={() => onTabChange(id)}
-            title={cfg.hint}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-12 font-semibold transition-colors whitespace-nowrap shrink-0 border ${
-              isActive
-                ? "bg-brand text-white border-brand"
-                : "text-ink-1 border-hair-2 bg-bg-panel hover:bg-bg-1 hover:text-ink-0"
-            }`}
-          >
-            <span>{cfg.icon}</span>
-            <span>{cfg.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // ── Active section renderer ──────────────────────────────────────────────────
 
 // Renders a standalone tool's own page inside the hub via ?embed=1, so the
@@ -215,16 +180,9 @@ class SectionErrorBoundary extends Component<{ children: ReactNode }, EBState> {
 
 function HubInner() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const rawTab = searchParams?.get("tab") ?? null;
   const activeTab: TabId = isValidTab(rawTab) ? rawTab : "workbench";
   const embedded = searchParams?.get("embed") === "1";
-
-  const handleTabChange = (tab: TabId) => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
-    params.set("tab", tab);
-    router.replace(`/intelligence-hub?${params.toString()}`, { scroll: false });
-  };
 
   if (embedded) {
     return (
@@ -238,8 +196,6 @@ function HubInner() {
 
   return (
     <ModuleLayout asanaModule="intelligence-hub" asanaLabel="Intelligence Hub">
-      <TabStrip activeTab={activeTab} onTabChange={handleTabChange} />
-
       <div role="tabpanel" aria-label={TAB_CONFIG[activeTab].label}>
         <SectionErrorBoundary>
           <ActiveSection tab={activeTab} />
