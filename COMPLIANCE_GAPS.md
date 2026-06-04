@@ -67,11 +67,7 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 **Description:** `.env.example` ships `FIU_PENDING_ENTITY_0N` placeholders. If deployed as-is, every STR/SAR submitted via `/api/goaml-xml` would carry an invalid reporting entity ID, causing the UAE FIU to reject the filing. FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Resolution (2026-06-04, operator decision):** The 6 active reporting entities and their FIU-assigned Rentity IDs (`HS1`…`HS6`) are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set.
-
-**Remaining operator action (non-blocking):**
-  1. Confirm the inlined legal entity **names** match each entity's registered goAML name (they print on every filing).
-  2. Provide the 7th entity's Rentity ID if/when a 7th entity is registered (currently 6 active).
+**Resolution (2026-06-04, operator decision):** The 6 active reporting entities — registered names `HS1`…`HS6`, FIU-assigned Rentity IDs `001`…`006` (operator-confirmed) — are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
 
 ---
 
@@ -269,7 +265,7 @@ The implementation is **more conservative** than the regulatory minimum. This is
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
 | CG-2 | MLRO | 2026-06-04 | CLOSED — CO+MLRO POST authorisation approved; expiry/scope defaults confirmed |
 | CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
-| CG-4 | Operator | 2026-06-04 | CLOSED — HS1…HS6 inlined for 6 active entities (confirm legal names) |
+| CG-4 | Operator | 2026-06-04 | CLOSED — 6 entities (names HS1…HS6, Rentity IDs 001…006) inlined |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
