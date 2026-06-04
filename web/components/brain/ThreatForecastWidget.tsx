@@ -5,13 +5,35 @@ import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 type ThreatLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+// Mirrors ForecastResult from src/brain/temporal-forecast-engine.ts, returned
+// by /api/temporal-threat-forecast as { ok: true, ...result }.
+interface ThreatFactor {
+  kind: "sanctions_exposure" | "cahra_reactivation" | "pep_transition" | "dormant_account";
+  currentRisk: number;
+  forecastRisk: number;
+  peakDate: string;
+  decayLambda: number;
+  correlatedEvents: string[];
+}
+
+interface GeopoliticalTrigger {
+  country: string;
+  eventType: string;
+  riskLevel: number;
+  daysUntilEvent: number;
+  description: string;
+}
+
 interface ThreatForecastResponse {
-  threatLevel: ThreatLevel;
-  probability: number;
-  forecastHorizonDays: number;
-  triggerFactors: string[];
-  confidenceInterval: { low: number; high: number };
-  narrative: string;
+  ok?: boolean;
+  caseId: string;
+  forecastAt: string;
+  factors: ThreatFactor[];
+  overallThreatHorizonDays: number;
+  peakRiskDate: string;
+  confidenceInterval: { low: number; mean: number; high: number };
+  triggeringEvents: GeopoliticalTrigger[];
+  methodology: string;
 }
 
 export interface ThreatForecastWidgetProps {
@@ -27,23 +49,31 @@ const LEVEL_STYLES: Record<ThreatLevel, { badge: string; ring: string; label: st
   CRITICAL: { badge: "bg-red-900 text-red-300 border-red-600",            ring: "ring-red-500",     label: "CRITICAL" },
 };
 
-const TRIGGER_ICONS: Record<string, string> = {
-  default: "⚡",
-  sanction: "🚫",
-  transaction: "💸",
-  network: "🕸",
-  geographic: "🌍",
-  pep: "👤",
+const FACTOR_LABELS: Record<ThreatFactor["kind"], string> = {
+  sanctions_exposure: "Sanctions exposure",
+  cahra_reactivation: "CAHRA reactivation",
+  pep_transition: "PEP transition",
+  dormant_account: "Dormant account",
 };
 
-function getTriggerIcon(factor: string): string {
-  const lower = factor.toLowerCase();
-  if (lower.includes("sanction")) return TRIGGER_ICONS["sanction"] ?? "⚡";
-  if (lower.includes("transaction") || lower.includes("payment")) return TRIGGER_ICONS["transaction"] ?? "⚡";
-  if (lower.includes("network") || lower.includes("associate")) return TRIGGER_ICONS["network"] ?? "⚡";
-  if (lower.includes("geo") || lower.includes("country") || lower.includes("jurisdiction")) return TRIGGER_ICONS["geographic"] ?? "⚡";
-  if (lower.includes("pep") || lower.includes("political")) return TRIGGER_ICONS["pep"] ?? "⚡";
-  return TRIGGER_ICONS["default"] ?? "⚡";
+function levelFromRisk(risk: number): ThreatLevel {
+  if (risk >= 0.75) return "CRITICAL";
+  if (risk >= 0.5) return "HIGH";
+  if (risk >= 0.25) return "MEDIUM";
+  return "LOW";
+}
+
+const TRIGGER_ICONS: Record<string, string> = {
+  default: "⚡",
+  sanctions: "🚫",
+  conflict: "💥",
+  election: "🗳",
+  financial_crisis: "💸",
+  regulatory: "📜",
+};
+
+function getTriggerIcon(eventType: string): string {
+  return TRIGGER_ICONS[eventType] ?? TRIGGER_ICONS["default"] ?? "⚡";
 }
 
 export function ThreatForecastWidget({ caseId, subject, className = "" }: ThreatForecastWidgetProps) {
@@ -59,7 +89,7 @@ export function ThreatForecastWidget({ caseId, subject, className = "" }: Threat
     fetch("/api/temporal-threat-forecast", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caseId, subject }),
+      body: JSON.stringify({ caseId, subject: subject ? { name: subject } : undefined }),
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -99,10 +129,16 @@ export function ThreatForecastWidget({ caseId, subject, className = "" }: Threat
     );
   }
 
-  const styles = LEVEL_STYLES[data.threatLevel] ?? LEVEL_STYLES["LOW"];
-  const probPct = Math.round(data.probability * 100);
-  const ciLow = Math.round(data.confidenceInterval.low * 100);
-  const ciHigh = Math.round(data.confidenceInterval.high * 100);
+  const factors = Array.isArray(data.factors) ? data.factors : [];
+  const triggers = Array.isArray(data.triggeringEvents) ? data.triggeringEvents : [];
+  const ci = data.confidenceInterval ?? { low: 0, mean: 0, high: 0 };
+  const peakForecastRisk = factors.reduce((m, f) => Math.max(m, f.forecastRisk ?? 0), 0);
+  const threatLevel = levelFromRisk(Math.max(peakForecastRisk, ci.mean ?? 0));
+  const styles = LEVEL_STYLES[threatLevel];
+  const probPct = Math.round((ci.mean ?? 0) * 100);
+  const ciLow = Math.round((ci.low ?? 0) * 100);
+  const ciHigh = Math.round((ci.high ?? 0) * 100);
+  const horizonDays = data.overallThreatHorizonDays ?? 0;
 
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-900 p-4 ${className}`}>
@@ -120,33 +156,53 @@ export function ThreatForecastWidget({ caseId, subject, className = "" }: Threat
             <span className="text-slate-400">Probability:</span>
             <div className="flex-1 h-2 bg-slate-800 rounded overflow-hidden">
               <div
-                className={`h-full rounded ${data.threatLevel === "CRITICAL" ? "bg-red-500" : data.threatLevel === "HIGH" ? "bg-orange-500" : data.threatLevel === "MEDIUM" ? "bg-yellow-500" : "bg-emerald-500"}`}
+                className={`h-full rounded ${threatLevel === "CRITICAL" ? "bg-red-500" : threatLevel === "HIGH" ? "bg-orange-500" : threatLevel === "MEDIUM" ? "bg-yellow-500" : "bg-emerald-500"}`}
                 style={{ width: `${probPct}%` }}
               />
             </div>
             <span className="font-mono text-slate-200 w-8 text-right">{probPct}%</span>
           </div>
           <p className="text-slate-400">
-            Horizon: <span className="text-slate-200 font-mono">{data.forecastHorizonDays}d</span>
+            Horizon: <span className="text-slate-200 font-mono">{horizonDays}d</span>
           </p>
           <p className="text-slate-400">
             CI: <span className="text-slate-200 font-mono">{ciLow}%–{ciHigh}%</span>
+          </p>
+          <p className="text-slate-400">
+            Peak risk date: <span className="text-slate-200 font-mono">{data.peakRiskDate}</span>
           </p>
         </div>
       </div>
 
       <p className="text-xs text-slate-300 leading-relaxed mb-4 bg-slate-800 rounded p-3 border border-slate-700">
-        {data.narrative}
+        Across {factors.length} risk factor{factors.length === 1 ? "" : "s"}, peak materialisation is projected
+        for {data.peakRiskDate}. {data.methodology}
       </p>
 
-      {data.triggerFactors.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-slate-400 mb-2">Trigger factors</p>
+      {factors.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-medium text-slate-400 mb-2">Risk factors</p>
           <ul className="space-y-1">
-            {data.triggerFactors.map((factor, i) => (
+            {factors.map((f, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                <span>{FACTOR_LABELS[f.kind] ?? f.kind}</span>
+                <span className="font-mono text-slate-400">
+                  {Math.round((f.currentRisk ?? 0) * 100)}% → {Math.round((f.forecastRisk ?? 0) * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {triggers.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-slate-400 mb-2">Triggering events</p>
+          <ul className="space-y-1">
+            {triggers.map((t, i) => (
               <li key={i} className="flex items-center gap-2 text-xs text-slate-300">
-                <span className="shrink-0">{getTriggerIcon(factor)}</span>
-                <span>{factor}</span>
+                <span className="shrink-0">{getTriggerIcon(t.eventType)}</span>
+                <span>{t.description}</span>
               </li>
             ))}
           </ul>

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { type FamilyModule } from "@/components/layout/ModuleFamilyBar";
 import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
@@ -654,41 +653,13 @@ function JurisdictionIntelPanel() {
   );
 }
 
-// ── Intelligence modules — rendered inline when selected ──────────────────────
-// (KYC Tools moved to the global "More" mega-menu — see Header.tsx — so they
-// are not duplicated here.)
-
-const INTEL_MODULES: FamilyModule[] = [
-  { label: "Live Intel Feed", href: "/intel", icon: "🛰️" },
-  { label: "Brain Intel", href: "/intelligence-hub?tab=brain", icon: "🧠" },
-  { label: "Workbench", href: "/intelligence-hub?tab=workbench", icon: "🔧" },
-  { label: "Telemetry", href: "/intelligence-hub?tab=telemetry", icon: "📡" },
-  { label: "Red-Team", href: "/intelligence-hub?tab=red-team", icon: "🥷" },
-  { label: "Security", href: "/intelligence-hub?tab=security-audit", icon: "🛡️" },
-  { label: "Status", href: "/intelligence-hub?tab=status", icon: "💚" },
-  { label: "API Docs", href: "/intelligence-hub?tab=api-docs", icon: "📘" },
-  { label: "System Card", href: "/system-card", icon: "📋" },
-  { label: "Security Scan", href: "/security-scan", icon: "🛡️" },
-  { label: "Analyst Behavior", href: "/analyst-behavior", icon: "👁️" },
-  { label: "Board Dashboard", href: "/board-dashboard", icon: "🎯" },
-  { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-];
+// Intel tools previously surfaced via the inline "Live Intelligence Feed"
+// dropdown now live in the global "More" mega-menu's Intelligence section
+// (see Header.tsx). This page focuses on the three live feed panels below.
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntelPage() {
-  const [activeModule, setActiveModule] = useState<FamilyModule | null>(null);
-
-  const handleModuleSelect = (mod: FamilyModule) => {
-    // "Live Intel Feed" is this page — toggle off or show inline panels
-    if (mod.href === "/intel") {
-      setActiveModule(null);
-      return;
-    }
-    // Toggle: clicking the active module closes it
-    setActiveModule((prev) => (prev?.href === mod.href ? null : mod));
-  };
-
   return (
     <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence" hideDetailPanel>
       <ModuleHero
@@ -713,71 +684,6 @@ export default function IntelPage() {
           { value: "5m", label: "live refresh cadence" },
         ]}
       />
-
-      {/* Live Intelligence Feed — consolidated into a single dropdown.
-          Selecting a tool opens it in the inline preview panel below
-          (same behavior as the old tab row), pages/features untouched. */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap rounded-lg border border-hair-2 bg-bg-panel px-3 py-2">
-        <span className="font-mono text-11 uppercase tracking-wide-3 text-brand">
-          Live Intelligence Feed
-        </span>
-        <select
-          value={activeModule?.href ?? "/intel"}
-          onChange={(e) => {
-            const mod = INTEL_MODULES.find((m) => m.href === e.target.value);
-            if (mod) handleModuleSelect(mod);
-          }}
-          className="text-12 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand cursor-pointer"
-          aria-label="Live Intelligence Feed tools"
-        >
-          {INTEL_MODULES.map((m) => (
-            <option key={m.href} value={m.href}>
-              {m.icon ? `${m.icon} ` : ""}{m.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Inline module panel — appears below the bar without navigation */}
-      {activeModule && (
-        <div className="mb-6 border border-brand/30 rounded-xl overflow-hidden shadow-sm">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-brand/5 border-b border-brand/20">
-            <div className="flex items-center gap-2">
-              {activeModule.icon && <span className="text-15">{activeModule.icon}</span>}
-              <span className="text-12 font-semibold text-ink-0">{activeModule.label}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={activeModule.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-10 font-mono text-brand hover:underline"
-              >
-                open full page ↗
-              </a>
-              <button
-                type="button"
-                onClick={() => setActiveModule(null)}
-                className="text-14 text-ink-3 hover:text-ink-0 px-2 leading-none"
-                aria-label="Close panel"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          <iframe
-            key={activeModule.href}
-            // Append ?embed=1 so ModuleLayout strips the header, sidebar,
-            // regulatory ticker, and right-rail feed — otherwise the iframe
-            // renders the entire app chrome nested inside the panel.
-            src={`${activeModule.href}${activeModule.href.includes("?") ? "&" : "?"}embed=1`}
-            title={activeModule.label}
-            className="w-full border-0 bg-bg-0"
-            style={{ minHeight: 720, display: "block" }}
-            loading="lazy"
-          />
-        </div>
-      )}
 
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />

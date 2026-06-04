@@ -4,19 +4,33 @@ import { useEffect, useState, useCallback } from "react";
 
 type FatigueLevel = "optimal" | "moderate" | "elevated" | "critical";
 
+// Mirrors FatigueSignal / CognitiveFatigueProfile from
+// src/brain/cognitive-load-monitor.ts, returned by /api/cognitive-load as
+// { ok: true, ...profile }. Note: the API exposes a numeric fatigueScore (not a
+// categorical level), caseCount (not reviewedCount), and signal.detail (not
+// description) — we derive the level client-side below.
 interface FatigueSignal {
-  type: string;
+  kind: string;
   severity: string;
-  description: string;
+  detail: string;
 }
 
 interface CognitiveLoadResponse {
   actorId: string;
-  fatigueLevel: FatigueLevel;
   fatigueScore: number;
   signals: FatigueSignal[];
-  reviewedCount: number;
+  caseCount: number;
   windowHours: number;
+  recommendation?: string;
+}
+
+// Map the numeric fatigueScore (severity-weighted, see SEVERITY_WEIGHTS in the
+// monitor) onto the badge's categorical level.
+function levelFromScore(score: number): FatigueLevel {
+  if (score >= 40) return "critical";
+  if (score >= 20) return "elevated";
+  if (score >= 10) return "moderate";
+  return "optimal";
 }
 
 export interface CognitiveLoadBadgeProps {
@@ -34,17 +48,13 @@ const LEVEL_STYLES: Record<FatigueLevel, { dot: string; text: string; bar: strin
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-function isFatigueLevel(val: string): val is FatigueLevel {
-  return ["optimal", "moderate", "elevated", "critical"].includes(val);
-}
-
 export function CognitiveLoadBadge({ actorId, className = "", compact = false }: CognitiveLoadBadgeProps) {
   const [data, setData] = useState<CognitiveLoadResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
 
   const fetchData = useCallback(() => {
-    fetch(`/api/cognitive-load?actorId=${encodeURIComponent(actorId)}`)
+    fetch(`/api/cognitive-load?actor=${encodeURIComponent(actorId)}`)
       .then((res) => {
         if (res.status === 401 || res.status === 403) {
           setHidden(true);
@@ -81,7 +91,9 @@ export function CognitiveLoadBadge({ actorId, className = "", compact = false }:
 
   if (!data) return null;
 
-  const level = isFatigueLevel(data.fatigueLevel) ? data.fatigueLevel : "optimal";
+  const fatigueScore = data.fatigueScore ?? 0;
+  const signals = Array.isArray(data.signals) ? data.signals : [];
+  const level = levelFromScore(fatigueScore);
   const styles = LEVEL_STYLES[level];
 
   if (compact) {
@@ -106,28 +118,28 @@ export function CognitiveLoadBadge({ actorId, className = "", compact = false }:
       <div className="mb-3">
         <div className="flex justify-between text-xs text-slate-400 mb-1">
           <span>Fatigue score</span>
-          <span className="font-mono text-slate-200">{data.fatigueScore.toFixed(0)}/100</span>
+          <span className="font-mono text-slate-200">{fatigueScore.toFixed(0)}/100</span>
         </div>
         <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${styles.bar}`}
-            style={{ width: `${Math.min(data.fatigueScore, 100)}%` }}
+            style={{ width: `${Math.min(fatigueScore, 100)}%` }}
           />
         </div>
       </div>
 
       <p className="text-xs text-slate-400 mb-2">
-        {data.reviewedCount} cases reviewed in {data.windowHours}h window
+        {data.caseCount ?? 0} cases reviewed in {data.windowHours}h window
       </p>
 
-      {data.signals.length > 0 && (
+      {signals.length > 0 && (
         <ul className="space-y-1">
-          {data.signals.map((sig, i) => (
+          {signals.map((sig, i) => (
             <li key={i} className="text-xs text-slate-400 flex items-start gap-1.5">
               <span className="shrink-0 mt-0.5">
-                {sig.severity === "high" ? "🔴" : sig.severity === "medium" ? "🟡" : "🟢"}
+                {sig.severity === "critical" || sig.severity === "high" ? "🔴" : sig.severity === "medium" ? "🟡" : "🟢"}
               </span>
-              <span>{sig.description}</span>
+              <span>{sig.detail}</span>
             </li>
           ))}
         </ul>

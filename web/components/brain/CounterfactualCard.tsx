@@ -3,19 +3,28 @@
 import { useEffect, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
-interface FlipFactor {
-  factor: string;
-  currentValue: string;
-  targetValue: string;
-  scoreImpact: number;
-  feasibility: "easy" | "moderate" | "hard" | "immovable";
+// Mirrors the brain's CounterfactualExplanation shape returned by
+// /api/score-counterfactual (see src/brain/counterfactual-explainer.ts).
+interface CounterfactualItem {
+  driverId: string;
+  currentValue: number;
+  deltaRequired: number;
+  counterfactualValue: number;
+  description: string;
+  wouldFlipTo: "clear" | "flag" | "escalate";
+  plausibility: "high" | "medium" | "low";
+  regulatoryDefence: string;
 }
 
 interface CounterfactualResponse {
-  flips: FlipFactor[];
-  explanationText: string;
-  currentScore: number;
-  targetScore: number;
+  ok?: boolean;
+  originalVerdict: string;
+  originalScore: number;
+  escalationThreshold: number;
+  counterfactuals: CounterfactualItem[];
+  immovableFactors: string[];
+  regulatoryStatement: string;
+  methodology: string;
 }
 
 export interface CounterfactualCardProps {
@@ -26,12 +35,25 @@ export interface CounterfactualCardProps {
   className?: string;
 }
 
-const FEASIBILITY_STYLES: Record<FlipFactor["feasibility"], string> = {
-  easy: "bg-emerald-900 text-emerald-300 border-emerald-700",
-  moderate: "bg-yellow-900 text-yellow-300 border-yellow-700",
-  hard: "bg-orange-900 text-orange-300 border-orange-700",
-  immovable: "bg-slate-800 text-slate-400 border-slate-600",
+const PLAUSIBILITY_STYLES: Record<CounterfactualItem["plausibility"], string> = {
+  high: "bg-emerald-900 text-emerald-300 border-emerald-700",
+  medium: "bg-yellow-900 text-yellow-300 border-yellow-700",
+  low: "bg-orange-900 text-orange-300 border-orange-700",
 };
+
+const DRIVER_LABELS: Record<string, string> = {
+  pepPenalty: "PEP salience",
+  redlinesPenalty: "Redline conditions",
+  adverseMediaPenalty: "Adverse media severity",
+  jurisdictionPenalty: "Jurisdiction risk tier",
+  regimesPenalty: "Sanctions regime exposure",
+  quickScreen: "Sanctions-list proximity",
+  adverseKeywordPenalty: "Adverse keyword signal",
+};
+
+function driverLabel(driverId: string): string {
+  return DRIVER_LABELS[driverId] ?? driverId;
+}
 
 export function CounterfactualCard({
   caseId,
@@ -90,6 +112,11 @@ export function CounterfactualCard({
     );
   }
 
+  const counterfactuals = Array.isArray(data.counterfactuals) ? data.counterfactuals : [];
+  const immovableFactors = Array.isArray(data.immovableFactors) ? data.immovableFactors : [];
+  const originalScore = data.originalScore ?? 0;
+  const escalationThreshold = data.escalationThreshold ?? 0;
+
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-900 p-4 ${className}`}>
       <div className="mb-4">
@@ -98,48 +125,57 @@ export function CounterfactualCard({
           What would need to change for this decision to be different?
         </p>
         <div className="flex gap-4 mt-2 text-xs text-slate-500">
-          <span>Current score: <span className="text-slate-200 font-mono">{data.currentScore.toFixed(1)}</span></span>
-          <span>Target score: <span className="text-slate-200 font-mono">{data.targetScore.toFixed(1)}</span></span>
+          <span>Current score: <span className="text-slate-200 font-mono">{originalScore.toFixed(1)}</span></span>
+          <span>Escalation threshold: <span className="text-slate-200 font-mono">{escalationThreshold.toFixed(1)}</span></span>
         </div>
       </div>
 
       <div className="space-y-2">
-        {data.flips.map((flip) => (
+        {counterfactuals.map((cf) => (
           <div
-            key={flip.factor}
+            key={cf.driverId}
             className="flex items-start gap-3 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-xs"
           >
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
-                {flip.feasibility === "immovable" && <span title="Immovable factor">🔒</span>}
-                <span className="font-medium text-slate-200 truncate">{flip.factor}</span>
-              </div>
+              <span className="font-medium text-slate-200 truncate">{driverLabel(cf.driverId)}</span>
               <p className="text-slate-400 mt-0.5">
-                <span className="font-mono text-red-400">{flip.currentValue}</span>
+                <span className="font-mono text-red-400">{(cf.currentValue ?? 0).toFixed(1)}</span>
                 {" → "}
-                <span className="font-mono text-emerald-400">{flip.targetValue}</span>
+                <span className="font-mono text-emerald-400">{(cf.counterfactualValue ?? 0).toFixed(1)}</span>
+                {" "}(would flip to <span className="text-slate-300">{cf.wouldFlipTo}</span>)
               </p>
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">
               <span
-                className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${FEASIBILITY_STYLES[flip.feasibility]}`}
+                className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${PLAUSIBILITY_STYLES[cf.plausibility] ?? PLAUSIBILITY_STYLES.medium}`}
               >
-                {flip.feasibility}
+                {cf.plausibility}
               </span>
               <span className="text-slate-500 font-mono">
-                {flip.scoreImpact > 0 ? "+" : ""}{flip.scoreImpact.toFixed(1)}
+                −{(cf.deltaRequired ?? 0).toFixed(1)}
               </span>
             </div>
           </div>
         ))}
       </div>
 
-      {data.flips.length === 0 && (
+      {counterfactuals.length === 0 && (
         <p className="text-xs text-slate-500 py-2 text-center">No actionable counterfactual factors identified.</p>
       )}
 
+      {immovableFactors.length > 0 && (
+        <div className="mt-3 border-t border-slate-700 pt-3">
+          <p className="text-xs font-medium text-slate-300 mb-1">🔒 Immovable factors</p>
+          <ul className="space-y-1">
+            {immovableFactors.map((f, i) => (
+              <li key={i} className="text-xs text-slate-500 leading-relaxed">{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="mt-4 text-xs text-slate-400 border-t border-slate-700 pt-3 leading-relaxed">
-        {data.explanationText}
+        {data.regulatoryStatement}
       </p>
     </div>
   );

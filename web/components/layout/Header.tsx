@@ -83,6 +83,18 @@ const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: st
     title: "Intelligence",
     items: [
       { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Live regulatory & 7-language adverse-media feed · unified intelligence hub" },
+      { label: "🧠 Brain Intel", href: "/intelligence-hub?tab=brain", hint: "Brain faculty intelligence & reasoning-mode insight" },
+      { label: "🔧 Workbench", href: "/intelligence-hub?tab=workbench", hint: "Analyst cognitive workbench" },
+      { label: "📡 Telemetry", href: "/intelligence-hub?tab=telemetry", hint: "Live system telemetry & metrics" },
+      { label: "🥷 Red-Team", href: "/intelligence-hub?tab=red-team", hint: "Adversarial red-team probe console" },
+      { label: "🛡️ Security", href: "/intelligence-hub?tab=security-audit", hint: "Security audit dashboard" },
+      { label: "💚 Status", href: "/intelligence-hub?tab=status", hint: "Live service status & health" },
+      { label: "📘 API Docs", href: "/intelligence-hub?tab=api-docs", hint: "API reference documentation" },
+      { label: "📋 System Card", href: "/system-card", hint: "Model system card & governance disclosures" },
+      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Dependency & code security scan" },
+      { label: "👁️ Analyst Behavior", href: "/analyst-behavior", hint: "Analyst behavior monitoring" },
+      { label: "🎯 Board Dashboard", href: "/board-dashboard", hint: "Board-level compliance dashboard" },
+      { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "Key risk indicator dashboard" },
     ],
   },
 ];

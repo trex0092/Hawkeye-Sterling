@@ -821,7 +821,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         degraded: true,
         degradedReason: detail,
         audit: { runId: makeRunId(), generatedAt: new Date().toISOString(), engineVersion: BRAIN_ENGINE_VERSION, schemaVersion: REPORT_SCHEMA_VERSION, buildSha: BUILD_SHA.slice(0, 12), dataFreshness: DATA_FRESHNESS, moduleWeights: MODULE_WEIGHTS },
-        screen: { hits: [], topScore: 0, generatedAt: new Date().toISOString() },
+        screen: { hits: [], topScore: 0, severity: "clear", generatedAt: new Date().toISOString() },
         pep: null,
         adverseMedia: [],
         esg: null,
