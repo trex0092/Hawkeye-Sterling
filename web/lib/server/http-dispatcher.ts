@@ -66,24 +66,22 @@ const proxyConfig = readProxyEnv();
 // feeds (never the API-key vendor adapters, which would leak credentials to a
 // third party).
 //
-// ON BY DEFAULT. GOVERNANCE RATIONALE (operator-accepted):
-//   - These are PUBLIC news feeds. Querying public news for a name is NOT
-//     "tipping off" under FATF / Cabinet Decision 10/2019 — tipping-off requires
-//     disclosing the existence of a SAR/investigation to the subject or a third
-//     party. The subject never sees the query, and the relay has no knowledge of
-//     any filing. So the tipping-off control is not engaged here.
-//   - The screened name is personal data, but it ALREADY egresses directly to
-//     ~200 news feeds on every dossier; the relay only adds one intermediary hop
-//     on feeds that refused us (403/429/451/503). The operator has accepted this
-//     residual third-party-processor exposure.
-//   - Credentialed vendor adapters are NEVER relayed (see `allowRelay`), so no
-//     API key is ever exposed to a relay.
-// Operator controls:
+// OFF BY DEFAULT — opt-in. Two reasons it must NOT be default-on:
+//   1. RELIABILITY (the hard one): public relays are flaky, and a dropped/reset
+//      connection from one surfaces as an UNHANDLED socket error (read
+//      ECONNRESET at TCP.onStreamRead — no app frame to catch it) that crashes
+//      the whole serverless function. A default-on public chain therefore turned
+//      the news health probe / dossier from a clean "unavailable" into a 500
+//      crash in production. Opt-in keeps the FATF R.10 fail-safe intact.
+//   2. DATA HANDLING: the screened name transits a third-party relay. Querying
+//      public news is not "tipping off" (the subject never sees it), but the
+//      processor hop is still an operator decision.
+// Operators who want public-relay fallback opt in explicitly, and should prefer
+// a relay they control:
 //   - NEWS_FETCH_RELAY=<tmpl[,tmpl]> → use ONLY the operator's own relay(s)
-//   - NEWS_RELAY_DISABLED=1|true|on (or NEWS_RELAY_ENABLED=0|false|off) → direct
-//     egress only; refused feeds then surface as the true upstream status (the
-//     FATF R.10 fail-safe is preserved).
-// Each template must contain "{url}".
+//   - NEWS_RELAY_ENABLED=1|true|on   → use the built-in public chain below
+// Each template must contain "{url}". When off, refused feeds simply surface as
+// the true upstream status.
 //
 // NOTE: this public chain is for NEWS only. Sanctions/PEP LIST downloads are
 // deliberately NOT routed through public relays — a tampering relay could strip
@@ -100,14 +98,10 @@ const RELAY_TEMPLATES: string[] = (() => {
   // An operator-supplied relay is an explicit choice of destination → honour it.
   const custom = process.env["NEWS_FETCH_RELAY"]?.trim();
   if (custom) return custom.split(",").map((s) => s.trim()).filter(Boolean);
-  // Kill-switch: operators who require direct-only news egress can opt out.
-  // Honour both the explicit NEWS_RELAY_DISABLED and a legacy NEWS_RELAY_ENABLED=off.
-  const off = process.env["NEWS_RELAY_DISABLED"]?.trim().toLowerCase();
-  if (off === "1" || off === "true" || off === "on") return [];
-  const legacy = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
-  if (legacy === "0" || legacy === "false" || legacy === "off") return [];
-  // Default: the built-in public relay chain is ON (see governance note above).
-  return DEFAULT_RELAYS;
+  // The built-in public chain is opt-in only (see reliability note above).
+  const flag = process.env["NEWS_RELAY_ENABLED"]?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "on") return DEFAULT_RELAYS;
+  return [];
 })();
 
 // Upstream statuses that mean "this IP is refused / throttled" — the cases a
@@ -175,6 +169,19 @@ function targetUrl(input: string | URL | Request): string {
   return input.url;
 }
 
+// Release an unconsumed response body so undici can recycle the underlying
+// socket cleanly. A discarded keep-alive response whose body is never read can
+// later be reset by the peer, and that reset surfaces as an UNHANDLED 'error'
+// (read ECONNRESET) that crashes a serverless invocation. Cancelling the body
+// is best-effort — it throws if already consumed/aborted, which we ignore.
+export async function drainResponse(res: Response | null | undefined): Promise<void> {
+  try {
+    await res?.body?.cancel();
+  } catch {
+    /* already consumed, locked, or aborted — nothing to release */
+  }
+}
+
 // Drop-in replacement for `fetch` for all news/feed egress. Behaves exactly like
 // global fetch when no proxy is configured; otherwise routes the single request
 // through the proxy dispatcher. Caller-supplied headers/signal/etc. are passed
@@ -216,7 +223,13 @@ export async function newsFetch(
   for (const template of RELAY_TEMPLATES) {
     try {
       const relayed = await fetch(buildRelayUrl(template, target), relayInit);
-      if (relayed.ok) return relayed;
+      if (relayed.ok) {
+        // Discarding the refused direct response — release its socket so a later
+        // reset can't crash the function as an unhandled error.
+        await drainResponse(directRes);
+        return relayed;
+      }
+      await drainResponse(relayed); // non-2xx relay — release before next attempt
     } catch {
       // This relay failed — try the next one.
     }

@@ -19,7 +19,7 @@
 // probe exposes no regulated data — only upstream reachability booleans).
 
 import { NextResponse } from "next/server";
-import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS, drainResponse } from "@/lib/server/http-dispatcher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,7 +56,7 @@ async function probe(
       { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
       { allowRelay },
     );
-    return {
+    const result: SourceCheck = {
       name,
       url,
       status: res.ok ? "reachable" : "unreachable",
@@ -65,6 +65,10 @@ async function probe(
       detail: res.ok ? undefined : `HTTP ${res.status}`,
       via,
     };
+    // We only need the status — release the body so an unconsumed keep-alive
+    // socket can't later reset and crash the function as an unhandled error.
+    await drainResponse(res);
+    return result;
   } catch (err) {
     return {
       name,
