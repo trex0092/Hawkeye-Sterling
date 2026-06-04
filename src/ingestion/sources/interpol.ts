@@ -9,7 +9,7 @@
 // Override URL via FEED_INTERPOL (useful for staging / self-hosted mirror).
 
 import { type SourceAdapter, type NormalisedEntity, mkListing } from '../types.js';
-import { sha256Hex } from '../fetch-util.js';
+import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_INTERPOL']
   ?? 'https://ws-public.interpol.int/notices/v1/red?resultPerPage=200&page=1';
@@ -41,8 +41,9 @@ async function fetchPage(url: string): Promise<InterpolPage | null> {
   try {
     const res = await fetch(url, {
       signal: ctrl.signal,
-      headers: { 'Accept': 'application/json', 'User-Agent': 'Hawkeye-Sterling-AML/2.0' },
-    });
+      headers: { 'Accept': 'application/json', 'User-Agent': BROWSER_UA },
+      ...(ingestionDispatcher() ? { dispatcher: ingestionDispatcher() } : {}),
+    } as RequestInit);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json() as InterpolPage;
   } finally {
