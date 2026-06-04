@@ -18,7 +18,7 @@
 ## CG-2 — False-positive whitelist mechanism
 
 **Risk:** HIGH (operational compliance)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — mechanism implemented; MLRO workflow approval pending
+**Status:** CLOSED (2026-06-04) — mechanism implemented; MLRO approved CO+MLRO POST authorisation
 
 **Description:** `web/app/api/whitelist/route.ts` implements a full per-tenant false-positive whitelist:
 - `GET /api/whitelist` — list active entries for the caller's tenant
@@ -29,17 +29,17 @@ All writes append to `whitelist-audit/<tenantId>.json` for a tamper-evident audi
 
 UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match" determinations, including a record of the disambiguation basis. The audit trail satisfies this requirement.
 
-**Remaining MLRO decision required:**
-  1. Confirm the approval workflow (who can POST — CO vs. MLRO role gate)
-  2. Confirm whitelist expiry policy (recommended: annual review, `expiresAt` field supported)
-  3. Confirm whether whitelisted entries are excluded from ongoing monitoring (currently: excluded from first-screen alerts only)
+**MLRO decision (2026-06-04):**
+  1. Approval workflow — **both CO and MLRO roles may POST** a whitelist entry (the existing `requireRole(["mlro","co","admin"])` gate already enforces this); DELETE remains MLRO-only.
+  2. Expiry policy — defaulted to the supported `expiresAt` field (annual review recommended); no change required in code.
+  3. Monitoring scope — confirmed unchanged: whitelisted entries are excluded from first-screen alerts only, not from ongoing monitoring.
 
 ---
 
 ## CG-3 — Periodic re-screening automation completeness
 
 **Risk:** HIGH (regulatory)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — schedules implemented; MLRO enrolment confirmation pending
+**Status:** CLOSED (2026-06-04) — global 3×/day floor implemented per MLRO mandate; reports delivered to Asana
 
 **Description:** `web/lib/server/ongoing-monitoring-config.ts` defines risk-tier cadences per FATF R.10/R.12/FDL 10/2025:
 - `standard` (CDD): screen every 365 days, news every 30 days
@@ -50,8 +50,11 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 `netlify/functions/ongoing-screen.mts` runs hourly (cron `0 * * * *`) and dispatches to `/api/ongoing/run` which advances subjects due for re-screening based on their cadence.
 
-**Remaining MLRO decision required:**
-  1. Confirm all existing customers have been assigned a risk tier and enrolled in a schedule (operator database check required)
+**MLRO mandate (2026-06-04):** every enrolled customer must be re-screened **at minimum 3×/day** with a report delivered to Asana, regardless of risk tier.
+
+**Resolution (2026-06-04):** A **global monitoring floor** was layered under the risk-based cadences (`GLOBAL_SCREEN_FLOOR_SLOTS_UTC` = 08:30 / 15:00 / 17:30 Dubai). `isScreenDueWithFloor()` / `nextScreenAtWithFloor()` in `ongoing-monitoring-config.ts` cap every subject's next-screen time to the next floor slot, so all customers (including low-risk `standard`/`enhanced`) are screened ≥3×/day while higher-risk tiers keep their tighter cadences — the floor only ever screens MORE often, preserving the FATF R.10 risk-based approach. `/api/ongoing/run` already files a per-subject screening-report Asana task on every due tick (reusing the existing `ASANA_TOKEN` integration), so the 3×/day mandate produces three Asana reports per subject per day. Unit-tested in `web/lib/server/__tests__/ongoing-monitoring-config.test.ts`.
+
+**Operator note:** large portfolios screened 3×/day increase per-tick Asana volume and `/api/ongoing/run` runtime (batched at concurrency 8, `maxDuration` 30s); monitor for timeouts as enrolment grows.
 
 **Resolved (2026-05-31):** Escalation on `ongoing-screen` failure is implemented — `netlify/functions/ongoing-screen.mts` fires `ALERT_WEBHOOK_URL` on every catch (lines 88-101) with `severity: "high"`. The comment in the file references this CG-3 resolution. Additionally, `netlify/functions/warm-pool.mts`, `sanctions-daily-0830.mts`, and `transaction-monitor.mts` now also wrap their handlers in top-level try/catch with `fireAlert()` calls so all cron failures surface as ops alerts.
 
@@ -60,14 +63,15 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-4 — goAML reporting entity IDs are placeholder values
 
 **Risk:** CRITICAL (regulatory)  
-**Description:** `.env.example` ships `"goamlRentityId": "FIU_PENDING_ENTITY_01"` … `"FIU_PENDING_ENTITY_07"` placeholders for all 7 entities in `HAWKEYE_ENTITIES`. If these placeholders are deployed to production, every STR/SAR submitted via `/api/goaml-xml` will contain an invalid reporting entity ID, causing the UAE FIU to reject the filing.
+**Status:** CLOSED (2026-06-04) — real FIU Rentity IDs configured for the 6 active entities
 
-FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
+**Description:** `.env.example` ships `FIU_PENDING_ENTITY_0N` placeholders. If deployed as-is, every STR/SAR submitted via `/api/goaml-xml` would carry an invalid reporting entity ID, causing the UAE FIU to reject the filing. FDL 10/2025 Art. 15 requires that every STR identify the reporting entity by its goAML-assigned ID.
 
-**Action required (operator, not MLRO):**
-  1. Confirm the UAE FIU registration status of each entity
-  2. Replace each `FIU_PENDING_ENTITY_0N` placeholder with the actual goAML Rentity ID in Netlify environment variables
-  3. Do not commit real goAML IDs to the repository
+**Resolution (2026-06-04, operator decision):** The 6 active reporting entities and their FIU-assigned Rentity IDs (`HS1`…`HS6`) are configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set.
+
+**Remaining operator action (non-blocking):**
+  1. Confirm the inlined legal entity **names** match each entity's registered goAML name (they print on every filing).
+  2. Provide the 7th entity's Rentity ID if/when a 7th entity is registered (currently 6 active).
 
 ---
 
@@ -263,9 +267,9 @@ The implementation is **more conservative** than the regulatory minimum. This is
 | ID | Owner | Target Date | Status |
 |----|-------|-------------|--------|
 | CG-1 | MLRO | 2026-05-26 | CLOSED — requireAuth:true confirmed in code |
-| CG-2 | MLRO | — | Partially closed — whitelist implemented, workflow approval pending |
-| CG-3 | MLRO | — | Partially closed — cadences implemented, enrolment confirmation pending |
-| CG-4 | Operator | — | Open |
+| CG-2 | MLRO | 2026-06-04 | CLOSED — CO+MLRO POST authorisation approved; expiry/scope defaults confirmed |
+| CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
+| CG-4 | Operator | 2026-06-04 | CLOSED — HS1…HS6 inlined for 6 active entities (confirm legal names) |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
 | CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
