@@ -3,7 +3,6 @@
 import { type ReactNode, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "./Header";
-import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
   SidebarMLROCard,
@@ -54,9 +53,13 @@ export function ModuleLayout<K extends string = string>({
   filtersTitle: _filtersTitle = "Queue filters",
   sidebarExtra,
   sidebarActions,
-  detailPanel,
-  hideDetailPanel = false,
-  engineLabel = "Compliance engine",
+  // The right-hand "Compliance engine" activity feed was removed from every
+  // module page — it now lives only in the Screening section. These props are
+  // kept in the public interface so the 30+ call sites don't break, but are no
+  // longer consumed here.
+  detailPanel: _detailPanel,
+  hideDetailPanel: _hideDetailPanel = false,
+  engineLabel: _engineLabel = "Compliance engine",
   asanaModule,
   asanaLabel,
 }: ModuleLayoutProps<K>) {
@@ -72,7 +75,7 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
-      <div className={`grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line ${hideDetailPanel ? "" : "lg:grid-cols-[220px_1fr_360px]"}`}>
+      <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <SidebarShell>
             <SidebarSection title="Regulatory">
@@ -103,29 +106,7 @@ export function ModuleLayout<K extends string = string>({
 
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           {children}
-          {asanaModule && (
-            <footer className="mt-10 pt-5 border-t border-hair-2 flex flex-wrap items-center gap-3 print:hidden">
-              <span className="font-mono text-10 uppercase tracking-wide-4 text-ink-3">Report</span>
-              <AsanaReportButton
-                payload={{
-                  module: asanaModule,
-                  label: asanaLabel ?? asanaModule,
-                  summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
-                }}
-              />
-            </footer>
-          )}
         </main>
-
-        {!hideDetailPanel && (
-          <div className="hidden lg:block">
-            {detailPanel ?? (
-              <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
-                <ActivityFeed label={engineLabel} />
-              </aside>
-            )}
-          </div>
-        )}
       </div>
     </>
   );

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { KriDashboardResponse, KriResult, KriStatus } from "@/app/api/kri-dashboard/route";
 
@@ -165,13 +164,6 @@ export default function KriDashboardPage() {
             feed is connected.
           </>
         }
-      />
-      <ModuleFamilyBar
-        suiteName="Leadership Tools"
-        modules={[
-          { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-          { label: "Board Dashboard", href: "/board-dashboard", icon: "🏛️" },
-        ]}
       />
 
       <div className="flex items-center justify-between flex-wrap gap-2 mb-2">

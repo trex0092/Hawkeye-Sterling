@@ -68,15 +68,26 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let results: TriageResult[];
   try {
-    const client = getAnthropicClient(apiKey, 4_500);
+    const client = getAnthropicClient(apiKey, 30_000);
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 700,
+      // 20 items × ~5 short fields needs well over 700 tokens; an undersized
+      // budget truncated the array (no closing "]") and the parse failed,
+      // surfacing as "degraded mode" with items unscored.
+      max_tokens: 4_096,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(compact) }],
+      messages: [
+        { role: "user", content: JSON.stringify(compact) },
+        // Prefill the assistant turn with "[" so the model is forced to
+        // continue a JSON array rather than wrapping it in prose. We prepend
+        // the "[" back below before parsing.
+        { role: "assistant", content: "[" },
+      ],
     });
-    const text = (response.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "[]";
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    const continuation = (response.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "";
+    const raw = `[${continuation}`;
+    // Extract the outermost array (tolerates any trailing prose after "]").
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       return NextResponse.json(
         { ok: true, results: [], status: "degraded", reason: "AI triage response could not be parsed — feed items displayed unscored." },

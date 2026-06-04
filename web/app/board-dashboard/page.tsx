@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { BoardDashboardResponse, BoardPanel, BoardMetric } from "@/app/api/board-dashboard/route";
 
@@ -149,13 +148,6 @@ export default function BoardDashboardPage() {
             Full case data available to MLRO via the Screening and Cases modules.
           </>
         }
-      />
-      <ModuleFamilyBar
-        suiteName="Leadership Tools"
-        modules={[
-          { label: "KRI Dashboard", href: "/kri-dashboard", icon: "📊" },
-          { label: "Board Dashboard", href: "/board-dashboard", icon: "🏛️" },
-        ]}
       />
 
       <div className="flex justify-end mb-2">

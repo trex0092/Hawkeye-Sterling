@@ -2,34 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { RowActions } from "@/components/shared/RowActions";
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 
-// Intel — two panels:
-//   1. UAE Regulatory Live Feed — polls MoET, UAE IEC, CBUAE, Google News
-//      for the latest circulars, enforcement actions, and guidance.
-//   2. Adverse-media watchlist — sweeps Google News for named subjects.
-
-// ── Adverse-media types ──────────────────────────────────────────────────────
-interface Article {
-  url: string;
-  title: string;
-  snippet?: string;
-  pubDate?: string;
-  source?: string;
-  severity: "clear" | "low" | "medium" | "high" | "critical";
-}
-
-const STORAGE_KEY = "hawkeye.intel.watchlist";
-const DEFAULTS = ["Nicolas Maduro", "Donald Trump", "Vladimir Putin"];
-
-const SEV_TONE: Record<Article["severity"], string> = {
-  clear: "bg-green-dim text-green",
-  low: "bg-blue-dim text-blue",
-  medium: "bg-amber-dim text-amber",
-  high: "bg-orange-dim text-orange",
-  critical: "bg-red text-white",
-};
+// Intel — UAE Regulatory Live Feed: polls MoET, UAE IEC, CBUAE, UAEFIU, FATF
+// and Google News for the latest circulars, enforcement actions, and guidance,
+// then AI-triages each item by relevance, impact, and required action.
 
 const TONE_BADGE: Record<RegulatoryItem["tone"], string> = {
   green:  "bg-green-dim text-green",
@@ -342,320 +319,10 @@ function RegulatoryFeedPanel() {
   );
 }
 
-// ── Adverse-media Watchlist Panel ────────────────────────────────────────────
-
-function AdverseMediaPanel() {
-  const [watch, setWatch] = useState<string[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [draft, setDraft] = useState("");
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      setWatch(raw ? JSON.parse(raw) : DEFAULTS);
-    } catch (err) {
-      console.warn("[hawkeye] intel watchlist parse failed — using defaults:", err);
-      setWatch(DEFAULTS);
-    }
-  }, []);
-
-  const save = (list: string[]) => {
-    setWatch(list);
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
-    catch (err) { console.error("[hawkeye] intel watchlist persist failed — entries will be lost:", err); }
-  };
-
-  const add = () => {
-    if (!draft.trim()) return;
-    save([...watch, draft.trim()]);
-    setDraft("");
-  };
-
-  const remove = (name: string) => save(watch.filter((n) => n !== name));
-
-  const sweep = async () => {
-    setLoading(true);
-    try {
-      // Sweep all watched subjects in parallel; one failure never blocks the rest.
-      const settled = await Promise.allSettled(
-        watch.map(async (name) => {
-          const res = await fetch(`/api/news-search?q=${encodeURIComponent(name)}`, { headers: { accept: "application/json" } });
-          if (!res.ok) return [] as Article[];
-          const body = await res.json().catch(() => ({})) as { articles?: Article[] };
-          return body.articles ?? [];
-        }),
-      );
-      const all: Article[] = [];
-      for (const r of settled) if (r.status === "fulfilled") all.push(...r.value);
-      all.sort((a, b) => {
-        const order = ["clear", "low", "medium", "high", "critical"];
-        return order.indexOf(b.severity) - order.indexOf(a.severity);
-      });
-      if (!mountedRef.current) return;
-      setArticles(all.slice(0, 60));
-    } finally { if (mountedRef.current) setLoading(false); }
-  };
-
-  return (
-    <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
-      <div className="px-4 py-3 border-b border-hair-2 bg-bg-1">
-        <span className="text-12 font-semibold text-ink-0">Adverse-media watchlist</span>
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-10.5 uppercase tracking-wide-4 font-semibold text-ink-2">Subjects</span>
-          <button
-            type="button"
-            onClick={() => void sweep()}
-            disabled={loading || watch.length === 0}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
-          >
-            {loading ? "Sweeping…" : "Run sweep"}
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {watch.map((n) => (
-            <span key={n} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-11 bg-brand-dim text-brand-deep">
-              {n}
-              <RowActions label={n} onDelete={() => remove(n)} confirmDelete={false} />
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") add(); }}
-            placeholder="+ Add subject to watch"
-            className="flex-1 text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0"
-          />
-          <button type="button" onClick={add} className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1">Add</button>
-        </div>
-      </div>
-
-      {articles.length > 0 && (
-        <div className="border-t border-hair-2 divide-y divide-hair max-h-[400px] overflow-y-auto">
-          {articles.map((a) => (
-            <a
-              key={a.url}
-              href={a.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-start gap-3 px-4 py-3 no-underline hover:bg-bg-1 transition-colors"
-            >
-              <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-9 font-semibold uppercase shrink-0 mt-0.5 ${SEV_TONE[a.severity]}`}>
-                {a.severity}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-12 font-medium text-ink-0 mb-0.5 leading-snug">{a.title}</div>
-                {a.snippet && <div className="text-10.5 text-ink-2 leading-snug mb-1">{a.snippet}</div>}
-                <div className="flex gap-3 font-mono text-9 text-ink-3">
-                  {a.source && <span>{a.source}</span>}
-                  {a.pubDate && <span>{a.pubDate}</span>}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
-
-      {articles.length === 0 && (
-        <div className="px-4 pb-4 text-11 text-ink-3 text-center">
-          Run a sweep to pull adverse-media articles matching your watchlist.
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Jurisdiction Intelligence Panel ─────────────────────────────────────────
-
-interface SanctionsExposure { uae: string; un: string; ofac: string; eu: string; uk: string; }
-interface JurisdictionIntel {
-  ok: boolean;
-  countryName: string;
-  overallRisk: "critical" | "high" | "medium" | "low";
-  fatfStatus: string;
-  fatfDetail: string;
-  sanctionsExposure: SanctionsExposure;
-  cahraStatus: string;
-  keyRisks: string[];
-  dpmsSpecificRisks: string[];
-  typologiesPrevalent: string[];
-  cddImplications: string;
-  transactionRisks: string;
-  recentDevelopments: string;
-  uaeRegulatoryRequirement: string;
-  riskMitigation: string[];
-}
-
-const JRISK_TONE: Record<string, string> = {
-  critical: "bg-red text-white",
-  high: "bg-red-dim text-red",
-  medium: "bg-amber-dim text-amber",
-  low: "bg-green-dim text-green",
-};
-
-function JurisdictionIntelPanel() {
-  const [country, setCountry] = useState("");
-  const [context, setContext] = useState("");
-  const [intel, setIntel] = useState<JurisdictionIntel | null>(null);
-  const [loading, setLoading] = useState(false);
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
-  const run = async () => {
-    if (!country.trim()) return;
-    setLoading(true);
-    setIntel(null);
-    try {
-      const res = await fetch("/api/jurisdiction-intel", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ country: country.trim(), context: context.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => ({})) as JurisdictionIntel;
-        if (!mountedRef.current) return;
-        if (data.ok) setIntel(data);
-      } else {
-        console.error(`[hawkeye] jurisdiction-intel HTTP ${res.status}`);
-      }
-    } catch (err) {
-      console.error("[hawkeye] jurisdiction-intel threw:", err);
-    } finally { if (mountedRef.current) setLoading(false); }
-  };
-
-  const inputCls = "text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand";
-
-  return (
-    <div className="border border-hair-2 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-bg-panel border-b border-hair">
-        <span className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Jurisdiction Intelligence</span>
-        <span className="text-10 text-ink-3 font-mono">Beats World-Check 3-tier ratings</span>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Country</label>
-            <input value={country} onChange={(e) => setCountry(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void run()}
-              placeholder="e.g. Iran, Sudan, DRC, Russia…" className={`${inputCls} w-full`} />
-          </div>
-          <div className="flex-1">
-            <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Context (optional)</label>
-            <input value={context} onChange={(e) => setContext(e.target.value)}
-              placeholder="e.g. gold supplier, client nationality, wire destination"
-              className={`${inputCls} w-full`} />
-          </div>
-          <button type="button" onClick={() => void run()} disabled={loading || !country.trim()}
-            className="text-11 font-semibold px-4 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 whitespace-nowrap">
-            {loading ? "Analyzing…" : "Analyze Jurisdiction"}
-          </button>
-        </div>
-
-        {intel && (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-15 font-bold text-ink-0">{intel.countryName}</span>
-              <span className={`font-mono text-10 font-bold px-2 py-px rounded uppercase ${JRISK_TONE[intel.overallRisk] ?? ""}`}>
-                {intel.overallRisk} risk
-              </span>
-              <span className={`font-mono text-10 px-2 py-px rounded ${
-                intel.fatfStatus.toLowerCase().includes("grey") ? "bg-amber-dim text-amber" :
-                intel.fatfStatus.toLowerCase().includes("black") ? "bg-red text-white" : "bg-green-dim text-green"
-              }`}>{intel.fatfStatus}</span>
-            </div>
-
-            {intel.fatfDetail && <p className="text-12 text-ink-1">{intel.fatfDetail}</p>}
-
-            {intel.cahraStatus && (
-              <div className="flex items-center gap-2">
-                <span className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold">CAHRA:</span>
-                <span className={`text-11 font-mono ${intel.cahraStatus.toLowerCase().includes("conflict") || intel.cahraStatus.toLowerCase().includes("high") ? "text-red" : "text-ink-1"}`}>{intel.cahraStatus}</span>
-              </div>
-            )}
-
-            <div>
-              <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-2">Sanctions Exposure</div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                {(["uae", "un", "ofac", "eu", "uk"] as const).map((regime) => (
-                  <div key={regime} className="bg-bg-1 rounded p-2">
-                    <div className="text-9 font-mono font-bold uppercase text-ink-3 mb-1">{regime.toUpperCase()}</div>
-                    <div className="text-10 text-ink-1">{intel.sanctionsExposure[regime] || "—"}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {intel.keyRisks.length > 0 && (
-              <div>
-                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Key Risks</div>
-                <div className="flex flex-wrap gap-1">
-                  {intel.keyRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-red-dim text-red">{r}</span>)}
-                </div>
-              </div>
-            )}
-
-            {intel.dpmsSpecificRisks.length > 0 && (
-              <div>
-                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">DPMS-Specific Risks</div>
-                <div className="flex flex-wrap gap-1">
-                  {intel.dpmsSpecificRisks.map((r, i) => <span key={i} className="text-10 px-2 py-px rounded bg-amber-dim text-amber">{r}</span>)}
-                </div>
-              </div>
-            )}
-
-            {intel.typologiesPrevalent.length > 0 && (
-              <div>
-                <div className="text-10 uppercase tracking-wide-3 text-ink-3 font-semibold mb-1">Prevalent Typologies</div>
-                <div className="flex flex-wrap gap-1">
-                  {intel.typologiesPrevalent.map((t, i) => <span key={i} className="text-10 px-2 py-px rounded bg-bg-2 text-ink-1">{t}</span>)}
-                </div>
-              </div>
-            )}
-
-            {intel.cddImplications && (
-              <div className="border border-brand/30 rounded-lg p-3 bg-bg-panel">
-                <div className="text-10 uppercase tracking-wide-3 text-brand-deep font-semibold mb-1">CDD Implications</div>
-                <p className="text-12 text-ink-0">{intel.cddImplications}</p>
-              </div>
-            )}
-
-            {intel.uaeRegulatoryRequirement && (
-              <div className="border-l-2 border-red/50 pl-3">
-                <div className="text-10 uppercase tracking-wide-3 text-red font-semibold mb-1">UAE Regulatory Requirement</div>
-                <p className="text-12 font-semibold text-ink-0">{intel.uaeRegulatoryRequirement}</p>
-              </div>
-            )}
-
-            {intel.transactionRisks && <p className="text-11 text-ink-2 italic">{intel.transactionRisks}</p>}
-
-            {intel.recentDevelopments && (
-              <p className="text-11 text-ink-1 border-t border-hair pt-2"><strong>Recent developments:</strong> {intel.recentDevelopments}</p>
-            )}
-
-            {intel.riskMitigation.length > 0 && (
-              <div>
-                <div className="text-10 uppercase tracking-wide-3 text-green font-semibold mb-1">Risk Mitigation</div>
-                <ul className="text-11 text-ink-1 space-y-0.5 list-disc list-inside">
-                  {intel.riskMitigation.map((m, i) => <li key={i}>{m}</li>)}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // Intel tools previously surfaced via the inline "Live Intelligence Feed"
 // dropdown now live in the global "More" mega-menu's Intelligence section
-// (see Header.tsx). This page focuses on the three live feed panels below.
+// (see Header.tsx). This page focuses on the UAE Regulatory Live Feed below.
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -668,27 +335,22 @@ export default function IntelPage() {
         titleEm="feed."
         intro={
           <>
-            <strong>Three live panels.</strong> The UAE Regulatory Feed polls
-            MoET, UAE IEC, CBUAE, UAEFIU, FATF and Google News every 5 minutes
-            for circulars, enforcement actions and guidance updates.
-            The adverse-media panel sweeps any named subject across 7 language
-            feeds and surfaces HIGH / CRITICAL items first.
-            Jurisdiction Intelligence delivers deep FATF/sanctions/CAHRA briefs
-            that go far beyond World-Check 3-tier country ratings.
+            <strong>UAE Regulatory Live Feed.</strong> Polls MoET, UAE IEC,
+            CBUAE, UAEFIU, FATF and Google News every 5 minutes for circulars,
+            enforcement actions and guidance updates — each item AI-triaged by
+            relevance, impact and required action.
           </>
         }
         kpis={[
           { value: "4", label: "live government sources" },
           { value: "30", label: "live news queries" },
-          { value: "7", label: "adverse-media languages" },
           { value: "5m", label: "live refresh cadence" },
+          { value: "AI", label: "relevance triage" },
         ]}
       />
 
       <div className="mt-6 space-y-6">
         <RegulatoryFeedPanel />
-        <AdverseMediaPanel />
-        <JurisdictionIntelPanel />
       </div>
     </ModuleLayout>
   );

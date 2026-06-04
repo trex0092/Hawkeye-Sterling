@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode, Suspense } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
-import { HubContextProvider, useHubContext } from "@/components/intelligence-hub/HubContext";
+import { HubContextProvider } from "@/components/intelligence-hub/HubContext";
 
 // ── Tab configuration ────────────────────────────────────────────────────────
 
@@ -114,83 +114,6 @@ const ApiDocsSection = dynamic(
   () => import("@/components/intelligence-hub/ApiDocsSection").then((m) => ({ default: m.ApiDocsSection })),
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
-
-// ── Unified health bar ───────────────────────────────────────────────────────
-
-function UnifiedHealthBar() {
-  const { signals } = useHubContext();
-
-  const pills: Array<{ label: string; value: string | undefined; tone: "green" | "amber" | "red" | "default" }> = [
-    {
-      label: "FP rate",
-      value: signals.fpRate !== undefined ? `${signals.fpRate.toFixed(1)}%` : undefined,
-      tone:
-        signals.fpRate === undefined ? "default"
-        : signals.fpRate > 3 ? "red"
-        : signals.fpRate > 1 ? "amber"
-        : "green",
-    },
-    {
-      label: "Red-team pass",
-      value: signals.redTeamPassPct !== undefined ? `${signals.redTeamPassPct}%` : undefined,
-      tone:
-        signals.redTeamPassPct === undefined ? "default"
-        : signals.redTeamPassPct < 95 ? "amber"
-        : "green",
-    },
-    {
-      label: "Endpoint",
-      value: signals.endpointHealth,
-      tone:
-        signals.endpointHealth === "operational" ? "green"
-        : signals.endpointHealth === "degraded" ? "amber"
-        : signals.endpointHealth === "down" ? "red"
-        : "default",
-    },
-    {
-      label: "Brain drift",
-      value: signals.driftedModes !== undefined ? String(signals.driftedModes) : undefined,
-      tone:
-        signals.driftedModes === undefined ? "default"
-        : signals.driftedModes > 0 ? "amber"
-        : "green",
-    },
-  ];
-
-  const toneClasses: Record<string, string> = {
-    green:   "bg-green-dim text-green border-green/30",
-    amber:   "bg-amber-dim text-amber border-amber/30",
-    red:     "bg-red-dim text-red border-red/30",
-    default: "bg-bg-1 text-ink-3 border-hair-2",
-  };
-
-  const hasAnySignal = pills.some((p) => p.value !== undefined);
-
-  return (
-    <div className="flex items-center gap-3 mb-6 flex-wrap">
-      <span className="text-10 font-semibold uppercase tracking-wide-4 text-ink-3 font-mono">
-        Cross-section health
-      </span>
-      {pills.map((p) => (
-        <span
-          key={p.label}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-11 font-mono font-semibold ${toneClasses[p.tone]}`}
-          title={`${p.label}: ${p.value ?? "visit tab to load"}`}
-        >
-          <span className="text-10 font-normal opacity-70">{p.label}</span>
-          {p.value !== undefined ? (
-            <span>{p.value}</span>
-          ) : (
-            <span className="opacity-40 text-10">—</span>
-          )}
-        </span>
-      ))}
-      {!hasAnySignal && (
-        <span className="text-11 text-ink-3 font-mono">Visit tabs to populate signals</span>
-      )}
-    </div>
-  );
-}
 
 // ── Tab strip ────────────────────────────────────────────────────────────────
 
@@ -331,21 +254,6 @@ function HubInner() {
 
   return (
     <ModuleLayout asanaModule="intelligence-hub" asanaLabel="Intelligence Hub">
-      {/* Page header */}
-      <div className="mb-6 border-b-2 border-ink-0 pb-4">
-        <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-          Intelligence Hub · 14 modules unified
-        </div>
-        <h1 className="font-display text-36 text-ink-0 m-0 leading-tight">
-          Intelligence <em className="italic text-brand">command centre.</em>
-        </h1>
-        <p className="text-13 text-ink-2 mt-1 max-w-[70ch]">
-          Analytics · Brain XAI · AI Workbench · Mode Telemetry · Red-Team · Security · Governance · Status · API Docs — unified in one view with cross-section health monitoring.
-        </p>
-      </div>
-
-      <UnifiedHealthBar />
       <TabStrip activeTab={activeTab} onTabChange={handleTabChange} />
 
       <div role="tabpanel" aria-label={TAB_CONFIG[activeTab].label}>
