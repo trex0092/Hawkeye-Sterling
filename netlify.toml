@@ -64,6 +64,10 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[[edge_functions]]
+  function = "fetch-relay"
+  path = "/.netlify/edge-functions/fetch-relay"
+
 [functions]
   # Look for the scheduled Netlify Function(s) at the repo root.
   directory = "netlify/functions"
