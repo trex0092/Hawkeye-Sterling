@@ -800,7 +800,7 @@ const INVESTIGATIVE_FEEDS: Array<{
   name: string;
 }> = [
   // Tier-1 investigative journalism
-  { url: "https://www.occrp.org/feed/",                                    lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "OCCRP" },
+  { url: "https://www.occrp.org/en/investigations?format=feed&type=rss",   lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "OCCRP" },
   { url: "https://www.icij.org/feed/",                                     lang: "en", sourceTier: "tier1", sourceCategory: "investigative", name: "ICIJ" },
   // Financial crime / regulatory bodies
   { url: "https://www.fatf-gafi.org/media/fatf/rss/fatf-en.rss",          lang: "en", sourceTier: "tier1", sourceCategory: "regulatory",    name: "FATF" },
