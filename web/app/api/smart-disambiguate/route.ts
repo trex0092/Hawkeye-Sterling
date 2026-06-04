@@ -72,17 +72,32 @@ interface DisambiguationResult {
   processingTime: string;
 }
 
-const SYSTEM_PROMPT = `You are a UAE AML screening specialist with expertise in name disambiguation for high-frequency names across South Asian, Arab, and African populations. Your goal is to help analysts efficiently resolve large volumes of screening hits for common names by applying systematic multi-factor analysis under FDL 10/2025 and FATF R.10.
+const SYSTEM_PROMPT = `You are a UAE AML screening specialist with deep expertise in name disambiguation for high-frequency names across South Asian, Arab, African, East Asian and CJK populations. Your goal is to resolve large volumes of screening hits with maximum precision under FDL 10/2025 and FATF R.10.
 
-For each hit, use ALL available differentiating factors:
-- DOB comparison (even partial — year only is enough to clear many hits)
-- Gender (male hit vs female client = confirmed false positive)
-- Nationality/country (different nationality = strong differentiator for non-nationals)
-- Role/profession (retired politician vs active gold trader)
-- Geographic period (hit from 1990s, client born 1998)
-- Match score (if < 70 and other factors differ = likely false positive)
+DISAMBIGUATION RULES (apply in strict priority order):
+1. GENDER MISMATCH → confirmed_false_positive (male hit for female client or vice versa)
+2. ID NUMBER EXACT MATCH → likely_true_match (national ID / passport is definitive)
+3. DOB YEAR CONFLICT (>5 years apart) → likely_false_positive
+4. DOB YEAR + NATIONALITY CONFLICT → confirmed_false_positive (two strong contradictions)
+5. DOB YEAR MATCH + NATIONALITY MATCH → likely_true_match
+6. DIFFERENT NATIONALITY (non-MENA vs MENA, different continents) → likely_false_positive unless other corroboration
+7. MATCH SCORE < 60 + any differentiator → confirmed_false_positive
+8. PROFESSION MISMATCH (e.g. hit is military commander, client is retail trader) → likely_false_positive
+9. TEMPORAL IMPOSSIBILITY (hit sanctioned 1995, client born 1990) → confirmed_false_positive
+10. If no strong differentiator → possible_match, request DOB or passport
 
-Output ONLY valid JSON, no markdown, no explanation:
+ARABIC / TRANSLITERATION HANDLING:
+- Mohamed = Mohammed = Muhammad = Muhammed (treat as identical)
+- Abdullah = Abdallah = Abdulla = Abd Allah
+- Hussein = Hussain = Husain = Hossein
+- Omar = Umar; Yousef = Yusuf; Khalid = Khaled = Khaalid
+- Do NOT treat name similarity alone as a match — it is expected for common names
+
+CJK NAMES:
+- Wang Wei, Li Wei, Zhang Wei — extremely common; require DOB or ID to differentiate
+- Romanisation variants: Wang = Wong = Huang (Cantonese); Li = Lee = Lei
+
+OUTPUT: ONLY valid JSON, no markdown, no explanation:
 {
   "overallAssessment": "string",
   "clientRiskProfile": "string",
@@ -91,17 +106,17 @@ Output ONLY valid JSON, no markdown, no explanation:
     {
       "hitId": "string",
       "verdict": "confirmed_false_positive" | "likely_false_positive" | "possible_match" | "likely_true_match",
-      "confidenceScore": number,
-      "primaryDifferentiator": "string",
+      "confidenceScore": number (0-100),
+      "primaryDifferentiator": "string — the single most decisive factor",
       "canAutoDispose": boolean,
-      "dispositionText": "string",
+      "dispositionText": "string — one sentence for audit record",
       "requiresClientClarification": boolean,
-      "clarificationQuestion": "string"
+      "clarificationQuestion": "string — specific question if clarification needed"
     }
   ],
-  "clarificationQuestions": ["string array"],
-  "bulkDispositionText": "string",
-  "escalationItems": ["string array of hitIds"],
+  "clarificationQuestions": ["string array — deduplicated across all hits"],
+  "bulkDispositionText": "string — summary for MLRO",
+  "escalationItems": ["hitId array — hits requiring immediate MLRO attention"],
   "regulatoryNote": "string",
   "processingTime": "string"
 }`;
@@ -135,9 +150,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  if (hits.length > 20) {
+  if (hits.length > 30) {
     return NextResponse.json(
-      { ok: false, error: `hits array exceeds maximum batch size of 20 (received ${hits.length}). Split into multiple requests.` },
+      { ok: false, error: `hits array exceeds maximum batch size of 30 (received ${hits.length}). Split into multiple requests.` },
       { status: 400, headers: gate.headers }
     );
   }
@@ -196,12 +211,24 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   try {
     const modelChoice = pickModel({ kind: "classification", costSensitivity: "balanced", latencyBudgetMs: 6_000 });
-    const client = getAnthropicClient(apiKey, 6_000);
-    const response = await client.messages.create({
+    const anthropic = getAnthropicClient(apiKey, 6_000);
+
+    // Adaptive token budget: prioritise high-score hits so that if the LLM
+    // is verbose, low-risk hits are truncated before high-risk ones.
+    // Sort hits descending by matchScore before sending to the model.
+    const prioritisedHits = [...sanitizedHits].sort(
+      (a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0),
+    );
+    const adaptiveUserMessage = `Disambiguate these screening hits for client: ${JSON.stringify(sanitizedClient)}. Hits to assess (sorted highest-risk first): ${JSON.stringify(prioritisedHits)}`;
+
+    // Token budget: 60 tok/hit (more room for richer verdicts), min 512, max 2048
+    const maxTokens = Math.min(2048, Math.max(512, 256 + hits.length * 60));
+
+    const response = await anthropic.messages.create({
       model: modelChoice.model,
-      max_tokens: Math.min(1024, 200 + hits.length * 40), // ~40 tok/hit; scale with batch size (max 20 hits → 1000 tok)
+      max_tokens: maxTokens,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+      messages: [{ role: "user", content: adaptiveUserMessage }],
     });
 
     const raw = (response.content[0]?.type === "text" ? response.content[0].text : "{}").trim();
@@ -249,9 +276,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[smart-disambiguate] LLM call failed:", msg);
     void writeAuditChainEntry(
-      { event: "screening.disambiguation_error", actor: gate.keyId, clientName: sanitizedClient?.name ?? client.name, reason: msg },
+      { event: "screening.disambiguation_error", actor: gate.keyId, clientName: sanitizedClient?.name ?? (body.client ?? body.profile)?.name ?? "unknown", reason: msg },
       tenantIdFromGate(gate),
     ).catch(() => undefined);
     return NextResponse.json({ ok: true, ...buildTemplate(), degraded: true, degradedReason: "LLM service temporarily unavailable", latencyMs: Date.now() - t0 }, { headers: gate.headers });
   }
 }
+

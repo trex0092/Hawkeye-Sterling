@@ -5,35 +5,14 @@
 // on confirming and contradicting factors between a screened subject
 // and a sanctions-list candidate.
 //
-// Design goals
-// ─────────────
-// 1. Multi-factor scoring: each corroborating/contradicting signal
-//    contributes an explicit point value so the score is transparent
-//    and auditable (not a black-box ML weight).
-//
-// 2. Confidence tiers map the score to four actionable outcomes:
-//    85-100 → "confirmed"  — definitive match, recommend freeze
-//    65-84  → "probable"   — MLRO manual review, 48h hold
-//    45-64  → "possible"   — enhanced due diligence
-//    0-44   → "unlikely"   — log and clear, no adverse action
-//
-// 3. Automatic false-positive detection: when name similarity is high
-//    (baseScore > 0.85) but the contradiction score exceeds 50 (e.g.
-//    different DOB + different nationality), the hit is auto-classified
-//    as "likely_false_positive" with a structured explanation.
-//
-// 4. Watchlist program context: for OFAC hits the SDN programme names
-//    (e.g. "UKRAINE", "IRAN", "DPRK") are surfaced so analysts can
-//    assess relevance to their customer's risk profile.
-//
-// 5. Look-alike name clustering: hits whose candidateNames are more
-//    than 95% similar to each other are grouped into a cluster so the
-//    analyst sees "N variants of the same listing" rather than N
-//    confusing duplicates.
-//
-// Name similarity (for clustering and FP detection) uses a compact
-// trigram Jaccard implementation that matches the brain matching.ts
-// approach — no external dependency.
+// Scoring factors (v2 — weaponised edition):
+//   Nationality:   +25 (exact) / +10 (regional) / -30 (conflict)
+//   DOB:           +30 (year+month) / +15 (year only) / -25 (conflict)
+//   Aliases:       +20 per match, capped at +40
+//   Gender:        +10 (match) / -15 (mismatch — clears obvious FPs)
+//   Entity type:   +20 (match)
+//   ID number:     +40 (exact national ID / passport match)
+//   Address:       +10 (country extracted from address matches nationality)
 
 import type { QuickScreenHit, QuickScreenSubject, QuickScreenCandidate } from './quick-screen.js';
 
@@ -48,10 +27,14 @@ export interface DisambiguationFactors {
   dobPoints: number;
   /** +20 per matching alias (capped at +40 total) */
   aliasPoints: number;
-  /** +10 (gender match) */
+  /** +10 (gender match) / -15 (mismatch) */
   genderPoints: number;
   /** +20 (same entity type: individual vs company) */
   entityTypePoints: number;
+  /** +40 (exact national ID / passport number match) */
+  idNumberPoints: number;
+  /** +10 (address country matches subject nationality) */
+  addressPoints: number;
   /** Sum of all negative-signal points (always ≤ 0) */
   contradictionPoints: number;
 }
@@ -106,8 +89,6 @@ export interface ClusterSummary {
 
 // ── Regional nationality groupings for partial (+10) matching ──────────────────
 
-// ISO 3166-1 alpha-2 / country-name groups. If subject and candidate share
-// a region but not the exact nationality, we award +10 rather than +25.
 const NATIONALITY_REGIONS: string[][] = [
   // Gulf Cooperation Council
   ['AE', 'SA', 'KW', 'QA', 'BH', 'OM',
@@ -131,6 +112,44 @@ const NATIONALITY_REGIONS: string[][] = [
    'NIGERIA', 'GHANA', 'KENYA', 'SOUTH AFRICA', 'ETHIOPIA', 'TANZANIA', 'UGANDA'],
 ];
 
+// ISO alpha-2 → country name map for address extraction.
+const ISO2_TO_NAME: Record<string, string> = {
+  AE: 'UAE', SA: 'SAUDI ARABIA', KW: 'KUWAIT', QA: 'QATAR', BH: 'BAHRAIN', OM: 'OMAN',
+  EG: 'EGYPT', IQ: 'IRAQ', IR: 'IRAN', SY: 'SYRIA', LB: 'LEBANON', JO: 'JORDAN',
+  YE: 'YEMEN', LY: 'LIBYA', TN: 'TUNISIA', DZ: 'ALGERIA', MA: 'MOROCCO', SD: 'SUDAN',
+  RU: 'RUSSIA', UA: 'UKRAINE', BY: 'BELARUS', KZ: 'KAZAKHSTAN', UZ: 'UZBEKISTAN',
+  IN: 'INDIA', PK: 'PAKISTAN', BD: 'BANGLADESH', LK: 'SRI LANKA', AF: 'AFGHANISTAN',
+  CN: 'CHINA', KP: 'NORTH KOREA', KR: 'SOUTH KOREA', JP: 'JAPAN', TW: 'TAIWAN',
+  NG: 'NIGERIA', GH: 'GHANA', KE: 'KENYA', ZA: 'SOUTH AFRICA', ET: 'ETHIOPIA',
+  GB: 'UNITED KINGDOM', US: 'UNITED STATES', DE: 'GERMANY', FR: 'FRANCE',
+  TR: 'TURKEY', PH: 'PHILIPPINES', VN: 'VIETNAM', ID: 'INDONESIA', MY: 'MALAYSIA',
+};
+
+// Arabic/transliteration equivalence pairs — normalise before comparison.
+const ARABIC_EQUIV: [RegExp, string][] = [
+  [/\bmoha?mme?d\b/gi, 'mohammad'],
+  [/\bmuh?ammad\b/gi, 'mohammad'],
+  [/\bmoha?med\b/gi, 'mohammad'],
+  [/\bal[- ]?hussein\b/gi, 'alhusain'],
+  [/\bal[- ]?husayn\b/gi, 'alhusain'],
+  [/\bal[- ]?husain\b/gi, 'alhusain'],
+  [/\bali\b/gi, 'ali'],
+  [/\babd[- ]?ullah\b/gi, 'abdallah'],
+  [/\bab?dallah\b/gi, 'abdallah'],
+  [/\babdullahi?\b/gi, 'abdallah'],
+  [/\byusuf\b/gi, 'yusuf'],
+  [/\byousef\b/gi, 'yusuf'],
+  [/\byousu?f\b/gi, 'yusuf'],
+  [/\bomar\b/gi, 'umar'],
+  [/\bumar\b/gi, 'umar'],
+  [/\bohamed\b/gi, 'mohammad'],
+  [/ae/gi, 'a'],  // Müller → muller
+  [/oe/gi, 'o'],
+  [/ue/gi, 'u'],
+  [/kh/gi, 'h'], // khalid → halid (phonetic merge)
+  [/gh/gi, 'g'],
+];
+
 function nationalityRegionOf(nat: string): string | null {
   const n = nat.toUpperCase().trim();
   for (let i = 0; i < NATIONALITY_REGIONS.length; i++) {
@@ -148,14 +167,18 @@ function nationalityPoints(
   const s = subjectNat.toUpperCase().trim();
   const c = candidateNat.toUpperCase().trim();
   if (!s || !c) return 0;
-  if (s === c) return 25;          // exact match
-  const sr = nationalityRegionOf(s);
-  const cr = nationalityRegionOf(c);
-  if (sr !== null && cr !== null && sr === cr) return 10; // same region
-  return -30;                      // confirmed different nationality
+  if (s === c) return 25;
+  // Also check ISO2 → name expansion
+  const sExpanded = ISO2_TO_NAME[s] ?? s;
+  const cExpanded = ISO2_TO_NAME[c] ?? c;
+  if (sExpanded === cExpanded) return 25;
+  const sr = nationalityRegionOf(s) ?? nationalityRegionOf(sExpanded);
+  const cr = nationalityRegionOf(c) ?? nationalityRegionOf(cExpanded);
+  if (sr !== null && cr !== null && sr === cr) return 10;
+  return -30;
 }
 
-// ── DOB points (distinct from the existing matchDOB boost in quick-screen.ts) ──
+// ── DOB parsing — expanded format support ─────────────────────────────────────
 
 interface DobParts { y: number; m?: number; d?: number }
 
@@ -163,18 +186,55 @@ function parseDob(raw: string): DobParts | null {
   const s = raw.trim();
   const isVY = (y: number) => y >= 1900 && y <= 2100;
   const isVM = (m: number) => m >= 1 && m <= 12;
+
+  // ISO 8601 / YYYY-MM-DD or YYYY/MM/DD
   const iso = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
   if (iso) {
     const y = +(iso[1] ?? '0'), m = +(iso[2] ?? '0'), d = +(iso[3] ?? '0');
     return (isVY(y) && isVM(m)) ? { y, m, d } : null;
   }
-  const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  // DMY: DD/MM/YYYY or DD.MM.YYYY or DD-MM-YYYY
+  const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
   if (dmy) {
     const y = +(dmy[3] ?? '0'), m = +(dmy[2] ?? '0'), d = +(dmy[1] ?? '0');
     return (isVY(y) && isVM(m)) ? { y, m, d } : null;
   }
+  // MDY: MM/DD/YYYY (US format)
+  const mdy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    const y = +(mdy[3] ?? '0'), m = +(mdy[1] ?? '0'), d = +(mdy[2] ?? '0');
+    // Disambiguate MDY vs DMY: if day candidate > 12, it must be DMY; else try MDY
+    if (isVY(y) && isVM(m)) return { y, m, d };
+  }
+  // Named month: "15 Jan 1975", "January 15 1975", "15-Jan-1975"
+  const MONTHS: Record<string, number> = {
+    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+    jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+    january: 1, february: 2, march: 3, april: 4, june: 6,
+    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+  };
+  const named = s.match(/^(\d{1,2})[- ]([A-Za-z]+)[- ](\d{4})$/) ||
+                s.match(/^([A-Za-z]+)[- ](\d{1,2})[,\s]+(\d{4})$/);
+  if (named) {
+    // Try both orders
+    let d: number, mStr: string, y: number;
+    if (/^\d/.test(named[1] ?? '')) {
+      d = +(named[1] ?? '0'); mStr = (named[2] ?? '').toLowerCase(); y = +(named[3] ?? '0');
+    } else {
+      mStr = (named[1] ?? '').toLowerCase(); d = +(named[2] ?? '0'); y = +(named[3] ?? '0');
+    }
+    const m = MONTHS[mStr];
+    if (m && isVY(y) && isVM(m)) return { y, m, d };
+  }
+  // Year only
   const yo = s.match(/^(\d{4})$/);
   if (yo) { const y = +(yo[1] ?? '0'); return isVY(y) ? { y } : null; }
+  // Partial "YYYY-MM"
+  const ym = s.match(/^(\d{4})[-/](\d{1,2})$/);
+  if (ym) {
+    const y = +(ym[1] ?? '0'), m = +(ym[2] ?? '0');
+    return (isVY(y) && isVM(m)) ? { y, m } : null;
+  }
   return null;
 }
 
@@ -183,16 +243,72 @@ function dobPoints(subjectDob: string | undefined, candidateDob: string | undefi
   const sp = parseDob(subjectDob);
   const cp = parseDob(candidateDob);
   if (!sp || !cp) return 0;
-  if (sp.y !== cp.y) return -25;                   // year conflict — strong negative
-  if (sp.m !== undefined && cp.m !== undefined && sp.m === cp.m) return 30; // year+month
-  return 15;                                        // year only
+  if (sp.y !== cp.y) return -25;
+  // Partial DOB conflict: year matches but month differs — mild negative
+  if (sp.m !== undefined && cp.m !== undefined && sp.m !== cp.m) return -5;
+  if (sp.m !== undefined && cp.m !== undefined && sp.m === cp.m) return 30;
+  return 15; // year only
+}
+
+// ── ID number exact match ─────────────────────────────────────────────────────
+
+function normaliseId(id: string): string {
+  return id.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function idNumberPoints(
+  subjectId: string | undefined,
+  candidateId: string | undefined,
+): number {
+  if (!subjectId || !candidateId) return 0;
+  const s = normaliseId(subjectId);
+  const c = normaliseId(candidateId);
+  if (!s || !c || s.length < 4) return 0; // too short to be meaningful
+  return s === c ? 40 : 0;
+}
+
+// ── Address → country extraction ──────────────────────────────────────────────
+
+function extractCountryFromAddress(address: string | undefined): string | null {
+  if (!address) return null;
+  const upper = address.toUpperCase();
+  // Check ISO alpha-2 codes appearing as whole words
+  for (const [iso, name] of Object.entries(ISO2_TO_NAME)) {
+    const re = new RegExp(`\\b${iso}\\b`);
+    if (re.test(upper)) return name;
+    if (upper.includes(name)) return name;
+  }
+  // Check full country names from regions
+  for (const group of NATIONALITY_REGIONS) {
+    for (const entry of group) {
+      if (entry.length > 2 && upper.includes(entry)) return entry;
+    }
+  }
+  return null;
+}
+
+function addressPoints(
+  subjectAddress: string | undefined,
+  subjectNationality: string | undefined,
+): number {
+  if (!subjectAddress || !subjectNationality) return 0;
+  const addrCountry = extractCountryFromAddress(subjectAddress);
+  if (!addrCountry) return 0;
+  const nat = subjectNationality.toUpperCase().trim();
+  const natExpanded = ISO2_TO_NAME[nat] ?? nat;
+  return (addrCountry === nat || addrCountry === natExpanded) ? 10 : 0;
 }
 
 // ── Alias match points ────────────────────────────────────────────────────────
 
-function normalise(s: string): string {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+export function normalise(s: string): string {
+  let n = s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Apply Arabic/transliteration equivalences
+  for (const [pattern, replacement] of ARABIC_EQUIV) {
+    n = n.replace(pattern, replacement);
+  }
+  return n;
 }
 
 function aliasPoints(
@@ -205,10 +321,10 @@ function aliasPoints(
   for (const ca of candidateAliases) {
     if (sSet.has(normalise(ca))) matched++;
   }
-  return Math.min(40, matched * 20); // +20 per match, cap at +40
+  return Math.min(40, matched * 20);
 }
 
-// ── Gender points ─────────────────────────────────────────────────────────────
+// ── Gender points — mismatch now penalises (-15) to clear obvious FPs ─────────
 
 type Gender = 'M' | 'F' | 'male' | 'female' | 'm' | 'f';
 
@@ -227,7 +343,8 @@ function genderPoints(
   const s = canonGender(subjectGender);
   const c = canonGender(candidateGender);
   if (!s || !c) return 0;
-  return s === c ? 10 : 0; // gender match = +10; mismatch = 0 (not a hard negative for individuals)
+  // Mismatch = -15 (was 0). A male hit for a female client is an obvious FP.
+  return s === c ? 10 : -15;
 }
 
 // ── Entity type points ────────────────────────────────────────────────────────
@@ -240,9 +357,6 @@ function entityTypePoints(
   const s = subjectType.toLowerCase();
   const c = candidateType.toLowerCase();
   if (s === c) return 20;
-  // individual vs organisation is a significant mismatch — already penalised in
-  // quick-screen.ts via entityTypeMismatch 0.6× factor, so we don't double-count
-  // the penalty here. We just don't award the +20 bonus.
   return 0;
 }
 
@@ -262,27 +376,22 @@ export function trigramSimilarity(a: string, b: string): number {
   if (sa.size === 0 || sb.size === 0) return 0;
   let intersect = 0;
   for (const g of sa) { if (sb.has(g)) intersect++; }
-  return intersect / (sa.size + sb.size - intersect); // Jaccard
+  return intersect / (sa.size + sb.size - intersect);
 }
 
-// ── Contradiction score (for FP auto-detection) ───────────────────────────────
+// ── Contradiction score ───────────────────────────────────────────────────────
 
-/**
- * Contradiction score 0-100: how strongly do the identifiers contradict
- * a match between subject and candidate? Only uses negative signals.
- *
- * Used alongside baseScore to trigger the "likely_false_positive" flag:
- * contradictionScore > 50 AND baseScore > 0.85 → likely false positive.
- */
 export function contradictionScore(
-  subject: Pick<QuickScreenSubject, 'dateOfBirth' | 'nationality'>,
-  candidate: Pick<QuickScreenCandidate, 'dateOfBirth' | 'nationality'>,
+  subject: Pick<QuickScreenSubject, 'dateOfBirth' | 'nationality'> & { gender?: string; idNumber?: string },
+  candidate: Pick<QuickScreenCandidate, 'dateOfBirth' | 'nationality'> & { gender?: string; idNumber?: string },
 ): number {
   let score = 0;
   const dp = dobPoints(subject.dateOfBirth, candidate.dateOfBirth);
-  if (dp < 0) score += -dp;       // -25 → 25 contradiction points
+  if (dp < 0) score += Math.abs(dp);
   const np = nationalityPoints(subject.nationality, candidate.nationality);
-  if (np === -30) score += 30;    // different nationality → 30 contradiction points
+  if (np === -30) score += 30;
+  const gp = genderPoints(subject.gender, candidate.gender);
+  if (gp < 0) score += Math.abs(gp); // -15 gender mismatch contributes
   return Math.min(100, score);
 }
 
@@ -298,31 +407,11 @@ export function confidenceTierFromScore(score: number): ConfidenceTier {
 // ── Main disambiguation scorer ────────────────────────────────────────────────
 
 export interface DisambiguationInput {
-  subject: QuickScreenSubject & { gender?: string };
-  candidate: QuickScreenCandidate & { gender?: string };
-  /** Raw name-matching base score (0..1) from the matching engine. */
+  subject: QuickScreenSubject & { gender?: string; idNumber?: string; address?: string };
+  candidate: QuickScreenCandidate & { gender?: string; idNumber?: string };
   baseScore: number;
 }
 
-/**
- * Compute the multi-factor disambiguation score (0-100) for a single
- * subject → candidate pair.
- *
- * The score is additive:
- *   Nationality:  +25 (exact) / +10 (regional) / -30 (different)
- *   DOB:          +30 (year+month) / +15 (year only) / -25 (conflict)
- *   Aliases:      +20 per match, capped at +40
- *   Gender:       +10 (match)
- *   Entity type:  +20 (match)
- *
- * The raw sum is offset from a neutral baseline of 50 and clamped to
- * [0, 100]. The baseline means "no corroborating or contradicting
- * evidence" → score 50 → "possible" tier.
- *
- * Name similarity is already captured in the base score from the
- * matching engine. We intentionally do not re-score names here to
- * avoid double-counting.
- */
 export function computeDisambiguation(input: DisambiguationInput): DisambiguationResult {
   const { subject, candidate, baseScore } = input;
 
@@ -331,9 +420,10 @@ export function computeDisambiguation(input: DisambiguationInput): Disambiguatio
   const alias = aliasPoints(subject.aliases, candidate.aliases);
   const gender = genderPoints(subject.gender, candidate.gender);
   const entityType = entityTypePoints(subject.entityType, candidate.entityType);
+  const idNum = idNumberPoints(subject.idNumber, candidate.idNumber);
+  const addr = addressPoints(subject.address, subject.nationality);
 
-  // Contradiction points = sum of all negative contributions (kept ≤ 0)
-  const contradictionTotal = Math.min(0, nat) + Math.min(0, dob);
+  const contradictionTotal = Math.min(0, nat) + Math.min(0, dob) + Math.min(0, gender);
 
   const factors: DisambiguationFactors = {
     nationalityPoints: nat,
@@ -341,22 +431,17 @@ export function computeDisambiguation(input: DisambiguationInput): Disambiguatio
     aliasPoints: alias,
     genderPoints: gender,
     entityTypePoints: entityType,
+    idNumberPoints: idNum,
+    addressPoints: addr,
     contradictionPoints: contradictionTotal,
   };
 
-  // Raw additive score centred on 50 (neutral).
-  const raw = 50 + nat + dob + alias + gender + entityType;
+  const raw = 50 + nat + dob + alias + gender + entityType + idNum + addr;
   const disambiguationScore = Math.min(100, Math.max(0, raw));
   const confidenceTier = confidenceTierFromScore(disambiguationScore);
 
-  // SDN programme context — surface OFAC programme codes so analysts can
-  // assess whether the hit's programme (e.g. "IRAN", "DPRK") is relevant
-  // to their customer. Only populated for hits that carry programs[].
   const sdnPrograms = candidate.programs?.length ? candidate.programs : undefined;
 
-  // Automatic false-positive detection:
-  // High name similarity (> 0.85 base score) PLUS strong contradiction
-  // (DOB conflict + nationality conflict together > 50) → likely FP.
   const cs = contradictionScore(subject, candidate);
   const result: DisambiguationResult = {
     disambiguationScore,
@@ -373,6 +458,9 @@ export function computeDisambiguation(input: DisambiguationInput): Disambiguatio
     if (nat === -30) parts.push(
       `nationality conflict (subject: ${subject.nationality ?? 'unknown'}, candidate: ${candidate.nationality ?? 'unknown'})`,
     );
+    if (gender === -15) parts.push(
+      `gender conflict (subject: ${subject.gender ?? 'unknown'}, candidate: ${candidate.gender ?? 'unknown'})`,
+    );
     result.falsePositiveFlag = 'likely_false_positive';
     result.falsePositiveExplanation =
       `High name similarity (${Math.round(baseScore * 100)}%) with contradicting identifiers: ` +
@@ -385,23 +473,9 @@ export function computeDisambiguation(input: DisambiguationInput): Disambiguatio
 
 // ── Look-alike name clustering ────────────────────────────────────────────────
 
-/**
- * Cluster hits whose candidateNames are >= 95% similar (trigram Jaccard)
- * so the analyst sees "N variants of the same listing" rather than N
- * confusing near-duplicate rows.
- *
- * Algorithm: greedy single-linkage clustering.
- *   1. Process hits in score order (highest first — already sorted by caller).
- *   2. For each hit, check if its name is >= CLUSTER_THRESHOLD similar to any
- *      existing cluster centroid (the first hit in the cluster).
- *   3. If similar, add to that cluster; otherwise start a new cluster.
- *
- * This is O(n²) — acceptable for our max hit count of 200 (common names).
- */
 const CLUSTER_THRESHOLD = 0.95;
 
 export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
-  // centroid[i] = candidateName of the first hit in cluster i
   const centroids: string[] = [];
   const assignments: number[] = new Array(hits.length).fill(-1);
 
@@ -422,20 +496,18 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
     }
   }
 
-  // Build per-cluster membership
-  const clusterMap = new Map<number, number[]>(); // clusterIdx → [hitIdx, ...]
+  const clusterMap = new Map<number, number[]>();
   for (let i = 0; i < assignments.length; i++) {
     const ci = assignments[i] ?? -1;
     if (!clusterMap.has(ci)) clusterMap.set(ci, []);
     clusterMap.get(ci)?.push(i);
   }
 
-  // Build cluster summaries and annotate hits
   const annotated: AnnotatedHit[] = hits.map((h) => ({ ...h }));
   const clusters: ClusterSummary[] = [];
 
   for (const [ci, members] of clusterMap.entries()) {
-    if (members.length <= 1) continue; // singleton — no annotation needed
+    if (members.length <= 1) continue;
     const label = `cluster-${ci}`;
     const firstIdx = members[0] ?? 0;
     const primaryName = centroids[ci] ?? hits[firstIdx]?.candidateName ?? '';
@@ -443,19 +515,15 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
     clusters.push({ label, size: members.length, primaryName, names });
     for (const idx of members) {
       const a = annotated[idx];
-      if (a) {
-        a.clusterLabel = label;
-        a.clusterSize = members.length;
-      }
+      if (a) { a.clusterLabel = label; a.clusterSize = members.length; }
     }
   }
 
-  // Reorder: non-clustered first, then by cluster so members are adjacent
   annotated.sort((a, b) => {
     const ac = a.clusterLabel ?? '';
     const bc = b.clusterLabel ?? '';
     if (ac === bc) return b.score - a.score;
-    if (!ac) return -1; // singletons first
+    if (!ac) return -1;
     if (!bc) return 1;
     return ac.localeCompare(bc);
   });
@@ -465,18 +533,10 @@ export function clusterLookalikes(hits: QuickScreenHit[]): LookalikeClusters {
 
 // ── Convenience: annotate a QuickScreenHit with disambiguation ────────────────
 
-/**
- * Enrich a single hit with the full multi-factor disambiguation result.
- * Returns a new hit object — does not mutate the input.
- *
- * The hit must already have `baseScore` and the candidate reference
- * for discriminator fields. Subject and candidate are passed separately
- * so the caller (quick-screen.ts) can thread them through.
- */
 export function enrichHitWithDisambiguation(
   hit: QuickScreenHit,
-  subject: QuickScreenSubject & { gender?: string },
-  candidate: QuickScreenCandidate & { gender?: string },
+  subject: QuickScreenSubject & { gender?: string; idNumber?: string; address?: string },
+  candidate: QuickScreenCandidate & { gender?: string; idNumber?: string },
 ): QuickScreenHit & {
   disambiguationScore: number;
   confidenceTier: ConfidenceTier;
