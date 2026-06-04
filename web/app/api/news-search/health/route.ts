@@ -116,7 +116,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // operator sees the full egress picture, not just the two primary sources.
   if (verbose) {
     targets.push(
-      { name: "occrp_investigative", url: "https://www.occrp.org/feed/", relayable: true, operatorRelayOnly: true },
+      { name: "occrp_investigative", url: "https://www.occrp.org/en/investigations?format=feed&type=rss", relayable: true, operatorRelayOnly: true },
       { name: "bbc_regional", url: "https://feeds.bbci.co.uk/news/world/rss.xml", relayable: true, operatorRelayOnly: true },
       { name: "opensanctions", url: "https://api.opensanctions.org/healthz" },
     );
