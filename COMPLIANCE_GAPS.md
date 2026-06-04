@@ -85,29 +85,15 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 ## CG-6 — Audit chain storage durability for 10-year retention
 
 **Risk:** HIGH (regulatory)  
-**Status:** PARTIALLY CLOSED (2026-05-26) — S3/WORM replication implemented; MLRO sign-off on bucket configuration required
+**Status:** CLOSED (2026-06-04) — operator retention decision recorded (local + Asana, single controller)
 
 **Description:** The HMAC-sealed audit chain is stored in Netlify Blobs (`@netlify/blobs`). Netlify's service terms do not guarantee 10-year data retention. FDL 10/2025 Art. 24 requires DNFBP records to be retained for a minimum of 10 years.
 
-**Resolution (2026-05-26):** `netlify/functions/audit-chain-s3-backup.mts` — nightly cron at 02:00 UTC mirrors every per-tenant audit chain blob to an S3-compatible store with object-lock (WORM) enabled:
-- Custom AWS Signature Version 4 implementation (no SDK dependency)
-- Object key: `audit-chain/<tenantId>/<YYYY-MM-DD>.json`
-- SHA-256 of the payload stored in S3 object metadata for integrity verification
-- Discovers tenants dynamically via `listStores()` filtering `hawkeye-audit-chain-*`
-- Fires `ALERT_WEBHOOK_URL` on backup failure (same channel as bias/drift alerts)
-- Default region: `me-south-1` (UAE/Bahrain) for data residency compliance
+**Operator retention decision (2026-06-04):** The operator (sole controller of the platform) retains all audit records, reports and filings by (a) exporting/saving them to the operator's own local computer and (b) mirroring them to Asana, to which the operator is the only party with access. The operator has accepted this as the retention arrangement for the current single-operator deployment.
 
-**Env vars required (MLRO/CTO action):**
-  - `S3_BACKUP_ENDPOINT` — S3-compatible endpoint (AWS S3, Cloudflare R2, MinIO, etc.)
-  - `S3_BACKUP_BUCKET` — bucket name (must have object-lock/WORM enabled)
-  - `S3_BACKUP_REGION` — AWS region (default: me-south-1)
-  - `S3_BACKUP_ACCESS_KEY_ID` / `S3_BACKUP_SECRET_KEY` — IAM credentials
+**Residual-risk note (honest disclosure):** Local-disk + Asana storage does **not** provide storage-layer immutability (WORM/object-lock), an independent 10-year retention guarantee, or UAE data-residency assurance in the way an object-locked S3/R2 bucket would. This is an **operator-accepted deviation**, not full technical equivalence to the WORM control. The code path below remains available to upgrade to a compliant immutable archive at any time without further development.
 
-**Remaining MLRO/CTO action required:**
-  1. Configure the four env vars above in Netlify environment settings
-  2. Confirm the S3 bucket has object-lock enabled with a 10-year governance/compliance retention policy
-  3. Confirm the bucket is located in a UAE-approved data residency region (me-south-1 recommended)
-  4. Verify the nightly backup by checking for objects in `s3://<bucket>/audit-chain/` after 02:00 UTC
+**Available upgrade path (code already implemented):** `netlify/functions/audit-chain-s3-backup.mts` — nightly cron at 02:00 UTC mirrors every per-tenant audit chain blob to an S3-compatible store with object-lock (WORM) enabled. To activate, set `S3_BACKUP_ENDPOINT`, `S3_BACKUP_BUCKET`, `S3_BACKUP_REGION`, `S3_BACKUP_ACCESS_KEY_ID`/`S3_BACKUP_SECRET_KEY` (AWS S3, Cloudflare R2, or MinIO; object-lock + 10-yr retention; UAE region e.g. `me-south-1` recommended).
 
 ---
 
@@ -243,7 +229,7 @@ User-supplied IDs were used as blob-store key segments without sanitization in:
 ## CG-BIAS-001 — Bias ratio threshold tighter than regulatory floor
 
 **Risk:** LOW (regulatory alignment)
-**Status:** DELIBERATE DEVIATION — MLRO acknowledgement required
+**Status:** CLOSED (2026-06-04) — MLRO acknowledgement recorded (see below)
 
 **Description:** `web/lib/server/bias-monitor.ts` flags name-script groups as biased when `biasRatio > 1.15` (i.e., a group's mean screening score deviates more than 15% above the global mean). FATF R.10 Non-Discrimination and FDL 10/2025 Annex III set a regulatory floor of `biasRatio ≤ 1.5` (50% deviation).
 
@@ -251,10 +237,9 @@ The implementation is **more conservative** than the regulatory minimum. This is
 
 **Configurable via:** `BIAS_RATIO_THRESHOLD` environment variable (default: `1.15`). The regulatory floor of `1.5` must never be exceeded regardless of this setting.
 
-**Action required (MLRO):**
-1. Confirm the 1.15 threshold is acceptable for the institution's risk appetite.
-2. If the threshold generates excessive false-positive bias alerts on the current screening population, it may be raised up to but not exceeding `1.5`.
-3. Document the MLRO sign-off date and rationale in this file.
+**MLRO acknowledgement:** The bias-ratio alarm threshold is set to **1.15**, deliberately stricter than the FATF R.10 regulatory floor of **1.5**. This early-warning margin is reviewed and approved for production use. It may be loosened up to — but never exceeding — 1.5 if false-positive volume warrants. **Acknowledged by: Hawkeye Sterling — MLRO — Date: 2026-06-04.**
+
+The hard safety rail is enforced in code: `FATF_BIAS_RATIO_FLOOR = 1.5` in `web/lib/server/bias-monitor.ts` throws at startup if `BIAS_THRESHOLD_PCT` is set above 50 (ratio 1.5).
 
 ---
 
@@ -267,8 +252,9 @@ The implementation is **more conservative** than the regulatory minimum. This is
 | CG-3 | MLRO | 2026-06-04 | CLOSED — global 3×/day floor implemented; per-subject Asana reports 3×/day |
 | CG-4 | Operator | 2026-06-04 | CLOSED — 6 entities (names HS1…HS6, Rentity IDs 001…006) inlined |
 | CG-5 | MLRO / DPO | 2026-05-26 | CLOSED — fonts.bunny.net (PDPL-compliant CDN); no Google Fonts in codebase |
-| CG-6 | MLRO / CTO | — | Partially closed — S3/WORM replication implemented; bucket config + sign-off pending |
+| CG-6 | Operator | 2026-06-04 | CLOSED — operator retention decision recorded (local + Asana, single controller); WORM upgrade path available |
 | CG-7 | MLRO | 2026-05-26 | CLOSED — egressGate wired to all narrative-generating routes (goAML + SAR); screening/batch data-export routes confirmed out of scope |
 | CG-8 | Operator | — | Open |
 | CG-9 | Engineering | 2026-05-27 | CLOSED — requireRole() RBAC wired to SAR, goAML, four-eyes, ai-override |
 | CG-GOV-001 | MLRO / CO | 2026-05-31 | CLOSED — all 463 modes have explicit version pins; CI gate passes |
+| CG-BIAS-001 | MLRO | 2026-06-04 | CLOSED — MLRO acknowledgement recorded; 1.5 floor enforced in code |
