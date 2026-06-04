@@ -102,6 +102,9 @@ These default to enabled where shown. Setting to blank disables.
 | `SEC_EDGAR_ENABLED` | `1` | US SEC EDGAR |
 | `ICIJ_OFFSHORE_LEAKS_ENABLED` | `1` | ICIJ Offshore Leaks |
 | `GOOGLE_NEWS_RSS_ENABLED` | `1` | Google News RSS |
+| `NEWS_HTTP_PROXY` | _(unset)_ | Outbound proxy for news/feed egress only (defeats datacenter-IP 403s) |
+| `NEWS_PROXY_CA` | _(unset)_ | PEM CA bundle for a TLS-intercepting news proxy |
+| `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` | `true` | Set `false` to accept a trusted internal proxy's self-signed cert |
 
 > **Datacenter-IP note (`GOOGLE_NEWS_RSS_ENABLED`):** Google News RSS frequently
 > returns HTTP 403 to cloud/datacenter IPs (Netlify) regardless of User-Agent.
@@ -111,6 +114,20 @@ These default to enabled where shown. Setting to blank disables.
 > the investigative/regional feed banks, and any keyed news-API adapters. This
 > does **not** disable adverse media; it only removes a source that is 403-ing.
 > Probe live reachability any time via `GET /api/news-search/health`.
+
+> **News egress proxy (`NEWS_HTTP_PROXY`):** A cleaner fix than disabling a
+> source — when the runtime egresses from a datacenter IP and feeds 403
+> regardless of User-Agent, point `NEWS_HTTP_PROXY` at an outbound HTTP/HTTPS
+> proxy whose egress IP is not 403'd. **Only** news/feed fetches route through
+> it; the sanctions/PEP path, Netlify Blobs, Upstash Redis, Anthropic and MoonDB
+> egress directly. Falls back to `HTTPS_PROXY` / `HTTP_PROXY` when unset.
+> `NEWS_PROXY_CA` / `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` tune TLS for an internal
+> intercepting proxy. Verify with `GET /api/news-search/health?verbose=1`: each
+> source reports `via:"proxy"` and the top-level `proxy` block names the env var
+> that supplied it (never the URL/credentials). If live feeds remain
+> unreachable, `/api/news-search` now degrades to the most recent cached dossier
+> (`fetchMode:"cached"`, `retrieval:"degraded"`) instead of a bare outage, while
+> a true outage with nothing cached still surfaces as `unavailable` (FATF R.10).
 
 ---
 

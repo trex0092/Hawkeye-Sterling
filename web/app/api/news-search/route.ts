@@ -9,6 +9,9 @@ import { classifyEsg } from "@/lib/data/esg";
 import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { getJson, setJson } from "@/lib/server/store";
+import { newsFetch, newsProxyInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { getStore } from "@netlify/blobs";
+import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
 // brain compilation hasn't run yet (cold Lambda, partial build). Falls back
 // to no-op implementations that return minimal scores so the route degrades
@@ -370,6 +373,12 @@ interface NewsResponse {
   feedsReachable: number;             // feeds that returned HTTP 2xx
   degraded?: boolean;                 // convenience flag: retrieval !== "live"
   googleNewsRssEnabled?: boolean;     // false when GOOGLE_NEWS_RSS_ENABLED=false (datacenter-IP 403 workaround)
+  // Set when live retrieval reached nothing but a cached dossier (stale L2 or
+  // the background GDELT prefetch) was served instead. The UI shows these as
+  // "cached, not live" — never as a fresh confirmed-clean result (FATF R.10).
+  retrievalNote?: string;
+  cachedAt?: string;                  // ISO timestamp of the cached payload served on the fallback path
+  proxyConfigured?: boolean;          // true when news egress routes through NEWS_HTTP_PROXY / HTTPS_PROXY
 }
 
 function severityOrder(s: Article["severity"]): number {
@@ -727,18 +736,12 @@ function noteFeedOutcome(stats: RetrievalStats | undefined, reachable: boolean):
   if (reachable) stats.reachable += 1;
 }
 
-// Google News RSS — and several mainstream outlets — return HTTP 403 to obvious
-// bot User-Agents (e.g. a "+https://…" crawler string). Egress on the serverless
-// runtime is open; the bot UA, not the network, is what blocked live retrieval.
-// Presenting a current real browser UA + Accept-Language is what lets the fetch
-// actually pull live adverse-media articles in production.
-const BROWSER_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-const FEED_HEADERS: Record<string, string> = {
-  "user-agent": BROWSER_UA,
-  accept: "application/rss+xml,application/xml,text/xml,application/json;q=0.9,*/*;q=0.8",
-  "accept-language": "en-US,en;q=0.9",
-};
+// BROWSER_UA / FEED_HEADERS and the news egress path now live in
+// @/lib/server/http-dispatcher so every feed fetch (and the /health probe) share
+// one User-Agent and one optional outbound proxy. Google News RSS and several
+// mainstream outlets 403 obvious bot User-Agents AND datacenter IPs; the browser
+// UA defeats the former, the optional NEWS_HTTP_PROXY defeats the latter. Use
+// newsFetch(...) instead of fetch(...) for any external feed below.
 
 async function fetchLocaleFeed(
   q: string,
@@ -756,7 +759,7 @@ async function fetchLocaleFeed(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FEED_TIMEOUT_MS);
   try {
-    const res = await fetch(feed, {
+    const res = await newsFetch(feed, {
       headers: FEED_HEADERS,
       signal: controller.signal,
     } as RequestInit);
@@ -931,7 +934,7 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[], 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
-        const res = await fetch(feed.url, {
+        const res = await newsFetch(feed.url, {
           headers: FEED_HEADERS,
           signal: controller.signal,
         } as RequestInit);
@@ -1037,7 +1040,7 @@ async function fetchRegionalFeeds(
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), INVESTIGATIVE_FEED_TIMEOUT_MS);
       try {
-        const res = await fetch(feed.url, {
+        const res = await newsFetch(feed.url, {
           headers: FEED_HEADERS,
           signal: controller.signal,
         } as RequestInit);
@@ -1126,7 +1129,7 @@ async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<Ne
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GDELT_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { headers: FEED_HEADERS, signal: controller.signal } as RequestInit);
+    const res = await newsFetch(url, { headers: FEED_HEADERS, signal: controller.signal } as RequestInit);
     noteFeedOutcome(stats, res.ok);
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/gdelt HTTP ${res.status}`);
@@ -1327,6 +1330,66 @@ async function writeNewsBlobCache(cacheKey: string, data: NewsResponse): Promise
   try {
     await setJson(newsBlobCacheKey(cacheKey), { data, expires: Date.now() + NEWS_CACHE_TTL_MS });
   } catch { /* fail-soft — L1 still serves */ }
+}
+// Outage-only stale read: ignores the 2-minute TTL. Used solely on the
+// retrieval==="unavailable" fallback path so a transient feed outage degrades to
+// the last good dossier instead of a bare "0 feeds reachable". The result is
+// re-flagged fetchMode:"cached"/retrieval:"degraded" by the caller so it is never
+// presented as a fresh, confirmed-clean negative finding (FATF R.10).
+async function readNewsBlobCacheStale(cacheKey: string): Promise<NewsResponse | null> {
+  try {
+    const entry = await getJson<{ data: NewsResponse; expires: number }>(newsBlobCacheKey(cacheKey));
+    if (entry?.data) return entry.data;
+  } catch { /* fail-soft — treat as a miss */ }
+  return null;
+}
+
+// Map one background-prefetched GDELT record to a fully-classified Article using
+// the same adverse-keyword / ESG / severity passes the live path uses, so cached
+// fallback articles carry identical enrichment.
+function gdeltRecordToArticle(rec: GdeltArticle): Article | null {
+  const title = rec.title?.trim();
+  const link = rec.url?.trim();
+  if (!title || !link) return null;
+  const kwHits = classifyAdverseKeywords(title);
+  const esgHits = classifyEsg(title);
+  return {
+    title,
+    link,
+    pubDate: parseGdeltDate(rec.seendate),
+    source: rec.domain ?? "gdelt",
+    snippet: title, // GDELT artlist mode has no body text; title is the best signal.
+    keywordGroups: Array.from(new Set(kwHits.map((h) => h.group))),
+    esgCategories: Array.from(new Set(esgHits.map((e) => e.categoryId))),
+    severity: classifyArticleSeverity(kwHits),
+    fuzzyScore: 100, // already name-matched by the prefetch query that produced the record
+    fuzzyMethod: "gdelt_prefetch_cache",
+    lang: (rec.language ?? "en").slice(0, 2).toLowerCase() || "en",
+    sourceTier: "unknown",
+  };
+}
+
+// Read the background GDELT prefetch cache (netlify/functions/gdelt-prefetch.mts,
+// store "gdelt-cache", key "gdelt:{subject}") — the same store /api/adverse-media
+// already reads. Fail-soft: any miss/throw returns null.
+async function readGdeltPrefetchArticles(
+  subject: string,
+): Promise<{ articles: Article[]; cachedAt: string } | null> {
+  try {
+    const store = getStore({ name: "gdelt-cache" });
+    const cached = (await store.get(`gdelt:${subject}`, { type: "json" })) as
+      | { articles?: GdeltArticle[]; cachedAt?: string }
+      | null;
+    if (!cached?.articles || !Array.isArray(cached.articles)) return null;
+    const articles = cached.articles
+      .map(gdeltRecordToArticle)
+      .filter((a): a is Article => a !== null)
+      .slice(0, 20);
+    if (articles.length === 0) return null;
+    return { articles, cachedAt: cached.cachedAt ?? new Date().toISOString() };
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: Request): Promise<NextResponse> {
@@ -1785,7 +1848,62 @@ export async function GET(req: Request): Promise<NextResponse> {
       feedsReachable,
       degraded: retrieval !== "live",
       googleNewsRssEnabled: rssEnabled,
+      proxyConfigured: newsProxyInfo().configured,
     };
+    // FATF R.10 graceful degradation. When live retrieval reached nothing at all
+    // (every feed blocked / 403), fall back to the most recent cached dossier —
+    // first the stale L2 Blobs cache, then the background GDELT prefetch store —
+    // so the panel degrades to "cached, not live" instead of a bare outage. A
+    // genuine outage with NOTHING cached still surfaces as "unavailable": we
+    // NEVER present cached articles as a fresh, confirmed-clean result.
+    let servedFromOutageCache = false;
+    if (retrieval === "unavailable" && payload.articleCount === 0) {
+      const stale = await readNewsBlobCacheStale(cacheKey);
+      if (stale && stale.articleCount > 0) {
+        Object.assign(payload, stale, {
+          fetchMode: "cached" as const,
+          retrieval: "degraded" as const,
+          degraded: true,
+          cachedAt: stale.fetchedAt,
+          retrievalNote:
+            "Live retrieval unavailable — showing the most recent cached dossier. Re-run when feeds are reachable before clearing. (FATF R.10)",
+          latencyMs: Date.now() - t0,
+          proxyConfigured: newsProxyInfo().configured,
+        });
+        servedFromOutageCache = true;
+      } else {
+        const prefetch = await readGdeltPrefetchArticles(q);
+        if (prefetch) {
+          const top = prefetch.articles.reduce(
+            (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),
+            "clear" as Article["severity"],
+          );
+          const kw = prefetch.articles.flatMap((a) =>
+            a.keywordGroups.map((g) => ({ group: g as AdverseKeywordGroup, groupLabel: g, term: "", offset: 0 })),
+          );
+          Object.assign(payload, {
+            articles: prefetch.articles,
+            articleCount: prefetch.articles.length,
+            topSeverity: top,
+            keywordGroupCounts: adverseKeywordGroupCounts(kw).map((g) => ({
+              group: g.group,
+              label: g.label,
+              count: g.count,
+            })),
+            esgDomains: Array.from(new Set(prefetch.articles.flatMap((a) => a.esgCategories))),
+            languages: Array.from(new Set(prefetch.articles.map((a) => a.lang))).sort(),
+            source: "newsapi" as const,
+            fetchMode: "cached" as const,
+            retrieval: "degraded" as const,
+            degraded: true,
+            cachedAt: prefetch.cachedAt,
+            retrievalNote:
+              "Live retrieval unavailable — showing background-cached GDELT results. Re-run when feeds are reachable before clearing. (FATF R.10)",
+          });
+          servedFromOutageCache = true;
+        }
+      }
+    }
     // Observability: retrieval health + reachability ratio so a wholesale news
     // outage (retrieval:"unavailable") pages an operator instead of silently
     // surfacing zero articles as a clean negative finding.
@@ -1796,7 +1914,10 @@ export async function GET(req: Request): Promise<NextResponse> {
     );
     setGauge("hawkeye_news_retrieval_unavailable", retrieval === "unavailable" ? 1 : 0);
     // Cache successful results for 2 minutes (L1 in-memory + L2 cross-instance Blobs).
-    if (payload.articleCount > 0) {
+    // Never re-cache an outage-fallback payload — that would pin a stale/cached
+    // dossier into the "fresh" cache and short-circuit a retry that might now reach
+    // live feeds.
+    if (payload.articleCount > 0 && !servedFromOutageCache) {
       NEWS_CACHE.set(cacheKey, { data: payload, expires: Date.now() + NEWS_CACHE_TTL_MS });
       // Evict oldest entries if cache grows too large
       if (NEWS_CACHE.size > 500) {

@@ -37,6 +37,7 @@
     "react-is": "19.2.7",
     "styled-jsx": "5.1.6",
     "swagger-ui-react": "^5.32.6",
+    "undici": "^6.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

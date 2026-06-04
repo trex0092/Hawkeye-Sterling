@@ -22,6 +22,7 @@
 // downgrade confidence based on the flag.
 
 import { getRedis } from "@/lib/cache/redis";
+import { newsFetch } from "@/lib/server/http-dispatcher";
 
 export interface GdeltArticle {
   url?: string;
@@ -556,7 +557,7 @@ async function fetchOneQuery(
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), perQueryTimeoutMs);
     try {
-      const res = await fetch(url, {
+      const res = await newsFetch(url, {
         headers: {
           "user-agent": "Mozilla/5.0 (compatible; HawkeyeSterling/1.0; gdelt-cache)",
           accept: "application/json",
@@ -809,7 +810,7 @@ export async function queryGdeltGkg(subjectName: string): Promise<GkgResult | nu
   const timer = setTimeout(() => controller.abort(), GKG_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url.toString(), { signal: controller.signal });
+    const res = await newsFetch(url.toString(), { signal: controller.signal });
     if (!res.ok) return null;
     const data = await res.json() as { articles?: Array<{ tone?: string; themes?: string; persons?: string }> };
 
