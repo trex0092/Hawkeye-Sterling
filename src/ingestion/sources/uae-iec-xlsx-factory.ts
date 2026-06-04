@@ -14,7 +14,7 @@
 // independent FileID env override, source URL, and listing metadata.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
-import { sha256Hex } from '../fetch-util.js';
+import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
 const BASE_DOWNLOAD_URL = 'https://www.uaeiec.gov.ae/API/Upload/DownloadFile';
 const FETCH_TIMEOUT_MS = 20_000;
@@ -181,9 +181,10 @@ async function fetchXlsxBuffer(url: string): Promise<Buffer> {
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
-      headers: { accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
+      headers: { 'User-Agent': BROWSER_UA, accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
       signal: controller.signal,
-    });
+      ...(ingestionDispatcher() ? { dispatcher: ingestionDispatcher() } : {}),
+    } as RequestInit);
     if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
     const arrayBuf = await res.arrayBuffer();
     return Buffer.from(arrayBuf);

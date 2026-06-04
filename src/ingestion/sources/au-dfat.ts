@@ -13,7 +13,7 @@
 // Override URL via FEED_AU_DFAT.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
-import { sha256Hex } from '../fetch-util.js';
+import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
 const SOURCE_URL = process.env['FEED_AU_DFAT']
   ?? 'https://www.dfat.gov.au/sites/default/files/regulation8_consolidated.xlsx';
@@ -102,9 +102,10 @@ async function fetchXlsxBuffer(url: string, retries = 2, backoffMs = 2000): Prom
     const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
       const res = await fetch(url, {
-        headers: { accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
+        headers: { 'User-Agent': BROWSER_UA, accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream' },
         signal: controller.signal,
-      });
+        ...(ingestionDispatcher() ? { dispatcher: ingestionDispatcher() } : {}),
+      } as RequestInit);
       clearTimeout(t);
       if (!res.ok) {
         const httpErr = new Error(`HTTP ${res.status} from ${url}`);

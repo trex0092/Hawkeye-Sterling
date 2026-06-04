@@ -20,7 +20,7 @@
 // Without credentials, only the public FinCEN advisory feed is ingested.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
-import { sha256Hex } from '../fetch-util.js';
+import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
 function syncId(s: string): string {
   let h = 5381;
@@ -51,9 +51,10 @@ async function fetchProtectedList(apiKey: string, endpoint: string): Promise<Nor
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Accept': 'application/json',
-        'User-Agent': 'Hawkeye-Sterling-AML/2.0',
+        'User-Agent': BROWSER_UA,
       },
-    });
+      ...(ingestionDispatcher() ? { dispatcher: ingestionDispatcher() } : {}),
+    } as RequestInit);
     if (!res.ok) throw new Error(`HTTP ${res.status} from FinCEN endpoint`);
     const data = (await res.json()) as { subjects?: Array<Record<string, unknown>> };
     const subjects = data.subjects ?? [];

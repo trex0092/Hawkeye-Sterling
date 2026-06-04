@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../../fetch-util.js', () => ({
-  sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`),
+  sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined,
 }));
 
 // ── ExcelJS mock factory ──────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ describe('jpMofAdapter.fetch — no URLs configured', () => {
     delete process.env['FEED_JP_MOF'];
     vi.resetModules();
     vi.doMock('../../fetch-util.js', () => ({
-      sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`),
+      sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined,
     }));
     const { jpMofAdapter } = await import('../jp-mof.js');
     const result = await jpMofAdapter.fetch();
@@ -121,7 +121,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['John Doe', 'J. Doe', '1970-01-01', 'Russian', 'Director', '2022-03-01', 'Individual', 'MOF001'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -144,7 +144,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['Evil Corp', '', '', 'Russia', '', '2022-01-01', 'Organisation', 'MOF002'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -159,7 +159,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['MV Ship', '', '', '', '', '2022-01-01', 'Vessel', 'MOF003'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -174,7 +174,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['Plane 1', '', '', '', '', '2022-01-01', 'Aircraft', 'MOF004'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -189,7 +189,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['Someone', '', '1985-06-15', '', '', '2022-01-01', '', 'MOF005'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -204,7 +204,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['John Doe', 'John Doe', '', '', '', '2022-01-01', 'Individual', 'MOF006'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -220,7 +220,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       ['', '', '', '', '', '2022-01-01', 'Individual', 'MOF007'],
       ['Valid Person', '', '', '', '', '2022-01-01', 'Individual', 'MOF008'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -236,7 +236,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['No Ref Person', '', '', '', '', '2022-01-01', 'Individual', ''],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -251,7 +251,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['Person Sheet', '', '', 'Japan', '', '2022-01-01', 'Individual', 'MOFAGG'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -267,7 +267,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,
       ['Test', '', '', '', '', '2022-01-01', 'Individual', 'MOFCHK'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -285,7 +285,7 @@ describe('jpMofAdapter.fetch — successful parse', () => {
       MOF_HEADER,                     // row 4 — should be detected
       ['Alice', '', '1990-01-01', '', '', '2022-01-01', 'Individual', 'MOF-HDR'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -306,7 +306,7 @@ describe('jpMofAdapter.fetch — parseOne no-sheet branch', () => {
     process.env['FEED_JP_MOF'] = 'https://example.com/mof.xlsx';
     vi.resetModules();
     vi.doMock('exceljs', () => makeEmptyExcelJsModule());
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -320,7 +320,7 @@ describe('jpMofAdapter.fetch — parseOne no-sheet branch', () => {
       ['Col A', 'Col B'], // no recognisable name column
       ['val1', 'val2'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -339,7 +339,7 @@ describe('jpMofAdapter.fetch — error branches', () => {
     process.env['FEED_JP_MOF'] = 'https://example.com/mof.xlsx';
     vi.resetModules();
     vi.doMock('exceljs', () => { throw new Error('Cannot find module exceljs'); });
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchOk();
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -350,7 +350,7 @@ describe('jpMofAdapter.fetch — error branches', () => {
     process.env['FEED_JP_MOF'] = 'https://example.com/mof.xlsx';
     vi.resetModules();
     vi.doMock('exceljs', () => makeEmptyExcelJsModule());
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
     mockFetchError(404);
 
     const { jpMofAdapter } = await import('../jp-mof.js');
@@ -362,7 +362,7 @@ describe('jpMofAdapter.fetch — error branches', () => {
     vi.resetModules();
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network down')));
     vi.doMock('exceljs', () => makeEmptyExcelJsModule());
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
 
     const { jpMofAdapter } = await import('../jp-mof.js');
     await expect(jpMofAdapter.fetch()).rejects.toThrow('jp_mof: all 2 feed URL(s) failed');
@@ -386,7 +386,7 @@ describe('jpMofAdapter.fetch — error branches', () => {
       MOF_HEADER,
       ['Good Person', '', '', 'Japan', '', '2022-01-01', 'Individual', 'MOF-GOOD'],
     ]));
-    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`) }));
+    vi.doMock('../../fetch-util.js', () => ({ sha256Hex: vi.fn(async (s: string) => `sha-${s.slice(0, 6)}`), BROWSER_UA: 'test-ua', ingestionDispatcher: () => undefined }));
 
     const { jpMofAdapter } = await import('../jp-mof.js');
     const result = await jpMofAdapter.fetch();
