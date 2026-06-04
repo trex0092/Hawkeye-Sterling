@@ -696,12 +696,13 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
 const FEED_TIMEOUT_MS = 1_200;
 
 // Overall timebox: all 100+ locale feeds + 5 continent feed banks run in parallel.
-// 3.5s was too tight for datacenter egress — Google News RSS frequently 403s
-// cloud IPs and GDELT's round-trip alone can exceed it, so live retrieval was
-// returning zero articles even when press existed. 9s gives the keyless sources
-// (GDELT + RSS + investigative/regional banks) room to actually respond while
-// staying well inside the 30s maxDuration budget.
-const OVERALL_TIMEBOX_MS = 9_000;
+// 3.5s/9s were too tight for datacenter egress — Google News RSS frequently 403s
+// cloud IPs and GDELT's round-trip alone can exceed 9s under load, so live
+// retrieval was returning zero articles (or dropping GDELT) even when press
+// existed. 12s gives the keyless sources (GDELT + RSS + investigative/regional
+// banks) room to actually respond while staying well inside the 30s maxDuration
+// budget. Worst-case added screening latency vs 9s is ~3s.
+const OVERALL_TIMEBOX_MS = 12_000;
 
 // Belt-and-suspenders global branch deadline. Every parallel retrieval branch
 // (GDELT, the regional/investigative feed banks, and the keyed news-API
@@ -1109,9 +1110,10 @@ async function fetchOceaniaFeeds(subjectName: string, variants: string[], stats?
 // source-tiering pipeline with no duplicated logic.
 const GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc";
 // GDELT is the most reliable keyless source from datacenter IPs (an API, not
-// scraped RSS). 2.5s was clipping it before it could respond; 8s lets it return
-// within the wider overall timebox.
-const GDELT_TIMEOUT_MS = 8_000;
+// scraped RSS). 2.5s/8s were clipping it before it could respond; 10s lets it
+// return within the wider overall timebox (GDELT round-trips can exceed 8s under
+// load, which surfaced as a false "unreachable" in the egress health probe).
+const GDELT_TIMEOUT_MS = 10_000;
 
 function parseGdeltDate(seendate: string | undefined): string {
   // GDELT seendate format: "20240115T120000Z" → ISO 8601.
@@ -1567,7 +1569,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
     // Fan out to all locales + all configured news API adapters in parallel.
     // allSettled + per-feed AbortSignal + overall timebox ensures the function
-    // always returns within ~7.5s, well inside the 30s maxDuration budget.
+    // always returns within ~12s, well inside the 30s maxDuration budget.
     // Shared retrieval-health accumulator — every instrumented feed fetch
     // records whether it reached its upstream so we can tell a genuine
     // negative finding apart from a wholesale outage.
