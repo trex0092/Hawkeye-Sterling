@@ -197,9 +197,20 @@ export async function newsFetch(
   // Give the relay the same budget as the original timeout, or 8s if unknown.
   const relayController = new AbortController();
   const relayTimeout = setTimeout(() => relayController.abort(), 8_000);
+  // Combine the relay's own 8s budget with the caller's signal so that an
+  // already-expired per-feed timeout (e.g. the 800ms locale AbortController)
+  // aborts the relay immediately rather than letting it run for another 8s.
+  // Without this, every timed-out locale fetch enters an 8s relay window that
+  // outlasts the 4s OVERALL_TIMEBOX_MS, causing feedStats to read 0/0 when
+  // the Promise.all resolves and the dossier to report "unavailable" even when
+  // Google News RSS is reachable.
+  const callerSignal = (init as RequestInit | undefined)?.signal as AbortSignal | undefined;
+  const relaySignal = callerSignal
+    ? AbortSignal.any([relayController.signal, callerSignal])
+    : relayController.signal;
   const relayInit: RequestInit = {
     headers: FEED_HEADERS,
-    signal: relayController.signal,
+    signal: relaySignal,
     ...(dispatcher ? ({ dispatcher } as DispatcherRequestInit) : {}),
   };
   try {
