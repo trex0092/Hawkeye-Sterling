@@ -10,7 +10,7 @@ interface ModeGridProps {
   totalInFaculty: number;
 }
 
-export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty }: ModeGridProps) {
+export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty: _totalInFaculty }: ModeGridProps) {
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-xl p-5">
       <div className="text-11 font-semibold tracking-wide-4 uppercase text-ink-2 mb-1">
