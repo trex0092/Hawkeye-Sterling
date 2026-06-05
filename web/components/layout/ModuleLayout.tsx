@@ -130,7 +130,7 @@ interface ModuleHeroProps {
 }
 
 function ModuleHeroInner({
-  eyebrow,
+  eyebrow: _eyebrow,
   title,
   titleEm,
   // kpis intentionally ignored — the hero KPI tile bar was removed across
