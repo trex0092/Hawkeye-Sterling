@@ -222,14 +222,10 @@ export function WorkbenchSection() {
     <main className="px-6 py-6 overflow-y-auto">
         {/* Hero */}
         <div className="mb-6">
-          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-            WORKBENCH BRAIN
-          </div>
           <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
             The full <em className="italic text-brand">arsenal.</em>
           </h1>
-          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3">
             <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
             Pick the reasoning modes you want to engage and screen a subject, or
             inspect the catalogues, charter directives and audit state of the brain

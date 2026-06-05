@@ -7,6 +7,7 @@ const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
 const CUSTOM_STYLES = `
   #swagger-root { background: transparent; }
+  .swagger-ui .wrapper { padding: 0 !important; max-width: none !important; }
   .swagger-ui {
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
