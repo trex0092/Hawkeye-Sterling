@@ -283,19 +283,6 @@ export function WorkbenchSection() {
                 placeholder="Full name to screen — e.g. Mohammed Al-Hassan, Владимир Путин, محمد"
                 className="flex-1 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
               />
-              {subjectName.trim() === "" && (
-                <span className="text-11 text-ink-3 whitespace-nowrap">
-                  Required to run
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setHypotheticalOpen(true)}
-                className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand whitespace-nowrap"
-                title="Open the brain inspector on a synthetic subject — full reasoning chain rendered without enrolling in the screening queue"
-              >
-                Run on hypothetical
-              </button>
             </div>
 
             <WorkbenchToolbar

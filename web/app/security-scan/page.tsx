@@ -133,7 +133,7 @@ export default function SecurityScanPage() {
         intro="Platform-level security posture · Authentication · UEBA · Audit integrity · Sanctions alerts"
       />
 
-      <div className="mx-auto max-w-4xl px-4 pb-16 space-y-6">
+      <div className="max-w-4xl pb-16 space-y-6">
 
         {/* Inline banner */}
         <SecurityScanBanner inline />

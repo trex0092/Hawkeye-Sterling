@@ -123,8 +123,8 @@ function nowIso(): string {
 // ─── FATF Grey / Blacklist Parser ─────────────────────────────────────────────
 //
 // FATF publishes two HTML pages:
-//   Grey list: https://www.fatf-gafi.org/en/topics/grey-list.html
-//   Black list: https://www.fatf-gafi.org/en/topics/fatf-blacklist.html  (call-for-action)
+//   Grey list: https://www.fatf-gafi.org/en/countries/black-and-grey-lists.html
+//   Black list: https://www.fatf-gafi.org/en/countries/black-and-grey-lists.html
 //
 // Both pages list countries in <h3>, <li>, or <p> elements next to keywords like
 // "Increased Monitoring" or "Call for Action".  Since FATF does not expose a
@@ -137,8 +137,8 @@ export interface FatfLists {
   fetchedAt: string;
 }
 
-const FATF_GREY_URL = "https://www.fatf-gafi.org/en/topics/grey-list.html";
-const FATF_BLACK_URL = "https://www.fatf-gafi.org/en/topics/fatf-blacklist.html";
+const FATF_GREY_URL = "https://www.fatf-gafi.org/en/countries/black-and-grey-lists.html";
+const FATF_BLACK_URL = "https://www.fatf-gafi.org/en/countries/black-and-grey-lists.html";
 const FATF_RSS_URL = "https://www.fatf-gafi.org/en/topics/fatf-latest-news.rss";
 
 // Known jurisdictions from FATF plenary outcomes (maintained as a well-known

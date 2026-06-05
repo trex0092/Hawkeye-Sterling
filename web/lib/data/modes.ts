@@ -2481,7 +2481,5 @@ export const PRESETS: ReasoningPreset[] = [
 // Minimal demo seed — surfaced via the "Reset to minimal" button on /workbench.
 export const MINIMAL_SELECTED_MODE_IDS = ["RM-001", "RM-012", "RM-056", "RM-143"];
 
-// Default selection covers every mode so the regulatory-coverage bars on
-// /workbench start at 100/100/100. Use the "Reset to minimal" button to scope
-// down to MINIMAL_SELECTED_MODE_IDS for narrow analytical work.
-export const DEFAULT_SELECTED_MODE_IDS = MODES.map((m) => m.id);
+// Default to no modes selected — user picks via presets or "Weaponize all".
+export const DEFAULT_SELECTED_MODE_IDS: string[] = [];
