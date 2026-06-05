@@ -222,14 +222,10 @@ export function WorkbenchSection() {
     <main className="px-6 py-6 overflow-y-auto">
         {/* Hero */}
         <div className="mb-6">
-          <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-            WORKBENCH BRAIN
-          </div>
           <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
             The full <em className="italic text-brand">arsenal.</em>
           </h1>
-          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3 border-l-2 border-brand pl-3.5">
+          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3">
             <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
             Pick the reasoning modes you want to engage and screen a subject, or
             inspect the catalogues, charter directives and audit state of the brain
@@ -283,19 +279,6 @@ export function WorkbenchSection() {
                 placeholder="Full name to screen — e.g. Mohammed Al-Hassan, Владимир Путин, محمد"
                 className="flex-1 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand focus:bg-bg-panel"
               />
-              {subjectName.trim() === "" && (
-                <span className="text-11 text-ink-3 whitespace-nowrap">
-                  Required to run
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setHypotheticalOpen(true)}
-                className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand whitespace-nowrap"
-                title="Open the brain inspector on a synthetic subject — full reasoning chain rendered without enrolling in the screening queue"
-              >
-                Run on hypothetical
-              </button>
             </div>
 
             <WorkbenchToolbar

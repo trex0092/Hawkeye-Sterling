@@ -145,10 +145,6 @@ function ModuleHeroInner({
   if (searchParams?.get("embed") === "1") return null;
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-        {eyebrow}
-      </div>
       <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
         {title}
         {titleEm && (
@@ -159,7 +155,7 @@ function ModuleHeroInner({
         )}
       </h1>
       {intro && (
-        <div className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] mt-3 border-l-2 border-brand pl-3.5">
+        <div className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] mt-3">
           {intro}
         </div>
       )}

@@ -37,7 +37,7 @@ export function ActionButton({
   return (
     <button
       {...rest}
-      className={`w-full inline-flex items-center gap-2 px-4 py-2 rounded border text-13 font-semibold text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${v.btn} ${className}`}
+      className={`w-full inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-11 font-semibold text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${v.btn} ${className}`}
     >
       <span
         className={`w-1.5 h-1.5 rounded-full shrink-0 ${v.dot}`}

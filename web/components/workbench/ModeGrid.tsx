@@ -62,14 +62,7 @@ export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty }: ModeG
       ) : (
         <div className="pt-4 mt-5 border-t border-hair">
           <div className="text-11 text-ink-2">
-            Showing {modes.length} of {totalInFaculty} modes ·{" "}
-            <a
-              href="#"
-              className="text-brand no-underline font-medium hover:underline"
-              onClick={(e) => e.preventDefault()}
-            >
-              Load more
-            </a>
+            Showing {modes.length} modes
           </div>
         </div>
       )}
