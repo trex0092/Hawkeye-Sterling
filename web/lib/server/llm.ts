@@ -216,15 +216,15 @@ export class AnthropicGuard {
         const modelEnvKey = response.model.toUpperCase().replace(/[^A-Z0-9]/g, "_");
         const inputPricePerMTok =
           process.env["LLM_INPUT_PRICE_PER_MTOK"]
-            ? (parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"]) || knownPrices.input)
+            ? ((v => Number.isFinite(v) ? v : knownPrices.input)(parseFloat(process.env["LLM_INPUT_PRICE_PER_MTOK"])))
             : (process.env[`LLM_PRICE_${modelEnvKey}_INPUT`]
-                ? (parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_INPUT`]!) || knownPrices.input)
+                ? ((v => Number.isFinite(v) ? v : knownPrices.input)(parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_INPUT`]!)))
                 : knownPrices.input);
         const outputPricePerMTok =
           process.env["LLM_OUTPUT_PRICE_PER_MTOK"]
-            ? (parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"]) || knownPrices.output)
+            ? ((v => Number.isFinite(v) ? v : knownPrices.output)(parseFloat(process.env["LLM_OUTPUT_PRICE_PER_MTOK"])))
             : (process.env[`LLM_PRICE_${modelEnvKey}_OUTPUT`]
-                ? (parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_OUTPUT`]!) || knownPrices.output)
+                ? ((v => Number.isFinite(v) ? v : knownPrices.output)(parseFloat(process.env[`LLM_PRICE_${modelEnvKey}_OUTPUT`]!)))
                 : knownPrices.output);
         const inputTokens = response.usage?.input_tokens ?? 0;
         const outputTokens = response.usage?.output_tokens ?? 0;
