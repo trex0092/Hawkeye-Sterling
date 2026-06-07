@@ -307,7 +307,12 @@ if (HAS_API_KEY && compAgentOk) {
 
 header("TIER 8  MCP tools smoke  [optional]");
 
-if (HAS_SERVER) {
+// Re-probe: the server may have started during the preceding test phases even
+// if it wasn't up at script-start (e.g. when smoke-test-runner launches after
+// `npm run dev` in a parallel terminal).
+const serverReadyNow = HAS_SERVER || await probeServer(SMOKE_BASE_URL);
+
+if (serverReadyNow) {
   run(
     "MCP tools smoke (14 cases)",
     "node", ["scripts/smoke-mcp-tools.mjs"],
