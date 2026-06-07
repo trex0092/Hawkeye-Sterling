@@ -112,7 +112,7 @@ export function issueJwt(
     ...payload,
     iat: now,
     exp,
-    ...(opts.iss ? { iss: opts.iss } : {}),
+    iss: opts.iss ?? "hawkeye-sterling",
   };
   const header: JwtHeader = { alg: ALG, typ: "JWT" };
   const headerB64 = b64uEncode(JSON.stringify(header));
@@ -174,10 +174,10 @@ export function verifyJwt(token: string): JwtVerifyResult & { usedPrevKey?: bool
     return { ok: false, reason: "expired", payload };
   }
 
-  // Require a valid issuer on every token. Tokens issued by issueJwt() always
-  // carry iss: "hawkeye-sterling" (line 89). Accepting tokens without an iss
-  // claim opened a cross-service JWT confusion path when another service
-  // shared JWT_SIGNING_SECRET. F-06 fix: iss is now required and pinned.
+  // Require a valid issuer on every token. issueJwt() defaults iss to
+  // "hawkeye-sterling" when not overridden by the caller. Accepting tokens
+  // without a matching iss claim would open a cross-service JWT confusion path
+  // if another service shared JWT_SIGNING_SECRET. F-06 fix: iss required and pinned.
   if (!payload.iss || payload.iss !== "hawkeye-sterling") {
     return { ok: false, reason: "invalid_issuer" };
   }

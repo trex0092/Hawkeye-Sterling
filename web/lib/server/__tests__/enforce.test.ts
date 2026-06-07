@@ -530,8 +530,8 @@ describe("JWT path", () => {
     }
   });
 
-  it("JWT with no iss claim returns 401 (required after F-06)", async () => {
-    const token = makeJwt({}, { iss: undefined });
+  it("JWT with wrong iss claim returns 401 (required after F-06)", async () => {
+    const token = makeJwt({}, { iss: "wrong-service" });
     mocks.extractKey.mockReturnValue(token);
     const result = await enforce(makeReq());
     expect(result.ok).toBe(false);

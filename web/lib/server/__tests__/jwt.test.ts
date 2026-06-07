@@ -95,9 +95,9 @@ describe("issueJwt / verifyJwt", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("rejects token with no iss field (required after F-06 fix)", async () => {
+  it("rejects token with wrong iss field (required after F-06 fix)", async () => {
     const { issueJwt, verifyJwt } = await getJwt();
-    const { token } = issueJwt({ sub: "key_001", tier: "standard" });
+    const { token } = issueJwt({ sub: "key_001", tier: "standard" }, { iss: "wrong-service" });
     const result = verifyJwt(token);
     expect(result.ok).toBe(false);
     expect(result.reason).toBe("invalid_issuer");
