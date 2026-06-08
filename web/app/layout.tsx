@@ -64,7 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CaseVaultSyncer />
           <ServiceWorkerRegistrar />
           <AlertToast />
-          <SecurityScanBanner />
           <div className="flex-1">
             {children}
           </div>

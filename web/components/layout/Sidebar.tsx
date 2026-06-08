@@ -1,18 +1,25 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { type ReactNode, Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { SidebarShell, SidebarSection } from "./SidebarParts";
 import { NAV_GROUPS } from "@/lib/nav-groups";
 
-function isActive(pathname: string, href: string): boolean {
-  const base = href.split("?")[0];
+function isActive(pathname: string, search: string, href: string): boolean {
+  const [base, query] = href.split("?");
   if (base === "/") return pathname === "/";
+  if (query) {
+    // Require exact path + tab match so /intelligence-hub?tab=brain only
+    // highlights that one item, not all items sharing the same base path.
+    return pathname === base && search === `?${query}`;
+  }
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-export function Sidebar({ children }: { children?: ReactNode } = {}) {
+function SidebarInner({ children }: { children?: ReactNode }) {
   const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const search = searchParams?.toString() ? `?${searchParams.toString()}` : "";
 
   return (
     <SidebarShell>
@@ -20,7 +27,7 @@ export function Sidebar({ children }: { children?: ReactNode } = {}) {
         <SidebarSection key={group.title} title={group.title} collapsible>
           <ul className="list-none p-0 m-0 space-y-0.5">
             {group.items.map((item) => {
-              const active = isActive(pathname, item.href);
+              const active = isActive(pathname, search, item.href);
               const spaceIdx = item.label.indexOf(" ");
               const emoji = item.label.slice(0, spaceIdx);
               const text = item.label.slice(spaceIdx + 1);
@@ -46,5 +53,13 @@ export function Sidebar({ children }: { children?: ReactNode } = {}) {
       ))}
       {children}
     </SidebarShell>
+  );
+}
+
+export function Sidebar({ children }: { children?: ReactNode } = {}) {
+  return (
+    <Suspense fallback={null}>
+      <SidebarInner>{children}</SidebarInner>
+    </Suspense>
   );
 }

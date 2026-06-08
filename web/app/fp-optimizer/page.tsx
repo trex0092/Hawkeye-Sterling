@@ -373,7 +373,7 @@ export default function FpOptimizerPage() {
 
       {/* ── TAB 2: Live Prediction ── */}
       {tab === "prediction" && (
-        <div className="space-y-6 max-w-2xl">
+        <div className="space-y-6 w-full">
           <div className="border border-hair-2 rounded-lg p-5 bg-bg-1">
             <div className="font-mono text-11 uppercase tracking-wide text-ink-3 mb-4">
               New Screening Hit — FP Prediction

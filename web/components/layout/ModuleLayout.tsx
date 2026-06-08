@@ -6,7 +6,6 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
-  SidebarMLROCard,
   SidebarSection,
   type SidebarFilterItem,
 } from "./SidebarParts";
@@ -78,10 +77,6 @@ export function ModuleLayout<K extends string = string>({
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <Sidebar>
-            <SidebarSection title="Regulatory">
-              <SidebarMLROCard />
-            </SidebarSection>
-
             {sidebarActions && (
               <SidebarSection title="Actions">
                 <div className="flex flex-col gap-2 px-2">{sidebarActions}</div>
@@ -136,7 +131,7 @@ function ModuleHeroInner({
   // kpis intentionally ignored — the hero KPI tile bar was removed across
   // all modules. The prop is kept on ModuleHeroProps so call sites still
   // compile (and keep their derived metrics) without needing edits.
-  intro,
+  intro: _intro,
 }: ModuleHeroProps) {
   // When a module page is rendered embedded inside another view (e.g. the
   // Intelligence Hub iframe tabs, ?embed=1), its own page hero is redundant
@@ -154,11 +149,6 @@ function ModuleHeroInner({
           </>
         )}
       </h1>
-      {intro && (
-        <div className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] mt-3">
-          {intro}
-        </div>
-      )}
     </div>
   );
 }

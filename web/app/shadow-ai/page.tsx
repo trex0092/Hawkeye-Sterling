@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { ShadowAIEntry, ShadowAIStatus } from "@/app/api/shadow-ai/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -154,14 +153,6 @@ export default function ShadowAIPage() {
         </ActionButton>
       }
     >
-      <ModuleFamilyBar
-        suiteName="AI Governance"
-        modules={[
-          { label: "AI Incident Playbook", href: "/ai-incident-playbook", icon: "🤖" },
-          { label: "Shadow AI Register", href: "/shadow-ai", icon: "👁️" },
-          { label: "Vendor AI Audit", href: "/vendor-ai-audit", icon: "🏢" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="Shadow AI Detection"

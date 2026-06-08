@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { CountryRiskResult } from "@/app/api/country-risk/route";
 import type { CountryCompareResult } from "@/app/api/country-risk/compare/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
@@ -488,11 +487,6 @@ function CountryRiskInner() {
           </>
         }
       />
-      <ModuleFamilyBar suiteName="Country & Geopolitical Risk" modules={[
-        { label: "Country Risk", href: "/country-risk", icon: "🌍" },
-        { label: "Geopolitical", href: "/geopolitical", icon: "🌏" },
-      ]} />
-
       {/* Mode toggle */}
       <div className="flex items-center gap-2 mb-5">
         <button

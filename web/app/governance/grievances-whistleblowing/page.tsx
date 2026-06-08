@@ -778,11 +778,8 @@ export default function GrievancesWhistleblowingPage() {
             <section style={{ marginTop: 14, paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
               <div>
                 <h1 className="gw-serif gw-hero-title" style={{ fontWeight: 400, fontSize: 54, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
-                  A protected channel<br />to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
+                  A protected channel to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
                 </h1>
-                <p style={{ color: V.ink2, fontSize: 13.5, maxWidth: 560, marginTop: 14, lineHeight: 1.6, margin: "14px 0 0" }}>
-                  A safe, transparent, confidential mechanism for customers, partners, employees and third parties to raise concerns or report misconduct — without fear of retaliation.
-                </p>
               </div>
             </section>
 

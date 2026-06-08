@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface VoluntaryDisclosure {
@@ -179,7 +178,6 @@ export default function VoluntaryDisclosurePage() {
 
   return (
     <ModuleLayout>
-      <ModuleFamilyBar suiteName="Governance & Ethics" modules={GOV_MODULES} />
       <ModuleHero
         eyebrow=""
         title="Voluntary Disclosure"

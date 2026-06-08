@@ -89,13 +89,13 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
       <div className="text-12 font-semibold text-ink-0 mb-3">Evaluate transactions against AED {THRESHOLD_AED.toLocaleString()} threshold</div>
 
       {/* Add transaction row */}
-      <div className="flex flex-wrap gap-2 items-end mb-3">
+      <div className="grid grid-cols-[1fr_1fr_1fr_1fr_2fr_1.5fr_auto] gap-2 items-end mb-3">
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Transaction ID</label>
-          <input value={txnId} onChange={(e) => setTxnId(e.target.value)} className={`${inputCls} w-28`} placeholder="TXN-001" /></div>
+          <input value={txnId} onChange={(e) => setTxnId(e.target.value)} className={`${inputCls} w-full`} placeholder="TXN-001" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Amount (AED)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-28`} placeholder="55000" /></div>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full`} placeholder="55000" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Channel</label>
-          <select value={channel} onChange={(e) => setChannel(e.target.value as DpmsrTransaction["channel"])} className={`${inputCls} w-28`}>
+          <select value={channel} onChange={(e) => setChannel(e.target.value as DpmsrTransaction["channel"])} className={`${inputCls} w-full`}>
             <option value="cash">Cash</option>
             <option value="cash_courier">Cash courier</option>
             <option value="wire">Wire</option>
@@ -104,13 +104,13 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
             <option value="other">Other</option>
           </select></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Customer ID</label>
-          <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={`${inputCls} w-28`} placeholder="CUST-001" /></div>
+          <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={`${inputCls} w-full`} placeholder="CUST-001" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Customer Name</label>
-          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={`${inputCls} w-36`} placeholder="Full name" /></div>
+          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={`${inputCls} w-full`} placeholder="Full name" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Date</label>
-          <IsoDateInput value={txnDate} onChange={(iso) => setTxnDate(iso)} className={`${inputCls} w-36`} /></div>
+          <IsoDateInput value={txnDate} onChange={(iso) => setTxnDate(iso)} className={`${inputCls} w-full`} /></div>
         <button type="button" onClick={addTxn}
-          className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90">+ Add</button>
+          className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 self-end">+ Add</button>
       </div>
 
       {error && <p className="text-11 text-red mb-2">{error}</p>}

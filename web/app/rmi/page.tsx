@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { RowActions } from "@/components/shared/RowActions";
 
@@ -388,15 +387,6 @@ export default function RmiPage() {
           { value: String(liveSmelters.length), label: "smelters tracked" },
         ]}
       />
-      <ModuleFamilyBar suiteName="Supply Chain & Responsible Sourcing" modules={[
-        { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
-        { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
-        { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
-        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
-        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
-        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
-      ]} />
-
       {/* OECD DDG 5-step alignment summary */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mb-6">
         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import type { GeopoliticalEvent } from "@/app/api/geopolitical/events/route";
 import type {
@@ -220,10 +219,6 @@ export default function GeopoliticalPage() {
           { value: String(kpiRegions || "—"), label: "Regions monitored" },
         ]}
       />
-      <ModuleFamilyBar suiteName="Country & Geopolitical Risk" modules={[
-        { label: "Country Risk", href: "/country-risk", icon: "🌍" },
-        { label: "Geopolitical", href: "/geopolitical", icon: "🌏" },
-      ]} />
 
       {/* Tab bar */}
       <div className="flex gap-1 mb-6 border-b border-hair">

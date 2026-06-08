@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface TmRuleChange {
@@ -193,7 +192,6 @@ export default function TmRulesPage() {
 
   return (
     <ModuleLayout>
-      <ModuleFamilyBar suiteName="Transaction Monitoring" modules={TM_MODULES} />
       <ModuleHero
         eyebrow=""
         title="TM Rule Change"

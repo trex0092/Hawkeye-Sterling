@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface AuditFinding {
@@ -186,15 +185,6 @@ export default function AuditFindingsPage() {
         </ActionButton>
       }
     >
-      <ModuleFamilyBar
-        suiteName="Compliance Records"
-        modules={[
-          { label: "Audit Findings", href: "/audit-findings", icon: "📋" },
-          { label: "Business Risk (BRA)", href: "/bra", icon: "📊" },
-          { label: "Dormant Accounts", href: "/dormant-accounts", icon: "💤" },
-          { label: "Outsourcing Register", href: "/outsourcing-register", icon: "🏢" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="Audit Findings"

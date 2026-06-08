@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface PnmrRecord {
@@ -111,14 +110,6 @@ export default function PnmrQueuePage() {
 
   return (
     <ModuleLayout>
-      <ModuleFamilyBar
-        suiteName="Sanctions Alerts & Name Match"
-        modules={[
-          { label: "TFS Alerts", href: "/tfs-alerts", icon: "🚨" },
-          { label: "CNMR", href: "/cnmr", icon: "📝" },
-          { label: "PNMR Queue", href: "/pnmr", icon: "📋" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="PNMR"

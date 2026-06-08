@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { writeAuditEvent } from "@/lib/audit";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
@@ -473,13 +472,6 @@ export default function OngoingMonitorPage() {
         ]}
       />
 
-      <ModuleFamilyBar
-        suiteName="Case Management"
-        modules={[
-          { label: "Ongoing Monitor", href: "/ongoing-monitor", icon: "👁️" },
-          { label: "Cases", href: "/cases", icon: "🗂️" },
-        ]}
-      />
 
       {/* Section tab bar */}
       <div className="flex items-center gap-1.5 mb-6">

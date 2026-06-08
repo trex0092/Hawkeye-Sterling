@@ -130,10 +130,9 @@ export default function SecurityScanPage() {
         eyebrow={`🛡️ Hawkeye Security Suite — ${statusIcon} ${statusLabel}`}
         title="Platform Security Scan"
         titleEm="report."
-        intro="Platform-level security posture · Authentication · UEBA · Audit integrity · Sanctions alerts"
       />
 
-      <div className="max-w-4xl pb-16 space-y-6">
+      <div className="w-full pb-16 space-y-6">
 
         {/* Inline banner */}
         <SecurityScanBanner inline />

@@ -638,7 +638,6 @@ export default function StrCasesPage() {
       <ModuleHeader
             title="STR Case"
             titleEm="Management"
-            subtitle="file without delay · no tipping-off"
             dotColor="brand"
             badge={{
               label: "FDL Art. 26–27 · File without delay",
