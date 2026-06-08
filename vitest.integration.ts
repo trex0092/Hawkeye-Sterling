@@ -19,6 +19,12 @@ export default defineConfig({
     // files vs ~2s locally. Once loaded _brain is a module-level singleton
     // so only the first test in a run pays this cost. 120 s gives 3× headroom.
     testTimeout: 120_000,
+    // Use forked processes instead of worker threads so that audit-chain retry
+    // setTimeout callbacks draining after a test completes do not trigger
+    // EnvironmentTeardownError ("Closing rpc while onUserConsoleLog was pending").
+    // Worker-thread RPC tears down before pending console.log calls finish;
+    // a forked process exits cleanly without an open RPC channel.
+    pool: 'forks',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],
