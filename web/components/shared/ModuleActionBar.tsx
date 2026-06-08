@@ -64,7 +64,7 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
         zIndex: 60,
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: 3,
         pointerEvents: "all",
       }}
     >
@@ -90,28 +90,26 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
 
 function NeonBtn({ label, color, onClick }: { label: string; color: string; onClick: () => void }) {
   const idle: React.CSSProperties = {
-    height: 24,
-    minWidth: 82,
-    padding: "0 10px",
+    height: 17,
+    minWidth: 58,
+    padding: "0 7px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    // dark glass — the neon color shines through, not fills
     background: `rgba(0,0,0,0.55)`,
     border: `1px solid ${color}`,
     borderRadius: 2,
     color: color,
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 800,
-    letterSpacing: "0.12em",
+    letterSpacing: "0.10em",
     textTransform: "uppercase",
     cursor: "pointer",
     whiteSpace: "nowrap",
     fontFamily: "'Inter','system-ui',sans-serif",
     userSelect: "none",
-    // neon glow: text + border + outer halo
-    textShadow: `0 0 4px ${color}, 0 0 10px ${color}cc, 0 0 18px ${color}88`,
-    boxShadow: `0 0 4px ${color}88, 0 0 10px ${color}44, inset 0 0 8px ${color}18`,
+    textShadow: `0 0 3px ${color}, 0 0 8px ${color}cc, 0 0 14px ${color}88`,
+    boxShadow: `0 0 3px ${color}88, 0 0 8px ${color}44, inset 0 0 6px ${color}18`,
     transition: "text-shadow 0.15s, box-shadow 0.15s",
   };
 
