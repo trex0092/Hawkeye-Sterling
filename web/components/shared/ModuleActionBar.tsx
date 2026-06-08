@@ -2,20 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 // Standardised 8-button action bar — portalled to document.body so
 // position:fixed is always relative to the viewport, never broken by a
 // parent overflow/transform/will-change containing block.
+//
+// Default behaviours (no props needed):
+//   AI      → navigate to /mlro-advisor
+//   CSV     → fires CustomEvent("hawkeye:csv") — modules listen + onCsv callback
+//   RUN     → fires CustomEvent("hawkeye:run") — modules listen + onRun callback
+//   PDF     → window.print() (browser saves as PDF)
+//   REFRESH → window.location.reload()
+//   +ADD    → fires CustomEvent("hawkeye:add") — modules listen + onAdd callback
+//   SYNC    → window.location.reload()
+//   ASANA   → POST /api/module-report
 
 interface ModuleActionBarProps {
   asanaModule?: string;
   asanaLabel?: string;
   asanaSummary?: string;
+  onCsv?: () => void;
+  onRun?: () => void;
+  onAdd?: () => void;
 }
 
 type AsanaStatus = "idle" | "posting" | "sent" | "error";
 
-// Colors pulled from globals.css CSS variables (resolved to actual hex/rgba)
 const BTNS = [
   { key: "asana",   label: "ASANA",     color: "#10b981", dim: "rgba(16,185,129,0.10)",  border: "rgba(16,185,129,0.30)"  },
   { key: "ai",      label: "AI",        color: "#ec4899", dim: "rgba(236,72,153,0.08)",  border: "rgba(236,72,153,0.30)"  },
@@ -29,34 +42,65 @@ const BTNS = [
 
 type BtnKey = typeof BTNS[number]["key"];
 
-export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: ModuleActionBarProps) {
+export function ModuleActionBar({
+  asanaModule,
+  asanaLabel,
+  asanaSummary,
+  onCsv,
+  onRun,
+  onAdd,
+}: ModuleActionBarProps) {
   const [asanaStatus, setAsanaStatus] = useState<AsanaStatus>("idle");
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => { setMounted(true); }, []);
 
   const handle = async (key: BtnKey) => {
-    if (key === "asana") {
-      if (asanaStatus !== "idle") { if (asanaStatus === "error") setAsanaStatus("idle"); return; }
-      setAsanaStatus("posting");
-      try {
-        const res = await fetch("/api/module-report", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            module: asanaModule ?? "unknown",
-            label: asanaLabel ?? "Module",
-            summary: asanaSummary ?? `Module report submitted from Hawkeye Sterling — ${asanaLabel ?? asanaModule}.`,
-          }),
-        });
-        const json = await res.json().catch(() => null) as { ok?: boolean } | null;
-        setAsanaStatus(res.ok && json?.ok ? "sent" : "error");
-      } catch {
-        setAsanaStatus("error");
+    switch (key) {
+      case "asana": {
+        if (asanaStatus !== "idle") { if (asanaStatus === "error") setAsanaStatus("idle"); return; }
+        setAsanaStatus("posting");
+        try {
+          const res = await fetch("/api/module-report", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              module: asanaModule ?? "unknown",
+              label: asanaLabel ?? "Module",
+              summary: asanaSummary ?? `Module report submitted from Hawkeye Sterling — ${asanaLabel ?? asanaModule}.`,
+            }),
+          });
+          const json = await res.json().catch(() => null) as { ok?: boolean } | null;
+          setAsanaStatus(res.ok && json?.ok ? "sent" : "error");
+        } catch {
+          setAsanaStatus("error");
+        }
+        return;
       }
-      return;
+      case "ai":
+        router.push("/mlro-advisor");
+        return;
+      case "csv":
+        if (onCsv) { onCsv(); return; }
+        window.dispatchEvent(new CustomEvent("hawkeye:csv", { bubbles: true }));
+        return;
+      case "run":
+        if (onRun) { onRun(); return; }
+        window.dispatchEvent(new CustomEvent("hawkeye:run", { bubbles: true }));
+        return;
+      case "pdf":
+        window.print();
+        return;
+      case "refresh":
+      case "sync":
+        window.location.reload();
+        return;
+      case "add":
+        if (onAdd) { onAdd(); return; }
+        window.dispatchEvent(new CustomEvent("hawkeye:add", { bubbles: true }));
+        return;
     }
-    if (key === "refresh" || key === "sync") window.location.reload();
   };
 
   if (!mounted) return null;
@@ -71,7 +115,7 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
           else if (asanaStatus === "error") label = "ASANA ⚠";
         }
         return (
-          <AppBtn key={b.key} label={label} color={b.color} dim={b.dim} border={b.border} onClick={() => handle(b.key)} />
+          <AppBtn key={b.key} label={label} color={b.color} dim={b.dim} border={b.border} onClick={() => { void handle(b.key); }} />
         );
       })}
     </div>
