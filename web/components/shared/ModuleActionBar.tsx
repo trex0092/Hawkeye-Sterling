@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 // Standardised 8-button neon action bar — fixed top-right on every module.
-// Replaces all per-module sidebarActions buttons with one consistent toolbar.
+// True neon aesthetic: dark-glass background, glowing border + text-shadow.
 
 interface ModuleActionBarProps {
   asanaModule?: string;
@@ -14,14 +14,14 @@ interface ModuleActionBarProps {
 type AsanaStatus = "idle" | "posting" | "sent" | "error";
 
 const BTNS = [
-  { key: "asana",   label: "ASANA",     bg: "#15803d", glow: "#22c55e", text: "#f0fdf4" },
-  { key: "ai",      label: "AI",        bg: "#be185d", glow: "#f472b6", text: "#fff"    },
-  { key: "csv",     label: "CSV",       bg: "#0e7490", glow: "#22d3ee", text: "#ecfeff" },
-  { key: "run",     label: "▷ RUN",    bg: "#a16207", glow: "#facc15", text: "#fefce8" },
-  { key: "pdf",     label: "PDF",       bg: "#c2410c", glow: "#fb923c", text: "#fff"    },
-  { key: "refresh", label: "↻ REFRESH", bg: "#166534", glow: "#4ade80", text: "#f0fdf4" },
-  { key: "add",     label: "+ ADD",     bg: "#7e22ce", glow: "#c084fc", text: "#faf5ff" },
-  { key: "sync",    label: "↻ SYNC",   bg: "#155e75", glow: "#67e8f9", text: "#ecfeff" },
+  { key: "asana",   label: "ASANA",     color: "#00ff88" },
+  { key: "ai",      label: "AI",        color: "#ff2d78" },
+  { key: "csv",     label: "CSV",       color: "#00e5ff" },
+  { key: "run",     label: "▷ RUN",    color: "#ffe600" },
+  { key: "pdf",     label: "PDF",       color: "#ff6b1a" },
+  { key: "refresh", label: "↻ REFRESH", color: "#39ff14" },
+  { key: "add",     label: "+ ADD",     color: "#bf5fff" },
+  { key: "sync",    label: "↻ SYNC",   color: "#00cfff" },
 ] as const;
 
 type BtnKey = typeof BTNS[number]["key"];
@@ -64,7 +64,7 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
         zIndex: 60,
         display: "flex",
         flexDirection: "column",
-        gap: 3,
+        gap: 4,
         pointerEvents: "all",
       }}
     >
@@ -75,14 +75,11 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
           else if (asanaStatus === "sent") label = "ASANA ✓";
           else if (asanaStatus === "error") label = "ASANA ⚠";
         }
-
         return (
           <NeonBtn
             key={b.key}
             label={label}
-            bg={b.bg}
-            glow={b.glow}
-            text={b.text}
+            color={b.color}
             onClick={() => handle(b.key)}
           />
         );
@@ -91,54 +88,49 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
   );
 }
 
-function NeonBtn({
-  label,
-  bg,
-  glow,
-  text,
-  onClick,
-}: {
-  label: string;
-  bg: string;
-  glow: string;
-  text: string;
-  onClick: () => void;
-}) {
-  const base: React.CSSProperties = {
-    height: 22,
-    minWidth: 76,
-    padding: "0 9px",
+function NeonBtn({ label, color, onClick }: { label: string; color: string; onClick: () => void }) {
+  const idle: React.CSSProperties = {
+    height: 24,
+    minWidth: 82,
+    padding: "0 10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: `linear-gradient(180deg, ${glow}bb 0%, ${bg} 65%)`,
-    border: `1px solid ${glow}99`,
-    borderRadius: 3,
-    color: text,
+    // dark glass — the neon color shines through, not fills
+    background: `rgba(0,0,0,0.55)`,
+    border: `1px solid ${color}`,
+    borderRadius: 2,
+    color: color,
     fontSize: 9,
     fontWeight: 800,
-    letterSpacing: "0.09em",
+    letterSpacing: "0.12em",
     textTransform: "uppercase",
     cursor: "pointer",
     whiteSpace: "nowrap",
-    boxShadow: `0 0 6px ${glow}55, 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.22)`,
-    transition: "box-shadow 0.15s, filter 0.15s",
     fontFamily: "'Inter','system-ui',sans-serif",
     userSelect: "none",
+    // neon glow: text + border + outer halo
+    textShadow: `0 0 4px ${color}, 0 0 10px ${color}cc, 0 0 18px ${color}88`,
+    boxShadow: `0 0 4px ${color}88, 0 0 10px ${color}44, inset 0 0 8px ${color}18`,
+    transition: "text-shadow 0.15s, box-shadow 0.15s",
   };
 
   return (
     <button
       type="button"
       onClick={onClick}
-      style={base}
+      style={idle}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 14px ${glow}99, 0 2px 8px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.3)`;
-        e.currentTarget.style.filter = "brightness(1.12)";
+        const el = e.currentTarget;
+        el.style.textShadow = `0 0 4px ${color}, 0 0 12px ${color}, 0 0 24px ${color}dd, 0 0 40px ${color}88`;
+        el.style.boxShadow  = `0 0 8px ${color}cc, 0 0 20px ${color}88, 0 0 36px ${color}44, inset 0 0 10px ${color}28`;
+        el.style.background = `rgba(0,0,0,0.35)`;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 6px ${glow}55, 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.22)`;
-        e.currentTarget.style.filter = "brightness(1)";
+        const el = e.currentTarget;
+        el.style.textShadow = `0 0 4px ${color}, 0 0 10px ${color}cc, 0 0 18px ${color}88`;
+        el.style.boxShadow  = `0 0 4px ${color}88, 0 0 10px ${color}44, inset 0 0 8px ${color}18`;
+        el.style.background = `rgba(0,0,0,0.55)`;
       }}
     >
       {label}
