@@ -112,7 +112,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build image locally for scanning
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services/osint-bridge
           push: false
@@ -160,7 +160,7 @@ jobs:
 
       - name: Build and push osint-bridge image
         id: docker-build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services/osint-bridge
           push: true
