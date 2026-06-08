@@ -178,7 +178,7 @@ function FiuDpmsSection() {
       {/* Coverage bar summary (shown after load) */}
       {data && (
         <div className="px-5 py-3 border-b border-hair bg-bg-1 flex items-center gap-6 flex-wrap">
-          <div className="flex-1 min-w-[180px]">
+          <div className="flex-1 sm:min-w-[180px]">
             <div className="flex items-center justify-between mb-1">
               <span className="font-mono text-10 text-ink-3 uppercase tracking-wide">Overall coverage</span>
               <span className={`font-mono text-12 font-bold ${coveragePct >= 80 ? "text-green" : coveragePct >= 50 ? "text-amber" : "text-red"}`}>

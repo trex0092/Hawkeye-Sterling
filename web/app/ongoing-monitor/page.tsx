@@ -538,12 +538,18 @@ export default function OngoingMonitorPage() {
           </div>
 
           <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-x-auto mt-4">
-            <table className="w-full min-w-[820px] text-11">
+            <table className="w-full min-w-[400px] text-11">
               <thead className="bg-bg-1 border-b border-hair-2">
                 <tr>
-                  {["Subject", "Case", "Tier", "Cadence", "Last Run / Result", "Next Due", "Status", "Enrolled by", ""].map((h) => (
-                    <th key={h} className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">{h}</th>
-                  ))}
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Subject</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden sm:table-cell">Case</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Tier</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden sm:table-cell">Cadence</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden md:table-cell">Last Run / Result</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden md:table-cell">Next Due</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Status</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden lg:table-cell">Enrolled by</th>
+                  <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono"></th>
                 </tr>
               </thead>
               <tbody>
@@ -599,14 +605,14 @@ export default function OngoingMonitorPage() {
                         );
                       })()}
                     </td>
-                    <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.caseId || "—"}</td>
+                    <td className="px-3 py-2 font-mono text-10 text-ink-2 hidden sm:table-cell">{s.caseId || "—"}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${TIER_TONE[s.tier]}`}>
                         {s.tier}
                       </span>
                     </td>
-                    <td className="px-3 py-2 font-mono text-10 text-ink-1">{CADENCE_LABEL[s.cadence]}</td>
-                    <td className="px-3 py-2 font-mono text-10 text-ink-2">
+                    <td className="px-3 py-2 font-mono text-10 text-ink-1 hidden sm:table-cell">{CADENCE_LABEL[s.cadence]}</td>
+                    <td className="px-3 py-2 font-mono text-10 text-ink-2 hidden md:table-cell">
                       <div>{s.lastRun || "—"}</div>
                       {lastResults[s.id] && (
                         <>
@@ -620,7 +626,7 @@ export default function OngoingMonitorPage() {
                         {screening[s.id] ? "screening…" : "screen now"}
                       </button>
                     </td>
-                    <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.nextDue || "—"}</td>
+                    <td className="px-3 py-2 font-mono text-10 text-ink-2 hidden md:table-cell">{s.nextDue || "—"}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${STATUS_TONE[s.status]}`}>
@@ -632,7 +638,7 @@ export default function OngoingMonitorPage() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-ink-3 text-10">{s.enrolledBy || "—"}</td>
+                    <td className="px-3 py-2 text-ink-3 text-10 hidden lg:table-cell">{s.enrolledBy || "—"}</td>
                     <td className="px-2 py-2 text-right">
                       <RowActions
                         label={`subject ${s.id}`}

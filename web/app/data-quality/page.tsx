@@ -203,7 +203,7 @@ export default function DataQualityPage() {
                   { tier: "Standard risk", target: "≥ 85%", tone: "text-amber", bar: "bg-amber" },
                   { tier: "Low risk", target: "≥ 75%", tone: "text-green", bar: "bg-green" },
                 ].map(({ tier, target, tone, bar }) => (
-                  <div key={tier} className="flex items-center gap-3 min-w-[160px]">
+                  <div key={tier} className="flex items-center gap-3 sm:min-w-[160px]">
                     <div className={`w-1.5 h-8 rounded-full ${bar} opacity-70`} />
                     <div>
                       <div className="text-11 text-ink-2 uppercase tracking-wide-3 font-mono">{tier}</div>

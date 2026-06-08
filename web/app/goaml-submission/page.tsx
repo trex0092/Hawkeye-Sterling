@@ -950,7 +950,7 @@ function SummaryCard({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline gap-1.5 text-12">
-      <span className="text-ink-3 shrink-0 min-w-[100px]">{label}</span>
+      <span className="text-ink-3 shrink-0 sm:min-w-[100px]">{label}</span>
       <span className="text-ink-0 font-medium truncate">{value || "—"}</span>
     </div>
   );

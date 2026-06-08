@@ -208,7 +208,9 @@ export async function recordScreeningBias(
 
     // Recompute report every 100 entries
     if (pruned.length % 100 === 0) {
-      void computeBiasReport(tenant, pruned).catch(() => undefined);
+      void computeBiasReport(tenant, pruned).catch((err: unknown) => {
+        console.error("[bias-monitor] recomputation failed — bias report may be stale:", err instanceof Error ? err.message : String(err));
+      });
     }
 
     // Per-list source bias tracking — write one entry per triggering list.

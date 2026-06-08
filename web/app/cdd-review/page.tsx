@@ -1846,7 +1846,7 @@ export default function CddReviewPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search subjects…"
-              className="text-11 px-3 py-1 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand transition-colors min-w-[150px]"
+              className="text-11 px-3 py-1 rounded border border-hair-2 bg-bg-panel text-ink-0 focus:outline-none focus:border-brand transition-colors sm:min-w-[150px]"
             />
             {(["all", "overdue", "due-soon", "current", "unknown"] as StatusFilter[]).map((f) => (
               <button

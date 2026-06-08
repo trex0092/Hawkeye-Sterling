@@ -21,7 +21,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3 mb-2 text-13 leading-relaxed">
-      <span className="text-ink-2 min-w-[200px] shrink-0">{label}</span>
+      <span className="text-ink-2 sm:min-w-[200px] shrink-0">{label}</span>
       <span className="text-ink-0">{children}</span>
     </div>
   );
@@ -209,7 +209,7 @@ export default function SystemCardPage() {
           { reg: "UAE PDPL", scope: "Personal data of screened individuals — access, purpose limitation, residency" },
         ].map(r => (
           <div key={r.reg} className="flex gap-3 pb-2 mb-2 border-b border-hair last:border-0 last:mb-0 last:pb-0">
-            <span className="text-blue text-13 font-semibold min-w-[200px] shrink-0">{r.reg}</span>
+            <span className="text-blue text-13 font-semibold sm:min-w-[200px] shrink-0">{r.reg}</span>
             <span className="text-ink-1 text-12 leading-relaxed">{r.scope}</span>
           </div>
         ))}

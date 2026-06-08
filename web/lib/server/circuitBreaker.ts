@@ -150,7 +150,7 @@ export function recordFailure(key: string): void {
   hydrate(key);
   const s = breakers.get(key) ?? { failures: 0, openedAt: null, halfOpenAt: null, probeInFlight: false };
   s.failures++;
-  if ((s.halfOpenAt ?? null) !== null) {
+  if (s.halfOpenAt !== null) {
     // Probe failed — re-open with jitter to prevent thundering herd on recovery.
     s.openedAt = Date.now() + Math.floor(Math.random() * JITTER_MAX_MS);
     s.halfOpenAt = null;

@@ -613,7 +613,7 @@ export default function CountryRiskMapPage() {
       />
       {/* Search + legend row */}
       <div className="flex flex-wrap items-center gap-4 mb-5">
-        <div className="flex-1 min-w-[180px] max-w-xs">
+        <div className="flex-1 sm:min-w-[180px] max-w-xs">
           <input
             type="text"
             value={search}

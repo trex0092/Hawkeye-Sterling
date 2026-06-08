@@ -149,7 +149,7 @@ function JurisdictionChain({ layers }: { layers: SanctionsEvasionResult["jurisdi
     <div className="flex items-start gap-2 flex-wrap">
       {layers.map((layer, i) => (
         <div key={layer.layer} className="flex items-center gap-2">
-          <div className={`rounded-lg border p-3 min-w-[120px] ${riskColor(layer.risk)}`}>
+          <div className={`rounded-lg border p-3 sm:min-w-[120px] ${riskColor(layer.risk)}`}>
             <div className="font-mono text-10 uppercase tracking-wide mb-0.5">Layer {layer.layer}</div>
             <div className="font-semibold text-13">{layer.jurisdiction}</div>
             <div className="font-mono text-10 opacity-80 mt-0.5">{layer.risk} Risk</div>

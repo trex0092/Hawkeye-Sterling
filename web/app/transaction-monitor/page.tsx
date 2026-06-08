@@ -572,7 +572,7 @@ export default function TransactionMonitorPage() {
             <Register empty="No transactions being monitored." />
       ) : (
             <div className="mt-8 bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
-              <table className="w-full min-w-[900px] text-12">
+              <table className="w-full min-w-[400px] text-12">
                 <thead className="bg-bg-1 border-b border-hair-2">
                   <tr>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
@@ -584,20 +584,20 @@ export default function TransactionMonitorPage() {
                     <th className="text-right px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Amount
                     </th>
-                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden sm:table-cell">
                       Channel
                     </th>
-                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden sm:table-cell">
                       Direction
                     </th>
                     <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
                       Flags
                     </th>
-                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden md:table-cell">
                       Typology
                     </th>
-                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">AI</th>
-                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden md:table-cell">AI</th>
+                    <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono hidden sm:table-cell">
                       Logged
                     </th>
                     <th className="w-[40px]" aria-label="Actions" />
@@ -623,8 +623,8 @@ export default function TransactionMonitorPage() {
                       <td className="px-3 py-2 text-right font-mono">
                         {t.currency} {t.amount}
                       </td>
-                      <td className="px-3 py-2 text-ink-1">{t.channel}</td>
-                      <td className="px-3 py-2 text-ink-1">{t.direction}</td>
+                      <td className="px-3 py-2 text-ink-1 hidden sm:table-cell">{t.channel}</td>
+                      <td className="px-3 py-2 text-ink-1 hidden sm:table-cell">{t.direction}</td>
                       <td className="px-3 py-2">
                         {t.behaviouralFlags.length > 0 ? (
                           <span className="inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 bg-red-dim text-red">
@@ -636,7 +636,7 @@ export default function TransactionMonitorPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3 py-2 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                         {(() => {
                           const tag = typologyTags[t.id];
                           if (!tag) return <span className="text-ink-3 font-mono text-10">—</span>;
@@ -652,7 +652,7 @@ export default function TransactionMonitorPage() {
                           );
                         })()}
                       </td>
-                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2 py-2 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => void explainTx(t)}
@@ -662,7 +662,7 @@ export default function TransactionMonitorPage() {
                           {explaining[t.id] === true ? "…" : "Explain"}
                         </button>
                       </td>
-                      <td className="px-3 py-2 font-mono text-10 text-ink-3">
+                      <td className="px-3 py-2 font-mono text-10 text-ink-3 hidden sm:table-cell">
                         {new Date(t.loggedAt).toLocaleString()}
                       </td>
                       <td className="px-2 py-2 text-right">

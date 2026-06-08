@@ -309,7 +309,9 @@ export async function consumeOrgQuota(
   }
 
   state.used = projected;
-  void setJson(key, state).catch(() => undefined);
+  void setJson(key, state).catch((err: unknown) => {
+    console.error("[rate-limit] org quota state write failed — stale quota possible:", err instanceof Error ? err.message : String(err));
+  });
   return { allowed: true, remaining: state.limit - projected };
 }
 

@@ -120,7 +120,9 @@ function logAuthFailure(
         ...extra,
       },
       "default",
-    ).catch(() => undefined);
+    ).catch((err: unknown) => {
+      console.error("[enforce] audit chain write failed for auth.failure:", err instanceof Error ? err.message : String(err));
+    });
   }
 
   // LOG-001: feed the distributed-bruteforce correlator. Fire-and-forget so
