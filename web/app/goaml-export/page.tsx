@@ -192,20 +192,6 @@ export default function GoAmlExportPage() {
     setTimeout(() => URL.revokeObjectURL(url), 5_000);
   };
 
-  if (!GOAML_ALLOWED_ROLES.has(role)) {
-    return (
-      <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center px-6">
-          <p className="text-16 font-semibold text-ink-1">Access restricted</p>
-          <p className="text-13 text-ink-3 max-w-md">
-            goAML XML filing is restricted to MLRO, Compliance Officer, and Managing Director roles.
-            Switch roles in the sidebar if you have the appropriate access.
-          </p>
-        </div>
-      </ModuleLayout>
-    );
-  }
-
   return (
     <ModuleLayout asanaModule="goaml" asanaLabel="goAML XML Export">
       <ModuleHero
