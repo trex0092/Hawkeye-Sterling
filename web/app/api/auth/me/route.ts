@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { verifySession, computeRequestFingerprint, SESSION_COOKIE } from "@/lib/server/auth";
+import { verifySession, computeRequestFingerprint, SESSION_COOKIE, issueSession, SESSION_TTL_S } from "@/lib/server/auth";
 import { loadUsers, ROLE_LABEL, updateSessionActivity } from "../../access/_store";
 import { cookies, headers } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -108,13 +108,48 @@ export async function GET(): Promise<NextResponse> {
   const { passwordHash: _h, passwordSalt: _s, pwVersion: _v, lastIpHash: _ip, ...safe } = user;
   // Bump session lastActive — best-effort, must not block the response.
   void updateSessionActivity(session.userId).catch(() => {});
-  return NextResponse.json({
+
+  // Sliding-window renewal: refresh the session on every visit once the cookie
+  // is more than 7 days old. With SESSION_TTL_S = 1 year, this ensures any
+  // active user's session never expires — only logout or a password change ends
+  // it. Preserves the original fpHash so the IP-change detector keeps its
+  // login-time baseline.
+  const nowSec = Math.floor(Date.now() / 1000);
+  const RENEW_THRESHOLD_SEC = SESSION_TTL_S - 7 * 24 * 60 * 60; // renew if issued > 7 days ago
+  let sessionExp = session.exp;
+  let renewedToken: string | undefined;
+  if (session.exp - nowSec < RENEW_THRESHOLD_SEC) {
+    renewedToken = issueSession(
+      session.userId,
+      session.username,
+      session.role,
+      session.pwv ?? 0,
+      session.fpHash ?? "",
+      session.tenantId,
+    );
+    sessionExp = nowSec + SESSION_TTL_S;
+  }
+
+  const res = NextResponse.json({
     ok: true,
     user: {
       ...safe,
       roleLabel: ROLE_LABEL[user.role] ?? user.role,
-      sessionExp: session.exp,
+      sessionExp,
     },
     ...(ipChanged ? { warning: { code: "IP_CHANGED", message: "Session IP changed since login — possible session theft." } } : {}),
   });
+
+  if (renewedToken) {
+    const isSecure = process.env["NODE_ENV"] !== "development";
+    res.cookies.set(SESSION_COOKIE, renewedToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: "lax",
+      maxAge: SESSION_TTL_S,
+      path: "/",
+    });
+  }
+
+  return res;
 }

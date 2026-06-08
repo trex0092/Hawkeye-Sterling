@@ -5,7 +5,12 @@
 import { scryptSync, timingSafeEqual, createHmac, randomBytes } from "node:crypto";
 
 const SESSION_COOKIE = "hs_session";
-const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
+// 1 year — session expires only on logout, password change, or admin reset.
+// The sliding-window renewal in /api/auth/me keeps the cookie fresh so active
+// users are never kicked out. Browsers cap maxAge at ~400 days so the cookie
+// itself is refreshed on each visit; users inactive for > 1 year will see
+// "Sign in required" rather than the "Your session has expired" modal.
+const SESSION_TTL_S = 365 * 24 * 60 * 60; // 1 year
 
 // ── Password helpers ─────────────────────────────────────────────────────────
 

@@ -50,6 +50,10 @@ export interface AccessUser {
    *  use their re-hashed password for all future logins. Prevents the master
    *  recovery env var from acting as a persistent backdoor. */
   recoveryUsed?: boolean;
+  /** AES-256-GCM encrypted base32 TOTP secret (see web/lib/server/totp.ts). */
+  totpSecret?: string;
+  /** Whether TOTP is required at login for this user. */
+  totpEnabled?: boolean;
 }
 
 export interface PermissionLogEntry {
