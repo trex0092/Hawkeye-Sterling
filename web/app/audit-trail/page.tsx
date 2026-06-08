@@ -175,11 +175,6 @@ export default function AuditTrailPage() {
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
             Audit <em className="italic text-brand">trail.</em>
           </h1>
-          <p className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3">
-            <strong>Ten-year retention · tamper-evident chain.</strong> Every disposition,
-            escalation and STR is bound to the hash of the preceding event. The chain is
-            exportable to goAML and the FIU on demand.
-          </p>
         </div>
 
         {/* KPI bar */}
