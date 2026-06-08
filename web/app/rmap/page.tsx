@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface RmapSmelter {
@@ -83,17 +82,6 @@ export default function RmapPage() {
 
   return (
     <ModuleLayout>
-      <ModuleFamilyBar
-        suiteName="Supply Chain & Responsible Sourcing"
-        modules={[
-          { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
-          { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
-          { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
-          { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
-          { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
-          { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="RMAP Smelter"

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { OecdDdgRecord } from "@/lib/server/oecd-ddg";
 
 // OECD 5-Step Due Diligence Guidance — Responsible Supply Chains
@@ -197,15 +196,6 @@ export default function OecdDdgPage() {
           </>
         }
       />
-      <ModuleFamilyBar suiteName="Supply Chain & Responsible Sourcing" modules={[
-        { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
-        { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
-        { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
-        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
-        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
-        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
-      ]} />
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: record list */}
         <div className="lg:col-span-1">

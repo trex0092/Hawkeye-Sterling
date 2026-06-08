@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import type { SupplyChainRiskResult } from "@/app/api/supply-chain/risk/route";
 import type { SupplyChainMapResult } from "@/app/api/supply-chain/map/route";
 
@@ -420,15 +419,6 @@ export default function SupplyChainPage() {
         ]}
         intro="Assess geographic concentration, sanctions exposure, environmental crime risk, labour exploitation, and regulatory compliance gaps across your supply chain (EU CSDDD, US UFLPA, Dodd-Frank §1502)."
       />
-      <ModuleFamilyBar suiteName="Supply Chain & Responsible Sourcing" modules={[
-        { label: "Supply Chain Risk", href: "/supply-chain", icon: "🔗" },
-        { label: "RMI / RMAP", href: "/rmi", icon: "🏭" },
-        { label: "Responsible Sourcing", href: "/responsible-sourcing", icon: "⛏️" },
-        { label: "OECD DDG", href: "/oecd-ddg", icon: "📋" },
-        { label: "RMAP Database", href: "/rmap", icon: "🗄️" },
-        { label: "LBMA Gold", href: "/lbma", icon: "🥇" },
-      ]} />
-
       {/* ── Input form ── */}
       <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 mb-6">
         <h2 className="text-14 font-semibold text-ink-0 mb-4">Company & Supply Chain Setup</h2>
