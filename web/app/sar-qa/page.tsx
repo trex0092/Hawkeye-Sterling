@@ -211,10 +211,6 @@ export default function SarQaPage() {
             { value: String(cases.length), label: "total filed" },
           ]}
         />
-        <ModuleFamilyBar suiteName="STR/SAR Filing Suite" modules={[
-          { label: "SAR QA", href: "/sar-qa", icon: "🔍" },
-          { label: "goAML Export", href: "/goaml-export", icon: "📤" },
-        ]} />
 
 
         <div className="mt-4 flex items-center justify-end gap-3">
