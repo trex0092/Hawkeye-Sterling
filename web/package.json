@@ -18,7 +18,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.92.0",
+    "@anthropic-ai/sdk": "^0.102.0",
     "@e965/xlsx": "^0.20.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@netlify/blobs": "^10.7.4",
