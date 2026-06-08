@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { writeAuditEvent } from "@/lib/audit";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";

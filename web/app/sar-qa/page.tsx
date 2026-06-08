@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import { RowActions } from "@/components/shared/RowActions";

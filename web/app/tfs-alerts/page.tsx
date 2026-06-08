@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import {
   loadAlerts,
   saveAlerts,
