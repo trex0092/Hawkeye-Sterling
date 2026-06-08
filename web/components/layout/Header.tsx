@@ -167,7 +167,8 @@ export function Header() {
         </Link>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
-          {NAV_TABS_I18N.map((tab) => {
+          {/* First tab (Screening) */}
+          {NAV_TABS_I18N.slice(0, 1).map((tab) => {
             const active = isActive(pathname ?? "", tab.href);
             return (
               <a
@@ -248,6 +249,23 @@ export function Header() {
               </>
             )}
           </div>
+          {/* Remaining tabs after More */}
+          {NAV_TABS_I18N.slice(1).map((tab) => {
+            const active = isActive(pathname ?? "", tab.href);
+            return (
+              <a
+                key={tab.href}
+                href={tab.href}
+                className={`px-3 py-1.5 text-12.5 rounded no-underline font-medium transition-colors whitespace-nowrap ${
+                  active
+                    ? "bg-bg-2 text-ink-0"
+                    : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
+                }`}
+              >
+                {tab.label}
+              </a>
+            );
+          })}
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
