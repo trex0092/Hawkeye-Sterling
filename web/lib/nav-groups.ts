@@ -27,6 +27,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "🔎 Screening", href: "/screening", hint: "Sanctions, PEP & adverse-media screening" },
       { label: "💸 Transaction Monitor", href: "/transaction-monitor", hint: "Real-time transaction monitoring & alerting" },
       { label: "👁️ Ongoing Monitor", href: "/ongoing-monitor", hint: "Continuous subject monitoring & re-screening" },
+      { label: "🗂️ Cases", href: "/cases", hint: "Case management — investigations, dispositions & audit trail" },
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
       { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
       { label: "🔗 Supply Chain & Responsible Sourcing", href: "/supply-chain", hint: "Geographic risk · CSDDD · UFLPA · RMI/RMAP · OECD 5-step DDG · MD 68/2024" },

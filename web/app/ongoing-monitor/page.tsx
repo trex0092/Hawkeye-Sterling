@@ -473,13 +473,6 @@ export default function OngoingMonitorPage() {
         ]}
       />
 
-      <ModuleFamilyBar
-        suiteName="Case Management"
-        modules={[
-          { label: "Ongoing Monitor", href: "/ongoing-monitor", icon: "👁️" },
-          { label: "Cases", href: "/cases", icon: "🗂️" },
-        ]}
-      />
 
       {/* Section tab bar */}
       <div className="flex items-center gap-1.5 mb-6">
