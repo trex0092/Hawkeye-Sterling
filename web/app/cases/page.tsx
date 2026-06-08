@@ -6,13 +6,10 @@ import { CasesSidebar } from "@/components/cases/CasesSidebar";
 import { CasesHero } from "@/components/cases/CasesHero";
 import { CasesToolbar } from "@/components/cases/CasesToolbar";
 import { CasesTable } from "@/components/cases/CasesTable";
-import { CaseDetailPanel } from "@/components/cases/CaseDetailPanel";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { CASE_FILTERS } from "@/lib/data/cases";
 import { deleteCase, loadCases } from "@/lib/data/case-store";
 import type { CaseFilter, CaseFilterKey, CaseRecord } from "@/lib/types";
-import { ActivityFeed } from "@/components/screening/ActivityFeed";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 interface TriagedCase {
   id: string;
@@ -189,7 +186,7 @@ export default function CasesPage() {
   return (
     <>
       <Header />
-      <div className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_360px]">
+      <div className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[220px_1fr]">
         <div className="hidden md:block">
           <CasesSidebar
             filters={filtersWithCounts}
@@ -202,7 +199,6 @@ export default function CasesPage() {
           <div className="flex items-start justify-between mb-0">
             <CasesHero />
             <div className="mt-1 flex items-center gap-2">
-              <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
               <button type="button" onClick={() => void runBatchTriage()} disabled={triageLoading || cases.length === 0}
                 className="inline-flex items-center gap-1.5 text-11 font-semibold px-3 py-1.5 rounded border border-brand/40 bg-brand-dim text-brand hover:bg-brand/20 disabled:opacity-40">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" style={{ animation: "live-pulse 2s ease-in-out infinite" }} />
@@ -257,25 +253,8 @@ export default function CasesPage() {
             }}
             onOpenReport={(record) => setReportCase(record)}
           />
-          <footer className="mt-10 pt-5 border-t border-hair-2 flex flex-wrap items-center gap-3 print:hidden">
-            <span className="font-mono text-10 uppercase tracking-wide-4 text-ink-3">Report</span>
-            <AsanaReportButton payload={{ module: "cases", label: "Cases Dashboard", summary: "Case management report from Hawkeye Sterling — active, escalated and reported STR/SAR cases reviewed." }} />
-          </footer>
         </main>
 
-        <div className="hidden lg:block">
-          {selected ? (
-            <CaseDetailPanel
-              record={selected}
-              onExport={() => setReportCase(selected)}
-              onViewTimeline={() => setTimelineOpen(true)}
-            />
-          ) : (
-            <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6 print:hidden">
-              <ActivityFeed label="Compliance engine" />
-            </aside>
-          )}
-        </div>
       </div>
       <ReportModal
         open={reportCase !== null}
