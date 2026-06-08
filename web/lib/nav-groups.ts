@@ -29,6 +29,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Risk & AML Ops",
     items: [
+      { label: "🔎 Screening", href: "/screening", hint: "Sanctions, PEP & adverse-media screening" },
       { label: "💸 Transaction Monitor", href: "/transaction-monitor", hint: "Real-time transaction monitoring & alerting" },
       { label: "👁️ Ongoing Monitor", href: "/ongoing-monitor", hint: "Continuous subject monitoring & re-screening" },
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },

@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
-import { useLocale } from "@/lib/i18n/LocaleProvider";
-
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
 
 const THEME_KEY = "hawkeye.theme";
 
@@ -19,8 +12,6 @@ function applyTheme(theme: "light" | "dark"): void {
 }
 
 export function Header() {
-  const pathname = usePathname();
-  const { strings } = useLocale();
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -39,8 +30,6 @@ export function Header() {
     try { if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next); } catch { /* private mode or quota */ }
   };
 
-  const screeningActive = isActive(pathname ?? "", "/screening");
-
   return (
     <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
@@ -55,19 +44,6 @@ export function Header() {
             <span className="text-[13px] font-semibold tracking-tight text-ink-0">Hawkeye Sterling</span>
           </span>
         </Link>
-
-        <div className="flex gap-0.5 ml-2 md:ml-8">
-          <a
-            href="/screening"
-            className={`px-3 py-1.5 text-12.5 rounded no-underline font-medium transition-colors whitespace-nowrap ${
-              screeningActive
-                ? "bg-bg-2 text-ink-0"
-                : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
-            }`}
-          >
-            🔎 {strings.screening}
-          </a>
-        </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
           <a
