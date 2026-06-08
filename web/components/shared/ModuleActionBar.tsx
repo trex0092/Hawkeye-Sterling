@@ -58,7 +58,7 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
   return (
     <div style={{ position: "fixed", top: 88, right: 40, zIndex: 60, display: "flex", flexDirection: "column", gap: 2 }}>
       {BTNS.map((b) => {
-        let label = b.label;
+        let label: string = b.label;
         if (b.key === "asana") {
           if (asanaStatus === "posting") label = "ASANA…";
           else if (asanaStatus === "sent")  label = "ASANA ✓";
