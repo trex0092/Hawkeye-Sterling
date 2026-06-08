@@ -213,18 +213,25 @@ export function computeAttestationStatus(nextAttestationDue: string): "current" 
  * entries are surfaced at runtime rather than silently serving stale data.
  */
 export function getOverdueModels(): readonly ModelRegistryEntry[] {
-  validateModelRegistry();
+  const validationErrors = validateModelRegistry();
+  if (validationErrors.length > 0) {
+    console.warn(`[ai-governance] getOverdueModels: ${validationErrors.length} MODEL_REGISTRY misconfiguration(s) detected — excluding malformed entries`);
+  }
+  // Exclude entries missing required fields — a broken approval.nextAttestationDue
+  // would produce NaN comparisons that silently report as "current" (not overdue).
   return MODEL_REGISTRY.filter(
-    (m) => computeAttestationStatus(m.approval.nextAttestationDue) === "overdue",
+    (m) => m.cardRef && m.riskTier && m.approval?.nextAttestationDue &&
+      computeAttestationStatus(m.approval.nextAttestationDue) === "overdue",
   );
 }
 
 /**
  * Validate all MODEL_REGISTRY entries for required compliance fields.
- * Logs CRITICAL errors for missing cardRef, riskTier, or approval records
- * so misconfigured entries are visible before they reach a regulator audit.
+ * Returns a list of error strings (one per misconfigured entry) so callers
+ * can act on misconfiguration rather than silently continuing.
  */
-function validateModelRegistry(): void {
+function validateModelRegistry(): string[] {
+  const errors: string[] = [];
   for (const m of MODEL_REGISTRY) {
     const missing: string[] = [];
     if (!m.cardRef) missing.push("cardRef");
@@ -232,9 +239,12 @@ function validateModelRegistry(): void {
     if (!m.approval?.approvedBy) missing.push("approval.approvedBy");
     if (!m.approval?.nextAttestationDue) missing.push("approval.nextAttestationDue");
     if (missing.length > 0) {
-      console.error(`[ai-governance] MODEL_REGISTRY entry '${m.modelId}' missing required fields: ${missing.join(", ")} — FDL 10/2025 Art.18 compliance gap`);
+      const msg = `MODEL_REGISTRY entry '${m.modelId}' missing required fields: ${missing.join(", ")}`;
+      console.error(`[ai-governance] ${msg} — FDL 10/2025 Art.18 compliance gap`);
+      errors.push(msg);
     }
   }
+  return errors;
 }
 
 // ── Explainability metadata ───────────────────────────────────────────────────

@@ -22,6 +22,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { verifyRegulatorToken } from "@/lib/server/regulator-jwt";
 import { filterAuditEntries, type AuditTrailFilter } from "@/lib/server/audit-trail-filters";
+import { getChainSecret } from "@/lib/server/audit-chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,10 +52,11 @@ interface TamperMarker {
 function computeEntryHash(prevHash: string | undefined, payload: unknown, at: string, seq: number, hashAlg?: string): string {
   const input = `${prevHash ?? ""}::${seq}::${at}::${JSON.stringify(payload)}`;
   if (hashAlg === "hmac-sha256") {
-    const secret = process.env["AUDIT_CHAIN_SECRET"];
-    if (!secret) return ""; // cannot verify without the secret — caller will see hashValid:false
-    // Derive per-tenant key the same way audit-chain.ts does for the default tenant
-    const tenantKey = createHmac("sha256", secret).update("default").digest("hex");
+    // Use getChainSecret() from audit-chain.ts — it applies the correct
+    // "hawkeye-audit-chain-v1:{tenantId}" domain label when deriving the key,
+    // and honours per-tenant AUDIT_CHAIN_SECRET_DEFAULT overrides.
+    const tenantKey = getChainSecret("default");
+    if (!tenantKey) return ""; // cannot verify without the secret — caller will see hashValid:false
     return createHmac("sha256", tenantKey).update(input).digest("hex");
   }
   return createHash("sha256").update(input, "utf8").digest("hex");

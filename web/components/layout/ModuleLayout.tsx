@@ -1,9 +1,10 @@
 "use client";
 
-import { type ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
 import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import {
   type SidebarFilterItem,
@@ -63,6 +64,8 @@ export function ModuleLayout<K extends string = string>({
 }: ModuleLayoutProps<K>) {
   const searchParams = useSearchParams();
   const embedded = searchParams?.get("embed") === "1";
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   if (embedded) {
     return (
       <main className="px-4 py-4 md:px-8 md:py-6">
@@ -72,7 +75,8 @@ export function ModuleLayout<K extends string = string>({
   }
   return (
     <>
-      <Header />
+      <Header onMenuOpen={() => setMobileNavOpen(true)} />
+      <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">

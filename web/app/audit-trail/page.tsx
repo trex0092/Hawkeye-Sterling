@@ -339,13 +339,13 @@ export default function AuditTrailPage() {
         )}
 
         <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-12.5">
+          <table className="w-full min-w-[360px] border-collapse text-12.5">
             <thead className="bg-bg-1 border-b border-hair-2">
               <tr>
                 <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-36">
                   Timestamp
                 </th>
-                <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-28">
+                <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-28 hidden sm:table-cell">
                   Actor
                 </th>
                 <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-40">
@@ -354,7 +354,7 @@ export default function AuditTrailPage() {
                 <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
                   Target
                 </th>
-                <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-32">
+                <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-32 hidden lg:table-cell">
                   Hash
                 </th>
                 <th className="w-[44px]" aria-label="Actions" />
@@ -384,7 +384,7 @@ export default function AuditTrailPage() {
                       <td className={`px-4 py-2.5 font-mono text-10 text-ink-2 ${leftBorderCls} ${isLast ? "" : "border-b border-hair"}`}>
                         {formatDMYTimeSec(entry.timestamp)}
                       </td>
-                      <td className={`px-4 py-2.5 text-12 text-ink-0 ${isLast ? "" : "border-b border-hair"}`}>
+                      <td className={`px-4 py-2.5 text-12 text-ink-0 hidden sm:table-cell ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.actor}
                       </td>
                       <td className={`px-4 py-2.5 ${isLast ? "" : "border-b border-hair"}`}>
@@ -393,7 +393,7 @@ export default function AuditTrailPage() {
                       <td className={`px-4 py-2.5 text-12 text-ink-0 ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.target}
                       </td>
-                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-3 break-all ${isLast ? "" : "border-b border-hair"}`}>
+                      <td className={`px-4 py-2.5 font-mono text-10 text-ink-3 break-all hidden lg:table-cell ${isLast ? "" : "border-b border-hair"}`}>
                         {entry.hash}
                       </td>
                       <td className={`px-2 py-2.5 text-right ${isLast ? "" : "border-b border-hair"}`}>

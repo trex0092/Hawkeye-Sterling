@@ -284,7 +284,7 @@ async function handleGoaml(req: Request): Promise<Response> {
     console.error("[goaml] entity ID validation failed:", msg);
     return NextResponse.json(
       { ok: false, error: msg, code: "GOAML_ENTITY_PLACEHOLDER" },
-      { status: 503 },
+      { status: 503, headers: gateHeaders },
     );
   }
 
