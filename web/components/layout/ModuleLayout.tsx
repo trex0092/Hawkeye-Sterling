@@ -6,7 +6,6 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
-  SidebarMLROCard,
   SidebarSection,
   type SidebarFilterItem,
 } from "./SidebarParts";
@@ -78,10 +77,6 @@ export function ModuleLayout<K extends string = string>({
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <Sidebar>
-            <SidebarSection title="Regulatory">
-              <SidebarMLROCard />
-            </SidebarSection>
-
             {sidebarActions && (
               <SidebarSection title="Actions">
                 <div className="flex flex-col gap-2 px-2">{sidebarActions}</div>
