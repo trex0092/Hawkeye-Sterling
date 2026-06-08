@@ -12,6 +12,13 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 // Groups: Onboarding & CDD · Risk & AML Ops · Governance & Audit · Enrichment · Intelligence
 const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: string; hint: string }> }> = [
   {
+    title: "Compliance",
+    items: [
+      { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing", hint: "Whistleblowing & grievance management" },
+      { label: "🔐 Access Control", href: "/access-control", hint: "User roles, sessions & permissions" },
+    ],
+  },
+  {
     // Client lifecycle: intake → KYC → ongoing CDD → data quality
     title: "Onboarding & CDD",
     items: [
@@ -126,8 +133,6 @@ export function Header() {
     { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
     { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
     { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
-    { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing" },
-    { label: "🔐 Access Control", href: "/access-control" },
   ];
 
   useEffect(() => {
