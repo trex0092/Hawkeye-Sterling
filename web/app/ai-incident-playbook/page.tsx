@@ -173,14 +173,6 @@ export default function AIIncidentPlaybookPage() {
         </ActionButton>
       }
     >
-      <ModuleFamilyBar
-        suiteName="AI Governance"
-        modules={[
-          { label: "AI Incident Playbook", href: "/ai-incident-playbook", icon: "🤖" },
-          { label: "Shadow AI Register", href: "/shadow-ai", icon: "👁️" },
-          { label: "Vendor AI Audit", href: "/vendor-ai-audit", icon: "🏢" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="AI Incident Response"

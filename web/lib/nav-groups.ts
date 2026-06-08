@@ -56,7 +56,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · UAE-specific localised content" },
       { label: "📖 Playbook", href: "/playbook", hint: "Step-by-step AML/CFT compliance playbooks" },
       { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
-      { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
+      { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection" },
+      { label: "👁️ Shadow AI Register", href: "/shadow-ai", hint: "Unauthorized AI tool detection & remediation · No-DPA vendors · Data classification risk" },
+      { label: "🏢 Vendor AI Audit", href: "/vendor-ai-audit", hint: "AI vendor due diligence · DPA · model card · penetration testing · SLAs · CBUAE audit trail" },
     ],
   },
   {
