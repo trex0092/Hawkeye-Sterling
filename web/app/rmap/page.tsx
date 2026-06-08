@@ -89,7 +89,7 @@ export default function RmapPage() {
         intro="Conformant smelter lookup · CMRT v6.01 export · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 annual certification"
       />
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 space-y-5">
+      <div className="w-full px-4 pb-16 space-y-5">
 
         {/* Regulatory callout */}
         <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30 text-xs text-amber-300 font-mono">

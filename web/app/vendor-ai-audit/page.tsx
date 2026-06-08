@@ -160,7 +160,7 @@ export default function VendorAIAuditPage() {
         intro="AI vendor due diligence · DPA · model card · penetration testing · bias audit · right-to-audit clause"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Assess New Vendor button moved to sidebar Actions */}
 

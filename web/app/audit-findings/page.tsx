@@ -192,7 +192,7 @@ export default function AuditFindingsPage() {
         intro="Internal audit findings · remediation tracking · MLRO sign-off · Board Audit Committee"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>

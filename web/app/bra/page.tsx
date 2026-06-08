@@ -125,7 +125,7 @@ export default function BraPage() {
         intro="DNFBP risk scoring · 90-day review cycle · inherent risk · controls effectiveness · residual risk"
       />
 
-      <div className="mx-auto max-w-4xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Action bar */}
         <div className="flex justify-end">

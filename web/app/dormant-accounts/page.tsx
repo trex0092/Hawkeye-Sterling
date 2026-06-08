@@ -206,7 +206,7 @@ export default function DormantAccountsPage() {
         intro="12-month inactivity threshold · re-KYC on reactivation · MLRO notification · CBUAE §8.4"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Action bar */}
         <div className="flex items-center justify-end gap-4">

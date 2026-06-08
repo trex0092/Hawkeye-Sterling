@@ -766,14 +766,6 @@ export default function GrievancesWhistleblowingPage() {
           {/* ══ MAIN ══ */}
           <main className="gw-main-panel" style={{ padding: "28px 16px 60px", minWidth: 0 }}>
 
-            {/* Breadcrumbs */}
-            <div style={mono({ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, display: "flex", gap: 10, alignItems: "center" })}>
-              <span>FORMS</span><span style={{ color: V.muted2 }}>·</span>
-              <span>MORE</span><span style={{ color: V.muted2 }}>·</span>
-              <span>Governance & Audit</span><span style={{ color: V.muted2 }}>·</span>
-              <span style={{ color: V.ember }}>Grievances & Whistleblowing</span>
-            </div>
-
             {/* ── HERO ── */}
             <section style={{ marginTop: 14, paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
               <div>

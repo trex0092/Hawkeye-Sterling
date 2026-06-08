@@ -182,7 +182,7 @@ export default function CoiRegisterPage() {
         intro="Staff declarations · MLRO sign-off · annual review · conflict management · CBUAE governance"
       />
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 space-y-5">
+      <div className="w-full px-4 pb-16 space-y-5">
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>

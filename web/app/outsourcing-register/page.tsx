@@ -194,7 +194,7 @@ export default function OutsourcingRegisterPage() {
         intro="Third-party AML/CFT arrangements · Board approval · annual MLRO review · agreement currency"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Action bar */}
         <div className="flex items-center justify-end gap-4">

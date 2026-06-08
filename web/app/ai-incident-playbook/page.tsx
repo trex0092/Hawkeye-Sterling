@@ -179,7 +179,7 @@ export default function AIIncidentPlaybookPage() {
         intro="Step-by-step AI failure response · Hallucination · Bias · Prompt injection · Data leakage · CBUAE reporting"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Stat tiles removed; Log AI Incident button lives in sidebar Actions */}
 

@@ -99,7 +99,7 @@ export default function LbmaPage() {
         intro="Counterparty due diligence questionnaires · GDL verification · CAHRA sourcing · supply chain traceability · LBMA RGG V9"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-5">
+      <div className="w-full px-4 pb-16 space-y-5">
 
         {/* Action bar */}
         <div className="flex justify-end">

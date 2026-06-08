@@ -160,7 +160,7 @@ export default function ShadowAIPage() {
         intro="Unauthorized AI tool detection & remediation · Unregistered LLMs · No-DPA vendors · Data classification risk"
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-16 space-y-6">
+      <div className="w-full px-4 pb-16 space-y-6">
 
         {/* Stat tiles removed; Report Shadow AI button lives in sidebar Actions */}
 

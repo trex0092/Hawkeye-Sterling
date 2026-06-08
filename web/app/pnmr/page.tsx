@@ -117,7 +117,7 @@ export default function PnmrQueuePage() {
         intro="Provisional Notification of Match Records · goAML submission · 48-hour SLA · false positive resolution"
       />
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 space-y-4">
+      <div className="w-full px-4 pb-16 space-y-4">
 
         {/* Overdue banner */}
         {overdueCount > 0 && (
