@@ -16,6 +16,7 @@ import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { postScreeningReport } from "@/lib/api/screeningReport";
 import { formatDMY } from "@/lib/utils/dateFormat";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
+import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { BrainNarrative } from "@/components/screening/BrainNarrative";
 import { BrainReasoningChain } from "@/components/screening/BrainReasoningChain";
 import {
@@ -1123,6 +1124,14 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             >
               Replay
             </a>
+            <AsanaReportButton
+              payload={{
+                module: "screening",
+                label: subject.name,
+                summary: `Screening report for ${subject.name} (${subject.id}) — risk score ${effectiveScore}/100`,
+                metadata: { subjectId: subject.id, riskScore: effectiveScore },
+              }}
+            />
             <PanelBtn
               brand
               onClick={handleRaiseSTR}

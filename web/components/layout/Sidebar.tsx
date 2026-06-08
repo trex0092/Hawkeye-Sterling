@@ -2,14 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  // SidebarFilterList: imported until pin/save/delta UX lands; alias-only
-  // keeps the import path warm for IDEs without raising no-unused-vars.
-  SidebarFilterList as _SidebarFilterList,
-  SidebarMLROCard,
+  SidebarFilterList,
   SidebarSection,
   SidebarShell,
 } from "./SidebarParts";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import type { FilterKey, QueueFilter, SavedFilterSet } from "@/lib/types";
 
 const PINNED_KEY = "hawkeye.pinned-filters";
@@ -144,17 +140,17 @@ export function Sidebar({ filters, activeFilters, onFiltersChange, onRefresh }: 
 
   return (
     <SidebarShell>
-      <SidebarSection title="Regulatory">
-        <SidebarMLROCard />
-      </SidebarSection>
-      <SidebarSection title="Report">
-        <AsanaReportButton
-          payload={{
-            module: "screening",
-            label: "Screening Queue",
-            summary:
-              "Screening report submitted from the Hawkeye Sterling dashboard — current queue state and active filters.",
-          }}
+      <SidebarSection title="Queue">
+        <SidebarFilterList
+          items={filters}
+          activeKeys={activeFilters}
+          onSelect={_handleSelect}
+          countDeltas={_countDeltas}
+          lastRefreshed={lastRefreshed}
+          savedFilters={_savedFilters}
+          onSaveFilter={_saveFilterSet}
+          onDeleteSaved={_deleteSavedFilter}
+          onApplySaved={onFiltersChange}
         />
       </SidebarSection>
     </SidebarShell>

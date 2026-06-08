@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 type Step = "loading" | "scan" | "verify" | "done" | "disable" | "error";
 
@@ -129,9 +130,9 @@ export default function TotpSetupPage() {
       <div style={card}>
         {/* Header */}
         <div style={{ marginBottom: "28px" }}>
-          <a href="/" style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", textDecoration: "none" }}>
+          <Link href="/" style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", textDecoration: "none" }}>
             ← Back to app
-          </a>
+          </Link>
           <div style={{ fontSize: "20px", fontWeight: 700, color: "#fff", marginTop: "14px" }}>
             Two-factor authentication
           </div>
@@ -257,9 +258,9 @@ export default function TotpSetupPage() {
             <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
               From now on, you will be asked for a 6-digit code from Google Authenticator each time you sign in.
             </div>
-            <a href="/" style={{ display: "block", marginTop: "20px", ...btnPrimary, textAlign: "center", textDecoration: "none" }}>
+            <Link href="/" style={{ display: "block", marginTop: "20px", ...btnPrimary, textAlign: "center", textDecoration: "none" }}>
               Back to app
-            </a>
+            </Link>
           </>
         )}
 
