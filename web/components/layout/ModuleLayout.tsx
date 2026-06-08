@@ -154,11 +154,6 @@ function ModuleHeroInner({
           </>
         )}
       </h1>
-      {intro && (
-        <div className="max-w-[68ch] text-ink-1 text-13.5 leading-[1.6] mt-3">
-          {intro}
-        </div>
-      )}
     </div>
   );
 }

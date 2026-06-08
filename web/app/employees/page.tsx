@@ -359,13 +359,6 @@ export default function EmployeesPage() {
           }
         />
 
-        <ModuleFamilyBar
-          suiteName="People & Training"
-          modules={[
-            { label: "Employees", href: "/employees", icon: "🧑‍💼" },
-            { label: "Training", href: "/training", icon: "🎓" },
-          ]}
-        />
 
         {/* Summary bar */}
         <div className="flex items-center gap-4 mt-6 mb-4">
