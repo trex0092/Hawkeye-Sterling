@@ -74,14 +74,13 @@ function StepProgress({ step, state }: { step: typeof OECD_STEPS[0]; state: Resp
   const s = state[`step${step.n}` as keyof ResponsibleSourcingState] as ResponsibleSourcingState["step1"] | undefined;
   const completed = s?.completed ?? false;
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${completed ? "bg-green-dim border-green/30" : "bg-bg-panel border-hair-2"}`}>
-      <span className="text-18 shrink-0">{step.icon}</span>
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border flex-1 min-w-0 ${completed ? "bg-green-dim border-green/30" : "bg-bg-panel border-hair-2"}`}>
       <div className="flex-1 min-w-0">
-        <div className="text-12 font-semibold text-ink-0">Step {step.n}: {step.title}</div>
-        <div className="text-10 text-ink-3 font-mono">{step.legalRef}</div>
+        <div className="text-11 font-semibold text-ink-0 truncate">Step {step.n}: {step.title}</div>
+        <div className="text-9 text-ink-3 font-mono truncate">{step.legalRef}</div>
       </div>
-      <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase shrink-0 ${completed ? "bg-green-dim text-green border border-green/30" : "bg-bg-2 text-ink-3 border border-hair"}`}>
-        {completed ? "Complete" : "Pending"}
+      <span className={`inline-flex items-center px-1.5 py-px rounded font-mono text-9 font-semibold uppercase shrink-0 ${completed ? "bg-green-dim text-green border border-green/30" : "bg-bg-2 text-ink-3 border border-hair"}`}>
+        {completed ? "Done" : "Pending"}
       </span>
     </div>
   );
@@ -294,7 +293,7 @@ export default function ResponsibleSourcingPage() {
         <div className="h-2 bg-bg-2 rounded-full overflow-hidden mb-1">
           <div className={`h-full rounded-full transition-all ${isComplete ? "bg-green" : "bg-brand"}`} style={{ width: `${progressPct}%` }} />
         </div>
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="flex gap-2 mt-2">
           {OECD_STEPS.map((step) => <StepProgress key={step.n} step={step} state={workflow} />)}
         </div>
       </div>
