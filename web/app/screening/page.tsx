@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState, useCallback } f
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import { ScreeningHero } from "@/components/screening/ScreeningHero";
 import { ScreeningToolbar } from "@/components/screening/ScreeningToolbar";
 import { ScreeningTable } from "@/components/screening/ScreeningTable";
@@ -1360,6 +1361,7 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule="screening" asanaLabel="Screening" />
       <div className={`grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line${(selected || compareIds.size === 2) && !formOpen ? " lg:grid-cols-[220px_1fr_480px]" : ""}`}>
         <div className="hidden md:block">
           <Sidebar />

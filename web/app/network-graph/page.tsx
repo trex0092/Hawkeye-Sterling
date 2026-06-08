@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import type { RelationshipGraph, GraphNode, GraphEdge } from "@/lib/server/relationship-graph";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { Subject } from "@/lib/types";
@@ -597,6 +598,7 @@ export default function NetworkGraphPage() {
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule="network-graph" asanaLabel="Network Graph" />
       <div className="min-h-screen bg-bg-0 text-ink-0">
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Page header */}

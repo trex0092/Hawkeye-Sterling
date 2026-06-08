@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import { CasesSidebar } from "@/components/cases/CasesSidebar";
 import { CasesHero } from "@/components/cases/CasesHero";
 import { CasesToolbar } from "@/components/cases/CasesToolbar";
@@ -186,6 +187,7 @@ export default function CasesPage() {
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule="cases" asanaLabel="Cases" />
       <div className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[220px_1fr]">
         <div className="hidden md:block">
           <CasesSidebar

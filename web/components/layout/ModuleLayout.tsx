@@ -4,7 +4,7 @@ import { type ReactNode, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import {
   SidebarSection,
   type SidebarFilterItem,
@@ -74,28 +74,11 @@ export function ModuleLayout<K extends string = string>({
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <Sidebar>
-            {sidebarActions && (
-              <SidebarSection title="Actions">
-                <div className="flex flex-col gap-2 px-2">{sidebarActions}</div>
-              </SidebarSection>
-            )}
-
             {sidebarExtra}
-
-            {asanaModule && (
-              <SidebarSection title="Report">
-                <AsanaReportButton
-                  payload={{
-                    module: asanaModule,
-                    label: asanaLabel ?? asanaModule,
-                    summary: `Module report submitted from Hawkeye Sterling dashboard — ${asanaLabel ?? asanaModule}.`,
-                  }}
-                />
-              </SidebarSection>
-            )}
           </Sidebar>
         </div>
 

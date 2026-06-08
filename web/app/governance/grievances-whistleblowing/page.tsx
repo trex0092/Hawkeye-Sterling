@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -545,6 +545,11 @@ export default function GrievancesWhistleblowingPage() {
 
   return (
     <>
+      <ModuleActionBar
+        asanaModule="grievances-whistleblowing"
+        asanaLabel="Grievances & Whistleblowing"
+        asanaSummary={`Grievances & Whistleblowing report — open ${stats.open} · resolved ${stats.resolved} · escalated ${stats.escalated} · SLA ${stats.slaHitPct}%.`}
+      />
       {/* nosemgrep: react-dangerously-set-innerhtml -- safe: PAGE_CSS is a compile-time static string constant defined in this file, not user input */}
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
 
@@ -961,27 +966,6 @@ export default function GrievancesWhistleblowingPage() {
                     <div style={{ marginTop: 4, fontSize: 11, color: V.ink2, lineHeight: 1.5 }}>Where the matter may relate to ML/TF, do <strong>not</strong> disclose, confirm or discuss the existence of any report, investigation or internal review with any third party.</div>
                   </div>
 
-                  {/* Asana report */}
-                  <div style={{ margin: "0 18px 18px" }}>
-                    <AsanaReportButton
-                      payload={{
-                        module: "grievances-whistleblowing",
-                        label: "Grievances & Whistleblowing",
-                        summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): open ${stats.open} · resolved ${stats.resolved} · escalated ${stats.escalated} · SLA hit ${stats.slaHitPct}%. Routed to 19 · Incidents & Grievances board.`,
-                        url: "/governance/grievances-whistleblowing",
-                        metadata: {
-                          policyCode: "FG/GVW/004",
-                          version: "004",
-                          effective: "28 NOV 2025",
-                          owner: "Compliance Dpt",
-                          openCases: stats?.open ?? null,
-                          resolvedCases: stats?.resolved ?? null,
-                          escalatedCases: stats?.escalated ?? null,
-                          slaHitPct: stats?.slaHitPct ?? null,
-                        },
-                      }}
-                    />
-                  </div>
 
                 </div>
               </aside>

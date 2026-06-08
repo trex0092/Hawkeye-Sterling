@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import type { ScreeningHistoryEntry } from "@/lib/types";
 
@@ -89,6 +90,7 @@ export default function ReplayPage() {
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule="screening-replay" asanaLabel="Screening Replay" />
       <main className="max-w-5xl mx-auto px-10 py-8">
         <div className="mb-6">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const PINK = "#D20055";
@@ -557,6 +558,7 @@ export default function ReportsPreviewPage() {
   return (
     <>
       <Header />
+      <ModuleActionBar asanaModule="reports-preview" asanaLabel="Reports Preview" />
       <div className="min-h-[calc(100vh-84px)] bg-bg px-4 py-8 md:px-10">
         <div className="mb-6">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">
