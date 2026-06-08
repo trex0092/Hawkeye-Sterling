@@ -457,18 +457,18 @@ export default function TrainingPage() {
             {/* Programme table */}
             <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-12 min-w-[1100px]">
+                <table className="w-full text-12 min-w-[480px]">
                   <thead className="bg-bg-1 border-b border-hair-2">
                     <tr>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-10">#</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-24">Month</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-28">Date (Week)</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-10 hidden sm:table-cell">#</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-24 hidden md:table-cell">Month</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-28 hidden sm:table-cell">Date (Week)</th>
                       <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono">Subject</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-16">Hrs</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-40">Target Audience</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-52">Areas of Training</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-44">Training Activities</th>
-                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-40">Regulatory Basis</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-16 hidden sm:table-cell">Hrs</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-40 hidden lg:table-cell">Target Audience</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-52 hidden lg:table-cell">Areas of Training</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-44 hidden lg:table-cell">Training Activities</th>
+                      <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-40 hidden md:table-cell">Regulatory Basis</th>
                       <th className="text-left px-3 py-2 text-10 uppercase tracking-wide-3 text-ink-2 font-mono w-28">Status</th>
                       <th className="w-[48px]" />
                     </tr>
@@ -508,15 +508,15 @@ export default function TrainingPage() {
                             isMonthStart && i > 0 ? "border-t-2 border-hair-2" : "",
                           ].join(" ")}
                         >
-                          <td className="px-3 py-2 font-mono text-10 text-ink-3">{s.session}</td>
-                          <td className="px-3 py-2 text-11 text-ink-2 font-medium">{isMonthStart ? s.month : ""}</td>
-                          <td className="px-3 py-2 font-mono text-11 text-ink-2">{s.dateWeek}</td>
+                          <td className="px-3 py-2 font-mono text-10 text-ink-3 hidden sm:table-cell">{s.session}</td>
+                          <td className="px-3 py-2 text-11 text-ink-2 font-medium hidden md:table-cell">{isMonthStart ? s.month : ""}</td>
+                          <td className="px-3 py-2 font-mono text-11 text-ink-2 hidden sm:table-cell">{s.dateWeek}</td>
                           <td className="px-3 py-2 text-ink-0 font-medium">{s.subject}</td>
-                          <td className="px-3 py-2 font-mono text-11 text-ink-2 text-center">{s.durationHrs}</td>
-                          <td className="px-3 py-2 text-11 text-ink-1">{s.audience}</td>
-                          <td className="px-3 py-2 text-11 text-ink-2">{s.areas}</td>
-                          <td className="px-3 py-2 text-11 text-ink-2">{s.activities}</td>
-                          <td className="px-3 py-2 font-mono text-10 text-ink-2">{s.regulatoryBasis}</td>
+                          <td className="px-3 py-2 font-mono text-11 text-ink-2 text-center hidden sm:table-cell">{s.durationHrs}</td>
+                          <td className="px-3 py-2 text-11 text-ink-1 hidden lg:table-cell">{s.audience}</td>
+                          <td className="px-3 py-2 text-11 text-ink-2 hidden lg:table-cell">{s.areas}</td>
+                          <td className="px-3 py-2 text-11 text-ink-2 hidden lg:table-cell">{s.activities}</td>
+                          <td className="px-3 py-2 font-mono text-10 text-ink-2 hidden md:table-cell">{s.regulatoryBasis}</td>
                           <td className="px-3 py-2">
                             <span className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold whitespace-nowrap ${PROG_STATUS_TONE[s.status]}`}>
                               {PROG_STATUS_LABEL[s.status]}

@@ -50,7 +50,11 @@ interface CheckOpts {
 let _detectHallucinations: ((_text: string, _citations: ReturnType<typeof buildCitationsFromFragments>) => { hasHallucination: boolean; severity: HallucinationResult['severity']; detectedPatterns: string[] }) | null = null;
 let _detectHallucinationsLoadErr: string | null = null;
 
-void import('@brain/GroundedComplianceLLM.js').then((m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
+// Single shared loading promise — both the eager module-scope load and the
+// per-request fallback path await the same promise, eliminating the race where
+// two concurrent imports could leave _detectHallucinationsLoadErr stale after
+// a successful per-request load.
+const _brainModuleLoad: Promise<void> = import('@brain/GroundedComplianceLLM.js').then((m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
   _detectHallucinations = m.detectHallucinations;
 }).catch((err: unknown) => {
   _detectHallucinationsLoadErr = err instanceof Error ? err.message : String(err);
@@ -83,15 +87,13 @@ export async function checkHallucination(
 
   let skipReason: string | undefined;
   try {
-    // Use module-level cached loader; fall back to dynamic import if still loading.
-    const detectRaw = _detectHallucinations ?? await import('@brain/GroundedComplianceLLM.js').then(
-      (m: { detectHallucinations: NonNullable<typeof _detectHallucinations> }) => {
-        _detectHallucinations = m.detectHallucinations;
-        return m.detectHallucinations;
-      },
-    );
-    // Guard required by TypeScript — module-level let prevents narrowing through ??.
-    if (!detectRaw) throw new Error('detectHallucinations module not loaded');
+    // If the module hasn't finished loading yet, await the single shared promise
+    // rather than launching a second dynamic import (which would race with it).
+    if (!_detectHallucinations) {
+      await _brainModuleLoad;
+    }
+    const detectRaw = _detectHallucinations;
+    if (!detectRaw) throw new Error(_detectHallucinationsLoadErr ?? 'detectHallucinations module not loaded');
     const citations = buildCitationsFromFragments(evidenceFragments);
     const result = detectRaw(responseText, citations);
     detected = result.hasHallucination;

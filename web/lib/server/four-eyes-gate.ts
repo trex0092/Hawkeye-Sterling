@@ -194,22 +194,37 @@ async function _recordApproval(
     // storage but remains invisible to getCaseApprovals() (its digest won't
     // match) so it cannot contribute to a false quorum. The hawkeye_four_eyes_orphan_total
     // counter + critical alert lets ops clean it up manually (H-3).
-    await del(approvalKey(input.caseId, approvalId)).catch(async () => {
+    // Emit critical alert on first failure — don't wait for retry to surface ops risk.
+    // The orphan is invisible to getCaseApprovals() (digest mismatch) but must be
+    // cleaned up manually; early alerting gives ops maximum response time.
+    let deleteOk = false;
+    try {
+      await del(approvalKey(input.caseId, approvalId));
+      deleteOk = true;
+    } catch (firstErr: unknown) {
+      const firstErrMsg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+      log({ level: "warn", route: "four-eyes-gate", event: "four_eyes.orphan_delete_first_attempt_failed", caseId: input.caseId, approvalId, err: firstErrMsg });
+      incrementCounter('hawkeye_four_eyes_orphan_total', 1, {});
+      void emitAndLog('alert_four_eyes_orphan', {
+        event: 'four_eyes_orphaned_approval',
+        caseId: input.caseId,
+        approvalId,
+        error: firstErrMsg,
+        severity: 'critical',
+        at: new Date().toISOString(),
+      }).catch(() => undefined);
       await new Promise((r) => setTimeout(r, 200));
-      await del(approvalKey(input.caseId, approvalId)).catch((retryErr) => {
+      try {
+        await del(approvalKey(input.caseId, approvalId));
+        deleteOk = true;
+      } catch (retryErr: unknown) {
         const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
         log({ level: "error", route: "four-eyes-gate", event: "four_eyes.orphan_delete_failed", caseId: input.caseId, approvalId, err: errMsg });
-        incrementCounter('hawkeye_four_eyes_orphan_total', 1, {});
-        void emitAndLog('alert_four_eyes_orphan', {
-          event: 'four_eyes_orphaned_approval',
-          caseId: input.caseId,
-          approvalId,
-          error: errMsg,
-          severity: 'critical',
-          at: new Date().toISOString(),
-        }).catch(() => undefined);
-      });
-    });
+      }
+    }
+    if (!deleteOk) {
+      log({ level: "error", route: "four-eyes-gate", event: "four_eyes.orphan_persists", caseId: input.caseId, approvalId });
+    }
     const earlier = actorDecisions[0]!;
     return {
       status: await getCaseApprovals(input.caseId),

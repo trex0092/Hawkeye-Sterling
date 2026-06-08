@@ -562,7 +562,7 @@ export default function AdverseMediaLivePage() {
               </div>
 
               {/* Summary */}
-              <div className="flex-1 min-w-[280px]">
+              <div className="flex-1 sm:min-w-[280px]">
                 <div className="text-10 font-mono uppercase tracking-wide-3 text-ink-2 mb-1.5 font-semibold">
                   AI summary
                 </div>

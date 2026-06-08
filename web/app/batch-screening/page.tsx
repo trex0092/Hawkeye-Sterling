@@ -75,18 +75,18 @@ function ResultsTable({ results }: { results: BatchResult[] }) {
       <table className="w-full text-11 border-collapse">
         <thead>
           <tr className="border-b border-hair-2 bg-bg-1">
-            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">#</th>
+            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2 hidden sm:table-cell">#</th>
             <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">Subject</th>
             <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">Verdict</th>
             <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">Risk</th>
-            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">Matches</th>
-            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2">ms</th>
+            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2 hidden sm:table-cell">Matches</th>
+            <th className="text-left px-3 py-2 font-semibold text-ink-3 uppercase tracking-wide-2 hidden md:table-cell">ms</th>
           </tr>
         </thead>
         <tbody>
           {results.map((r, i) => (
             <tr key={r.subjectId} className="border-b border-hair-2 last:border-0 hover:bg-bg-1/50 transition-colors">
-              <td className="px-3 py-2 text-ink-4 font-mono text-10">{i + 1}</td>
+              <td className="px-3 py-2 text-ink-4 font-mono text-10 hidden sm:table-cell">{i + 1}</td>
               <td className="px-3 py-2 text-ink-0 font-medium max-w-[200px] truncate" title={r.name}>{r.name}</td>
               <td className="px-3 py-2">
                 <span className={`inline-flex items-center gap-1 px-1.5 py-px rounded border font-mono text-9 font-semibold uppercase tracking-wide-2 ${verdictBadge(r.verdict)}`}>
@@ -97,8 +97,8 @@ function ResultsTable({ results }: { results: BatchResult[] }) {
               <td className="px-3 py-2 font-mono text-10 text-ink-2">
                 {r.riskScore !== null ? r.riskScore.toFixed(2) : "—"}
               </td>
-              <td className="px-3 py-2 font-mono text-10 text-ink-2">{r.matchCount}</td>
-              <td className="px-3 py-2 font-mono text-10 text-ink-4">{r.processingMs}</td>
+              <td className="px-3 py-2 font-mono text-10 text-ink-2 hidden sm:table-cell">{r.matchCount}</td>
+              <td className="px-3 py-2 font-mono text-10 text-ink-4 hidden md:table-cell">{r.processingMs}</td>
             </tr>
           ))}
         </tbody>

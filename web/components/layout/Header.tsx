@@ -11,7 +11,7 @@ function applyTheme(theme: "light" | "dark"): void {
   document.documentElement.setAttribute("data-theme", theme);
 }
 
-export function Header() {
+export function Header({ onMenuOpen }: { onMenuOpen?: () => void } = {}) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -33,6 +33,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
+        {/* Hamburger — mobile only */}
+        {onMenuOpen && (
+          <button
+            type="button"
+            onClick={onMenuOpen}
+            aria-label="Open navigation menu"
+            className="md:hidden flex items-center justify-center w-[44px] h-[44px] rounded border border-hair-2 text-ink-1 hover:text-ink-0 hover:bg-bg-2 transition-colors shrink-0 mr-1"
+          >
+            <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+              <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
         <Link
           href="/"
           className="inline-flex items-center gap-2.5 text-ink-0 no-underline shrink-0"
@@ -49,14 +62,14 @@ export function Header() {
           <a
             href="/profile"
             title="My profile & password"
-            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0 transition-colors no-underline"
+            className="border border-hair-2 rounded px-3 py-1.5 min-h-[36px] inline-flex items-center text-10.5 text-ink-1 hover:text-ink-0 transition-colors no-underline"
           >
             👤 Profile
           </a>
           <button
             type="button"
             onClick={toggleTheme}
-            className="border border-hair-2 rounded px-2 py-0.5 text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
+            className="border border-hair-2 rounded px-3 py-1.5 min-h-[36px] text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
             title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
             aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >

@@ -97,7 +97,9 @@ export async function recordDecision(
 
     // Recompute report every 50 entries
     if (pruned.length % 50 === 0) {
-      void computeDriftReport(tenant, pruned).catch(() => undefined);
+      void computeDriftReport(tenant, pruned).catch((err: unknown) => {
+        console.error("[drift-monitor] recomputation failed — drift report may be stale:", err instanceof Error ? err.message : String(err));
+      });
     }
   } catch (err) {
     console.warn("[drift-monitor] recordDecision failed (non-critical):", err instanceof Error ? err.message : String(err));

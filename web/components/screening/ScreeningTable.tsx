@@ -66,7 +66,7 @@ export function ScreeningTable({
   const allSelected = showCheckboxes && allRowIds.length > 0 && allRowIds.every((id) => selectedRowIds?.has(id));
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
-      <table className="w-full border-collapse text-12.5 min-w-[640px]">
+      <table className="w-full border-collapse text-12.5 min-w-[320px]">
         <thead className="bg-bg-1 border-b border-hair-2">
           <tr>
             {showCheckboxes && (
@@ -118,7 +118,7 @@ export function ScreeningTable({
                 activeKey={sortKey}
                 dir={sortDir}
                 onSort={onSortChange}
-                className="w-[60px]"
+                className="w-[60px] hidden sm:table-cell"
               />
             )}
             {columns.sla && (
@@ -128,16 +128,16 @@ export function ScreeningTable({
                 activeKey={sortKey}
                 dir={sortDir}
                 onSort={onSortChange}
-                className="w-[70px]"
+                className="w-[70px] hidden sm:table-cell"
               />
             )}
             {columns.lists && (
-              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2">
+              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 hidden sm:table-cell">
                 Lists
               </th>
             )}
             {columns.snooze && (
-              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-[100px]">
+              <th className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 w-[100px] hidden sm:table-cell">
                 Snooze
               </th>
             )}
@@ -251,17 +251,17 @@ export function ScreeningTable({
                   </td>
                 )}
                 {columns.cdd && (
-                  <td className={`px-4 py-3 ${cellBorder}`}>
+                  <td className={`px-4 py-3 hidden sm:table-cell ${cellBorder}`}>
                     <CddBadge posture={subject.cddPosture} />
                   </td>
                 )}
                 {columns.sla && (
-                  <td className={`px-4 py-3 ${cellBorder}`}>
+                  <td className={`px-4 py-3 hidden sm:table-cell ${cellBorder}`}>
                     <SlaBadge hours={slh} raw={subject.slaNotify} />
                   </td>
                 )}
                 {columns.lists && (
-                  <td className={`px-4 py-3 ${cellBorder}`}>
+                  <td className={`px-4 py-3 hidden sm:table-cell ${cellBorder}`}>
                     <div className="flex flex-wrap gap-1">
                       {subject.listCoverage.map((source) => (
                         <SanctionTag key={source} source={source} />
@@ -270,7 +270,7 @@ export function ScreeningTable({
                   </td>
                 )}
                 {columns.snooze && (
-                  <td className={`px-4 py-3 ${cellBorder}`}>
+                  <td className={`px-4 py-3 hidden sm:table-cell ${cellBorder}`}>
                     {subject.snoozedUntil ? (
                       <span className="text-10 font-mono text-amber">
                         until {subject.snoozedUntil.slice(0, 10)}

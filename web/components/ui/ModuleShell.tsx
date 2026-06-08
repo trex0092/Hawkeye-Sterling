@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 export function ModuleShell({ children }: { children: ReactNode }) {
-  return <div className="max-w-[1440px] mx-auto px-10 py-8">{children}</div>;
+  return <div className="max-w-[1440px] mx-auto px-4 py-4 md:px-8 md:py-6 lg:px-10 lg:py-8">{children}</div>;
 }
 
 interface ModuleHeaderProps {

@@ -1303,7 +1303,7 @@ export default function StrCasesPage() {
             })()}
 
             {/* Key factors */}
-            <div className="flex-1 min-w-[240px]">
+            <div className="flex-1 sm:min-w-[240px]">
               <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2 mb-2">Key Factors</div>
               <ul className="space-y-1">
                 {sarResult.keyFactors.map((f, i) => (

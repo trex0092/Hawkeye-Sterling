@@ -20,14 +20,14 @@ export function CasesTable({
 }: CasesTableProps) {
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-xl overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-12.5">
+      <table className="w-full min-w-[320px] border-collapse text-12.5">
         <thead className="bg-bg-1 border-b border-hair-2">
           <tr>
             <Th width="100px">Case ID</Th>
             <Th>Subject</Th>
             <Th>Status</Th>
-            <Th>Evidence</Th>
-            <Th>Last activity</Th>
+            <Th className="hidden sm:table-cell">Evidence</Th>
+            <Th className="hidden sm:table-cell">Last activity</Th>
             <th className="w-[60px]" aria-label="Actions" />
           </tr>
         </thead>
@@ -54,12 +54,12 @@ export function CasesTable({
                 <Td isLast={isLast}>
                   <StatusTag status={record.status} label={record.statusLabel} />
                 </Td>
-                <Td isLast={isLast}>
+                <Td isLast={isLast} className="hidden sm:table-cell">
                   <span className="font-mono text-11.5 text-ink-0">
                     {record.evidenceCount}
                   </span>
                 </Td>
-                <Td isLast={isLast}>
+                <Td isLast={isLast} className="hidden sm:table-cell">
                   <span className="text-11.5 text-ink-2">{record.lastActivity}</span>
                 </Td>
                 <td className={`px-2 py-3 ${isLast ? "" : "border-b border-hair"}`}>
@@ -90,10 +90,10 @@ export function CasesTable({
   );
 }
 
-function Th({ children, width }: { children: React.ReactNode; width?: string }) {
+function Th({ children, width, className }: { children: React.ReactNode; width?: string; className?: string }) {
   return (
     <th
-      className="text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2"
+      className={`text-left px-4 py-2.5 text-11 font-semibold tracking-wide-3 uppercase text-ink-2 ${className ?? ""}`}
       style={width ? { width } : undefined}
     >
       {children}
@@ -101,9 +101,9 @@ function Th({ children, width }: { children: React.ReactNode; width?: string }) 
   );
 }
 
-function Td({ children, isLast }: { children: React.ReactNode; isLast: boolean }) {
+function Td({ children, isLast, className }: { children: React.ReactNode; isLast: boolean; className?: string }) {
   return (
-    <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"}`}>{children}</td>
+    <td className={`px-4 py-3 ${isLast ? "" : "border-b border-hair"} ${className ?? ""}`}>{children}</td>
   );
 }
 

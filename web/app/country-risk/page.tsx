@@ -277,7 +277,7 @@ function CompareTable({ data }: { data: CountryCompareResult }) {
               Dimension
             </th>
             {data.countries.map((c) => (
-              <th key={c.country} className="text-center py-2 px-3 text-11 font-semibold text-ink-0 min-w-[120px]">
+              <th key={c.country} className="text-center py-2 px-3 text-11 font-semibold text-ink-0 min-w-[80px]">
                 {c.country}
               </th>
             ))}
