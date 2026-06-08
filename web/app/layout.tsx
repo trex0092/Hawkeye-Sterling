@@ -6,7 +6,6 @@ import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistr
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { AlertToast } from "@/components/layout/AlertToast";
-import { SessionExpiryWatcher } from "@/components/layout/SessionExpiryWatcher";
 import { SecurityScanBanner } from "@/components/layout/SecurityScanBanner";
 
 export const metadata: Metadata = {
@@ -66,7 +65,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ServiceWorkerRegistrar />
           <AlertToast />
           <SecurityScanBanner />
-          <SessionExpiryWatcher />
           <div className="flex-1">
             {children}
           </div>

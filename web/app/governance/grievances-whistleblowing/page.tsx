@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -755,7 +756,12 @@ export default function GrievancesWhistleblowingPage() {
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1, backgroundImage: "radial-gradient(rgba(255,255,255,.012) 1px,transparent 1px)", backgroundSize: "3px 3px", mixBlendMode: "overlay" }} />
 
         {/* ── SIDEBAR + MAIN GRID ── */}
-        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "140px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
+        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "220px 140px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
+
+          {/* ══ NAV SIDEBAR ══ */}
+          <div className="hidden md:block">
+            <Sidebar />
+          </div>
 
           {/* ══ SIDEBAR ══ */}
           <aside className="gw-sidebar-panel" style={{ borderRight: `1px solid ${V.line}`, padding: "14px 10px 20px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>

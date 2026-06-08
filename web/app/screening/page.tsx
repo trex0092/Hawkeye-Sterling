@@ -20,7 +20,6 @@ import { lookupKnownPEP } from "@/lib/data/known-entities";
 import type { CDDPosture, FilterKey, QueueFilter, SanctionSource, SavedSearch, SortKey, Subject, TableColumnKey } from "@/lib/types";
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
-import { ActivityFeed } from "@/components/screening/ActivityFeed";
 import { writeAuditEvent } from "@/lib/audit";
 import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
@@ -1842,11 +1841,7 @@ export default function ScreeningPage() {
                 </ErrorBoundary>
               );
             }
-            return (
-              <aside className="border-l border-hair-2 overflow-y-auto px-5 py-6">
-                <ActivityFeed />
-              </aside>
-            );
+            return null;
           })()}
         </div>
       </div>
