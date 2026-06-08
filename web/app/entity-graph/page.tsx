@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import type { EntityGraphResult } from "@/app/api/entity-graph/route";
-import type { LeiLookupResult } from "@/app/api/lei-lookup/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 // ── Shared style constants ─────────────────────────────────────────────────
@@ -299,75 +298,6 @@ function RelatedEntitiesTable({
   );
 }
 
-// ── GLEIF LEI Panel ────────────────────────────────────────────────────────
-
-function LeiPanel({ record }: { record: LeiLookupResult }) {
-  return (
-    <div className={`${cardCls} space-y-3`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="font-semibold text-14 text-ink-0">{record.legalName}</div>
-          <div className="font-mono text-11 text-ink-3 mt-0.5">{record.lei}</div>
-        </div>
-        <StatusBadge status={record.status} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-12">
-        <div>
-          <div className="text-ink-3 mb-0.5">Jurisdiction</div>
-          <div className="font-medium text-ink-0">{record.jurisdiction}</div>
-        </div>
-        <div>
-          <div className="text-ink-3 mb-0.5">Legal Form</div>
-          <div className="text-ink-0">{record.legalForm}</div>
-        </div>
-        <div className="col-span-2">
-          <div className="text-ink-3 mb-0.5">Registered Address</div>
-          <div className="text-ink-0">{record.registeredAddress}</div>
-        </div>
-        {record.headquartersAddress !== record.registeredAddress && (
-          <div className="col-span-2">
-            <div className="text-ink-3 mb-0.5">HQ Address</div>
-            <div className="text-ink-0">{record.headquartersAddress}</div>
-          </div>
-        )}
-        <div>
-          <div className="text-ink-3 mb-0.5">Last Updated</div>
-          <div className="font-mono text-11 text-ink-0">{record.lastUpdated.slice(0, 10)}</div>
-        </div>
-        <div>
-          <div className="text-ink-3 mb-0.5">Registration Status</div>
-          <div className="text-ink-0">{record.registrationStatus}</div>
-        </div>
-      </div>
-      {(record.directParent || record.ultimateParent) && (
-        <div className="border-t border-hair pt-3 space-y-2">
-          <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
-            Ownership Structure
-          </div>
-          {record.directParent && (
-            <div className="flex items-center gap-2 text-12">
-              <span className="text-10 uppercase tracking-wide-2 bg-brand-dim text-brand rounded px-1.5 py-px font-mono">
-                Direct Parent
-              </span>
-              <span className="font-medium text-ink-0">{record.directParent.name}</span>
-              <span className="font-mono text-10 text-ink-3">{record.directParent.lei}</span>
-            </div>
-          )}
-          {record.ultimateParent && record.ultimateParent.lei !== record.directParent?.lei && (
-            <div className="flex items-center gap-2 text-12">
-              <span className="text-10 uppercase tracking-wide-2 bg-amber-dim text-amber rounded px-1.5 py-px font-mono">
-                Ultimate Parent
-              </span>
-              <span className="font-medium text-ink-0">{record.ultimateParent.name}</span>
-              <span className="font-mono text-10 text-ink-3">{record.ultimateParent.lei}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function EntityGraphPage() {
@@ -378,12 +308,6 @@ export default function EntityGraphPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EntityGraphResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // LEI quick-lookup state
-  const [leiInput, setLeiInput] = useState("");
-  const [leiLoading, setLeiLoading] = useState(false);
-  const [leiResult, setLeiResult] = useState<LeiLookupResult | null>(null);
-  const [leiError, setLeiError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -418,37 +342,6 @@ export default function EntityGraphPage() {
       if (mountedRef.current) setError(caughtErrorMessage(err, "Request failed — check network connection"));
     } finally {
       if (mountedRef.current) setLoading(false);
-    }
-  }
-
-  async function lookupLei() {
-    const val = leiInput.trim();
-    if (!val) return;
-    setLeiLoading(true);
-    setLeiError(null);
-    setLeiResult(null);
-    try {
-      const body = val.length === 20 ? { lei: val } : { legalName: val };
-      const res = await fetch("/api/lei-lookup", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? apiErrorMessage(res.status, "LEI lookup"));
-      }
-      const data = await res.json().catch(() => ({})) as LeiLookupResult & { error?: string };
-      if (!mountedRef.current) return;
-      if (!data.ok) {
-        setLeiError((data as unknown as { error?: string }).error ?? apiErrorMessage(res.status, "LEI lookup"));
-      } else {
-        setLeiResult(data);
-      }
-    } catch (err) {
-      if (mountedRef.current) setLeiError(caughtErrorMessage(err, "Request failed"));
-    } finally {
-      if (mountedRef.current) setLeiLoading(false);
     }
   }
 
@@ -598,49 +491,6 @@ export default function EntityGraphPage() {
         </div>
       )}
 
-      {/* ── GLEIF LEI Quick Lookup ── */}
-      <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 space-y-4 mt-8">
-        <div>
-          <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
-            GLEIF LEI Quick Lookup
-          </div>
-          <div className="text-12 text-ink-2">
-            Enter a 20-character LEI code for a direct GLEIF record, or enter an entity name
-            to search by legal name.
-          </div>
-        </div>
-
-        <div className="flex gap-3 flex-wrap">
-          <input
-            className={`flex-1 min-w-48 font-mono ${inputCls}`}
-            placeholder="20-char LEI  e.g. 529900S0LYEQVTRP7C22  — or entity name"
-            value={leiInput}
-            onChange={(e) => setLeiInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === "Enter" && lookupLei()}
-          />
-          <button
-            type="button"
-            onClick={lookupLei}
-            disabled={leiLoading || !leiInput.trim()}
-            className={btnPrimary}
-          >
-            {leiLoading ? "Looking up…" : "Look Up LEI"}
-          </button>
-        </div>
-
-        {leiError && (
-          <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red">
-            <span className="font-semibold">Error:</span> {leiError}
-          </div>
-        )}
-
-        {leiResult && (
-          <div>
-            <div className={sectionHeading}>GLEIF Record</div>
-            <LeiPanel record={leiResult} />
-          </div>
-        )}
-      </div>
     </ModuleLayout>
   );
 }

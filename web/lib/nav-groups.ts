@@ -73,6 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "🔢 Benford Analysis", href: "/benford", hint: "Benford's-law statistical anomaly test" },
       { label: "🕵️ Investigation", href: "/investigation", hint: "Case investigation workbench" },
       { label: "📍 Single Country", href: "/country-risk?tab=single", hint: "Single-country risk brief" },
+      { label: "🌏 Geopolitical", href: "/geopolitical", hint: "Live geopolitical events · portfolio impact · risk map" },
       { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "Sanctions evasion typology detection" },
       { label: "🏢 UBO Walker", href: "/governance/intelligence-tools?tab=ubo", hint: "Beneficial-ownership chain walker" },
       { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "UBO walker · crypto exposure · synthetic ID" },
