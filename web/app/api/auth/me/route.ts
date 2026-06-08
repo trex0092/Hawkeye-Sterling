@@ -109,11 +109,13 @@ export async function GET(): Promise<NextResponse> {
   // Bump session lastActive — best-effort, must not block the response.
   void updateSessionActivity(session.userId).catch(() => {});
 
-  // Sliding-window renewal: when less than half the TTL remains, issue a fresh
-  // session token so active users are never kicked out mid-session. Preserves
-  // the original fpHash so the IP-change detector keeps its login-time baseline.
+  // Sliding-window renewal: refresh the session on every visit once the cookie
+  // is more than 7 days old. With SESSION_TTL_S = 1 year, this ensures any
+  // active user's session never expires — only logout or a password change ends
+  // it. Preserves the original fpHash so the IP-change detector keeps its
+  // login-time baseline.
   const nowSec = Math.floor(Date.now() / 1000);
-  const RENEW_THRESHOLD_SEC = Math.floor(SESSION_TTL_S / 2);
+  const RENEW_THRESHOLD_SEC = SESSION_TTL_S - 7 * 24 * 60 * 60; // renew if issued > 7 days ago
   let sessionExp = session.exp;
   let renewedToken: string | undefined;
   if (session.exp - nowSec < RENEW_THRESHOLD_SEC) {

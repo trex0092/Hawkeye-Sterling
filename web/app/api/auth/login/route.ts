@@ -7,6 +7,7 @@ import { createHash, createHmac, timingSafeEqual, randomBytes } from "node:crypt
 const RECOVERY_COMPARE_KEY = Buffer.from("hawkeye-token-compare-v1", "utf8");
 import { loadUsers, saveUsers, withUsersLock, appendSession, maskIp } from "@/app/api/access/_store";
 import { verifyPassword, hashPassword, generateSalt, issueSession, computeRequestFingerprint, SESSION_COOKIE, SESSION_TTL_S } from "@/lib/server/auth";
+import { verifyTotp, decryptTotpSecret } from "@/lib/server/totp";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { anonIpKey } from "@/lib/server/enforce";
 import { getJson, setJson, del } from "@/lib/server/store";
@@ -113,14 +114,14 @@ function clientIp(req: Request): string {
 }
 
 export async function POST(req: Request) {
-  let body: { username?: string; password?: string };
+  let body: { username?: string; password?: string; totpCode?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { username, password } = body;
+  const { username, password, totpCode } = body;
   if (typeof username !== "string" || !username.trim() || typeof password !== "string" || !password) {
     return NextResponse.json({ ok: false, error: "Username and password are required" }, { status: 400 });
   }
@@ -266,6 +267,27 @@ export async function POST(req: Request) {
   // succeeded (user was found) or the recovery block set user before falling
   // through. The only other path returns 401 above.
   if (!user) return NextResponse.json({ ok: false, error: "Invalid username or password" }, { status: 401 });
+
+  // ── TOTP second factor ────────────────────────────────────────────────────
+  // If the user has TOTP enabled, require a valid 6-digit code. Return a
+  // dedicated `requiresTOTP: true` flag (not a hard 401) so the login page
+  // can show the TOTP input without revealing that the password was correct.
+  if (user.totpEnabled && user.totpSecret) {
+    if (typeof totpCode !== "string" || !/^\d{6}$/.test(totpCode)) {
+      return NextResponse.json({ ok: false, requiresTOTP: true, error: "Enter the 6-digit code from your authenticator app" }, { status: 200 });
+    }
+    let base32: string;
+    try { base32 = decryptTotpSecret(user.totpSecret); }
+    catch {
+      console.error("[auth/login] TOTP secret decrypt failed for", user.id);
+      return NextResponse.json({ ok: false, error: "Authentication error — contact your administrator" }, { status: 500 });
+    }
+    if (!verifyTotp(base32, totpCode)) {
+      incrementCounter('hawkeye_auth_failures_total', 1, { reason: 'totp_invalid' });
+      return NextResponse.json({ ok: false, requiresTOTP: true, error: "Incorrect code — try again" }, { status: 401 });
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Clear the per-username counter on success (the IP counter intentionally
   // stays to limit rapid username cycling from the same address).

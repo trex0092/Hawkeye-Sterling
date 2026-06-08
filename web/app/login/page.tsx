@@ -5,6 +5,7 @@ import { useState, FormEvent, useEffect, useRef } from "react";
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [requiresTOTP, setRequiresTOTP] = useState(false);
   // Hydration gate: keeps the submit button disabled until React has mounted
   // so a tap before the onSubmit handler is attached can't trigger a native
   // form GET that would lose the XHR path and reload with empty query params.
@@ -15,6 +16,7 @@ export default function LoginPage() {
   // by a React re-render. Values are read directly from the DOM on submit.
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const totpRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -22,24 +24,54 @@ export default function LoginPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
+  // Auto-focus the TOTP input when the step becomes visible.
+  useEffect(() => {
+    if (requiresTOTP) totpRef.current?.focus();
+  }, [requiresTOTP]);
+
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     const username = usernameRef.current?.value.trim() ?? "";
     const password = passwordRef.current?.value ?? "";
+    const totpCode = totpRef.current?.value.replace(/\s/g, "") ?? "";
+
+    const body: Record<string, string> = { username, password };
+    if (requiresTOTP && totpCode) body["totpCode"] = totpCode;
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(body),
       });
-      const json = await res.json().catch(() => ({})) as { ok: boolean; error?: string };
+      const json = await res.json().catch(() => ({})) as {
+        ok: boolean;
+        error?: string;
+        requiresTOTP?: boolean;
+      };
+
+      if (!mountedRef.current) return;
+
+      // Server is asking for the TOTP code — show the second step.
+      if (json.requiresTOTP && !json.ok) {
+        setRequiresTOTP(true);
+        setLoading(false);
+        // If there's a specific error (wrong code), show it. Otherwise clear.
+        if (requiresTOTP) {
+          setError(json.error ?? "Incorrect code — try again");
+        } else {
+          setError("");
+        }
+        return;
+      }
+
       if (!res.ok || !json.ok) {
-        if (!mountedRef.current) return;
         setError(json.error ?? "Invalid credentials");
         return;
       }
+
       const nextParam = new URLSearchParams(window.location.search).get("next");
       window.location.href = nextParam && /^\/[^/]/.test(nextParam) ? nextParam : "/";
     } catch {
@@ -47,6 +79,37 @@ export default function LoginPage() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "8px",
+    padding: "11px 14px",
+    fontSize: "14px",
+    color: "#fff",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "11px",
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.45)",
+    letterSpacing: "0.6px",
+    textTransform: "uppercase",
+    marginBottom: "6px",
+  };
+
+  const focusIn = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "#e91e8c";
+    e.currentTarget.style.background = "rgba(233,30,140,0.04)";
+  };
+  const focusOut = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
   };
 
   return (
@@ -114,93 +177,83 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={submit}>
-          {/* Username */}
-          <div style={{ marginBottom: "14px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.45)",
-                letterSpacing: "0.6px",
-                textTransform: "uppercase",
-                marginBottom: "6px",
-              }}
-            >
-              Username
-            </label>
-            <input
-              ref={usernameRef}
-              type="text"
-              name="username"
-              autoComplete="username"
-              defaultValue=""
-              placeholder="e.g. luisa"
-              style={{
-                width: "100%",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                padding: "11px 14px",
-                fontSize: "14px",
-                color: "#fff",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#e91e8c";
-                e.currentTarget.style.background = "rgba(233,30,140,0.04)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-              }}
-            />
+          {/* Step 1: Username + Password (always rendered, hidden on TOTP step) */}
+          <div style={{ display: requiresTOTP ? "none" : "block" }}>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={labelStyle}>Username</label>
+              <input
+                ref={usernameRef}
+                type="text"
+                name="username"
+                autoComplete="username"
+                defaultValue=""
+                placeholder="e.g. luisa"
+                style={inputStyle}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={labelStyle}>Password</label>
+              <input
+                ref={passwordRef}
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                defaultValue=""
+                placeholder="••••••••"
+                style={inputStyle}
+                onFocus={focusIn}
+                onBlur={focusOut}
+              />
+            </div>
           </div>
 
-          {/* Password */}
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.45)",
-                letterSpacing: "0.6px",
-                textTransform: "uppercase",
-                marginBottom: "6px",
-              }}
-            >
-              Password
-            </label>
-            <input
-              ref={passwordRef}
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              defaultValue=""
-              placeholder="••••••••"
-              style={{
-                width: "100%",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                padding: "11px 14px",
-                fontSize: "14px",
-                color: "#fff",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#e91e8c";
-                e.currentTarget.style.background = "rgba(233,30,140,0.04)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-              }}
-            />
-          </div>
+          {/* Step 2: TOTP code */}
+          {requiresTOTP && (
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ marginBottom: "16px", fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>
+                Open <strong style={{ color: "#fff" }}>Google Authenticator</strong> and enter the 6-digit code for Hawkeye Sterling.
+              </div>
+              <label style={labelStyle}>Authenticator code</label>
+              <input
+                ref={totpRef}
+                type="text"
+                name="totpCode"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                style={{
+                  ...inputStyle,
+                  fontSize: "22px",
+                  letterSpacing: "0.3em",
+                  textAlign: "center",
+                }}
+                onFocus={focusIn}
+                onBlur={focusOut}
+                onChange={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "").slice(0, 6);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => { setRequiresTOTP(false); setError(""); }}
+                style={{
+                  marginTop: "10px",
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255,255,255,0.35)",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                ← Back
+              </button>
+            </div>
+          )}
 
           {/* Error */}
           {error && (
@@ -237,27 +290,29 @@ export default function LoginPage() {
               transition: "background 0.15s",
             }}
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing in…" : requiresTOTP ? "Verify code" : "Sign in"}
           </button>
         </form>
 
         {/* Forgot password */}
-        <div
-          style={{
-            marginTop: "18px",
-            textAlign: "center",
-            fontSize: "12px",
-            color: "rgba(255,255,255,0.35)",
-          }}
-        >
-          Forgotten your password?{" "}
-          <a
-            href="mailto:dpo@hawkeyesterling.com?subject=Password%20Reset%20Request"
-            style={{ color: "#e91e8c", textDecoration: "none" }}
+        {!requiresTOTP && (
+          <div
+            style={{
+              marginTop: "18px",
+              textAlign: "center",
+              fontSize: "12px",
+              color: "rgba(255,255,255,0.35)",
+            }}
           >
-            Contact your MLRO
-          </a>
-        </div>
+            Forgotten your password?{" "}
+            <a
+              href="mailto:dpo@hawkeyesterling.com?subject=Password%20Reset%20Request"
+              style={{ color: "#e91e8c", textDecoration: "none" }}
+            >
+              Contact your MLRO
+            </a>
+          </div>
+        )}
 
         {/* Footer */}
         <div
