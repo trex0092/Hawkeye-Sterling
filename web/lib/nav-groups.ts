@@ -3,15 +3,9 @@ export interface NavGroup { title: string; items: NavItem[] }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: "Compliance",
-    items: [
-      { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing", hint: "Whistleblowing & grievance management" },
-      { label: "🔐 Access Control", href: "/access-control", hint: "User roles, sessions & permissions" },
-    ],
-  },
-  {
     title: "Onboarding & CDD",
     items: [
+      { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing", hint: "Whistleblowing & grievance management" },
       { label: "🔄 pKYC Monitor", href: "/pkyc", hint: "Perpetual KYC — continuous CDD lifecycle management" },
       { label: "🪄 Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
       { label: "🪪 Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
@@ -94,6 +88,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "👁️ Analyst Behavior", href: "/analyst-behavior", hint: "Analyst behavior monitoring" },
       { label: "🎯 Board Dashboard", href: "/board-dashboard", hint: "Board-level compliance dashboard" },
       { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "Key risk indicator dashboard" },
+      { label: "🔐 Access Control", href: "/access-control", hint: "User roles, sessions & permissions" },
     ],
   },
 ];

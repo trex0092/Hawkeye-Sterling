@@ -3,11 +3,11 @@
 import { type ReactNode, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
 import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import {
   SidebarMLROCard,
   SidebarSection,
-  SidebarShell,
   type SidebarFilterItem,
 } from "./SidebarParts";
 
@@ -77,7 +77,7 @@ export function ModuleLayout<K extends string = string>({
       <Header />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
-          <SidebarShell>
+          <Sidebar>
             <SidebarSection title="Regulatory">
               <SidebarMLROCard />
             </SidebarSection>
@@ -101,7 +101,7 @@ export function ModuleLayout<K extends string = string>({
                 />
               </SidebarSection>
             )}
-          </SidebarShell>
+          </Sidebar>
         </div>
 
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">

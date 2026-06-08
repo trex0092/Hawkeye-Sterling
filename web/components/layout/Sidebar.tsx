@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarShell, SidebarSection } from "./SidebarParts";
 import { NAV_GROUPS } from "@/lib/nav-groups";
@@ -10,7 +11,7 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-export function Sidebar() {
+export function Sidebar({ children }: { children?: ReactNode } = {}) {
   const pathname = usePathname() ?? "";
 
   return (
@@ -43,6 +44,7 @@ export function Sidebar() {
           </ul>
         </SidebarSection>
       ))}
+      {children}
     </SidebarShell>
   );
 }
