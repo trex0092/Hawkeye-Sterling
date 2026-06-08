@@ -558,7 +558,7 @@ jobs:
 
       - name: Install kubeconform
         run: |
-          curl -fsSL --retry 3 --retry-delay 5 \
+          curl -fsSL --retry 6 --retry-delay 10 --retry-connrefused --connect-timeout 30 \
             "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz" \
             | tar xz
           sudo mv kubeconform /usr/local/bin/kubeconform
