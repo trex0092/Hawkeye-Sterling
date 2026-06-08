@@ -38,7 +38,10 @@ function parseRetryAfterMs(err: unknown): number | null {
   const match = msg.match(/retry[- ]after[:\s]+(\d+)/i);
   if (match?.[1]) {
     const secs = parseInt(match[1], 10);
-    if (!isNaN(secs) && secs > 0 && secs < 300) return secs * 1_000;
+    // No upper-bound filter here — the call site's Math.min(..., 5_000) caps
+    // the actual wait. Filtering ≥300 would return null and skip the wait
+    // entirely, violating the retry-after directive on long headers.
+    if (!isNaN(secs) && secs > 0) return secs * 1_000;
   }
   return null;
 }
