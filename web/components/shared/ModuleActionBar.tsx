@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
-// Standardised 8-button action bar — fixed top-right on every module.
-// Matches the app's existing button language: dark dim-tinted bg, hairline
-// colored border, colored text, pulse dot — same as AsanaReportButton / ActionButton.
+// Standardised 8-button action bar — portalled to document.body so
+// position:fixed is always relative to the viewport, never broken by a
+// parent overflow/transform/will-change containing block.
 
 interface ModuleActionBarProps {
   asanaModule?: string;
@@ -30,6 +31,9 @@ type BtnKey = typeof BTNS[number]["key"];
 
 export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: ModuleActionBarProps) {
   const [asanaStatus, setAsanaStatus] = useState<AsanaStatus>("idle");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handle = async (key: BtnKey) => {
     if (key === "asana") {
@@ -55,8 +59,10 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
     if (key === "refresh" || key === "sync") window.location.reload();
   };
 
-  return (
-    <div style={{ position: "fixed", top: 88, right: 40, zIndex: 60, display: "flex", flexDirection: "column", gap: 2 }}>
+  if (!mounted) return null;
+
+  const bar = (
+    <div style={{ position: "fixed", top: 88, right: 40, zIndex: 9999, display: "flex", flexDirection: "column", gap: 2, pointerEvents: "auto" }}>
       {BTNS.map((b) => {
         let label: string = b.label;
         if (b.key === "asana") {
@@ -70,6 +76,8 @@ export function ModuleActionBar({ asanaModule, asanaLabel, asanaSummary }: Modul
       })}
     </div>
   );
+
+  return createPortal(bar, document.body);
 }
 
 function AppBtn({ label, color, dim, border, onClick }: {
