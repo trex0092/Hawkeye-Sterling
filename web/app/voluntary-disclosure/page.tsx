@@ -68,7 +68,7 @@ const STATUS_COLOURS: Record<string, string> = {
 
 const STATUS_FLOW = ["draft", "pending_mlro", "pending_legal", "submitted", "acknowledged", "closed"];
 
-const GOV_MODULES = [
+const _GOV_MODULES = [
   { label: "COI Register", href: "/coi-register", icon: "⚖️" },
   { label: "Voluntary Disclosure", href: "/voluntary-disclosure", icon: "📣" },
 ];

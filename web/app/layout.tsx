@@ -6,7 +6,6 @@ import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistr
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { AlertToast } from "@/components/layout/AlertToast";
-import { SecurityScanBanner } from "@/components/layout/SecurityScanBanner";
 
 export const metadata: Metadata = {
   title: "Hawkeye Sterling",

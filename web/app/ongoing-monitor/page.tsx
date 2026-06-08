@@ -212,13 +212,13 @@ export default function OngoingMonitorPage() {
   const [removeReason, setRemoveReason] = useState("");
 
   // Enrichment state
-  const [enrichName, setEnrichName] = useState("");
-  const [enrichLei, setEnrichLei] = useState("");
-  const [enrichDomain, setEnrichDomain] = useState("");
-  const [enableOsint, setEnableOsint] = useState(false);
-  const [enrichLoading, setEnrichLoading] = useState(false);
-  const [enrichResult, setEnrichResult] = useState<EnrichResult | null>(null);
-  const [enrichError, setEnrichError] = useState<string | null>(null);
+  const [enrichName, _setEnrichName] = useState("");
+  const [enrichLei, _setEnrichLei] = useState("");
+  const [enrichDomain, _setEnrichDomain] = useState("");
+  const [enableOsint, _setEnableOsint] = useState(false);
+  const [_enrichLoading, setEnrichLoading] = useState(false);
+  const [_enrichResult, setEnrichResult] = useState<EnrichResult | null>(null);
+  const [_enrichError, setEnrichError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -371,7 +371,7 @@ export default function OngoingMonitorPage() {
     } finally { if (mountedRef.current) setScreening((prev) => ({ ...prev, [s.id]: false })); }
   };
 
-  const enrich = async () => {
+  const _enrich = async () => {
     if (!enrichName.trim()) return;
     setEnrichLoading(true); setEnrichError(null); setEnrichResult(null);
     try {

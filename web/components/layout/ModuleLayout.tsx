@@ -6,7 +6,6 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
 import {
-  SidebarSection,
   type SidebarFilterItem,
 } from "./SidebarParts";
 
@@ -51,7 +50,7 @@ export function ModuleLayout<K extends string = string>({
   onFilterChange: _onFilterChange,
   filtersTitle: _filtersTitle = "Queue filters",
   sidebarExtra,
-  sidebarActions,
+  sidebarActions: _sidebarActions,
   // The right-hand "Compliance engine" activity feed was removed from every
   // module page — it now lives only in the Screening section. These props are
   // kept in the public interface so the 30+ call sites don't break, but are no

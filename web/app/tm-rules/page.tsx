@@ -62,7 +62,7 @@ const STATUS_COLOURS: Record<string, string> = {
 
 const PIPELINE_STAGES = ["proposed", "testing", "pending_approval", "approved", "deployed"] as const;
 
-const TM_MODULES = [
+const _TM_MODULES = [
   { label: "TM Rule Changes", href: "/tm-rules", icon: "📐" },
 ];
 
