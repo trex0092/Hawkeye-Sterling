@@ -37,8 +37,8 @@ export default function SystemCardPage() {
     <ModuleLayout>
       <ModuleHero
         eyebrow=""
-        title="System Card"
-        intro="Public disclosure document for Hawkeye Sterling as required by ISO/IEC 42001, EU AI Act Art.13, and UAE AI Governance guidelines."
+        title="System"
+        titleEm="Card."
       />
 
       {/* Identity */}

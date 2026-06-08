@@ -225,14 +225,6 @@ export function WorkbenchSection() {
           <h1 className="font-display font-normal text-48 tracking-tightest m-0 mb-2 text-ink-0">
             The full <em className="italic text-brand">arsenal.</em>
           </h1>
-          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3">
-            <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
-            Pick the reasoning modes you want to engage and screen a subject, or
-            inspect the catalogues, charter directives and audit state of the brain
-            itself. <span className="text-ink-3">Live reasoning is now available
-            inline on every queued subject (Screening → subject row → Live reasoning
-            tab) — or on a hypothetical via the button below.</span>
-          </p>
         </div>
 
         {/* Tab strip */}

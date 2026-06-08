@@ -187,14 +187,6 @@ export default function WeaponizedBrainPage() {
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
             The full <em className="italic text-brand">arsenal.</em>
           </h1>
-          <p className="max-w-[72ch] text-ink-1 text-13.5 leading-[1.6] m-0 mt-3">
-            <strong>One signed contract · 19 catalogues · every screening inherits it.</strong>{" "}
-            The weaponized brain fuses the charter, faculties, reasoning modes, doctrines,
-            red flags, typologies, sanction regimes, jurisdictions, DPMS KPIs, CAHRA seed,
-            thresholds, playbooks, redlines, FATF recommendations, dispositions, skills,
-            cognitive amplifiers and meta-cognition into a single policy document every
-            downstream integration imports verbatim.
-          </p>
         </div>
 
         <BrainConsole />
