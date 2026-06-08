@@ -395,7 +395,7 @@ const PAGE_CSS = `
 function mono(style?: React.CSSProperties): React.CSSProperties {
   return { fontFamily: "'JetBrains Mono','IBM Plex Mono',monospace", ...style };
 }
-function serif(style?: React.CSSProperties): React.CSSProperties {
+function _serif(style?: React.CSSProperties): React.CSSProperties {
   return { fontFamily: "'Newsreader','Cormorant Garamond',Georgia,serif", ...style };
 }
 
@@ -756,66 +756,12 @@ export default function GrievancesWhistleblowingPage() {
         <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1, backgroundImage: "radial-gradient(rgba(255,255,255,.012) 1px,transparent 1px)", backgroundSize: "3px 3px", mixBlendMode: "overlay" }} />
 
         {/* ── SIDEBAR + MAIN GRID ── */}
-        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "220px 140px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
+        <div className="gw-outer-grid" style={{ display: "grid", gridTemplateColumns: "220px 1fr", minHeight: "calc(100vh - 54px - 28px - 30px)", position: "relative", zIndex: 2 }}>
 
           {/* ══ NAV SIDEBAR ══ */}
           <div className="hidden md:block">
             <Sidebar />
           </div>
-
-          {/* ══ SIDEBAR ══ */}
-          <aside className="gw-sidebar-panel" style={{ borderRight: `1px solid ${V.line}`, padding: "14px 10px 20px", background: "linear-gradient(180deg,rgba(28,26,21,.35),transparent 220px)" }}>
-
-            {/* Programme Stats */}
-            <div style={mono({ fontSize: 8, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, marginBottom: 7 })}>Programme · 30 Days</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 4 }}>
-              {[
-                { n: stats?.open        ?? "—", l: "Cases · Open" },
-                { n: stats?.resolved    ?? "—", l: "Resolved"     },
-                { n: stats?.escalated   ?? "—", l: "Escalated"    },
-                { n: stats != null ? `${stats.slaHitPct}%` : "—", l: "SLA Hit" },
-              ].map((s) => (
-                <div key={s.l} style={{ border: `1px solid ${V.line}`, padding: "6px 7px", background: V.panel }}>
-                  <div style={serif({ fontWeight: 600, fontSize: 16, color: V.ink, lineHeight: 1 })}>{s.n}</div>
-                  <div style={mono({ fontSize: 7, letterSpacing: ".14em", textTransform: "uppercase", color: V.muted, marginTop: 4 })}>{s.l}</div>
-                </div>
-              ))}
-            </div>
-            <div style={mono({ fontSize: 7.5, color: V.muted, marginBottom: 12, fontStyle: "italic" })}>Derived from case register · 30-day window</div>
-
-            {/* Anti-Retaliation */}
-            <div style={{ border: `1px solid ${V.line}`, borderLeft: `2px solid oklch(74% 0.18 350)`, background: "linear-gradient(90deg,var(--gw-ember-soft),transparent 70%)", padding: "7px 8px" }}>
-              <div style={mono({ fontSize: 7.5, letterSpacing: ".16em", textTransform: "uppercase", color: V.ember, fontWeight: 700 })}>Anti-Retaliation</div>
-              <div style={{ marginTop: 4, fontSize: 10, color: V.ink2, lineHeight: 1.45 }}>
-                Reports made in <strong style={{ color: V.ink }}>good faith</strong> are protected under{" "}
-                <strong style={{ color: V.ink }}>FDL No.10/2025</strong> regardless of whether the concern is later substantiated. Retaliation = corrective action up to termination.
-              </div>
-            </div>
-
-            {/* Report to Asana */}
-            <div style={{ marginTop: 12 }}>
-              <div style={mono({ fontSize: 8, letterSpacing: ".18em", textTransform: "uppercase", color: V.muted, marginBottom: 7 })}>Report</div>
-              <AsanaReportButton
-                payload={{
-                  module: "grievances-whistleblowing",
-                  label: "Grievances & Whistleblowing",
-                  summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): open ${stats.open} · resolved ${stats.resolved} · escalated ${stats.escalated} · SLA hit ${stats.slaHitPct}%. Routed to 19 · Incidents & Grievances board.`,
-                  url: "/governance/grievances-whistleblowing",
-                  metadata: {
-                    policyCode: "FG/GVW/004",
-                    version: "004",
-                    effective: "28 NOV 2025",
-                    owner: "Compliance Dpt",
-                    openCases: stats?.open ?? null,
-                    resolvedCases: stats?.resolved ?? null,
-                    escalatedCases: stats?.escalated ?? null,
-                    slaHitPct: stats?.slaHitPct ?? null,
-                  },
-                }}
-              />
-            </div>
-
-          </aside>
 
           {/* ══ MAIN ══ */}
           <main className="gw-main-panel" style={{ padding: "28px 16px 60px", minWidth: 0 }}>
@@ -1024,6 +970,28 @@ export default function GrievancesWhistleblowingPage() {
                   <div style={{ margin: "0 18px 16px", border: `1px solid oklch(66% 0.20 20)`, background: "linear-gradient(90deg,var(--gw-rose-soft),transparent)", padding: "11px 13px", marginTop: 14 }}>
                     <div style={mono({ fontSize: 9, letterSpacing: ".18em", color: V.rose, fontWeight: 700, textTransform: "uppercase" })}>Tipping-off warning</div>
                     <div style={{ marginTop: 4, fontSize: 11, color: V.ink2, lineHeight: 1.5 }}>Where the matter may relate to ML/TF, do <strong>not</strong> disclose, confirm or discuss the existence of any report, investigation or internal review with any third party.</div>
+                  </div>
+
+                  {/* Asana report */}
+                  <div style={{ margin: "0 18px 18px" }}>
+                    <AsanaReportButton
+                      payload={{
+                        module: "grievances-whistleblowing",
+                        label: "Grievances & Whistleblowing",
+                        summary: `Grievances & Whistleblowing programme report — FG/GVW/004 v004. Programme stats (30d): open ${stats.open} · resolved ${stats.resolved} · escalated ${stats.escalated} · SLA hit ${stats.slaHitPct}%. Routed to 19 · Incidents & Grievances board.`,
+                        url: "/governance/grievances-whistleblowing",
+                        metadata: {
+                          policyCode: "FG/GVW/004",
+                          version: "004",
+                          effective: "28 NOV 2025",
+                          owner: "Compliance Dpt",
+                          openCases: stats?.open ?? null,
+                          resolvedCases: stats?.resolved ?? null,
+                          escalatedCases: stats?.escalated ?? null,
+                          slaHitPct: stats?.slaHitPct ?? null,
+                        },
+                      }}
+                    />
                   </div>
 
                 </div>

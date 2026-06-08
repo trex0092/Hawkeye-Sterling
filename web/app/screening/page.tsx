@@ -1360,7 +1360,7 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px] border-t-2 border-brand-line">
+      <div className={`grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line${(selected || compareIds.size === 2) && !formOpen ? " lg:grid-cols-[220px_1fr_480px]" : ""}`}>
         <div className="hidden md:block">
           <Sidebar />
         </div>
