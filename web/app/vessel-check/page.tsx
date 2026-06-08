@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
 interface VesselOwner {
@@ -242,14 +241,6 @@ function VesselCheckInner() {
                 <div>
                   <h2 className="text-18 font-semibold text-ink-0">{result.vessel.vesselName}</h2>
                   <p className="text-11 font-mono text-ink-3 mt-0.5">IMO {result.imoNumber}</p>
-                  <div className="mt-2">
-                    <AsanaReportButton payload={{
-                      module: "vessel-check",
-                      label: `${result.vessel.vesselName} (IMO ${result.imoNumber})`,
-                      summary: `Vessel: ${result.vessel.vesselName}; IMO: ${result.imoNumber}; Flag: ${result.vessel.flag ?? "—"}; Risk: ${result.riskLevel}; ${result.riskDetail}`,
-                      metadata: { imo: result.imoNumber, flag: result.vessel.flag, riskLevel: result.riskLevel, sanctionHits: result.vessel.sanctionHits.length },
-                    }} />
-                  </div>
                 </div>
                 <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${RISK_TONE[result.riskLevel ?? "clean"]}`}>
                   {result.riskLevel}

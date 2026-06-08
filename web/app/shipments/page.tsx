@@ -5,7 +5,6 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMY } from "@/lib/utils/dateFormat";
 
@@ -1392,12 +1391,6 @@ export default function ShipmentsPage() {
                   Consignment manifest — {detail.id}
                 </span>
                 <div className="flex items-center gap-2">
-                  <AsanaReportButton payload={{
-                    module: "shipments",
-                    label: `${detail.id} · ${detail.refinery}`,
-                    summary: `Consignment: ${detail.id}; Refinery: ${detail.refinery}; Origin: ${detail.miningCountry}; Status: ${detail.status}; USD value: $${detail.usdValue.toLocaleString()}; Weight: ${detail.grossWeightKg} kg`,
-                    metadata: { id: detail.id, refinery: detail.refinery, status: detail.status, usdValue: detail.usdValue, direction: detail.direction, originCountry: detail.originCountry },
-                  }} />
                   <span className={`inline-flex items-center px-2 py-0.5 rounded font-mono text-10 font-semibold uppercase ${STATUS_TONE[detail.status]}`}>
                     {STATUS_LABEL[detail.status]}
                   </span>

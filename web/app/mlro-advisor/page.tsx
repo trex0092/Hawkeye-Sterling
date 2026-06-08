@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { StrDraftModal } from "@/components/shared/StrDraftModal";
 import { downloadEvidencePack, type EvidencePackEntry } from "@/lib/evidencePack";
 import { exportMlroMemo, exportRiskProfileSummary } from "@/lib/pdf/exporters";
@@ -3972,12 +3971,6 @@ export default function MlroAdvisorPage() {
                           </details>
                         )}
                         <div className="flex items-center gap-2 pt-1 flex-wrap">
-                          <AsanaReportButton payload={{
-                            module: "mlro-advisor",
-                            label: `MLRO Advisory · ${entry.result.complianceReview.advisorVerdict.replace(/_/g, " ")}`,
-                            summary: `Q: ${entry.question.slice(0, 80)} | Verdict: ${entry.result.complianceReview.advisorVerdict} | Mode: ${entry.mode} | ${entry.result.elapsedMs}ms`,
-                            metadata: { verdict: entry.result.complianceReview.advisorVerdict, mode: entry.mode, issues: entry.result.complianceReview.issues.length },
-                          }} />
                           <button
                             type="button"
                             onClick={() => setStrDraftFor(entry)}
@@ -4853,12 +4846,6 @@ export default function MlroAdvisorPage() {
                           className="ml-auto text-11 font-semibold px-2.5 py-1 rounded border transition-colors"
                           style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                         >PDF</button>
-                        <AsanaReportButton payload={{
-                          module: "mlro-advisor",
-                          label: `Risk Profile Summary · ${rpsInput.entityName} · ${r.overallResidualRisk.toUpperCase()} risk`,
-                          summary: `Entity: ${rpsInput.entityName} | Type: ${r.entityOverview.entityType} | Sector: ${r.entityOverview.sector} | Jurisdiction: ${r.entityOverview.jurisdiction} | Risk score: ${r.entityOverview.riskScore}/100 | Overall residual risk: ${r.overallResidualRisk} | Decision: ${r.conclusion.onboardingDecision}`,
-                          metadata: { overallRisk: r.overallResidualRisk, decision: r.conclusion.onboardingDecision, riskScore: r.entityOverview.riskScore },
-                        }} />
                         <button
                           type="button"
                           onClick={() => {

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 type BenfordRisk = "clean" | "marginal" | "suspicious" | "insufficient-data";
@@ -215,14 +214,6 @@ export default function BenfordPage() {
                 <div>
                   <h2 className="text-16 font-semibold text-ink-0">{result.label || "Dataset"}</h2>
                   <p className="text-12 text-ink-2 mt-0.5">{result.riskDetail}</p>
-                  <div className="mt-2">
-                    <AsanaReportButton payload={{
-                      module: "benford",
-                      label: result.label || "Dataset",
-                      summary: `Benford analysis: n=${result.n}, MAD=${(result.mad * 100).toFixed(3)}%, χ²=${result.chiSquared.toFixed(2)}, p=${result.chiSquaredPValue.toFixed(3)}, risk=${result.risk}`,
-                      metadata: { n: result.n, mad: result.mad, chiSquared: result.chiSquared, risk: result.risk, flaggedDigits: result.flaggedDigits.join(", ") || "none" },
-                    }} />
-                  </div>
                 </div>
                 <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase ${RISK_TONE[result.risk]}`}>
                   {result.risk.replace("-", " ")}

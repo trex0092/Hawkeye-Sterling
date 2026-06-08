@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { analyzeCrypto, type WalletNode } from "@/lib/intelligence/cryptoExposure";
 import { walletAgeScore, mixerExposure, type WalletProfile } from "@/lib/intelligence/cryptoIntel";
@@ -215,14 +214,6 @@ export default function CryptoRiskPage() {
                     Chain: <span className="font-semibold">{result.chain.toUpperCase()}</span>
                     {" · "}Provider: <span className="font-semibold">{result.provider}</span>
                   </p>
-                  <div className="mt-2">
-                    <AsanaReportButton payload={{
-                      module: "crypto-risk",
-                      label: `${result.chain.toUpperCase()} · ${result.address.slice(0, 12)}…`,
-                      summary: `Wallet: ${result.address}; Chain: ${result.chain}; Risk: ${result.riskLevel} (${result.riskScore}); Category: ${result.riskCategory ?? "—"}; Labels: ${result.labels.join(", ") || "none"}`,
-                      metadata: { address: result.address, chain: result.chain, riskLevel: result.riskLevel, riskScore: result.riskScore, directSanctioned: result.exposure?.directSanctioned },
-                    }} />
-                  </div>
                 </div>
                 <span className={`text-11 font-bold px-2.5 py-1 rounded uppercase flex-shrink-0 ml-3 ${RISK_TONE[result.riskLevel] ?? RISK_TONE.unknown}`}>
                   {result.riskLevel} · {result.riskScore}

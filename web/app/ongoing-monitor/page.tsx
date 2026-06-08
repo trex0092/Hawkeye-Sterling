@@ -5,7 +5,6 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { writeAuditEvent } from "@/lib/audit";
 import { apiErrorMessage } from "@/lib/client/error-utils";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { AsanaStatus } from "@/components/shared/AsanaStatus";
 import { RowActions } from "@/components/shared/RowActions";
 import { formatDMY as fmtDate, formatDMYTime as fmtDateTime } from "@/lib/utils/dateFormat";
@@ -613,14 +612,6 @@ export default function OngoingMonitorPage() {
                         <>
                           <div className={`text-10 font-semibold mt-0.5 ${lastResults[s.id]!.severity === "critical" ? "text-red" : lastResults[s.id]!.severity === "high" ? "text-amber" : "text-green"}`}>
                             {lastResults[s.id]!.severity.toUpperCase()} · {lastResults[s.id]!.topScore}/100
-                          </div>
-                          <div className="mt-1">
-                            <AsanaReportButton payload={{
-                              module: "ongoing-monitor",
-                              label: s.name,
-                              summary: `Ongoing monitoring: ${s.name}; Tier: ${s.tier}; Cadence: ${s.cadence}; Severity: ${lastResults[s.id]!.severity}; Score: ${lastResults[s.id]!.topScore}/100`,
-                              metadata: { caseId: s.caseId, tier: s.tier, severity: lastResults[s.id]!.severity, topScore: lastResults[s.id]!.topScore },
-                            }} />
                           </div>
                         </>
                       )}

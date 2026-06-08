@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
-import { AsanaReportButton } from "@/components/shared/AsanaReportButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface OwnershipNode {
@@ -208,12 +207,6 @@ function GleifInner() {
                 <span className={`text-11 px-2 py-0.5 rounded font-semibold uppercase ${STATUS_TONE[leiResult.record.registrationStatus] ?? "bg-bg-2 text-ink-3"}`}>
                   {leiResult.record.registrationStatus}
                 </span>
-                <AsanaReportButton payload={{
-                  module: "gleif",
-                  label: leiResult.record.legalName,
-                  summary: `LEI: ${leiResult.lei}; Status: ${leiResult.record.registrationStatus}; Jurisdiction: ${leiResult.record.jurisdiction || "—"}; Ownership chain: ${leiResult.ownershipChain.length} entities`,
-                  metadata: { lei: leiResult.lei, status: leiResult.record.registrationStatus, jurisdiction: leiResult.record.jurisdiction, chainDepth: leiResult.ownershipChain.length },
-                }} />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-12">
