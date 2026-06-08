@@ -361,7 +361,7 @@ export default function ApprovalsPage() {
         titleEm="register."
         intro="Entity onboarding approval tracker — decision status, risk score, and approved country destinations. All approval changes are logged in the immutable audit trail per UAE FDL 10/2025 Art.20."
       />
-      <div className="max-w-3xl mx-auto px-4 pb-6 space-y-5">
+      <div className="w-full px-4 pb-6 space-y-5">
         {/* Error */}
         {error && (
           <div className="px-4 py-2 rounded-lg bg-red/10 border border-red/30 text-12 text-red">
