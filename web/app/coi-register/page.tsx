@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
 interface CoiDeclaration {
@@ -176,13 +175,6 @@ export default function CoiRegisterPage() {
         </ActionButton>
       }
     >
-      <ModuleFamilyBar
-        suiteName="Governance & Ethics"
-        modules={[
-          { label: "COI Register", href: "/coi-register", icon: "⚖️" },
-          { label: "Voluntary Disclosure", href: "/voluntary-disclosure", icon: "📣" },
-        ]}
-      />
       <ModuleHero
         eyebrow=""
         title="Conflicts of Interest"

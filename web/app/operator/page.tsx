@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { McpLogEntry } from "@/app/api/operator/logs/route";
 
@@ -148,11 +147,6 @@ export default function OperatorConsolePage() {
         title="Operator Console"
         intro="MCP activity log, telemetry, and fairness monitoring — every tool call made by Claude is logged here for audit and regulatory review."
       />
-      <ModuleFamilyBar suiteName="Audit Trail & Operator Console" modules={[
-        { label: "Audit Trail", href: "/audit-trail", icon: "🔒" },
-        { label: "Operator Console", href: "/operator", icon: "🔭" },
-      ]} />
-
       {/* Stats bar */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
         {[
