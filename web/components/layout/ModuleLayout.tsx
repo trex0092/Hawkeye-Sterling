@@ -136,7 +136,7 @@ function ModuleHeroInner({
   // kpis intentionally ignored — the hero KPI tile bar was removed across
   // all modules. The prop is kept on ModuleHeroProps so call sites still
   // compile (and keep their derived metrics) without needing edits.
-  intro,
+  intro: _intro,
 }: ModuleHeroProps) {
   // When a module page is rendered embedded inside another view (e.g. the
   // Intelligence Hub iframe tabs, ?embed=1), its own page hero is redundant
