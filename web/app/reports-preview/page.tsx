@@ -566,10 +566,6 @@ export default function ReportsPreviewPage() {
           <h1 className="font-display font-normal text-28 md:text-40 leading-[1.1] tracking-tightest text-ink-0 mb-2">
             Report <em className="italic text-brand">designs.</em>
           </h1>
-          <p className="text-ink-1 text-13 max-w-[60ch]">
-            Every PDF report — rendered live. Cover page + content page for each module.
-            The pink drop-cap, security watermark, header bar, and signature footer match the downloaded PDF exactly.
-          </p>
         </div>
 
         {/* tab strip */}
