@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
-import { ModuleFamilyBar } from "@/components/layout/ModuleFamilyBar";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 import type { CnmrCase } from "@/app/api/cnmr/route";
@@ -290,11 +289,6 @@ export default function CnmrPage() {
           </>
         }
       />
-      <ModuleFamilyBar suiteName="Sanctions Alerts & Name Match" modules={[
-        { label: "TFS Alerts", href: "/tfs-alerts", icon: "🚨" },
-        { label: "CNMR", href: "/cnmr", icon: "📝" },
-        { label: "PNMR Queue", href: "/pnmr", icon: "📋" },
-      ]} />
 
       {/* Regulatory callout */}
       <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
