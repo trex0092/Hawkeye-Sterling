@@ -580,7 +580,7 @@ export default function ScreeningPage() {
     return () => window.removeEventListener("hawkeye:operator-updated", sync);
   }, []);
 
-  const handleRefresh = useCallback(() => {
+  const _handleRefresh = useCallback(() => {
     try {
       const loaded = loadSubjects();
       setSubjects(loaded);
@@ -631,7 +631,7 @@ export default function ScreeningPage() {
 
   const deferredQuery = useDeferredValue(query);
 
-  const dynamicFilters = useMemo(() => computeDynamicFilters(subjects, operatorName), [subjects, operatorName]);
+  const _dynamicFilters = useMemo(() => computeDynamicFilters(subjects, operatorName), [subjects, operatorName]);
 
   const filtered = useMemo(() => {
     // NL search overrides normal filtering pipeline
@@ -1363,12 +1363,7 @@ export default function ScreeningPage() {
       <Header />
       <div className="grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[220px_1fr_480px] border-t-2 border-brand-line">
         <div className="hidden md:block">
-          <Sidebar
-            filters={dynamicFilters}
-            activeFilters={activeFilters}
-            onFiltersChange={setActiveFilters}
-            onRefresh={handleRefresh}
-          />
+          <Sidebar />
         </div>
 
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">

@@ -1,110 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RegulatoryTicker } from "./RegulatoryTicker";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-
-
-// Secondary modules — rendered under a "More" dropdown so the top-row
-// stays readable.
-// Groups: Onboarding & CDD · Risk & AML Ops · Governance & Audit · Enrichment · Intelligence
-const MORE_GROUPS: Array<{ title: string; items: Array<{ label: string; href: string; hint: string }> }> = [
-  {
-    title: "Compliance",
-    items: [
-      { label: "🛡️ Grievances", href: "/governance/grievances-whistleblowing", hint: "Whistleblowing & grievance management" },
-      { label: "🔐 Access Control", href: "/access-control", hint: "User roles, sessions & permissions" },
-    ],
-  },
-  {
-    // Client lifecycle: intake → KYC → ongoing CDD → data quality
-    title: "Onboarding & CDD",
-    items: [
-      { label: "🔄 pKYC Monitor", href: "/pkyc", hint: "Perpetual KYC — continuous CDD lifecycle management" },
-      { label: "🪄 Onboarding Wizard", href: "/operations/onboard", hint: "Guided new-customer flow" },
-      { label: "🪪 Client Portal", href: "/client-portal", hint: "Entity KYC + AI risk assessment" },
-      { label: "👥 UBO Declaration", href: "/ubo-declaration", hint: "Beneficial ownership form + AI risk" },
-      { label: "👤 PEP Profiles", href: "/pep-profile", hint: "PEP tier · SOW · network map · EDD measures" },
-      { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
-      { label: "🤝 Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
-      { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
-      { label: "✅ Data Quality", href: "/data-quality", hint: "CDD completeness + AI remediation plan" },
-      { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
-      { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan · training tracker" },
-      { label: "✅ Approvals", href: "/approvals", hint: "Entity approval tracker — status, risk score, country destinations" },
-    ],
-  },
-  {
-    // AML/CFT operational modules: risk assessment, STR workflow, supply chain, oversight
-    title: "Risk & AML Ops",
-    items: [
-      { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
-      { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
-      { label: "🔗 Supply Chain & Responsible Sourcing", href: "/supply-chain", hint: "Geographic risk · CSDDD · UFLPA · RMI/RMAP · OECD 5-step DDG · MD 68/2024" },
-      { label: "📋 Reg Changes", href: "/reg-change", hint: "Regulatory change roadmap · AI implementation calendar" },
-      { label: "📦 Shipments", href: "/shipments", hint: "Bullion chain-of-custody + AI TBML scan" },
-      { label: "🇦🇪 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions + NAS/ARS registration + control list" },
-      { label: "🚨 Sanctions Alerts & Name Match", href: "/tfs-alerts", hint: "EOCN subscription alerts · CNMR filing · Gmail monitor · Asana compliance tasks" },
-      { label: "💵 DPMSR", href: "/dpmsr", hint: "DPMS cash reporting ≥ AED 55,000 · CR134/2025 Art.3" },
-      { label: "📋 MoE Survey", href: "/moe-survey", hint: "Mandatory AML/CFT survey MOET/AML/001/2026 · all DNFBPs" },
-      { label: "👮 Enforcement", href: "/enforcement", hint: "Regulatory deadlines & action tracker" },
-      { label: "⚖️ Oversight", href: "/oversight", hint: "Board & management sign-off · minutes" },
-      { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
-    ],
-  },
-  {
-    // Regulatory record-keeping, audit trail, reference library
-    title: "Governance & Audit",
-    items: [
-      { label: "🤖 Responsible AI", href: "/responsible-ai", hint: "UNESCO AI ethics compliance · human oversight" },
-      { label: "🏛️ Inspection Room", href: "/governance/inspection-room", hint: "Regulator-ready evidence pack" },
-      { label: "📜 Regulatory Library", href: "/regulatory", hint: "Searchable UAE/FATF regulatory library" },
-      { label: "📑 Policies & SOPs", href: "/policies", hint: "AML programme charter & procedures" },
-      { label: "📚 Typology Library", href: "/typology-library", hint: "500+ ML typologies · AI search · UAE-specific localised content" },
-      { label: "📖 Playbook", href: "/playbook", hint: "Step-by-step AML/CFT compliance playbooks" },
-      { label: "✏️ Corrections", href: "/corrections", hint: "Data-subject access & correction requests" },
-      { label: "🤖 AI Incident Playbook", href: "/ai-incident-playbook", hint: "UAE FDL 10/2025 — AI failure response: hallucination, bias spike, data poisoning, prompt injection · Shadow AI Register · Vendor AI Audit" },
-    ],
-  },
-  {
-    title: "KYC Tools",
-    items: [
-      { label: "🌐 OSINT", href: "/osint", hint: "Open-source intelligence — domain & username harvest" },
-      { label: "🆔 GLEIF / LEI", href: "/gleif", hint: "Legal Entity Identifier lookup & name search" },
-      { label: "🕸️ Entity Graph", href: "/entity-graph", hint: "Relationship & ownership network graph" },
-      { label: "🌍 Domain Intel", href: "/domain-intel", hint: "Domain & web infrastructure intelligence" },
-      { label: "₿ Crypto Risk", href: "/crypto-risk", hint: "Wallet & crypto exposure risk" },
-      { label: "🚢 Vessel Check", href: "/vessel-check", hint: "Vessel sanctions & dark-fleet screening" },
-      { label: "🔢 Benford Analysis", href: "/benford", hint: "Benford's-law statistical anomaly test" },
-      { label: "🕵️ Investigation", href: "/investigation", hint: "Case investigation workbench" },
-      { label: "📍 Single Country", href: "/country-risk?tab=single", hint: "Single-country risk brief" },
-      { label: "🚫 Sanctions Evasion", href: "/sanctions-evasion", hint: "Sanctions evasion typology detection" },
-      { label: "🏢 UBO Walker", href: "/governance/intelligence-tools?tab=ubo", hint: "Beneficial-ownership chain walker" },
-      { label: "🧪 Intelligence Tools", href: "/governance/intelligence-tools", hint: "UBO walker · crypto exposure · synthetic ID" },
-      { label: "🔒 Audit Trail", href: "/audit-trail", hint: "Immutable decision audit trail" },
-    ],
-  },
-  {
-    title: "Intelligence",
-    items: [
-      { label: "🛰️ Live Intelligence Feed", href: "/intel", hint: "Live regulatory & 7-language adverse-media feed · unified intelligence hub" },
-      { label: "🧠 Brain Intel", href: "/intelligence-hub?tab=brain", hint: "Brain faculty intelligence & reasoning-mode insight" },
-      { label: "🔧 Workbench", href: "/intelligence-hub?tab=workbench", hint: "Analyst cognitive workbench" },
-      { label: "📡 Telemetry", href: "/intelligence-hub?tab=telemetry", hint: "Live system telemetry & metrics" },
-      { label: "🥷 Red-Team", href: "/intelligence-hub?tab=red-team", hint: "Adversarial red-team probe console" },
-      { label: "🛡️ Security", href: "/intelligence-hub?tab=security-audit", hint: "Security audit dashboard" },
-      { label: "💚 Status", href: "/intelligence-hub?tab=status", hint: "Live service status & health" },
-      { label: "📘 API Docs", href: "/intelligence-hub?tab=api-docs", hint: "API reference documentation" },
-      { label: "📋 System Card", href: "/system-card", hint: "Model system card & governance disclosures" },
-      { label: "🛡️ Security Scan", href: "/security-scan", hint: "Dependency & code security scan" },
-      { label: "👁️ Analyst Behavior", href: "/analyst-behavior", hint: "Analyst behavior monitoring" },
-      { label: "🎯 Board Dashboard", href: "/board-dashboard", hint: "Board-level compliance dashboard" },
-      { label: "📊 KRI Dashboard", href: "/kri-dashboard", hint: "Key risk indicator dashboard" },
-    ],
-  },
-];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -122,18 +22,6 @@ export function Header() {
   const pathname = usePathname();
   const { strings } = useLocale();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreButtonRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number } | null>(null);
-
-  // Top-nav labels resolved per active locale. Emoji prefixes are
-  // language-neutral so they stay across all locales.
-  const NAV_TABS_I18N = [
-    { label: `🔎 ${strings.screening}`, href: "/screening" },
-    { label: `💸 ${strings.transactionMonitor}`, href: "/transaction-monitor" },
-    { label: `👁️ ${strings.ongoingMonitor}`, href: "/ongoing-monitor" },
-    { label: `🧠 ${strings.mlroAdvisor}`, href: "/mlro-advisor" },
-  ];
 
   useEffect(() => {
     const storedTheme =
@@ -151,6 +39,8 @@ export function Header() {
     try { if (typeof localStorage !== "undefined") localStorage.setItem(THEME_KEY, next); } catch { /* private mode or quota */ }
   };
 
+  const screeningActive = isActive(pathname ?? "", "/screening");
+
   return (
     <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
@@ -167,105 +57,16 @@ export function Header() {
         </Link>
 
         <div className="flex gap-0.5 ml-2 md:ml-8">
-          {/* First tab (Screening) */}
-          {NAV_TABS_I18N.slice(0, 1).map((tab) => {
-            const active = isActive(pathname ?? "", tab.href);
-            return (
-              <a
-                key={tab.href}
-                href={tab.href}
-                className={`px-3 py-1.5 text-12.5 rounded no-underline font-medium transition-colors whitespace-nowrap ${
-                  active
-                    ? "bg-bg-2 text-ink-0"
-                    : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
-                }`}
-              >
-                {tab.label}
-              </a>
-            );
-          })}
-          <div className="relative" ref={moreButtonRef}>
-            <button
-              type="button"
-              onClick={() => {
-                if (!moreOpen && moreButtonRef.current) {
-                  const rect = moreButtonRef.current.getBoundingClientRect();
-                  // On mobile (<768px), anchor to left edge of viewport so
-                  // the dropdown never overflows off-screen.
-                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-                  setDropdownPos({
-                    left: isMobile ? 8 : rect.left,
-                    top: rect.bottom + 4,
-                  });
-                }
-                setMoreOpen((v) => !v);
-              }}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 text-12.5 rounded font-medium transition-colors whitespace-nowrap ${
-                MORE_GROUPS.some((g) => g.items.some((it) => isActive(pathname ?? "", it.href)))
-                  ? "bg-bg-2 text-ink-0"
-                  : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
-              }`}
-            >
-              {strings.more}
-              <span className="text-10 text-ink-3">▾</span>
-            </button>
-            {moreOpen && dropdownPos && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setMoreOpen(false)}
-                  aria-hidden="true"
-                />
-                <div
-                  className="fixed z-50 w-[calc(100vw-16px)] md:w-[940px] lg:w-[1320px] max-h-[calc(100vh-80px)] overflow-y-auto bg-bg-panel border border-hair-2 rounded-lg shadow-lg p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4"
-                  style={{ left: dropdownPos.left, top: dropdownPos.top }}
-                >
-                  {MORE_GROUPS.map((g) => (
-                    <div key={g.title}>
-                      <div className="text-10 uppercase tracking-wide-3 text-brand font-semibold mb-1.5 px-2">
-                        {g.title}
-                      </div>
-                      <ul className="list-none p-0 m-0">
-                        {g.items.map((it) => (
-                          <li key={it.href}>
-                            <a
-                              href={it.href}
-                              onClick={() => setMoreOpen(false)}
-                              className={`block px-2 py-1.5 rounded no-underline transition-colors ${
-                                isActive(pathname ?? "", it.href)
-                                  ? "bg-brand-dim text-brand-deep"
-                                  : "text-ink-0 hover:bg-bg-1"
-                              }`}
-                            >
-                              <div className="text-12 font-medium">{it.label}</div>
-                              <div className="text-10 text-ink-3">{it.hint}</div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          {/* Remaining tabs after More */}
-          {NAV_TABS_I18N.slice(1).map((tab) => {
-            const active = isActive(pathname ?? "", tab.href);
-            return (
-              <a
-                key={tab.href}
-                href={tab.href}
-                className={`px-3 py-1.5 text-12.5 rounded no-underline font-medium transition-colors whitespace-nowrap ${
-                  active
-                    ? "bg-bg-2 text-ink-0"
-                    : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
-                }`}
-              >
-                {tab.label}
-              </a>
-            );
-          })}
+          <a
+            href="/screening"
+            className={`px-3 py-1.5 text-12.5 rounded no-underline font-medium transition-colors whitespace-nowrap ${
+              screeningActive
+                ? "bg-bg-2 text-ink-0"
+                : "text-ink-2 hover:bg-bg-2 hover:text-ink-0"
+            }`}
+          >
+            🔎 {strings.screening}
+          </a>
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4 font-mono text-10.5 text-ink-2 shrink-0">
