@@ -118,7 +118,7 @@ export default function OecdDdgPage() {
 
   useEffect(() => { void loadRecords(); }, [loadRecords]);
 
-  const createRecord = async () => {
+  const _createRecord = async () => {
     const year = parseInt(newYear, 10);
     if (!year || year < 2000 || year > 2100) return;
     try {

@@ -6,7 +6,6 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import type { PKycSubject, PKycCadence } from "@/app/api/pkyc/_store";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -67,7 +66,7 @@ export default function PKycPage() {
   const [, setStats] = useState<PKycStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
+  const [_running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
   const [enrolling, setEnrolling] = useState(false);

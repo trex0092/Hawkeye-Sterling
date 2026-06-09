@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
-import { ActionButton } from "@/components/shared/ActionButton";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { RowActions } from "@/components/shared/RowActions";
@@ -986,7 +985,7 @@ export default function ShipmentsPage() {
   const [releasedIds, _setReleasedIds] = useState<string[]>([]);
   const [editingShipment, setEditingShipment] = useState<Consignment | null>(null);
   const [tbml, setTbml] = useState<ShipmentTbml | null>(null);
-  const [tbmlLoading, setTbmlLoading] = useState(false);
+  const [_tbmlLoading, setTbmlLoading] = useState(false);
   const [tbmlError, setTbmlError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
@@ -1059,7 +1058,7 @@ export default function ShipmentsPage() {
     saveDeletedIds([]);
   };
 
-  const runTbmlScan = async (consignments: Consignment[]) => {
+  const _runTbmlScan = async (consignments: Consignment[]) => {
     setTbmlLoading(true);
     setTbmlError(null);
     try {

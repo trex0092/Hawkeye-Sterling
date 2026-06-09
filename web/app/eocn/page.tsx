@@ -264,7 +264,7 @@ export default function EocnPage() {
   const [customMatches, setCustomMatches] = useState<EocnMatch[]>([]);
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editMatchDraft, setEditMatchDraft] = useState<MatchEditDraft>({ disposition: "under-review", notes: "", goAmlRef: "", mlroSignedOff: false });
-  const [refreshing, setRefreshing] = useState(false);
+  const [_refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   // Live-feed payload, initialized from the bundled fixture so the
@@ -336,7 +336,7 @@ export default function EocnPage() {
     };
   }, []);
 
-  const handleRefresh = useCallback(async () => {
+  const _handleRefresh = useCallback(async () => {
     setRefreshing(true);
     setFetchError(null);
     try {

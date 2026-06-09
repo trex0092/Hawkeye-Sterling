@@ -64,7 +64,7 @@ export default function RmapPage() {
     void fetchSmelters(query.trim() || undefined);
   }
 
-  async function downloadCmrt() {
+  async function _downloadCmrt() {
     try {
       const res = await fetch("/api/rmap/export-cmrt");
       if (!res.ok) { setError("CMRT export failed"); return; }

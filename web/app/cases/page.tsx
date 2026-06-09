@@ -98,7 +98,7 @@ export default function CasesPage() {
   const [reportCase, setReportCase] = useState<CaseRecord | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
-  const [triageLoading, setTriageLoading] = useState(false);
+  const [_triageLoading, setTriageLoading] = useState(false);
   const [triageError, setTriageError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
@@ -152,7 +152,7 @@ export default function CasesPage() {
     [cases],
   );
 
-  const runBatchTriage = async () => {
+  const _runBatchTriage = async () => {
     setTriageLoading(true);
     setTriageResult(null);
     setTriageError(null);
