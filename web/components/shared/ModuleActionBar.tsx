@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
 
 // Standardised 8-button action bar — portalled to document.body so
 // position:fixed is always relative to the viewport, never broken by a
 // parent overflow/transform/will-change containing block.
 //
 // Default behaviours (no props needed):
-//   AI      → navigate to /mlro-advisor
+//   AI      → fires CustomEvent("hawkeye:ai") + opens /mlro-advisor in new tab (or onAi callback)
 //   CSV     → fires CustomEvent("hawkeye:csv") — modules listen + onCsv callback
 //   RUN     → fires CustomEvent("hawkeye:run") — modules listen + onRun callback
 //   PDF     → window.print() (browser saves as PDF)
@@ -22,6 +21,7 @@ interface ModuleActionBarProps {
   asanaModule?: string;
   asanaLabel?: string;
   asanaSummary?: string;
+  onAi?: () => void;
   onCsv?: () => void;
   onRun?: () => void;
   onAdd?: () => void;
@@ -46,13 +46,13 @@ export function ModuleActionBar({
   asanaModule,
   asanaLabel,
   asanaSummary,
+  onAi,
   onCsv,
   onRun,
   onAdd,
 }: ModuleActionBarProps) {
   const [asanaStatus, setAsanaStatus] = useState<AsanaStatus>("idle");
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -79,7 +79,9 @@ export function ModuleActionBar({
         return;
       }
       case "ai":
-        router.push("/mlro-advisor");
+        if (onAi) { onAi(); return; }
+        window.dispatchEvent(new CustomEvent("hawkeye:ai", { bubbles: true }));
+        window.open("/mlro-advisor", "_blank", "noopener,noreferrer");
         return;
       case "csv":
         if (onCsv) { onCsv(); return; }
