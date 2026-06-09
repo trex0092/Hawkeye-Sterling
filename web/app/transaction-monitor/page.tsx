@@ -419,7 +419,7 @@ export default function TransactionMonitorPage() {
     <ModuleLayout
       asanaModule="transaction-monitor"
       asanaLabel="Transaction Monitor"
-      onRun={runDailyScan}
+      onRun={() => void runDailyScan()}
       sidebarActions={
         <>
           <ActionButton variant="screening" type="button" onClick={runDailyScan} disabled={running}>

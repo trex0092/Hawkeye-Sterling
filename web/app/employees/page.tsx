@@ -324,6 +324,8 @@ export default function EmployeesPage() {
     <ModuleLayout
       asanaModule="employees"
       asanaLabel="Employees"
+      onRun={() => void runEmployeeRiskScan()}
+      onAdd={addEmployee}
       sidebarActions={
         <>
           <ActionButton

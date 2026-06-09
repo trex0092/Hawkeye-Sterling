@@ -308,7 +308,7 @@ export default function GoAmlSubmissionPage() {
   const narrativeLen = form.narrativeText.length;
 
   return (
-    <ModuleLayout asanaModule="goaml-submission" asanaLabel="goAML STR Submission">
+    <ModuleLayout asanaModule="goaml-submission" asanaLabel="goAML STR Submission" onAdd={addTx}>
       <ModuleHero
         eyebrow=""
         title="STR / SAR"

@@ -240,6 +240,7 @@ export default function UboDeclarationPage() {
     <ModuleLayout
       asanaModule="ubo-declaration"
       asanaLabel="UBO Declaration"
+      onAdd={addUbo}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={addUbo}>
           + Add UBO

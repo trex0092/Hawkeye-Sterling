@@ -365,7 +365,7 @@ export default function RmiPage() {
   const activeSuppliers = liveSmelters.filter((s) => s.activeSupplier).length;
 
   return (
-    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine" onRun={runRmiAssessment}>
+    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine" onRun={() => void runRmiAssessment()}>
       <ModuleHero
 
         eyebrow=""

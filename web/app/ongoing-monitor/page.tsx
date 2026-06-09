@@ -438,6 +438,8 @@ export default function OngoingMonitorPage() {
     <ModuleLayout
       asanaModule="ongoing-monitor"
       asanaLabel="Ongoing Monitor"
+      onRun={() => void runAiMonitor()}
+      onAdd={() => void add()}
       sidebarActions={
         section === "monitoring" ? (
           <ActionButton

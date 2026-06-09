@@ -316,7 +316,7 @@ export default function EwraPage() {
   const highRiskCount = state.dimensions.filter((d) => residual(d) >= 4).length;
 
   return (
-    <ModuleLayout asanaModule="ewra" asanaLabel="Enterprise-Wide Risk Assessment">
+    <ModuleLayout asanaModule="ewra" asanaLabel="Enterprise-Wide Risk Assessment" onRun={() => void runThreatIntel()}>
         <ModuleHero
 
           eyebrow=""
