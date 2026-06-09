@@ -106,7 +106,7 @@ export function ModuleActionBar({
   if (!mounted) return null;
 
   const bar = (
-    <div style={{ position: "fixed", top: 350, right: 4, zIndex: 9999, display: "flex", flexDirection: "column", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ position: "fixed", bottom: 20, right: 4, zIndex: 9999, display: "flex", flexDirection: "column", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
       {BTNS.map((b) => {
         let label: string = b.label;
         if (b.key === "asana") {
