@@ -169,7 +169,7 @@ export function OwnershipTab({ subject }: { subject: Subject }) {
         Each node carries jurisdiction, ownership percentage, verification
         status, and risk flags (PEP / sanctions / CAHRA / adverse-media).
         Unverified nodes require an MLRO four-eyes review before onboarding
-        can complete under FDL 10/2025 Art.19 (UBO identification). Shell
+        can complete under Federal Decree-Law No. 10 of 2025 Art.19 (UBO identification). Shell
         companies, nominee shareholders, and trust structures render as
         distinct node kinds so layered ownership is immediately visible.
       </p>

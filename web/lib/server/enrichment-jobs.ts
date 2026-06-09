@@ -98,7 +98,7 @@ export async function completeEnrichmentJob(
       enrichmentResultId: jobId,
     }).catch((err: unknown) => {
       // WEB-003 (forensic audit batch 3): audit-chain write failures are
-      // compliance-critical (FDL 10/2025 Art.18 — every AI decision must
+      // compliance-critical (Federal Decree-Law No. 10 of 2025 Art.18 — every AI decision must
       // be auditable). Surface at ERROR so SLA dashboards page MLRO.
       console.error("[enrichment-jobs] audit write FAILED:", err instanceof Error ? err.message : String(err));
     });

@@ -2,7 +2,7 @@
 //
 // EDD File Completeness Checker.
 // Evaluates whether an Enhanced Due Diligence (EDD) file meets the minimum
-// documentation requirements under UAE FDL 10/2025.
+// documentation requirements under UAE Federal Decree-Law No. 10 of 2025.
 //
 // Checks:
 //   - Identity document (passport/Emirates ID/trade licence) — mandatory
@@ -20,7 +20,7 @@
 //
 // Returns: completeness score, missing items, gap narrative, recommendations.
 //
-// Regulatory basis: FDL 10/2025 Art.8; FATF R.10, R.12
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.8; FATF R.10, R.12
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -104,7 +104,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Identity document (passport, Emirates ID, trade licence)",
       mandatory: true,
       present: !!file.hasIdentityDocument,
-      regulatoryBasis: "FDL 10/2025 Art.8(1)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(1)",
       guidance: "Certified copy of valid government-issued ID; for corporates: trade licence + MoA",
     },
     {
@@ -112,7 +112,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Source of funds (SoF) documentation",
       mandatory: true,
       present: !!file.hasSourceOfFunds,
-      regulatoryBasis: "FDL 10/2025 Art.8(3); FATF R.10",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(3); FATF R.10",
       guidance: "Bank statements, invoices, or other documentary evidence of funds origin",
     },
     {
@@ -120,7 +120,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Source of wealth (SoW) documentation",
       mandatory: isHighOrCritical,
       present: !!file.hasSourceOfWealth,
-      regulatoryBasis: "FDL 10/2025 Art.8(4); FATF R.12",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(4); FATF R.12",
       guidance: "Required for high/critical risk. Employment evidence, business income, inheritance docs",
     },
     {
@@ -128,7 +128,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Business purpose / transaction rationale",
       mandatory: true,
       present: !!file.hasBusinessPurpose,
-      regulatoryBasis: "FDL 10/2025 Art.8(2)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(2)",
       guidance: "Documented explanation of why the customer is engaging in this business relationship",
     },
     {
@@ -136,7 +136,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Beneficial ownership chain documentation",
       mandatory: isCorporate,
       present: !!file.hasBeneficialOwnership,
-      regulatoryBasis: "FDL 10/2025 Art.8(5); CR 134/2025 Art.14 (UBO chain)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(5); CR 134/2025 Art.14 (UBO chain)",
       guidance: "UBO register extract or ownership chart showing all >25% beneficial owners",
     },
     {
@@ -144,7 +144,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "PEP status declaration and enhanced checks",
       mandatory: !!file.isPep,
       present: !!file.hasPepDeclaration,
-      regulatoryBasis: "FDL 10/2025 Art.10; FATF R.12",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.10; FATF R.12",
       guidance: "Written PEP determination, role/position details, and senior management approval",
     },
     {
@@ -152,7 +152,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Adverse media / negative news search",
       mandatory: true,
       present: !!file.hasAdverseMediaSearch,
-      regulatoryBasis: "FDL 10/2025 Art.8(6); FATF R.10",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(6); FATF R.10",
       guidance: "Documented search of reputable news sources, with date and results recorded",
     },
     {
@@ -160,7 +160,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Sanctions screening confirmation",
       mandatory: true,
       present: !!file.hasSanctionsConfirmation,
-      regulatoryBasis: "FDL 10/2025 Art.11; UNSCR; OFAC",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.11; UNSCR; OFAC",
       guidance: "Screening certificate or screenshot against OFAC SDN, UN Consolidated, UAE EOCN",
     },
     {
@@ -168,7 +168,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Senior management / MLRO approval",
       mandatory: isCritical || !!file.isPep,
       present: !!file.hasSeniorManagementApproval,
-      regulatoryBasis: "FDL 10/2025 Art.8(7); FATF R.12",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(7); FATF R.12",
       guidance: "Signed approval from MLRO or C-suite for high-risk relationship acceptance",
     },
     {
@@ -176,7 +176,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Geographic risk justification",
       mandatory: !!file.hasHighRiskJurisdiction,
       present: !!file.hasGeoRiskJustification,
-      regulatoryBasis: "FDL 10/2025 Art.9; FATF R.10",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.9; FATF R.10",
       guidance: "Written rationale for accepting business from high-risk jurisdiction",
     },
     {
@@ -184,7 +184,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Ongoing monitoring plan / review schedule",
       mandatory: isHighOrCritical,
       present: !!file.hasOngoingMonitoringPlan,
-      regulatoryBasis: "FDL 10/2025 Art.8(8); FATF R.10",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(8); FATF R.10",
       guidance: "Documented monitoring frequency and triggers for review escalation",
     },
     {
@@ -192,7 +192,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Last EDD review date recorded",
       mandatory: true,
       present: !!file.hasLastReviewDate,
-      regulatoryBasis: "FDL 10/2025 Art.8(9)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(9)",
       guidance: "Date of last EDD review must be recorded; overdue reviews require immediate refresh",
     },
     {
@@ -200,7 +200,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Financial statements (for corporate / high-value)",
       mandatory: isCorporate && isHighOrCritical,
       present: !!file.hasFinancialStatements,
-      regulatoryBasis: "FDL 10/2025 Art.8(10)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(10)",
       guidance: "Audited accounts or management accounts for the last 2 years",
     },
     {
@@ -208,7 +208,7 @@ function buildRequirements(file: EddFile): EddRequirement[] {
       label: "Corporate structure / network diagram",
       mandatory: isCorporate && isCritical,
       present: !!file.hasNetworkDiagram,
-      regulatoryBasis: "FDL 10/2025 Art.8(5)",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8(5)",
       guidance: "Visual diagram of corporate group structure and ownership layers",
     },
   ];

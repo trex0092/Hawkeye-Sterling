@@ -242,7 +242,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
       await recordSubmittedSha256(tenant, draftSha256, submissionRef).catch((err) =>
         console.warn("[goaml/auto-submit] sha256 idempotency record write failed:", err instanceof Error ? err.message : String(err)),
       );
-      // FDL 10/2025 Art.17 — live FIU submission must be on the tamper-evident chain.
+      // Federal Decree-Law No. 10 of 2025 Art.17 — live FIU submission must be on the tamper-evident chain.
       void writeAuditChainEntry(
         {
           event: "goaml.live_submit.accepted",

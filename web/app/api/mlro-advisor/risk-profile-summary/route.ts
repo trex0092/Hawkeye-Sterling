@@ -446,7 +446,7 @@ function buildSystemPrompt(
     .map(([k, v]) => `  ${k}: mean ${v.mean} ${v.unit} ±${v.std}${v.note ? ` [${v.note}]` : ""}`)
     .join("\n");
 
-  return `You are a Senior MLRO and Compliance Specialist at a UAE-regulated financial institution. Generate a structured Risk Profile Summary. Apply UAE FDL 10/2025, FATF Recommendations, and CBUAE AML Standards.
+  return `You are a Senior MLRO and Compliance Specialist at a UAE-regulated financial institution. Generate a structured Risk Profile Summary. Apply UAE Federal Decree-Law No. 10 of 2025, FATF Recommendations, and CBUAE AML Standards.
 
 === FULL MLRO RED-FLAG TAXONOMY — ALL ${flagPool.length} FLAGS (ordered: sector-relevant first) ===
 Your redFlagsToWatch MUST be drawn from this list. Do not invent flags outside it.

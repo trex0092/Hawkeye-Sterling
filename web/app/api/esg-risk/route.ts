@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       },
       regulatoryExposure: [
         { regulation: "FATF R.1 (risk-based approach)", jurisdiction: "Global", compliance: "Required" },
-        { regulation: "UAE FDL 10/2025 Art.4 (EWRA)", jurisdiction: "UAE", compliance: "Required" },
+        { regulation: "UAE Federal Decree-Law No. 10 of 2025 Art.4 (EWRA)", jurisdiction: "UAE", compliance: "Required" },
         ...(sectorRisky ? [{ regulation: "OECD Due Diligence Guidance for Responsible Business Conduct", jurisdiction: "OECD", compliance: "Recommended" }] : []),
       ],
       fatfTypologies: sectorRisky ? [

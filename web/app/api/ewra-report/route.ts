@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       res >= 4 ? "critical" : res >= 3 ? "high" : res >= 2 ? "medium" : "low";
     return {
       overallRisk,
-      executiveSummary: `Enterprise-Wide Risk Assessment for ${body.institutionName ?? "the institution"} — reporting period ${body.reportingPeriod ?? new Date().getFullYear()}. Overall inherent risk scored ${inh}/5; overall residual risk ${res}/5 (band: ${overallRisk.toUpperCase()}). Assessment performed across ${body.dimensions?.length ?? 0} dimensions in line with FATF R.1 and FDL 10/2025 Art.4. The Board is asked to note residual exposure and approve the action plan below.`,
+      executiveSummary: `Enterprise-Wide Risk Assessment for ${body.institutionName ?? "the institution"} — reporting period ${body.reportingPeriod ?? new Date().getFullYear()}. Overall inherent risk scored ${inh}/5; overall residual risk ${res}/5 (band: ${overallRisk.toUpperCase()}). Assessment performed across ${body.dimensions?.length ?? 0} dimensions in line with FATF R.1 and Federal Decree-Law No. 10 of 2025 Art.4. The Board is asked to note residual exposure and approve the action plan below.`,
       keyFindings: (Array.isArray(body.dimensions) ? body.dimensions : []).slice(0, 5).map((d) => `${d.dimension} — inherent ${d.inherent}/5, controls ${d.controls}/5${d.notes ? ` (${d.notes})` : ""}`),
       dimensionNarratives: (Array.isArray(body.dimensions) ? body.dimensions : []).map((d) => ({
         dimension: d.dimension,
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         "Direct management to address any control gap identified within the next quarter.",
         "Receive a follow-up report at the next Board meeting.",
       ],
-      regulatoryContext: "This assessment satisfies the EWRA obligations under UAE FDL 10/2025 Art.4 and FATF Recommendation 1.",
+      regulatoryContext: "This assessment satisfies the EWRA obligations under UAE Federal Decree-Law No. 10 of 2025 Art.4 and FATF Recommendation 1.",
       approvalStatement: `Approved on behalf of the Board on ${new Date().toLocaleDateString()}.`,
       nextSteps: ["File this EWRA in the regulatory record.", "Action the gap-remediation plan.", "Refresh annually."],
       immediateActions: overallRisk === "critical" ? ["Convene an MLRO emergency review.", "Suspend onboarding in critical-residual segments until controls are uplifted."] : [],
@@ -122,11 +122,11 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance specialist generating a formal Enterprise-Wide Risk Assessment (EWRA) board report under UAE FDL 10/2025 Art.4 and FATF R.1.
+          text: `You are a UAE AML/CFT compliance specialist generating a formal Enterprise-Wide Risk Assessment (EWRA) board report under UAE Federal Decree-Law No. 10 of 2025 Art.4 and FATF R.1.
 
 Generate a professional, board-ready EWRA report based on the risk dimension scores provided. The report must:
 - Be written in formal, regulatory-grade English suitable for Board presentation
-- Reference UAE FDL 10/2025 and FATF R.1 specifically
+- Reference UAE Federal Decree-Law No. 10 of 2025 and FATF R.1 specifically
 - Identify the overall risk level from the dimension scores
 - Provide specific, actionable board recommendations
 - Include an approval statement
@@ -181,7 +181,7 @@ Generate the board EWRA report.`,
     },
   });
 
-  // FATF R.1 / FDL 10/2025 Art.4 — board EWRA report generation is a
+  // FATF R.1 / Federal Decree-Law No. 10 of 2025 Art.4 — board EWRA report generation is a
   // compliance-critical event that must appear on the tamper-evident chain.
   void writeAuditChainEntry(
     {

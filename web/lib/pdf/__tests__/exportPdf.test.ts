@@ -173,9 +173,9 @@ describe("exportToPdf", () => {
   });
 
   it("renders regulatory basis in footer", () => {
-    exportToPdf(baseOptions({ regulatoryBasis: "FDL 10/2025 Art.24" }));
+    exportToPdf(baseOptions({ regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.24" }));
     const textCalls: unknown[][] = mockDoc.text.mock.calls;
-    const found = textCalls.some((c) => typeof c[0] === "string" && c[0].includes("FDL 10/2025"));
+    const found = textCalls.some((c) => typeof c[0] === "string" && c[0].includes("Federal Decree-Law No. 10 of 2025"));
     expect(found).toBe(true);
   });
 

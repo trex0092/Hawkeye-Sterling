@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Cannot reset password for a higher-privileged account" }, { status: 403 });
   }
 
-  // FDL 10/2025 Art.24: privileged password reset must be in the tamper-evident
+  // Federal Decree-Law No. 10 of 2025 Art.24: privileged password reset must be in the tamper-evident
   // audit chain so regulators can review all access-control changes.
   void writeAuditChainEntry({
     event: "access.password_reset_by_admin",

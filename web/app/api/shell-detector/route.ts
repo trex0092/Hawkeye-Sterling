@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE AML specialist assessing corporate structures for shell company indicators under FATF Recommendation 24 and UAE FDL 10/2025. Red flags include: nominee directors/shareholders, bearer shares, complex multi-layer ownership without clear rationale, registered agent addresses, mismatch between declared activity and financial flows, companies in secrecy jurisdictions, BVI/Cayman/Marshall Islands intermediaries, no employees, no physical presence.
+        system: `You are a UAE AML specialist assessing corporate structures for shell company indicators under FATF Recommendation 24 and UAE Federal Decree-Law No. 10 of 2025. Red flags include: nominee directors/shareholders, bearer shares, complex multi-layer ownership without clear rationale, registered agent addresses, mismatch between declared activity and financial flows, companies in secrecy jurisdictions, BVI/Cayman/Marshall Islands intermediaries, no employees, no physical presence.
 
 Respond ONLY with valid JSON — no markdown fences:
 {

@@ -1,7 +1,7 @@
 // Customer categorization engine (Part 2 of the build spec).
 // Translates screening severity + hit metadata into regulatory risk
 // category, due diligence level, review schedule, and override flags
-// as required by UAE FDL No.10/2025 and FATF R.10.
+// as required by Federal Decree-Law No. 10 of 2025 and FATF R.10.
 
 export type ScreeningSeverity = "clear" | "low" | "medium" | "high" | "critical";
 export type RiskCategory      = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -86,13 +86,13 @@ export function categorize(input: CategorizationInput): CategorizationResult {
   if (isPep && (riskCategory === "LOW" || riskCategory === "MEDIUM")) {
     riskCategory = "HIGH"; dueDiligence = "EDD"; reviewMonths = 3;
     seniorManagementApproval = true;
-    overrideReasons.push("PEP identified — force HIGH minimum (FDL No.10/2025 Art.19)");
+    overrideReasons.push("PEP identified — force HIGH minimum (Federal Decree-Law No. 10 of 2025 Art.19)");
   }
 
   // Previous STR/SAR — force HIGH minimum.
   if (hasStrSarOnRecord && (riskCategory === "LOW" || riskCategory === "MEDIUM")) {
     riskCategory = "HIGH"; dueDiligence = "EDD"; reviewMonths = 3;
-    overrideReasons.push("Prior STR/SAR on record — force HIGH (FDL No.10/2025 Art.18)");
+    overrideReasons.push("Prior STR/SAR on record — force HIGH (Federal Decree-Law No. 10 of 2025 Art.18)");
   }
 
   const nextReview = new Date();

@@ -185,7 +185,7 @@ export async function appendAuditEntry(input: AuditLogAppendInput): Promise<{ se
   // Fire-and-forget Blobs write. Audit DR-05: the previous swallow-and-
   // ignore catch made persistent-audit failures invisible even though the
   // store wrapper logs them. An MLRO audit-log persistence failure is a
-  // compliance event in its own right (FDL 10/2025 Art.24 — 10-year audit
+  // compliance event in its own right (Federal Decree-Law No. 10 of 2025 Art.24 — 10-year audit
   // retention). Surface it explicitly to console.error so the Netlify
   // function log captures the seq + error reason instead of just the
   // generic store-wrapper warning.

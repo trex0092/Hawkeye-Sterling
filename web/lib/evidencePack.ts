@@ -114,7 +114,7 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
 
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
   doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
-  const desc = "Reasoning trail and classifier evidence supporting the advisor's verdict. Hash-chained for tamper-evident review under UAE FDL 10/2025 Art.14 and FATF R.20.";
+  const desc = "Reasoning trail and classifier evidence supporting the advisor's verdict. Hash-chained for tamper-evident review under UAE Federal Decree-Law No. 10 of 2025 Art.14 and FATF R.20.";
   doc.text(doc.splitTextToSize(desc, 380), PW/2, 272, {align:"center"});
 
   const modeStr = entry.mode.replace(/_/g," · ").toUpperCase();
@@ -129,7 +129,7 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
     { label:"EXECUTOR",        value:execModel,       sub:"Tool-calling" },
     { label:"OFFICER",         value:"L. Fernanda",   sub:"CO/MLRO" },
     { label:"INTEGRITY HASH",  value:hashShort,       sub:"HMAC-Verified" },
-    { label:"RETENTION",       value:"10 years",      sub:"FDL 10/2025" },
+    { label:"RETENTION",       value:"10 years",      sub:"Federal Decree-Law No. 10 of 2025" },
   ]);
   coverFooter(doc);
 
@@ -206,7 +206,7 @@ export function renderAdvisorEvidencePack(entry: EvidencePackEntry): Blob {
   const total = doc.getNumberOfPages()-1;
   for (let p=2; p<=doc.getNumberOfPages(); p++) {
     doc.setPage(p);
-    contentFrame(doc, ref, "FDL 10/2025 ART.14  ·  FATF R.1-40  ·  CBUAE","AML STANDARDS", p-1, total);
+    contentFrame(doc, ref, "Federal Decree-Law No. 10 of 2025 ART.14  ·  FATF R.1-40  ·  CBUAE","AML STANDARDS", p-1, total);
   }
 
   return doc.output("blob");

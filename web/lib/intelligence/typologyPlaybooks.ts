@@ -57,7 +57,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "LBMA Responsible Gold Guidance v9",
       "OECD Due Diligence Guidance — Gold Supplement",
       "MoE Circular No. 2 of 2024 (UAE responsible sourcing)",
-      "FDL 10/2025 Art.20 (predicate offences) · Art.26-27 (filing obligations)",
+      "Federal Decree-Law No. 10 of 2025 Art.20 (predicate offences) · Art.26-27 (filing obligations)",
     ],
   },
   fatf_tbml: {
@@ -87,7 +87,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "FATF 2020 Trade-Based Money Laundering Update",
       "FATF / Egmont 2021 Trade-Based ML — Risk Indicators",
       "WCO TBML Risk Indicators",
-      "FDL 10/2025 Art.20 / Art.26-27",
+      "Federal Decree-Law No. 10 of 2025 Art.20 / Art.26-27",
     ],
   },
   fatf_hawala_ivts: {
@@ -147,7 +147,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "OFAC 50% Rule (Aug 2014)",
       "OFSI 2024 Sanctions Evasion Through Shell Companies",
       "FATF R.24-25 (Beneficial Ownership)",
-      "FDL 10/2025 Art.18 (UBO mandate)",
+      "Federal Decree-Law No. 10 of 2025 Art.18 (UBO mandate)",
     ],
   },
   fatf_crypto_offramp: {
@@ -207,7 +207,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "FATF Recommendations 5, 6, 7",
       "UN Resolution 1267 / 1989 / 2253",
       "FDL 7/2014 (anti-terrorism)",
-      "FDL 10/2025 Art.30",
+      "Federal Decree-Law No. 10 of 2025 Art.30",
       "Cabinet Resolution 156/2025",
     ],
   },
@@ -235,7 +235,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
     citations: [
       "FATF Recommendation 7",
       "UN Resolution 1540 / 1718 / 2231",
-      "FDL 10/2025 Art.31",
+      "Federal Decree-Law No. 10 of 2025 Art.31",
       "Cabinet Resolution 156/2025 (Controlled Items)",
     ],
   },
@@ -244,7 +244,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
     summary:
       "PEP-linked corruption / kleptocracy: foreign or domestic public official misappropriating state assets for personal enrichment.",
     immediate: [
-      "Senior management approval per FATF R.12 / FDL 10/2025 Art.17.",
+      "Senior management approval per FATF R.12 / Federal Decree-Law No. 10 of 2025 Art.17.",
       "Detailed source-of-wealth review including public-office salary records, declared assets, family wealth.",
       "Identify all family members + close associates (RCAs) and run separately.",
     ],
@@ -265,7 +265,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "FATF Recommendation 12 (PEPs)",
       "FATF 2013 Politically Exposed Persons (R.12 and R.22)",
       "World Bank / UNODC StAR",
-      "FDL 10/2025 Art.17",
+      "Federal Decree-Law No. 10 of 2025 Art.17",
     ],
   },
   fatf_ubo_concealment: {
@@ -292,7 +292,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
     citations: [
       "FATF Recommendations 24-25",
       "FATF 2018 Concealment of Beneficial Ownership",
-      "FDL 10/2025 Art.18 (UBO mandate)",
+      "Federal Decree-Law No. 10 of 2025 Art.18 (UBO mandate)",
     ],
   },
   human_trafficking: {
@@ -333,7 +333,7 @@ const PLAYBOOKS: Record<string, TypologyPlaybook> = {
       "FATF Recommendation 10 (ongoing customer due diligence)",
       "FinCEN Advisory FIN-2014-A008 (human trafficking red flags)",
       "ILO Global Estimates of Modern Slavery (2022)",
-      "FDL 10/2025 Art.3 (predicate offences include trafficking in persons)",
+      "Federal Decree-Law No. 10 of 2025 Art.3 (predicate offences include trafficking in persons)",
       "UN Protocol to Prevent, Suppress and Punish Trafficking in Persons (Palermo Protocol)",
     ],
   },

@@ -130,7 +130,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       tenantId,
     ).catch((e: unknown) => console.warn("[audit] write failed:", e instanceof Error ? e.message : String(e)));
 
-    // FDL 10/2025 Art.24 — the act of generating a compliance certificate is
+    // Federal Decree-Law No. 10 of 2025 Art.24 — the act of generating a compliance certificate is
     // itself a regulated event and must be traceable in the audit trail.
     const certAuditKey = `audit/mlro/${Date.now()}-cert-${certificate.serialNumber}`;
     void setJson(certAuditKey, {
@@ -162,7 +162,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         certificate,
         regulationBasis: [
           "UAE PDPL 45/2021 Art.13 (record retention)",
-          "UAE FDL 10/2025 Art.19 (record keeping) + Art.24 (10-year audit chain)",
+          "UAE Federal Decree-Law No. 10 of 2025 Art.19 (record keeping) + Art.24 (10-year audit chain)",
           "FATF R.11 (record-keeping)",
         ],
         hint: certificate.signed

@@ -266,7 +266,7 @@ function RetentionPanel() {
         <p className="text-sm text-ink-2 mt-1">
           Marks cleared subjects older than the configured retention period as
           pending deletion. A grace-period review is recommended before hard
-          deletion. AML retention obligations (FDL 10/2025 Art.20) take precedence.
+          deletion. AML retention obligations (Federal Decree-Law No. 10 of 2025 Art.20) take precedence.
         </p>
       </div>
 

@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT legal expert specialising in legal professional privilege, tipping-off prohibition, and confidentiality obligations under UAE FDL 10/2025 Art.30. Analyse legal privilege and tipping-off scenarios and return a JSON object with exactly these fields: { "privilegeApplies": boolean, "tippingOffRisk": "high"|"medium"|"low", "disclosurePermitted": boolean, "safeProcedureSteps": string[], "legalCounselRequired": boolean, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT legal expert specialising in legal professional privilege, tipping-off prohibition, and confidentiality obligations under UAE Federal Decree-Law No. 10 of 2025 Art.30. Analyse legal privilege and tipping-off scenarios and return a JSON object with exactly these fields: { "privilegeApplies": boolean, "tippingOffRisk": "high"|"medium"|"low", "disclosurePermitted": boolean, "safeProcedureSteps": string[], "legalCounselRequired": boolean, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

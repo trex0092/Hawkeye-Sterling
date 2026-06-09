@@ -400,7 +400,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <p class="scr-para">${factsText}</p>`;
 
   // ── page 2: analysis + decision ───────────────────────────────────
-  const analysisText = `The composite score sits in the <strong style="color:${sevColor}">${e(sev)}</strong> band. ${r.hits.length > 0 ? `Possible matches concentrate on ${Array.from(new Set(r.hits.map(h => h.listId))).slice(0, 3).map(l => `<strong>${e(l)}</strong>`).join(", ")}.` : "The subject does not appear on any monitored sanctions regime."} ${sb?.jurisdiction ? `Jurisdictional risk for ${e(sb.jurisdiction.name)} is assessed as ${sb.jurisdiction.cahra ? '<strong style="color:#d61e6f">CAHRA</strong>' : "non-CAHRA"}.` : ""} ${amCount > 0 ? `The adverse-media signal requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3). Categories tripped: ${amCategoriesTripped.slice(0, 5).map(c => e(c.replace(/_/g, " "))).join(", ")}${amCategoriesTripped.length > 5 ? ` +${amCategoriesTripped.length - 5} more` : ""}.` : ""}`;
+  const analysisText = `The composite score sits in the <strong style="color:${sevColor}">${e(sev)}</strong> band. ${r.hits.length > 0 ? `Possible matches concentrate on ${Array.from(new Set(r.hits.map(h => h.listId))).slice(0, 3).map(l => `<strong>${e(l)}</strong>`).join(", ")}.` : "The subject does not appear on any monitored sanctions regime."} ${sb?.jurisdiction ? `Jurisdictional risk for ${e(sb.jurisdiction.name)} is assessed as ${sb.jurisdiction.cahra ? '<strong style="color:#d61e6f">CAHRA</strong>' : "non-CAHRA"}.` : ""} ${amCount > 0 ? `The adverse-media signal requires analyst review and live-news corroboration before constructive knowledge can be asserted under Federal Decree-Law No. 10 of 2025 Art.2(3). Categories tripped: ${amCategoriesTripped.slice(0, 5).map(c => e(c.replace(/_/g, " "))).join(", ")}${amCategoriesTripped.length > 5 ? ` +${amCategoriesTripped.length - 5} more` : ""}.` : ""}`;
 
   const amBrief = amCount > 0 ? `
   <div class="scr-am-brief">
@@ -484,7 +484,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
       <strong style="color:${RES_COLOR.possible}">${triagePos2.length} possible</strong>,
       <strong style="color:${RES_COLOR.false}">${triageNeg.length} false</strong>,
       ${triageOpen.length} unresolved.
-      Each disposition is operator-attested per FDL 10/2025 Art.19; reasons recorded below form the negative-finding evidence-of-search obligation.
+      Each disposition is operator-attested per Federal Decree-Law No. 10 of 2025 Art.19; reasons recorded below form the negative-finding evidence-of-search obligation.
     </p>
     <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px">
       <thead style="background:#f8fafc">
@@ -536,7 +536,7 @@ function renderHtmlReport(text: string, input: ReportInput): string {
   <div class="scr-note">${e(integrityNote)}</div>
   ${hsFinis(reportId, 2, 2)}`;
 
-  const regs  = "FDL 10/2025 · 10-year retention";
+  const regs  = "Federal Decree-Law No. 10 of 2025 · 10-year retention";
   const label = "SUBJECT SCREENING DOSSIER";
 
   // ── page 3: Intelligence Pack — typologies, predicates, interview script ──

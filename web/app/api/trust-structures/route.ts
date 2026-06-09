@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in complex trust and legal arrangement risk assessment under FATF R.25 and UAE FDL 10/2025 Art.7. Analyse trust/legal structures and return a JSON object with exactly these fields: { "opacityScore": number (0-100), "riskRating": "critical"|"high"|"medium"|"low", "uboIdentified": boolean, "jurisdictionRisk": string, "layersCount": number, "structureRedFlags": string[], "uboVerificationSteps": string[], "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in complex trust and legal arrangement risk assessment under FATF R.25 and UAE Federal Decree-Law No. 10 of 2025 Art.7. Analyse trust/legal structures and return a JSON object with exactly these fields: { "opacityScore": number (0-100), "riskRating": "critical"|"high"|"medium"|"low", "uboIdentified": boolean, "jurisdictionRisk": string, "layersCount": number, "structureRedFlags": string[], "uboVerificationSteps": string[], "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

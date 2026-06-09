@@ -396,7 +396,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       // Write a screening-history entry so the ReScreenDiff component shows a
       // populated timeline. Zero-hit runs MUST also write — the absence of hits
-      // is itself the compliance record (FDL 10/2025 Art.16 continuous monitoring).
+      // is itself the compliance record (Federal Decree-Law No. 10 of 2025 Art.16 continuous monitoring).
       // The key pattern screening-history/<id>/<iso-ts> matches the GET handler
       // in /api/screening-history/route.ts which reads this namespace.
       const historyEntry: ScreeningHistoryEntry = {

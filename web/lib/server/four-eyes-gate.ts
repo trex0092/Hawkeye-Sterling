@@ -1,6 +1,6 @@
 // Hawkeye Sterling — four-eyes approval gate.
 //
-// UAE FDL 10/2025 Art.16 + FATF R.26 require dual attestation before
+// UAE Federal Decree-Law No. 10 of 2025 Art.16 + FATF R.26 require dual attestation before
 // regulator-facing filings (STR / SAR / CTR / FFR goAML submissions and
 // material disposition commits). This module provides the canonical gate
 // that route handlers call before any tipping-off-risk action.
@@ -74,7 +74,7 @@ export interface SanitizedFourEyesStatus {
 }
 
 const PREFIX = "four-eyes/approvals/";
-const FOUR_EYES_TTL_HOURS = 48; // Cases pending >= 48h are flagged as overdue (FDL 10/2025 Art.16)
+const FOUR_EYES_TTL_HOURS = 48; // Cases pending >= 48h are flagged as overdue (Federal Decree-Law No. 10 of 2025 Art.16)
 const FOUR_EYES_ESCALATION_HOURS = 72; // Cases pending >= 72h trigger escalation
 
 function safeSegment(s: string): string {
@@ -151,7 +151,7 @@ async function _recordApproval(
   if (!input.caseId.trim() || !input.actor.trim() || input.rationale.trim().length < 20) {
     throw new Error(
       "four-eyes: caseId and actor are required; rationale must be at least 20 characters " +
-      "(provide substantive reasoning per UAE FDL 10/2025 Art.16)"
+      "(provide substantive reasoning per UAE Federal Decree-Law No. 10 of 2025 Art.16)"
     );
   }
   // Inspect existing approvals — refuse same-actor double-approval.
@@ -337,7 +337,7 @@ export async function requireFourEyes(caseId: string): Promise<{
       message: need,
       status: sanitized,
       regulationBasis: [
-        "UAE FDL 10/2025 Art.16 (dual-attestation for regulator filings)",
+        "UAE Federal Decree-Law No. 10 of 2025 Art.16 (dual-attestation for regulator filings)",
         "FATF Recommendation 26 (record-keeping + responsibility separation)",
         "CR No. 134/2025 Art.18 (MLRO sign-off review)",
       ],
@@ -361,10 +361,10 @@ export async function expireCase(caseId: string, expiredBy: string): Promise<{ s
   if (status.approverGids.includes(expiredBy)) {
     throw new Error(
       `expireCase: expiredBy actor ${hashActor(expiredBy)} is an existing approver on this case. ` +
-      `Use a system/cron identity that is not a case approver (FDL 10/2025 Art.16).`,
+      `Use a system/cron identity that is not a case approver (Federal Decree-Law No. 10 of 2025 Art.16).`,
     );
   }
-  const expiryRationale = `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (FDL 10/2025 Art.16)`;
+  const expiryRationale = `Case expired automatically — pending > ${FOUR_EYES_TTL_HOURS}h without second approval (Federal Decree-Law No. 10 of 2025 Art.16)`;
   const expiry: ApprovalEntry = {
     approvalId: `expiry_${Date.now()}_${randomBytes(8).toString("hex")}`,
     caseId,

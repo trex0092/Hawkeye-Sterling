@@ -3,7 +3,7 @@
 // Second-approver completion step for the four-eyes dual-control queue.
 // Mirrors the semantics of PATCH /api/four-eyes?id= but accepts a cleaner
 // POST body instead of a PATCH + query-param combination, and explicitly
-// enforces UAE FDL 10/2025 Art.16 (two DISTINCT operators required).
+// enforces UAE Federal Decree-Law No. 10 of 2025 Art.16 (two DISTINCT operators required).
 //
 // Body: { id, operator, decision: "approve" | "reject", rejectionReason? }
 //
@@ -115,7 +115,7 @@ async function reportToAsana(
     `Decided at      : ${new Date().toISOString()}`,
     ...(item.reason ? [`Reason          : ${item.reason}`] : []),
     ``,
-    `Legal basis     : FATF R.28 · FDL 10/2025 Art.16 · four-eyes principle`,
+    `Legal basis     : FATF R.28 · Federal Decree-Law No. 10 of 2025 Art.16 · four-eyes principle`,
   ];
   try {
     const res = await fetch("https://app.asana.com/api/1.0/tasks", {
@@ -200,12 +200,12 @@ async function handleComplete(req: Request, ctx: RequestContext): Promise<NextRe
     );
   }
 
-  // FDL 10/2025 Art.16 — two DISTINCT operators required.
+  // Federal Decree-Law No. 10 of 2025 Art.16 — two DISTINCT operators required.
   if (operator === existing.initiatedBy) {
     return NextResponse.json(
       {
         ok: false,
-        error: "second approver must be different from initiator (FATF four-eyes / UAE FDL 10/2025 Art.16)",
+        error: "second approver must be different from initiator (FATF four-eyes / UAE Federal Decree-Law No. 10 of 2025 Art.16)",
         code: "SAME_ACTOR_VIOLATION",
       },
       { status: 403 },

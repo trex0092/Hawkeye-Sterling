@@ -2,7 +2,7 @@
 //
 // Separate from the existing presentation-layer case-vault (which syncs
 // localStorage to Blobs). This module implements the full compliance-law
-// case data model required by UAE FDL No.10/2025 and the build spec.
+// case data model required by Federal Decree-Law No. 10 of 2025 and the build spec.
 //
 // Storage layout (all under the "hawkeye-sterling" Blobs store):
 //   hs-compliance/<tenant>/counter.json        → { next: number }
@@ -109,7 +109,7 @@ export interface HsCase {
   escalationHistory:   EscalationHistoryEntry[];
 
   // ── Regulatory deadline tracking (c) ─────────────────────────────────────
-  // UAE FDL 10/2025 Art.17: STR must be filed within 48 h of suspicion formation.
+  // UAE Federal Decree-Law No. 10 of 2025 Art.17: STR must be filed within 48 h of suspicion formation.
   // filingDeadline is set when status transitions to "escalated".
   // overdueSar is set true when the case remains "escalated" for >36 h without
   // advancing to "filed_str".
@@ -399,7 +399,7 @@ export async function appendEscalationHistory(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// (c) Regulatory deadline tracking (UAE FDL 10/2025 Art.17)
+// (c) Regulatory deadline tracking (UAE Federal Decree-Law No. 10 of 2025 Art.17)
 // ─────────────────────────────────────────────────────────────────────────────
 // STR must be filed within 48 hours of suspicion formation.
 // The filing deadline clock starts when a case transitions to "escalated".
@@ -454,7 +454,7 @@ export async function checkOverdueSar(tenant: Tenant): Promise<HsCase[]> {
           caseId:          c.caseId,
           subjectName:     c.subjectName,
           filingDeadline:  c.filingDeadline,
-          fdlReference:    "UAE FDL No.10/2025 Art.17",
+          fdlReference:    "Federal Decree-Law No. 10 of 2025 Art.17",
         }, tenant).catch(() => undefined);
       }
     }

@@ -12,7 +12,7 @@ export const maxDuration = 15;
 // HMAC-signed audit chain. The four-eyes workflow needs every MLRO
 // disposition / STR / freeze / goAML submission sealed into an
 // immutable chain where each entry is bound to the hash of the
-// previous one — tamper-evident per FDL 10/2025 Art.24 (10-year
+// previous one — tamper-evident per Federal Decree-Law No. 10 of 2025 Art.24 (10-year
 // retention).
 //
 // Entry shape:
@@ -131,7 +131,7 @@ async function handleSign(req: Request, ctx: RequestContext): Promise<NextRespon
   const secret = getSigningKey(tenantId);
   if (!secret) {
     // Fail-closed: returning ok:true with entry:null silently confused callers
-    // into thinking audit writes succeeded. For FDL 10/2025 Art.24 compliance
+    // into thinking audit writes succeeded. For Federal Decree-Law No. 10 of 2025 Art.24 compliance
     // the chain MUST be written or the endpoint MUST surface a clear error.
     console.error(
       `[hawkeye] audit/sign: AUDIT_CHAIN_SECRET missing or too short for tenant "${tenantId}" — refusing to sign. ` +

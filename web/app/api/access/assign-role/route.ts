@@ -14,11 +14,11 @@ import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { cookies } from "next/headers";
 
 const FALLBACK_ASSESSMENT: Record<string, string> = {
-  "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per FDL 10/2025 Art.20.",
+  "trading→compliance": "Upgrading from Trading to Compliance Department grants full platform access including MLRO Advisor, STR Cases, Playbook and Access Control. Verify the user's AML certification and obtain senior management approval before activation per Federal Decree-Law No. 10 of 2025 Art.20.",
   "accounts→compliance": "Upgrading from Accounts to Compliance Department grants full platform access. Verify mandatory AML/CFT training completion and ensure separation-of-duties controls are documented.",
   "logistics→management": "Management access adds Oversight, EWRA, and MLRO Advisor read access. The user can now review board-level compliance reports. Risk: ensure the user understands their read-only advisory access to the MLRO module.",
   "compliance→management": "Downgrading to Management Department removes Access Control and advanced investigation modules. Confirm the user no longer needs MLRO-level access before applying this change.",
-  "default": "Department role change modifies the user's module access profile. Review the Permission Matrix to confirm the new access scope is appropriate for the user's responsibilities. Ensure separation of duties is maintained per UAE FDL 10/2025 Art.20.",
+  "default": "Department role change modifies the user's module access profile. Review the Permission Matrix to confirm the new access scope is appropriate for the user's responsibilities. Ensure separation of duties is maintained per UAE Federal Decree-Law No. 10 of 2025 Art.20.",
 };
 
 export async function POST(req: Request) {
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   }
 
   const { userId, newRole, reason } = body;
-  // FDL 10/2025 Art.20: assignedBy MUST be derived from the authenticated
+  // Federal Decree-Law No. 10 of 2025 Art.20: assignedBy MUST be derived from the authenticated
   // gate identity — never from caller-supplied body to prevent IDOR / non-repudiation bypass.
   const assignedBy = gate.record?.email ?? gate.keyId;
   if (!userId || !newRole || !reason) {
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
   };
   await appendPermissionLog(logEntry);
 
-  // FDL 10/2025 Art.20 — role assignments are privileged access-control events;
+  // Federal Decree-Law No. 10 of 2025 Art.20 — role assignments are privileged access-control events;
   // must be on the tamper-evident server-side chain.
   const tenant = tenantIdFromGate(gate);
   void writeAuditChainEntry(
@@ -152,7 +152,7 @@ export async function POST(req: Request) {
         system: [
           {
             type: "text",
-            text: `You are an AML compliance access-control expert for a UAE-regulated gold trading firm operating under FDL 10/2025 and CBUAE AML Standards. When a user's role changes within the Hawkeye Sterling AML platform, assess the impact in 2–3 sentences: what access changes occur, and what specific risks or considerations arise. Be concise and practical. Return only plain text — no markdown, no bullet points.`,
+            text: `You are an AML compliance access-control expert for a UAE-regulated gold trading firm operating under Federal Decree-Law No. 10 of 2025 and CBUAE AML Standards. When a user's role changes within the Hawkeye Sterling AML platform, assess the impact in 2–3 sentences: what access changes occur, and what specific risks or considerations arise. Be concise and practical. Return only plain text — no markdown, no bullet points.`,
             cache_control: { type: "ephemeral" },
           },
         ],

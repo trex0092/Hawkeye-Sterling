@@ -6,7 +6,7 @@
 // Reads HMAC-signed audit chain entries from the "hawkeye-audit-chain"
 // Netlify Blobs store written by /api/audit/sign, returns the full
 // BrainVerdict envelope for a given screening ID, and exposes a
-// POST handler for HMAC signature verification per FDL 10/2025 Art.24.
+// POST handler for HMAC signature verification per Federal Decree-Law No. 10 of 2025 Art.24.
 //
 // Entry shape (produced by /api/audit/sign):
 //   {
@@ -197,7 +197,7 @@ function deriveRecommendedActions(entries: AuditEntry[]): string[] {
       actions.push("Schedule 5-day review for freeze continuation or release.");
       break;
     case "clear":
-      actions.push("Document clearing rationale and retain for 10 years per FDL 10/2025 Art.24.");
+      actions.push("Document clearing rationale and retain for 10 years per Federal Decree-Law No. 10 of 2025 Art.24.");
       break;
     case "screening_completed":
       actions.push("Verify findings against watchlist sources.");

@@ -202,7 +202,7 @@ async function triggerSar(task: AsanaTask, origin: string): Promise<{ goamlXmlBa
           id: task.gid,
           name: subjectName,
         },
-        narrative: task.notes ?? `Auto-escalated from Asana task ${task.gid}. Source case requires SAR/STR filing per FDL 10/2025.`,
+        narrative: task.notes ?? `Auto-escalated from Asana task ${task.gid}. Source case requires SAR/STR filing per Federal Decree-Law No. 10 of 2025.`,
         filingType: "STR",
       }),
       signal: AbortSignal.timeout(25_000),
@@ -284,7 +284,7 @@ async function processEvents(events: AsanaEvent[], origin: string): Promise<{ pr
     triggered++;
     if (result.goamlXmlBase64) {
       await attachToTask(taskGid, result.goamlXmlBase64);
-      await commentOnTask(taskGid, `Hawkeye Sterling: SAR draft generated and attached. MLRO must review the goAML XML before filing via goaml.uae.gov.ae (FDL 10/2025 Art.32).`);
+      await commentOnTask(taskGid, `Hawkeye Sterling: SAR draft generated and attached. MLRO must review the goAML XML before filing via goaml.uae.gov.ae (Federal Decree-Law No. 10 of 2025 Art.32).`);
     } else {
       await commentOnTask(taskGid, `Hawkeye Sterling: SAR generated but no goAML XML returned. Check /api/sar-report logs.`);
     }

@@ -105,7 +105,7 @@ function triggerSanctionsDownAlert(downListIds: string[]): void {
     downListIds,
     severity: "critical",
     message: `Mandatory sanctions list(s) down: ${downListIds.join(", ")}. Immediate refresh required.`,
-    regulatoryAnchor: "UAE FDL No.10/2025 Art.20 — continuous sanctions monitoring obligation",
+    regulatoryAnchor: "Federal Decree-Law No. 10 of 2025 Art.20 — continuous sanctions monitoring obligation",
   }, "default").catch((err) => {
     console.error("[health] sanctions alert write failed:", err instanceof Error ? err.message : String(err));
   });
@@ -240,7 +240,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const warnings: string[] = [];
   if (!hGate.loaded) warnings.push("hallucination_gate_disabled");
 
-  // F-08: S3 audit backup required for FDL 10/2025 Art.24 10-year retention.
+  // F-08: S3 audit backup required for Federal Decree-Law No. 10 of 2025 Art.24 10-year retention.
   // Netlify Blobs has no 10-year SLA; S3/WORM backup is mandatory in production.
   const s3Configured = !!(process.env["S3_BACKUP_ENDPOINT"] && process.env["S3_BACKUP_BUCKET"]);
   if (!s3Configured && process.env["NODE_ENV"] === "production") {

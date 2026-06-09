@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in insider threat assessment and staff whistleblower alert handling under UAE FDL 10/2025 Art.21 and CBUAE AML Standards §6.4. Assess staff alerts and whistleblower reports and return a JSON object with exactly these fields: { "credibilityScore": number (0-100), "urgencyLevel": "critical"|"high"|"medium"|"low", "verificationSteps": string[], "mlroActions": string[], "hrCoordinationRequired": boolean, "regulatoryReportingRequired": boolean, "confidentialityProtocol": string, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in insider threat assessment and staff whistleblower alert handling under UAE Federal Decree-Law No. 10 of 2025 Art.21 and CBUAE AML Standards §6.4. Assess staff alerts and whistleblower reports and return a JSON object with exactly these fields: { "credibilityScore": number (0-100), "urgencyLevel": "critical"|"high"|"medium"|"low", "verificationSteps": string[], "mlroActions": string[], "hrCoordinationRequired": boolean, "regulatoryReportingRequired": boolean, "confidentialityProtocol": string, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

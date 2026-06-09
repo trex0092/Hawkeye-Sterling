@@ -156,8 +156,8 @@ function buildDraft(source: StrDraftSource, reporterEntity?: Props["reporterEnti
   const anchors = Array.from(
     new Set([
       "FATF R.20 (STR filing)",
-      "UAE FDL 10/2025 Art.15",
-      "UAE FDL 10/2025 Art.16 (no tipping-off)",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.15",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.16 (no tipping-off)",
       "Cabinet Decision 74/2020 (TFS)",
       "MoE Circular 3/2025",
       ...(source.redlines?.fired ?? []).map((r) => r.regulatoryAnchor).filter((a): a is string => Boolean(a)),

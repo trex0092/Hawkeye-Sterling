@@ -152,7 +152,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   );
 
   // Enrolment in the ongoing-monitoring register is a compliance event
-  // (FDL 10/2025 Art.16 — enhanced ongoing monitoring for high-risk subjects).
+  // (Federal Decree-Law No. 10 of 2025 Art.16 — enhanced ongoing monitoring for high-risk subjects).
   void writeAuditChainEntry(
     {
       event: "ongoing.subject_enrolled",
@@ -205,7 +205,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     );
   }
 
-  // Mandatory reason field — min 5 chars (FDL 10/2025 Art.16, audit trail).
+  // Mandatory reason field — min 5 chars (Federal Decree-Law No. 10 of 2025 Art.16, audit trail).
   const reason = url.searchParams.get("reason")?.trim() ?? "";
   if (reason.length < 5) {
     return NextResponse.json(

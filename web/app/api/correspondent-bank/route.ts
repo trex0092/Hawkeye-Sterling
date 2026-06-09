@@ -115,7 +115,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in correspondent banking due diligence under FATF R.13 and UAE FDL 10/2025. Assess correspondent banking relationships and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "kycStatus": "pass"|"conditional"|"fail", "amlProgrammeAssessment": string, "shellBankRisk": boolean, "payableThrough": boolean, "requiredEnhancements": string[], "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in correspondent banking due diligence under FATF R.13 and UAE Federal Decree-Law No. 10 of 2025. Assess correspondent banking relationships and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "kycStatus": "pass"|"conditional"|"fail", "amlProgrammeAssessment": string, "shellBankRisk": boolean, "payableThrough": boolean, "requiredEnhancements": string[], "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

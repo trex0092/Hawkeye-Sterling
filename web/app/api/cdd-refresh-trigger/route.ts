@@ -35,15 +35,15 @@ const FALLBACK: CddRefreshTriggerResult = {
   refreshRequired: true,
   urgency: "within_30_days",
   triggerEvents: [
-    { event: "Customer transaction pattern materially inconsistent with onboarding profile (volume 3x expected)", triggered: true, legalBasis: "UAE FDL 10/2025 Art.15(2) — ongoing monitoring obligation", deadline: "Review within 30 days of detection", severity: "mandatory" },
-    { event: "Adverse media hit — director named in regulatory investigation", triggered: true, legalBasis: "UAE FDL 10/2025 Art.14(1)(c) — material change in risk profile", deadline: "Immediate review required", severity: "mandatory" },
-    { event: "Annual review cycle due (high-risk customer)", triggered: true, legalBasis: "UAE FDL 10/2025 Art.15(1) — periodic CDD review; CBUAE Guidelines §4.3 (annual for high-risk)", severity: "mandatory" },
+    { event: "Customer transaction pattern materially inconsistent with onboarding profile (volume 3x expected)", triggered: true, legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.15(2) — ongoing monitoring obligation", deadline: "Review within 30 days of detection", severity: "mandatory" },
+    { event: "Adverse media hit — director named in regulatory investigation", triggered: true, legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.14(1)(c) — material change in risk profile", deadline: "Immediate review required", severity: "mandatory" },
+    { event: "Annual review cycle due (high-risk customer)", triggered: true, legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.15(1) — periodic CDD review; CBUAE Guidelines §4.3 (annual for high-risk)", severity: "mandatory" },
     { event: "Change of beneficial ownership reported", triggered: false, legalBasis: "UAE Cabinet Resolution 109/2023 Art.8 — UBO change notification", severity: "mandatory" },
   ],
   currentRiskTier: "high",
   recommendedCddLevel: "full_edd",
   eddRequired: true,
-  eddReason: "Transaction pattern deviation + adverse media = material change in risk rating. EDD required before relationship continuation under FATF R.10 and FDL 10/2025 Art.14(2).",
+  eddReason: "Transaction pattern deviation + adverse media = material change in risk rating. EDD required before relationship continuation under FATF R.10 and Federal Decree-Law No. 10 of 2025 Art.14(2).",
   riskReviewRequired: true,
   fieldsToReverify: [
     "Source of funds — re-obtain and verify supporting documents",
@@ -58,10 +58,10 @@ const FALLBACK: CddRefreshTriggerResult = {
     "Explanation of transaction volume increase from senior officer",
     "Corporate structure chart as of current date",
   ],
-  accountActionPending: "Consider restricting account activity pending completion of refresh CDD under FDL 10/2025 Art.15(3) — relationship must be terminated if CDD cannot be completed.",
+  accountActionPending: "Consider restricting account activity pending completion of refresh CDD under Federal Decree-Law No. 10 of 2025 Art.15(3) — relationship must be terminated if CDD cannot be completed.",
   actionRationale: "Three independent triggers have activated simultaneously, all mandatory. MLRO should approve account restriction pending refresh. If customer cannot provide documentation within 30 days, relationship must be terminated and exit STR considered.",
-  reviewDeadline: "30 days from trigger date — FDL 10/2025 Art.15 ongoing monitoring obligation",
-  regulatoryBasis: "UAE FDL 10/2025 Art.14, 15 (CDD and ongoing monitoring); Art.15(3) (inability to complete CDD — terminate relationship); FATF R.10; UAE Cabinet Resolution 109/2023 (UBO); CBUAE AML/CFT Guidelines 2021 §4.3",
+  reviewDeadline: "30 days from trigger date — Federal Decree-Law No. 10 of 2025 Art.15 ongoing monitoring obligation",
+  regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.14, 15 (CDD and ongoing monitoring); Art.15(3) (inability to complete CDD — terminate relationship); FATF R.10; UAE Cabinet Resolution 109/2023 (UBO); CBUAE AML/CFT Guidelines 2021 §4.3",
 };
 
 export async function POST(req: Request) {
@@ -95,10 +95,10 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 600,
-        system: `You are a UAE CDD/EDD specialist determining whether a customer due diligence refresh is legally required under UAE FDL 10/2025.
+        system: `You are a UAE CDD/EDD specialist determining whether a customer due diligence refresh is legally required under UAE Federal Decree-Law No. 10 of 2025.
 
 CDD refresh triggers (UAE law):
-1. MANDATORY: Material change in customer risk profile — FDL 10/2025 Art.15(2)
+1. MANDATORY: Material change in customer risk profile — Federal Decree-Law No. 10 of 2025 Art.15(2)
 2. MANDATORY: Transaction pattern materially inconsistent with stated profile — Art.15(2)
 3. MANDATORY: Adverse media hit materially affecting risk rating — Art.14(1)(c)
 4. MANDATORY: Change in beneficial ownership — Cabinet Resolution 109/2023 Art.8
@@ -147,7 +147,7 @@ Determine if CDD refresh is required.`,
     if (!Array.isArray(result.triggerEvents)) result.triggerEvents = [];
     if (!Array.isArray(result.fieldsToReverify)) result.fieldsToReverify = [];
     if (!Array.isArray(result.additionalDocumentsRequired)) result.additionalDocumentsRequired = [];
-    // FDL 10/2025 Art.14-15 — CDD refresh determination is a compliance
+    // Federal Decree-Law No. 10 of 2025 Art.14-15 — CDD refresh determination is a compliance
     // event; must appear on the tamper-evident audit chain.
     void writeAuditChainEntry(
       {

@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE real estate money laundering specialist with expertise in DLD/RERA transaction patterns, off-plan ML typologies, and FATF Recommendation 22 DNFBP obligations. Analyse real estate transactions for ML red flags including price manipulation, all-cash purchases, third-party payments, rapid flipping, and beneficial ownership opacity. Apply UAE FDL 10/2025 DNFBP requirements and FATF 2022 Real Estate Guidance. Respond ONLY with valid JSON matching the RealEstateMlResult interface — no markdown fences.`,
+          text: `You are a UAE real estate money laundering specialist with expertise in DLD/RERA transaction patterns, off-plan ML typologies, and FATF Recommendation 22 DNFBP obligations. Analyse real estate transactions for ML red flags including price manipulation, all-cash purchases, third-party payments, rapid flipping, and beneficial ownership opacity. Apply UAE Federal Decree-Law No. 10 of 2025 DNFBP requirements and FATF 2022 Real Estate Guidance. Respond ONLY with valid JSON matching the RealEstateMlResult interface — no markdown fences.`,
           cache_control: { type: "ephemeral" },
         },
       ],

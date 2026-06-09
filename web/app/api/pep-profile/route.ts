@@ -108,7 +108,7 @@ const _FALLBACK: PepProfileResult = {
     ],
   },
   requiredMeasures: [
-    "Senior Management approval required prior to onboarding (FDL 10/2025 Art.14, FATF R.12).",
+    "Senior Management approval required prior to onboarding (Federal Decree-Law No. 10 of 2025 Art.14, FATF R.12).",
     "Source of wealth verification — obtain and verify documentary evidence for equity portfolio and offshore structures.",
     "Enhanced due diligence — full beneficial ownership mapping of all associated entities.",
     "Ongoing monitoring — monthly transaction review with automated alert thresholds.",
@@ -118,7 +118,7 @@ const _FALLBACK: PepProfileResult = {
   ],
   reviewFrequency: "monthly",
   recommendation: "senior_approval",
-  summary: "Subject is a Tier-1 PEP (serving cabinet minister) with a risk score of 82/100. The primary concerns are unexplained wealth (equity holdings 46x annual salary), spouse-linked entity receiving state contracts during tenure, and offshore holding structures with no declared business rationale. Adverse media references procurement irregularities without formal charges. Senior Management approval is required under FDL 10/2025 Art.14 before any account relationship is established. Comprehensive source of wealth verification and enhanced due diligence must be completed prior to onboarding.",
+  summary: "Subject is a Tier-1 PEP (serving cabinet minister) with a risk score of 82/100. The primary concerns are unexplained wealth (equity holdings 46x annual salary), spouse-linked entity receiving state contracts during tenure, and offshore holding structures with no declared business rationale. Adverse media references procurement irregularities without formal charges. Senior Management approval is required under Federal Decree-Law No. 10 of 2025 Art.14 before any account relationship is established. Comprehensive source of wealth verification and enhanced due diligence must be completed prior to onboarding.",
 };
 
 export async function POST(req: Request) {
@@ -292,7 +292,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE FDL 10/2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category). Tier 1 also includes royalty and senior religious/political leaders recognised by these titles or their equivalents: Sheikh, Emir, Sultan, Caliph, Grand Mufti (MENA royalty and senior religious authority); Secretário, Ministro, Senador, Governador (LatAm government); Gouverneur, Sénateur, Directeur général (French-speaking Africa); Mkurugenzi, Waziri, Rais (Swahili East Africa); Olisenator, Gubernator, Prezident (Eastern European variants); and Arabic script titles الأمير (Prince/Emir), الوزير (Minister), الرئيس (President/Chairman), الأمين (Secretary-General); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1.
+          text: `You are a specialist AML analyst focused on Politically Exposed Person (PEP) risk assessment under FATF Recommendation 12, UAE Federal Decree-Law No. 10 of 2025 Art.14, and CBUAE AML Standards. Analyse PEP profile data and produce a comprehensive risk assessment. Apply FATF PEP tier definitions: Tier 1 = heads of state/government, senior ministers, senior military/judiciary/central bank officials, senior officials of international organisations (UN Secretary-General, World Bank Group presidents, IMF Managing Director, ICC/ICJ officials, Arab League Secretary-General — SIE category). Tier 1 also includes royalty and senior religious/political leaders recognised by these titles or their equivalents: Sheikh, Emir, Sultan, Caliph, Grand Mufti (MENA royalty and senior religious authority); Secretário, Ministro, Senador, Governador (LatAm government); Gouverneur, Sénateur, Directeur général (French-speaking Africa); Mkurugenzi, Waziri, Rais (Swahili East Africa); Olisenator, Gubernator, Prezident (Eastern European variants); and Arabic script titles الأمير (Prince/Emir), الوزير (Minister), الرئيس (President/Chairman), الأمين (Secretary-General); Tier 2 = senior judicial officials, senior military officials, members of parliament/legislative bodies, senior political party officials; Tier 3 = mid-level government officials, lower-ranking officials; Tier 4 = senior executives of state-owned enterprises (SOE) at board/C-suite level with material government ownership, senior local/regional government officials; RCA = relative or close associate of any PEP tier — includes spouses, children, parents, and siblings of the PEP, plus known close business associates. Classify SIE (Senior International Organisation Exposed Person) within Tier 1.
 
 HIGH-RISK CORRUPTION SECTORS — MANDATORY EDD: The following sectors carry the highest systemic bribery and corruption risk per FATF, GRECO, Transparency International, and UNCAC guidance. When the PEP's position, organisation, or declared business involves any of these sectors, you MUST: (1) flag "high_corruption_risk_sector" explicitly in requiredMeasures, (2) set EDD as mandatory (not discretionary), and (3) apply at minimum "senior_approval" recommendation:
 - Defence procurement and military acquisitions (arms contracts, offset agreements)
@@ -353,7 +353,7 @@ Declared Assets: ${sanitizeText(body.declaredAssets) || "Not declared"}
 
 ${pepDataContext}
 
-Perform a comprehensive PEP risk assessment grounded in the PEP database data above (source: ${pepDataSource}). Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE FDL 10/2025 Art.14.`,
+Perform a comprehensive PEP risk assessment grounded in the PEP database data above (source: ${pepDataSource}). Classify tier, assess source of wealth plausibility, map the political network, identify all risk factors, and provide required AML measures per FATF R.12 and UAE Federal Decree-Law No. 10 of 2025 Art.14.`,
         },
       ],
     });

@@ -8,7 +8,7 @@ import type { ThreatIntelResult } from "@/app/api/ewra/threat-intel/route";
 import { openReportWindow } from "@/lib/reportOpen";
 
 // Entity-Wide Risk Assessment (EWRA) / Business-Wide Risk Assessment (BWRA)
-// Required annually under FDL 10/2025 Art.4 and FATF R.1.
+// Required annually under Federal Decree-Law No. 10 of 2025 Art.4 and FATF R.1.
 // Five risk dimensions scored 1–5 for inherent risk; controls effectiveness
 // rated 1–5; residual risk = inherent − controls reduction.
 
@@ -325,7 +325,7 @@ export default function EwraPage() {
           intro={
             <>
               <strong>Entity-Wide & Business-Wide Risk Assessment.</strong>{" "}
-              Annual requirement under FDL 10/2025 Art.4 and FATF R.1. Score
+              Annual requirement under Federal Decree-Law No. 10 of 2025 Art.4 and FATF R.1. Score
               inherent risk per dimension (1–5), rate control effectiveness,
               and derive residual risk. Board reviews and approves annually.
             </>
@@ -426,7 +426,7 @@ export default function EwraPage() {
           <div className="mt-4 bg-bg-panel border border-brand/30 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-hair-2 bg-brand-dim">
               <div>
-                <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand">✦ AI Board Report · FDL 10/2025 Art.4</div>
+                <div className="text-10 font-semibold uppercase tracking-wide-3 text-brand">✦ AI Board Report · Federal Decree-Law No. 10 of 2025 Art.4</div>
                 <div className="text-13 font-bold text-ink-0 mt-0.5">Enterprise-Wide Risk Assessment — Board Narrative</div>
               </div>
               <div className="flex items-center gap-2">
@@ -822,7 +822,7 @@ export default function EwraPage() {
 
         <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
           Scoring guide — Inherent risk: 1 = very low, 5 = critical. Controls effectiveness: 1 = no controls, 5 = strong mitigants.
-          Residual risk is derived automatically. Board must review and re-approve annually per FDL 10/2025 Art.4 and FATF R.1.
+          Residual risk is derived automatically. Board must review and re-approve annually per Federal Decree-Law No. 10 of 2025 Art.4 and FATF R.1.
           Changes auto-save to local storage.
         </p>
 

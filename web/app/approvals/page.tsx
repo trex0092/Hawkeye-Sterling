@@ -359,7 +359,7 @@ export default function ApprovalsPage() {
         eyebrow=""
         title="Approval"
         titleEm="register."
-        intro="Entity onboarding approval tracker — decision status, risk score, and approved country destinations. All approval changes are logged in the immutable audit trail per UAE FDL 10/2025 Art.20."
+        intro="Entity onboarding approval tracker — decision status, risk score, and approved country destinations. All approval changes are logged in the immutable audit trail per UAE Federal Decree-Law No. 10 of 2025 Art.20."
       />
       <div className="w-full px-4 pb-6 space-y-5">
         {/* Error */}

@@ -174,7 +174,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         criticalActions: [
           ...(breachedFfrs > 0 ? [`URGENT: ${breachedFfrs} FFR(s) past 24h SLA — file with FIU immediately (Cabinet Resolution 74/2020 Art.4)`] : []),
           ...(sanctionsListsDown > 0 ? [`URGENT: ${sanctionsListsDown} mandatory sanctions list(s) down — trigger refresh at POST /api/sanctions/refresh`] : []),
-          ...(!auditChainConfigured ? ["WARNING: AUDIT_CHAIN_SECRET not configured — audit chain HMAC disabled (FDL 10/2025 Art.24 risk)"] : []),
+          ...(!auditChainConfigured ? ["WARNING: AUDIT_CHAIN_SECRET not configured — audit chain HMAC disabled (Federal Decree-Law No. 10 of 2025 Art.24 risk)"] : []),
         ],
         regulatoryStatus: hasIssues ? "ACTION_REQUIRED" : "COMPLIANT",
       },

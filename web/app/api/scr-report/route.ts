@@ -399,7 +399,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       date: dateStr,
       category: catLabel.toUpperCase(),
       categoryColour: amComposite >= 70 ? "red" as const : "orange" as const,
-      substance: `${catCount} adverse ${srcLabel === "NEWS" ? "article" : "filing"}${catCount === 1 ? "" : "s"} in the ${catLabel} category.${kwNote}${compNote} Analyst review and live-news corroboration required before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
+      substance: `${catCount} adverse ${srcLabel === "NEWS" ? "article" : "filing"}${catCount === 1 ? "" : "s"} in the ${catLabel} category.${kwNote}${compNote} Analyst review and live-news corroboration required before constructive knowledge can be asserted under Federal Decree-Law No. 10 of 2025 Art.2(3).`,
       corroboration: `${srcLabel === "NEWS" ? "multi-source news · open-source" : "regulatory filing · open-source"} · ${amTierLabel}`,
     };
   }) : [];
@@ -411,7 +411,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       ? "No PEP classification or adverse media was identified in this screening run. The domain returns a CLEAR finding."
       : [
           pepTier ? `PEP signal: ${s.name} has been identified as a possible ${pepCategory.toLowerCase()} (${pepTier}). Independent verification required per FATF R.12.` : "",
-          amTotal > 0 ? `Adverse media: ${amTotal} hit${amTotal === 1 ? "" : "s"} in ${amCats.length} categor${amCats.length === 1 ? "y" : "ies"}. Analyst review and live-news corroboration required before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).` : "",
+          amTotal > 0 ? `Adverse media: ${amTotal} hit${amTotal === 1 ? "" : "s"} in ${amCats.length} categor${amCats.length === 1 ? "y" : "ies"}. Analyst review and live-news corroboration required before constructive knowledge can be asserted under Federal Decree-Law No. 10 of 2025 Art.2(3).` : "",
         ].filter(Boolean).join(" "),
     reviewer: "AUTOMATED · QA passed",
     pepConfidence: pepTier ? "0.82 · possible" : undefined,
@@ -453,9 +453,9 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 
   // ── Statutory rows ──────────────────────────────────────────────────────────
   const statutoryRows: SCRStatutoryRow[] = [
-    { ref: "9.1", bold: true, label: "Tipping-off prohibition", detail: "Absolute — FDL 10/2025 Art.26 · CR 134/2025 Art.18", rightRef: "[A.01]" },
-    { ref: "9.2", label: "Retention period", detail: "10 years from transaction date · WORM storage · FDL 10/2025 Art.28", rightRef: "[A.01]" },
-    { ref: "9.3", label: "STR obligation", detail: disposition === "prohibited" ? "FILED — within 35 days per FDL 10/2025 Art.15" : "No STR required at this stage", rightRef: "[A.01]" },
+    { ref: "9.1", bold: true, label: "Tipping-off prohibition", detail: "Absolute — Federal Decree-Law No. 10 of 2025 Art.26 · CR 134/2025 Art.18", rightRef: "[A.01]" },
+    { ref: "9.2", label: "Retention period", detail: "10 years from transaction date · WORM storage · Federal Decree-Law No. 10 of 2025 Art.28", rightRef: "[A.01]" },
+    { ref: "9.3", label: "STR obligation", detail: disposition === "prohibited" ? "FILED — within 35 days per Federal Decree-Law No. 10 of 2025 Art.15" : "No STR required at this stage", rightRef: "[A.01]" },
     { ref: "9.4", label: "goAML notification", detail: disposition === "prohibited" ? "FFR filed via goAML · EOCN notified" : "N/A — negative / clear finding", rightRef: "[A.02]" },
     { ref: "9.5", label: "Ongoing screening cadence", detail: "Thrice-daily: 08:30 / 15:00 / 17:30 GST per CR 134/2025 §17", rightRef: "[A.03]" },
     { ref: "9.6", label: "Board notification", detail: disposition === "prohibited" ? "CEO and Board Chair notified within 5 business days" : "N/A", rightRef: "[A.04]" },
@@ -463,7 +463,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 
   // ── Retention rows ────────────────────────────────────────────────────────
   const retentionRows: SCRRetentionRow[] = [
-    { ref: "10.1", bold: true, label: "Retention policy", detail: "10 years from last transaction · FDL 10/2025 Art.28", rightRef: "[A.01]" },
+    { ref: "10.1", bold: true, label: "Retention policy", detail: "10 years from last transaction · Federal Decree-Law No. 10 of 2025 Art.28", rightRef: "[A.01]" },
     { ref: "10.2", label: "Storage medium", detail: "WORM — Write Once Read Many · HSM-sealed", rightRef: "[A.01]" },
     { ref: "10.3", label: "Tipping-off prohibition", detail: "Absolute — no disclosure of this report outside designated recipients", rightRef: "[A.01]" },
     { ref: "10.4", label: "Distribution list", detail: "MLRO · QA · IA · AUDITORS (ON REQ.)", rightRef: "[A.02]" },
@@ -553,7 +553,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     },
 
     subjectOfRecord: {
-      basis: `FDL 10/2025 Art.14 · CR 134/2025 §6 · FATF R.10`,
+      basis: `Federal Decree-Law No. 10 of 2025 Art.14 · CR 134/2025 §6 · FATF R.10`,
       cells: sorCells,
     },
 
@@ -664,7 +664,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
 
     indices: {
       authorities: [
-        { ref: "[A.01]", citation: "FDL 10/2025", description: "UAE AML/CFT/CPF primary law — Art. 14 (record-keeping), Art. 26-27 (tipping-off), Art. 28 (retention)" },
+        { ref: "[A.01]", citation: "Federal Decree-Law No. 10 of 2025", description: "UAE AML/CFT/CPF primary law — Art. 14 (record-keeping), Art. 26-27 (tipping-off), Art. 28 (retention)" },
         { ref: "[A.02]", citation: "CR 134/2025", description: "Executive Regulations — Art. 17 (ongoing screening cadence), Art. 18 (notification obligations)" },
         { ref: "[A.03]", citation: "CR 74/2020", description: "DPMS Regulations — threshold ≥ AED 55,000" },
         { ref: "[A.04]", citation: "FATF R.6", description: "Targeted financial sanctions — assets freeze and report" },
@@ -685,7 +685,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
     },
 
     attestation: {
-      certificationText: `I certify that this Screening Compliance Report (${reportNo}) was produced by the Hawkeye Sterling automated screening engine in accordance with FDL 10/2025, Cabinet Resolution 134/2025, and FATF Recommendations 6, 10, 12, 20, 24, and 25. The report is hash-protected and WORM-sealed for the mandated 10-year retention period. Tipping-off prohibition applies absolutely — this document must not be disclosed to the subject or associated parties.`,
+      certificationText: `I certify that this Screening Compliance Report (${reportNo}) was produced by the Hawkeye Sterling automated screening engine in accordance with Federal Decree-Law No. 10 of 2025, Cabinet Resolution 134/2025, and FATF Recommendations 6, 10, 12, 20, 24, and 25. The report is hash-protected and WORM-sealed for the mandated 10-year retention period. Tipping-off prohibition applies absolutely — this document must not be disclosed to the subject or associated parties.`,
       seal: {
         reportDigest,
         wormSeqCaseBundle: `${seqNum} · hsm-bound · sha-256 ${digestHex}fc02`,
@@ -694,7 +694,7 @@ function buildSCR(body: ReportInput, now: Date): ScreeningComplianceReport {
       },
     },
 
-    footerCitations: "FDL 10/2025 Art.14 & 26-28 · CR 134/2025 Art.17-18 · FATF R.6, 10, 12, 20, 24-25 · LBMA RGG V9 · EOCN Guidance 01/2023",
+    footerCitations: "Federal Decree-Law No. 10 of 2025 Art.14 & 26-28 · CR 134/2025 Art.17-18 · FATF R.6, 10, 12, 20, 24-25 · LBMA RGG V9 · EOCN Guidance 01/2023",
   };
 
   return scr;

@@ -9,7 +9,7 @@
 //      still link to the erasure event without surfacing PII.
 //   2. **Legal-hold timer** — anonymised record retained for ERASURE_LEGAL_HOLD_DAYS
 //      (default 365) to satisfy concurrent AML retention obligations
-//      under FDL 10/2025 Art.24. A subsequent purge cron hard-deletes
+//      under Federal Decree-Law No. 10 of 2025 Art.24. A subsequent purge cron hard-deletes
 //      after the hold expires.
 //   3. **Audit-log** — every erasure recorded as a tamper-evident event
 //      (subject, requester, timestamp, scope, regulation basis).
@@ -188,7 +188,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     keysAffected,
     regulationBasis: [
       "UAE PDPL Federal Decree-Law 45/2021 Art.39 (right to erasure)",
-      "UAE FDL 10/2025 Art.24 (10-year AML retention — basis for legal-hold timer)",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.24 (10-year AML retention — basis for legal-hold timer)",
       "GDPR Art.17(3)(b) (legal-obligation exemption for AML)",
     ],
   };
@@ -211,7 +211,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const { keysAffected: _keysAffected, ...publicLogEntry } = logEntry;
   return NextResponse.json({
     ok: true,
-    regulation: "UAE PDPL Art.39 / FDL 10/2025 Art.24",
+    regulation: "UAE PDPL Art.39 / Federal Decree-Law No. 10 of 2025 Art.24",
     erasureId,
     dryRun: Boolean(body.dryRun),
     keysAnonymised: keysAffected.length,

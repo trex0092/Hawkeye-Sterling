@@ -79,7 +79,7 @@ function computeRmfFunctions(): RmfFunctionScore[] {
       "MODEL_REGISTRY with riskTier + approval + cardRef for every model",
       "GOVERNANCE_POLICY with 7 principles + 5 prohibitions",
       "Quarterly review cycle tracked in reviewCycle field",
-      "FDL No.10/2025 Art.18 demonstrable human oversight",
+      "Federal Decree-Law No. 10 of 2025 Art.18 demonstrable human oversight",
     ],
     gaps: overdue.length > 0
       ? [`${overdue.length} model(s) with overdue attestation`]
@@ -110,7 +110,7 @@ function computeRmfFunctions(): RmfFunctionScore[] {
       "Eval harness: 50 scenarios in src/brain/registry/eval-harness.ts",
       "Bias monitor: biasRatio ≤ 1.15 (tighter than FATF floor 1.5)",
       "Drift monitor: tracks model response distribution shift",
-      "Prompt hash manifest validated in CI (FDL 10/2025 Art.18)",
+      "Prompt hash manifest validated in CI (Federal Decree-Law No. 10 of 2025 Art.18)",
     ],
     gaps: [
       "AML.TA0001 Reconnaissance — no probe coverage yet",

@@ -201,7 +201,7 @@ export function GovernanceSection() {
   return (
     <div className="space-y-8">
       <ModuleHero
-        eyebrow={`NIST AI RMF · MITRE ATLAS · FDL No.10/2025 Art.18 — ${data.models.length} models registered`}
+        eyebrow={`NIST AI RMF · MITRE ATLAS · Federal Decree-Law No. 10 of 2025 Art.18 — ${data.models.length} models registered`}
         title="AI Governance"
       />
 
@@ -240,7 +240,7 @@ export function GovernanceSection() {
       {/* Model registry */}
       <div>
         <h3 className="text-12 font-semibold uppercase tracking-wide-3 text-ink-3 mb-3">
-          Model Registry — {data.models.length} models · FDL No.10/2025 Art.18
+          Model Registry — {data.models.length} models · Federal Decree-Law No. 10 of 2025 Art.18
         </h3>
         <ModelTable models={data.models} />
       </div>

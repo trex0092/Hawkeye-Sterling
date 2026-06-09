@@ -6,7 +6,7 @@ import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { AIIncidentRecord, IncidentType, IncidentSeverity, IncidentStatus } from "@/app/api/ai-incident-playbook/route";
 
-// UAE AI Incident Response — FDL 10/2025 Art.24 + CBUAE AI Governance Guidelines 2025
+// UAE AI Incident Response — Federal Decree-Law No. 10 of 2025 Art.24 + CBUAE AI Governance Guidelines 2025
 // Covers: hallucination, bias spike, data poisoning, model unavailability, prompt injection,
 //         data leakage, shadow AI, drift, other
 
@@ -42,7 +42,7 @@ const RESPONSE_PLAYBOOKS: Partial<Record<IncidentType, { phase: string; actions:
     { phase: "1. Detect & Contain (0–1h)", actions: ["Confirm fabrication via secondary source verification", "Quarantine affected output — do not share with client", "Identify the model + prompt version involved"] },
     { phase: "2. Assess (1–4h)", actions: ["Determine if customer-impacting (adverse decision made?)", "Check if regulatory report was generated from the output", "Quantify affected records"] },
     { phase: "3. Remediate", actions: ["Roll back / invalidate affected outputs in system", "Re-run screening with human-in-the-loop verification", "Update system prompt with hallucination guard"] },
-    { phase: "4. Report", actions: ["Log in AI Incident Register", "If CBUAE/FSRA impact: notify within 72h (FDL 10/2025 Art.24)", "Document root cause + lessons learned"] },
+    { phase: "4. Report", actions: ["Log in AI Incident Register", "If CBUAE/FSRA impact: notify within 72h (Federal Decree-Law No. 10 of 2025 Art.24)", "Document root cause + lessons learned"] },
   ],
   bias_spike: [
     { phase: "1. Detect & Contain", actions: ["Capture bias report snapshot with timestamp", "Halt automated adverse decisions for affected demographic", "Enable manual review queue"] },
@@ -74,7 +74,7 @@ const DEFAULT_PLAYBOOK = [
   { phase: "1. Detect & Triage", actions: ["Confirm incident type and scope", "Preserve evidence (logs, outputs, timestamps)", "Assign incident owner"] },
   { phase: "2. Contain", actions: ["Disable affected AI component if risk warrants", "Enable manual process fallback", "Notify MLRO and CISO within 2h"] },
   { phase: "3. Investigate", actions: ["Root cause analysis", "Impact assessment on customers / decisions / data", "Document findings"] },
-  { phase: "4. Remediate & Close", actions: ["Apply fix and validate", "Regulatory notification if required (FDL 10/2025 Art.24)", "Lessons-learned session and register update"] },
+  { phase: "4. Remediate & Close", actions: ["Apply fix and validate", "Regulatory notification if required (Federal Decree-Law No. 10 of 2025 Art.24)", "Lessons-learned session and register update"] },
 ];
 
 interface FormState {
@@ -185,7 +185,7 @@ export default function AIIncidentPlaybookPage() {
 
         {/* Regulatory notice */}
         <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 text-sm text-amber-300">
-          <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under FDL 10/2025 Art.24. Document all containment steps and root cause analysis.
+          <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under Federal Decree-Law No. 10 of 2025 Art.24. Document all containment steps and root cause analysis.
         </div>
 
         {error && (

@@ -2,7 +2,7 @@
 //
 // STR/SAR Submission Autopilot for UAE DPMS institutions.
 // Full pipeline in a single call:
-//   Stage 1 — Draft / enhance SAR narrative (FDL 10/2025 Art.15 standard)
+//   Stage 1 — Draft / enhance SAR narrative (Federal Decree-Law No. 10 of 2025 Art.15 standard)
 //   Stage 2 — Generate goAML-compatible XML payload
 //   Stage 3 — Validate completeness against CBUAE submission requirements
 //   Stage 4 — Return submission checklist with missing items flagged
@@ -82,7 +82,7 @@ function generateGoAmlXml(data: {
     <report_date>${data.reportDate}</report_date>
     <currency_code_local>${escapeXml(data.currency ?? "AED")}</currency_code_local>
     <submission_code>E</submission_code>
-    <reason>${escapeXml(data.narrative?.slice(0, 500) ?? "Suspicious transaction reported under FDL 10/2025 Art.15")}</reason>
+    <reason>${escapeXml(data.narrative?.slice(0, 500) ?? "Suspicious transaction reported under Federal Decree-Law No. 10 of 2025 Art.15")}</reason>
     <action>R</action>
     <str_reason>
       <str_reason_code>${escapeXml(data.typology ?? "OTHER")}</str_reason_code>
@@ -190,7 +190,7 @@ Write a formal, factual, evidence-based STR narrative that:
 1. States WHO is suspected and of WHAT
 2. Describes the specific suspicious transaction(s) with dates and amounts
 3. Explains WHY the transaction is suspicious (red flags)
-4. References regulatory basis (FDL 10/2025 Art.15)
+4. References regulatory basis (Federal Decree-Law No. 10 of 2025 Art.15)
 5. Lists predicate offense if identifiable
 6. States what the reporting institution knows about the subject (KYC context)
 
@@ -266,10 +266,10 @@ Draft the STR narrative.`,
       "2. Verify all missing/weak fields are resolved",
       "3. Log into UAE FIU goAML portal (goaml.uaefiu.gov.ae)",
       "4. Create new STR, paste or upload the goAML XML",
-      "5. Retain reference number for 10-year record keeping (FDL 10/2025 Art.19)",
+      "5. Retain reference number for 10-year record keeping (Federal Decree-Law No. 10 of 2025 Art.19)",
       "6. Acknowledge within 30 days if FIU issues follow-up request",
     ],
-    regulatoryBasis: "FDL 10/2025 Art.15 · CBUAE AML Standards §9 · FATF R.20",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.15 · CBUAE AML Standards §9 · FATF R.20",
     aiEnriched: true,
     generatedAt: new Date().toISOString(),
   }, { headers: gate.headers });

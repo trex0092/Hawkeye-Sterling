@@ -254,7 +254,7 @@ export default function UboDeclarationPage() {
           titleEm="declaration."
           intro={
             <>
-              <strong>UAE Cabinet Resolution No. 58 of 2020 / FDL 10/2025 Art.19.</strong>{" "}
+              <strong>UAE Cabinet Resolution No. 58 of 2020 / Federal Decree-Law No. 10 of 2025 Art.19.</strong>{" "}
               All entities must declare their natural-person beneficial
               owners holding ≥ 25% ownership, control, or voting rights.
               Fill in the form below.

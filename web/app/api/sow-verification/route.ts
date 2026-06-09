@@ -132,10 +132,10 @@ function assessRisk(body: RequestBody): RiskAssessment {
   let score = 0;
   const factors: string[] = [];
 
-  // PEP status — significant uplift under FDL 10/2025 Art.16
+  // PEP status — significant uplift under Federal Decree-Law No. 10 of 2025 Art.16
   if (body.pepStatus) {
     score += 40;
-    factors.push("PEP status declared — enhanced due diligence mandatory under FATF R.12 and FDL 10/2025 Art.16");
+    factors.push("PEP status declared — enhanced due diligence mandatory under FATF R.12 and Federal Decree-Law No. 10 of 2025 Art.16");
   }
 
   // High declared wealth threshold (AED 500,000)
@@ -218,7 +218,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
     },
     {
       document: "Source of funds declaration form (signed and dated)",
-      reason: "Mandatory SOF self-certification under FDL 10/2025 Art.14 and FATF R.10",
+      reason: "Mandatory SOF self-certification under Federal Decree-Law No. 10 of 2025 Art.14 and FATF R.10",
       deadline: buildDeadline(5),
     },
   );
@@ -254,7 +254,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
     required.push(
       {
         document: "Independent wealth verification report (from accredited third-party due diligence firm)",
-        reason: "PEP EDD obligation — FATF R.12; FDL 10/2025 Art.16(2)(b); CBUAE AML Standards §7.2",
+        reason: "PEP EDD obligation — FATF R.12; Federal Decree-Law No. 10 of 2025 Art.16(2)(b); CBUAE AML Standards §7.2",
         deadline: buildDeadline(21),
       },
       {
@@ -269,7 +269,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
       },
       {
         document: "Anti-bribery and corruption declaration (AML/CFT self-certification)",
-        reason: "PEP bribery/corruption risk mitigation — FDL 10/2025 Art.16(3) and UNCAC Art.52",
+        reason: "PEP bribery/corruption risk mitigation — Federal Decree-Law No. 10 of 2025 Art.16(3) and UNCAC Art.52",
         deadline: buildDeadline(7),
       },
     );
@@ -302,7 +302,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
         required.push(
           {
             document: "Audited financial accounts (3 most recent years)",
-            reason: "Business ownership income verification — FDL 10/2025 Art.14; CBUAE §5.3",
+            reason: "Business ownership income verification — Federal Decree-Law No. 10 of 2025 Art.14; CBUAE §5.3",
             deadline: buildDeadline(14),
           },
           {
@@ -394,7 +394,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
           },
           {
             document: "Gift donor's source of funds evidence (donor ID + bank statements)",
-            reason: "Traces the ultimate SOF behind the gift — FATF R.10; FDL 10/2025 Art.14",
+            reason: "Traces the ultimate SOF behind the gift — FATF R.10; Federal Decree-Law No. 10 of 2025 Art.14",
             deadline: buildDeadline(14),
           },
         );
@@ -438,7 +438,7 @@ function buildChecklist(body: RequestBody, risk: RiskAssessment): SowVerificatio
       case "other":
         required.push({
           document: "Supporting documentation for declared wealth source (bespoke — to be agreed with compliance officer)",
-          reason: "Non-standard SOW requires bespoke evidential package — FDL 10/2025 Art.14(4)",
+          reason: "Non-standard SOW requires bespoke evidential package — Federal Decree-Law No. 10 of 2025 Art.14(4)",
           deadline: buildDeadline(14),
         });
         break;
@@ -542,7 +542,7 @@ function buildRecommendation(body: RequestBody, risk: RiskAssessment): string {
   }
 
   parts.push(
-    `Regulatory basis: FDL 10/2025 Arts.14–16; Cabinet Decision 58/2020; CBUAE AML/CFT Standards (2023); FATF Recommendations 10, 12, 15, 24.`,
+    `Regulatory basis: Federal Decree-Law No. 10 of 2025 Arts.14–16; Cabinet Decision 58/2020; CBUAE AML/CFT Standards (2023); FATF Recommendations 10, 12, 15, 24.`,
   );
 
   return parts.join(" ");

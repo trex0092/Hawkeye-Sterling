@@ -3,7 +3,7 @@
 // I7: Real-time SLA countdown for open compliance obligations.
 // Returns time-remaining and breach status for all active SLA clocks:
 //   - FFR: 24-hour asset freeze reporting (Cabinet Resolution 74/2020 Art.4)
-//   - CNMR: 5 business-day STR filing (UAE FDL No.10/2025 Art.22)
+//   - CNMR: 5 business-day STR filing (Federal Decree-Law No. 10 of 2025 Art.22)
 //   - EDD review cadence for PEP/high-risk subjects
 //   - EOCN designation: 24-hour freeze window
 //
@@ -162,7 +162,7 @@ export async function GET(req: Request): Promise<NextResponse> {
           startedAt: c.createdAt,
           deadline: deadline.toISOString(),
           status: breached ? "breached" : "open",
-          regulatoryAnchor: "UAE FDL No.10/2025 Art.22 — 5 business-day STR filing window",
+          regulatoryAnchor: "Federal Decree-Law No. 10 of 2025 Art.22 — 5 business-day STR filing window",
           remainingMs: Math.max(0, remaining),
           remainingFormatted: msToHhMm(remaining),
           breached,
@@ -215,7 +215,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         : criticalCount > 0
         ? `WARNING: ${criticalCount} SLA(s) critical (< 2h remaining)`
         : `${filtered.length} open SLA clock(s) — all within window`,
-      regulatoryNote: "SLA windows: FFR = 24h from freeze (Cabinet Resolution 74/2020 Art.4), STR/CNMR = 5 business days from suspicion (FDL No.10/2025 Art.22).",
+      regulatoryNote: "SLA windows: FFR = 24h from freeze (Cabinet Resolution 74/2020 Art.4), STR/CNMR = 5 business days from suspicion (Federal Decree-Law No. 10 of 2025 Art.22).",
     },
     { status: 200, headers: gate.headers },
   );

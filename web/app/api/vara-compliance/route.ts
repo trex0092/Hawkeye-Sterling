@@ -10,7 +10,7 @@
 //   - FATF R.15 (New Technologies / Virtual Assets)
 //   - FATF R.16 (Wire Transfers — extended to VASPs / Travel Rule)
 //   - CBUAE VC/VASP Regulations (Central Bank UAE)
-//   - UAE FDL 10/2025 (Federal Decree-Law on AML/CFT)
+//   - UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law on AML/CFT)
 
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
@@ -278,7 +278,7 @@ function buildVaraLicenseStatus(body: RequestBody): string {
     return (
       "UNLICENSED — Entity is not licensed by UAE VARA. " +
       "Operating virtual asset services without a VARA license is illegal under the " +
-      "Virtual Assets and Related Activities Regulations 2023 and UAE FDL 10/2025."
+      "Virtual Assets and Related Activities Regulations 2023 and UAE Federal Decree-Law No. 10 of 2025."
     );
   }
   if (body.isVaraLicensed === true) {

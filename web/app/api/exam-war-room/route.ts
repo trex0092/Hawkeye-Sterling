@@ -12,7 +12,7 @@
 //   - "Hot spot" identification from examination trends
 //   - Day-of-exam talking points for the MLRO
 //
-// Regulatory basis: FDL 10/2025 Art.26-27; CBUAE Supervisory Framework;
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.26-27; CBUAE Supervisory Framework;
 //                   FATF Methodology for Assessing Compliance
 
 import { NextResponse } from "next/server";
@@ -249,7 +249,7 @@ Base your analysis on the ${examinerBody}'s known examination priorities and the
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
     const anthropic = getAnthropicClient(apiKey, 4_500, "exam-war-room");
-    const prompt = `You are a specialist UAE AML examination preparation consultant with deep knowledge of ${examinerBody} examination methodology and UAE FDL 10/2025 requirements.
+    const prompt = `You are a specialist UAE AML examination preparation consultant with deep knowledge of ${examinerBody} examination methodology and UAE Federal Decree-Law No. 10 of 2025 requirements.
 
 ENTITY CONTEXT:
 ${contextSummary}
@@ -259,7 +259,7 @@ ${focusAreas.map((f, i) => `${i + 1}. ${f}`).join("\n")}
 
 TASK: ${(modeInstructions[mode as ExamMode] ?? modeInstructions["full_war_room"])}
 
-Be specific to this entity's actual situation. Reference UAE FDL 10/2025 article numbers where relevant. Be practical and actionable — this is a real exam preparation exercise.`;
+Be specific to this entity's actual situation. Reference UAE Federal Decree-Law No. 10 of 2025 article numbers where relevant. Be practical and actionable — this is a real exam preparation exercise.`;
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",

@@ -36,7 +36,7 @@ export interface WeightHistory {
   note: string;
 }
 
-// Baseline weights (FDL 10/2025 / FATF DPMS guidance)
+// Baseline weights (Federal Decree-Law No. 10 of 2025 / FATF DPMS guidance)
 export const DEFAULT_WEIGHTS: RiskWeights = {
   sanctionsHit:       0.25,
   pepStatus:          0.15,

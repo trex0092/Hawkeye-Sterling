@@ -84,7 +84,7 @@ interface ReportBody {
   trigger?: "screen" | "ongoing" | "save";
   /** Optional second-officer identity for four-eyes filing. When present, enforces
    *  that the approver differs from the filer (ctx.apiKey.id). Required for
-   *  high-severity reports filed to the MLRO inbox per FDL 10/2025 Art.16. */
+   *  high-severity reports filed to the MLRO inbox per Federal Decree-Law No. 10 of 2025 Art.16. */
   approver?: string;
 }
 
@@ -231,7 +231,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
     : `No PEP classification was raised by the brain during this screen.`);
   if (amFiring.length > 0) {
     analysisBits.push(
-      `The adverse-media signal is presently open-source and requires analyst review and live-news corroboration before constructive knowledge can be asserted under FDL 10/2025 Art.2(3).`,
+      `The adverse-media signal is presently open-source and requires analyst review and live-news corroboration before constructive knowledge can be asserted under Federal Decree-Law No. 10 of 2025 Art.2(3).`,
     );
   }
 
@@ -309,7 +309,7 @@ function buildInitialScreeningNotes(b: ReportBody): string {
   }
 
   lines.push(`Hawkeye  : https://hawkeye-sterling.netlify.app/screening?open=${b.subject.id}`);
-  lines.push(`Legal    : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
+  lines.push(`Legal    : Federal Decree-Law No. 10 of 2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
   return lines.join("\n");
 }
 
@@ -416,7 +416,7 @@ function buildOngoingSnapshotNotes(b: ReportBody): string {
 
   lines.push(`Hawkeye           : https://hawkeye-sterling.netlify.app/screening?open=${b.subject.id}`);
   lines.push(`Download PDF      : https://hawkeye-sterling.netlify.app/screening?open=${b.subject.id}&report=pdf`);
-  lines.push(`Legal basis       : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
+  lines.push(`Legal basis       : Federal Decree-Law No. 10 of 2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
   return lines.join("\n");
 }
 
@@ -445,7 +445,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
 
   // M-9: Optional four-eyes enforcement. When an approver is provided, verify
   // that the approver differs from the filer — same-person approvals are rejected
-  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  // to prevent a single officer bypassing MLRO oversight (Federal Decree-Law No. 10 of 2025 Art.16).
   if (body.approver !== undefined) {
     const trimmedApprover = body.approver.trim();
     if (!trimmedApprover || trimmedApprover.length > 128) {
@@ -460,7 +460,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
         { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
         ctx.tenantId,
       ).catch(() => undefined);
-      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE Federal Decree-Law No. 10 of 2025 Art.16 four-eyes requirement)." });
     }
     void writeAuditChainEntry(
       { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
@@ -479,7 +479,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
   const runId = randomUUID();
   const payloadSha256 = createHash("sha256").update(JSON.stringify(body)).digest("hex");
 
-  // Write audit chain entry for compliance traceability (FDL 10/2025 Art.24).
+  // Write audit chain entry for compliance traceability (Federal Decree-Law No. 10 of 2025 Art.24).
   void writeAuditChainEntry(
     {
       event: "screening.report.generated",
@@ -497,7 +497,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
 
   // M-9: Optional four-eyes enforcement. When an approver is provided, verify
   // that the approver differs from the filer — same-person approvals are rejected
-  // to prevent a single officer bypassing MLRO oversight (FDL 10/2025 Art.16).
+  // to prevent a single officer bypassing MLRO oversight (Federal Decree-Law No. 10 of 2025 Art.16).
   if (body.approver !== undefined) {
     const trimmedApprover = body.approver.trim();
     if (!trimmedApprover || trimmedApprover.length > 128) {
@@ -512,7 +512,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
         { event: "screening.report.four_eyes_same_person", actor: ctx.apiKey?.id ?? "system", subjectName: body.subject.name },
         ctx.tenantId,
       ).catch(() => undefined);
-      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE FDL 10/2025 Art.16 four-eyes requirement)." });
+      return respond(409, { ok: false, error: "four_eyes_same_person", detail: "Approver must differ from the filer (UAE Federal Decree-Law No. 10 of 2025 Art.16 four-eyes requirement)." });
     }
     void writeAuditChainEntry(
       { event: "screening.report.four_eyes_passed", actor: ctx.apiKey?.id ?? "system", approver: trimmedApprover, subjectName: body.subject.name },
@@ -536,7 +536,7 @@ async function handleScreeningReport(req: Request, ctx: RequestContext): Promise
 
   // Egress gate: compliance pre-check before MLRO inbox delivery.
   // Gate is off by default; enable with EGRESS_GATE_ENABLED=true after MLRO
-  // confirms mandate (FDL 10/2025 Art.16, charter P3).
+  // confirms mandate (Federal Decree-Law No. 10 of 2025 Art.16, charter P3).
   const egressResult = await runEgressCheck(notes, "Screening report");
   if (!egressResult.allowed) {
     return respond(451, {

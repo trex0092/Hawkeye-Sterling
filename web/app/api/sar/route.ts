@@ -2,7 +2,7 @@
 //
 // Provides a unified entry point for SAR generation and retrieval used by the
 // MCP tool `generate_sar_report` and the MLRO workflow. Enforces the four-eyes
-// dual-attestation requirement (UAE FDL 10/2025 Art.16) before generating any
+// dual-attestation requirement (UAE Federal Decree-Law No. 10 of 2025 Art.16) before generating any
 // regulatory-facing SAR.
 //
 // Routes:
@@ -22,7 +22,7 @@
 //   Before generating the SAR the route checks /api/four-eyes?caseId=<id>
 //   and counts distinct approvers. If < 2 distinct approvers have signed off,
 //   the request is rejected with 403 four_eyes_required.
-//   This implements UAE FDL 10/2025 Art.16 in code, not just governance policy.
+//   This implements UAE Federal Decree-Law No. 10 of 2025 Art.16 in code, not just governance policy.
 
 import { randomBytes, createHash } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -142,7 +142,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
   const generatedBy = str(raw["generatedBy"]) ?? "mlro";
 
   // Only MLRO or compliance_admin roles may bypass the four-eyes gate.
-  // Reject any other caller who sets bypassFourEyes=true (UAE FDL 10/2025 Art.16).
+  // Reject any other caller who sets bypassFourEyes=true (UAE Federal Decree-Law No. 10 of 2025 Art.16).
   if (bypassFourEyes) {
     const callerRole = callerRecord?.role ?? "";
     if (callerRole !== "mlro" && callerRole !== "compliance_admin") {
@@ -207,7 +207,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     );
   }
 
-  // ── Four-eyes pre-check (UAE FDL 10/2025 Art.16) ─────────────────────────
+  // ── Four-eyes pre-check (UAE Federal Decree-Law No. 10 of 2025 Art.16) ─────────────────────────
   if (!bypassFourEyes) {
     const feCheck = await checkFourEyes(caseId, req);
     if (!feCheck.ok) {
@@ -217,7 +217,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
           error: "four_eyes_required",
           message:
             "Two distinct approver sign-offs required before SAR submission. " +
-            "UAE FDL 10/2025 Art.16 — dual-attestation mandatory for regulatory filings.",
+            "UAE Federal Decree-Law No. 10 of 2025 Art.16 — dual-attestation mandatory for regulatory filings.",
           approvalsRecorded: feCheck.approvers.length,
           distinctApprovers: feCheck.distinctApprovers,
           action: "POST a four-eyes approval via /api/four-eyes with action='str' before retrying",
@@ -235,7 +235,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
     );
     // F-15 fix: four-eyes bypass audit write is BLOCKING — do not proceed with
     // the SAR generation if the tamper-evident record cannot be written.
-    // A missing audit entry for a bypass violates FDL 10/2025 Art.16.
+    // A missing audit entry for a bypass violates Federal Decree-Law No. 10 of 2025 Art.16.
     const bypassWritten = await writeAuditChainEntry({
       event: "four_eyes.bypass",
       actor: generatedBy,
@@ -247,7 +247,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       filingType,
     });
     if (!bypassWritten) {
-      console.error("[sar] four_eyes.bypass audit write FAILED — blocking SAR generation (FDL 10/2025 Art.16)");
+      console.error("[sar] four_eyes.bypass audit write FAILED — blocking SAR generation (Federal Decree-Law No. 10 of 2025 Art.16)");
       return NextResponse.json(
         {
           ok: false,
@@ -318,7 +318,7 @@ async function handlePost(req: Request, callerRecord: ApiKeyRecord | null, gateH
       console.warn("[sar] record persist failed (non-critical):", err);
     });
 
-    // FDL 10/2025 Art.17 — SAR generation is a regulatory filing event;
+    // Federal Decree-Law No. 10 of 2025 Art.17 — SAR generation is a regulatory filing event;
     // must be on the tamper-evident server-side chain.
     void writeAuditChainEntry(
       {
@@ -370,7 +370,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
   // SAR generation is a regulator-facing action requiring MLRO or CO oversight
-  // (UAE FDL 10/2025 Art.16 + FATF R.26). External API callers do not qualify.
+  // (UAE Federal Decree-Law No. 10 of 2025 Art.16 + FATF R.26). External API callers do not qualify.
   const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
   if (roleBlock) return roleBlock;
   const tenant = tenantIdFromGate(gate);

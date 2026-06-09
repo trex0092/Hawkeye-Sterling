@@ -1,6 +1,6 @@
 // Hawkeye Sterling — prompt registry.
 //
-// Centralises prompt identity tracking required by FDL 10/2025 Art.18 (every
+// Centralises prompt identity tracking required by Federal Decree-Law No. 10 of 2025 Art.18 (every
 // AI-generated compliance decision must be reproducible to the exact prompt
 // version that produced it). The registry:
 //   1. Stores each registered prompt's declared hash alongside its current

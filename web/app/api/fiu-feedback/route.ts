@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in FIU engagement and STR/goAML feedback handling under UAE FDL 10/2025. Process FIU feedback communications and return a JSON object with exactly these fields: { "feedbackType": "acknowledgement"|"request-for-info"|"commendation"|"adverse", "keyPoints": string[], "requiredActions": string[], "responseDraft": string, "deadlineDays": number, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in FIU engagement and STR/goAML feedback handling under UAE Federal Decree-Law No. 10 of 2025. Process FIU feedback communications and return a JSON object with exactly these fields: { "feedbackType": "acknowledgement"|"request-for-info"|"commendation"|"adverse", "keyPoints": string[], "requiredActions": string[], "responseDraft": string, "deadlineDays": number, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

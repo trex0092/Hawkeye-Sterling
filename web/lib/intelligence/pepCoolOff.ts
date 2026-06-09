@@ -1,6 +1,6 @@
 // Hawkeye Sterling — PEP cool-off period tracker (Layer #37).
 //
-// FATF R.12 + FDL 10/2025 Art.17: PEPs remain subject to enhanced
+// FATF R.12 + Federal Decree-Law No. 10 of 2025 Art.17: PEPs remain subject to enhanced
 // scrutiny for a defined cool-off after leaving office. Different
 // regimes apply different windows; the safest is the longest.
 //

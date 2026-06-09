@@ -746,7 +746,7 @@ export default function CddReviewPage() {
         intro={
           <>
             <strong>Who needs re-KYC and when.</strong> Risk-tiered review
-            cadences per FDL 10/2025 Art.11 — high-risk (PEP / sanctions)
+            cadences per Federal Decree-Law No. 10 of 2025 Art.11 — high-risk (PEP / sanctions)
             every 3 months, medium every 6 months, low risk annually.
             Cases auto-imported; manual subjects can be added.
           </>
@@ -1134,7 +1134,7 @@ export default function CddReviewPage() {
           <div className="flex items-center gap-2">
             <span className="text-14">✅</span>
             <span className="text-13 font-semibold text-ink-0">EDD File Completeness Check</span>
-            <span className="text-10 font-mono text-ink-3 ml-1">Mandatory document checklist · FDL 10/2025 Art.8 · FATF R.10</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">Mandatory document checklist · Federal Decree-Law No. 10 of 2025 Art.8 · FATF R.10</span>
           </div>
           <button
             type="button"
@@ -1343,7 +1343,7 @@ export default function CddReviewPage() {
           <div className="flex items-center gap-2">
             <span className="text-14">📜</span>
             <span className="text-13 font-semibold text-ink-0">AML Policy Reviewer</span>
-            <span className="text-10 font-mono text-ink-3 ml-1">AI compliance gap analysis · FDL 10/2025</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">AI compliance gap analysis · Federal Decree-Law No. 10 of 2025</span>
           </div>
           <button
             type="button"
@@ -1410,7 +1410,7 @@ export default function CddReviewPage() {
                 value={policyText}
                 onChange={(e) => setPolicyText(e.target.value)}
                 rows={8}
-                placeholder="Paste your AML/CFT policy document text here. The AI will analyse it against FDL 10/2025, CBUAE AML Standards, and FATF Recommendations…"
+                placeholder="Paste your AML/CFT policy document text here. The AI will analyse it against Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, and FATF Recommendations…"
                 className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors resize-y font-mono leading-relaxed"
               />
               <div className="flex justify-end">
@@ -1592,7 +1592,7 @@ export default function CddReviewPage() {
           <div className="flex items-center gap-2">
             <span className="text-14">📮</span>
             <span className="text-13 font-semibold text-ink-0">Exit Letter Generator</span>
-            <span className="text-10 font-mono text-ink-3 ml-1">Tipping-off safe · FDL 10/2025 Art.17</span>
+            <span className="text-10 font-mono text-ink-3 ml-1">Tipping-off safe · Federal Decree-Law No. 10 of 2025 Art.17</span>
           </div>
           <button
             type="button"
@@ -1729,7 +1729,7 @@ export default function CddReviewPage() {
                 <span className="text-red text-14 shrink-0">🚨</span>
                 <div>
                   <p className="text-12 font-semibold text-red">TIPPING-OFF WARNING — STR filed</p>
-                  <p className="text-11 text-ink-2 mt-0.5">This letter has been drafted to avoid disclosing AML/STR details per FDL 10/2025 Art.17. Review carefully before sending. Legal review recommended.</p>
+                  <p className="text-11 text-ink-2 mt-0.5">This letter has been drafted to avoid disclosing AML/STR details per Federal Decree-Law No. 10 of 2025 Art.17. Review carefully before sending. Legal review recommended.</p>
                 </div>
               </div>
             )}
@@ -2032,7 +2032,7 @@ export default function CddReviewPage() {
 
       {/* ── Footer ── */}
       <p className="text-10 text-ink-3 mt-4 leading-relaxed">
-        Review cadences per <strong className="text-ink-2">FDL 10/2025 Art.11</strong>:
+        Review cadences per <strong className="text-ink-2">Federal Decree-Law No. 10 of 2025 Art.11</strong>:
         High risk (PEP / sanctions) — 90 days · Medium risk — 180 days · Low risk — 365 days.
         Case records auto-imported from the screening register (last activity used as proxy).
         Manual records persist in localStorage. AI adequacy assessment powered by Claude Haiku.

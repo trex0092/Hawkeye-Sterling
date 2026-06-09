@@ -17,9 +17,9 @@ const BASE_ITEMS: TickerItem[] = [
   { label: "FATF R.24/25 · UBO VERIFICATION ACTIVE", tone: "green" },
   { label: "UN SC RES 1267/1989/2253 · ISIL/AL-QAIDA LIST ACTIVE", tone: "green" },
   { label: "MoE CIRCULAR 2/2024 · DPMS AED 55K REPORTING ACTIVE", tone: "green" },
-  { label: "FDL 10/2025 ART.4 · EWRA ANNUAL REVIEW REQUIRED", tone: "amber" },
+  { label: "Federal Decree-Law No. 10 of 2025 ART.4 · EWRA ANNUAL REVIEW REQUIRED", tone: "amber" },
   { label: "FATF R.15 · VIRTUAL ASSETS TRAVEL RULE ACTIVE", tone: "green" },
-  { label: "FDL 10/2025 ART.19 · 10-YEAR ADVERSE MEDIA LOOKBACK ACTIVE", tone: "green" },
+  { label: "Federal Decree-Law No. 10 of 2025 ART.19 · 10-YEAR ADVERSE MEDIA LOOKBACK ACTIVE", tone: "green" },
 ];
 
 const TONE_DOT: Record<TickerItem["tone"], string> = {

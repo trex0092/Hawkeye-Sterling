@@ -10,7 +10,7 @@
 //
 // An env var of the same name, when present at runtime, still overrides — so an
 // operator who later re-scopes a variable to Functions/Runtime keeps that
-// flexibility without a code change. FDL 10/2025 Art.18 (version traceability).
+// flexibility without a code change. Federal Decree-Law No. 10 of 2025 Art.18 (version traceability).
 
 /** Brain / engine release tag surfaced in /api/status and error envelopes. */
 export const BRAIN_VERSION: string = process.env["BRAIN_VERSION"] ?? "wave-5";

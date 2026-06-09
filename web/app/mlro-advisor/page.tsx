@@ -643,8 +643,8 @@ interface SanctionsListHit { list: string; listAuthority: string; hitType: "conf
 interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"medium"|"low"|"none"; immediateFreeze: boolean; freezeBasis?: string; listHits: SanctionsListHit[]; assetFreezeRequired: boolean; dealingProhibition: boolean; tippingOffRisk: boolean; recommendedAction: "freeze_immediately"|"file_str"|"escalate_mlro"|"enhanced_screening"|"clear"; actionRationale: string; frozenAssetReportingDeadline?: string; applicableRegime: string[]; complianceObligations: string[]; regulatoryBasis: string }
 
 // ── Suggested questions ───────────────────────────────────────────────────────
-// Sources: UAE FDL 10/2025 & Cabinet Resolution 134/2025 (which together
-// repealed and replaced the previous FDL No.20/2018 + Cabinet Decision No.10/2019),
+// Sources: UAE Federal Decree-Law No. 10 of 2025 & Cabinet Resolution 134/2025 (which together
+// repealed and replaced the previous Federal Decree-Law No. 20 of 2018 + Cabinet Decision No.10/2019),
 // MoE DPMS rules, UAE FIU (goAML), EOCN sanctions guidance, LBMA Responsible
 // Gold Guidance, OECD CAHRA 5-step Due Diligence, FATF 40 Recommendations,
 // RMI RMAP / CMRT, ESG frameworks (EU CSDDD / CSRD), UN Guiding Principles
@@ -654,9 +654,9 @@ const SUGGESTED_GROUPS = [
   {
     label: "UAE FDL & Cabinet Resolution",
     questions: [
-      "What is the record-retention period under UAE FDL 10/2025 Art.16?",
-      "What are the STR reporting obligations under UAE FDL 10/2025?",
-      "What are the tipping-off prohibitions under UAE FDL 10/2025 Art.25?",
+      "What is the record-retention period under UAE Federal Decree-Law No. 10 of 2025 Art.16?",
+      "What are the STR reporting obligations under UAE Federal Decree-Law No. 10 of 2025?",
+      "What are the tipping-off prohibitions under UAE Federal Decree-Law No. 10 of 2025 Art.25?",
       "What CDD measures does UAE Cabinet Resolution 134/2025 require?",
     ],
   },
@@ -800,7 +800,7 @@ const SUGGESTED_GROUPS = [
       "What is the UAE cash declaration threshold at entry/exit points?",
       "What reporting obligation applies to cash transactions above AED 55,000?",
       "What red flags indicate cash structuring below the AED 55,000 threshold?",
-      "What records must be kept for cash transactions under FDL 10/2025?",
+      "What records must be kept for cash transactions under Federal Decree-Law No. 10 of 2025?",
       "What due diligence applies when a DPMS client pays in physical gold rather than cash?",
       "How does FATF R.32 apply to cross-border transportation of cash and BNIs?",
     ],
@@ -817,7 +817,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Beneficial Ownership",
     questions: [
-      "What is the UAE ultimate beneficial owner disclosure threshold under FDL 10/2025?",
+      "What is the UAE ultimate beneficial owner disclosure threshold under Federal Decree-Law No. 10 of 2025?",
       "What are the penalties for providing false UBO information under UAE law?",
       "How do we verify UBO claims for a BVI or Cayman holding structure?",
       "What does FATF R.24 require on legal persons' beneficial ownership transparency?",
@@ -849,7 +849,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "UAE Real Estate & DNFBPs",
     questions: [
-      "What AML/CFT obligations apply to UAE real estate agents under FDL 10/2025?",
+      "What AML/CFT obligations apply to UAE real estate agents under Federal Decree-Law No. 10 of 2025?",
       "What is the cash payment reporting threshold for UAE real estate transactions?",
       "What CDD is required before completing a high-value real estate transaction in the UAE?",
       "What red flags must UAE real estate agents monitor for property sector ML?",
@@ -860,7 +860,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Legal Persons & Arrangements",
     questions: [
-      "What is the UAE's beneficial ownership disclosure threshold under FDL 10/2025?",
+      "What is the UAE's beneficial ownership disclosure threshold under Federal Decree-Law No. 10 of 2025?",
       "How do we verify UBO claims for a trust structure under UAE law?",
       "What CDD applies to a shelf company with nominee directors under FATF R.24?",
       "What does UAE Cabinet Resolution 109/2023 require on UBO registers?",
@@ -894,7 +894,7 @@ const SUGGESTED_GROUPS = [
     label: "UAE Free Zones",
     questions: [
       "What AML/CFT obligations apply to entities registered in UAE free zones?",
-      "How does FDL 10/2025 apply to DIFC and ADGM-licensed entities?",
+      "How does Federal Decree-Law No. 10 of 2025 apply to DIFC and ADGM-licensed entities?",
       "What enhanced CDD applies to free zone companies with no UAE nexus business?",
       "What red flags indicate free zone abuse for sanctions evasion?",
       "What are the AML supervisory responsibilities of UAE free zone authorities?",
@@ -915,7 +915,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Internal Audit & Compliance Testing",
     questions: [
-      "What elements must a UAE AML internal audit programme cover under FDL 10/2025?",
+      "What elements must a UAE AML internal audit programme cover under Federal Decree-Law No. 10 of 2025?",
       "How frequently must AML controls be independently tested in a UAE DPMS entity?",
       "What does FATF R.18 require on internal controls, audit, and compliance?",
       "What are the key AML internal audit findings that must be escalated to the Board?",
@@ -948,7 +948,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Customer Risk Rating Models",
     questions: [
-      "What risk factors must a UAE entity's customer risk rating model include under FDL 10/2025?",
+      "What risk factors must a UAE entity's customer risk rating model include under Federal Decree-Law No. 10 of 2025?",
       "What weighting should jurisdiction risk have in a UAE DPMS customer risk scoring model?",
       "When must a customer risk rating be reviewed outside the scheduled review cycle?",
       "What does FATF R.10 require on ongoing monitoring and risk-based customer classification?",
@@ -970,7 +970,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Proliferation Financing (PF)",
     questions: [
-      "What is the UAE's legal framework for countering proliferation financing under FDL 10/2025?",
+      "What is the UAE's legal framework for countering proliferation financing under Federal Decree-Law No. 10 of 2025?",
       "Which UNSC resolutions impose immediate asset freeze obligations in UAE for PF?",
       "What goods are considered dual-use under UAE Federal Decree-Law 26/2021 Strategic Goods Control?",
       "What is the UAE CBUAE PF Circular 2023 and what does it require from financial institutions?",
@@ -981,7 +981,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "PEP Enhanced Due Diligence",
     questions: [
-      "What is the definition of a Politically Exposed Person under UAE FDL 10/2025 Art.14(2)?",
+      "What is the definition of a Politically Exposed Person under UAE Federal Decree-Law No. 10 of 2025 Art.14(2)?",
       "What senior management approval is required for a PEP relationship under UAE law?",
       "What is the difference between source of wealth and source of funds in PEP EDD?",
       "How should a UAE FI handle a customer who becomes a PEP during an existing relationship?",
@@ -997,15 +997,15 @@ const SUGGESTED_GROUPS = [
       "What is the UAE CBUAE requirement for nested correspondent account relationships?",
       "What due diligence must a UAE correspondent bank perform on a respondent bank's AML programme?",
       "How should a UAE FI handle a correspondent bank in a FATF grey-list jurisdiction?",
-      "What is the 'shell bank' prohibition under UAE FDL 10/2025 and FATF R.13?",
+      "What is the 'shell bank' prohibition under UAE Federal Decree-Law No. 10 of 2025 and FATF R.13?",
     ],
   },
   {
     label: "High-Risk Customer Remediation",
     questions: [
-      "What triggers a mandatory CDD refresh for a high-risk customer under UAE FDL 10/2025 Art.15?",
+      "What triggers a mandatory CDD refresh for a high-risk customer under UAE Federal Decree-Law No. 10 of 2025 Art.15?",
       "What account restrictions can a UAE FI impose pending completion of refresh CDD?",
-      "When must a UAE FI terminate a business relationship under FDL 10/2025 Art.15(3)?",
+      "When must a UAE FI terminate a business relationship under Federal Decree-Law No. 10 of 2025 Art.15(3)?",
       "Should a UAE FI file an exit STR when terminating a high-risk relationship?",
       "What documentation is required to support a decision to continue a high-risk relationship?",
       "What is the remediation timeline for a customer classified as high-risk after post-onboarding monitoring?",
@@ -1018,7 +1018,7 @@ const SUGGESTED_GROUPS = [
       "What is the UAE EOCN and what obligations does Cabinet Decision 74/2020 impose?",
       "What is the timeline for reporting frozen assets to UAE EOCN after a designation hit?",
       "How does secondary sanctions risk from OFAC affect UAE financial institutions?",
-      "What is the tipping-off prohibition in the context of sanctions screening under FDL 10/2025?",
+      "What is the tipping-off prohibition in the context of sanctions screening under Federal Decree-Law No. 10 of 2025?",
       "What is the difference between a designated entity hit and a PEP hit in terms of legal obligations?",
     ],
   },
@@ -1036,18 +1036,18 @@ const SUGGESTED_GROUPS = [
   {
     label: "Annual AML Programme Self-Assessment",
     questions: [
-      "What are the required components of an annual AML/CFT programme review under UAE FDL 10/2025?",
+      "What are the required components of an annual AML/CFT programme review under UAE Federal Decree-Law No. 10 of 2025?",
       "What must a UAE FI's annual enterprise-wide risk assessment (EWRA) cover?",
       "What is the CBUAE inspection framework for AML/CFT programmes and what are common findings?",
       "What governance documentation must a UAE MLRO maintain for the annual AML programme review?",
-      "What training requirements must be satisfied annually under UAE FDL 10/2025 Art.19(3)?",
-      "What are the penalties for an inadequate AML programme under UAE FDL 10/2025?",
+      "What training requirements must be satisfied annually under UAE Federal Decree-Law No. 10 of 2025 Art.19(3)?",
+      "What are the penalties for an inadequate AML programme under UAE Federal Decree-Law No. 10 of 2025?",
     ],
   },
   {
     label: "Board & Senior Management AML Oversight",
     questions: [
-      "What are the AML/CFT governance obligations of the Board of Directors under UAE FDL 10/2025?",
+      "What are the AML/CFT governance obligations of the Board of Directors under UAE Federal Decree-Law No. 10 of 2025?",
       "What management information (MIS) must be reported to the Board on AML performance?",
       "What is the personal liability of senior management for AML failures under UAE law?",
       "How should a UAE FI document Board approval of the AML/CFT risk appetite statement?",
@@ -1059,9 +1059,9 @@ const SUGGESTED_GROUPS = [
     label: "goAML Filing Quality & FIU Engagement",
     questions: [
       "What are the mandatory fields in a UAE FIU goAML STR submission?",
-      "What is the 2-business-day STR filing deadline and when does it start running under UAE FDL 10/2025 Art.26?",
+      "What is the 2-business-day STR filing deadline and when does it start running under UAE Federal Decree-Law No. 10 of 2025 Art.26?",
       "What is the tipping-off prohibition and how does it interact with the STR filing process?",
-      "What voluntary disclosure obligations exist under UAE FDL 10/2025 beyond STRs?",
+      "What voluntary disclosure obligations exist under UAE Federal Decree-Law No. 10 of 2025 beyond STRs?",
       "How should a UAE MLRO handle a goAML STR that was filed in error?",
       "What feedback does the UAE FIU provide to reporting entities after an STR is filed?",
     ],
@@ -1069,7 +1069,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Layering Detection & Asset Tracing",
     questions: [
-      "What are the three ML stages (placement, layering, integration) and how does the UAE FDL 10/2025 address each?",
+      "What are the three ML stages (placement, layering, integration) and how does the UAE Federal Decree-Law No. 10 of 2025 address each?",
       "What structuring patterns indicate placement-stage ML under UAE CTR threshold rules?",
       "What round-trip transaction indicators indicate layering per FATF typologies?",
       "How does the UAE confiscation framework under Federal Law 4/2002 apply to traced criminal proceeds?",
@@ -1080,7 +1080,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Real Estate Money Laundering",
     questions: [
-      "What off-plan property red flags must UAE DNFBP real estate agents report under FDL 10/2025?",
+      "What off-plan property red flags must UAE DNFBP real estate agents report under Federal Decree-Law No. 10 of 2025?",
       "When is a UAE real estate transaction classified as all-cash and what EDD applies?",
       "What third-party payment red flags trigger STR obligations for UAE real estate agents?",
       "How does rapid DLD re-registration within 6 months indicate ML layering?",
@@ -1092,7 +1092,7 @@ const SUGGESTED_GROUPS = [
     label: "Source of Wealth & Illicit Enrichment",
     questions: [
       "What is UNCAC Article 20 illicit enrichment and how does it apply to UAE public officials?",
-      "What documentation must a UAE FI obtain to verify PEP source of wealth under FDL 10/2025?",
+      "What documentation must a UAE FI obtain to verify PEP source of wealth under Federal Decree-Law No. 10 of 2025?",
       "What is the difference between source of wealth and source of funds in UAE EDD?",
       "What unexplained wealth gap percentage triggers an STR filing obligation for a UAE MLRO?",
       "How should a UAE FI handle an inheritance claim that cannot be independently verified?",
@@ -1102,7 +1102,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Insider Threat & Employee Conduct",
     questions: [
-      "What constitutes tipping off under UAE FDL 10/2025 Art.20 and what are the criminal penalties?",
+      "What constitutes tipping off under UAE Federal Decree-Law No. 10 of 2025 Art.20 and what are the criminal penalties?",
       "What controls must a UAE FI have to detect insider facilitation of financial crime per FATF R.18?",
       "What lifestyle checks can a UAE FI conduct on employees in sensitive AML roles?",
       "When must a UAE MLRO notify regulators of a confirmed insider tipping-off incident?",
@@ -1113,18 +1113,18 @@ const SUGGESTED_GROUPS = [
   {
     label: "Board AML Governance & Reporting",
     questions: [
-      "What quarterly AML MIS must a UAE Board receive under FDL 10/2025 Art.5(2)?",
+      "What quarterly AML MIS must a UAE Board receive under Federal Decree-Law No. 10 of 2025 Art.5(2)?",
       "What personal liability does a UAE Board member face for AML programme failures?",
       "What KPIs must a UAE Board monitor for AML effectiveness under CBUAE guidelines?",
       "When must a UAE MLRO escalate a compliance matter directly to the Board?",
-      "What does a UAE Board AML risk appetite statement need to contain under FDL 10/2025?",
+      "What does a UAE Board AML risk appetite statement need to contain under Federal Decree-Law No. 10 of 2025?",
       "What is the three lines of defence model in UAE AML/CFT governance?",
     ],
   },
   {
     label: "Enforcement & Regulatory Penalties",
     questions: [
-      "What are the maximum administrative penalties under UAE FDL 10/2025 for AML violations?",
+      "What are the maximum administrative penalties under UAE Federal Decree-Law No. 10 of 2025 for AML violations?",
       "When does an AML violation result in criminal prosecution of the MLRO personally under UAE law?",
       "What self-reporting discount is available under CBUAE enforcement policy for voluntary disclosure?",
       "What precedent CBUAE enforcement actions have been taken for STR filing failures?",
@@ -1135,7 +1135,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Inter-Agency Coordination & Referrals",
     questions: [
-      "What are the legal pathways for a UAE FI to refer a case to law enforcement under FDL 10/2025?",
+      "What are the legal pathways for a UAE FI to refer a case to law enforcement under Federal Decree-Law No. 10 of 2025?",
       "What information must a UAE MLRO provide to the UAE FIU in an inter-agency referral?",
       "When must a UAE MLRO refer a matter to the UAE Attorney General vs filing an STR?",
       "What Egmont Group channels are available for UAE cross-border intelligence sharing?",
@@ -1146,9 +1146,9 @@ const SUGGESTED_GROUPS = [
   {
     label: "AML Policy & Programme Governance",
     questions: [
-      "What elements must a UAE AML/CFT policy contain to comply with FDL 10/2025 and CBUAE guidelines?",
+      "What elements must a UAE AML/CFT policy contain to comply with Federal Decree-Law No. 10 of 2025 and CBUAE guidelines?",
       "How often must a UAE AML policy be formally reviewed and board-approved?",
-      "What policy changes are mandatory following UAE FDL 10/2025 coming into force?",
+      "What policy changes are mandatory following UAE Federal Decree-Law No. 10 of 2025 coming into force?",
       "What does FATF R.18 require regarding documented AML policies and procedures?",
       "How should a UAE AML policy address the risk-based approach to CDD and monitoring?",
       "What policy documentation must be available during a CBUAE AML/CFT inspection?",
@@ -1168,7 +1168,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Regulatory Calendar & Compliance Deadlines",
     questions: [
-      "What is the STR filing deadline under UAE FDL 10/2025 and when does the clock start?",
+      "What is the STR filing deadline under UAE Federal Decree-Law No. 10 of 2025 and when does the clock start?",
       "What is the CTR filing deadline for cash transactions above AED 55,000?",
       "When must a UAE FI file its annual AML self-assessment with CBUAE?",
       "What is the goAML registration renewal deadline for UAE reporting entities?",
@@ -1179,7 +1179,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Enterprise-Wide Risk Assessment (EWRA)",
     questions: [
-      "What risk categories must a UAE FI&apos;s EWRA cover under FDL 10/2025?",
+      "What risk categories must a UAE FI&apos;s EWRA cover under Federal Decree-Law No. 10 of 2025?",
       "How should a UAE DPMS entity weight real estate and gold sector risks in its EWRA?",
       "What methodology does FATF recommend for institutional ML/TF risk assessment?",
       "When must a UAE FI update its EWRA outside the annual review cycle?",
@@ -1190,7 +1190,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "AML Programme Gap Analysis",
     questions: [
-      "What are the mandatory components of a UAE AML/CFT programme under FDL 10/2025 Art.18?",
+      "What are the mandatory components of a UAE AML/CFT programme under Federal Decree-Law No. 10 of 2025 Art.18?",
       "What CBUAE inspection findings most commonly indicate AML programme gaps?",
       "What does FATF R.18 require for internal AML audit independence and frequency?",
       "What gaps in a UAE TM programme are considered systemic failures by CBUAE?",
@@ -1212,7 +1212,7 @@ const SUGGESTED_GROUPS = [
   {
     label: "Entity Network & Beneficial Ownership Mapping",
     questions: [
-      "What relationship indicators suggest a nominee director arrangement under UAE FDL 10/2025?",
+      "What relationship indicators suggest a nominee director arrangement under UAE Federal Decree-Law No. 10 of 2025?",
       "How does a shared registered address across multiple companies indicate a shell network?",
       "What is the UAE UBO disclosure threshold and how is it applied to layered holding structures?",
       "When do transaction links between entities indicate conduit ML activity per FATF typologies?",
@@ -1225,7 +1225,7 @@ const SUGGESTED_GROUPS = [
     questions: [
       "What must a UAE FI&apos;s AML risk appetite statement prohibit as zero-tolerance activities?",
       "How should Board risk appetite thresholds translate into operational TM alert parameters?",
-      "What does UAE FDL 10/2025 Art.5 require of the Board on AML risk appetite?",
+      "What does UAE Federal Decree-Law No. 10 of 2025 Art.5 require of the Board on AML risk appetite?",
       "How often must a UAE AML risk appetite statement be reviewed and re-approved by the Board?",
       "What risk appetite metrics must be reported to the MLRO and Board regularly?",
       "What is the difference between risk tolerance and risk appetite in UAE AML governance?",
@@ -3541,7 +3541,7 @@ export default function MlroAdvisorPage() {
                         subject: last?.question?.slice(0, 80) ?? "MLRO Advisory Session",
                         summary: advisorHistory.map((h) => `Q: ${h.question}\nVerdict: ${h.result.complianceReview.advisorVerdict}`).join("\n\n"),
                         recommendation: last?.result.complianceReview.advisorVerdict ?? "See session transcript",
-                        regulatoryBasis: "UAE FDL 10/2025 · FATF Recommendations · CBUAE AML Standards",
+                        regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 · FATF Recommendations · CBUAE AML Standards",
                       });
                     }}
                     className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
@@ -5241,7 +5241,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "pep-network" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP Network Intelligence</div>
-                <p className="text-11 text-ink-3">Full network enumeration of persons and entities requiring screening — beyond static PEP profiles. Powered by FATF R.12 and FDL 10/2025 Art.12.</p>
+                <p className="text-11 text-ink-3">Full network enumeration of persons and entities requiring screening — beyond static PEP profiles. Powered by FATF R.12 and Federal Decree-Law No. 10 of 2025 Art.12.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-10 text-ink-3 mb-1">PEP name *</label>
@@ -5491,7 +5491,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-12 font-semibold text-ink-0 mb-1">Transaction Narrative Analyzer</div>
-                  <p className="text-11 text-ink-3 mb-3">Paste a raw transaction narrative, TM alert, or case note. AI determines the AML typology, red flags, STR threshold, and recommended action — grounded in UAE FDL 10/2025 and FATF recommendations.</p>
+                  <p className="text-11 text-ink-3 mb-3">Paste a raw transaction narrative, TM alert, or case note. AI determines the AML typology, red flags, STR threshold, and recommended action — grounded in UAE Federal Decree-Law No. 10 of 2025 and FATF recommendations.</p>
                   <textarea
                     value={txnNarrative}
                     onChange={(e) => setTxnNarrative(e.target.value)}
@@ -6569,7 +6569,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "case-timeline" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Case Timeline Builder — goAML STR Narrative · Suspicion Crystallisation</div>
-                <p className="text-11 text-ink-3">Input raw case notes, dates, and events in any order. AI structures them chronologically, identifies when suspicion crystallised (FATF R.20), calculates the STR deadline (FDL 10/2025 Art.26), and generates a goAML-ready narrative block.</p>
+                <p className="text-11 text-ink-3">Input raw case notes, dates, and events in any order. AI structures them chronologically, identifies when suspicion crystallised (FATF R.20), calculates the STR deadline (Federal Decree-Law No. 10 of 2025 Art.26), and generates a goAML-ready narrative block.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={timelineSubject} onChange={(e) => setTimelineSubject(e.target.value)} placeholder="Subject / account holder" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Case / Account Reference</label><input value={timelineCaseRef} onChange={(e) => setTimelineCaseRef(e.target.value)} placeholder="e.g. CAS-2024-0041" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6643,7 +6643,7 @@ export default function MlroAdvisorPage() {
             {/* ML Predicate Mapper */}
             {superToolsTab === "ml-predicate" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">ML Predicate Mapper — UAE FDL 10/2025 · FATF R.3 · 23 Predicate Categories</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">ML Predicate Mapper — UAE Federal Decree-Law No. 10 of 2025 · FATF R.3 · 23 Predicate Categories</div>
                 <p className="text-11 text-ink-3">Input case facts to identify applicable UAE predicate offences, maximum penalties, self-laundering applicability, and whether an STR is required. Maps to all 23 FATF R.3 designated predicate offence categories.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Suspected Activity (optional)</label><input value={predicateActivity} onChange={(e) => setPredicateActivity(e.target.value)} placeholder="e.g. corruption, fraud, tax evasion" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6711,7 +6711,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "client-risk" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Client Risk Scorer — Onboarding Risk Assessment · CDD Level</div>
-                <p className="text-11 text-ink-3">Input entity details and shareholders. AI produces a risk rating, determines CDD vs EDD, identifies PEP exposure, and recommends action per UAE FDL 10/2025 and FATF R.10.</p>
+                <p className="text-11 text-ink-3">Input entity details and shareholders. AI produces a risk rating, determines CDD vs EDD, identifies PEP exposure, and recommends action per UAE Federal Decree-Law No. 10 of 2025 and FATF R.10.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={clientRiskEntity.name} onChange={(e) => setClientRiskEntity((p) => ({...p, name: e.target.value}))} placeholder="Full legal name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Country of Incorporation</label><input value={clientRiskEntity.countryOfIncorporation} onChange={(e) => setClientRiskEntity((p) => ({...p, countryOfIncorporation: e.target.value}))} placeholder="e.g. UAE, BVI, UK" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -6827,7 +6827,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "ubo-risk" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">UBO Risk Analyzer — Beneficial Ownership · FATF R.24 · PEP Flags</div>
-                <p className="text-11 text-ink-3">Input the corporate entity and its ultimate beneficial owners. AI assesses ownership structure risk, PEP flags, nationality risks, CDD gaps, and sanctions screening requirements per FATF R.24 and UAE FDL 10/2025.</p>
+                <p className="text-11 text-ink-3">Input the corporate entity and its ultimate beneficial owners. AI assesses ownership structure risk, PEP flags, nationality risks, CDD gaps, and sanctions screening requirements per FATF R.24 and UAE Federal Decree-Law No. 10 of 2025.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Entity Name *</label><input value={uboEntity} onChange={(e) => setUboEntity(e.target.value)} placeholder="Legal name of entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Country of Registration</label><input value={uboRegistered} onChange={(e) => setUboRegistered(e.target.value)} placeholder="e.g. UAE, BVI, Cayman" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7085,7 +7085,7 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "sar-triage" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR/STR Triage Decision Engine · UAE FDL 10/2025 Art.26 · FATF R.20</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR/STR Triage Decision Engine · UAE Federal Decree-Law No. 10 of 2025 Art.26 · FATF R.20</div>
                 <p className="text-11 text-ink-3">File or no-file? Applies the UAE &apos;reasonable grounds to suspect&apos; standard (no monetary threshold) and the 2-business-day filing deadline. Checks narrative completeness, missing fields, and tipping-off risk before generating an MLRO decision memorandum.</p>
                 <div className="space-y-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Suspicious Activity Description *</label><textarea value={sarInput.suspiciousActivity} onChange={(e) => setSarInput((p) => ({...p, suspiciousActivity: e.target.value}))} rows={4} placeholder="Describe the suspicious activity in detail — what happened, when, amounts, patterns, customer behaviour..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
@@ -7136,7 +7136,7 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "doc-fraud" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Document Fraud Detector · UAE FDL 10/2025 Art.14 · KYC Authenticity</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Document Fraud Detector · UAE Federal Decree-Law No. 10 of 2025 Art.14 · KYC Authenticity</div>
                 <p className="text-11 text-ink-3">Assess identity documents and KYC supporting documents for fraud indicators. Checks Emirates ID format, salary certificate consistency, trade licence format, attestation chains, and income plausibility. Outputs verification steps and regulatory implications.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Document Types Presented *</label><input value={docFraudInput.documentTypes} onChange={(e) => setDocFraudInput((p) => ({...p, documentTypes: e.target.value}))} placeholder="e.g. Emirates ID, salary certificate, trade licence, bank statement" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7181,7 +7181,7 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "ctr-structuring" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CTR / Structuring Detector · UAE FDL 10/2025 Art.17 · Deterministic Engine</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CTR / Structuring Detector · UAE Federal Decree-Law No. 10 of 2025 Art.17 · Deterministic Engine</div>
                 <p className="text-11 text-ink-3">Deterministic engine — no AI. Paste a list of cash transaction amounts. Instantly detects structuring (smurfing) patterns, identifies CTR-required transactions (≥ AED 55,000), computes Benford-style band distribution, and outputs filing obligations.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Cash Transaction Amounts (AED) *</label><textarea value={ctrAmounts} onChange={(e) => setCtrAmounts(e.target.value)} rows={3} placeholder="Paste amounts separated by commas, newlines, or semicolons&#10;e.g. 52000, 54500, 53200, 51800, 55000, 49000" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 font-mono resize-none focus:outline-none focus:border-brand" /></div>
@@ -7225,8 +7225,8 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "dnfbp-obligations" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">DNFBP Obligation Mapper · UAE FDL 10/2025 · FATF R.22-23</div>
-                <p className="text-11 text-ink-3">Maps exact AML/CFT obligations by DNFBP type — gold dealers, real estate agents, lawyers, accountants, TCSPs, MSBs, VASPs — under UAE FDL 10/2025 and FATF Recommendations 22-23. Identifies triggered obligations, thresholds, and regulatory authority.</p>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">DNFBP Obligation Mapper · UAE Federal Decree-Law No. 10 of 2025 · FATF R.22-23</div>
+                <p className="text-11 text-ink-3">Maps exact AML/CFT obligations by DNFBP type — gold dealers, real estate agents, lawyers, accountants, TCSPs, MSBs, VASPs — under UAE Federal Decree-Law No. 10 of 2025 and FATF Recommendations 22-23. Identifies triggered obligations, thresholds, and regulatory authority.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">DNFBP Type *</label><input value={dnfbpInput.dnfbpType} onChange={(e) => setDnfbpInput((p) => ({...p, dnfbpType: e.target.value}))} placeholder="e.g. gold dealer, real estate agent, lawyer, accountant, TCSP" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Type</label><input value={dnfbpInput.transactionType} onChange={(e) => setDnfbpInput((p) => ({...p, transactionType: e.target.value}))} placeholder="e.g. gold purchase, property sale, corporate formation" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7269,8 +7269,8 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "cdd-refresh" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CDD Refresh Trigger Analyzer · UAE FDL 10/2025 Art.15 · Ongoing Monitoring</div>
-                <p className="text-11 text-ink-3">Determine whether a CDD refresh is legally required and at what urgency. Evaluates all mandatory and advisory trigger events under UAE FDL 10/2025 Art.15, FATF R.10, and CBUAE review frequency guidelines. Outputs EDD requirement, field list, and account action.</p>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">CDD Refresh Trigger Analyzer · UAE Federal Decree-Law No. 10 of 2025 Art.15 · Ongoing Monitoring</div>
+                <p className="text-11 text-ink-3">Determine whether a CDD refresh is legally required and at what urgency. Evaluates all mandatory and advisory trigger events under UAE Federal Decree-Law No. 10 of 2025 Art.15, FATF R.10, and CBUAE review frequency guidelines. Outputs EDD requirement, field list, and account action.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">Customer Name</label><input value={cddRefreshInput.customerName} onChange={(e) => setCddRefreshInput((p) => ({...p, customerName: e.target.value}))} placeholder="Customer full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Current Risk Tier</label><input value={cddRefreshInput.currentRiskTier} onChange={(e) => setCddRefreshInput((p) => ({...p, currentRiskTier: e.target.value}))} placeholder="high / medium / low" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -7358,7 +7358,7 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "goaml-validator" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">goAML STR Validator · UAE FIU · FDL 10/2025 Art.26</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">goAML STR Validator · UAE FIU · Federal Decree-Law No. 10 of 2025 Art.26</div>
                 <p className="text-11 text-ink-3">Validates an STR draft against UAE FIU goAML schema requirements before filing. Checks field completeness, narrative quality, and suspicion crystallisation date. Outputs a corrected narrative, critical issues, and an improved draft paragraph ready for submission.</p>
                 <div className="space-y-3">
                   <div><label className="block text-10 text-ink-3 mb-1">STR Narrative Draft *</label><textarea value={goAmlInput.narrative} onChange={(e) => setGoAmlInput((p) => ({...p, narrative: e.target.value}))} rows={5} placeholder="Paste your draft STR narrative here for validation..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
@@ -7407,7 +7407,7 @@ export default function MlroAdvisorPage() {
 
             {superToolsTab === "pep-edd" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP EDD Package Generator · UAE FDL 10/2025 Art.14(2) · FATF R.12</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">PEP EDD Package Generator · UAE Federal Decree-Law No. 10 of 2025 Art.14(2) · FATF R.12</div>
                 <p className="text-11 text-ink-3">Generates a complete Politically Exposed Person EDD package: classification, risk rating, full EDD questionnaire, SOW/SOF assessment, required documentation list, ongoing monitoring plan, and a signed MLRO memo template. Senior management approval requirements automatically flagged.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 text-ink-3 mb-1">PEP Name *</label><input value={pepEddInput.pepName} onChange={(e) => setPepEddInput((p) => ({...p, pepName: e.target.value}))} placeholder="Full name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7510,7 +7510,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "layering-detector" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Layering Detector · Placement / Layering / Integration</div>
-                <p className="text-11 text-ink-3">Analyses transaction descriptions to detect all three ML stages — placement, layering, and integration — including account hopping, round-trip structures, and structuring patterns per UAE FDL 10/2025 and FATF typologies.</p>
+                <p className="text-11 text-ink-3">Analyses transaction descriptions to detect all three ML stages — placement, layering, and integration — including account hopping, round-trip structures, and structuring patterns per UAE Federal Decree-Law No. 10 of 2025 and FATF typologies.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Description *</label><textarea value={layeringInput.transactions} onChange={(e) => setLayeringInput((p) => ({...p, transactions: e.target.value}))} rows={4} placeholder="Describe the transaction pattern, amounts, account movements…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -7561,7 +7561,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "real-estate-ml" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Real Estate ML Analyzer · DLD / RERA / FATF R.22</div>
-                <p className="text-11 text-ink-3">Screens UAE real estate transactions for ML red flags: price manipulation, all-cash purchases, third-party payments, rapid flipping, off-plan structuring, and beneficial ownership opacity per FATF 2022 Real Estate Guidance and UAE FDL 10/2025 DNFBP requirements.</p>
+                <p className="text-11 text-ink-3">Screens UAE real estate transactions for ML red flags: price manipulation, all-cash purchases, third-party payments, rapid flipping, off-plan structuring, and beneficial ownership opacity per FATF 2022 Real Estate Guidance and UAE Federal Decree-Law No. 10 of 2025 DNFBP requirements.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Property Details *</label><textarea value={realEstateMlInput.propertyDetails} onChange={(e) => setRealEstateMlInput((p) => ({...p, propertyDetails: e.target.value}))} rows={3} placeholder="Property type, location, development name, transaction structure…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Buyer Name</label><input value={realEstateMlInput.buyerName} onChange={(e) => setRealEstateMlInput((p) => ({...p, buyerName: e.target.value}))} placeholder="Full buyer name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7662,7 +7662,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "sow-calculator" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Source of Wealth Calculator · PEP / Illicit Enrichment</div>
-                <p className="text-11 text-ink-3">Reconciles declared income streams against declared assets to identify unexplained wealth gaps and illicit enrichment risk per UNCAC Art.20, UAE FDL 10/2025 EDD requirements, and FATF R.12 PEP SOW/SOF standards.</p>
+                <p className="text-11 text-ink-3">Reconciles declared income streams against declared assets to identify unexplained wealth gaps and illicit enrichment risk per UNCAC Art.20, UAE Federal Decree-Law No. 10 of 2025 EDD requirements, and FATF R.12 PEP SOW/SOF standards.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Declared Income (description) *</label><textarea value={sowInput.declaredIncome} onChange={(e) => setSowInput((p) => ({...p, declaredIncome: e.target.value}))} rows={3} placeholder="Describe income sources — salary, business income, rental, investments, inheritance…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -7708,7 +7708,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "insider-threat-screen" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Insider Threat Screen · Tipping-Off · Financial Crime Facilitation</div>
-                <p className="text-11 text-ink-3">Assesses employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat categories including financial crime facilitation, tipping off (FDL 10/2025 Art.20), fraud, and bribery. Provides coordinated HR and compliance action recommendations.</p>
+                <p className="text-11 text-ink-3">Assesses employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat categories including financial crime facilitation, tipping off (Federal Decree-Law No. 10 of 2025 Art.20), fraud, and bribery. Provides coordinated HR and compliance action recommendations.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Employee Name</label><input value={insiderInput.employeeName} onChange={(e) => setInsiderInput((p) => ({...p, employeeName: e.target.value}))} placeholder="Full employee name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Employee Role *</label><input value={insiderInput.employeeRole} onChange={(e) => setInsiderInput((p) => ({...p, employeeRole: e.target.value}))} placeholder="e.g. Relationship Manager, MLRO" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7747,7 +7747,7 @@ export default function MlroAdvisorPage() {
             {/* Board AML Report */}
             {superToolsTab === "board-aml-report" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
-                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Board AML Report Generator · Quarterly MIS · FDL 10/2025 Art.5(2)</div>
+                <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Board AML Report Generator · Quarterly MIS · Federal Decree-Law No. 10 of 2025 Art.5(2)</div>
                 <p className="text-11 text-ink-3">Generates comprehensive quarterly Board AML/CFT reports including executive summaries, KPI commentary, MLRO updates, regulatory highlights, open audit findings, upcoming obligations, and board recommendations per CBUAE AML/CFT Guidelines §3.2.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Name</label><input value={boardAmlInput.institutionName} onChange={(e) => setBoardAmlInput((p) => ({...p, institutionName: e.target.value}))} placeholder="Institution / entity name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7783,7 +7783,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "enforcement-exposure" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Enforcement Exposure Estimator · Penalties · Criminal Liability</div>
-                <p className="text-11 text-ink-3">Estimates regulatory enforcement exposure including penalty ranges, likely penalties, mitigating/aggravating factors, precedent cases, criminal exposure, MLRO personal liability, and self-reporting benefits per UAE FDL 10/2025 and CBUAE enforcement framework.</p>
+                <p className="text-11 text-ink-3">Estimates regulatory enforcement exposure including penalty ranges, likely penalties, mitigating/aggravating factors, precedent cases, criminal exposure, MLRO personal liability, and self-reporting benefits per UAE Federal Decree-Law No. 10 of 2025 and CBUAE enforcement framework.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Violation Description *</label><textarea value={enforcementInput.violation} onChange={(e) => setEnforcementInput((p) => ({...p, violation: e.target.value}))} rows={3} placeholder="Describe the AML/CFT violation or compliance failure in detail…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={enforcementInput.institutionType} onChange={(e) => setEnforcementInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / real estate agent…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
@@ -7824,7 +7824,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "inter-agency-referral" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Inter-Agency Referral Builder · FIU · Law Enforcement · CBUAE</div>
-                <p className="text-11 text-ink-3">Generates structured inter-agency referrals and intelligence disclosures to UAE FIU, law enforcement, and regulatory bodies, with evidence summaries, legal basis, and recommended referral pathways per UAE FDL 10/2025 and international cooperation frameworks.</p>
+                <p className="text-11 text-ink-3">Generates structured inter-agency referrals and intelligence disclosures to UAE FIU, law enforcement, and regulatory bodies, with evidence summaries, legal basis, and recommended referral pathways per UAE Federal Decree-Law No. 10 of 2025 and international cooperation frameworks.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Case Description *</label><textarea value={referralInput.caseDescription} onChange={(e) => setReferralInput((p) => ({...p, caseDescription: e.target.value}))} rows={4} placeholder="Describe the case, suspicious activity, and grounds for referral…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none focus:outline-none focus:border-brand" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -7860,7 +7860,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "policy-reviewer" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Policy Reviewer · AML/CFT Policy Gap Analysis</div>
-                <p className="text-11 text-ink-3">Reviews AML/CFT policy documents against UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Identifies gaps, outdated provisions, missing mandatory elements, and drafts recommended amendments.</p>
+                <p className="text-11 text-ink-3">Reviews AML/CFT policy documents against UAE Federal Decree-Law No. 10 of 2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Identifies gaps, outdated provisions, missing mandatory elements, and drafts recommended amendments.</p>
                 <div className="space-y-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Policy Text *</label><textarea value={policyInput.policyText} onChange={(e) => setPolicyInput((p) => ({...p, policyText: e.target.value}))} rows={6} placeholder="Paste your AML/CFT policy text for review…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -7967,7 +7967,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "regulatory-calendar" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Regulatory Calendar · UAE AML/CFT Obligation Deadlines</div>
-                <p className="text-11 text-ink-3">Generates a structured regulatory calendar of AML/CFT reporting deadlines, review cycles, and compliance obligations for UAE regulated entities per FDL 10/2025, CBUAE guidelines, goAML filing requirements, and international frameworks.</p>
+                <p className="text-11 text-ink-3">Generates a structured regulatory calendar of AML/CFT reporting deadlines, review cycles, and compliance obligations for UAE regulated entities per Federal Decree-Law No. 10 of 2025, CBUAE guidelines, goAML filing requirements, and international frameworks.</p>
                 <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={regCalInput.institutionType} onChange={(e) => setRegCalInput({ institutionType: e.target.value })} placeholder="bank / DPMS / VASP / real estate agent / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                 <button type="button" onClick={() => void runRegulatoryCalendar()} disabled={regCalLoading} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{regCalLoading ? "Generating…" : "Generate Regulatory Calendar"}</button>
                 {toolErrors["regulatoryCalendar"] && (
@@ -7993,7 +7993,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "ewra-generator" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">EWRA Generator · Enterprise-Wide Risk Assessment</div>
-                <p className="text-11 text-ink-3">Generates a structured Enterprise-Wide Risk Assessment (EWRA) covering inherent ML/TF/PF risks, control effectiveness, residual risk ratings, and methodology per UAE FDL 10/2025, FATF guidance on national and institutional risk assessments, and CBUAE EWRA requirements.</p>
+                <p className="text-11 text-ink-3">Generates a structured Enterprise-Wide Risk Assessment (EWRA) covering inherent ML/TF/PF risks, control effectiveness, residual risk ratings, and methodology per UAE Federal Decree-Law No. 10 of 2025, FATF guidance on national and institutional risk assessments, and CBUAE EWRA requirements.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={ewraInput.institutionType} onChange={(e) => setEwraInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Products & Services</label><input value={ewraInput.productsServices} onChange={(e) => setEwraInput((p) => ({...p, productsServices: e.target.value}))} placeholder="e.g. trade finance, retail banking, gold trading" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -8027,7 +8027,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "aml-programme-gap" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AML Programme Gap Analyser · FATF R.18 · CBUAE Compliance</div>
-                <p className="text-11 text-ink-3">Conducts a structured gap analysis of an institution&apos;s AML/CFT programme against UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF R.18 internal control requirements. Identifies missing mandatory elements and prioritises remediation actions.</p>
+                <p className="text-11 text-ink-3">Conducts a structured gap analysis of an institution&apos;s AML/CFT programme against UAE Federal Decree-Law No. 10 of 2025, CBUAE AML/CFT Guidelines, and FATF R.18 internal control requirements. Identifies missing mandatory elements and prioritises remediation actions.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={amlGapInput.institutionType} onChange={(e) => setAmlGapInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Staff Count</label><input value={amlGapInput.staffCount} onChange={(e) => setAmlGapInput((p) => ({...p, staffCount: e.target.value}))} placeholder="e.g. 50" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -8136,7 +8136,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "risk-appetite-builder" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Risk Appetite Builder · Board-Approved AML/CFT Risk Appetite Statement</div>
-                <p className="text-11 text-ink-3">Generates a structured AML/CFT Risk Appetite Statement (RAS) for Board approval covering ML/TF/PF risk tolerance thresholds, prohibited activities, acceptable risk boundaries, and monitoring metrics per UAE FDL 10/2025 Art.5 Board accountability requirements and FATF governance guidance.</p>
+                <p className="text-11 text-ink-3">Generates a structured AML/CFT Risk Appetite Statement (RAS) for Board approval covering ML/TF/PF risk tolerance thresholds, prohibited activities, acceptable risk boundaries, and monitoring metrics per UAE Federal Decree-Law No. 10 of 2025 Art.5 Board accountability requirements and FATF governance guidance.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type *</label><input value={riskAppInput.institutionType} onChange={(e) => setRiskAppInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Key Products</label><input value={riskAppInput.keyProducts} onChange={(e) => setRiskAppInput((p) => ({...p, keyProducts: e.target.value}))} placeholder="e.g. trade finance, private banking, crypto" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -8169,7 +8169,7 @@ export default function MlroAdvisorPage() {
             {superToolsTab === "regulatory-exam-prep" && (
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-3">
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Regulatory Exam Prep · CBUAE / FATF Inspection Readiness</div>
-                <p className="text-11 text-ink-3">Generates structured regulatory examination preparation packs covering common examiner questions, expected evidence, self-assessment checklists, and remediation priorities for CBUAE AML/CFT inspections and FATF mutual evaluation preparation per UAE FDL 10/2025 and FATF Recommendations.</p>
+                <p className="text-11 text-ink-3">Generates structured regulatory examination preparation packs covering common examiner questions, expected evidence, self-assessment checklists, and remediation priorities for CBUAE AML/CFT inspections and FATF mutual evaluation preparation per UAE Federal Decree-Law No. 10 of 2025 and FATF Recommendations.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div><label className="block text-10 text-ink-3 mb-1">Exam Area *</label><input value={examPrepInput.examArea} onChange={(e) => setExamPrepInput((p) => ({...p, examArea: e.target.value}))} placeholder="e.g. CDD, TM, STR quality, EWRA, PEP, sanctions…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={examPrepInput.institutionType} onChange={(e) => setExamPrepInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
@@ -8464,7 +8464,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Trust & Complex Structure Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.25 · UAE FDL 10/2025 Art.7 · UBO identification and opacity risk in layered structures</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.25 · UAE Federal Decree-Law No. 10 of 2025 Art.7 · UBO identification and opacity risk in layered structures</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Name</label><input value={trustStructInput.entityName} onChange={e => setTrustStructInput(p => ({...p, entityName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Trust / foundation / holding name" /></div>
@@ -8653,7 +8653,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Staff Alert / Internal Whistleblower Adviser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Internal alert credibility and MLRO action protocol</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.24 · FATF R.18 · Internal alert credibility and MLRO action protocol</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Alert Source</label><input value={staffAlertInput.alertSource} onChange={e => setStaffAlertInput(p => ({...p, alertSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous tip, line manager, hotline…" /></div>
@@ -8687,7 +8687,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">STR Quality Scorer</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.15 · FATF R.20 · goAML quality gate — score your STR narrative before submission</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.15 · FATF R.20 · goAML quality gate — score your STR narrative before submission</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={strQualityInput.subjectName} onChange={e => setStrQualityInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Reporting subject" /></div>
@@ -8717,7 +8717,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Hawala / Informal Value Transfer Detector</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE FDL 10/2025 · Informal value transfer typology indicators and risk assessment</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.14 · UAE Federal Decree-Law No. 10 of 2025 · Informal value transfer typology indicators and risk assessment</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={hawalaInput.subjectName} onChange={e => setHawalaInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Individual or business" /></div>
@@ -8777,7 +8777,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">PEP Corporate Nexus Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · PEP-linked corporate ownership risk and enhanced due diligence requirements</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE Federal Decree-Law No. 10 of 2025 · PEP-linked corporate ownership risk and enhanced due diligence requirements</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Company Name</label><input value={pepCorpInput.companyName} onChange={e => setPepCorpInput(p => ({...p, companyName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Corporate entity" /></div>
@@ -8867,7 +8867,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Periodic KYC Review Planner</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Periodic CDD review cycle planning and overdue queue prioritisation</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.13 · FATF R.10 · Periodic CDD review cycle planning and overdue queue prioritisation</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={pKycInput.institutionType} onChange={e => setPKycInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP…" /></div>
@@ -8894,7 +8894,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Whistleblower Report Handler</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.24 · FATF R.18 · Whistleblower allegation triage, credibility assessment, and MLRO response protocol</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.24 · FATF R.18 · Whistleblower allegation triage, credibility assessment, and MLRO response protocol</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Report Source</label><input value={whistleInput.reportSource} onChange={e => setWhistleInput(p => ({...p, reportSource: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anonymous, employee, regulator…" /></div>
@@ -8924,7 +8924,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Trade Finance Red Flag Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML Guidance · UAE FDL 10/2025 · Trade-based money laundering indicators in trade finance transactions</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML Guidance · UAE Federal Decree-Law No. 10 of 2025 · Trade-based money laundering indicators in trade finance transactions</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Type</label><input value={tradeFinRfInput.transactionType} onChange={e => setTradeFinRfInput(p => ({...p, transactionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="LC, documentary collection, open account…" /></div>
@@ -8986,7 +8986,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Customer Lifecycle Risk Monitor</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.13 · FATF R.10 · Ongoing monitoring and risk rating evolution throughout the customer lifecycle</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.13 · FATF R.10 · Ongoing monitoring and risk rating evolution throughout the customer lifecycle</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Name</label><input value={custLifeInput.customerName} onChange={e => setCustLifeInput(p => ({...p, customerName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customer or entity name" /></div>
@@ -9016,7 +9016,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Enhanced PEP Screening</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE FDL 10/2025 · Enhanced due diligence for politically exposed persons including wealth and connections analysis</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.12 · UAE Federal Decree-Law No. 10 of 2025 · Enhanced due diligence for politically exposed persons including wealth and connections analysis</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Subject Name</label><input value={pepEnhInput.subjectName} onChange={e => setPepEnhInput(p => ({...p, subjectName: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="PEP full name" /></div>
@@ -9046,7 +9046,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">AML Training Gap Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 Art.19 · FATF R.18 · Identify AML/CFT training gaps and build a remediation programme</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 Art.19 · FATF R.18 · Identify AML/CFT training gaps and build a remediation programme</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Staff Count</label><input value={amlTrainInput.staffCount} onChange={e => setAmlTrainInput(p => ({...p, staffCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total number of staff" /></div>
@@ -9105,7 +9105,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">AML KPI Dashboard Generator</div>
-                  <div className="text-11 text-ink-2 mt-0.5">UAE FDL 10/2025 · FATF R.33 · Generate a comprehensive AML programme KPI assessment for board and regulator reporting</div>
+                  <div className="text-11 text-ink-2 mt-0.5">UAE Federal Decree-Law No. 10 of 2025 · FATF R.33 · Generate a comprehensive AML programme KPI assessment for board and regulator reporting</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={amlKpiInput.institutionType} onChange={e => setAmlKpiInput(p => ({...p, institutionType: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Bank, DNFBP, VASP, insurer…" /></div>
@@ -9136,7 +9136,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Trade Finance Risk — TBML Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML 2006/2020 · Wolfsberg Trade Finance Principles · BIS guidance · ICC UCP 600 · UAE FDL 10/2025</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF TBML 2006/2020 · Wolfsberg Trade Finance Principles · BIS guidance · ICC UCP 600 · UAE Federal Decree-Law No. 10 of 2025</div>
                 </div>
 
                 {/* Transaction & Parties */}
@@ -9354,7 +9354,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">Insider Threat Assessor</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF insider facilitation · ACAMS insider threat framework · CERT MERIT model · MICE analysis · UAE FDL 10/2025 Art.26 · CBUAE staff screening</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF insider facilitation · ACAMS insider threat framework · CERT MERIT model · MICE analysis · UAE Federal Decree-Law No. 10 of 2025 Art.26 · CBUAE staff screening</div>
                 </div>
 
                 {/* Employee basics */}
@@ -10805,7 +10805,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">🔍 AML Framework Gap Analyser</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · FDL No.10/2025</div>
+                  <div className="text-11 text-ink-2 mt-0.5">FATF R.1 · Federal Decree-Law No. 10 of 2025</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Institution Type</label><input value={ntIn("institutionType")} onChange={e => { if (superToolsTab !== "aml-framework-gap") { setNt({}); setNtResult(null); } ntSet("institutionType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. bank, VASP, DNFBP" /></div>
@@ -11477,7 +11477,7 @@ export default function MlroAdvisorPage() {
               <div className="space-y-4">
                 <div>
                   <div className="text-13 font-semibold text-ink-0">📋 UAE/Local KYC Requirements Guide</div>
-                  <div className="text-11 text-ink-2 mt-0.5">FDL No.10/2025 · CRS · FATCA</div>
+                  <div className="text-11 text-ink-2 mt-0.5">Federal Decree-Law No. 10 of 2025 · CRS · FATCA</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Entity Type</label><input value={ntIn("entityType")} onChange={e => { if (superToolsTab !== "local-kyc-requirements") { setNt({}); setNtResult(null); } ntSet("entityType", e.target.value); }} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Obliged entity type" /></div>

@@ -84,12 +84,12 @@ Adverse Media Findings: ${sanitizeText(body.adverseMediaFindings, 1000) || "none
 Transaction Monitoring Alert Details: ${sanitizeText(body.transactionMonitoringAlert, 1000) || "none"}
 Report Action: ${body.reportAction === "supplementary" ? "Supplementary" : "Initial"}
 
-Draft the STR narrative, ensuring all FATF predicate offences, specific dates, amounts, transaction types, monitoring trigger, and regulatory provisions (UAE FDL 10/2025 Art.17, FATF Recommendation 20) are included.`;
+Draft the STR narrative, ensuring all FATF predicate offences, specific dates, amounts, transaction types, monitoring trigger, and regulatory provisions (UAE Federal Decree-Law No. 10 of 2025 Art.17, FATF Recommendation 20) are included.`;
 
   const SYSTEM = `You are a senior UAE AML compliance officer drafting a Suspicious Transaction Report (STR) for submission via goAML to the UAE Financial Intelligence Unit (FIU).
 
 REGULATORY FRAMEWORK:
-- UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) on Anti-Money Laundering and Combating the Financing of Terrorism:
+- UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025) on Anti-Money Laundering and Combating the Financing of Terrorism:
   Art. 14: obligation to monitor customer transactions and detect suspicious activity
   Art. 17: mandatory STR filing within 48 hours of forming suspicion
   Art. 18: tipping-off prohibition
@@ -103,7 +103,7 @@ MANDATORY NARRATIVE ELEMENTS (ALL must appear):
 4. WHERE — Account numbers, branch location, correspondent banks, receiving jurisdictions, geographic routing
 5. WHY — Clear suspicion rationale: which specific FATF predicate offence(s) are suspected, how each red flag maps to a typology, linkage to adverse media findings if present
 6. MONITORING TRIGGER — Explicitly state what triggered the alert: threshold breach (specify the threshold), unusual pattern vs peer group, velocity rule, structuring pattern, geographic anomaly, etc.
-7. REGULATORY BASIS — Cite: UAE FDL 10/2025 Art.17 as the filing obligation; FATF R.20 as the international standard; specify predicate offences under FATF R.3
+7. REGULATORY BASIS — Cite: UAE Federal Decree-Law No. 10 of 2025 Art.17 as the filing obligation; FATF R.20 as the international standard; specify predicate offences under FATF R.3
 8. ACTIONS TAKEN — Internal escalation chain, account restrictions applied, documentation gathered, MLRO decision date
 
 QUALITY REQUIREMENTS:
@@ -126,7 +126,7 @@ Respond ONLY with valid JSON — no markdown fences:
   "goAmlFields": {
     "reportType": "<STR|SAR|CTR>",
     "suspiciousActivityType": "<typology category matching UAE FIU codes>",
-    "filingBasis": "UAE FDL 10/2025 Art.17; FATF R.20",
+    "filingBasis": "UAE Federal Decree-Law No. 10 of 2025 Art.17; FATF R.20",
     "deadlineDate": "<ISO date 48 hours from suspicion formation>"
   },
   "regulatoryBasis": "UAE Federal Decree-Law No. 10 of 2025 Art.14, Art.17; FATF Recommendation 20; FATF Predicate Offences Recommendation 3"

@@ -4,8 +4,8 @@
 // Regulatory basis:
 //   FATF Recommendation 1 (risk-based approach) / INR.1
 //   CBUAE AML/CFT Supervisory Standards (2024 revision)
-//   UAE FDL 10/2025 — Federal Decree-Law on AML/CFT
-//   UAE FDL 20/2018 — Dealers in Precious Metals and Stones
+//   UAE Federal Decree-Law No. 10 of 2025 — Federal Decree-Law on AML/CFT
+//   UAE Federal Decree-Law No. 20 of 2018 — Dealers in Precious Metals and Stones
 //   ISO 31000:2018 — Risk management framework (residual risk treatment)
 
 import { getJson, setJson } from "@/lib/server/store";
@@ -40,7 +40,7 @@ export const FATF_RISK_FACTOR_MATRIX: FatfRiskFactor[] = [
     baseScore: 55,
     weight: 0.15,
     ratingLabel: "medium",
-    regulatoryBasis: "FATF Rec.10; FDL 10/2025 Art.8",
+    regulatoryBasis: "FATF Rec.10; Federal Decree-Law No. 10 of 2025 Art.8",
   },
   {
     factor: "Non-face-to-face (remote onboarding)",
@@ -56,7 +56,7 @@ export const FATF_RISK_FACTOR_MATRIX: FatfRiskFactor[] = [
     baseScore: 70,
     weight: 0.25,
     ratingLabel: "medium-high",
-    regulatoryBasis: "FATF Rec.8; FDL 10/2025 Art.9(3)",
+    regulatoryBasis: "FATF Rec.8; Federal Decree-Law No. 10 of 2025 Art.9(3)",
   },
   // ── Product / Service Risk ─────────────────────────────────────────────────
   {
@@ -139,7 +139,7 @@ export const FATF_RISK_FACTOR_MATRIX: FatfRiskFactor[] = [
     baseScore: 80,
     weight: 0.50,
     ratingLabel: "high",
-    regulatoryBasis: "FATF Rec.17; FDL 10/2025 Art.12",
+    regulatoryBasis: "FATF Rec.17; Federal Decree-Law No. 10 of 2025 Art.12",
   },
   {
     factor: "Direct bank branch (face-to-face)",
@@ -164,7 +164,7 @@ export function computeFatfCategoryScore(category: FatfRiskFactor["category"]): 
 // Additive modifiers (basis points on 0-100 scale) for UAE-designated
 // high-risk sectors. Applied to the inherent risk score before residual
 // risk calculation. Source: CBUAE AML/CFT Sectoral Risk Assessment 2024;
-// UAE FDL 20/2018 (DPMS); UAE MoE Free Zone CDD Circular 2022.
+// UAE Federal Decree-Law No. 20 of 2018 (DPMS); UAE MoE Free Zone CDD Circular 2022.
 
 export interface SectorRiskModifier {
   sector: string;
@@ -178,19 +178,19 @@ export const UAE_SECTOR_MODIFIERS: SectorRiskModifier[] = [
     sector: "Gold trading / precious metals",
     keywords: ["gold", "precious metal", "bullion", "dpms", "gold trading"],
     modifier: 20,
-    regulatoryBasis: "UAE FDL 20/2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
+    regulatoryBasis: "UAE Federal Decree-Law No. 20 of 2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
   },
   {
     sector: "Real estate",
     keywords: ["real estate", "property", "mortgage", "realty", "real_estate"],
     modifier: 15,
-    regulatoryBasis: "UAE FDL 10/2025 Art.3(8); RERA AML Circular 2023",
+    regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.3(8); RERA AML Circular 2023",
   },
   {
     sector: "Hawala / informal money transfer",
     keywords: ["hawala", "money transfer", "remittance", "hundi", "fawri", "informal"],
     modifier: 25,
-    regulatoryBasis: "CBUAE Hawala Provider Regulation 2021; FDL 10/2025 Art.3(10)",
+    regulatoryBasis: "CBUAE Hawala Provider Regulation 2021; Federal Decree-Law No. 10 of 2025 Art.3(10)",
   },
   {
     sector: "Free zone companies",
@@ -202,7 +202,7 @@ export const UAE_SECTOR_MODIFIERS: SectorRiskModifier[] = [
     sector: "Precious stones",
     keywords: ["precious stone", "gemstone", "diamond", "jewellery", "jewelry", "gems"],
     modifier: 15,
-    regulatoryBasis: "UAE FDL 20/2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
+    regulatoryBasis: "UAE Federal Decree-Law No. 20 of 2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
   },
 ];
 
@@ -315,7 +315,7 @@ export function assessCbuaeRiskAppetite(
     if (residualScore >= 75) {
       mandatoryActions.push(
         "Immediate transaction monitoring parameter review required",
-        "Consider voluntary disclosure to CBUAE (FDL 10/2025 Art.15)",
+        "Consider voluntary disclosure to CBUAE (Federal Decree-Law No. 10 of 2025 Art.15)",
       );
     }
     if (isHighRiskSector) {
@@ -408,7 +408,7 @@ export function buildTrendAnalysis(
       `(${previous.overallScore} → ${current}) since the previous assessment on ` +
       `${previous.generatedAt.split("T")[0]}. ` +
       `A >20 point increase requires board-level review and updated risk mitigation controls ` +
-      `under FATF Rec.1 continuous monitoring and FDL 10/2025 Art.5(4).`
+      `under FATF Rec.1 continuous monitoring and Federal Decree-Law No. 10 of 2025 Art.5(4).`
     : delta < -20
     ? `RISK IMPROVEMENT: Overall score decreased by ${delta} points ` +
       `(${previous.overallScore} → ${current}) since the previous assessment on ` +

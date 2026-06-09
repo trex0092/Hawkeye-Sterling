@@ -74,7 +74,7 @@ async function findBlockingFourEyesItem(
   }
 }
 
-// Phrases that constitute tipping-off under FDL 10/2025 Art.29.
+// Phrases that constitute tipping-off under Federal Decree-Law No. 10 of 2025 Art.29.
 // The list is broad on purpose: false-positive flagging an MLRO draft is
 // a recoverable inconvenience; a true-positive that slipped through is a
 // criminal disclosure. Patterns cover synonyms, abbreviations, and
@@ -209,13 +209,13 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
       {
         ok: false,
         error: "four_eyes_overdue_blocked",
-        detail: "A four-eyes approval for this subject has been pending > 72h and is now blocking STR/SAR filings. Resolve the overdue four-eyes item first (UAE FDL 10/2025 Art.16).",
+        detail: "A four-eyes approval for this subject has been pending > 72h and is now blocking STR/SAR filings. Resolve the overdue four-eyes item first (UAE Federal Decree-Law No. 10 of 2025 Art.16).",
       },
       { status: 422, headers: gateHeaders },
     );
   }
 
-  // Server-side tipping-off check — FDL 10/2025 Art.29
+  // Server-side tipping-off check — Federal Decree-Law No. 10 of 2025 Art.29
   if (body.narrative) {
     const tipOff = checkTippingOff(body.narrative);
     if (tipOff) {
@@ -258,7 +258,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     // user-supplied body.mlro string. body.mlro is a display name only;
     // recording it in the four-eyes ledger as the actor would allow any
     // authenticated caller to impersonate arbitrary identities in the
-    // regulatory artefact (FDL 10/2025 Art.16 compliance control bypass).
+    // regulatory artefact (Federal Decree-Law No. 10 of 2025 Art.16 compliance control bypass).
     const filerActor = actorKeyId ?? `mlro:${mlro}`;
     // The second approver is still user-supplied since the route is single-
     // session. Include the filer's API key as a prefix so the ledger entry
@@ -415,7 +415,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   };
 
   // Audit every draft attempt — even those that will fail validation — so
-  // the compliance record exists regardless of outcome (FDL 10/2025 Art.24).
+  // the compliance record exists regardless of outcome (Federal Decree-Law No. 10 of 2025 Art.24).
   void writeAuditChainEntry(
     {
       event: "sar.report.draft_attempted",
@@ -486,7 +486,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     );
   }
 
-  // FDL 10/2025 Art.17 + Art.24 — every SAR/STR report generation must be
+  // Federal Decree-Law No. 10 of 2025 Art.17 + Art.24 — every SAR/STR report generation must be
   // permanently logged on the tamper-evident server-side chain.
   void writeAuditChainEntry(
     {
@@ -520,7 +520,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
 
   lines.push("");
   lines.push(
-    "Legal basis: FDL 10/2025 Art.26-27 · Art.29 (tipping-off) · Art.24 (10-yr retention) · Cabinet Res 134/2025 Art.18",
+    "Legal basis: Federal Decree-Law No. 10 of 2025 Art.26-27 · Art.29 (tipping-off) · Art.24 (10-yr retention) · Cabinet Res 134/2025 Art.18",
   );
   lines.push("Source: Hawkeye Sterling — https://hawkeye-sterling.netlify.app");
 
@@ -534,7 +534,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
     const hh = String(ts.getUTCHours()).padStart(2, "0");
     const mi = String(ts.getUTCMinutes()).padStart(2, "0");
     const reportId = `HWK-${body.filingType}-${dd}-${mm}-${yyyy}-${hh}${mi}`;
-    const regs = "FDL 10/2025 Art.26-27 · Art.29 · Art.24 (10-yr retention) · Cabinet Res 134/2025 Art.18";
+    const regs = "Federal Decree-Law No. 10 of 2025 Art.26-27 · Art.29 · Art.24 (10-yr retention) · Cabinet Res 134/2025 Art.18";
     const label = `${body.filingType} FILING — goAML`;
     const sev = (body.result?.severity ?? "review").toLowerCase();
     const verdictBand = sev === "critical" ? "ember" : sev === "high" ? "ember" : sev === "medium" ? "amber" : "sage";
@@ -674,7 +674,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
 
   // Egress gate: compliance pre-check before MLRO inbox delivery.
   // Gate is off by default; enable with EGRESS_GATE_ENABLED=true after MLRO
-  // confirms mandate (FDL 10/2025 Art.16, charter P3).
+  // confirms mandate (Federal Decree-Law No. 10 of 2025 Art.16, charter P3).
   const egressResult = await runEgressCheck(lines.join("\n"), `${body.filingType} filing`);
   if (!egressResult.allowed) {
     return NextResponse.json({
@@ -711,7 +711,7 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
           projects: [projectGid],
           workspace: workspaceGid,
           assignee: asanaGids.assignee(),
-          // UAE FDL 10/2025 Art.22 — STR/SAR must be submitted within 30 days
+          // UAE Federal Decree-Law No. 10 of 2025 Art.22 — STR/SAR must be submitted within 30 days
           // of forming suspicion. Set due_on so the MLRO inbox shows the
           // regulatory deadline and automated overdue alerts fire in time.
           due_on: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
@@ -823,7 +823,7 @@ function autoNarrative(body: Body): string {
   // 3. Subject details (full name, ID, occupation, relationship to institution)
   // 4. Transaction details (amounts, dates, counterparties, accounts)
   // 5. Why the institution could not determine legitimacy (steps taken)
-  // 6. Regulatory basis — FDL 10/2025 Art. 15 (reporting obligation)
+  // 6. Regulatory basis — Federal Decree-Law No. 10 of 2025 Art. 15 (reporting obligation)
 
   const parts: string[] = [];
 
@@ -922,13 +922,13 @@ function autoNarrative(body: Body): string {
     );
   } else {
     parts.push(
-      `DUE DILIGENCE STEPS TAKEN: The reporting institution applied its standard KYC/CDD procedures and constructive-knowledge standard (FDL 10/2025 Art. 2(3)). Despite these steps, the institution was unable to determine a legitimate basis for the activity described above.`,
+      `DUE DILIGENCE STEPS TAKEN: The reporting institution applied its standard KYC/CDD procedures and constructive-knowledge standard (Federal Decree-Law No. 10 of 2025 Art. 2(3)). Despite these steps, the institution was unable to determine a legitimate basis for the activity described above.`,
     );
   }
 
   // ── 6. Regulatory basis ────────────────────────────────────────────────────
   parts.push(
-    `REGULATORY BASIS: This report is filed pursuant to the obligation imposed on reporting entities under UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) Art. 15 (reporting obligation). The reporting institution has reasonable grounds to suspect that the transactions constitute, or may constitute, money laundering, terrorist financing, or financing of illegal organisations. MLRO to review and confirm all details before goAML submission.`,
+    `REGULATORY BASIS: This report is filed pursuant to the obligation imposed on reporting entities under UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025) Art. 15 (reporting obligation). The reporting institution has reasonable grounds to suspect that the transactions constitute, or may constitute, money laundering, terrorist financing, or financing of illegal organisations. MLRO to review and confirm all details before goAML submission.`,
   );
 
   return parts.join("\n\n");

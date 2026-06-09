@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `MEMO-${dd}-${mm}-${yyyy}`;
-  const regs = "FDL 10/2025 · CBUAE AML STANDARDS · LEGAL PRIVILEGE";
+  const regs = "Federal Decree-Law No. 10 of 2025 · CBUAE AML STANDARDS · LEGAL PRIVILEGE";
 
   const cover: CoverData = {
     reportId, regs,

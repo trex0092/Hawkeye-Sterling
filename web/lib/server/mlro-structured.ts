@@ -41,7 +41,7 @@ include any text before or after the JSON. Do NOT wrap the JSON in markdown fenc
   "redFlags": { "flags": [{"indicator": <string>, "typology": <string>}] },
   "frameworkCitations": {
     "byClass": {
-      "A": [<string>...],            /* Primary law cites — e.g. "FDL 10/2025 Art.16" */
+      "A": [<string>...],            /* Primary law cites — e.g. "Federal Decree-Law No. 10 of 2025 Art.16" */
       "B": [<string>...],            /* Executive Regulation cites — e.g. "Cabinet Decision 134/2025 Art.11" */
       "C": [<string>...],            /* FIU operational guidance cites */
       "D": [<string>...]             /* International standards — e.g. "FATF R.10" */

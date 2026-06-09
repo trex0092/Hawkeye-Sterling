@@ -50,7 +50,7 @@ export interface VendorAIAssessment {
 
 const UAE_REGULATORY_BASIS = [
   "CBUAE AI Governance Guidelines 2025",
-  "UAE FDL 10/2025 Art.18 (Third-party AI oversight)",
+  "UAE Federal Decree-Law No. 10 of 2025 Art.18 (Third-party AI oversight)",
   "ADGM Data Protection Regulations 2021",
   "DIFC Data Protection Law 2020",
   "FATF R.18 (Third-party reliance controls)",
@@ -120,7 +120,7 @@ function buildAnthropicSeed(tenant: string): VendorAIAssessment {
     // Hawkeye Sterling implements hallucination detection and confidence logging at
     // the integration layer via hallucination-gate.ts — every LLM response is
     // checked for contradictions, unsupported citations, and fabricated entities,
-    // with events written to the tamper-evident audit chain (FDL 10/2025 Art.18).
+    // with events written to the tamper-evident audit chain (Federal Decree-Law No. 10 of 2025 Art.18).
     hallucIndicationLogEnabled: true,
     incidentNotificationSla: true,
     // Anthropic's enterprise API agreement includes independent testing and evaluation
@@ -149,7 +149,7 @@ function buildAnthropicSeed(tenant: string): VendorAIAssessment {
     overallFindings:
       "Anthropic provides comprehensive data protection (DPA, SOC 2 Type II, ISO 27001) and publishes Constitutional AI bias evaluations and Responsible Scaling Policy audits. " +
       "Hawkeye Sterling augments vendor controls with: (1) FATF R.10 name-origin bias monitoring with automated escalation alerts, " +
-      "(2) hallucination detection and confidence logging at every LLM call boundary written to the tamper-evident audit chain (FDL 10/2025 Art.18), " +
+      "(2) hallucination detection and confidence logging at every LLM call boundary written to the tamper-evident audit chain (Federal Decree-Law No. 10 of 2025 Art.18), " +
       "(3) regulator read-only JWT access enabling CBUAE examiners to independently audit all AI decisions without vendor involvement. " +
       "All 12 checklist items satisfied. Next attestation: 90 days.",
     criticalGaps: gaps,

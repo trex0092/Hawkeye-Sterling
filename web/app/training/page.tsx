@@ -24,7 +24,7 @@ const DEFAULT_ROWS: TrainingRow[] = [
   {
     id: "t1",
     name: "Luisa Fernanda",
-    course: "FDL 10/2025 · AML/CFT refresher",
+    course: "Federal Decree-Law No. 10 of 2025 · AML/CFT refresher",
     provider: "CBUAE",
     completed: "2026-02-14",
     durationHrs: "8",
@@ -144,7 +144,7 @@ const PROG_STATUS_LABEL: Record<ProgrammeStatus, string> = {
 
 const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   // January
-  { session: 1, month: "January", dateWeek: "Wk 1 · Jan 5", subject: "AML/CFT Foundations Refresher", durationHrs: 2, audience: "All Staff", areas: "AML/CFT fundamentals; regulatory landscape", activities: "Online module + quiz", regulatoryBasis: "FDL 10/2025 Art. 16", status: "completed" },
+  { session: 1, month: "January", dateWeek: "Wk 1 · Jan 5", subject: "AML/CFT Foundations Refresher", durationHrs: 2, audience: "All Staff", areas: "AML/CFT fundamentals; regulatory landscape", activities: "Online module + quiz", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 16", status: "completed" },
   { session: 2, month: "January", dateWeek: "Wk 2 · Jan 12", subject: "Sanctions Screening Procedures", durationHrs: 3, audience: "Operations · Compliance", areas: "Sanctions compliance; list management", activities: "Workshop + scenario drill", regulatoryBasis: "CR 134/2025 Art.14", status: "completed" },
   { session: 3, month: "January", dateWeek: "Wk 3 · Jan 19", subject: "PEP Identification & EDD", durationHrs: 2, audience: "MLRO · Compliance", areas: "PEP risk; enhanced due diligence", activities: "Case-study review", regulatoryBasis: "FATF R.12", status: "completed" },
   // February
@@ -152,11 +152,11 @@ const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   { session: 5, month: "February", dateWeek: "Wk 2 · Feb 9", subject: "LBMA Responsible Gold Guidance v9", durationHrs: 4, audience: "All Staff", areas: "Gold sourcing compliance; conflict minerals", activities: "Online module (LBMA e-learning)", regulatoryBasis: "LBMA RGG v9", status: "completed" },
   { session: 6, month: "February", dateWeek: "Wk 3 · Feb 16", subject: "Transaction Monitoring Tuning", durationHrs: 2, audience: "Operations · IT", areas: "TM rules calibration; false-positive reduction", activities: "System walkthrough + workshop", regulatoryBasis: "FATF R.10", status: "completed" },
   // March
-  { session: 7, month: "March", dateWeek: "Wk 1 · Mar 2", subject: "CDD & EDD Procedures", durationHrs: 3, audience: "All Staff", areas: "Customer due diligence; ongoing monitoring", activities: "Online module + quiz", regulatoryBasis: "FDL 10/2025 Art. 7", status: "completed" },
+  { session: 7, month: "March", dateWeek: "Wk 1 · Mar 2", subject: "CDD & EDD Procedures", durationHrs: 3, audience: "All Staff", areas: "Customer due diligence; ongoing monitoring", activities: "Online module + quiz", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 7", status: "completed" },
   { session: 8, month: "March", dateWeek: "Wk 2 · Mar 9", subject: "UBO Identification & Verification", durationHrs: 2, audience: "Operations · Compliance", areas: "Beneficial ownership; corporate structures", activities: "Case studies + Q&A", regulatoryBasis: "Cabinet Res. 58/2020", status: "completed" },
   { session: 9, month: "March", dateWeek: "Wk 3 · Mar 16", subject: "Annual Risk Assessment Workshop", durationHrs: 4, audience: "Senior Management · MLRO", areas: "EWRA/BWRA methodology; risk scoring", activities: "Facilitated workshop", regulatoryBasis: "FATF R.1", status: "completed" },
   // April
-  { session: 10, month: "April", dateWeek: "Wk 1 · Apr 6", subject: "Tipping-Off & Confidentiality Obligations", durationHrs: 2, audience: "All Staff", areas: "Legal prohibitions; internal escalation", activities: "Online module + quiz", regulatoryBasis: "FDL 10/2025 Art. 29", status: "completed" },
+  { session: 10, month: "April", dateWeek: "Wk 1 · Apr 6", subject: "Tipping-Off & Confidentiality Obligations", durationHrs: 2, audience: "All Staff", areas: "Legal prohibitions; internal escalation", activities: "Online module + quiz", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 29", status: "completed" },
   { session: 11, month: "April", dateWeek: "Wk 2 · Apr 13", subject: "SAR Quality Assurance (Four-Eyes)", durationHrs: 3, audience: "MLRO · Compliance", areas: "SAR drafting; four-eyes review standard", activities: "Live peer-review exercise", regulatoryBasis: "CBUAE Notice 2021/8", status: "completed" },
   { session: 12, month: "April", dateWeek: "Wk 3 · Apr 20", subject: "Correspondent Banking Risk", durationHrs: 2, audience: "Senior Management · MLRO", areas: "CB due diligence; respondent risk scoring", activities: "Case studies", regulatoryBasis: "FATF R.13", status: "in-progress" },
   // May
@@ -165,15 +165,15 @@ const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   { session: 15, month: "May", dateWeek: "Wk 3 · May 18", subject: "Virtual Asset & VASP Risk", durationHrs: 3, audience: "MLRO · Senior Management", areas: "VA typologies; VASP customer due diligence", activities: "Webinar (CBUAE series)", regulatoryBasis: "CBUAE VASP Regs 2023", status: "planned" },
   // June
   { session: 16, month: "June", dateWeek: "Wk 1 · Jun 1", subject: "H1 Programme Review & KPI Debrief", durationHrs: 2, audience: "MLRO · Senior Management", areas: "Training KPIs; gap analysis; H2 planning", activities: "Review meeting", regulatoryBasis: "Internal Charter", status: "planned" },
-  { session: 17, month: "June", dateWeek: "Wk 2 · Jun 8", subject: "Proliferation Financing Awareness", durationHrs: 3, audience: "All Staff", areas: "PF red flags; UN/EU/US PF lists", activities: "Online module + quiz", regulatoryBasis: "FDL 10/2025 Art. 2", status: "planned" },
+  { session: 17, month: "June", dateWeek: "Wk 2 · Jun 8", subject: "Proliferation Financing Awareness", durationHrs: 3, audience: "All Staff", areas: "PF red flags; UN/EU/US PF lists", activities: "Online module + quiz", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 2", status: "planned" },
   { session: 18, month: "June", dateWeek: "Wk 3 · Jun 15", subject: "Typology Clinic: Structuring & Layering", durationHrs: 2, audience: "Operations · Compliance", areas: "Transaction structuring; layering techniques", activities: "Case-study clinic", regulatoryBasis: "FATF Typologies 2024", status: "planned" },
   // July
-  { session: 19, month: "July", dateWeek: "Wk 1 · Jul 6", subject: "Art. 19 Adverse Media Lookback Audit", durationHrs: 4, audience: "MLRO · Compliance", areas: "10-year FDL Art. 19 lookback; audit trail", activities: "Audit exercise", regulatoryBasis: "FDL 10/2025 Art. 19", status: "planned" },
+  { session: 19, month: "July", dateWeek: "Wk 1 · Jul 6", subject: "Art. 19 Adverse Media Lookback Audit", durationHrs: 4, audience: "MLRO · Compliance", areas: "10-year FDL Art. 19 lookback; audit trail", activities: "Audit exercise", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 19", status: "planned" },
   { session: 20, month: "July", dateWeek: "Wk 2 · Jul 13", subject: "Correspondent Banking DD — Update", durationHrs: 3, audience: "Operations · MLRO", areas: "Respondent due diligence; updated questionnaire", activities: "Workshop", regulatoryBasis: "FATF R.13", status: "planned" },
   { session: 21, month: "July", dateWeek: "Wk 3 · Jul 21", subject: "Cyber-Enabled Financial Crime", durationHrs: 2, audience: "IT · Operations", areas: "Cyber-enabled fraud; BEC; account takeover", activities: "Webinar", regulatoryBasis: "CBUAE Cyber Regs 2023", status: "planned" },
   // August
-  { session: 22, month: "August", dateWeek: "Wk 1 · Aug 3", subject: "Periodic CDD Review Procedures", durationHrs: 3, audience: "Operations · Compliance", areas: "Re-KYC triggers; risk-based review cycle", activities: "Practical drill", regulatoryBasis: "FDL 10/2025 Art. 7", status: "planned" },
-  { session: 23, month: "August", dateWeek: "Wk 2 · Aug 10", subject: "Whistleblower & Speak-Up Policy", durationHrs: 2, audience: "All Staff", areas: "Protected disclosure; internal reporting channels", activities: "Online module", regulatoryBasis: "FDL 10/2025 Art. 29", status: "planned" },
+  { session: 22, month: "August", dateWeek: "Wk 1 · Aug 3", subject: "Periodic CDD Review Procedures", durationHrs: 3, audience: "Operations · Compliance", areas: "Re-KYC triggers; risk-based review cycle", activities: "Practical drill", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 7", status: "planned" },
+  { session: 23, month: "August", dateWeek: "Wk 2 · Aug 10", subject: "Whistleblower & Speak-Up Policy", durationHrs: 2, audience: "All Staff", areas: "Protected disclosure; internal reporting channels", activities: "Online module", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 29", status: "planned" },
   { session: 24, month: "August", dateWeek: "Wk 3 · Aug 17", subject: "MLRO Desk Simulation", durationHrs: 4, audience: "MLRO", areas: "End-to-end case management; STR decision gate", activities: "Full simulation exercise", regulatoryBasis: "CBUAE MLRO Guidance 2022", status: "planned" },
   // September
   { session: 25, month: "September", dateWeek: "Wk 1 · Sep 7", subject: "Mid-Year Regulatory Update", durationHrs: 3, audience: "All Staff", areas: "New regulations; enforcement actions; FATF news", activities: "Webinar (external speaker)", regulatoryBasis: "Multiple — CBUAE/FATF", status: "planned" },
@@ -181,15 +181,15 @@ const ANNUAL_PROGRAMME: ProgrammeSession[] = [
   { session: 27, month: "September", dateWeek: "Wk 3 · Sep 21", subject: "ESG & Greenwashing Financial Crime", durationHrs: 2, audience: "Senior Management · MLRO", areas: "Environmental financial crime; green bond risk", activities: "Webinar", regulatoryBasis: "FATF Green Finance 2024", status: "planned" },
   // October
   { session: 28, month: "October", dateWeek: "Wk 1 · Oct 5", subject: "FATF Mutual Evaluation Readiness", durationHrs: 4, audience: "MLRO · Senior Management", areas: "MER preparation; effectiveness criteria", activities: "Workshop (external consultant)", regulatoryBasis: "FATF R.33–34", status: "planned" },
-  { session: 29, month: "October", dateWeek: "Wk 2 · Oct 12", subject: "Third-Party & Supplier Due Diligence", durationHrs: 3, audience: "Operations · Procurement", areas: "Third-party risk; outsourcing controls", activities: "Online module + scenario", regulatoryBasis: "FDL 10/2025 Art. 12", status: "planned" },
+  { session: 29, month: "October", dateWeek: "Wk 2 · Oct 12", subject: "Third-Party & Supplier Due Diligence", durationHrs: 3, audience: "Operations · Procurement", areas: "Third-party risk; outsourcing controls", activities: "Online module + scenario", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 12", status: "planned" },
   { session: 30, month: "October", dateWeek: "Wk 3 · Oct 19", subject: "AI & Deepfake-Enabled Fraud", durationHrs: 2, audience: "All Staff", areas: "AI-enabled financial crime; synthetic identity", activities: "Webinar", regulatoryBasis: "FATF Emerging Risks 2025", status: "planned" },
   // November
   { session: 31, month: "November", dateWeek: "Wk 1 · Nov 2", subject: "goAML Advanced STR/SAR Drafting", durationHrs: 3, audience: "MLRO · Compliance", areas: "Complex case narration; supporting documentation", activities: "Practical drill", regulatoryBasis: "UNODC goAML Guide v4", status: "planned" },
-  { session: 32, month: "November", dateWeek: "Wk 2 · Nov 9", subject: "Record-Keeping & Data Quality", durationHrs: 2, audience: "Operations · IT", areas: "Retention obligations; data completeness", activities: "Online module", regulatoryBasis: "FDL 10/2025 Art. 22", status: "planned" },
+  { session: 32, month: "November", dateWeek: "Wk 2 · Nov 9", subject: "Record-Keeping & Data Quality", durationHrs: 2, audience: "Operations · IT", areas: "Retention obligations; data completeness", activities: "Online module", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 22", status: "planned" },
   { session: 33, month: "November", dateWeek: "Wk 3 · Nov 16", subject: "Year-End Compliance Review", durationHrs: 4, audience: "All Staff", areas: "Annual programme review; gap analysis; lessons learned", activities: "Review session + group discussion", regulatoryBasis: "Internal Charter", status: "planned" },
   // December
   { session: 34, month: "December", dateWeek: "Wk 1 · Dec 7", subject: "2027 Programme Planning", durationHrs: 3, audience: "MLRO · Senior Management", areas: "Regulatory horizon; programme design; resourcing", activities: "Workshop", regulatoryBasis: "CBUAE AML Strategy 2026", status: "planned" },
-  { session: 35, month: "December", dateWeek: "Wk 2 · Dec 14", subject: "Annual Assessments & Certifications", durationHrs: 4, audience: "All Staff", areas: "Knowledge assessment; certification renewal", activities: "Online assessment (proctored)", regulatoryBasis: "FDL 10/2025 Art. 16", status: "planned" },
+  { session: 35, month: "December", dateWeek: "Wk 2 · Dec 14", subject: "Annual Assessments & Certifications", durationHrs: 4, audience: "All Staff", areas: "Knowledge assessment; certification renewal", activities: "Online assessment (proctored)", regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art. 16", status: "planned" },
   { session: 36, month: "December", dateWeek: "Wk 3 · Dec 21", subject: "MLRO Annual Report Preparation", durationHrs: 3, audience: "MLRO · Senior Management", areas: "Regulatory reporting; metrics compilation", activities: "Workshop", regulatoryBasis: "CBUAE Notice 2021/4", status: "planned" },
 ];
 
@@ -311,7 +311,7 @@ export default function TrainingPage() {
           intro={
             <>
               <strong>Who took what, when it expires.</strong> Auditor-demanded
-              artefact under FDL 10/2025 Art. 16 — every AML/CFT team member
+              artefact under Federal Decree-Law No. 10 of 2025 Art. 16 — every AML/CFT team member
               must have current training on the relevant frameworks. Log tracks
               individual completion; Annual Programme tracks the 2026 scheduled
               sessions.
@@ -539,7 +539,7 @@ export default function TrainingPage() {
             </div>
 
             <div className="mt-3 text-10 text-ink-3 font-mono">
-              Programme reflects FDL 10/2025 Art. 16 annual training obligation. Status as at 24 Apr 2026.
+              Programme reflects Federal Decree-Law No. 10 of 2025 Art. 16 annual training obligation. Status as at 24 Apr 2026.
             </div>
           </>
         )}

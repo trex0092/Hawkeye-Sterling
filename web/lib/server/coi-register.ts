@@ -1,4 +1,4 @@
-// Conflicts of Interest (COI) Register — FATF R.35 · CBUAE Governance Guidelines · FDL 10/2025 Art.19
+// Conflicts of Interest (COI) Register — FATF R.35 · CBUAE Governance Guidelines · Federal Decree-Law No. 10 of 2025 Art.19
 //
 // Tracks staff declarations of conflicts of interest, MLRO review decisions,
 // and annual review cycles.

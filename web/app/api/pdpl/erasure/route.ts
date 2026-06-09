@@ -2,7 +2,7 @@
 // POST /api/pdpl/erasure — Submit an erasure request
 // GET  /api/pdpl/erasure?requestId=<id> — Check erasure request status
 //
-// Note: AML records subject to FDL 10/2025 Art.20 10-year retention CANNOT
+// Note: AML records subject to Federal Decree-Law No. 10 of 2025 Art.20 10-year retention CANNOT
 // be erased. Erasure is limited to non-AML PII fields within discretionary
 // data stores.
 //
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     grounds,
     status: 'pending',
     amlExemptionApplied: true,
-    amlExemptionBasis: 'FDL 10/2025 Art.20 — AML records are exempt from erasure for 10-year mandatory retention period. Non-AML discretionary data will be reviewed for erasure.',
+    amlExemptionBasis: 'Federal Decree-Law No. 10 of 2025 Art.20 — AML records are exempt from erasure for 10-year mandatory retention period. Non-AML discretionary data will be reviewed for erasure.',
   };
 
   const tenantId = tenantIdFromGate(gate);
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     requestId,
     request,
-    notice: 'Erasure request logged. AML records are subject to 10-year mandatory retention (FDL 10/2025 Art.20) and cannot be erased. Non-AML discretionary PII will be reviewed within 30 days per PDPL Art.17.',
+    notice: 'Erasure request logged. AML records are subject to 10-year mandatory retention (Federal Decree-Law No. 10 of 2025 Art.20) and cannot be erased. Non-AML discretionary PII will be reviewed within 30 days per PDPL Art.17.',
   }, { status: 202, headers: gate.headers });
 }
 
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
 
 // PATCH /api/pdpl/erasure — Admin: approve/reject and execute erasure of
 // non-AML discretionary data. AML records (cases, SAR, audit-trail, ongoing
-// subjects, str-cases) are exempt from erasure per FDL 10/2025 Art.20.
+// subjects, str-cases) are exempt from erasure per Federal Decree-Law No. 10 of 2025 Art.20.
 export async function PATCH(req: NextRequest) {
   const deny = adminAuth(req);
   if (deny) return deny;
@@ -161,7 +161,7 @@ export async function PATCH(req: NextRequest) {
   const erasedKeys: string[] = [];
   if (decision === 'approved') {
     // Erase non-AML discretionary PII for this subject.
-    // AML-exempt prefixes (FDL 10/2025 Art.20 10-year retention):
+    // AML-exempt prefixes (Federal Decree-Law No. 10 of 2025 Art.20 10-year retention):
     //   ongoing/subject/, cases/, str-cases/, sar/, audit-trail/, pkyc/subject/
     const discretionaryPrefixes = [
       `pdpl/consent/${erasureTenantId}/${request.subjectId}`,
@@ -211,7 +211,7 @@ export async function PATCH(req: NextRequest) {
     request: updated,
     erasedKeys: decision === 'approved' ? erasedKeys : [],
     notice: decision === 'approved'
-      ? `Discretionary non-AML PII erased (${erasedKeys.length} record(s)). AML records retained per FDL 10/2025 Art.20.`
+      ? `Discretionary non-AML PII erased (${erasedKeys.length} record(s)). AML records retained per Federal Decree-Law No. 10 of 2025 Art.20.`
       : 'Erasure request rejected. No data was deleted.',
   });
 }

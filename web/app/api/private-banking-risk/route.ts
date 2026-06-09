@@ -121,7 +121,7 @@ function computePrivateBankingScore(body: RequestBody): ScoringDetail {
 
   // (c) Private trust structure: +20
   // Opacity of beneficial ownership through discretionary trusts, purpose trusts,
-  // and similar arrangements — FATF R.25 and UAE FDL 10/2025 Art.7.
+  // and similar arrangements — FATF R.25 and UAE Federal Decree-Law No. 10 of 2025 Art.7.
   if (body.hasPrivateTrustStructure === true) {
     score += 20;
     flags.push("private_trust_structure:+20 (FATF R.25 — trust opacity inhibits beneficial ownership identification)");
@@ -334,7 +334,7 @@ function buildRecommendation(
 ): string {
   switch (category) {
     case "do_not_accept":
-      return `Decline client relationship. Risk score ${score}/100 (${riskLevel}). The combination of sanctioned/blacklisted jurisdiction nexus and PEP exposure makes this relationship non-compliant with FATF requirements and UAE AML obligations under FDL 10/2025. File a rejection memo and consider whether a STR/SAR is required.`;
+      return `Decline client relationship. Risk score ${score}/100 (${riskLevel}). The combination of sanctioned/blacklisted jurisdiction nexus and PEP exposure makes this relationship non-compliant with FATF requirements and UAE AML obligations under Federal Decree-Law No. 10 of 2025. File a rejection memo and consider whether a STR/SAR is required.`;
     case "senior_approval_required":
       return `Conditional acceptance subject to senior management written approval. Risk score ${score}/100 (${riskLevel}). Complete all EDD requirements before account opening. Ongoing monitoring must be enhanced with quarterly transaction review and annual senior sign-off.`;
     case "edd_mandatory":
@@ -415,7 +415,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     recommendation,
     regulatoryBasis: [
       "FATF Guidance on Private Banking",
-      "UAE FDL 10/2025 Art.7",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.7",
       "CBUAE Private Banking AML Standard",
     ],
   };

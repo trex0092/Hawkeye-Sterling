@@ -69,7 +69,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 700,
-    system: `You are an AML network intelligence analyst specialising in cross-case pattern recognition for UAE DPMS (gold traders) under FDL 10/2025.
+    system: `You are an AML network intelligence analyst specialising in cross-case pattern recognition for UAE DPMS (gold traders) under Federal Decree-Law No. 10 of 2025.
 
 Analyse the provided case digest array and identify:
 1. Shared counterparties across multiple cases (possible money mule networks)

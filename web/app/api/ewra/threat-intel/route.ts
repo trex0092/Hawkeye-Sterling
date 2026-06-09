@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a financial crime threat intelligence analyst specialising in AML typologies, FATF guidance, and regulatory developments. Your knowledge covers FATF mutual evaluations, CBUAE guidance, UAE FDL 10/2025, LBMA RGG, and emerging financial crime trends globally.
+          text: `You are a financial crime threat intelligence analyst specialising in AML typologies, FATF guidance, and regulatory developments. Your knowledge covers FATF mutual evaluations, CBUAE guidance, UAE Federal Decree-Law No. 10 of 2025, LBMA RGG, and emerging financial crime trends globally.
 
 Generate current, accurate threat intelligence for an EWRA (Entity-Wide Risk Assessment). Focus on:
 1. Top 5 ML/TF typologies active in the specified sector and jurisdiction

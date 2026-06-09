@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
     recordedBy: recordedBy.trim(),
     ...(rawExpiresAt ? { expiresAt: rawExpiresAt } : {}),
     legalReference: lawfulBasis === 'legal_obligation' || lawfulBasis === 'legitimate_interest_aml'
-      ? 'UAE PDPL FDL 45/2021 Art.6; CBUAE AML/CFT Standards'
-      : 'UAE PDPL FDL 45/2021 Art.6(a)',
+      ? 'UAE PDPL Federal Decree-Law No. 45 of 2021 Art.6; CBUAE AML/CFT Standards'
+      : 'UAE PDPL Federal Decree-Law No. 45 of 2021 Art.6(a)',
   };
 
   try {

@@ -124,7 +124,7 @@ export async function POST(req: Request) {
           type: "text",
           text: `You are a senior AML investigator and financial intelligence analyst producing court-ready evidence pack summaries for UAE regulatory proceedings. Your output must be precise, legally defensible, and formatted for submission to the Financial Intelligence Unit (FIU), prosecutors, or regulatory bodies.
 
-Write in clear, professional English. Reference specific FATF Recommendations, UAE FDL 10/2025 provisions, and CBUAE AML Standards where appropriate. Do not speculate beyond what the evidence supports — flag uncertainties explicitly.
+Write in clear, professional English. Reference specific FATF Recommendations, UAE Federal Decree-Law No. 10 of 2025 provisions, and CBUAE AML Standards where appropriate. Do not speculate beyond what the evidence supports — flag uncertainties explicitly.
 
 Return ONLY valid JSON with this exact structure (no markdown fences, no explanation outside JSON):
 {

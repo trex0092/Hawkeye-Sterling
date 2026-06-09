@@ -98,7 +98,7 @@ function validateSecrets(): void {
   // AuditLedger persistence warning. The in-process AuditLedger is in-memory
   // only — entries are lost on Lambda cold-start. A persistent audit store
   // (Netlify Blobs 10-year or S3-equivalent) is required for FATF R.11 / UAE
-  // FDL 10/2025 Art.22 5-year retention. See HIGH-1 in SECURITY-NOTES.md.
+  // Federal Decree-Law No. 10 of 2025 Art.22 5-year retention. See HIGH-1 in SECURITY-NOTES.md.
   if (isProduction) {
     const hasAuditStorage =
       Boolean(process.env['AUDIT_BLOBS_STORE']) ||
@@ -129,7 +129,7 @@ function validateSecrets(): void {
     const gateDisabled = process.env['EGRESS_GATE_DISABLED'] === 'true';
     if (!gateDisabled && !process.env['ANTHROPIC_API_KEY']) {
       console.error(
-        '[startup] CRITICAL: Egress gate is ACTIVE (FDL 10/2025 Art.17 tipping-off checks) but ANTHROPIC_API_KEY is missing. ' +
+        '[startup] CRITICAL: Egress gate is ACTIVE (Federal Decree-Law No. 10 of 2025 Art.17 tipping-off checks) but ANTHROPIC_API_KEY is missing. ' +
         'Every SAR/STR will return held_review until the key is set or EGRESS_GATE_DISABLED=true is acknowledged.',
       );
     }

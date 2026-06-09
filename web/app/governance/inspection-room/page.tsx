@@ -133,7 +133,7 @@ function buildPanels(): Panel[] {
     {
       key: "training",
       title: "Training register",
-      description: "Annual AML/CFT training completion log — required by FDL 10/2025.",
+      description: "Annual AML/CFT training completion log — required by Federal Decree-Law No. 10 of 2025.",
       href: "/training",
       status: trainingCount >= 5 ? "ready" : trainingCount > 0 ? "partial" : "missing",
       detail: `${trainingCount} training records`,
@@ -213,7 +213,7 @@ function PanelActions({ panel, onChanged }: { panel: Panel; onChanged: () => voi
         aria-label={`Clear ${panel.title}`}
         title={
           panel.appendOnly
-            ? "Append-only — Layer-4 audit chain has 10-year retention by FDL 10/2025 Art.20"
+            ? "Append-only — Layer-4 audit chain has 10-year retention by Federal Decree-Law No. 10 of 2025 Art.20"
             : `Clear ${panel.title} from this browser (local data only)`
         }
         className={deleteCls}
@@ -247,7 +247,7 @@ export default function InspectionRoomPage() {
     const hh = String(now.getUTCHours()).padStart(2, "0");
     const mi = String(now.getUTCMinutes()).padStart(2, "0");
     const reportId = `HWK-INSP-${dd}-${mm}-${yyyy}-${hh}${mi}`;
-    const regs = "FDL 10/2025 · 10-year retention · Cabinet Res 134/2025 Art.18";
+    const regs = "Federal Decree-Law No. 10 of 2025 · 10-year retention · Cabinet Res 134/2025 Art.18";
     const label = "INSPECTION ROOM DOSSIER";
 
     const overall = overallStatus;
@@ -328,7 +328,7 @@ export default function InspectionRoomPage() {
       <ul class="hs-findings">
         <li>Generated at <strong>${now.toUTCString().replace(" GMT", " UTC")}</strong>.</li>
         <li>Report ID: <code>${reportId}</code>.</li>
-        <li>Retention: 10 years (UAE FDL 10/2025 Art.24).</li>
+        <li>Retention: 10 years (UAE Federal Decree-Law No. 10 of 2025 Art.24).</li>
         <li>Implementing regulation: Cabinet Resolution 134/2025 Art.18.</li>
         <li>FATF baseline: R.1 (EWRA), R.10 (CDD), R.18 (records), R.20 (STR), R.24-25 (UBO).</li>
       </ul>

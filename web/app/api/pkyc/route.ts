@@ -84,7 +84,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
 
   await saveSubject(subject, ctx.tenantId);
 
-  // FDL 10/2025 Art.24: pKYC enrollment triggers ongoing CDD monitoring — must be in the tamper-evident chain.
+  // Federal Decree-Law No. 10 of 2025 Art.24: pKYC enrollment triggers ongoing CDD monitoring — must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "pkyc.enrolled", subjectId: id, actor: ctx.tenantId },
     ctx.tenantId,

@@ -9,7 +9,7 @@
 // Input schema: GoAmlXmlInput (see below).
 // Output:       GoAmlXmlResult (JSON — XML string embedded as a field).
 //
-// Regulatory basis: UAE FDL 10/2025 Art.17 (48-hour STR obligation);
+// Regulatory basis: UAE Federal Decree-Law No. 10 of 2025 Art.17 (48-hour STR obligation);
 // UAE FIU goAML Technical Guide v3.1; goAML XML schema v4.0/5.x.
 
 import { NextResponse } from "next/server";
@@ -533,7 +533,7 @@ const SUBMISSION_CHECKLIST = [
   "Legal counsel has been notified if required (e.g. parallel law-enforcement referral).",
   "XML file has been downloaded and saved to the case file with date-stamp.",
   "Draft has been validated and no critical errors remain before portal submission.",
-  "Filing is within the 48-hour deadline mandated by UAE FDL 10/2025 Art.17.",
+  "Filing is within the 48-hour deadline mandated by UAE Federal Decree-Law No. 10 of 2025 Art.17.",
   "CBUAE registration number (filing_institution) has been verified against the goAML portal.",
   "decision_date reflects the date the MLRO formally decided to file the STR.",
   "action_code is set to 1 (Initial) or 2 (Supplementary) as appropriate.",
@@ -589,7 +589,7 @@ export async function POST(req: Request): Promise<Response> {
           "goAML XML generation blocked: the submission data does not meet minimum UAE FIU filing requirements. " +
           "Resolve all field errors before retrying.",
         fieldErrors: preflightErrors,
-        regulatoryBasis: "UAE FDL 10/2025 Art.17; UAE FIU goAML Technical Guide v3.1; FATF R.20",
+        regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.17; UAE FIU goAML Technical Guide v3.1; FATF R.20",
       },
       { status: 422, headers: gate.headers },
     );

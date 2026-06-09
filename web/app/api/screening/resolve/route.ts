@@ -25,7 +25,7 @@
 //   }
 //
 // Behavior:
-//   - Always writes a HMAC-signed audit-chain entry (FDL 10/2025 Art.19,
+//   - Always writes a HMAC-signed audit-chain entry (Federal Decree-Law No. 10 of 2025 Art.19,
 //     Art.24 — tamper-evident regulator evidence). J-06 + J-07 enrichment:
 //       · structured FP reason code (J-06)
 //       · canonical sanctions-entity snapshot at resolution time (J-07)
@@ -178,7 +178,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // J-06 / G-05 — on false-positive dispositions, validate the structured
   // reason code (and the free-text reason when reasonCode === "FP_06"). A
   // missing or malformed reasonCode is a 400 — every FP must carry an
-  // immutable, queryable justification per FDL 10/2025 Art.19.
+  // immutable, queryable justification per Federal Decree-Law No. 10 of 2025 Art.19.
   let validatedReasonCode: FpReasonCode | null = null;
   let validatedReason: string | null = typeof reason === "string" && reason.trim().length > 0 ? reason.trim() : null;
   if (resolution === "false") {
@@ -222,7 +222,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         typeof hitContext?.matchStrength === "number" ? `Match strength: ${hitContext.matchStrength}/100` : null,
         reason ? `MLRO note: ${reason}` : null,
         ``,
-        `Auto-added to ongoing monitoring per FATF R.10 / FDL 10/2025 Art.19.`,
+        `Auto-added to ongoing monitoring per FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.19.`,
         `Resolved: ${timestamp}`,
         `Audit ID: ${auditId}`,
       ].filter(Boolean).join("\n");
@@ -258,7 +258,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  // Persist immutable audit-trail event (FDL 10/2025 Art.19 — 10-year retention).
+  // Persist immutable audit-trail event (Federal Decree-Law No. 10 of 2025 Art.19 — 10-year retention).
   // Two writes happen in parallel:
   //   1. Plain Blobs at audit/hit-resolution/{auditId} — preserves the
   //      existing case-history reader contract (backward compatible).

@@ -1,7 +1,7 @@
 // Hawkeye-Sterling — ongoing monitoring configuration.
 //
 // Single source of truth for:
-//   1. Risk-based monitoring frequency schedules (per FATF R.10 / R.12 / FDL 10/2025)
+//   1. Risk-based monitoring frequency schedules (per FATF R.10 / R.12 / Federal Decree-Law No. 10 of 2025)
 //   2. Per-customer alert threshold configuration (stored in Netlify Blobs)
 //   3. Monitoring queue prioritisation logic
 //   4. Change-detection helpers (sanctions score jump, new adverse-media category, jurisdiction change)
@@ -50,12 +50,12 @@ export const MONITORING_FREQUENCIES: Record<CustomerRiskTier, MonitoringFrequenc
   intensive: {
     screenIntervalDays: 30,
     newsCheckIntervalDays: 1,
-    regulatoryBasis: "Intensive monitoring — very high risk customer, FDL 20/2018 Art.21",
+    regulatoryBasis: "Intensive monitoring — very high risk customer, Federal Decree-Law No. 20 of 2018 Art.21",
   },
   pep: {
     screenIntervalDays: 7,
     newsCheckIntervalDays: 1,
-    regulatoryBasis: "PEP mandatory monitoring — FATF R.12, FDL 20/2018 Art.18, UAE CBUAE guidance",
+    regulatoryBasis: "PEP mandatory monitoring — FATF R.12, Federal Decree-Law No. 20 of 2018 Art.18, UAE CBUAE guidance",
   },
   prohibited: {
     screenIntervalDays: 1,

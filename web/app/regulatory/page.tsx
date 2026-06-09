@@ -95,10 +95,10 @@ interface RegEntry {
 
 const LIBRARY: RegEntry[] = [
   {
-    code: "FDL 10/2025",
+    code: "Federal Decree-Law No. 10 of 2025",
     title: "Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF",
     authority: "UAE Federal",
-    citation: "FDL 10/2025",
+    citation: "Federal Decree-Law No. 10 of 2025",
     summary:
       "Primary UAE AML/CFT/CPF law. Key articles referenced by the brain: Art. 2(3) constructive-knowledge standard; Art. 17 EDD for PEPs; Art. 19 UBO identification; Art. 24 ten-year retention; Art. 26-27 STR timing; Art. 29 tipping-off prohibition.",
     tags: ["UAE", "primary", "AML", "CFT"],
@@ -109,7 +109,7 @@ const LIBRARY: RegEntry[] = [
     authority: "UAE Cabinet",
     citation: "CR 134/2025",
     summary:
-      "Executive Regulations giving effect to FDL 10/2025. Article 18 covers the goAML submission process and reporting-entity obligations.",
+      "Executive Regulations giving effect to Federal Decree-Law No. 10 of 2025. Article 18 covers the goAML submission process and reporting-entity obligations.",
     tags: ["UAE", "regulation", "goAML"],
   },
   {
@@ -311,7 +311,7 @@ const LIBRARY: RegEntry[] = [
     tags: ["UAE", "terrorism", "TFS", "primary"],
   },
   {
-    code: "FDL 45/2021",
+    code: "Federal Decree-Law No. 45 of 2021",
     title: "Federal Decree-Law No. 45 of 2021 — Personal Data Protection",
     authority: "UAE Federal",
     citation: "Federal Decree-Law 45/2021",

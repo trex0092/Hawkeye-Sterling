@@ -378,7 +378,7 @@ export function AnalyticsSection() {
     const hh = String(ts.getUTCHours()).padStart(2, "0");
     const mi = String(ts.getUTCMinutes()).padStart(2, "0");
     const reportId = `HWK-DIGEST-${dd}-${mm}-${yyyy}-${hh}${mi}`;
-    const regs = "FDL 10/2025 Art.26-27 · Cabinet Res 134/2025 Art.18 · MoE Circular 3/2025 · Ten-year retention";
+    const regs = "Federal Decree-Law No. 10 of 2025 Art.26-27 · Cabinet Res 134/2025 Art.18 · MoE Circular 3/2025 · Ten-year retention";
     const label = "MLRO PERFORMANCE DIGEST";
 
     const fp = data?.quality.falsePositiveRate ?? 0;
@@ -477,7 +477,7 @@ export function AnalyticsSection() {
           { k: "Report ID", v: reportId },
           { k: "Generated", v: ts.toUTCString().replace(" GMT", " UTC") },
           { k: "Brain version", v: "wave-5" },
-          { k: "Retention", v: "10 years (FDL 10/2025 Art.24)" },
+          { k: "Retention", v: "10 years (Federal Decree-Law No. 10 of 2025 Art.24)" },
         ])}
         ${hsFinis(reportId, 3, 3)}
       `,
@@ -900,7 +900,7 @@ export function AnalyticsSection() {
         )}
 
         <div className="mt-10 pt-4 border-t border-hair text-10.5 text-ink-3 font-mono print:mt-6">
-          Hawkeye Sterling · FDL 10/2025 Art.26-27 · Cabinet Res 134/2025 ·
+          Hawkeye Sterling · Federal Decree-Law No. 10 of 2025 Art.26-27 · Cabinet Res 134/2025 ·
           MoE Circular 3/2025 · Ten-year retention
         </div>
 

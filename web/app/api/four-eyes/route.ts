@@ -81,7 +81,7 @@ async function generateApprovalSummary(
   const msg = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 700,
-    system: [{ type: "text" as const, text: 'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'FDL 10/2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.', cache_control: { type: "ephemeral" as const } }],
+    system: [{ type: "text" as const, text: 'You are an AML four-eyes approval assessor. Return ONLY this JSON: { "aiSummary": "string", "aiRegulatoryAnchor": "string", "aiRiskLevel": "critical|high|medium|low" }. aiSummary = 1 sentence: what this action means for the subject and why a second approver should care. aiRegulatoryAnchor = the specific UAE/FATF regulation that requires this action (e.g. \'Federal Decree-Law No. 10 of 2025 Art.22 — STR filing obligation\'). aiRiskLevel = the risk level of the action.', cache_control: { type: "ephemeral" as const } }],
     messages: [{ role: "user", content: userContent }],
   });
 
@@ -195,7 +195,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
   }
 
   // Duplicate-actor check: prevent the same person from submitting multiple
-  // entries for the same subject (UAE FDL 10/2025 Art.16 — two DISTINCT
+  // entries for the same subject (UAE Federal Decree-Law No. 10 of 2025 Art.16 — two DISTINCT
   // actors required). This is a pre-write guard; PATCH /four-eyes?id also
   // enforces initiatedBy ≠ approvedBy at approval time.
   const existingKeys = await listKeys("four-eyes/").catch(() => [] as string[]);
@@ -211,7 +211,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
       {
         ok: false,
         error: "duplicate_approver",
-        message: `${initiatedBy} has already submitted a pending four-eyes entry for this subject. Two distinct actors are required. UAE FDL 10/2025 Art.16.`,
+        message: `${initiatedBy} has already submitted a pending four-eyes entry for this subject. Two distinct actors are required. UAE Federal Decree-Law No. 10 of 2025 Art.16.`,
       },
       { status: 409 },
     );
@@ -313,7 +313,7 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
   if (decision === "reject" && item.rejectionReason) lines.push(`Rejection reason: ${item.rejectionReason}`);
   if (item.contextUrl) lines.push(`Context URL     : ${item.contextUrl}`);
   lines.push(``);
-  lines.push(`Legal basis     : FATF R.28 · FDL 10/2025 Art.22 · four-eyes principle`);
+  lines.push(`Legal basis     : FATF R.28 · Federal Decree-Law No. 10 of 2025 Art.22 · four-eyes principle`);
 
   try {
     const res = await fetch("https://app.asana.com/api/1.0/tasks", {
@@ -361,7 +361,7 @@ async function reportToAsana(item: FourEyesItem, decision: "approve" | "reject",
 
 async function handlePatch(req: Request, ctx: RequestContext): Promise<NextResponse> {
   // Four-eyes approval/rejection requires MLRO or CO portal session.
-  // External API key callers cannot approve regulator-facing decisions (FDL 10/2025 Art.16).
+  // External API key callers cannot approve regulator-facing decisions (Federal Decree-Law No. 10 of 2025 Art.16).
   const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
   if (roleBlock) return roleBlock;
 

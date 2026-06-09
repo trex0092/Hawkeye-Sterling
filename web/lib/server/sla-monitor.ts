@@ -144,7 +144,7 @@ export function formatSlaAlert<C extends SlaCaseShape>(
 
   if (breached.length > 0) {
     lines.push("BREACHED — IMMEDIATE ACTION REQUIRED");
-    lines.push("Case SLAs have already lapsed. UAE FDL 10/2025 Art.21 STR timelines may be at risk.");
+    lines.push("Case SLAs have already lapsed. UAE Federal Decree-Law No. 10 of 2025 Art.21 STR timelines may be at risk.");
     lines.push("");
     for (const b of breached.slice(0, sampleSize)) {
       const oh = b.hoursOverdue;

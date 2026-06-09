@@ -4,7 +4,7 @@
 // journal snapshot and the configured retention window.
 //
 // The scheduled function (netlify/functions/retention-scheduler.mts)
-// enforces FDL 10/2025 Art.20 ten-year retention + PDPL Art.13
+// enforces Federal Decree-Law No. 10 of 2025 Art.20 ten-year retention + PDPL Art.13
 // data-minimisation daily at 23:15 UTC. This GET endpoint lets operators
 // check retention health without waiting for the scheduled run.
 
@@ -82,7 +82,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         retentionDays,
         total: records.length,
         eligibleForPurge: eligibleForPurge.length,
-        note: "Purge runs daily at 23:15 UTC via retention-scheduler scheduled function (FDL 10/2025 Art.20)",
+        note: "Purge runs daily at 23:15 UTC via retention-scheduler scheduled function (Federal Decree-Law No. 10 of 2025 Art.20)",
       },
       { headers: gate.headers },
     );

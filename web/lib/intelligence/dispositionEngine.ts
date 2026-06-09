@@ -280,7 +280,7 @@ export function disposition(input: DispositionInputs): DispositionResult {
       requiredEvidence.push(
         "Direct identifier verification (passport / DOB / nationality) against the matched sanctions record",
       );
-      requiredEvidence.push("MLRO sign-off; consider freeze under FDL 10/2025 Art.26-27");
+      requiredEvidence.push("MLRO sign-off; consider freeze under Federal Decree-Law No. 10 of 2025 Art.26-27");
     } else {
       escalate(
         "high",
@@ -342,14 +342,14 @@ export function disposition(input: DispositionInputs): DispositionResult {
     );
   }
 
-  // 5. PEP — any tier triggers EDD per FATF R.12 / FDL 10/2025 Art.17.
+  // 5. PEP — any tier triggers EDD per FATF R.12 / Federal Decree-Law No. 10 of 2025 Art.17.
   if (input.pepTier) {
     const tier = input.pepTier.replace(/^tier_/, "tier ").replace(/_/g, " ");
     redFlags.push(`PEP — ${tier}`);
     const salText = typeof input.pepSalience === "number" ? ` (salience ${(input.pepSalience * 100).toFixed(0)}%)` : "";
     escalate("high", `PEP classified as ${tier}${salText} — FATF R.12 mandates EDD`);
     requiredEvidence.push("Source-of-wealth (SoW) and source-of-funds (SoF) documentation");
-    requiredEvidence.push("Senior-management approval per FDL 10/2025 Art.17");
+    requiredEvidence.push("Senior-management approval per Federal Decree-Law No. 10 of 2025 Art.17");
   }
 
   // 6. CAHRA jurisdiction — at minimum medium pressure; combined with high-
@@ -436,7 +436,7 @@ export function disposition(input: DispositionInputs): DispositionResult {
 
   // Always include the standing FATF/FDL legal basis line.
   rationale.push(
-    "Legal basis applied: FATF R.10/R.12/R.20 · FDL 10/2025 Art.17/Art.20/Art.26-27 · Cabinet Resolution 134/2025 Art.18.",
+    "Legal basis applied: FATF R.10/R.12/R.20 · Federal Decree-Law No. 10 of 2025 Art.17/Art.20/Art.26-27 · Cabinet Resolution 134/2025 Art.18.",
   );
 
   // ── Geographic risk ────────────────────────────────────────────────────
@@ -761,67 +761,67 @@ function derivePredicateOffences(amCategories: string[]): PredicateOffence[] {
       id: "TF",
       label: "Terrorism financing",
       fatfReference: "FATF R.5 / R.6",
-      uaeBasis: "FDL 7/2014 (anti-terrorism) · FDL 10/2025 Art.30",
+      uaeBasis: "FDL 7/2014 (anti-terrorism) · Federal Decree-Law No. 10 of 2025 Art.30",
     },
     proliferation_financing: {
       id: "PF",
       label: "Proliferation financing of WMD",
       fatfReference: "FATF R.7 / UNSCR 1540 / UNSCR 1718 / UNSCR 2231",
-      uaeBasis: "FDL 10/2025 Art.31 · Cabinet Resolution 156/2025",
+      uaeBasis: "Federal Decree-Law No. 10 of 2025 Art.31 · Cabinet Resolution 156/2025",
     },
     sanctions_violations: {
       id: "SANC",
       label: "Sanctions violation",
       fatfReference: "FATF R.6 / R.7",
-      uaeBasis: "FDL 10/2025 Art.31 · MoE Circular 3/2025",
+      uaeBasis: "Federal Decree-Law No. 10 of 2025 Art.31 · MoE Circular 3/2025",
     },
     corruption_organised_crime: {
       id: "CORR",
       label: "Corruption / bribery / organised crime",
       fatfReference: "FATF R.20 (predicate offence)",
-      uaeBasis: "Federal Decree-Law 31/2021 Art.234 (bribery) · FDL 10/2025 Art.20",
+      uaeBasis: "Federal Decree-Law 31/2021 Art.234 (bribery) · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     drug_trafficking: {
       id: "DRUG",
       label: "Drug trafficking",
       fatfReference: "FATF R.20 (Vienna 1988 Convention)",
-      uaeBasis: "Federal Law 14/1995 (Counter-Narcotics) · FDL 10/2025 Art.20",
+      uaeBasis: "Federal Law 14/1995 (Counter-Narcotics) · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     human_trafficking_modern_slavery: {
       id: "HT",
       label: "Human trafficking / modern slavery",
       fatfReference: "FATF R.20 (Palermo Protocol)",
-      uaeBasis: "FDL 51/2006 (HT) · FDL 10/2025 Art.20",
+      uaeBasis: "Federal Decree-Law No. 51 of 2006 (HT) · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     ml_financial_crime: {
       id: "ML",
       label: "Money laundering",
       fatfReference: "FATF R.3 / R.20",
-      uaeBasis: "FDL 10/2025 Art.2 / Art.20 / Art.26",
+      uaeBasis: "Federal Decree-Law No. 10 of 2025 Art.2 / Art.20 / Art.26",
     },
     cybercrime: {
       id: "CYBER",
       label: "Cybercrime",
       fatfReference: "FATF R.20 (Budapest Convention)",
-      uaeBasis: "FDL 5/2012 (Cybercrime) · FDL 10/2025 Art.20",
+      uaeBasis: "FDL 5/2012 (Cybercrime) · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     fraud_forgery: {
       id: "FRAUD",
       label: "Fraud / forgery",
       fatfReference: "FATF R.20",
-      uaeBasis: "Federal Decree-Law 31/2021 Art.451 · FDL 10/2025 Art.20",
+      uaeBasis: "Federal Decree-Law 31/2021 Art.451 · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     tax_crimes: {
       id: "TAX",
       label: "Tax crime",
       fatfReference: "FATF R.20 (post-2012 inclusion)",
-      uaeBasis: "Federal Decree-Law 28/2022 (Tax Procedures) · FDL 10/2025 Art.20",
+      uaeBasis: "Federal Decree-Law 28/2022 (Tax Procedures) · Federal Decree-Law No. 10 of 2025 Art.20",
     },
     environmental_crime: {
       id: "ENV",
       label: "Environmental crime",
       fatfReference: "FATF R.20 (FATF 2021 environmental crime report)",
-      uaeBasis: "FDL 10/2025 Art.20",
+      uaeBasis: "Federal Decree-Law No. 10 of 2025 Art.20",
     },
   };
   const out: PredicateOffence[] = [];
@@ -868,7 +868,7 @@ function buildInterviewScript(
       id: "pep_sow",
       question:
         "Please walk us through your principal sources of wealth, including any income from public service, family inheritance, or business ventures.",
-      rationale: "Source-of-wealth (SoW) is mandatory for any-tier PEP per FDL 10/2025 Art.17.",
+      rationale: "Source-of-wealth (SoW) is mandatory for any-tier PEP per Federal Decree-Law No. 10 of 2025 Art.17.",
     });
   }
   // Adverse media — corruption / OC
@@ -936,7 +936,7 @@ function buildInterviewScript(
       id: "ubo_map",
       question:
         "Please provide the beneficial ownership map down to natural persons holding ≥25% of voting rights or economic interest, with supporting register extracts.",
-      rationale: "FATF R.10/R.24 + FDL 10/2025 Art.18 — UBO mandate.",
+      rationale: "FATF R.10/R.24 + Federal Decree-Law No. 10 of 2025 Art.18 — UBO mandate.",
     });
   }
   return q;
@@ -958,7 +958,7 @@ function buildDocumentRequests(
 
   if (input.entityType === "organisation") {
     add({ id: "cert_inc", document: "Certificate of incorporation / commercial registration", why: "Verify legal existence and registered address." });
-    add({ id: "ubo_map", document: "UBO declaration with register extracts", why: "FATF R.24 / FDL 10/2025 Art.18." });
+    add({ id: "ubo_map", document: "UBO declaration with register extracts", why: "FATF R.24 / Federal Decree-Law No. 10 of 2025 Art.18." });
     add({ id: "ms_id", document: "ID + proof-of-address for each director / authorised signatory", why: "FATF R.10." });
     add({ id: "ownership_chart", document: "Group structure chart down to natural persons", why: "Identify hidden controlling interests." });
   } else {
@@ -967,12 +967,12 @@ function buildDocumentRequests(
   }
 
   if (band !== "clear" && band !== "low") {
-    add({ id: "sow", document: "Source-of-wealth (SoW) statement with corroborating documents", why: "EDD requirement under FATF R.10/R.12 / FDL 10/2025 Art.17." });
+    add({ id: "sow", document: "Source-of-wealth (SoW) statement with corroborating documents", why: "EDD requirement under FATF R.10/R.12 / Federal Decree-Law No. 10 of 2025 Art.17." });
     add({ id: "sof", document: "Source-of-funds (SoF) for the relationship", why: "EDD requirement." });
   }
 
   if (input.pepTier) {
-    add({ id: "pep_consent", document: "Senior management approval for the PEP relationship", why: "FATF R.12 / FDL 10/2025 Art.17 — must be on file." });
+    add({ id: "pep_consent", document: "Senior management approval for the PEP relationship", why: "FATF R.12 / Federal Decree-Law No. 10 of 2025 Art.17 — must be on file." });
     add({ id: "pep_sow_extra", document: "Detailed SoW including public-office salary records, declared assets, family wealth", why: "PEP SoW must be more rigorous than non-PEP." });
   }
 

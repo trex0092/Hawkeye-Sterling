@@ -376,7 +376,7 @@ const SKILLS_RAW: readonly string[] = [
   "Asset Recovery Coordination",
   "International FATF-Style Body Liaison",
   // UAE regulatory framework
-  "FDL 10/2025 Implementation",
+  "Federal Decree-Law No. 10 of 2025 Implementation",
   "UAE CBUAE Regulation Application",
   "ADGM/DIFC Financial Free Zone AML",
   "UAE Insurance Sector AML",

@@ -6,7 +6,7 @@
 // under the "str-cases" tenant namespace (separate from the general case vault).
 // Pattern analysis is available at POST /api/str-cases/pattern-detect.
 //
-// Regulatory basis: UAE FDL 10/2025 Art.17 (48-hour STR filing obligation).
+// Regulatory basis: UAE Federal Decree-Law No. 10 of 2025 Art.17 (48-hour STR filing obligation).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

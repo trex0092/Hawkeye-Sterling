@@ -663,7 +663,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   };
 
   // Sanctions list ingest is a high-impact compliance operation (UAE EOCN/LTL);
-  // must be on the tamper-evident chain per FDL 10/2025 Art.15.
+  // must be on the tamper-evident chain per Federal Decree-Law No. 10 of 2025 Art.15.
   void writeAuditChainEntry(
     {
       event: "sanctions.eocn_ingest",

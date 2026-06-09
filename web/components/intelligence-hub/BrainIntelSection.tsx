@@ -102,7 +102,7 @@ export function BrainIntelSection() {
           <>
             10 intelligence modules: XAI score decomposition, counterfactual explainability,
             temporal threat forecasting, emerging typology mining, and responsible-AI monitoring.
-            UAE FDL 10/2025 Art.18 compliant.{" "}
+            UAE Federal Decree-Law No. 10 of 2025 Art.18 compliant.{" "}
             <span className="inline-flex items-center px-1.5 py-px rounded text-10 font-semibold bg-violet-dim text-violet border border-violet/30 font-mono ml-1">Wave 14</span>
           </>
         }
@@ -150,7 +150,7 @@ export function BrainIntelSection() {
               </h2>
               <p className="text-13 text-ink-2 mb-4">
                 Linear additive attribution — how much each risk factor contributed to the
-                composite score. Enables regulator-grade explainability per FDL 10/2025 Art.18.
+                composite score. Enables regulator-grade explainability per Federal Decree-Law No. 10 of 2025 Art.18.
               </p>
               <BrainXAIPanel
                 score={82}
@@ -186,7 +186,7 @@ export function BrainIntelSection() {
               <div className="bg-bg-panel rounded-xl p-4 border border-hair-2">
                 <h3 className="text-13 font-semibold text-ink-1 mb-2">Compliance Anchor</h3>
                 <p className="text-13 text-ink-2">
-                  UAE FDL 10/2025 Art.18 requires that AI-assisted decisions be explainable to
+                  UAE Federal Decree-Law No. 10 of 2025 Art.18 requires that AI-assisted decisions be explainable to
                   regulators. SHAP decomposition provides mathematical proof that each score
                   component is traceable to specific evidence.
                 </p>
@@ -369,7 +369,7 @@ export function BrainIntelSection() {
             <p className="text-13 text-ink-2 mb-6">
               Live model drift, bias monitoring, false positive optimizer, and analyst cognitive
               load — all in one regulatory view. Aligned to UNESCO AI Ethics Principle 3 (Fairness)
-              and UAE FDL 10/2025 Art.18 (human oversight of AI).
+              and UAE Federal Decree-Law No. 10 of 2025 Art.18 (human oversight of AI).
             </p>
             {raiLoading ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -503,7 +503,7 @@ export function BrainIntelSection() {
                       Bias ratio must remain ≤1.5 across all name-script groups.
                     </div>
                     <div>
-                      <span className="text-ink-0 font-medium">UAE FDL 10/2025 Art.18</span> — AI
+                      <span className="text-ink-0 font-medium">UAE Federal Decree-Law No. 10 of 2025 Art.18</span> — AI
                       audit trail depth. All drift, bias, and XAI data persisted to audit chain.
                     </div>
                     <div>

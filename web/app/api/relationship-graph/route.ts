@@ -312,7 +312,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         nodesReturned: nodes.length,
         edgesReturned: edges.length,
         generatedAt: new Date().toISOString(),
-        regulatoryContext: "UAE FDL No.10/2025 Art.11 — UBO identification requirement",
+        regulatoryContext: "Federal Decree-Law No. 10 of 2025 Art.11 — UBO identification requirement",
       },
     },
     { headers: gate.headers },

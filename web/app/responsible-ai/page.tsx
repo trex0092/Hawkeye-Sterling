@@ -10,7 +10,7 @@ import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
 // Responsible AI Governance — Module 27
 // UNESCO Recommendation on the Ethics of AI (2021), EU AI Act, UAE AI Strategy 2031.
 // Human oversight mandatory for all adverse dispositions.
-// All AI decisions logged with 10-year retention (FDL 10/2025 Art.24).
+// All AI decisions logged with 10-year retention (Federal Decree-Law No. 10 of 2025 Art.24).
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -911,7 +911,7 @@ function AuditTrailTab() {
   return (
     <div>
       <p className="text-11 text-ink-3 mb-3 font-mono">
-        Read-only immutable log. FDL 10/2025 Art.24 — all AI decisions retained 10 years. Showing{" "}
+        Read-only immutable log. Federal Decree-Law No. 10 of 2025 Art.24 — all AI decisions retained 10 years. Showing{" "}
         {AUDIT_TRAIL.length} most recent events.
       </p>
 
@@ -1355,7 +1355,7 @@ export default function ResponsibleAIPage() {
           <>
             <strong>Framework:</strong> UNESCO Recommendation on the Ethics of AI (2021) · EU AI Act ·
             UAE AI Strategy 2031. Human oversight mandatory for all adverse customer dispositions. All
-            AI decisions logged with 10-year retention (FDL 10/2025 Art.24).
+            AI decisions logged with 10-year retention (Federal Decree-Law No. 10 of 2025 Art.24).
           </>
         }
       />

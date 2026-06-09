@@ -8,7 +8,7 @@
 // there is no user-facing latency penalty. Failure is logged but does not
 // block the calling UI.
 //
-// Compliance basis: FDL 10/2025 Art.24 requires audit records to be
+// Compliance basis: Federal Decree-Law No. 10 of 2025 Art.24 requires audit records to be
 // persisted in a tamper-evident, regulator-accessible store — localStorage
 // alone does not satisfy this requirement.
 

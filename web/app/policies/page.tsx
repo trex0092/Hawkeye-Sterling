@@ -31,7 +31,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Charter",
     title: "MLRO Charter",
     body:
-      "The MLRO is independent of commercial lines. Decisions to file / withhold STR are the MLRO's alone; no commercial pressure overrides the MLRO's duty under FDL 10/2025 Art.15. The MLRO reports quarterly to the Board Audit Committee.",
+      "The MLRO is independent of commercial lines. Decisions to file / withhold STR are the MLRO's alone; no commercial pressure overrides the MLRO's duty under Federal Decree-Law No. 10 of 2025 Art.15. The MLRO reports quarterly to the Board Audit Committee.",
     lastReviewed: "2026-04-01",
   },
   {
@@ -71,7 +71,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Data",
     title: "Record retention",
     body:
-      "10-year retention on all CDD records, STR artefacts, case timelines, audit-chain entries, goAML envelopes, and ongoing-monitoring snapshots per FDL 10/2025 Art.24. Encrypted at rest. Access audited.",
+      "10-year retention on all CDD records, STR artefacts, case timelines, audit-chain entries, goAML envelopes, and ongoing-monitoring snapshots per Federal Decree-Law No. 10 of 2025 Art.24. Encrypted at rest. Access audited.",
     lastReviewed: "2026-04-01",
   },
   {
@@ -103,7 +103,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Governance",
     title: "AML/CFT Training Policy",
     body:
-      "All staff with AML/CFT responsibilities must complete initial training before onboarding and annual refresher training thereafter. Training covers: FATF recommendations, UAE FDL 10/2025, red-flag typologies, goAML filing, and four-eyes procedures. MLRO maintains a training register. Non-completion blocks system access after a 14-day grace period. Board members receive annual AML awareness briefing.",
+      "All staff with AML/CFT responsibilities must complete initial training before onboarding and annual refresher training thereafter. Training covers: FATF recommendations, UAE Federal Decree-Law No. 10 of 2025, red-flag typologies, goAML filing, and four-eyes procedures. MLRO maintains a training register. Non-completion blocks system access after a 14-day grace period. Board members receive annual AML awareness briefing.",
     lastReviewed: "2026-03-15",
   },
   {
@@ -151,7 +151,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Governance",
     title: "Escalation & Whistleblowing Policy",
     body:
-      "Any employee who becomes aware of actual or suspected money laundering, terrorist financing, or sanctions breaches must report to the MLRO immediately and no later than the next business day. Anonymous reports may be submitted via the confidential whistleblowing channel. No employee shall be subject to retaliation, demotion, or dismissal for a good-faith report. The MLRO maintains a secure escalation register. Failure to report is a disciplinary offence and may constitute a criminal act under FDL 10/2025 Art.25. Board Audit Committee reviews the escalation register annually.",
+      "Any employee who becomes aware of actual or suspected money laundering, terrorist financing, or sanctions breaches must report to the MLRO immediately and no later than the next business day. Anonymous reports may be submitted via the confidential whistleblowing channel. No employee shall be subject to retaliation, demotion, or dismissal for a good-faith report. The MLRO maintains a secure escalation register. Failure to report is a disciplinary offence and may constitute a criminal act under Federal Decree-Law No. 10 of 2025 Art.25. Board Audit Committee reviews the escalation register annually.",
     lastReviewed: "2026-04-01",
   },
   {
@@ -191,7 +191,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Governance",
     title: "MLRO Succession & Continuity Policy",
     body:
-      "A designated Deputy MLRO is authorised to exercise all MLRO powers in the event of absence, incapacity, or vacancy. The Deputy MLRO must hold equivalent AML/CFT qualifications. Any MLRO vacancy must be filled and the replacement notified to CBUAE / MoE within 30 calendar days per FDL 10/2025 Art.15(5). A succession plan is reviewed annually by the Board. The outgoing MLRO must complete a structured handover including case briefings, open investigations, and regulatory correspondence within 10 business days.",
+      "A designated Deputy MLRO is authorised to exercise all MLRO powers in the event of absence, incapacity, or vacancy. The Deputy MLRO must hold equivalent AML/CFT qualifications. Any MLRO vacancy must be filled and the replacement notified to CBUAE / MoE within 30 calendar days per Federal Decree-Law No. 10 of 2025 Art.15(5). A succession plan is reviewed annually by the Board. The outgoing MLRO must complete a structured handover including case briefings, open investigations, and regulatory correspondence within 10 business days.",
     lastReviewed: "2026-04-01",
   },
   {
@@ -199,7 +199,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Data",
     title: "Data Privacy & Subject Access Policy",
     body:
-      "Customer personal data is processed solely for the purposes of AML/CFT compliance under FDL 10/2025 and UAE Federal Decree-Law No. 45/2021 on Personal Data Protection. Data is retained for exactly 10 years from the end of the business relationship and then securely destroyed. Subject access requests are acknowledged within 5 business days and fulfilled within 30 days. Data shared with regulators or FIU is logged. International data transfers require a documented lawful basis. Breaches involving personal data are reported to the relevant authority within 72 hours.",
+      "Customer personal data is processed solely for the purposes of AML/CFT compliance under Federal Decree-Law No. 10 of 2025 and UAE Federal Decree-Law No. 45/2021 on Personal Data Protection. Data is retained for exactly 10 years from the end of the business relationship and then securely destroyed. Subject access requests are acknowledged within 5 business days and fulfilled within 30 days. Data shared with regulators or FIU is logged. International data transfers require a documented lawful basis. Breaches involving personal data are reported to the relevant authority within 72 hours.",
     lastReviewed: "2026-04-01",
   },
   {
@@ -463,7 +463,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Charter",
     title: "Compliance Function Independence Charter",
     body:
-      "The Compliance function reports administratively to the CEO and functionally to the Board Audit Committee. The CCO and MLRO have direct, unfiltered access to the Board Chair. Compliance budget, staffing, and tools are approved by the Board, not the business heads. No compensation element of any Compliance officer is tied to commercial KPIs. Removal of the CCO or MLRO requires Board approval and regulator notification within 30 days per FDL 10/2025 Art.15.",
+      "The Compliance function reports administratively to the CEO and functionally to the Board Audit Committee. The CCO and MLRO have direct, unfiltered access to the Board Chair. Compliance budget, staffing, and tools are approved by the Board, not the business heads. No compensation element of any Compliance officer is tied to commercial KPIs. Removal of the CCO or MLRO requires Board approval and regulator notification within 30 days per Federal Decree-Law No. 10 of 2025 Art.15.",
     lastReviewed: "2026-04-15",
   },
   {
@@ -495,7 +495,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Onboarding",
     title: "Beneficial Ownership Threshold Policy",
     body:
-      "Beneficial owners are identified at the 25% ownership-or-control threshold per FATF R.24/25 and FDL 10/2025 Art.20. Where no natural person meets the threshold through ownership, identification proceeds via control (voting rights, board appointment, contractual rights). Where neither path identifies a BO, the senior managing official is recorded with a documented rationale. Nominee directors or shareholders trigger automatic EDD and verification of the natural person behind the nominee.",
+      "Beneficial owners are identified at the 25% ownership-or-control threshold per FATF R.24/25 and Federal Decree-Law No. 10 of 2025 Art.20. Where no natural person meets the threshold through ownership, identification proceeds via control (voting rights, board appointment, contractual rights). Where neither path identifies a BO, the senior managing official is recorded with a documented rationale. Nominee directors or shareholders trigger automatic EDD and verification of the natural person behind the nominee.",
     lastReviewed: "2026-04-15",
   },
   {
@@ -575,7 +575,7 @@ const DEFAULT_POLICIES: Policy[] = [
     section: "Governance",
     title: "Information Barriers / Chinese Walls Policy",
     body:
-      "Information barriers separate AML / Compliance / MLRO functions from front-office and trading desks. Customer suspicion files, STR drafts, and freeze decisions are not accessible to commercial lines except on a strict need-to-know basis approved by the MLRO. Wall-crossings are logged with timestamp, requestor, recipient, and rationale. Breach of an information barrier is a disciplinary offence and may also constitute tipping-off under FDL 10/2025. Annual testing of barriers is performed by Internal Audit.",
+      "Information barriers separate AML / Compliance / MLRO functions from front-office and trading desks. Customer suspicion files, STR drafts, and freeze decisions are not accessible to commercial lines except on a strict need-to-know basis approved by the MLRO. Wall-crossings are logged with timestamp, requestor, recipient, and rationale. Breach of an information barrier is a disciplinary offence and may also constitute tipping-off under Federal Decree-Law No. 10 of 2025. Annual testing of barriers is performed by Internal Audit.",
     lastReviewed: "2026-04-15",
   },
   {
@@ -817,7 +817,7 @@ export default function PoliciesPage() {
               <strong>One source of truth for every rule the brain cites.</strong>{" "}
               Charter, redlines, risk appetite, sector policies — versioned
               and click-to-edit. Every disposition in the audit chain binds
-              to the policy revision in effect when the decision was made per FDL 10/2025 Art.24.
+              to the policy revision in effect when the decision was made per Federal Decree-Law No. 10 of 2025 Art.24.
             </>
           }
           kpis={[

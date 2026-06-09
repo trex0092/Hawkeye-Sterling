@@ -11,7 +11,7 @@ import {
   type AuditEntry,
 } from '../audit-chain';
 
-// Regression coverage for the FDL 10/2025 Art.24 audit-chain
+// Regression coverage for the Federal Decree-Law No. 10 of 2025 Art.24 audit-chain
 // tamper-evidence guarantee. The /api/audit/verify route delegates
 // to verifyChain() — these tests pin the three invariants that route
 // asserts: chain links, entry ids, HMAC signatures.

@@ -80,7 +80,7 @@ export default function CorrectionsPage() {
           intro={
             <>
               <strong>Dispute or request correction of a watchlist or adverse-media record.</strong>{" "}
-              Reviewed within 30 calendar days of receipt per FDL 10/2025 Art.30 and GDPR Art.16 (Rectification).
+              Reviewed within 30 calendar days of receipt per Federal Decree-Law No. 10 of 2025 Art.30 and GDPR Art.16 (Rectification).
               You will receive a receipt ID to track status and escalate if needed.
             </>
           }

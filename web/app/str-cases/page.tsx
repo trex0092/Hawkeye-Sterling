@@ -1186,7 +1186,7 @@ export default function StrCasesPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">SAR Probability Scorer</div>
-            <div className="text-10 text-ink-3 mt-0.5">Evidence-based STR filing probability · FDL 10/2025 Art.15 · FATF R.20</div>
+            <div className="text-10 text-ink-3 mt-0.5">Evidence-based STR filing probability · Federal Decree-Law No. 10 of 2025 Art.15 · FATF R.20</div>
           </div>
           {sarResult && (
             <button type="button" onClick={() => setSarResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear</button>

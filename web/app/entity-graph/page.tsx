@@ -354,7 +354,7 @@ export default function EntityGraphPage() {
         intro={
           <>
             <strong>FATF Recommendations 24–25</strong> (transparency of legal persons and
-            arrangements) · <strong>UAE FDL 10/2025 Art. 7</strong> (beneficial ownership
+            arrangements) · <strong>UAE Federal Decree-Law No. 10 of 2025 Art. 7</strong> (beneficial ownership
             verification). Query OpenCorporates and GLEIF to map corporate structures, resolve
             UBO chains, and flag offshore registration patterns, nominee directors, and dissolved
             entities.

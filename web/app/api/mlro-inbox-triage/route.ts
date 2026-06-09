@@ -17,7 +17,7 @@
 //   - Routine monitoring alerts → MEDIUM
 //   - Training / admin items → LOW
 //
-// Regulatory basis: FDL 10/2025 Art.15-16; FATF R.20, R.29
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.15-16; FATF R.20, R.29
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -113,7 +113,7 @@ function classifyItem(item: InboxItem): {
         reason: "Sanctions match requires immediate freeze and regulatory reporting",
         timeToAct: "immediately",
         action: "Freeze transaction/account, notify MLRO, file EOCN report within 2 hours, escalate to senior management",
-        basis: "FDL No.10/2025 Art.11; CR No.134/2025",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.11; CR No.134/2025",
         assignee: "mlro",
       };
 
@@ -123,7 +123,7 @@ function classifyItem(item: InboxItem): {
         reason: "CTR filing deadline exceeded — regulatory breach",
         timeToAct: "today",
         action: "File CTR via goAML immediately. Document reason for delay. Notify compliance officer.",
-        basis: "FDL 10/2025 Art.16 — 2 business day deadline",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.16 — 2 business day deadline",
         assignee: "mlro",
       };
 
@@ -133,7 +133,7 @@ function classifyItem(item: InboxItem): {
         reason: "STR/SAR filing deadline exceeded — regulatory breach",
         timeToAct: "today",
         action: "File STR via goAML immediately. Document delay reason. MLRO signature required.",
-        basis: "FDL 10/2025 Art.15 — 35-day deadline",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.15 — 35-day deadline",
         assignee: "mlro",
       };
 
@@ -148,7 +148,7 @@ function classifyItem(item: InboxItem): {
           reason: `STR referral — only ${daysLeft} day(s) remaining before 35-day filing deadline`,
           timeToAct: "today",
           action: "MLRO review and STR determination required urgently. File or close referral.",
-          basis: "FDL 10/2025 Art.15",
+          basis: "Federal Decree-Law No. 10 of 2025 Art.15",
           assignee: "mlro",
         };
       }
@@ -157,7 +157,7 @@ function classifyItem(item: InboxItem): {
         reason: `STR referral with ${daysLeft} days remaining`,
         timeToAct: "within 2 business days",
         action: "MLRO to review referral, gather evidence, and make STR determination",
-        basis: "FDL 10/2025 Art.15",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.15",
         assignee: "mlro",
       };
     }
@@ -168,7 +168,7 @@ function classifyItem(item: InboxItem): {
         reason: "EDD review overdue — relationship continuity at risk",
         timeToAct: isOverdue ? "today" : `${daysUntilDue} days`,
         action: "Initiate EDD refresh. Suspend high-risk transactions until complete.",
-        basis: "FDL 10/2025 Art.8",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.8",
         assignee: "compliance_assistant",
       };
 
@@ -179,7 +179,7 @@ function classifyItem(item: InboxItem): {
         reason: "Regulatory enquiry or examination notice requires senior attention",
         timeToAct: "within 24 hours",
         action: "MLRO and senior management to review. Prepare response team. Do not delete records.",
-        basis: "FDL 10/2025 Art.27",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.27",
         assignee: "mlro",
       };
 
@@ -189,7 +189,7 @@ function classifyItem(item: InboxItem): {
         reason: "PEP-related alert requires MLRO-level review",
         timeToAct: "within 24 hours",
         action: "Review PEP alert, assess EDD adequacy, obtain senior management sign-off if relationship continues",
-        basis: "FDL 10/2025 Art.10; FATF R.12",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.10; FATF R.12",
         assignee: "mlro",
       };
 
@@ -199,7 +199,7 @@ function classifyItem(item: InboxItem): {
         reason: "Adverse media hit — customer risk profile may need updating",
         timeToAct: "within 2 business days",
         action: "Review adverse media. Update customer risk classification if warranted. Consider EDD refresh.",
-        basis: "FDL 10/2025 Art.8(6)",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.8(6)",
         assignee: "compliance_assistant",
       };
 
@@ -209,7 +209,7 @@ function classifyItem(item: InboxItem): {
         reason: `Transaction alert — risk score ${item.riskScore ?? "unknown"}`,
         timeToAct: (item.riskScore ?? 0) >= 75 ? "today" : "within 3 business days",
         action: "Review transaction context, customer profile, and determine if STR referral warranted",
-        basis: "FDL 10/2025 Art.15",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.15",
         assignee: (item.riskScore ?? 0) >= 75 ? "mlro" : "compliance_assistant",
       };
 
@@ -219,7 +219,7 @@ function classifyItem(item: InboxItem): {
         reason: "Internal staff SAR referral awaiting MLRO determination",
         timeToAct: "within 3 business days",
         action: "Review staff referral. Request additional evidence if needed. Make STR/no-action determination.",
-        basis: "FDL 10/2025 Art.15; FATF R.20",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.15; FATF R.20",
         assignee: "mlro",
       };
 
@@ -229,7 +229,7 @@ function classifyItem(item: InboxItem): {
         reason: "Ongoing monitoring system alert",
         timeToAct: "within 5 business days",
         action: "Analyst review of alert context. Escalate to MLRO if STR indicators present.",
-        basis: "FDL 10/2025 Art.13",
+        basis: "Federal Decree-Law No. 10 of 2025 Art.13",
         assignee: "compliance_assistant",
       };
 

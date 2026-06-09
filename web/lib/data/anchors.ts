@@ -49,14 +49,14 @@ const RAW: Omit<RegulatoryAnchor, "id">[] = [
   { family: "FATF", citation: "FATF R.25", title: "Transparency of legal arrangements",             summary: "BO information on trusts and similar arrangements.", jurisdiction: "global" },
   { family: "FATF", citation: "FATF R.29", title: "Financial intelligence units",                   summary: "Establish an FIU as the national centre for STR analysis and dissemination.", jurisdiction: "global" },
 
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.2",  title: "ML offence definition",              summary: "Defines ML as conversion/transfer/concealment/acquisition of proceeds with knowledge they derive from a crime.", jurisdiction: "AE" },
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.15", title: "STR filing obligation",              summary: "File an STR with the FIU through goAML without delay upon suspicion.", jurisdiction: "AE" },
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.16", title: "Prohibition of tipping-off",         summary: "Criminal prohibition on informing the subject or any third party that an STR has been filed.", jurisdiction: "AE" },
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.20", title: "Record retention",                   summary: "Ten-year retention of CDD records, transaction records, and reasoning chain.", jurisdiction: "AE" },
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.24", title: "Record-keeping format & integrity",  summary: "Records must be accessible, tamper-evident, producible on regulator demand.", jurisdiction: "AE" },
-  { family: "UAE-FDL", citation: "FDL 10/2025 Art.46", title: "Four-eyes / dual approval",          summary: "Designated AML decisions require MLRO + deputy MLRO co-signature.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.2",  title: "ML offence definition",              summary: "Defines ML as conversion/transfer/concealment/acquisition of proceeds with knowledge they derive from a crime.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.15", title: "STR filing obligation",              summary: "File an STR with the FIU through goAML without delay upon suspicion.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.16", title: "Prohibition of tipping-off",         summary: "Criminal prohibition on informing the subject or any third party that an STR has been filed.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.20", title: "Record retention",                   summary: "Ten-year retention of CDD records, transaction records, and reasoning chain.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.24", title: "Record-keeping format & integrity",  summary: "Records must be accessible, tamper-evident, producible on regulator demand.", jurisdiction: "AE" },
+  { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.46", title: "Four-eyes / dual approval",          summary: "Designated AML decisions require MLRO + deputy MLRO co-signature.", jurisdiction: "AE" },
 
-  { family: "UAE-CABINET", citation: "Cabinet Res 10/2019",  title: "AML/CFT executive regulation", summary: "Implementing regulation for FDL 20/2018 (superseded by 134/2025 for specific sectors).", jurisdiction: "AE" },
+  { family: "UAE-CABINET", citation: "Cabinet Res 10/2019",  title: "AML/CFT executive regulation", summary: "Implementing regulation for Federal Decree-Law No. 20 of 2018 (superseded by 134/2025 for specific sectors).", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 74/2020 Art.4-7", title: "TFS · immediate freeze without delay", summary: "Funds/assets of UN/UNSC/Local Terrorism List designatees frozen within 24h without prior notice.", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 16/2021", title: "Beneficial ownership register", summary: "Mandatory BO filing with licensing authority; refresh on any >10% change.", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 134/2025 Art.12-14", title: "DPMS thresholds and EDD triggers", summary: "Designated Non-Financial Businesses & Professions — DPMS-specific CDD, EDD, transaction limits.", jurisdiction: "AE" },
@@ -79,8 +79,8 @@ const RAW: Omit<RegulatoryAnchor, "id">[] = [
   { family: "UN",   citation: "UNSC 1267 (Consolidated)",   title: "UN ISIL/Al-Qaida/Taliban sanctions", summary: "Global freeze obligation on designated persons/entities.", jurisdiction: "global" },
   { family: "EU",   citation: "EU CFSP Consolidated",       title: "EU restrictive measures",         summary: "EU Council asset freezes and sectoral restrictions.", jurisdiction: "EU" },
 
-  { family: "PDPL", citation: "FDL 45/2021 Art.6",  title: "Lawful basis for processing",           summary: "AML processing lawful on legal obligation basis; consent not required.", jurisdiction: "AE" },
-  { family: "PDPL", citation: "FDL 45/2021 Art.13", title: "Data breach notification",              summary: "Notify Data Office of breaches that risk privacy / security of personal data.", jurisdiction: "AE" },
+  { family: "PDPL", citation: "Federal Decree-Law No. 45 of 2021 Art.6",  title: "Lawful basis for processing",           summary: "AML processing lawful on legal obligation basis; consent not required.", jurisdiction: "AE" },
+  { family: "PDPL", citation: "Federal Decree-Law No. 45 of 2021 Art.13", title: "Data breach notification",              summary: "Notify Data Office of breaches that risk privacy / security of personal data.", jurisdiction: "AE" },
 ];
 
 export const ANCHORS: readonly RegulatoryAnchor[] = Object.freeze(

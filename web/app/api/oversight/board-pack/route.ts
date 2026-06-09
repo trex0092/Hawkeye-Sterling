@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT governance specialist drafting formal board pack materials for a DPMS (Dealer in Precious Metals and Stones) institution regulated under UAE FDL 10/2025 and CBUAE AML Standards. Your output is read directly by board members and the Managing Director — it must be precise, formal, and actionable.
+          text: `You are a UAE AML/CFT governance specialist drafting formal board pack materials for a DPMS (Dealer in Precious Metals and Stones) institution regulated under UAE Federal Decree-Law No. 10 of 2025 and CBUAE AML Standards. Your output is read directly by board members and the Managing Director — it must be precise, formal, and actionable.
 
 Generate a comprehensive board pack with the following sections:
 
@@ -79,7 +79,7 @@ Generate a comprehensive board pack with the following sections:
 
 6. generatedAt: ISO 8601 timestamp (use current time)
 
-Return ONLY valid JSON (no markdown fences) with exactly these keys. Be specific and cite UAE FDL 10/2025, CBUAE AML Standards, and FATF Recommendations where relevant.`,
+Return ONLY valid JSON (no markdown fences) with exactly these keys. Be specific and cite UAE Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, and FATF Recommendations where relevant.`,
           cache_control: { type: "ephemeral" },
         },
       ],

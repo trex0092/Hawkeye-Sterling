@@ -192,25 +192,25 @@ const UAE_REGULATORY_CITATIONS = `
 UAE REGULATORY CITATIONS — cite these for every applicable action:
 
 FREEZE (Asset Freezing):
-  • FDL No.10/2025 Art.24 — immediate asset freeze obligation upon confirmed sanctions match
+  • Federal Decree-Law No. 10 of 2025 Art.24 — immediate asset freeze obligation upon confirmed sanctions match
   • Cabinet Decision 74/2023 — UAE National AML/CFT Action Plan, freeze execution procedures
   • goAML mandatory STR submission within 24 hours of freeze decision
 
 STR / Suspicious Transaction Report:
-  • FDL No.10/2025 Art.17 — 48-hour STR submission deadline from suspicion formation
+  • Federal Decree-Law No. 10 of 2025 Art.17 — 48-hour STR submission deadline from suspicion formation
   • CBUAE AML/CFT Standard 4 — STR content, goAML XML format, confidentiality obligations
   • goAML XML format required for all electronic STR filings to NAMLCFTC/FIU
 
 EDD (Enhanced Due Diligence):
-  • FDL No.10/2025 Art.7 — EDD triggers, source-of-wealth documentation requirements
+  • Federal Decree-Law No. 10 of 2025 Art.7 — EDD triggers, source-of-wealth documentation requirements
   • CBUAE AML/CFT Standard 3 — CDD/EDD procedures, ongoing monitoring frequency
 
 PEP Monitoring:
   • FATF Recommendation 12 — PEP identification, enhanced scrutiny, senior management approval
-  • FDL No.10/2025 Art.32 — PEP definition under UAE law, enhanced monitoring obligations
+  • Federal Decree-Law No. 10 of 2025 Art.32 — PEP definition under UAE law, enhanced monitoring obligations
 
 Ongoing Monitoring:
-  • FDL No.10/2025 Art.14 — transaction monitoring, record-keeping (5-year minimum)
+  • Federal Decree-Law No. 10 of 2025 Art.14 — transaction monitoring, record-keeping (5-year minimum)
   • CBUAE AML/CFT Standard 4 — risk-based monitoring thresholds and escalation triggers
 
 Four-Eyes Principle (FREEZE / STR):
@@ -395,7 +395,7 @@ async function callGroqAdvisor(
   const timer = setTimeout(() => controller.abort(), Math.min(budgetMs, 20_000));
   const systemPrompt = [
     "You are a senior AML/CFT compliance officer and MLRO advisor specialising in UAE regulatory law",
-    "(FDL No.10/2025, Cabinet Resolution 134/2025, FATF Recommendations 1-40).",
+    "(Federal Decree-Law No. 10 of 2025, Cabinet Resolution 134/2025, FATF Recommendations 1-40).",
     "You provide concise, authoritative, citation-grounded compliance guidance.",
     `Current subject under review: ${sanitizeField(subjectName, 200)}.`,
     "Guidelines: cite specific UAE laws, FATF Recs, and Cabinet Resolutions; aim for 300-500 words;",
@@ -471,7 +471,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       {
         ok: true,
-        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (no ANTHROPIC_API_KEY or GROQ_API_KEY configured). Please consult your designated MLRO or compliance officer directly. Under UAE FDL No.10/2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY or GROQ_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
+        answer: `**MLRO Advisor — Offline Mode**\n\nYour question has been received but the AI advisor is currently unavailable (no ANTHROPIC_API_KEY or GROQ_API_KEY configured). Please consult your designated MLRO or compliance officer directly. Under Federal Decree-Law No. 10 of 2025 and FATF Recommendations, all compliance decisions must be reviewed and documented by a qualified MLRO. Set ANTHROPIC_API_KEY or GROQ_API_KEY in your Netlify environment variables to enable AI-powered advisory.`,
         advisorScore: null,
         citations: [],
         latencyMs: 0,
@@ -748,7 +748,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           max_tokens: 1024,
           system: [
             "You are a UAE-licensed MLRO compliance advisor. Provide a concise, citation-grounded advisory.",
-            "Output 250-400 words. Cite specific UAE laws (FDL No.10/2025, Cabinet Resolution 134/2025).",
+            "Output 250-400 words. Cite specific UAE laws (Federal Decree-Law No. 10 of 2025, Cabinet Resolution 134/2025).",
             "Lead with the recommended action (FREEZE / ESCALATE / EDD / MONITOR / CLEAR).",
             "Never fabricate citations or regulatory references.",
             "End with: 'This advisory requires human MLRO review per CR 134/2025 Art.18.'",
@@ -1134,7 +1134,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json(
       {
         ok: true,
-        answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under UAE FDL No.10/2025 and FATF Recommendations.",
+        answer: "The MLRO advisor encountered a temporary error. Please retry your question. If the issue persists, consult your compliance officer directly for guidance under Federal Decree-Law No. 10 of 2025 and FATF Recommendations.",
         advisorScore: null,
         citations: [],
         latencyMs: Date.now() - t0,

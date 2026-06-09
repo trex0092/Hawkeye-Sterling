@@ -20,7 +20,7 @@
 // Audit citations:
 //   J-04 — list version logging at screening time
 //   J-05 — match threshold logging at screening time
-//   FDL 10/2025 Art.24 — evidence integrity for compliance examinations
+//   Federal Decree-Law No. 10 of 2025 Art.24 — evidence integrity for compliance examinations
 //   CR 134/2025 — record-keeping for sanctions screening events
 
 export interface ListVersionStore {

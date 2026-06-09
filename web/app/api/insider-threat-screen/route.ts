@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE financial crime insider threat specialist with expertise in employee conduct risk, tipping off indicators (FDL 10/2025 Art.20), financial crime facilitation patterns, and CBUAE internal controls requirements. Assess employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat risk. Identify threat categories (financial crime facilitation, data theft, tipping off, fraud, bribery) with specific indicators. Provide coordinated HR and compliance action recommendations. Respond ONLY with valid JSON matching the InsiderThreatResult interface — no markdown fences.`,
+        system: `You are a UAE financial crime insider threat specialist with expertise in employee conduct risk, tipping off indicators (Federal Decree-Law No. 10 of 2025 Art.20), financial crime facilitation patterns, and CBUAE internal controls requirements. Assess employee behaviour, lifestyle indicators, system access patterns, and financial circumstances for insider threat risk. Identify threat categories (financial crime facilitation, data theft, tipping off, fraud, bribery) with specific indicators. Provide coordinated HR and compliance action recommendations. Respond ONLY with valid JSON matching the InsiderThreatResult interface — no markdown fences.`,
         messages: [{
           role: "user",
           content: `Employee Name: ${sanitizeField(body.employeeName ?? "not provided", 200)}

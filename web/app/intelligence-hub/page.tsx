@@ -30,7 +30,7 @@ const TAB_CONFIG: Record<TabId, { label: string; icon: string; hint: string }> =
   telemetry:       { label: "Telemetry",     icon: "📡", hint: "Mode firing counts · drift" },
   "red-team":      { label: "Red-Team",      icon: "🥷", hint: "Adversarial prompt catalogue" },
   "security-audit":{ label: "Security",      icon: "🛡️", hint: "AI code analyser · OWASP checklist" },
-  governance:      { label: "Governance",    icon: "⚖️",  hint: "NIST AI RMF · MITRE ATLAS · FDL 10/2025 Art.18" },
+  governance:      { label: "Governance",    icon: "⚖️",  hint: "NIST AI RMF · MITRE ATLAS · Federal Decree-Law No. 10 of 2025 Art.18" },
   status:          { label: "Status",        icon: "💚", hint: "Live endpoint & watchlist health" },
   "api-docs":      { label: "API Docs",      icon: "📘", hint: "OpenAPI reference" },
   "system-card":     { label: "System Card",      icon: "📋", hint: "Model/system card disclosure" },

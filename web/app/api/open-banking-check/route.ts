@@ -9,7 +9,7 @@
 //
 // Regulatory basis:
 //   - FATF Recommendations 10, 15, 16, 20 (CDD, New Technologies, Wire Transfers, STR)
-//   - UAE FDL 10/2025 (Federal Decree-Law on AML/CFT)
+//   - UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law on AML/CFT)
 //   - CBUAE Open Finance Regulation (2023)
 //   - EBA Guidelines on Internal Governance (EBA/GL/2021/05)
 //   - PSD2 / Open Banking Framework (EU) — Strong Customer Authentication

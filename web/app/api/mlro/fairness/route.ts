@@ -9,7 +9,7 @@
 //   · sampleSize
 //   · status: "pass" (DI 0.8–1.2) | "watch" (DI 0.6–0.8 or 1.2–1.5) | "fail" (DI <0.6 or >1.5)
 //
-// FATF R.1 / FDL 10/2025 Art.18 — non-discrimination in AI risk assessment.
+// FATF R.1 / Federal Decree-Law No. 10 of 2025 Art.18 — non-discrimination in AI risk assessment.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

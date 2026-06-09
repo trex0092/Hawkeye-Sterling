@@ -776,7 +776,7 @@ export default function RmiPage() {
 
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
         RMAP (Responsible Minerals Assurance Process) — RMI standard for 3TG and cobalt smelters/refiners.
-        UAE DNFBP entities sourcing from CAHRAs must maintain conformant supply chains per OECD DDG and FDL 10/2025.
+        UAE DNFBP entities sourcing from CAHRAs must maintain conformant supply chains per OECD DDG and Federal Decree-Law No. 10 of 2025.
         Non-conformant suppliers are blocked automatically. Findings escalated to MLRO.
       </p>
     </ModuleLayout>

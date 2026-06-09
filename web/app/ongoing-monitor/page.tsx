@@ -656,7 +656,7 @@ export default function OngoingMonitorPage() {
 
           <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
             Monitoring runs via the Netlify hourly cron (ongoing-screen function). Results are written to the subject&apos;s case timeline.
-            Twice-daily cadence is recommended for all sanctions-hit and PEP subjects per FDL 10/2025 Art.12.
+            Twice-daily cadence is recommended for all sanctions-hit and PEP subjects per Federal Decree-Law No. 10 of 2025 Art.12.
           </p>
         </>
       )}
@@ -668,7 +668,7 @@ export default function OngoingMonitorPage() {
             <h3 className="text-14 font-semibold text-ink-0 mb-1">Unenrol subject</h3>
             <p className="text-12 text-ink-2 mb-4">
               Remove <span className="font-medium text-ink-0">{removeConfirm.name}</span> from ongoing monitoring?
-              This action is recorded in the audit trail (FDL 10/2025 Art.16).
+              This action is recorded in the audit trail (Federal Decree-Law No. 10 of 2025 Art.16).
             </p>
             <label className="block text-11 font-medium text-ink-2 mb-1">
               Reason <span className="text-red">*</span> <span className="text-ink-3">(min 5 characters)</span>

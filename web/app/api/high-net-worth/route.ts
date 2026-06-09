@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in high-net-worth individual due diligence under FATF R.10, R.12, and UAE FDL 10/2025. Conduct EDD risk assessments and return a JSON object with exactly these fields: { "riskScore": number (0-100), "riskRating": "critical"|"high"|"medium"|"low", "wealthSourceVerified": boolean, "wealthSourceGaps": string[], "keyRiskFactors": string[], "eddRequirements": string[], "ongoingMonitoringPlan": string, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in high-net-worth individual due diligence under FATF R.10, R.12, and UAE Federal Decree-Law No. 10 of 2025. Conduct EDD risk assessments and return a JSON object with exactly these fields: { "riskScore": number (0-100), "riskRating": "critical"|"high"|"medium"|"low", "wealthSourceVerified": boolean, "wealthSourceGaps": string[], "keyRiskFactors": string[], "eddRequirements": string[], "ongoingMonitoringPlan": string, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

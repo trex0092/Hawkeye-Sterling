@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a CBUAE examination specialist with expertise in UAE AML/CFT inspection methodology, typical CBUAE examination questions, and model answers for regulated financial institutions. Generate realistic examination preparation materials including likely questions, model answers, documentation requirements, common findings, and best practices. Base questions on UAE FDL 10/2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Model answers should reflect what an inspector expects to hear — specific, procedure-oriented, legally grounded. Respond ONLY with valid JSON matching the RegExamResult interface — no markdown fences.`,
+        system: `You are a CBUAE examination specialist with expertise in UAE AML/CFT inspection methodology, typical CBUAE examination questions, and model answers for regulated financial institutions. Generate realistic examination preparation materials including likely questions, model answers, documentation requirements, common findings, and best practices. Base questions on UAE Federal Decree-Law No. 10 of 2025, CBUAE AML/CFT Guidelines, and FATF Recommendations. Model answers should reflect what an inspector expects to hear — specific, procedure-oriented, legally grounded. Respond ONLY with valid JSON matching the RegExamResult interface — no markdown fences.`,
         messages: [{
           role: "user",
           content: `Exam Area / Topic: ${sanitizeField(body.examArea, 500)}

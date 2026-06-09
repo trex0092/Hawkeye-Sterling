@@ -235,7 +235,7 @@ export default function DataQualityPage() {
                 ))}
               </div>
               <div className="mt-3 text-10.5 text-ink-3 font-mono">
-                Cases overdue for re-screening (&gt;90d default) are flagged red in the Re-screen column. FDL 10/2025 Art. 19 — 10-year lookback obligation applies.
+                Cases overdue for re-screening (&gt;90d default) are flagged red in the Re-screen column. Federal Decree-Law No. 10 of 2025 Art. 19 — 10-year lookback obligation applies.
               </div>
             </div>
           </div>

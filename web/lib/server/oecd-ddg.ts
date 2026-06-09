@@ -1,7 +1,7 @@
 // Hawkeye Sterling — OECD 5-Step Due Diligence Guidance (DDG) framework store.
 // Covers the five mandatory steps under OECD DDG for Responsible Supply Chains
 // from Conflict-Affected and High-Risk Areas (CAHRA). Required for UAE gold
-// refiners under Ministerial Decree 68/2024 and FDL 10/2025.
+// refiners under Ministerial Decree 68/2024 and Federal Decree-Law No. 10 of 2025.
 
 import { getJson, setJson, listKeys } from "./store";
 import { randomBytes } from "node:crypto";

@@ -10,7 +10,7 @@
 //   2. Automatic field population from CaseRecord / StrCase data
 //   3. A "download" header on success so browsers trigger Save As
 //
-// Regulatory basis: UAE FDL 10/2025 Art.17 — 48-hour STR obligation;
+// Regulatory basis: UAE Federal Decree-Law No. 10 of 2025 Art.17 — 48-hour STR obligation;
 // UAE FIU goAML Technical Guide v3.1.
 
 export const runtime = "nodejs";

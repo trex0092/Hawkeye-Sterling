@@ -1,7 +1,7 @@
 // GET   /api/coi-register/[id] — load a single COI declaration
 // PATCH /api/coi-register/[id] — update a COI declaration
 //
-// Regulatory basis: FATF R.35, CBUAE Governance Guidelines, FDL 10/2025 Art.19
+// Regulatory basis: FATF R.35, CBUAE Governance Guidelines, Federal Decree-Law No. 10 of 2025 Art.19
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

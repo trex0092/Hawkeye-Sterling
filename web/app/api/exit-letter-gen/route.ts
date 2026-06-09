@@ -6,7 +6,7 @@
 //
 // The letter must:
 //   - Notify the customer without "tipping off" (no explicit AML/STR mention if STR filed)
-//   - Comply with UAE tipping-off prohibition (FDL 10/2025 Art.17)
+//   - Comply with UAE tipping-off prohibition (Federal Decree-Law No. 10 of 2025 Art.17)
 //   - Give appropriate notice period (default 30 days)
 //   - State the relationship end date
 //   - Provide instructions for account closure / fund withdrawal
@@ -20,7 +20,7 @@
 //   "pep_not_accepted"  — PEP not accepted per policy
 //   "business_exit"    — geographic / product exit (non-AML)
 //
-// Regulatory basis: FDL 10/2025 Art.17 (tipping-off); Art.8 (CDD);
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.17 (tipping-off); Art.8 (CDD);
 //                   UAE Commercial Transactions Law
 
 import { NextResponse } from "next/server";
@@ -162,7 +162,7 @@ ${internalNotes ? `Notes: ${internalNotes}` : ""}
 
 TIPPING-OFF WARNING: ${tippingOffRisk ? "AN STR HAS BEEN FILED. Do not disclose AML concerns, STR filing, or any investigation to the customer. The reason given in the letter must remain generic. Legal review recommended before sending." : "No STR filed. Standard exit communication protocol applies."}
 
-This exit is being conducted under FDL 10/2025 and the entity's risk appetite policy. The customer-facing letter uses a non-AML rationale as required. All documentation must be retained for the 10-year record retention period (FDL Art.19).`;
+This exit is being conducted under Federal Decree-Law No. 10 of 2025 and the entity's risk appetite policy. The customer-facing letter uses a non-AML rationale as required. All documentation must be retained for the 10-year record retention period (FDL Art.19).`;
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY ?? "";

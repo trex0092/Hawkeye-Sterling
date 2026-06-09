@@ -42,7 +42,7 @@ export async function POST(
     gate.keyId, reason,
   ) ?? updated;
 
-  // Set the 48-hour STR filing deadline (UAE FDL 10/2025 Art.17) on first escalation.
+  // Set the 48-hour STR filing deadline (UAE Federal Decree-Law No. 10 of 2025 Art.17) on first escalation.
   if (!existing.filingDeadline) {
     updated = await setFilingDeadline(tenant, caseId) ?? updated;
   }

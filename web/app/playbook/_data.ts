@@ -20,7 +20,7 @@ export const PLAYBOOKS: Playbook[] = [
     typology: "tbml",
     family: "ML",
     description: "TBML exploits international trade transactions to move value across borders, typically through over/under-invoicing, multiple invoicing, falsely described goods, or phantom shipments. Gold sector entities are primary TBML vectors per FATF DPMS Guidance (2023). Each trade transaction must be benchmarked against world commodity prices and shipping logistics verified end-to-end.",
-    citations: ["FATF R.16 (Wire transfers & trade)", "FATF DPMS Guidance 2023 §4", "UAE FDL 10/2025 Art.14", "UN Panel of Experts reports"],
+    citations: ["FATF R.16 (Wire transfers & trade)", "FATF DPMS Guidance 2023 §4", "UAE Federal Decree-Law No. 10 of 2025 Art.14", "UN Panel of Experts reports"],
     steps: [
       {
         title: "1. Price analysis",
@@ -66,8 +66,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "PEP Enhanced Due Diligence (FATF R.12)",
     typology: "pep",
     family: "PEP",
-    description: "Politically Exposed Persons present heightened corruption and bribery risk due to their public function, influence over government decisions, and access to public funds. FATF R.12 mandates enhanced due diligence for foreign PEPs — including senior management approval — and applies risk-based measures to domestic PEPs and international organization PEPs. UAE FDL 10/2025 Art.17 requires Board-level sign-off for all PEP relationships.",
-    citations: ["FATF R.12 (Politically exposed persons)", "UAE FDL 10/2025 Art.17", "CBUAE AML Standards §4.3", "Wolfsberg PEP Guidance 2023"],
+    description: "Politically Exposed Persons present heightened corruption and bribery risk due to their public function, influence over government decisions, and access to public funds. FATF R.12 mandates enhanced due diligence for foreign PEPs — including senior management approval — and applies risk-based measures to domestic PEPs and international organization PEPs. UAE Federal Decree-Law No. 10 of 2025 Art.17 requires Board-level sign-off for all PEP relationships.",
+    citations: ["FATF R.12 (Politically exposed persons)", "UAE Federal Decree-Law No. 10 of 2025 Art.17", "CBUAE AML Standards §4.3", "Wolfsberg PEP Guidance 2023"],
     steps: [
       {
         title: "1. PEP classification",
@@ -91,7 +91,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "3. Senior-management approval",
         required: true,
         checks: [
-          "Obtain CEO + Board Chair sign-off per FDL 10/2025 Art.17",
+          "Obtain CEO + Board Chair sign-off per Federal Decree-Law No. 10 of 2025 Art.17",
           "Record approval date and rationale in case timeline",
           "Document four-eyes review",
         ],
@@ -382,7 +382,7 @@ export const PLAYBOOKS: Playbook[] = [
         checks: [
           "Annual ownership refresh — request updated registry extract",
           "Monitor for changes in UBO via public registry alerts where available",
-          "Any change in UBO triggers full re-KYC within 30 days per FDL 10/2025 Art.11",
+          "Any change in UBO triggers full re-KYC within 30 days per Federal Decree-Law No. 10 of 2025 Art.11",
           "Escalate to MLRO if UBO identity cannot be confirmed after two requests",
         ],
       },
@@ -431,7 +431,7 @@ export const PLAYBOOKS: Playbook[] = [
           "Verify real estate agent holds valid DLD / RERA licence",
           "Confirm agent has its own AML programme in place",
           "Obtain agent's KYC package on their client before reliance",
-          "Document reliance arrangement per FDL 10/2025 Art.12",
+          "Document reliance arrangement per Federal Decree-Law No. 10 of 2025 Art.12",
         ],
       },
     ],
@@ -668,7 +668,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "4. SAR / STR consideration",
         required: false,
         checks: [
-          "Assess whether identified bribery indicators constitute grounds for an STR under FDL 10/2025 Art.15",
+          "Assess whether identified bribery indicators constitute grounds for an STR under Federal Decree-Law No. 10 of 2025 Art.15",
           "Consider FCPA or UK Bribery Act extraterritorial exposure for USD-denominated or UK-nexus transactions",
           "Document the MLRO's triage rationale in the case file regardless of filing decision",
           "Escalate to General Counsel if criminal referral or self-disclosure is under consideration",
@@ -939,7 +939,7 @@ export const PLAYBOOKS: Playbook[] = [
           "Screen the client, spouse, children, parents, siblings, and known business associates against PEP databases",
           "Classify PEP tier: foreign (mandatory EDD), domestic (risk-based EDD), international organisation (risk-based)",
           "Confirm out-of-office date — PEP status persists for at least 12 months post-position per FATF R.12",
-          "Obtain CEO + Board Chair approval for Tier-1 PEP relationships per FDL 10/2025 Art.17",
+          "Obtain CEO + Board Chair approval for Tier-1 PEP relationships per Federal Decree-Law No. 10 of 2025 Art.17",
         ],
       },
       {
@@ -1100,9 +1100,9 @@ export const PLAYBOOKS: Playbook[] = [
         title: "4. STR trigger assessment",
         required: false,
         checks: [
-          "Assess whether early surrender or unusual claim pattern constitutes ML indicator per FDL 10/2025 Art.15",
+          "Assess whether early surrender or unusual claim pattern constitutes ML indicator per Federal Decree-Law No. 10 of 2025 Art.15",
           "If STR is filed, maintain policy records — do not cancel policy without FIU guidance to avoid tipping-off",
-          "Retain all underwriting, claims, and KYC records for 10 years from policy end per FDL 10/2025 Art.24",
+          "Retain all underwriting, claims, and KYC records for 10 years from policy end per Federal Decree-Law No. 10 of 2025 Art.24",
           "Notify MLRO of any intermediary (broker) involved in facilitating a suspicious policy",
         ],
       },
@@ -1272,7 +1272,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "2. Reliance conditions",
         required: true,
         checks: [
-          "Confirm reliance is permissible under FDL 10/2025 Art.12 — the introducing agent must be regulated",
+          "Confirm reliance is permissible under Federal Decree-Law No. 10 of 2025 Art.12 — the introducing agent must be regulated",
           "Execute a written reliance agreement specifying which CDD elements the agent has performed",
           "Obtain copies of the agent's CDD documentation on the customer — do not solely rely on their summary",
           "Retain accountability: reliance does not transfer regulatory liability from the firm to the agent",
@@ -1618,7 +1618,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "3. Regulatory & law enforcement notification",
         required: true,
         checks: [
-          "File STR via goAML without delay — cybercrime proceeds are a predicate ML offence under FDL 10/2025",
+          "File STR via goAML without delay — cybercrime proceeds are a predicate ML offence under Federal Decree-Law No. 10 of 2025",
           "Notify UAE eCrime (Dubai Police Cybercrime Unit or Abu Dhabi cybercrime authority) if funds are within the UAE",
           "If OFAC-designated ransomware actor is involved (e.g. Lazarus Group), report to OFAC under mandatory reporting obligation",
           "Cooperate fully with any FIU or law enforcement production order — do not destroy or alter any records",
@@ -1696,7 +1696,7 @@ export const PLAYBOOKS: Playbook[] = [
         checks: [
           "Register the DNFBP with the Ministry of Economy AML/CFT Department per Cabinet Decision 109/2023 Art.4",
           "Activate goAML access via UAE FIU and link the entity's MoE Trade Licence number",
-          "Appoint and notify the MLRO and Deputy MLRO to MoE within 30 days of activity commencement (FDL 10/2025 Art.21)",
+          "Appoint and notify the MLRO and Deputy MLRO to MoE within 30 days of activity commencement (Federal Decree-Law No. 10 of 2025 Art.21)",
           "Subscribe the MLRO to MoE Circulars + EOCN list-update mailing lists; confirm receipt of the latest circular pack",
         ],
       },
@@ -1704,7 +1704,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "2. Risk-based AML/CFT programme",
         required: true,
         checks: [
-          "Document an enterprise-level Business Risk Assessment (BRA) covering customer, geography, product, channel, transaction risks per FDL 10/2025 Art.4 and MoE BRA template",
+          "Document an enterprise-level Business Risk Assessment (BRA) covering customer, geography, product, channel, transaction risks per Federal Decree-Law No. 10 of 2025 Art.4 and MoE BRA template",
           "Approve the AML/CFT policy, CDD/EDD procedures, and Sanctions/TFS procedures at Board / senior-management level",
           "Define and approve a Sectoral Risk Assessment for the DPMS sub-sector (gold, diamonds, gemstones, watches, luxury) — annual refresh",
           "Map every line of business to MoE Circular reference (08/AML/2021 for DPMS cash threshold; 03/AML/2022 for free-zone DPMS; 05/AML/2023 for online platforms)",
@@ -1717,7 +1717,7 @@ export const PLAYBOOKS: Playbook[] = [
           "Identify any single or aggregated cash transaction ≥ AED 55,000 with a single customer (MoE Circular 08/AML/2021 — FATF Rec. 22 implementation)",
           "File a DPMS Threshold Report (DPMSR) via goAML within 14 days of the transaction date — file even if the transaction is non-suspicious",
           "Aggregate connected/linked transactions (same beneficial owner, same 24h window) before applying the threshold",
-          "Retain DPMSR submission acknowledgement + supporting invoice/CoC for 5 years (FDL 10/2025 Art.24)",
+          "Retain DPMSR submission acknowledgement + supporting invoice/CoC for 5 years (Federal Decree-Law No. 10 of 2025 Art.24)",
         ],
       },
       {
@@ -1744,7 +1744,7 @@ export const PLAYBOOKS: Playbook[] = [
   },
   {
     id: "fiu-goaml-filing",
-    title: "FIU UAE — goAML Filing Workflow (FDL 10/2025 Art.15)",
+    title: "FIU UAE — goAML Filing Workflow (Federal Decree-Law No. 10 of 2025 Art.15)",
     typology: "fiu_goaml",
     family: "FIU",
     steps: [
@@ -1753,8 +1753,8 @@ export const PLAYBOOKS: Playbook[] = [
         required: true,
         checks: [
           "Confirm the trigger: STR (suspicion of ML/TF), SAR (broader suspicious activity), DPMSR (cash threshold ≥ AED 55k), HRTR (high-risk-country counterparty), PNMR (partial-name sanctions match), FFR (TFS asset freeze) — each maps to a distinct goAML report-type code",
-          "Decide WITHOUT DELAY — FDL 10/2025 Art.26 prohibits any post-suspicion delay; the file-or-not decision must be documented even if 'do not file'",
-          "Tipping-off prohibition is absolute: no notification to the customer, counterparty, or any external party that a report is being or has been filed (FDL 10/2025 Art.29 — criminal offence)",
+          "Decide WITHOUT DELAY — Federal Decree-Law No. 10 of 2025 Art.26 prohibits any post-suspicion delay; the file-or-not decision must be documented even if 'do not file'",
+          "Tipping-off prohibition is absolute: no notification to the customer, counterparty, or any external party that a report is being or has been filed (Federal Decree-Law No. 10 of 2025 Art.29 — criminal offence)",
           "MLRO is the named filer; deputy may file only if MLRO is unavailable and the case file records the deputy's authority",
         ],
       },
@@ -1783,7 +1783,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "4. Post-filing case management",
         required: true,
         checks: [
-          "Apply transaction holds where lawful and where the file-without-delay obligation does not require advance customer notice (FDL 10/2025 Art.27)",
+          "Apply transaction holds where lawful and where the file-without-delay obligation does not require advance customer notice (Federal Decree-Law No. 10 of 2025 Art.27)",
           "Respond to FIU follow-up requests within the deadline stated in the request (typically 48h–7 days); maintain an FIU correspondence log",
           "Re-screen the subject + their network after every FIU acknowledgement — late-arriving sanctions designations are common in active investigations",
           "Document the four-eyes review: MLRO + a second officer (CCO, Board chair or designated alternate) sign off the closure of every filed case",
@@ -1793,7 +1793,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "5. Retention & audit",
         required: true,
         checks: [
-          "Retain the full case file (XML, narrative draft, supporting documents, screening logs, MLRO decision memo) for ≥ 5 years from filing date — 10 years for sanctions-related FFRs (FDL 10/2025 Art.24)",
+          "Retain the full case file (XML, narrative draft, supporting documents, screening logs, MLRO decision memo) for ≥ 5 years from filing date — 10 years for sanctions-related FFRs (Federal Decree-Law No. 10 of 2025 Art.24)",
           "Quarterly MLRO assurance review of every filed and not-filed decision; sample 10% for second-line review",
           "Annual independent audit must test STR effectiveness: filing volumes, average decision time, outcome tracking, FIU feedback closure",
           "Tipping-off training certification must be current (≤12 months) for every customer-facing employee",
@@ -1842,7 +1842,7 @@ export const PLAYBOOKS: Playbook[] = [
         required: true,
         checks: [
           "Notify EOCN of every freeze action within the prescribed deadline using the EOCN-published template (typically same business day)",
-          "Tipping-off the listed person, the counterparty, or any third party that a freeze is in place is a criminal offence (FDL 10/2025 Art.29)",
+          "Tipping-off the listed person, the counterparty, or any third party that a freeze is in place is a criminal offence (Federal Decree-Law No. 10 of 2025 Art.29)",
           "Internal communications must be on a strict need-to-know basis: MLRO, CEO, Board, legal counsel, payments-system operator only",
           "Customer-facing comms must use generic 'compliance hold' language approved by legal counsel; never reference EOCN, UNSC, or sanctions",
         ],
@@ -2085,7 +2085,7 @@ export const PLAYBOOKS: Playbook[] = [
     family: "ML",
     steps: [
       { title: "1. Border declaration check", required: true, checks: [
-        "Verify customs cash declaration on inbound funds ≥ AED 60,000 (FDL 10/2025 Art.21)",
+        "Verify customs cash declaration on inbound funds ≥ AED 60,000 (Federal Decree-Law No. 10 of 2025 Art.21)",
         "Cross-check declared origin against currency-marking / pack-band data",
         "Inspect courier identity and travel pattern against high-risk corridor list",
       ]},
@@ -3529,7 +3529,7 @@ export const PLAYBOOKS: Playbook[] = [
   },
   {
     id: "fdl-10-2025-art-13",
-    title: "FDL 10/2025 Art.13 — CDD Trigger Workflow",
+    title: "Federal Decree-Law No. 10 of 2025 Art.13 — CDD Trigger Workflow",
     typology: "fdl-10-2025-art-13",
     family: "CDD",
     steps: [
@@ -4229,7 +4229,7 @@ export const PLAYBOOKS: Playbook[] = [
         "Validate tax residency and treaty claims",
       ]},
       { title: "2. Linkage to ML", required: true, checks: [
-        "Treat tax evasion as a predicate offence under FATF and FDL 10/2025",
+        "Treat tax evasion as a predicate offence under FATF and Federal Decree-Law No. 10 of 2025",
         "Document the ML element: placement / layering / integration of tax-evaded proceeds",
         "Correlate with any FTA / OECD CRS / FATCA flag",
       ]},
@@ -4863,7 +4863,7 @@ export const PLAYBOOKS: Playbook[] = [
   },
   {
     id: "fdl-10-2025-art-15",
-    title: "FDL 10/2025 Art.15 — MLRO Designation & Independence",
+    title: "Federal Decree-Law No. 10 of 2025 Art.15 — MLRO Designation & Independence",
     typology: "fdl-10-2025-art-15",
     family: "FIU",
     steps: [
@@ -5168,8 +5168,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "Luxury Real Estate — Dubai ML Risk",
     typology: "luxury_reml",
     family: "REML",
-    description: "Dubai's real estate market is a globally recognized ML vulnerability. FATF Mutual Evaluation Report (UAE, 2020) identified real estate as the highest-risk sector. Off-plan purchases, cash transactions, nominee purchasers, and rapid flip cycles are key red flags. UAE MoE registration for DNFBP real estate brokers is mandatory. FDL 10/2025 Art.22 requires real estate brokers to perform full CDD on all parties.",
-    citations: ["FATF MER UAE 2020 §§5.3-5.4", "UAE FDL 10/2025 Art.22", "UAE MoE Real Estate DNFBP Registration", "CBUAE AML/CFT Guidelines §7", "Global Witness UAE Real Estate Report 2022"],
+    description: "Dubai's real estate market is a globally recognized ML vulnerability. FATF Mutual Evaluation Report (UAE, 2020) identified real estate as the highest-risk sector. Off-plan purchases, cash transactions, nominee purchasers, and rapid flip cycles are key red flags. UAE MoE registration for DNFBP real estate brokers is mandatory. Federal Decree-Law No. 10 of 2025 Art.22 requires real estate brokers to perform full CDD on all parties.",
+    citations: ["FATF MER UAE 2020 §§5.3-5.4", "UAE Federal Decree-Law No. 10 of 2025 Art.22", "UAE MoE Real Estate DNFBP Registration", "CBUAE AML/CFT Guidelines §7", "Global Witness UAE Real Estate Report 2022"],
     steps: [
       {
         title: "1. Buyer identity and source of funds",
@@ -5318,8 +5318,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "Sports Betting & Match Fixing ML",
     typology: "sports_betting",
     family: "ML",
-    description: "Sports betting accounts are used to layer proceeds by placing bets on both outcomes of an event, deliberately losing a portion to convert illicit funds into 'winnings'. Match fixing syndicates additionally corrupt athletes to control outcomes, generating large betting profits. Offshore gambling platforms without UAE licences are not permitted but are accessed by UAE residents. FDL 10/2025 covers gambling as a designated predicate offence.",
-    citations: ["UAE FDL 10/2025 Art.2 (Predicate offences)", "FATF Guidance on Gambling 2023", "Council of Europe MEDICRIME Convention", "UNODC Sports Integrity Toolkit"],
+    description: "Sports betting accounts are used to layer proceeds by placing bets on both outcomes of an event, deliberately losing a portion to convert illicit funds into 'winnings'. Match fixing syndicates additionally corrupt athletes to control outcomes, generating large betting profits. Offshore gambling platforms without UAE licences are not permitted but are accessed by UAE residents. Federal Decree-Law No. 10 of 2025 covers gambling as a designated predicate offence.",
+    citations: ["UAE Federal Decree-Law No. 10 of 2025 Art.2 (Predicate offences)", "FATF Guidance on Gambling 2023", "Council of Europe MEDICRIME Convention", "UNODC Sports Integrity Toolkit"],
     steps: [
       {
         title: "1. Gambling platform legitimacy",
@@ -5358,8 +5358,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "Immigration & Document Fraud Proceeds",
     typology: "immigration_fraud",
     family: "Fraud",
-    description: "Immigration fraud — forged visas, fake degrees, ghost employment schemes — generates significant criminal proceeds. UAE's status as a global migration hub makes it a target for document fraud networks. Proceeds are typically laundered through informal money transfer, hawala, and real estate. FDL 10/2025 identifies fraud and forgery as predicate offences requiring STR filing on suspicion.",
-    citations: ["UAE FDL 10/2025 Art.2 (Predicate offences)", "INTERPOL Human Trafficking notices", "IOM Migrant Vulnerability Report 2023", "UAE Cabinet Resolution 38/2022 (human trafficking)"],
+    description: "Immigration fraud — forged visas, fake degrees, ghost employment schemes — generates significant criminal proceeds. UAE's status as a global migration hub makes it a target for document fraud networks. Proceeds are typically laundered through informal money transfer, hawala, and real estate. Federal Decree-Law No. 10 of 2025 identifies fraud and forgery as predicate offences requiring STR filing on suspicion.",
+    citations: ["UAE Federal Decree-Law No. 10 of 2025 Art.2 (Predicate offences)", "INTERPOL Human Trafficking notices", "IOM Migrant Vulnerability Report 2023", "UAE Cabinet Resolution 38/2022 (human trafficking)"],
     steps: [
       {
         title: "1. Document authenticity verification",
@@ -5426,9 +5426,9 @@ export const PLAYBOOKS: Playbook[] = [
         required: false,
         checks: [
           "File STR if tax evasion is suspected and proceeds exceed AED 1,000,000",
-          "Tax crimes are predicate ML offences under UAE FDL 10/2025 — STR obligation applies",
+          "Tax crimes are predicate ML offences under UAE Federal Decree-Law No. 10 of 2025 — STR obligation applies",
           "Coordinate with UAE FTA if formal voluntary disclosure process is initiated",
-          "Maintain client file for 10 years per FDL 10/2025 Art.16",
+          "Maintain client file for 10 years per Federal Decree-Law No. 10 of 2025 Art.16",
         ],
       },
     ],
@@ -5488,8 +5488,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "Elder Financial Abuse & Exploitation",
     typology: "elder_abuse",
     family: "Fraud",
-    description: "Financial abuse of elderly customers by family members, caregivers, or strangers is a growing AML/fraud concern. Sudden changes in account signatories, large cash withdrawals by third parties, and unusual spending patterns are key indicators. UAE Federal Law No. 2/2019 on the rights of elderly persons requires reporting mechanisms. FDL 10/2025 requires STR filing where funds are proceeds of exploitation.",
-    citations: ["UAE Federal Law No. 2/2019 (Elderly persons)", "FATF Elder Financial Exploitation Guidance 2020", "UAE FDL 10/2025 Art.15", "CFPB Elder Financial Exploitation guidance 2019"],
+    description: "Financial abuse of elderly customers by family members, caregivers, or strangers is a growing AML/fraud concern. Sudden changes in account signatories, large cash withdrawals by third parties, and unusual spending patterns are key indicators. UAE Federal Law No. 2/2019 on the rights of elderly persons requires reporting mechanisms. Federal Decree-Law No. 10 of 2025 requires STR filing where funds are proceeds of exploitation.",
+    citations: ["UAE Federal Law No. 2/2019 (Elderly persons)", "FATF Elder Financial Exploitation Guidance 2020", "UAE Federal Decree-Law No. 10 of 2025 Art.15", "CFPB Elder Financial Exploitation guidance 2019"],
     steps: [
       {
         title: "1. Account access change red flags",
@@ -5539,7 +5539,7 @@ export const PLAYBOOKS: Playbook[] = [
     typology: "insurance_ml",
     family: "ML",
     description: "Insurance products are used for ML via overpayment of premiums followed by early redemption (receiving 'clean' refund cheque), fictitious claims, and purchase of single-premium investment products. FATF R.26 requires insurance companies to implement AML controls. UAE Insurance Authority (now CBUAE) guidelines require CDD on all single-premium life policies and early surrender monitoring.",
-    citations: ["FATF R.26 (Regulation of financial institutions)", "UAE CBUAE Insurance Circular 15/2022", "UAE FDL 10/2025 Art.8", "Wolfsberg Insurance Principles 2019"],
+    citations: ["FATF R.26 (Regulation of financial institutions)", "UAE CBUAE Insurance Circular 15/2022", "UAE Federal Decree-Law No. 10 of 2025 Art.8", "Wolfsberg Insurance Principles 2019"],
     steps: [
       {
         title: "1. Single-premium policy risk assessment",
@@ -5657,8 +5657,8 @@ export const PLAYBOOKS: Playbook[] = [
     title: "Public Procurement Fraud & Corruption",
     typology: "procurement_fraud",
     family: "ABC",
-    description: "Public procurement fraud involves kickbacks, bid rigging, fictitious invoices, and inflated contracts between government contractors and complicit officials. Proceeds are laundered through shell company layers, real estate, and offshore accounts. FCPA, UK Bribery Act, and UAE FDL 10/2025 Art.2 all identify public corruption as a predicate offence. PEP-linked companies in government contracting require enhanced scrutiny.",
-    citations: ["UAE FDL 10/2025 Art.2 (Corruption as predicate)", "FCPA (US)", "UK Bribery Act 2010 §6", "OECD Anti-Bribery Convention", "UNODC UN Convention Against Corruption Art.9"],
+    description: "Public procurement fraud involves kickbacks, bid rigging, fictitious invoices, and inflated contracts between government contractors and complicit officials. Proceeds are laundered through shell company layers, real estate, and offshore accounts. FCPA, UK Bribery Act, and UAE Federal Decree-Law No. 10 of 2025 Art.2 all identify public corruption as a predicate offence. PEP-linked companies in government contracting require enhanced scrutiny.",
+    citations: ["UAE Federal Decree-Law No. 10 of 2025 Art.2 (Corruption as predicate)", "FCPA (US)", "UK Bribery Act 2010 §6", "OECD Anti-Bribery Convention", "UNODC UN Convention Against Corruption Art.9"],
     steps: [
       {
         title: "1. PEP connection to government contracts",
@@ -5694,7 +5694,7 @@ export const PLAYBOOKS: Playbook[] = [
         title: "4. Reporting obligations",
         required: true,
         checks: [
-          "File STR via goAML if corruption/bribery suspected — mandatory under FDL 10/2025",
+          "File STR via goAML if corruption/bribery suspected — mandatory under Federal Decree-Law No. 10 of 2025",
           "Escalate to MLRO for immediate review if public official (PEP) is the contracting party",
           "Preserve all contract documentation and payment records for 10 years",
           "Consider account restriction pending MLRO decision",
@@ -5708,7 +5708,7 @@ export const PLAYBOOKS: Playbook[] = [
     typology: "medical_fraud",
     family: "Fraud",
     description: "Medical billing fraud involves fictitious patient claims, upcoding of procedures, phantom medical equipment, and kickbacks between providers and insurers. In UAE, DHA-licensed providers are the regulated sector. Insurance fraud proceeds are laundered through healthcare company accounts before distribution. FATF identifies healthcare fraud as a growing predicate ML offence.",
-    citations: ["UAE Health Insurance Law (Dubai Law No. 11/2013)", "UAE DHA Provider Licensing", "FATF Fraud Typologies 2023", "UAE FDL 10/2025 Art.2 (Fraud as predicate)"],
+    citations: ["UAE Health Insurance Law (Dubai Law No. 11/2013)", "UAE DHA Provider Licensing", "FATF Fraud Typologies 2023", "UAE Federal Decree-Law No. 10 of 2025 Art.2 (Fraud as predicate)"],
     steps: [
       {
         title: "1. Provider legitimacy check",
@@ -5778,7 +5778,7 @@ export const PLAYBOOKS: Playbook[] = [
         "Hold funds pending MLRO review — do NOT credit beneficiary without clearance",
       ]},
       { title: "2. Law enforcement liaison", required: true, checks: [
-        "Notify UAE FIU within 24 h (FDL 10/2025 Art.26) and freeze pending instruction",
+        "Notify UAE FIU within 24 h (Federal Decree-Law No. 10 of 2025 Art.26) and freeze pending instruction",
         "Preserve all IP, device, and session logs for law enforcement",
         "Do NOT tip off customer that an investigation is under way",
       ]},
@@ -6075,7 +6075,7 @@ export const PLAYBOOKS: Playbook[] = [
       { title: "2. Wind-down execution", required: true, checks: [
         "Provide respondent contractually required notice period (typically 60 days)",
         "Return all in-flight transactions to originators before relationship close",
-        "Retain all CDD files for minimum 5 years post-exit per FDL 10/2025 Art.24",
+        "Retain all CDD files for minimum 5 years post-exit per Federal Decree-Law No. 10 of 2025 Art.24",
       ]},
       { title: "3. Regulatory notification", required: false, checks: [
         "Notify CBUAE if de-risking leaves material local market without correspondent access",
@@ -6298,7 +6298,7 @@ export const PLAYBOOKS: Playbook[] = [
       { title: "2. Regulatory referral", required: true, checks: [
         "Report immediately to UAE FIU and refer to UAE Public Prosecution for human-trafficking offence assessment",
         "Do NOT alert the customer — preserve evidence and await LE instruction",
-        "File STR within statutory period citing FDL 10/2025 Art.26",
+        "File STR within statutory period citing Federal Decree-Law No. 10 of 2025 Art.26",
       ]},
       { title: "3. Account freeze", required: false, checks: [
         "Apply discretionary freeze pending LE instruction if proceeds are clearly identified",
@@ -6379,7 +6379,7 @@ export const PLAYBOOKS: Playbook[] = [
     family: "PEP",
     steps: [
       { title: "1. PEP classification", required: true, checks: [
-        "Classify PEP tier (1–4) and apply appropriate EDD level per FDL 10/2025 Art.14",
+        "Classify PEP tier (1–4) and apply appropriate EDD level per Federal Decree-Law No. 10 of 2025 Art.14",
         "Identify family members and close associates (RCAs) who share economic interest",
         "Confirm PEP is no longer in office for de-escalation eligibility (minimum 12-month cooling-off)",
       ]},
@@ -7072,7 +7072,7 @@ export const PLAYBOOKS: Playbook[] = [
     family: "Risk",
     steps: [
       { title: "1. Policy and procedure review", required: true, checks: [
-        "Confirm all AML policies reflect current UAE FDL 10/2025 and FATF 2022 Methodology",
+        "Confirm all AML policies reflect current UAE Federal Decree-Law No. 10 of 2025 and FATF 2022 Methodology",
         "Verify policies have been approved by the Board and are dated within the last 12 months",
         "Identify any FATF Recommendation gaps not addressed by existing policies",
       ]},
@@ -7368,7 +7368,7 @@ export const PLAYBOOKS: Playbook[] = [
       { title: "1. Office cessation verification", required: true, checks: [
         "Confirm the PEP has left office via official gazette, government website, or credible news source",
         "Document the date of cessation and the reason (term expiry, resignation, removal)",
-        "Apply FDL 10/2025 Art.14 cooling-off period — minimum 12 months of continued EDD",
+        "Apply Federal Decree-Law No. 10 of 2025 Art.14 cooling-off period — minimum 12 months of continued EDD",
       ]},
       { title: "2. Residual risk assessment", required: true, checks: [
         "Assess whether the former PEP retains ongoing influence over public decisions",
@@ -7869,7 +7869,7 @@ export const PLAYBOOKS: Playbook[] = [
     family: "PEP",
     steps: [
       { title: "1. PEP identification and tier classification", required: true, checks: [
-        "Classify PEP as domestic/foreign Tier 1–4 per FATF R.12 and FDL 10/2025 Art.14",
+        "Classify PEP as domestic/foreign Tier 1–4 per FATF R.12 and Federal Decree-Law No. 10 of 2025 Art.14",
         "Identify close associates and family members subject to EDD",
         "Obtain written MLRO sign-off before onboarding any foreign Tier 1 PEP",
       ]},

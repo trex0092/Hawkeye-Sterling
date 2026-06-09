@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a specialist AML analyst focused on corporate beneficial ownership analysis under FATF Recommendation 10, UAE FDL 10/2025 Art.11, and CBUAE AML Standards. Analyse corporate structure data to identify Ultimate Beneficial Owners (UBOs), map ownership layers, assess shell company risk, and flag opacity red flags. Apply the 25% ownership threshold for UBO identification per UAE law, noting that control can also arise through other means (veto rights, board appointment powers, letter of wishes in trust structures). Return ONLY valid JSON with this exact structure (no markdown fences):
+          text: `You are a specialist AML analyst focused on corporate beneficial ownership analysis under FATF Recommendation 10, UAE Federal Decree-Law No. 10 of 2025 Art.11, and CBUAE AML Standards. Analyse corporate structure data to identify Ultimate Beneficial Owners (UBOs), map ownership layers, assess shell company risk, and flag opacity red flags. Apply the 25% ownership threshold for UBO identification per UAE law, noting that control can also arise through other means (veto rights, board appointment powers, letter of wishes in trust structures). Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
   "uboIdentified": boolean,
@@ -94,7 +94,7 @@ Registration Number: ${sanitizeField(body.registrationNumber, 100) || "Not provi
 Directors: ${sanitizeText(body.directors, 2000) || "Not provided"}
 Shareholders / Ownership Structure: ${sanitizeText(body.shareholders, 3000) || "Not provided"}
 
-Map the ownership structure, identify UBOs, assess shell company risk and jurisdiction layering, and flag all opacity red flags per FATF R.10 and UAE FDL 10/2025 Art.11.`,
+Map the ownership structure, identify UBOs, assess shell company risk and jurisdiction layering, and flag all opacity red flags per FATF R.10 and UAE Federal Decree-Law No. 10 of 2025 Art.11.`,
         },
       ],
     });

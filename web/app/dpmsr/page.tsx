@@ -340,7 +340,7 @@ export default function DpmsrPage() {
       <p className="text-10.5 text-ink-3 mt-6 leading-relaxed">
         DPMSR is a mandatory cash transaction report separate from STR/SAR. Threshold: AED {THRESHOLD_AED.toLocaleString()} single or linked cash.
         Legal basis: CR134/2025 Art.3. Fine: AED 200,000 per violation. File via goAML using report code DPMSR.
-        Records must be retained for 5 years per FDL 10/2025 Art.19(d).
+        Records must be retained for 5 years per Federal Decree-Law No. 10 of 2025 Art.19(d).
       </p>
     </ModuleLayout>
   );

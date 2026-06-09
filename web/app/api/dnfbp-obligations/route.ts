@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE FDL 10/2025 and FATF Recommendations 22-23.
+        system: `You are a UAE AML/CFT specialist mapping Designated Non-Financial Business and Profession (DNFBP) obligations under UAE Federal Decree-Law No. 10 of 2025 and FATF Recommendations 22-23.
 
 UAE DNFBP categories and their specific obligations:
 
@@ -100,7 +100,7 @@ UAE DNFBP categories and their specific obligations:
 7. VIRTUAL ASSET SERVICE PROVIDERS (VASPs)
    - Supervised by VARA (Dubai) or ADGM FSRA; FATF R.15
 
-Key obligations for all DNFBPs (FDL 10/2025):
+Key obligations for all DNFBPs (Federal Decree-Law No. 10 of 2025):
 - CDD (Art.14), Record keeping 8 years (Art.16), CTR ≥ AED 55,000 (Art.17), STR within 2 business days (Art.26), MLRO appointment (Art.19), Training (Art.19(3)), EOCN screening (Cabinet Decision 74/2020)
 
 Respond ONLY with valid JSON — no markdown fences:

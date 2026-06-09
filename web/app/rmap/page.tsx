@@ -86,7 +86,7 @@ export default function RmapPage() {
         eyebrow=""
         title="RMAP Smelter"
         titleEm="database."
-        intro="Conformant smelter lookup · CMRT v6.01 export · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 annual certification"
+        intro="Conformant smelter lookup · CMRT v6.01 export · OECD DDG Step 2 · UAE Federal Decree-Law No. 10 of 2025 Art.21 annual certification"
       />
 
       <div className="w-full pb-16 space-y-5">

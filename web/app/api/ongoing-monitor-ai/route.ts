@@ -1,7 +1,7 @@
 // POST /api/ongoing-monitor-ai
 //
 // AI pattern analysis for the ongoing monitoring portfolio under
-// FDL 10/2025 Art.11 and FATF R.10/R.12.  Detects escalating risk
+// Federal Decree-Law No. 10 of 2025 Art.11 and FATF R.10/R.12.  Detects escalating risk
 // patterns, cadence mismatches, and subjects requiring MLRO escalation.
 
 import { NextResponse } from "next/server";
@@ -56,7 +56,7 @@ interface RequestBody {
   subjects: SubjectInput[];
 }
 
-const SYSTEM_PROMPT = `You are a UAE AML compliance analyst reviewing the ongoing monitoring portfolio. Analyze all monitored subjects for: escalating risk patterns (subjects overdue multiple cycles), behavioral anomalies based on tier mismatch (high-risk subject on weekly instead of daily cadence), subjects whose notes suggest increased risk, and subjects that should be escalated to MLRO review. This is ongoing monitoring under FDL 10/2025 Art.11 and FATF R.10/R.12.
+const SYSTEM_PROMPT = `You are a UAE AML compliance analyst reviewing the ongoing monitoring portfolio. Analyze all monitored subjects for: escalating risk patterns (subjects overdue multiple cycles), behavioral anomalies based on tier mismatch (high-risk subject on weekly instead of daily cadence), subjects whose notes suggest increased risk, and subjects that should be escalated to MLRO review. This is ongoing monitoring under Federal Decree-Law No. 10 of 2025 Art.11 and FATF R.10/R.12.
 
 Return ONLY a JSON object with this exact structure:
 {

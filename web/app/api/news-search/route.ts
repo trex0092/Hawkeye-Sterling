@@ -366,7 +366,7 @@ interface NewsResponse {
   // Live-retrieval health. Distinguishes "searched the world, found nothing"
   // (retrieval:"live" → a genuine, documentable negative finding) from "could
   // not reach any news source" (retrieval:"unavailable" → an outage that must
-  // NOT be presented as a clean result). FATF R.10 / FDL 10/2025: a wholesale
+  // NOT be presented as a clean result). FATF R.10 / Federal Decree-Law No. 10 of 2025: a wholesale
   // feed outage is not evidence of absence.
   retrieval: "live" | "degraded" | "unavailable";
   feedsAttempted: number;             // feeds we tried to fetch this request

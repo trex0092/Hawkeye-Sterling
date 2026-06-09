@@ -26,7 +26,7 @@ interface ClientRisk {
 }
 
 // Client Portal — entity-only onboarding. No individual top-level clients.
-// Shareholders (UBOs, directors, nominees) are sub-records per FDL 10/2025
+// Shareholders (UBOs, directors, nominees) are sub-records per Federal Decree-Law No. 10 of 2025
 // Art.10 (CDD) and Cabinet Decision 58/2020 (UBO identification).
 
 type PepStatus = "yes" | "no" | "unknown";
@@ -488,7 +488,7 @@ export default function ClientPortalPage() {
                 No individuals added yet — click &quot;+ Add Individual&quot; above.
                 <br />
                 <span className="text-10">
-                  Add all UBOs ≥ 25%, directors, and nominee individuals per FDL 10/2025 Art.10 / Cabinet Decision 58/2020.
+                  Add all UBOs ≥ 25%, directors, and nominee individuals per Federal Decree-Law No. 10 of 2025 Art.10 / Cabinet Decision 58/2020.
                 </span>
               </p>
             ) : (
@@ -509,7 +509,7 @@ export default function ClientPortalPage() {
           {/* ── Submit notice ─ buttons moved to sidebar Actions ───── */}
           <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
             <p className="text-10.5 text-ink-3 leading-relaxed max-w-2xl">
-              By submitting you consent to screening under FDL 10/2025 Art.10 (CDD)
+              By submitting you consent to screening under Federal Decree-Law No. 10 of 2025 Art.10 (CDD)
               and confirm data accuracy under Art.29 (false-statement offence).
               UBO information is shared with MoE / MOEC as required by Cabinet
               Decision 58/2020.

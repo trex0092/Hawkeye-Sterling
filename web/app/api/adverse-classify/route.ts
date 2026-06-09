@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1800,
-        system: `You are a UAE MLRO specialist classifying adverse media against FATF Recommendation 3 predicate offences and UAE FDL 10/2025 AML/CFT thresholds. Apply the 23 FATF predicate offence categories. Assess whether the information meets reasonable grounds for suspicion under UAE FDL 10/2025 Art.21.
+        system: `You are a UAE MLRO specialist classifying adverse media against FATF Recommendation 3 predicate offences and UAE Federal Decree-Law No. 10 of 2025 AML/CFT thresholds. Apply the 23 FATF predicate offence categories. Assess whether the information meets reasonable grounds for suspicion under UAE Federal Decree-Law No. 10 of 2025 Art.21.
 
 CRITICAL INSTRUCTION: If the input text is too brief or lacks substantive allegations, set adverseRisk to "low", mediaCredibility to "low", temporalRelevance to "unclear", and sarThresholdMet to false. List corroboration steps that would be required. Do NOT inflate risk for minimal input. Do NOT deflate risk for full article text containing clear criminal allegations (arrests, investigations, prosecution, sanctions). Reuters, AP, AFP, Bloomberg articles from credible journalists are "high" credibility.
 

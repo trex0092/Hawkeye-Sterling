@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `GAP-${dd}-${mm}-${yyyy}`;
-  const regs = "FDL 10/2025 · CBUAE GOVERNANCE STANDARDS · FATF R.1";
+  const regs = "Federal Decree-Law No. 10 of 2025 · CBUAE GOVERNANCE STANDARDS · FATF R.1";
 
   const grade = gapResult.overallGrade ?? "C";
   const tone = grade === "A" || grade === "B" ? "sage" : grade === "C" ? "amber" : "ember";
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     module: "GOVERNANCE OVERSIGHT",
     title: "Governance Gap Analysis Report",
     // hsCover() now escapes subtitle via escHtml() — pass the raw value.
-    subtitle: `Assessment of AML/CFT governance framework for ${institution} against CBUAE AML Standards and UAE FDL 10/2025 requirements.`,
+    subtitle: `Assessment of AML/CFT governance framework for ${institution} against CBUAE AML Standards and UAE Federal Decree-Law No. 10 of 2025 requirements.`,
     subjectLabel: "INSTITUTION",
     subjectName: institution,
     subjectMeta: `UAE · DMCC · ${reportId}`,

@@ -82,8 +82,8 @@ Lists to assess:
 Key rules:
 - EOCN/UN hit = immediate freeze, no delay, no court order — UAE CTF Law Art.7
 - OFAC SDN = US persons and USD transactions prohibited; secondary sanctions risk
-- Tipping off prohibited — FDL 10/2025 Art.25
-- STR within 2 business days of confirmed hit — FDL 10/2025 Art.26
+- Tipping off prohibited — Federal Decree-Law No. 10 of 2025 Art.25
+- STR within 2 business days of confirmed hit — Federal Decree-Law No. 10 of 2025 Art.26
 
 Note: You are assessing RISK AND OBLIGATION — not conducting a live database search. Assess based on the entity's profile and provide guidance on compliance obligations.
 

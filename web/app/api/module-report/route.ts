@@ -323,11 +323,11 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Adverse media co-hits cross-referenced with standalone adverse media module\n" +
     "☐ No HIGH or CRITICAL-risk subject onboarded without documented MLRO written sign-off\n" +
     "☐ False-positive rate within approved operating threshold (≤ 3%)\n" +
-    "☐ Audit chain entry confirmed: every AI screening decision logged per FDL 10/2025 Art.18\n" +
+    "☐ Audit chain entry confirmed: every AI screening decision logged per Federal Decree-Law No. 10 of 2025 Art.18\n" +
     "☐ Screening timestamp within 24 hours of subject submission\n\n" +
     "ESCALATION TRIGGERS: Any unresolved MATCH_FOUND disposition older than 24 hours must be escalated to MLRO. Any subject matching a designation issued within the past 30 days requires immediate senior MLRO review and potential asset freeze assessment.\n\n" +
     "CONSEQUENCES OF NON-COMPLIANCE: Failure to screen against designated persons lists before establishing a business relationship or executing a transaction constitutes a criminal offence under UAE law. Penalties include regulatory fines, licence suspension, and personal liability for the MLRO.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.20/2018 Art.18 (CDD obligations), UAE FDL No.10/2025 Art.18 (AI audit trail), FATF Recommendation 6 (Targeted Financial Sanctions), FATF Recommendation 10 (Customer Due Diligence), Cabinet Decision No.74/2020 (Anti-Money Laundering).",
+    "REGULATORY BASIS: Federal Decree-Law No. 20 of 2018 Art.18 (CDD obligations), Federal Decree-Law No. 10 of 2025 Art.18 (AI audit trail), FATF Recommendation 6 (Targeted Financial Sanctions), FATF Recommendation 10 (Customer Due Diligence), Cabinet Decision No.74/2020 (Anti-Money Laundering).",
 
   batch:
     "BATCH SCREENING RUN — COMPLIANCE REPORT\n\n" +
@@ -346,7 +346,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "SLA REQUIREMENTS: MATCH_FOUND dispositions must be reviewed within 24 hours of batch completion. Overdue dispositions beyond 48 hours breach internal SLA and require MLRO escalation with written justification.\n\n" +
     "ESCALATION TRIGGERS: Hit rate deviating more than 2 standard deviations from the 30-day rolling average must be investigated immediately. Any batch producing zero results against a known-populated watchlist must be treated as a system failure.\n\n" +
     "CONSEQUENCES OF NON-COMPLIANCE: Undisposed batch hits create unacknowledged sanctions exposure. Any transaction processed against a subject with an unresolved MATCH_FOUND may constitute a sanctions violation.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18, FATF Recommendation 6, FATF Recommendation 10, Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 6, FATF Recommendation 10, Cabinet Decision No.74/2020.",
 
   "adverse-media-lookback":
     "ADVERSE MEDIA LOOKBACK SCREENING — COMPLIANCE REPORT\n\n" +
@@ -363,7 +363,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ MLRO disposition recorded for every HIGH/CRITICAL-scored subject before onboarding\n\n" +
     "THRESHOLDS & SLAs: HIGH-risk subjects must receive MLRO disposition within 48 hours. CRITICAL-risk subjects must receive MLRO disposition within 24 hours and trigger automatic EDD. Subjects with no adverse media must have a CLEAR verdict logged for audit purposes.\n\n" +
     "ESCALATION TRIGGERS: Any subject with adverse media allegations of terrorism financing, sanctions evasion, or bribery of a public official requires immediate senior MLRO review regardless of NLP score.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 12 (Politically Exposed Persons — EDD obligations), FATF Recommendation 10 (CDD), UAE FDL No.10/2025 Art.18 (AI-assisted screening audit trail).",
+    "REGULATORY BASIS: FATF Recommendation 12 (Politically Exposed Persons — EDD obligations), FATF Recommendation 10 (CDD), Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted screening audit trail).",
 
   "adverse-media":
     "ADVERSE MEDIA SCREENING — COMPLIANCE REPORT\n\n" +
@@ -377,11 +377,11 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ HIGH and CRITICAL verdicts confirmed as blocking onboarding until MLRO disposition recorded\n" +
     "☐ Article evidence preserved with URL, publication date, and capture timestamp\n" +
     "☐ Hallucination gate passed — no AI-generated article citations present in output\n" +
-    "☐ Audit chain entry written per FDL 10/2025 Art.18 AI decision logging requirement\n" +
+    "☐ Audit chain entry written per Federal Decree-Law No. 10 of 2025 Art.18 AI decision logging requirement\n" +
     "☐ MLRO override (if applicable) documented with written reasoning\n\n" +
     "THRESHOLDS: Any unresolved HIGH-risk adverse media finding blocks onboarding and transaction approval until MLRO written disposition is recorded. CRITICAL findings trigger automatic EDD and senior management notification within 4 hours.\n\n" +
     "ESCALATION TRIGGERS: Adverse media involving current or former heads of state, government ministers, or designated terrorist financiers must be escalated to the MLRO and legal counsel regardless of overall score.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 12, UAE FDL No.10/2025 Art.18, UAE FDL No.20/2018 Art.18 (CDD), FATF Recommendation 10.",
+    "REGULATORY BASIS: FATF Recommendation 12, Federal Decree-Law No. 10 of 2025 Art.18, Federal Decree-Law No. 20 of 2018 Art.18 (CDD), FATF Recommendation 10.",
 
   "adverse-media-live":
     "LIVE ADVERSE MEDIA FEED — COMPLIANCE REPORT\n\n" +
@@ -399,7 +399,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Escalation path to MLRO on-call confirmed operational and tested within past 30 days\n\n" +
     "SLAs: CRITICAL alerts must be actioned within 4 hours. HIGH alerts within 24 hours. Feed downtime exceeding 4 hours constitutes an operational incident requiring MLRO notification and incident log entry (SOC2 CC7.4). Feeds silent for more than 1 hour without maintenance window require automated alerting.\n\n" +
     "ESCALATION TRIGGERS: Any CRITICAL alert involving a current customer triggers immediate MLRO notification and potential account restriction. Alert queue backlog exceeding 50 unacknowledged items requires a declared incident response.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (system resilience and AI decision audit), FATF Recommendation 12, SOC2 CC7.4 (incident detection and response).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (system resilience and AI decision audit), FATF Recommendation 12, SOC2 CC7.4 (incident detection and response).",
   // 02 · MLRO Daily Digest
   analytics:
     "MLRO DAILY DIGEST — ANALYTICS COMPLIANCE REPORT\n\n" +
@@ -411,13 +411,13 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Escalation rate reviewed — sustained increase ≥ 20% week-on-week requires documented assessment\n" +
     "☐ Alert-to-SAR conversion rate consistent with historical baseline\n" +
     "☐ Model drift indicators reviewed — any drifted mode triggers re-attestation within 5 business days\n" +
-    "☐ All AI performance metrics logged to audit chain per FDL 10/2025 Art.18\n" +
+    "☐ All AI performance metrics logged to audit chain per Federal Decree-Law No. 10 of 2025 Art.18\n" +
     "☐ Dashboard reviewed by MLRO at minimum weekly cadence; ad-hoc review on any RED KPI\n" +
     "☐ Comparative trend analysis completed for current period versus prior 4 weeks\n" +
     "☐ Board reporting pack updated with current-period analytics summary\n\n" +
     "THRESHOLDS & SLAs: Any KPI breach since last review requires documented root-cause analysis within 48 hours. Sustained FP rate > 5% for more than 3 consecutive days requires MLRO written assessment and board notification within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Bias ratio exceeding 1.15, FP rate exceeding 5%, or case volume spike > 50% day-on-day must be escalated to MLRO immediately and investigated within 24 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI performance monitoring and audit trail), FATF Recommendation 1 (risk-based approach), NIST AI RMF MEASURE-2.7 (model performance monitoring).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI performance monitoring and audit trail), FATF Recommendation 1 (risk-based approach), NIST AI RMF MEASURE-2.7 (model performance monitoring).",
 
   rmi:
     "RISK & MANAGEMENT INFORMATION (RMI) — COMPLIANCE REPORT\n\n" +
@@ -435,7 +435,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ MLRO sign-off recorded before board submission\n\n" +
     "THRESHOLDS & SLAs: Any KRI breaching RED threshold must be escalated to the board within 5 business days. KRIs in breach for more than 10 business days without a documented remediation plan require mandatory CEO and board notification.\n\n" +
     "ESCALATION TRIGGERS: New RED KRI identified, KRI breaching threshold for second consecutive period, or any KRI with no assigned owner must be escalated to MLRO immediately.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (risk governance), FATF Recommendation 1 (risk-based approach and risk assessment), UAE FDL No.20/2018 (enterprise risk management obligations).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (risk governance), FATF Recommendation 1 (risk-based approach and risk assessment), Federal Decree-Law No. 20 of 2018 (enterprise risk management obligations).",
 
   oversight:
     "COMPLIANCE OVERSIGHT — MLRO REVIEW REPORT\n\n" +
@@ -453,7 +453,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ MLRO certification completed and dated before period close\n\n" +
     "SLA REQUIREMENTS: Overdue STR cases (> 30 days open) require senior MLRO escalation. Four-eyes items overdue > 5 business days require written justification and MLRO approval to extend. Staff suspended from regulated activities must be reinstated via a formal competency sign-off process.\n\n" +
     "ESCALATION TRIGGERS: Any material compliance failure, regulatory breach, or criminal conduct disclosure must be notified to the board within 2 business days and to the competent authority per applicable regulatory timeframes.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight and governance), UAE FDL No.20/2018 Art.18 (MLRO responsibilities), FATF Recommendation 18 (internal controls and compliance function).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight and governance), Federal Decree-Law No. 20 of 2018 Art.18 (MLRO responsibilities), FATF Recommendation 18 (internal controls and compliance function).",
   // 03 · Audit Log
   "audit-trail":
     "AUDIT TRAIL INTEGRITY — COMPLIANCE REPORT\n\n" +
@@ -471,7 +471,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Chain integrity validation script (validate-audit-chain.mjs) run and passed\n\n" +
     "CRITICAL CONTROLS: The audit chain is append-only by architecture. Any detected modification, deletion, or gap constitutes a critical compliance incident. Chain integrity failures must be reported to the board within 24 hours and to the regulator within the applicable notification window.\n\n" +
     "ESCALATION TRIGGERS: Any single gap in the HMAC chain, any AI decision found to be unlogged, or any audit entry found to have been modified after creation must be treated as a critical incident per the Incident Runbook.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (append-only AI decision audit trail), SOC2 CC7.4 (audit log integrity), UAE FDL No.20/2018 Art.26 (record retention for 10 years), FATF Recommendation 11 (record-keeping).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (append-only AI decision audit trail), SOC2 CC7.4 (audit log integrity), Federal Decree-Law No. 20 of 2018 Art.26 (record retention for 10 years), FATF Recommendation 11 (record-keeping).",
 
   // 04 · Four-Eyes Approvals
   "cdd-review":
@@ -490,7 +490,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ CDD review must not be approved by the initiating officer — any single-person approval is invalid\n\n" +
     "THRESHOLDS & SLAs: CDD reviews must be completed within 5 business days of submission. HIGH/CRITICAL risk reviews require senior MLRO sign-off within 48 hours. Expired CDD (> 12 months without refresh for HIGH risk, > 24 months for MEDIUM) must be re-initiated before any account activity.\n\n" +
     "ESCALATION TRIGGERS: Any CDD review where the same officer appears as both maker and checker must be immediately voided, re-submitted, and the incident logged. Any subject attempting onboarding with expired CDD must be blocked.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight and four-eyes controls), FATF Recommendation 10 (CDD measures), UAE FDL No.20/2018 Art.18 (CDD obligations), Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight and four-eyes controls), FATF Recommendation 10 (CDD measures), Federal Decree-Law No. 20 of 2018 Art.18 (CDD obligations), Cabinet Decision No.74/2020.",
 
   "ubo-declaration":
     "UBO DECLARATION — BENEFICIAL OWNERSHIP REVIEW REPORT\n\n" +
@@ -509,7 +509,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ UBO register to be refreshed annually or on any material change in ownership\n\n" +
     "THRESHOLDS & SLAs: Unresolved UBO chains block account opening indefinitely. Any new UBO emerging post-onboarding must be notified within 14 days and the UBO declaration refreshed. Shell company layers > 3 require escalation to EDD with legal counsel engagement.\n\n" +
     "ESCALATION TRIGGERS: Circular ownership patterns, nominee structures obscuring beneficial ownership, or UBO identification impossible due to bearer shares require immediate MLRO and legal counsel notification.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership identification), Cabinet Decision No.74/2020 Art.8 (UBO transparency), UAE Federal Decree-Law No.32/2021 (Companies Act UBO register), UAE FDL No.10/2025 Art.18.",
+    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership identification), Cabinet Decision No.74/2020 Art.8 (UBO transparency), UAE Federal Decree-Law No.32/2021 (Companies Act UBO register), Federal Decree-Law No. 10 of 2025 Art.18.",
   // 05 · STR/SAR
   "str-cases":
     "SUSPICIOUS TRANSACTION REPORT (STR) CASE — COMPLIANCE REPORT\n\n" +
@@ -528,7 +528,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All case documentation retained for 10 years from filing date\n\n" +
     "THRESHOLDS & SLAs: STR cases must not remain open without a disposition for more than 30 days. Cases approaching the regulatory filing deadline (varies by jurisdiction — confirm with MLRO) require immediate escalation. Late filings must be disclosed to the regulator with an explanation.\n\n" +
     "TIPPING-OFF PROHIBITION: No information about the STR filing or the underlying suspicion may be disclosed to the subject or to any unauthorised third party. Tipping-off is a criminal offence.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.20/2018 Art.15 (STR filing obligation), Cabinet Decision No.10/2019 Art.15 (goAML reporting), UAE FDL No.10/2025 Art.18, FATF Recommendation 20 (suspicious transaction reporting).",
+    "REGULATORY BASIS: Federal Decree-Law No. 20 of 2018 Art.15 (STR filing obligation), Cabinet Decision No.10/2019 Art.15 (goAML reporting), Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 20 (suspicious transaction reporting).",
 
   "sar-qa":
     "SAR QUALITY ASSURANCE — COMPLIANCE REPORT\n\n" +
@@ -547,7 +547,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ No AI-only SAR may be filed — human MLRO written approval is a non-negotiable prerequisite\n\n" +
     "QUALITY STANDARDS: Any SAR narrative containing a hallucinated regulatory citation is immediately rejected and must be rewritten before QA re-commences. Factual errors in subject identifiers or transaction details invalidate the SAR and require correction before submission.\n\n" +
     "ESCALATION TRIGGERS: Repeated hallucination gate failures for a single case require escalation to the AI governance team for model review.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting standards), UAE FDL No.10/2025 Art.18 (human oversight of AI-generated content), FATF Recommendation 20.",
+    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting standards), Federal Decree-Law No. 10 of 2025 Art.18 (human oversight of AI-generated content), FATF Recommendation 20.",
 
   cases:
     "CASE MANAGEMENT — COMPLIANCE REPORT\n\n" +
@@ -565,7 +565,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Linked cases (same subject, related transactions) cross-referenced\n\n" +
     "RETENTION: All case documentation — including internal notes, evidence, and dispositions — must be retained for a minimum of 10 years from case closure. Retention policy enforced by system; manual deletion is not permitted.\n\n" +
     "ESCALATION TRIGGERS: Any case with no activity for 14 consecutive days, or any case approaching a filing deadline with no action plan, must be immediately escalated to the senior MLRO.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.26-27 (record keeping and retention), UAE FDL No.20/2018 Art.15 (investigation obligations), FATF Recommendation 20 (suspicious activity), FATF Recommendation 11 (record-keeping for 5 years minimum; UAE mandates 10 years).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.26-27 (record keeping and retention), Federal Decree-Law No. 20 of 2018 Art.15 (investigation obligations), FATF Recommendation 20 (suspicious activity), FATF Recommendation 11 (record-keeping for 5 years minimum; UAE mandates 10 years).",
 
   enforcement:
     "ENFORCEMENT ACTION — COMPLIANCE REPORT\n\n" +
@@ -583,7 +583,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All enforcement correspondence and response records retained for 10 years\n\n" +
     "CRITICAL DEADLINES: No enforcement correspondence may be left without a formal response past the stated deadline. Missing a regulatory response deadline constitutes a further compliance breach and must itself be disclosed. The board must be informed of the final outcome within 5 business days of resolution.\n\n" +
     "ESCALATION TRIGGERS: Any enforcement notice alleging criminal conduct, money laundering, or sanctions violations must be escalated to the board and to external legal counsel within 4 hours of receipt.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.26-27 (regulatory cooperation), CR 134/2025 Art.18 (supervisory response obligations), UAE FDL No.20/2018 (regulatory engagement), FATF Recommendation 27 (powers of supervisors).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.26-27 (regulatory cooperation), CR 134/2025 Art.18 (supervisory response obligations), Federal Decree-Law No. 20 of 2018 (regulatory engagement), FATF Recommendation 27 (powers of supervisors).",
 
   "goaml-submission":
     "goAML STR SUBMISSION — COMPLIANCE REPORT\n\n" +
@@ -601,7 +601,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Any REJECTED status (goAML error code) corrected and resubmitted within 24 hours\n\n" +
     "SLAs: Rejected submissions must be corrected and resubmitted within 24 hours of rejection receipt. Unacknowledged submissions (no ACK within 48 hours) must be investigated as a potential transmission failure.\n\n" +
     "ESCALATION TRIGGERS: Repeated goAML schema rejections for the same case must be escalated to the compliance technology team. Missing Rentity IDs (CG-4 compliance gap) must be treated as a P1 incident and the MLRO and CTO notified.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting requirements), CBUAE reporting circular, UAE FDL No.20/2018 Art.15, FATF Recommendation 20.",
+    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting requirements), CBUAE reporting circular, Federal Decree-Law No. 20 of 2018 Art.15, FATF Recommendation 20.",
 
   goaml:
     "goAML XML EXPORT — COMPLIANCE REPORT\n\n" +
@@ -619,7 +619,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Archive copy retained with the case management system for 10 years\n\n" +
     "DATA MINIMISATION: Only fields required by goAML schema may be populated. Additional PII fields available in the system but not required by the schema must not be included. Post-transmission, staging files must be deleted within 24 hours.\n\n" +
     "ESCALATION TRIGGERS: Any transmission failure, export file tampering, or inadvertent inclusion of excess PII requires immediate MLRO notification and a data incident log entry.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting), UAE FDL No.10/2025 Art.18 (data minimisation and audit), UAE PDPL (data minimisation principle), FATF Recommendation 20.",
+    "REGULATORY BASIS: Cabinet Decision No.10/2019 Art.15 (goAML reporting), Federal Decree-Law No. 10 of 2025 Art.18 (data minimisation and audit), UAE PDPL (data minimisation principle), FATF Recommendation 20.",
 
   "sar-narrative":
     "AI-GENERATED SAR NARRATIVE — COMPLIANCE REPORT\n\n" +
@@ -636,9 +636,9 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ AI-generated sections clearly marked and MLRO endorsement recorded for each section\n" +
     "☐ Human MLRO written sign-off obtained — AI output alone is never sufficient for STR filing\n" +
     "☐ goAML XML wrapper prepared and pre-validated against schema before final submission\n\n" +
-    "NON-NEGOTIABLE REQUIREMENT: AI-generated narratives may not be filed without mandatory human MLRO review and written sign-off. This is an absolute requirement under UAE FDL No.10/2025 Art.18 (human oversight of AI-assisted decisions in regulated contexts).\n\n" +
+    "NON-NEGOTIABLE REQUIREMENT: AI-generated narratives may not be filed without mandatory human MLRO review and written sign-off. This is an absolute requirement under Federal Decree-Law No. 10 of 2025 Art.18 (human oversight of AI-assisted decisions in regulated contexts).\n\n" +
     "ESCALATION TRIGGERS: Multiple hallucination gate failures for a single case require AI governance team escalation and possible model suspension from the SAR pipeline.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight requirement for AI decisions), Cabinet Decision No.10/2019 Art.15 (STR content requirements), FATF Recommendation 20.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight requirement for AI decisions), Cabinet Decision No.10/2019 Art.15 (STR content requirements), FATF Recommendation 20.",
   // 06 · FFR
   benford:
     "BENFORD'S LAW FINANCIAL FRAUD DETECTION — COMPLIANCE REPORT\n\n" +
@@ -656,7 +656,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Findings cross-referenced with transaction monitoring alerts for the same period\n\n" +
     "THRESHOLDS & SLAs: Any Z-score > 2.5 for leading-digit distribution must trigger a formal FFR investigation within 48 hours. Identified transaction clusters consistent with structuring (amounts just below reporting thresholds) must be escalated to MLRO and assessed for STR filing within 24 hours.\n\n" +
     "ESCALATION TRIGGERS: Statistically significant deviation in digit distribution combined with known high-risk typology patterns (round amounts, just-below-threshold clustering, high transaction frequency from single counterparty) constitutes a combined red flag requiring immediate MLRO escalation.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI-assisted fraud detection audit trail), FATF Typologies Report on financial fraud and money laundering through trade, FATF Recommendation 20 (reporting of suspicious transactions).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted fraud detection audit trail), FATF Typologies Report on financial fraud and money laundering through trade, FATF Recommendation 20 (reporting of suspicious transactions).",
 
   // 07 · CDD/KYC
   gleif:
@@ -675,7 +675,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Verification result logged to audit chain with GLEIF API response hash\n\n" +
     "THRESHOLDS: LAPSED LEIs block onboarding immediately and must not be unblocked until the entity has renewed and the LEI status returns to ISSUED. RETIRED LEIs require investigation into whether a successor entity exists and what happened to the predecessor.\n\n" +
     "ESCALATION TRIGGERS: Entity with a RETIRED LEI and no identified successor, or entity using an LEI belonging to a different legal person, must be treated as a potential identity fraud attempt and escalated to MLRO.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (entity identity verification), FATF Recommendation 10 (CDD — legal entity identification), EU Regulation 648/2012 (EMIR — LEI requirement for derivatives), FSB LEI framework.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (entity identity verification), FATF Recommendation 10 (CDD — legal entity identification), EU Regulation 648/2012 (EMIR — LEI requirement for derivatives), FSB LEI framework.",
 
   "entity-graph":
     "ENTITY GRAPH & UBO INTELLIGENCE — COMPLIANCE REPORT\n\n" +
@@ -693,7 +693,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Graph methodology reviewed for completeness — no known data gaps left unaddressed\n\n" +
     "THRESHOLDS & SLAs: Entities with > 3 shell company hops require EDD within 5 business days. Circular ownership requires legal counsel engagement within 48 hours. Entities connected to a sanctioned party at any degree require immediate MLRO escalation.\n\n" +
     "ESCALATION TRIGGERS: Any entity in the graph appearing on a sanctions list, with a confirmed PEP connection, or with more than 3 unresolvable UBO chain layers must be escalated to the MLRO for an EDD determination.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership), Cabinet Decision No.74/2020 Art.8, UAE FDL No.10/2025 Art.18, UAE Federal Decree-Law No.32/2021 (Companies Act).",
+    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership), Cabinet Decision No.74/2020 Art.8, Federal Decree-Law No. 10 of 2025 Art.18, UAE Federal Decree-Law No.32/2021 (Companies Act).",
 
   "domain-intel":
     "DOMAIN INTELLIGENCE — COMPLIANCE REPORT\n\n" +
@@ -711,7 +711,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Assessment documented with data-pull timestamps for audit admissibility\n\n" +
     "THRESHOLDS: Domains registered < 12 months old, privacy-shielded registrations, or domains flagged in threat intelligence feeds automatically trigger EDD before any business relationship proceeds. Domains with expired SSL certificates combined with any other risk flag block counterparty approval.\n\n" +
     "ESCALATION TRIGGERS: Any domain flagged in active threat intelligence feeds (malware, phishing, sanctions nexus) blocks counterparty approval immediately and requires MLRO review before the block may be lifted.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (CDD — enhanced due diligence for high-risk indicators), UAE FDL No.10/2025 Art.18 (digital identity verification), FATF Guidance on Virtual Assets and VASPs.",
+    "REGULATORY BASIS: FATF Recommendation 10 (CDD — enhanced due diligence for high-risk indicators), Federal Decree-Law No. 10 of 2025 Art.18 (digital identity verification), FATF Guidance on Virtual Assets and VASPs.",
 
   "crypto-risk":
     "CRYPTOCURRENCY / VIRTUAL ASSET RISK ASSESSMENT — COMPLIANCE REPORT\n\n" +
@@ -730,7 +730,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Assessment documented with blockchain explorer reference links and timestamp\n\n" +
     "THRESHOLDS: Any address scoring HIGH or CRITICAL must be escalated to MLRO before transaction processing. Mixer exposure > 10% is an automatic HIGH indicator. Any unregistered VASP counterparty requires enhanced due diligence and MLRO approval.\n\n" +
     "ESCALATION TRIGGERS: Confirmed darknet market association, confirmed ransomware linkage, or confirmed sanctioned entity connection requires immediate transaction blocking and MLRO + legal counsel notification.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 15 (Virtual Assets and VASPs), UAE Virtual Assets Regulatory Authority (VARA) framework, UAE FDL No.10/2025 Art.18, FATF Travel Rule guidance (Recommendation 16).",
+    "REGULATORY BASIS: FATF Recommendation 15 (Virtual Assets and VASPs), UAE Virtual Assets Regulatory Authority (VARA) framework, Federal Decree-Law No. 10 of 2025 Art.18, FATF Travel Rule guidance (Recommendation 16).",
 
   "vendor-dd":
     "VENDOR DUE DILIGENCE — COMPLIANCE REPORT\n\n" +
@@ -748,7 +748,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Vendor geographic risk assessed — vendors operating in FATF grey-list/black-list jurisdictions flagged\n\n" +
     "THRESHOLDS & SLAs: Vendors scoring ≥ 70 require MLRO written approval before any commercial engagement proceeds. HIGH-risk vendor re-screening must occur every 6 months. MEDIUM-risk vendors must be re-screened annually. Vendors whose risk score escalates to HIGH during the contract period must be reviewed within 30 days.\n\n" +
     "ESCALATION TRIGGERS: Any vendor with an unresolved sanctions match, a confirmed PEP beneficial owner, or a risk score change to CRITICAL must be suspended from use pending MLRO review.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (third-party risk management), FATF Recommendation 10 (CDD for business relationships), FATF Recommendation 18 (group-wide AML controls).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (third-party risk management), FATF Recommendation 10 (CDD for business relationships), FATF Recommendation 18 (group-wide AML controls).",
 
   "client-portal":
     "CLIENT PORTAL — ACTIVITY & COMPLIANCE REVIEW REPORT\n\n" +
@@ -766,7 +766,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Portal session logs retained for 10 years per record-keeping obligations\n\n" +
     "THRESHOLDS & SLAs: Pending verification items older than 7 days must be escalated. Pending items older than 30 days without any client response must trigger a formal account hold. Non-response after 60 days may trigger account termination per onboarding policy.\n\n" +
     "ESCALATION TRIGGERS: Anomalous portal access patterns (bulk document download, access from a new jurisdiction not previously associated with the client, repeated failed MFA) must be referred to the security team and MLRO within 24 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (CDD document management), FATF Recommendation 10 (CDD), SOC2 CC6.1 (access controls), UAE PDPL (data minimisation for client documents).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (CDD document management), FATF Recommendation 10 (CDD), SOC2 CC6.1 (access controls), UAE PDPL (data minimisation for client documents).",
 
   intel:
     "OSINT INTELLIGENCE — COMPLIANCE REPORT\n\n" +
@@ -784,7 +784,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Assessment reviewed by MLRO and outcome disposition recorded\n\n" +
     "EVIDENCE STANDARDS: OSINT findings used to support an EDD decision, a SAR filing, or a risk reclassification must be from tier-1 or tier-2 sources with full provenance recorded. Tier-3 sources may be noted but must be corroborated before being used as a primary basis for a compliance decision.\n\n" +
     "ESCALATION TRIGGERS: OSINT findings indicating politically-exposed status, involvement in criminal proceedings, or links to designated persons must be immediately escalated to the MLRO regardless of other screening results.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (EDD — open-source public information), UAE FDL No.10/2025 Art.18, FATF Recommendation 12 (PEP identification).",
+    "REGULATORY BASIS: FATF Recommendation 10 (EDD — open-source public information), Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 12 (PEP identification).",
 
   osint:
     "OSINT INTELLIGENCE — COMPLIANCE REPORT\n\n" +
@@ -802,7 +802,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Assessment reviewed by MLRO and outcome disposition recorded\n\n" +
     "EVIDENCE STANDARDS: OSINT findings used to support an EDD decision, a SAR filing, or a risk reclassification must be from tier-1 or tier-2 sources with full provenance recorded. Tier-3 sources may be noted but must be corroborated before being used as a primary basis for a compliance decision.\n\n" +
     "ESCALATION TRIGGERS: OSINT findings indicating politically-exposed status, involvement in criminal proceedings, or links to designated persons must be immediately escalated to the MLRO regardless of other screening results.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (EDD — open-source public information), UAE FDL No.10/2025 Art.18, FATF Recommendation 12 (PEP identification).",
+    "REGULATORY BASIS: FATF Recommendation 10 (EDD — open-source public information), Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 12 (PEP identification).",
 
   onboarding:
     "CUSTOMER ONBOARDING — COMPLIANCE REPORT\n\n" +
@@ -822,7 +822,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Account activation blocked until all mandatory CDD steps are complete and signed off\n\n" +
     "THRESHOLDS & SLAs: Onboarding records incomplete after 30 days must be reviewed by MLRO. Records incomplete after 60 days without a valid exception must be closed. HIGH and CRITICAL risk customers must have MLRO written approval before any account activation — no exceptions.\n\n" +
     "ESCALATION TRIGGERS: Any customer attempting to proceed without completing mandatory CDD, any customer providing forged or tampered identity documents, or any customer with an unresolved sanctions hit must be blocked and the MLRO notified immediately.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.20/2018 Art.18 (CDD at onboarding), FATF Recommendation 10 (CDD measures), UAE FDL No.10/2025 Art.18 (AI-assisted CDD audit trail), Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: Federal Decree-Law No. 20 of 2018 Art.18 (CDD at onboarding), FATF Recommendation 10 (CDD measures), Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted CDD audit trail), Cabinet Decision No.74/2020.",
 
   "pep-profile":
     "POLITICALLY EXPOSED PERSON (PEP) PROFILE — COMPLIANCE REPORT\n\n" +
@@ -841,7 +841,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ PEP status change monitoring active — system notifies MLRO if PEP leaves position\n\n" +
     "THRESHOLDS & SLAs: PEP relationships must be reviewed annually at minimum. Any adverse media finding involving a current PEP customer triggers immediate re-assessment within 48 hours. Foreign PEPs generally require higher scrutiny than domestic PEPs — risk classification must reflect this.\n\n" +
     "ESCALATION TRIGGERS: Any PEP customer with unexplained wealth inconsistent with their known official income, or with adverse media allegations of corruption or financial crime, must be immediately escalated to the MLRO and the board for a relationship continuation decision.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 12 (PEP — enhanced due diligence), UAE FDL No.20/2018 Art.18 (PEP obligations), UAE FDL No.10/2025 Art.18, FATF Guidance on PEPs (2013).",
+    "REGULATORY BASIS: FATF Recommendation 12 (PEP — enhanced due diligence), Federal Decree-Law No. 20 of 2018 Art.18 (PEP obligations), Federal Decree-Law No. 10 of 2025 Art.18, FATF Guidance on PEPs (2013).",
 
   ownership:
     "OWNERSHIP STRUCTURE — BENEFICIAL OWNERSHIP REVIEW REPORT\n\n" +
@@ -860,7 +860,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Ownership structure to be refreshed on any material change and at minimum annually\n\n" +
     "THRESHOLDS: Ownership chains > 4 layers require EDD and legal counsel review. Circular structures that make UBO identification impossible are an automatic relationship-refusal trigger. Bearer shares not converted to registered form within 30 days of notification block account activation.\n\n" +
     "ESCALATION TRIGGERS: Failure to identify UBOs after exhaustive investigation, discovery of bearer shares, or identification of a UBO who is a designated person or subject to a sanctions designation requires immediate MLRO and legal counsel escalation.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership), Cabinet Decision No.74/2020 Art.8, UAE Federal Decree-Law No.32/2021 (Companies Act — UBO register), UAE FDL No.10/2025 Art.18.",
+    "REGULATORY BASIS: FATF Recommendation 10 (beneficial ownership), Cabinet Decision No.74/2020 Art.8, UAE Federal Decree-Law No.32/2021 (Companies Act — UBO register), Federal Decree-Law No. 10 of 2025 Art.18.",
   // 08 · TM
   "transaction-monitor":
     "TRANSACTION MONITORING — ALERT REVIEW COMPLIANCE REPORT\n\n" +
@@ -878,7 +878,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All alert dispositions logged to audit chain with MLRO identity and timestamp\n\n" +
     "SLAs: CRITICAL alerts must be reviewed within 4 hours. HIGH alerts within 24 hours. MEDIUM alerts within 72 hours. Any alert exceeding its SLA without a disposition requires MLRO escalation with written justification.\n\n" +
     "ESCALATION TRIGGERS: Alert clusters for the same subject across multiple typologies simultaneously indicate a potential complex money laundering scheme — immediately escalate to MLRO for cumulative review regardless of individual alert severity.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 20 (suspicious transaction reporting), UAE FDL No.20/2018 Art.15, UAE FDL No.10/2025 Art.18 (AI-assisted TM audit trail), Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: FATF Recommendation 20 (suspicious transaction reporting), Federal Decree-Law No. 20 of 2018 Art.15, Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted TM audit trail), Cabinet Decision No.74/2020.",
 
   // 09 · Compliance Ops
   policies:
@@ -886,7 +886,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "Compliance policy review submitted. Current policy version, MLRO approval currency, regulatory reflection, staff notification status, and next scheduled review date assessed.\n\n" +
     "REVIEW CHECKLIST:\n" +
     "☐ Current policy version bears MLRO approval signature and approval date\n" +
-    "☐ Policy reflects all applicable FDL No.10/2025 and FDL No.20/2018 provisions\n" +
+    "☐ Policy reflects all applicable Federal Decree-Law No. 10 of 2025 and Federal Decree-Law No. 20 of 2018 provisions\n" +
     "☐ Policy reflects current FATF Recommendations — last FATF update applied\n" +
     "☐ Policy reflects Cabinet Decision No.74/2020 and all applicable subsidiary regulations\n" +
     "☐ All staff notified of the current policy version — acknowledgement receipts retained\n" +
@@ -897,7 +897,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Policies not reviewed within 12 months are immediately escalated for emergency review\n\n" +
     "REVIEW CYCLE: The AML/CFT policy must be reviewed and re-approved at minimum annually. An extraordinary review must be triggered by any material change in the regulatory framework, a significant business change, or a material compliance failure. Outdated policies create regulatory liability.\n\n" +
     "ESCALATION TRIGGERS: Any policy found to be non-compliant with current regulations (not just lapsed review date) must be immediately suspended from active use and an emergency review convened within 5 business days.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 18 (internal controls and AML/CFT policies), UAE FDL No.20/2018 Art.16 (AML policy obligations), UAE FDL No.10/2025 Art.18, CBUAE Supervisory Guidance.",
+    "REGULATORY BASIS: FATF Recommendation 18 (internal controls and AML/CFT policies), Federal Decree-Law No. 20 of 2018 Art.16 (AML policy obligations), Federal Decree-Law No. 10 of 2025 Art.18, CBUAE Supervisory Guidance.",
 
   regulatory:
     "REGULATORY OBLIGATION TRACKING — COMPLIANCE REPORT\n\n" +
@@ -915,7 +915,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Board reporting pack updated with current obligation status summary\n\n" +
     "THRESHOLDS & SLAs: Overdue obligations must be escalated to the board within 2 business days of breach. New obligations must be triaged within 5 business days. Material obligations (those carrying criminal liability or significant fine risk) must be escalated to the board and legal counsel immediately on identification.\n\n" +
     "ESCALATION TRIGGERS: Any obligation with criminal liability if missed (e.g., STR filing deadline, TFS notification window) must be escalated to MLRO and legal counsel on identification with a daily monitoring cadence until resolved.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (governance and regulatory compliance), UAE FDL No.20/2018 (MLRO obligations), FATF Recommendation 18, CBUAE supervisory requirements.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (governance and regulatory compliance), Federal Decree-Law No. 20 of 2018 (MLRO obligations), FATF Recommendation 18, CBUAE supervisory requirements.",
 
   playbook:
     "COMPLIANCE PLAYBOOK — REVIEW REPORT\n\n" +
@@ -933,7 +933,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Playbooks not tested within 6 months suspended from active status pending re-certification\n\n" +
     "TESTING REQUIREMENT: Compliance playbooks must be tested at minimum every 6 months. Testing methods accepted: full simulation, table-top exercise, or documented peer review by a qualified compliance officer. The testing method, date, participants, and any gaps identified must be recorded.\n\n" +
     "ESCALATION TRIGGERS: Any playbook invoked in a live incident where responsible officers were unavailable, contact details were wrong, or escalation paths failed must be immediately reviewed and updated. Gaps found during an incident are priority-one remediation items.\n\n" +
-    "REGULATORY BASIS: SOC2 CC7.4 (incident response and recovery procedures), UAE FDL No.10/2025 Art.18 (operational resilience), FATF Recommendation 18 (internal controls), CBUAE Operational Resilience Guidance.",
+    "REGULATORY BASIS: SOC2 CC7.4 (incident response and recovery procedures), Federal Decree-Law No. 10 of 2025 Art.18 (operational resilience), FATF Recommendation 18 (internal controls), CBUAE Operational Resilience Guidance.",
 
   "data-quality":
     "DATA QUALITY — COMPLIANCE REPORT\n\n" +
@@ -951,7 +951,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Audit trail of all data quality review activities maintained\n\n" +
     "THRESHOLDS & SLAs: Data quality score below 85% triggers a formal remediation workflow. Score below 70% constitutes a critical data integrity issue requiring immediate MLRO notification and a 5-business-day emergency remediation plan. Repeated breaches require root-cause analysis and MLRO sign-off.\n\n" +
     "ESCALATION TRIGGERS: Any data quality issue affecting the ability to screen customers against watchlists (e.g., missing name fields), assign risk classifications, or meet regulatory reporting deadlines must be treated as a critical incident.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (data accuracy in AI-assisted decisions), FATF Recommendation 11 (record-keeping accuracy), SOC2 CC4.2 (data quality and integrity).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (data accuracy in AI-assisted decisions), FATF Recommendation 11 (record-keeping accuracy), SOC2 CC4.2 (data quality and integrity).",
 
   corrections:
     "DATA CORRECTION AUDIT — COMPLIANCE REPORT\n\n" +
@@ -969,7 +969,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Any correction made without the required four-eyes approval flagged as a compliance breach\n\n" +
     "COMPLIANCE BREACH STANDARD: Any correction made without four-eyes sign-off is a compliance breach requiring immediate MLRO notification, investigation of how the control was bypassed, and implementation of a preventive measure within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Corrections to SAR narratives, sanctions dispositions, or risk classifications without MLRO approval are treated as potential audit integrity violations requiring senior management review.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (audit chain integrity and human oversight), FATF Recommendation 11 (record accuracy and immutability), SOC2 CC7.4 (data integrity controls).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (audit chain integrity and human oversight), FATF Recommendation 11 (record accuracy and immutability), SOC2 CC7.4 (data integrity controls).",
 
   "access-control":
     "ACCESS CONTROL AUDIT — COMPLIANCE REPORT\n\n" +
@@ -987,7 +987,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Privileged user list (admins, MLRO-level) reviewed and approved by board annually\n\n" +
     "THRESHOLDS & SLAs: Access recertification must occur at minimum every 90 days. Dormant accounts must be deactivated within 30 days of the 60-day inactivity trigger. Terminated employee access must be revoked within 24 hours of HR notification — immediate revocation for involuntary terminations.\n\n" +
     "ESCALATION TRIGGERS: Any orphaned admin account (no associated active employee), any access rights granted without documented approval, or any privileged access event outside approved hours requires immediate security team and MLRO investigation.\n\n" +
-    "REGULATORY BASIS: SOC2 CC6.1 (logical access controls), UAE FDL No.10/2025 Art.18 (access governance), FATF Recommendation 18 (internal controls — segregation of duties).",
+    "REGULATORY BASIS: SOC2 CC6.1 (logical access controls), Federal Decree-Law No. 10 of 2025 Art.18 (access governance), FATF Recommendation 18 (internal controls — segregation of duties).",
 
   "maker-checker":
     "MAKER-CHECKER WORKFLOW — COMPLIANCE REPORT\n\n" +
@@ -1005,7 +1005,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Checker workload distribution reviewed — no single checker overloaded\n\n" +
     "TOCTOU PROTECTION: The system re-reads every regulated record under write lock immediately before the checker's approval is finalised. This prevents the classic Time-of-Check-Time-of-Use vulnerability where a record is modified between the checker reviewing it and the approval being recorded. Any system issue disabling this lock must be treated as a critical security incident.\n\n" +
     "ESCALATION TRIGGERS: Any single-person approval on a regulated action (CDD sign-off, SAR filing, risk override) is a four-eyes breach. The action must be voided, the incident logged, and the MLRO and security team notified within 4 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight and four-eyes controls), FATF Recommendation 18 (segregation of duties), SOC2 CC6.1 (logical access — segregation).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight and four-eyes controls), FATF Recommendation 18 (segregation of duties), SOC2 CC6.1 (logical access — segregation).",
 
   approvals:
     "APPROVAL WORKFLOW — COMPLIANCE REPORT\n\n" +
@@ -1023,7 +1023,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All approval events logged to the append-only audit chain\n\n" +
     "NON-COMPLIANT APPROVALS: Any approval processed outside the system (verbal approval, email instruction, or informal sign-off) is a compliance breach with no valid audit trail. It must be logged as an incident, the approval re-processed through the system, and controls reviewed to prevent recurrence.\n\n" +
     "ESCALATION TRIGGERS: URGENT items not approved within 4 hours, any approval where the authority level was exceeded, or any out-of-system approval discovered must be escalated to the MLRO within 2 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight controls), FATF Recommendation 18 (four-eyes and segregation), SOC2 CC6.1 (authorisation controls).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight controls), FATF Recommendation 18 (four-eyes and segregation), SOC2 CC6.1 (authorisation controls).",
 
   profile:
     "USER PROFILE & PERMISSIONS — COMPLIANCE REPORT\n\n" +
@@ -1041,7 +1041,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Password policy compliance confirmed for all accounts not using SSO\n\n" +
     "THRESHOLDS & SLAs: Inactive accounts (> 90 days without login) must be reviewed within 5 business days and either reactivated with justification or deactivated. Privilege escalations must be reviewed and approved within 24 hours of request. Any self-escalation attempt is a security incident.\n\n" +
     "ESCALATION TRIGGERS: Any account with orphaned (no associated active user) admin rights, any shared credentials discovered, or any privilege escalation without documented approval must be treated as a security incident and investigated within 24 hours.\n\n" +
-    "REGULATORY BASIS: SOC2 CC6.1 (user access management), UAE FDL No.10/2025 Art.18 (access controls for AI systems), FATF Recommendation 18 (segregation of duties and access controls).",
+    "REGULATORY BASIS: SOC2 CC6.1 (user access management), Federal Decree-Law No. 10 of 2025 Art.18 (access controls for AI systems), FATF Recommendation 18 (segregation of duties and access controls).",
 
   cnmr:
     "CASH AND NON-MONETARY REPORT (CNMR) — COMPLIANCE REPORT\n\n" +
@@ -1059,7 +1059,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ MLRO review and sign-off obtained before submission\n\n" +
     "FILING DEADLINE: Late CNMR filings carry regulatory penalties and must be immediately disclosed to the MLRO and reported to the board. A root-cause analysis must be conducted for any late filing, and the findings reported to the board within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Any failure to identify and report a transaction above the threshold is a regulatory breach. Any discovered unreported transaction from a prior period must be treated as a late filing and disclosed to the regulator immediately.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.20/2018 Art.15 (reporting obligations), CBUAE Cash Transaction Reporting requirements, UAE FDL No.10/2025 Art.18 (audit trail for regulatory filings), Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: Federal Decree-Law No. 20 of 2018 Art.15 (reporting obligations), CBUAE Cash Transaction Reporting requirements, Federal Decree-Law No. 10 of 2025 Art.18 (audit trail for regulatory filings), Cabinet Decision No.74/2020.",
 
   dpmsr:
     "DESIGNATED PERSONS MONITORING & SANCTIONS REPORT (DPMSR) — COMPLIANCE REPORT\n\n" +
@@ -1077,7 +1077,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ MLRO sign-off obtained before each DPMSR submission\n\n" +
     "CRITICAL REQUIREMENT: DPMSR filings for confirmed designated persons (particularly UN Security Council designations) are time-critical. Delays beyond the prescribed regulatory window may constitute a criminal offence. Any backlog in DPMSR filings must be treated as a P1 incident.\n\n" +
     "ESCALATION TRIGGERS: Any unactioned designated person alert older than 24 hours must be immediately escalated to the MLRO. Any confirmed designation where asset freeze has not been initiated must be treated as an emergency compliance incident.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.74/2020 (TFS obligations), UN Security Council Resolutions (immediate asset freeze requirements), UAE FDL No.20/2018 Art.18 (designated person reporting), CBUAE reporting circulars.",
+    "REGULATORY BASIS: Cabinet Decision No.74/2020 (TFS obligations), UN Security Council Resolutions (immediate asset freeze requirements), Federal Decree-Law No. 20 of 2018 Art.18 (designated person reporting), CBUAE reporting circulars.",
 
   "moe-survey":
     "MINISTRY OF ECONOMY AML/CFT SURVEY — COMPLIANCE REPORT\n\n" +
@@ -1095,7 +1095,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Survey data retained for 10 years as part of regulatory correspondence records\n\n" +
     "DEADLINE COMPLIANCE: Late or incomplete MoE AML/CFT survey submissions carry regulatory penalties and may reflect negatively in the institutional risk assessment conducted by the supervisory authority. Any anticipated late submission must be proactively communicated to MoE before the deadline.\n\n" +
     "ESCALATION TRIGGERS: Any survey response that reveals a material compliance gap or a previously unreported regulatory breach must be immediately disclosed to the MLRO and legal counsel before submission.\n\n" +
-    "REGULATORY BASIS: UAE Ministry of Economy AML/CFT supervisory framework, UAE FDL No.20/2018 (regulatory reporting obligations), UAE FDL No.10/2025 Art.18, FATF Recommendation 27 (powers of supervisors).",
+    "REGULATORY BASIS: UAE Ministry of Economy AML/CFT supervisory framework, Federal Decree-Law No. 20 of 2018 (regulatory reporting obligations), Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 27 (powers of supervisors).",
 
   "oecd-ddg":
     "OECD 5-STEP DUE DILIGENCE GUIDANCE — COMPLIANCE REPORT\n\n" +
@@ -1112,7 +1112,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Next annual review date scheduled\n\n" +
     "ANNUAL REPORTING: The OECD 5-Step DDG requires annual public reporting on supply chain due diligence. Failure to report, or reporting that misrepresents compliance status, creates reputational and regulatory risk. The annual report must be reviewed by legal counsel before publication.\n\n" +
     "ESCALATION TRIGGERS: Any identified supply chain risk flagged as SEVERE (conflict minerals, child labour, forced labour, or direct financing of armed groups) must be immediately escalated to the MLRO, legal counsel, and the board regardless of the overall assessment stage.\n\n" +
-    "REGULATORY BASIS: OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas, UAE Ministerial Decision No.68/2024 (responsible sourcing requirements), UAE FDL No.10/2025 Art.18.",
+    "REGULATORY BASIS: OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas, UAE Ministerial Decision No.68/2024 (responsible sourcing requirements), Federal Decree-Law No. 10 of 2025 Art.18.",
 
   "responsible-sourcing":
     "RESPONSIBLE SOURCING — COMPLIANCE REPORT\n\n" +
@@ -1130,7 +1130,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Third-party audit findings reviewed and integrated into risk assessment\n\n" +
     "THRESHOLD: Any supply chain with unresolved conflict-zone exposure must be suspended from procurement immediately pending MLRO and legal review. No payment to a suspended supplier may be authorised until the review is complete and the risk disposition documented.\n\n" +
     "ESCALATION TRIGGERS: Any supply chain found to directly finance armed groups, involve child or forced labour, or violate applicable export control laws requires immediate suspension, MLRO notification, and legal counsel engagement.\n\n" +
-    "REGULATORY BASIS: UAE Ministerial Decision No.68/2024 (responsible sourcing), OECD 5-Step Due Diligence Guidance, Dodd-Frank Act Section 1502 (for applicable entities), UAE FDL No.10/2025 Art.18.",
+    "REGULATORY BASIS: UAE Ministerial Decision No.68/2024 (responsible sourcing), OECD 5-Step Due Diligence Guidance, Dodd-Frank Act Section 1502 (for applicable entities), Federal Decree-Law No. 10 of 2025 Art.18.",
 
   "tfs-alerts":
     "TARGETED FINANCIAL SANCTIONS (TFS) ALERT REVIEW — COMPLIANCE REPORT\n\n" +
@@ -1149,7 +1149,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Board notified of all confirmed TFS matches within 24 hours\n\n" +
     "CRIMINAL LIABILITY: Failure to act on a confirmed TFS match (designated person, sanctioned entity) within the prescribed timeframe is a criminal offence in the UAE and may carry personal liability for the MLRO. There is no de minimis threshold — all confirmed matches must be actioned.\n\n" +
     "ESCALATION TRIGGERS: Any unactioned TFS alert older than 24 hours, any confirmed designation where asset freeze has not been initiated, or any suspected tipping-off of the designated person must be treated as a P1 incident requiring immediate escalation.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.74/2020 (TFS immediate obligations), UN Security Council Resolutions (binding — no exceptions), UAE FDL No.20/2018 Art.18, FATF Recommendation 6 (targeted financial sanctions implementation).",
+    "REGULATORY BASIS: Cabinet Decision No.74/2020 (TFS immediate obligations), UN Security Council Resolutions (binding — no exceptions), Federal Decree-Law No. 20 of 2018 Art.18, FATF Recommendation 6 (targeted financial sanctions implementation).",
 
   "typology-library":
     "TYPOLOGY LIBRARY — REVIEW REPORT\n\n" +
@@ -1167,7 +1167,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Typology library version control maintained — previous versions archived\n\n" +
     "REVIEW CYCLE: Typologies must be reviewed and re-validated at minimum annually. A triggered review is required following any FATF Mutual Evaluation finding, any MENAFATF guidance update, or any material change in the institution's risk profile or product mix.\n\n" +
     "ESCALATION TRIGGERS: Any typology mode that has generated zero alerts for 90 consecutive days must be reviewed for calibration failure. A production typology returning anomalous results (e.g., sudden 10x alert spike) must be suspended and investigated immediately.\n\n" +
-    "REGULATORY BASIS: FATF Typologies Reports, MENAFATF Typologies, UAE FDL No.10/2025 Art.18 (AI model performance monitoring), FATF Recommendation 20 (suspicious transaction detection), NIST AI RMF MEASURE-2.7.",
+    "REGULATORY BASIS: FATF Typologies Reports, MENAFATF Typologies, Federal Decree-Law No. 10 of 2025 Art.18 (AI model performance monitoring), FATF Recommendation 20 (suspicious transaction detection), NIST AI RMF MEASURE-2.7.",
   // 10 · Shipments
   shipments:
     "SHIPMENT COMPLIANCE — REVIEW REPORT\n\n" +
@@ -1186,7 +1186,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All shipping documentation retained for 10 years\n\n" +
     "HOLD REQUIREMENT: Any shipment with unresolved sanctions, export control, or dark-vessel flags must be placed on hold immediately. No goods may be released, no payment made, and no freight forwarding instruction issued until MLRO clearance is documented.\n\n" +
     "ESCALATION TRIGGERS: Confirmed sanctioned vessel, confirmed sanctioned counterparty, goods destined for a UN-embargoed jurisdiction, or evidence of cargo misdeclaration requires immediate MLRO escalation and potential law enforcement notification.\n\n" +
-    "REGULATORY BASIS: UAE Federal Export Control Law, UAE FDL No.10/2025 Art.18 (trade compliance), FATF Recommendation 6 (trade-based money laundering), OFAC vessel guidance, UN Security Council embargo resolutions.",
+    "REGULATORY BASIS: UAE Federal Export Control Law, Federal Decree-Law No. 10 of 2025 Art.18 (trade compliance), FATF Recommendation 6 (trade-based money laundering), OFAC vessel guidance, UN Security Council embargo resolutions.",
 
   // 11 · Employees
   employees:
@@ -1205,7 +1205,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Training records retained for 10 years from the date of each training completion\n\n" +
     "THRESHOLDS & SLAs: Training completion rate below 95% triggers a remediation plan within 5 business days. Staff in a regulated role without current training must be immediately suspended from regulated activities until training is completed. Background screening must be completed before any new hire commences in a regulated role — no exceptions.\n\n" +
     "ESCALATION TRIGGERS: Any employee found to have a criminal conviction for financial crime, fraud, or money laundering discovered during background screening must be immediately suspended pending HR and MLRO review. Any employee who refuses to file a declaration of interest must be reported to the MLRO.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (staff competency for AI-assisted compliance), UAE FDL No.20/2018 Art.17 (staff AML/CFT training obligations), FATF Recommendation 18 (AML/CFT internal controls — staff training).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (staff competency for AI-assisted compliance), Federal Decree-Law No. 20 of 2018 Art.17 (staff AML/CFT training obligations), FATF Recommendation 18 (AML/CFT internal controls — staff training).",
 
   // 12 · Training
   training:
@@ -1225,7 +1225,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Third-party training providers (if used) confirmed as qualified and contracted\n\n" +
     "QUALITY STANDARD: Training content must be reviewed and re-approved by the MLRO at minimum annually and on any significant regulatory update. Training that does not reflect current regulatory requirements creates a compliance risk and may be grounds for regulatory criticism during an examination.\n\n" +
     "ESCALATION TRIGGERS: A department with a pass rate < 60% constitutes a systemic training failure requiring immediate MLRO notification and an emergency refresher programme. Any employee in a client-facing regulated role failing training must be removed from regulated activities until remediation is completed.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.20/2018 Art.17 (AML/CFT training obligations), UAE FDL No.10/2025 Art.18 (competency requirements for AI-assisted compliance), FATF Recommendation 18 (staff training and awareness).",
+    "REGULATORY BASIS: Federal Decree-Law No. 20 of 2018 Art.17 (AML/CFT training obligations), Federal Decree-Law No. 10 of 2025 Art.18 (competency requirements for AI-assisted compliance), FATF Recommendation 18 (staff training and awareness).",
   // 13 · Governance
   ewra:
     "ENTERPRISE-WIDE RISK ASSESSMENT (EWRA) — COMPLIANCE REPORT\n\n" +
@@ -1244,7 +1244,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ EWRA document version-controlled and retained for 10 years\n\n" +
     "REVIEW TRIGGERS: An extraordinary EWRA must be initiated within 30 days of: a new product launch, entry into a new geographic market, a material change in customer risk profile, a regulatory enforcement action, or a material compliance failure.\n\n" +
     "ESCALATION TRIGGERS: Any risk category assessed as CRITICAL with an INEFFECTIVE control must be escalated to the board within 5 business days with an emergency remediation plan.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 1 (risk-based approach — national and institutional risk assessments), UAE FDL No.10/2025 Art.18 (AI risk governance), UAE FDL No.20/2018 Art.16 (institutional risk assessment obligations), FATF Guidance on Risk-Based Approach.",
+    "REGULATORY BASIS: FATF Recommendation 1 (risk-based approach — national and institutional risk assessments), Federal Decree-Law No. 10 of 2025 Art.18 (AI risk governance), Federal Decree-Law No. 20 of 2018 Art.16 (institutional risk assessment obligations), FATF Guidance on Risk-Based Approach.",
 
   "responsible-ai":
     "RESPONSIBLE AI GOVERNANCE — COMPLIANCE REPORT\n\n" +
@@ -1263,7 +1263,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ AI governance policy reviewed and current — last MLRO approval within 12 months\n\n" +
     "NON-NEGOTIABLE THRESHOLD: Bias ratio > 1.15 (per CG-BIAS-001 deliberate deviation — tighter than FATF floor 1.5) requires the affected model to be immediately suspended from production and the MLRO notified. MLRO acknowledgement of the threshold deviation is required annually.\n\n" +
     "ESCALATION TRIGGERS: Any OVERDUE attestation in a production model, any bias ratio breach, or any prompt hash manifest mismatch (indicating an unapproved system prompt in production) must be treated as a P1 AI governance incident.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI governance, audit trail, human oversight), NIST AI RMF (GOVERN-1, MAP-1, MEASURE-2, MANAGE-1), FATF Recommendation 1 (non-discrimination in risk assessment).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI governance, audit trail, human oversight), NIST AI RMF (GOVERN-1, MAP-1, MEASURE-2, MANAGE-1), FATF Recommendation 1 (non-discrimination in risk assessment).",
 
   "eval-kpi":
     "AI EVALUATION KPI — COMPLIANCE REPORT\n\n" +
@@ -1281,7 +1281,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Re-evaluation and MLRO sign-off completed before model is reinstated to production\n\n" +
     "CRITICAL KPI: The false-negative rate (missed true positives — screening misses) is the highest-risk metric from a compliance perspective. Any increase in the false-negative rate, even within an otherwise acceptable F1 range, must be investigated as a potential compliance risk.\n\n" +
     "ESCALATION TRIGGERS: Any model whose recall drops below 85%, FP rate exceeds 5%, or bias ratio exceeds 1.15 must be suspended from production and the MLRO notified within 4 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI performance monitoring), NIST AI RMF MEASURE-2.7 (AI system performance metrics), FATF Recommendation 1 (non-discriminatory and effective risk-based approach).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI performance monitoring), NIST AI RMF MEASURE-2.7 (AI system performance metrics), FATF Recommendation 1 (non-discriminatory and effective risk-based approach).",
 
   "analytics-dashboard":
     "ANALYTICS DASHBOARD — COMPLIANCE REPORT\n\n" +
@@ -1299,7 +1299,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Dashboard data sourced exclusively from validated, audit-trailed systems — no manual overrides\n\n" +
     "THRESHOLDS: Any metric outside the approved operating range requires a documented response within 48 hours. Metrics outside the range for more than 3 consecutive review days require escalation to the board with a remediation plan.\n\n" +
     "ESCALATION TRIGGERS: Simultaneous breach of multiple KPIs (e.g., FP rate AND bias ratio breach on the same day) indicates a potential systemic model issue and must be treated as a P1 AI governance incident.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI performance monitoring and audit trail), NIST AI RMF MEASURE-2.7, FATF Recommendation 1 (ongoing risk-based monitoring).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI performance monitoring and audit trail), NIST AI RMF MEASURE-2.7, FATF Recommendation 1 (ongoing risk-based monitoring).",
 
   "kri-dashboard":
     "KEY RISK INDICATOR (KRI) DASHBOARD — COMPLIANCE REPORT\n\n" +
@@ -1317,7 +1317,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All KRI data sourced from validated, audit-trailed systems\n\n" +
     "THRESHOLDS & SLAs: Any KRI breaching RED threshold must be escalated to the board within 5 business days. KRIs in breach for more than 10 business days without a documented remediation plan require mandatory CEO and board notification. AMBER KRIs not resolved within 20 business days escalate to RED.\n\n" +
     "ESCALATION TRIGGERS: Simultaneous RED breaches across 3 or more KRIs indicate a systemic compliance stress event and must be escalated to the board and the MLRO as a priority risk assessment.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 1 (risk-based approach and ongoing risk monitoring), UAE FDL No.10/2025 Art.18 (risk governance), UAE FDL No.20/2018 (enterprise risk management obligations).",
+    "REGULATORY BASIS: FATF Recommendation 1 (risk-based approach and ongoing risk monitoring), Federal Decree-Law No. 10 of 2025 Art.18 (risk governance), Federal Decree-Law No. 20 of 2018 (enterprise risk management obligations).",
 
   "incident-runbook":
     "INCIDENT RESPONSE RUNBOOK — REVIEW REPORT\n\n" +
@@ -1336,7 +1336,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Runbooks not tested within 6 months suspended from active status pending re-certification\n\n" +
     "TESTING REQUIREMENT: The incident runbook must be tested every 6 months. Results of each test, including identified gaps and remediation actions, must be documented and reviewed by the MLRO. A runbook that has never been tested is not a runbook — it is a document.\n\n" +
     "ESCALATION TRIGGERS: Any incident runbook invocation where responsible officers were unreachable, escalation paths failed, or regulator notification deadlines were missed must be reviewed and remediated within 5 business days.\n\n" +
-    "REGULATORY BASIS: SOC2 CC7.4 (incident response and recovery), UAE FDL No.10/2025 Art.18 (operational resilience), FATF Recommendation 18 (internal controls — incident response), CBUAE Operational Resilience Guidance.",
+    "REGULATORY BASIS: SOC2 CC7.4 (incident response and recovery), Federal Decree-Law No. 10 of 2025 Art.18 (operational resilience), FATF Recommendation 18 (internal controls — incident response), CBUAE Operational Resilience Guidance.",
 
   "reg-change":
     "REGULATORY CHANGE MANAGEMENT — COMPLIANCE REPORT\n\n" +
@@ -1354,7 +1354,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Staff communications issued for changes affecting day-to-day compliance activities\n\n" +
     "THRESHOLDS & SLAs: All new obligations must be triaged within 5 business days. Obligations carrying criminal liability must be escalated to MLRO and legal counsel immediately on identification — zero triage delay. Implementation plans must be board-approved for material changes within 15 business days of identification.\n\n" +
     "ESCALATION TRIGGERS: Any regulatory change that creates a compliance gap in a currently active process (e.g., new screening requirement, shorter STR window) must be immediately escalated as a priority remediation item.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (regulatory compliance governance), UAE FDL No.20/2018 (ongoing compliance obligations), FATF Recommendation 18 (regulatory compliance function), CBUAE supervisory expectations.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (regulatory compliance governance), Federal Decree-Law No. 20 of 2018 (ongoing compliance obligations), FATF Recommendation 18 (regulatory compliance function), CBUAE supervisory expectations.",
   // 14 · Routines
   "ongoing-monitor":
     "ONGOING MONITORING — COMPLIANCE REPORT\n\n" +
@@ -1372,7 +1372,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Ongoing monitoring records retained for 10 years per record-keeping obligations\n\n" +
     "THRESHOLDS & SLAs: HIGH-risk customers overdue for quarterly re-screening by more than 14 days must be suspended from new transactions pending completion. Any customer whose re-screening produces a new MATCH_FOUND must be treated as a new sanctions alert with immediate MLRO escalation.\n\n" +
     "ESCALATION TRIGGERS: Any customer identified through ongoing monitoring as a designated person or as having materially elevated risk must be immediately escalated to the MLRO. A customer downgrading their own risk profile through document changes without corresponding substance (e.g., new incorporation in a lower-risk jurisdiction) must be investigated for evasion.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 10 (ongoing monitoring as a core CDD obligation), UAE FDL No.20/2018 Art.18 (periodic CDD refresh), UAE FDL No.10/2025 Art.18 (AI-assisted monitoring audit trail).",
+    "REGULATORY BASIS: FATF Recommendation 10 (ongoing monitoring as a core CDD obligation), Federal Decree-Law No. 20 of 2018 Art.18 (periodic CDD refresh), Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted monitoring audit trail).",
 
   // 15 · MLRO Workbench
   "mlro-advisor":
@@ -1389,9 +1389,9 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Guidance session output retained in the audit trail for 10 years\n" +
     "☐ Subject matter of guidance documented (jurisdiction, regulatory topic, decision context)\n" +
     "☐ If guidance was relied upon for a compliance decision, that decision is separately documented\n\n" +
-    "NON-NEGOTIABLE REQUIREMENT: AI-generated regulatory guidance may never be relied upon for a compliance decision without mandatory human MLRO review and written sign-off. This is an absolute requirement under UAE FDL No.10/2025 Art.18 (human oversight of AI-assisted decisions in regulated contexts). The MLRO must apply professional judgment — not merely ratify AI output.\n\n" +
+    "NON-NEGOTIABLE REQUIREMENT: AI-generated regulatory guidance may never be relied upon for a compliance decision without mandatory human MLRO review and written sign-off. This is an absolute requirement under Federal Decree-Law No. 10 of 2025 Art.18 (human oversight of AI-assisted decisions in regulated contexts). The MLRO must apply professional judgment — not merely ratify AI output.\n\n" +
     "ESCALATION TRIGGERS: Repeated hallucination gate failures in the MLRO Advisor module require escalation to the AI governance team for model review. Any guidance that leads to an incorrect compliance decision must be investigated as a near-miss incident.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (human oversight requirement for AI decisions in regulated contexts), UAE FDL No.20/2018 Art.17 (MLRO responsibilities and expertise requirements).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (human oversight requirement for AI decisions in regulated contexts), Federal Decree-Law No. 20 of 2018 Art.17 (MLRO responsibilities and expertise requirements).",
 
   investigation:
     "COMPLIANCE INVESTIGATION — REPORT\n\n" +
@@ -1410,7 +1410,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Tipping-off prohibition observed throughout — subject not informed of the investigation or filing\n\n" +
     "TIPPING-OFF PROHIBITION: Throughout the investigation, no information about the investigation or any potential STR filing may be communicated to the subject, any associate of the subject, or any third party not authorised to receive it. Tipping-off is a criminal offence.\n\n" +
     "ESCALATION TRIGGERS: Investigations with indicators of terrorism financing, proliferation financing, or state-sanctioned money laundering require immediate escalation to MLRO, legal counsel, and — where there is an immediate risk — law enforcement.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 20 (suspicious transaction reporting), UAE FDL No.20/2018 Art.15 (STR investigation obligations), UAE FDL No.10/2025 Art.18 (audit trail for AI-assisted investigation), Cabinet Decision No.10/2019.",
+    "REGULATORY BASIS: FATF Recommendation 20 (suspicious transaction reporting), Federal Decree-Law No. 20 of 2018 Art.15 (STR investigation obligations), Federal Decree-Law No. 10 of 2025 Art.18 (audit trail for AI-assisted investigation), Cabinet Decision No.10/2019.",
 
   heatmap:
     "GEOGRAPHIC RISK HEATMAP — COMPLIANCE REPORT\n\n" +
@@ -1428,7 +1428,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Jurisdiction scoring methodology MLRO-approved — last methodology review within 12 months\n\n" +
     "THRESHOLDS: A risk score change of 2 or more tiers (e.g., LOW to HIGH) for any jurisdiction in the institution's portfolio requires immediate customer re-assessment for all affected relationships within 30 days. New FATF grey-list entries require portfolio-wide re-screening within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Any jurisdiction added to the FATF black-list (or equivalent UN embargo) in which the institution has active customer relationships requires immediate MLRO escalation and a board notification within 24 hours.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 1 (jurisdiction risk in the risk-based approach), FATF Recommendations 10 and 19 (EDD for high-risk countries), UAE FDL No.10/2025 Art.18, Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: FATF Recommendation 1 (jurisdiction risk in the risk-based approach), FATF Recommendations 10 and 19 (EDD for high-risk countries), Federal Decree-Law No. 10 of 2025 Art.18, Cabinet Decision No.74/2020.",
 
   "brain-map":
     "BRAIN INTELLIGENCE ARCHITECTURE — COMPLIANCE REPORT\n\n" +
@@ -1446,7 +1446,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Brain architecture audit script (brain-audit.mjs) run and passed\n\n" +
     "CIRCUIT BREAKER: If the model router circuit breaker is in OPEN state, all AI-assisted decisions are falling back to the fail-closed path (HELD_REVIEW). This affects screening, transaction monitoring, and SAR narrative generation. An OPEN circuit breaker lasting more than 30 minutes requires P1 incident declaration.\n\n" +
     "ESCALATION TRIGGERS: Any OVERDUE attestation in a production model, any circuit breaker OPEN state, or any prompt hash manifest mismatch must be treated as a P1 AI governance incident with immediate MLRO and CTO notification.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI system integrity and audit trail), NIST AI RMF GOVERN-1 and MANAGE-1 (model governance), FATF Guidance on AI in AML/CFT.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI system integrity and audit trail), NIST AI RMF GOVERN-1 and MANAGE-1 (model governance), FATF Guidance on AI in AML/CFT.",
 
   "intelligence-hub":
     "INTELLIGENCE HUB — UNIFIED COMPLIANCE REPORT\n\n" +
@@ -1464,7 +1464,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ API Docs section reviewed — all endpoints confirmed as documented and current\n\n" +
     "CROSS-SECTION INTEGRITY: The Intelligence Hub aggregates signals from all major compliance modules. A RED signal in any section reflects a real compliance or technical issue in the underlying module. Signals must not be dismissed as 'display issues' — each must be investigated at the source.\n\n" +
     "ESCALATION TRIGGERS: Simultaneous RED signals in the Brain drift and Red-team pass rate sections indicate a potential combined AI integrity and adversarial robustness failure — escalate to the MLRO and AI governance team as a P1 incident.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI system governance and unified oversight), NIST AI RMF (integrated AI risk monitoring), FATF Recommendation 1 (risk-based approach across all compliance functions).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI system governance and unified oversight), NIST AI RMF (integrated AI risk monitoring), FATF Recommendation 1 (risk-based approach across all compliance functions).",
 
   "intelligence-tools":
     "INTELLIGENCE TOOLS GOVERNANCE — COMPLIANCE REPORT\n\n" +
@@ -1482,7 +1482,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Tool access audit records retained for 10 years\n\n" +
     "THRESHOLDS: Bulk exports exceeding 1,000 records in a single session require documented business justification and MLRO approval. Off-hours access (outside 07:00–22:00 local time) without a logged business reason must be investigated.\n\n" +
     "ESCALATION TRIGGERS: Any bulk export of CDD or screening data without documented justification, any access from a jurisdiction not associated with the user's role, or any credential-sharing indicator must be treated as a potential insider threat and referred to the security team within 4 hours.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (access controls for AI-assisted compliance tools), SOC2 CC6.1 (logical access), FATF Recommendation 18 (internal controls — system access).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (access controls for AI-assisted compliance tools), SOC2 CC6.1 (logical access), FATF Recommendation 18 (internal controls — system access).",
 
   "batch-screening":
     "BATCH SCREENING — COMPLIANCE REPORT\n\n" +
@@ -1497,10 +1497,10 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Watchlist version confirmed current at time of batch execution\n" +
     "☐ Batch runtime within SLA — timeouts or partial completion treated as a system incident\n" +
     "☐ Output file integrity verified — hash of output file computed and retained\n" +
-    "☐ All batch screening results logged to audit chain per FDL 10/2025 Art.18\n\n" +
+    "☐ All batch screening results logged to audit chain per Federal Decree-Law No. 10 of 2025 Art.18\n\n" +
     "BATCH INTEGRITY: The batch output file hash must be verified before the MLRO review queue is populated. Any discrepancy between the expected subject count and the actual processed count must be investigated as a potential system failure before any MATCH_FOUND results are reviewed.\n\n" +
     "ESCALATION TRIGGERS: Hit rate deviating more than 2 standard deviations from the 30-day rolling average, or a batch producing zero MATCH_FOUND results against a watchlist where hits are historically expected, must be escalated as potential system failure.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI-assisted screening audit trail), FATF Recommendation 6 (targeted financial sanctions screening completeness), Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI-assisted screening audit trail), FATF Recommendation 6 (targeted financial sanctions screening completeness), Cabinet Decision No.74/2020.",
 
   "country-risk":
     "COUNTRY RISK ASSESSMENT — COMPLIANCE REPORT\n\n" +
@@ -1518,7 +1518,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Board reporting pack updated with jurisdiction risk changes in the period\n\n" +
     "THRESHOLDS: A risk score change of ≥ 2 tiers for any jurisdiction in the institution's portfolio requires immediate customer re-assessment for all affected relationships within 30 days. New FATF grey-list entries require portfolio-wide re-screening within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Any new FATF black-list entry, new UN Security Council geographic embargo, or CBUAE enhanced counter-measures directive for a jurisdiction in the institution's active portfolio requires board notification within 24 hours.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 1 (jurisdiction risk), FATF Recommendations 10 and 19 (EDD for high-risk countries), UAE FDL No.10/2025 Art.18, Cabinet Decision No.74/2020.",
+    "REGULATORY BASIS: FATF Recommendation 1 (jurisdiction risk), FATF Recommendations 10 and 19 (EDD for high-risk countries), Federal Decree-Law No. 10 of 2025 Art.18, Cabinet Decision No.74/2020.",
 
   "country-risk-map":
     "COUNTRY RISK MAP — COMPLIANCE REPORT\n\n" +
@@ -1536,7 +1536,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Board reporting pack updated with the current country risk map summary\n\n" +
     "METHODOLOGY INTEGRITY: Country risk scores must be based on published, verifiable sources: FATF plenary outcomes, UN Security Council resolutions, CBUAE guidance, and credible country risk indices. Any departure from the approved methodology requires MLRO written approval.\n\n" +
     "ESCALATION TRIGGERS: Any internal jurisdiction risk score change that lowers the risk classification for a jurisdiction that FATF has grey-listed or black-listed requires immediate MLRO review — internal scores must not contradict binding FATF designations.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 1, FATF Recommendations 10 and 19, UAE FDL No.10/2025 Art.18, UAE FDL No.20/2018.",
+    "REGULATORY BASIS: FATF Recommendation 1, FATF Recommendations 10 and 19, Federal Decree-Law No. 10 of 2025 Art.18, Federal Decree-Law No. 20 of 2018.",
 
   "sanctions-evasion":
     "SANCTIONS EVASION DETECTION — COMPLIANCE REPORT\n\n" +
@@ -1554,7 +1554,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Investigation records retained for 10 years\n\n" +
     "REPORTING URGENCY: Confirmed sanctions evasion attempts must be reported to the competent authority immediately — there is no grace period. Any delay in reporting constitutes a further breach. Concurrent notification to the MLRO, legal counsel, and the board is required.\n\n" +
     "ESCALATION TRIGGERS: Any evasion pattern connected to a UN Security Council designated entity, any indication of state-sponsored sanctions evasion, or any pattern suggesting systematic circumvention (not an isolated incident) requires immediate MLRO, board, and legal counsel escalation.\n\n" +
-    "REGULATORY BASIS: FATF Recommendation 6 (targeted financial sanctions and evasion detection), Cabinet Decision No.74/2020, UAE FDL No.20/2018 Art.18, OFAC advisory on sanctions evasion red flags.",
+    "REGULATORY BASIS: FATF Recommendation 6 (targeted financial sanctions and evasion detection), Cabinet Decision No.74/2020, Federal Decree-Law No. 20 of 2018 Art.18, OFAC advisory on sanctions evasion red flags.",
 
   "supply-chain":
     "SUPPLY CHAIN RISK — COMPLIANCE REPORT\n\n" +
@@ -1572,7 +1572,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Annual re-screening schedule confirmed for all active tier-1 suppliers\n\n" +
     "SUSPENSION REQUIREMENT: Suppliers with unresolved HIGH-risk findings (sanctions match, confirmed conflict-mineral exposure, or forced labour indicators) must be suspended from all procurement activity. No payment may be made to a suspended supplier until MLRO clearance is documented.\n\n" +
     "ESCALATION TRIGGERS: Any tier-1 supplier found to be a designated person, confirmed as a front for a sanctioned entity, or found to be sourcing materials from a UN-embargoed jurisdiction requires immediate MLRO and legal counsel escalation.\n\n" +
-    "REGULATORY BASIS: UAE Ministerial Decision No.68/2024 (responsible sourcing), OECD 5-Step Due Diligence Guidance, UAE FDL No.10/2025 Art.18, FATF Recommendation 10 (third-party due diligence).",
+    "REGULATORY BASIS: UAE Ministerial Decision No.68/2024 (responsible sourcing), OECD 5-Step Due Diligence Guidance, Federal Decree-Law No. 10 of 2025 Art.18, FATF Recommendation 10 (third-party due diligence).",
 
   "analyst-behavior":
     "USER & ENTITY BEHAVIOUR ANALYTICS (UEBA) — COMPLIANCE REPORT\n\n" +
@@ -1590,7 +1590,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ UEBA event logs retained for 10 years per audit record-keeping obligations\n\n" +
     "INSIDER THREAT PROTOCOL: Confirmed insider threat indicators (exfiltration of compliance data, intentional bypass of screening controls, fabrication of compliance records) require immediate account suspension, MLRO notification, board notification, and — where criminal conduct is suspected — law enforcement referral.\n\n" +
     "ESCALATION TRIGGERS: Any UEBA alert involving a system administrator, MLRO, or board member requires immediate escalation to the board chair and external legal counsel — not to the MLRO (conflict of interest).\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (AI system access controls), SOC2 CC7.4 (security monitoring), FATF Recommendation 18 (internal controls — staff oversight).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (AI system access controls), SOC2 CC7.4 (security monitoring), FATF Recommendation 18 (internal controls — staff oversight).",
 
   "intel-status":
     "INTELLIGENCE SOURCE HEALTH — COMPLIANCE REPORT\n\n" +
@@ -1608,7 +1608,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Feed health incidents during the period reviewed and remediated\n\n" +
     "INCIDENT THRESHOLD: Feed downtime exceeding 4 hours constitutes an operational incident under the SOC2 CC7.4 incident response policy. An incident record must be created, the root cause investigated, and the MLRO notified of any compliance impact from the downtime period (e.g., missed watchlist updates).\n\n" +
     "ESCALATION TRIGGERS: Any sanctions list feed downtime exceeding 4 hours requires immediate MLRO notification and an assessment of whether any transactions processed during the downtime period require retrospective screening.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (system resilience for AI-assisted compliance), SOC2 CC7.4 (operational incident response), FATF Recommendation 6 (sanctions list screening — operational integrity).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (system resilience for AI-assisted compliance), SOC2 CC7.4 (operational incident response), FATF Recommendation 6 (sanctions list screening — operational integrity).",
   // 16 · Supply Chain
   "vessel-check":
     "VESSEL COMPLIANCE CHECK — REPORT\n\n" +
@@ -1626,7 +1626,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All findings documented with data sources cited (MMSI, IMO number, AIS provider, date)\n\n" +
     "DARK VESSEL PROTOCOL: Any AIS-off period exceeding 6 hours in open water (i.e., not in a port or anchorage where AIS-off is standard) must be treated as a high-risk indicator and reported to the MLRO. Multiple dark periods in a voyage constitute a pattern requiring SAR consideration.\n\n" +
     "ESCALATION TRIGGERS: Vessel with dark periods in sanctioned waters, vessel with flag changes in the past 90 days, or vessel involved in confirmed ship-to-ship transfers in the past 12 months must be immediately escalated to the MLRO before any cargo release or payment authorisation.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 (maritime trade compliance), OFAC Vessel Advisory (May 2020 — sanctions evasion via maritime sector), FATF Typologies (trade-based money laundering), UN Security Council maritime embargo implementation.",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 (maritime trade compliance), OFAC Vessel Advisory (May 2020 — sanctions evasion via maritime sector), FATF Typologies (trade-based money laundering), UN Security Council maritime embargo implementation.",
 
   // 17 · Export Control
   eocn:
@@ -1645,7 +1645,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Export compliance records retained for 10 years\n\n" +
     "ZERO-EXCEPTION HOLD REQUIREMENT: No shipment of controlled goods may proceed without a valid export licence covering the specific goods, destination country, and end-user. Shipments found to be lacking a required licence must be placed on an immediate hold with all commercial counterparties notified that the shipment is under review.\n\n" +
     "ESCALATION TRIGGERS: Any confirmed export of controlled goods without a valid licence, any end-user found to be a denied party, or any destination found to be embargoed for the specific goods category requires immediate MLRO, legal counsel, and potentially law enforcement notification.\n\n" +
-    "REGULATORY BASIS: UAE Federal Export Control Law, EU Dual-Use Regulation 2021/821, US Export Administration Regulations (for applicable entities), UN Security Council arms and proliferation embargo resolutions, UAE FDL No.10/2025 Art.18.",
+    "REGULATORY BASIS: UAE Federal Export Control Law, EU Dual-Use Regulation 2021/821, US Export Administration Regulations (for applicable entities), UN Security Council arms and proliferation embargo resolutions, Federal Decree-Law No. 10 of 2025 Art.18.",
 
   // 18 · Regulator Portal
   "inspection-room":
@@ -1664,7 +1664,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ All inspection records retained for 10 years from the date of the inspection\n\n" +
     "COOPERATION OBLIGATION: Full cooperation with the competent authority during an inspection is a legal obligation. Any attempt to conceal, withhold, or delay the provision of requested documents — without a bona fide legal professional privilege basis confirmed by counsel — constitutes obstruction and may give rise to additional regulatory action.\n\n" +
     "ESCALATION TRIGGERS: Any regulator query left unanswered for more than 48 hours, any attempt by staff to obstruct or limit regulator access, or any regulator query indicating awareness of a compliance failure not previously disclosed to the regulator requires immediate MLRO and board escalation.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.26-27 (regulatory cooperation and inspection rights), CR 134/2025 Art.18 (supervisory response obligations), UAE FDL No.20/2018 Art.26 (record retention for regulator access), FATF Recommendation 27 (supervisory powers).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.26-27 (regulatory cooperation and inspection rights), CR 134/2025 Art.18 (supervisory response obligations), Federal Decree-Law No. 20 of 2018 Art.26 (record retention for regulator access), FATF Recommendation 27 (supervisory powers).",
 
   // 19 · Incidents
   "grievances-whistleblowing":
@@ -1684,7 +1684,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Whistleblowing channel confirmed operational and communicated to all staff\n\n" +
     "REPORTER PROTECTION: Any retaliation against a whistleblower (demotion, discipline, dismissal, intimidation) is itself a serious compliance breach and, in certain jurisdictions, a criminal offence. Any suspected retaliation must be investigated independently and reported to the board.\n\n" +
     "ESCALATION TRIGGERS: Any disclosure alleging AML/CFT violations, regulatory misconduct, financial crime, or misconduct by a senior officer requires escalation to the board (excluding the subject of the disclosure). Anonymous disclosures must be investigated with the same rigour as named disclosures.\n\n" +
-    "REGULATORY BASIS: UAE FDL No.10/2025 Art.18 (governance and internal reporting), UAE Whistleblower Protection provisions (Federal Decree-Law No.4/2016 as applicable), UAE FDL No.20/2018 Art.18 (internal reporting channels), FATF Recommendation 18 (internal controls — reporting channels).",
+    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (governance and internal reporting), UAE Whistleblower Protection provisions (Federal Decree-Law No.4/2016 as applicable), Federal Decree-Law No. 20 of 2018 Art.18 (internal reporting channels), FATF Recommendation 18 (internal controls — reporting channels).",
 
   // Admin
   "admin-tenants":
@@ -1703,7 +1703,7 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "☐ Tenant offboarding procedure confirmed: data retention and deletion obligations documented\n\n" +
     "MULTI-TENANT ISOLATION: Each tenant's data — including CDD records, screening results, and audit chain entries — must be completely isolated from all other tenants at the storage and application layer. Any detected cross-tenant data access is a critical security and compliance incident.\n\n" +
     "ESCALATION TRIGGERS: Any cross-tenant data exposure, any API key found to be compromised, or any tenant found to be using the platform in violation of their agreement (e.g., sharing access with an unauthorised third party) must be immediately escalated to the MLRO and the security team, with the affected tenant suspended pending investigation.\n\n" +
-    "REGULATORY BASIS: SOC2 CC6.1 (logical access controls and multi-tenant isolation), UAE FDL No.10/2025 Art.18 (system access governance), UAE PDPL (data segregation between customers), FATF Recommendation 18 (group-wide controls — third-party service providers).",
+    "REGULATORY BASIS: SOC2 CC6.1 (logical access controls and multi-tenant isolation), Federal Decree-Law No. 10 of 2025 Art.18 (system access governance), UAE PDPL (data segregation between customers), FATF Recommendation 18 (group-wide controls — third-party service providers).",
 };
 
 interface Body {
@@ -1749,7 +1749,7 @@ function buildNotes(b: Body, gen: Date): string {
   }
   const pageUrl = b.url ?? `https://hawkeye-sterling.netlify.app/${b.module}`;
   lines.push(`Module URL  : ${pageUrl}`);
-  lines.push(`Legal basis : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
+  lines.push(`Legal basis : Federal Decree-Law No. 10 of 2025 Art.26-27 · CR 134/2025 Art.18 · 10-year retention`);
   return lines.join("\n");
 }
 

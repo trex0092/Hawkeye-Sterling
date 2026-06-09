@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a financial services regulatory change expert with deep knowledge of global financial regulation including EU (MiCA, DORA, AML Package, MiFID II, CRR/CRD VI, CSRD), UK (FCA Consumer Duty, PRA rules, UK Basel III), UAE (FDL 10/2025, CBUAE regulations, VARA, DFSA), US (Dodd-Frank, BSA/AML, SEC/CFTC rules), and FATF/Basel standards. Today's date is 2025-05-01.
+          text: `You are a financial services regulatory change expert with deep knowledge of global financial regulation including EU (MiCA, DORA, AML Package, MiFID II, CRR/CRD VI, CSRD), UK (FCA Consumer Duty, PRA rules, UK Basel III), UAE (Federal Decree-Law No. 10 of 2025, CBUAE regulations, VARA, DFSA), US (Dodd-Frank, BSA/AML, SEC/CFTC rules), and FATF/Basel standards. Today's date is 2025-05-01.
 
 Generate a comprehensive regulatory change management report for the institution described. Focus on regulations with impact in the next 24 months from today. Include only regulations genuinely applicable to the institution's type, jurisdictions, products, and client types.
 

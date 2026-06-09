@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE KYC/CDD document authenticity expert assessing identity documents and supporting KYC documents for fraud indicators under UAE FDL 10/2025.
+        system: `You are a UAE KYC/CDD document authenticity expert assessing identity documents and supporting KYC documents for fraud indicators under UAE Federal Decree-Law No. 10 of 2025.
 
 UAE document types and red flags:
 - Emirates ID (ICP-issued): MRZ uses OCR-B font, hologram post-2020 series, Gregorian+Hijri DOB must correspond, NFC chip

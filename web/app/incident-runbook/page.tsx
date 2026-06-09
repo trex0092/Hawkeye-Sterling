@@ -32,14 +32,14 @@ const RUNBOOKS: RunbookEntry[] = [
     trigger: "Audit chain integrity failure · PII exposed in logs · Unauthorized data access · Sanctions evasion detected",
     sla: "Notify MLRO + CTO within 15 minutes. UAE FIU notification within 30 days if customer data affected.",
     escalationContacts: ["MLRO (primary)", "CTO (secondary)", "Legal Counsel", "UAE FIU (if required)"],
-    regulatoryObligation: "UAE FDL No.10/2025 — breach notification to FIU within 30 days if customer data is involved.",
+    regulatoryObligation: "Federal Decree-Law No. 10 of 2025 — breach notification to FIU within 30 days if customer data is involved.",
     steps: [
       { action: "Immediately notify MLRO and CTO via phone + secure message", outcome: "Both notified within 15 min", owner: "All" },
       { action: "Freeze affected screening queues via /api/system-status", outcome: "No new cases processed on affected pipeline", owner: "DevOps" },
       { action: "Capture audit chain state — read only, DO NOT MODIFY", outcome: "Snapshot saved to incident evidence store", owner: "CTO" },
       { action: "Open incident record in docs/INCIDENTS.md with ISO 8601 timestamp", outcome: "Incident ID assigned (INC-YYYY-MMDD-NNN)", owner: "All" },
       { action: "Engage four-eyes review for any remediation actions", outcome: "Two approvers on record before any change applied", owner: "MLRO" },
-      { action: "Assess FIU reporting obligation under FDL No.10/2025", outcome: "Filing decision documented by MLRO", owner: "MLRO" },
+      { action: "Assess FIU reporting obligation under Federal Decree-Law No. 10 of 2025", outcome: "Filing decision documented by MLRO", owner: "MLRO" },
       { action: "After containment: root-cause analysis within 72 hours", outcome: "RCA document linked in INCIDENTS.md", owner: "CTO" },
     ],
   },
@@ -212,7 +212,7 @@ export default function IncidentRunbookPage() {
         <div>• Incident log: <span className="font-mono">docs/INCIDENTS.md</span></div>
         <div>• Compliance gaps: <span className="font-mono">COMPLIANCE_GAPS.md</span></div>
         <div>• SOC2 mapping: <span className="font-mono">docs/SOC2.md</span></div>
-        <div>• Regulatory: UAE FDL No.10/2025 · FIU notification SLA: 30 days</div>
+        <div>• Regulatory: Federal Decree-Law No. 10 of 2025 · FIU notification SLA: 30 days</div>
       </div>
     </ModuleLayout>
   );

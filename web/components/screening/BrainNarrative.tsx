@@ -55,7 +55,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
     const t = pepTier ?? pepAssessmentTier;
     const saliencePct = r.pep ? Math.round(r.pep.salience * 100) : null;
     paragraphs.push(
-      `Subject classified as PEP ${t}${saliencePct !== null ? ` with ${saliencePct}% salience` : ""}${r.pep?.rationale ? ` — ${r.pep.rationale}` : ""}. Enhanced due-diligence (EDD) applies under FATF Recommendation 12 / FDL 10/2025 Art.17.`,
+      `Subject classified as PEP ${t}${saliencePct !== null ? ` with ${saliencePct}% salience` : ""}${r.pep?.rationale ? ` — ${r.pep.rationale}` : ""}. Enhanced due-diligence (EDD) applies under FATF Recommendation 12 / Federal Decree-Law No. 10 of 2025 Art.17.`,
     );
   } else {
     paragraphs.push(`No PEP classification was raised by the brain on this screen.`);
@@ -91,7 +91,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
       );
     }
     paragraphs.push(
-      `Open-source analysis: ${bits.join("; ")}. These signals require analyst corroboration before constructive-knowledge can be asserted under FDL 10/2025 Art.2(3).`,
+      `Open-source analysis: ${bits.join("; ")}. These signals require analyst corroboration before constructive-knowledge can be asserted under Federal Decree-Law No. 10 of 2025 Art.2(3).`,
     );
   } else {
     paragraphs.push(`No adverse-media or ESG signals returned on this tick (keyword classifier: 0 hits; live news: no articles indexed).`);
@@ -146,7 +146,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
       return "Apply EDD and obtain senior-management approval; enrol in thrice-daily ongoing monitoring.";
     }
     if (newsHits && (newsHits.topSeverity === "critical" || newsHits.topSeverity === "high")) {
-      return `Defer clearance — live news dossier contains ${newsHits.articleCount} article${newsHits.articleCount === 1 ? "" : "s"} at ${newsHits.topSeverity.toUpperCase()} severity; analyst corroboration required before constructive-knowledge threshold (FDL 10/2025 Art.2(3)) is met; enrol in ongoing monitoring.`;
+      return `Defer clearance — live news dossier contains ${newsHits.articleCount} article${newsHits.articleCount === 1 ? "" : "s"} at ${newsHits.topSeverity.toUpperCase()} severity; analyst corroboration required before constructive-knowledge threshold (Federal Decree-Law No. 10 of 2025 Art.2(3)) is met; enrol in ongoing monitoring.`;
     }
     if (amLabels.length > 0 || redlines.length > 0 || newsHits) {
       return "Defer clearance pending analyst review and live-news corroboration; enrol in ongoing monitoring.";

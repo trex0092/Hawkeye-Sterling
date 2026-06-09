@@ -226,7 +226,7 @@ async function enrichWithClaude(
 Your task is to analyse adverse media results from GDELT for a named subject.
 Respond ONLY with valid JSON matching this exact schema, no commentary:
 {
-  "summary": "string (2-4 sentences, professional AML tone, cite FATF R.10 and FDL 10/2025 Art.10)",
+  "summary": "string (2-4 sentences, professional AML tone, cite FATF R.10 and Federal Decree-Law No. 10 of 2025 Art.10)",
   "articleCategories": [
     {"index": 1, "categories": ["sanctions","fraud",...]}
   ]
@@ -302,12 +302,12 @@ function buildFallbackSummary(
   riskRating: string,
 ): string {
   if (articles.length === 0) {
-    return `No adverse media identified for "${subjectName}" across the multi-source adverse-media corpus (lifetime — GDELT + 12 vendor feeds, FDL 10/2025 Art.19). Ongoing monitoring per FATF R.10 and FDL 10/2025 Art.10 continues; document this negative finding to the Art.19 audit log.`;
+    return `No adverse media identified for "${subjectName}" across the multi-source adverse-media corpus (lifetime — GDELT + 12 vendor feeds, Federal Decree-Law No. 10 of 2025 Art.19). Ongoing monitoring per FATF R.10 and Federal Decree-Law No. 10 of 2025 Art.10 continues; document this negative finding to the Art.19 audit log.`;
   }
   const sourceList = [...new Set(articles.slice(0, 3).map((a) => a.source))].join(", ");
   return `Adverse media search for "${subjectName}" returned ${articles.length} article(s) (risk score: ${riskScore}/100 — ${riskRating}). ` +
     `Sources include: ${sourceList}. ` +
-    `Per FATF R.10 and FDL 10/2025 Art.10, these findings require review as part of ongoing CDD monitoring. ` +
+    `Per FATF R.10 and Federal Decree-Law No. 10 of 2025 Art.10, these findings require review as part of ongoing CDD monitoring. ` +
     `Escalate to MLRO if any sanctioned-entity or predicate-offence nexus is confirmed.`;
 }
 
@@ -322,7 +322,7 @@ const FALLBACK: Omit<AdverseMediaLiveResult, "subject"> = {
   riskRating: "clear",
   articles: [],
   summary: "No adverse media found in GDELT index for this subject.",
-  regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
+  regulatoryBasis: "FATF R.10 (CDD), Federal Decree-Law No. 10 of 2025 Art.10 (ongoing monitoring)",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -497,13 +497,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     // When GDELT could not complete (timeout/unavailable), returning "clear" is
     // a false-clear: the search did not succeed so we cannot assert no findings.
     // Use "unknown" to force MLRO review. Only return "clear" when all sources
-    // succeeded and genuinely found nothing (FATF R.10 / FDL 10/2025 Art.19).
+    // succeeded and genuinely found nothing (FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.19).
     const emptyRiskRating: AdverseMediaLiveResult["riskRating"] =
       gdeltStatus === "ok" ? "clear" : "unknown";
     const emptySummary =
       gdeltStatus === "ok"
         ? FALLBACK.summary
-        : `Adverse media search for "${subjectName}" could not be completed — GDELT was ${gdeltStatus === "timeout" ? "unavailable" : "returning stale data"} at screening time. Cannot confirm clear status. Manual MLRO review required per FDL 10/2025 Art.19.`;
+        : `Adverse media search for "${subjectName}" could not be completed — GDELT was ${gdeltStatus === "timeout" ? "unavailable" : "returning stale data"} at screening time. Cannot confirm clear status. Manual MLRO review required per Federal Decree-Law No. 10 of 2025 Art.19.`;
     return NextResponse.json({
       ...FALLBACK,
       riskRating: emptyRiskRating,
@@ -564,7 +564,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskRating,
     articles: articlesWithCategories,
     summary,
-    regulatoryBasis: "FATF R.10 (CDD), FDL 10/2025 Art.10 (ongoing monitoring)",
+    regulatoryBasis: "FATF R.10 (CDD), Federal Decree-Law No. 10 of 2025 Art.10 (ongoing monitoring)",
     enriched,
     gdeltStatus,
     ...(Object.keys(metadata).length > 0 ? { metadata } : {}),

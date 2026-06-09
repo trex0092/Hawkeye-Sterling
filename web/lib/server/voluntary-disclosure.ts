@@ -1,10 +1,10 @@
-// Voluntary Disclosure Workflow store — FDL 10/2025 Art.25
+// Voluntary Disclosure Workflow store — Federal Decree-Law No. 10 of 2025 Art.25
 //
 // Provides CRUD operations for voluntary disclosure records submitted to
 // UAE regulatory bodies. Self-reporting before detection may qualify for
 // enforcement mitigation under CBUAE enforcement policy.
 //
-// Regulatory basis: FDL 10/2025 Art.25, CBUAE Enforcement Policy
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.25, CBUAE Enforcement Policy
 
 import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";

@@ -1,7 +1,7 @@
 // Hawkeye Sterling — correspondent bank risk scoring.
 //
 // BIC-based structural risk assessment for correspondent banking
-// relationships under FATF Recommendation 13 and UAE FDL 10/2025.
+// relationships under FATF Recommendation 13 and UAE Federal Decree-Law No. 10 of 2025.
 //
 // This module performs static, deterministic scoring from the BIC/
 // SWIFT code alone. It does NOT make live API calls. For enriched

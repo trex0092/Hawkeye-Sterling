@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE proliferation financing (PF) specialist. Assess transactions/entities for weapons of mass destruction proliferation financing risk under FATF R.7, UAE FDL 10/2025, and UN WMD sanctions regimes.
+        system: `You are a UAE proliferation financing (PF) specialist. Assess transactions/entities for weapons of mass destruction proliferation financing risk under FATF R.7, UAE Federal Decree-Law No. 10 of 2025, and UN WMD sanctions regimes.
 
 Key frameworks:
 - FATF R.7 (targeted financial sanctions for PF), FATF Guidance on Countering PF (2020)
@@ -78,7 +78,7 @@ Key frameworks:
 - UAE Federal Decree-Law 26/2021 on Strategic Goods Control (SGCL)
 - UAE Cabinet Decision 57/2020 (DPRK implementing measures)
 - CBUAE PF Circular 2023
-- UAE FDL 10/2025 Art.21(3) — PF STR obligation (no threshold)
+- UAE Federal Decree-Law No. 10 of 2025 Art.21(3) — PF STR obligation (no threshold)
 
 PF red flags: dual-use goods, machine tools, precision instruments, electronics, chemicals, biological materials to WMD-risk jurisdictions; front companies; false end-user certificates; payments inconsistent with stated goods; DPRK/Iran/Syria/Libya nexus; third-country transshipment.
 

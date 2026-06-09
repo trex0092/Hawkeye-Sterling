@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in regulatory audit response preparation under FATF R.26-28 and UAE FDL 10/2025. Prepare management responses to audit findings and return a JSON object with exactly these fields: { "overallRating": "satisfactory"|"needs-improvement"|"unsatisfactory", "responses": [{ "finding": string, "response": string, "rootCause": string, "remediation": string, "owner": string, "deadline": string, "evidence": string }], "coveringLetter": string, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in regulatory audit response preparation under FATF R.26-28 and UAE Federal Decree-Law No. 10 of 2025. Prepare management responses to audit findings and return a JSON object with exactly these fields: { "overallRating": "satisfactory"|"needs-improvement"|"unsatisfactory", "responses": [{ "finding": string, "response": string, "rootCause": string, "remediation": string, "owner": string, "deadline": string, "evidence": string }], "coveringLetter": string, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

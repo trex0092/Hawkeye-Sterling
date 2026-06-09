@@ -200,7 +200,7 @@ export default function SystemCardPage() {
       <Section>
         <SectionTitle>Regulatory Compliance Basis</SectionTitle>
         {[
-          { reg: "UAE FDL No.(10) of 2025", scope: "Primary AML/CFT/CPF law — Art.14 (PEP EDD), Art.19 (adverse media lookback), Art.32 (SAR filing)" },
+          { reg: "Federal Decree-Law No. 10 of 2025", scope: "Primary AML/CFT/CPF law — Art.14 (PEP EDD), Art.19 (adverse media lookback), Art.32 (SAR filing)" },
           { reg: "CR No.134/2025", scope: "Executive Regulations — Art.12 (UBO 25% threshold), Art.18 (MLRO review before case action), Art.28 (sanctions screening)" },
           { reg: "MoE Circulars No.3/2025 + No.6/2025", scope: "DPMS-specific obligations — real-time sanctions screening, record retention, FIU reporting" },
           { reg: "FATF Recommendations R.6, R.10, R.12", scope: "Targeted financial sanctions, CDD, PEP Enhanced Due Diligence" },

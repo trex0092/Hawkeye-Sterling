@@ -239,7 +239,7 @@ function EocnPdfUploadPanel() {
           <li>Any new hits create automatic MLRO inbox alerts for 24-hour freeze decision</li>
         </ol>
         <div className="mt-3 text-11 text-ink-3">
-          Regulatory basis: UAE Cabinet Resolution 74/2020; FDL 10/2025 Art.11 (24-hour freeze obligation).
+          Regulatory basis: UAE Cabinet Resolution 74/2020; Federal Decree-Law No. 10 of 2025 Art.11 (24-hour freeze obligation).
           All uploads are logged in the audit trail with uploader identity and timestamp.
         </div>
       </div>

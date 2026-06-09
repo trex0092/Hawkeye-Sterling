@@ -15,7 +15,7 @@
 //   7. Control Gaps & Remediation
 //   8. Upcoming Deadlines & Commitments
 //
-// Regulatory basis: FDL 10/2025 Art.23; FATF R.18; CBUAE AML/CFT Guidelines 2024
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.23; FATF R.18; CBUAE AML/CFT Guidelines 2024
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -173,7 +173,7 @@ ${metrics.regulatoryChanges?.join("\n") ?? "None noted"}
 
 ${dataContext}
 
-Generate the following sections. Each section should be substantive (3-6 sentences or bullet points), professional in tone, and appropriate for board-level readers. Reference relevant UAE FDL 10/2025 articles where appropriate.
+Generate the following sections. Each section should be substantive (3-6 sentences or bullet points), professional in tone, and appropriate for board-level readers. Reference relevant UAE Federal Decree-Law No. 10 of 2025 articles where appropriate.
 
 FORMAT YOUR RESPONSE AS JSON:
 {
@@ -225,7 +225,7 @@ Ensure each field is a complete, well-written paragraph or set of bullet points 
       title: `AML/CFT Board Report — ${metrics.entityName ?? "DPMS Entity"}`,
       period,
       sections: sectionList,
-      attestation: `This report was prepared by the MLRO (${metrics.mlroName ?? "N/A"}) for the board of directors for the period ${period}. It is prepared in compliance with FDL 10/2025 Art.23 and the CBUAE AML/CFT Guidelines. The information contained herein is accurate and complete to the best of the MLRO's knowledge as of ${metrics.reportingDate ?? new Date().toISOString().split("T")[0]}.`,
+      attestation: `This report was prepared by the MLRO (${metrics.mlroName ?? "N/A"}) for the board of directors for the period ${period}. It is prepared in compliance with Federal Decree-Law No. 10 of 2025 Art.23 and the CBUAE AML/CFT Guidelines. The information contained herein is accurate and complete to the best of the MLRO's knowledge as of ${metrics.reportingDate ?? new Date().toISOString().split("T")[0]}.`,
       generatedAt: new Date().toISOString(),
     };
 

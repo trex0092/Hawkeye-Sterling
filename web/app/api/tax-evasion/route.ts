@@ -117,7 +117,7 @@ UAE SPECIFIC:
 • OECD Pillar Two (Global Minimum Tax 15%): UAE Domestic Minimum Top-up Tax (DMTT) — large MNE groups (EUR 750M+ revenue) subject from 2025.
 • UAE VAT Fraud: 5% VAT. Carousel fraud, phantom transactions, false input tax credit claims.
 • UAE Free Zone abuse: transactions with mainland UAE misclassified as qualifying activities; substance requirements not met; using QFZP status without genuine free zone operations.
-• UAE FDL 10/2025 Art.24: obligation to file STR where tax crime suspected as predicate to ML.
+• UAE Federal Decree-Law No. 10 of 2025 Art.24: obligation to file STR where tax crime suspected as predicate to ML.
 • UAE FTA (Federal Tax Authority): enforcement powers, voluntary disclosure, penalties up to 300% of unpaid tax.
 
 JURISDICTION CLASSIFICATION:

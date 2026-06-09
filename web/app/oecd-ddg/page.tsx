@@ -406,7 +406,7 @@ export default function OecdDdgPage() {
 
       <p className="text-10.5 text-ink-3 mt-6 leading-relaxed">
         OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from CAHRAs.
-        Ministerial Decree 68/2024 · FDL 10/2025. Steps: (1) Management Systems (2) Risk Identification
+        Ministerial Decree 68/2024 · Federal Decree-Law No. 10 of 2025. Steps: (1) Management Systems (2) Risk Identification
         (3) Risk Response (4) Independent Audit (5) Annual Report. Changes auto-save.
       </p>
     </ModuleLayout>

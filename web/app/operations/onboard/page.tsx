@@ -155,9 +155,9 @@ const LIST_REDLINE_MAP: Record<string, string> = {
 };
 
 const REDLINE_ANCHORS: Record<string, string> = {
-  rl_ofac_sdn_confirmed:        "OFAC 31 CFR §594 · FDL 10/2025 Art.22 · Cabinet Decision 133/2025",
+  rl_ofac_sdn_confirmed:        "OFAC 31 CFR §594 · Federal Decree-Law No. 10 of 2025 Art.22 · Cabinet Decision 133/2025",
   rl_un_consolidated_confirmed: "UNSC Res.1267 consolidated list · Cabinet Decision 133/2025 Art.6",
-  rl_eu_cfsp_confirmed:         "EU CFSP Council Reg.2580/2001 · FDL 10/2025 Art.23",
+  rl_eu_cfsp_confirmed:         "EU CFSP Council Reg.2580/2001 · Federal Decree-Law No. 10 of 2025 Art.23",
   rl_uk_ofsi_confirmed:         "UK OFSI consolidated list · SAMLIT TF guidance",
   rl_eocn_confirmed:            "UAE EOCN list · Cabinet Decision 74/2021 · AML/CFT SRR",
 };
@@ -172,7 +172,7 @@ const TIER_DOC_CHECKLISTS: Record<Tier, DocCheckItem[]> = {
   "tier-1": [
     { id: "cert_incorp",      label: "Certificate of incorporation (certified copy)",         required: true },
     { id: "mem_articles",     label: "Memorandum & articles of association",                   required: true },
-    { id: "ubo_disclosure",   label: "UBO disclosure register (≥25% threshold — FDL 10/2025 Art.11)", required: true },
+    { id: "ubo_disclosure",   label: "UBO disclosure register (≥25% threshold — Federal Decree-Law No. 10 of 2025 Art.11)", required: true },
     { id: "ubo_passport",     label: "Certified copies of each UBO's passport / EID",          required: true },
     { id: "audited_accounts", label: "Audited financial statements (last 2 FY)",               required: true },
     { id: "bank_ref",         label: "Bank reference letter (≤3 months old)",                  required: true },
@@ -367,7 +367,7 @@ async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1
     `Expected profile: ${draft.expectedProfile}. ` +
     `Risk tier: ${draft.riskTier} (${draft.riskRationale}). ` +
     `Screening: ${(draft.screeningHits ?? []).length} hit(s). ` +
-    `Justify the proposed tier against FDL 10/2025 Art.16-19, Cabinet Decision 134/2025 Art.3-7, and FATF R.10/12/19.`;
+    `Justify the proposed tier against Federal Decree-Law No. 10 of 2025 Art.16-19, Cabinet Decision 134/2025 Art.3-7, and FATF R.10/12/19.`;
   try {
     const res = await fetch("/api/mlro-advisor", {
       method: "POST",
@@ -588,7 +588,7 @@ export default function OnboardingWizardPage() {
           <>
             <strong>Identity → CDD → Screening → Risk-Rate → MLRO sign-off.</strong>{" "}
             Five-step ribbon with auto-saved draft. Closes the gap between the
-            policy stack (FATF R.10, FDL 10/2025 Art.13) and the front-line
+            policy stack (FATF R.10, Federal Decree-Law No. 10 of 2025 Art.13) and the front-line
             analyst&apos;s workflow.
           </>
         }
@@ -815,7 +815,7 @@ export default function OnboardingWizardPage() {
 
                   {isVasp && (
                     <>
-                      <div className="text-11 font-mono uppercase text-amber-300 font-semibold mt-2">VASP-specific questions (FDL 10/2025 Art.28)</div>
+                      <div className="text-11 font-mono uppercase text-amber-300 font-semibold mt-2">VASP-specific questions (Federal Decree-Law No. 10 of 2025 Art.28)</div>
                       <Field
                         label="VASP licence number"
                         value={aa.cryptoVaspLicence ?? ""}

@@ -4,7 +4,7 @@
 // model ID, purpose, data received, constraints, FDL reference, risk tier,
 // and approval record. Satisfies the "Inventory AI systems, models and data
 // flows" checklist item from the Leader's Action Checklist (AI vs Cybersecurity
-// framework) and UAE FDL No.10/2025 Art.18 demonstrable human oversight.
+// framework) and Federal Decree-Law No. 10 of 2025 Art.18 demonstrable human oversight.
 
 import { createHash } from "node:crypto";
 
@@ -47,7 +47,7 @@ export interface ModelRegistryEntry {
   /** ISO date of last adversarial red-team run against this model deployment */
   redTeamLastRunAt?: string;
   /** Path to the model card document relative to repo root.
-   *  Required for FDL 10/2025 Art.18 attestation — panel must review card before signing off. */
+   *  Required for Federal Decree-Law No. 10 of 2025 Art.18 attestation — panel must review card before signing off. */
   cardRef: string;
 }
 
@@ -69,7 +69,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
     maxTokens:   1500,
     timeoutMs:   55_000,
     humanReviewRequired: true,
-    fdlReference: "FDL No.10/2025 Art.18 — all AI outputs require MLRO human review",
+    fdlReference: "Federal Decree-Law No. 10 of 2025 Art.18 — all AI outputs require MLRO human review",
     constraints: [
       "Output is advisory only — no autonomous compliance action",
       "PII is masked before transmission via getAnthropicClient guard",
@@ -93,7 +93,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
     maxTokens:   1500,
     timeoutMs:   25_000,
     humanReviewRequired: true,
-    fdlReference: "FDL No.10/2025 Art.18",
+    fdlReference: "Federal Decree-Law No. 10 of 2025 Art.18",
     constraints: [
       "Disposition is advisory — MLRO must sign off before any action",
       "Four-eyes required for STR filing (FDL Art.16)",
@@ -117,7 +117,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
     maxTokens:   1500,
     timeoutMs:   15_000,
     humanReviewRequired: true,
-    fdlReference: "FDL No.10/2025 Art.18",
+    fdlReference: "Federal Decree-Law No. 10 of 2025 Art.18",
     constraints: [
       "Multi-perspective consensus (executor/advisor/challenger) for complex queries",
       "Uncertainty explicitly stated — no false confidence",
@@ -140,7 +140,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
     maxTokens:   2000,
     timeoutMs:   45_000,
     humanReviewRequired: true,
-    fdlReference: "FDL No.10/2025 Art.18",
+    fdlReference: "Federal Decree-Law No. 10 of 2025 Art.18",
     constraints: [
       "Only invoked when mode=deep is explicitly requested",
       "Higher latency accepted for complex regulatory analysis",
@@ -183,7 +183,7 @@ export const MODEL_REGISTRY: readonly ModelRegistryEntry[] = [
 /**
  * Compute a short (16 hex char) SHA-256 fingerprint of a prompt text.
  * Use this at inference time to record which exact prompt produced a decision —
- * satisfies FDL No.10/2025 Art.18 reproducibility requirement.
+ * satisfies Federal Decree-Law No. 10 of 2025 Art.18 reproducibility requirement.
  * Safe to call with any string; returns "hash-pending" on error.
  */
 export function hashPromptText(text: string): string {
@@ -240,7 +240,7 @@ function validateModelRegistry(): string[] {
     if (!m.approval?.nextAttestationDue) missing.push("approval.nextAttestationDue");
     if (missing.length > 0) {
       const msg = `MODEL_REGISTRY entry '${m.modelId}' missing required fields: ${missing.join(", ")}`;
-      console.error(`[ai-governance] ${msg} — FDL 10/2025 Art.18 compliance gap`);
+      console.error(`[ai-governance] ${msg} — Federal Decree-Law No. 10 of 2025 Art.18 compliance gap`);
       errors.push(msg);
     }
   }
@@ -250,7 +250,7 @@ function validateModelRegistry(): string[] {
 // ── Explainability metadata ───────────────────────────────────────────────────
 // Attached to every AI-assisted decision (PEP classification, adverse media
 // severity) so human reviewers and regulators can understand what drove the
-// output. FDL No.10/2025 Art.18 requires AI outputs to be explainable.
+// output. Federal Decree-Law No. 10 of 2025 Art.18 requires AI outputs to be explainable.
 
 export interface ExplainabilityMetadata {
   /** Top factors that most influenced the AI decision, ordered by weight. */
@@ -363,7 +363,7 @@ export function buildAdverseMediaExplainability(opts: {
 }
 
 // ── Audit completeness validation ─────────────────────────────────────────────
-// UAE FDL No.10/2025 requires every audit entry to carry a mandatory set of
+// Federal Decree-Law No. 10 of 2025 requires every audit entry to carry a mandatory set of
 // fields. This validator returns the list of missing fields so callers can
 // reject or quarantine incomplete entries before they enter the audit chain.
 
@@ -401,7 +401,7 @@ export function validateAuditCompleteness(
 // ── Model version tracking ────────────────────────────────────────────────────
 // All AI-assisted screening results must record the model and prompt versions
 // so the audit chain can trace which AI artefact produced each decision.
-// This satisfies FDL No.10/2025 Art.18 (audit trail for AI outputs) and
+// This satisfies Federal Decree-Law No. 10 of 2025 Art.18 (audit trail for AI outputs) and
 // supports reproducibility investigations when model versions are updated.
 
 export interface ModelVersionInfo {
@@ -454,7 +454,7 @@ export const PROMPT_REGISTRY: Record<PromptVersionKey, { version: string; deploy
  * Build a ModelVersionInfo object for a given screening tool.
  * Pass the actual system prompt text as promptText to compute a SHA-256 hash
  * that uniquely identifies the prompt content in the audit chain.
- * Satisfies FDL No.10/2025 Art.18 reproducibility tracing.
+ * Satisfies Federal Decree-Law No. 10 of 2025 Art.18 reproducibility tracing.
  */
 export function buildModelVersionInfo(
   modelId: string,
@@ -476,7 +476,7 @@ export const GOVERNANCE_POLICY: GovernancePolicy = {
     "All AI models used in Hawkeye Sterling operate in an advisory capacity only. " +
     "No autonomous compliance action is taken based solely on AI output. " +
     "All AI-generated outputs require MLRO human review before any compliance action " +
-    "(FDL No.10/2025 Art.18). Two distinct approvers are required for STR filing " +
+    "(Federal Decree-Law No. 10 of 2025 Art.18). Two distinct approvers are required for STR filing " +
     "(FDL Art.16, FATF R.26). All AI invocations are logged to the HMAC-signed audit chain.",
   principles: [
     "Human oversight — MLRO review required for all AI outputs",

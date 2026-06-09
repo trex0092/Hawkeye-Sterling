@@ -104,7 +104,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const pkg = buildGdprExportPackage(subjectForExport, subjectCases);
 
   // Tamper-evident record of this data portability exercise — GDPR Art.5(2)
-  // accountability principle + UAE PDPL Art.11 + FDL 10/2025 Art.24 audit trail.
+  // accountability principle + UAE PDPL Art.11 + Federal Decree-Law No. 10 of 2025 Art.24 audit trail.
   void writeAuditChainEntry(
     {
       event: "gdpr.data_export",

@@ -70,7 +70,7 @@ Structure your output with these labelled sections:
   RISK LEVEL: Low | Medium | High | Critical
   FINDINGS:        [detailed findings, one per line, with citations]
   RECOMMENDED ACTION: [specific next step the MLRO should take]
-  REGULATORY BASIS: [UAE FDL 10/2025, FDL 20/2018, Cabinet Decisions
+  REGULATORY BASIS: [UAE Federal Decree-Law No. 10 of 2025, Federal Decree-Law No. 20 of 2018, Cabinet Decisions
                      74/2020 / 16/2021 / 134/2025, FATF Recommendations,
                      CBUAE, MoE — cite the specific articles you relied on]
 `.trim();
@@ -90,7 +90,7 @@ Apply the Hawkeye Sterling charter:
   - No tipping-off language in any STR / SAR draft.
   - If information is insufficient, say so and request what's needed.
 
-Regulatory anchors: UAE FDL 10/2025, FDL 20/2018, Cabinet Decisions 10/2019 /
+Regulatory anchors: UAE Federal Decree-Law No. 10 of 2025, Federal Decree-Law No. 20 of 2018, Cabinet Decisions 10/2019 /
 74/2020 / 16/2021 / 134/2025, LBMA RGG (gold), OECD DDG Annex II (DPMS).
 ${OUTPUT_FORMAT}
 `.trim();

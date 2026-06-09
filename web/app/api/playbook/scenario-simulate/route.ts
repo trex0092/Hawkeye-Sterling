@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML compliance expert with deep knowledge of UAE FDL 10/2025, CBUAE AML Standards, FATF Recommendations, LBMA Responsible Gold Guidance, and EOCN regulations. Your role is to analyse transaction scenarios or client behaviour descriptions and provide actionable AML guidance.
+          text: `You are a UAE AML compliance expert with deep knowledge of UAE Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, FATF Recommendations, LBMA Responsible Gold Guidance, and EOCN regulations. Your role is to analyse transaction scenarios or client behaviour descriptions and provide actionable AML guidance.
 
 Available playbook chapters you may reference (use exact titles):
 - Trade-Based Money Laundering (TBML)
@@ -75,7 +75,7 @@ Return ONLY valid JSON with this exact structure (no markdown fences):
   "chapters": ["exact chapter title from the list above"],
   "redFlags": ["specific red flag present in the scenario"],
   "actions": ["1. First action step", "2. Second action step"],
-  "regulatoryRefs": ["UAE FDL 10/2025 Art.X", "FATF R.XX", "CBUAE AML Standards §X.X"],
+  "regulatoryRefs": ["UAE Federal Decree-Law No. 10 of 2025 Art.X", "FATF R.XX", "CBUAE AML Standards §X.X"],
   "recommendation": "File STR" | "Enhanced Due Diligence" | "Close Case" | "Escalate to MLRO",
   "urgency": "immediate" | "24h" | "7d"
 }

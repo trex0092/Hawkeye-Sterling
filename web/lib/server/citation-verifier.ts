@@ -1,7 +1,7 @@
 // Citation verifier — post-pass over the MLRO Advisor's narrative.
 //
 // The advisor is system-prompted to cite primary regulatory sources
-// inline (e.g. "FATF R.10", "FDL 10/2025 Art.16"). Models occasionally
+// inline (e.g. "FATF R.10", "Federal Decree-Law No. 10 of 2025 Art.16"). Models occasionally
 // hallucinate plausible-sounding citations that don't exist. This
 // verifier extracts every citation it can recognise and bucketises
 // them into:
@@ -67,10 +67,10 @@ const VALID_FDL_10_2025_ARTS = new Set([
   36, 37, 38, 39, 40, 41, 42,
 ]);
 
-// FDL 20/2018 was repealed by FDL 10/2025. We still recognise its
+// Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025. We still recognise its
 // shape so the verifier can SAY it's a real law that's been
 // superseded — citing it in 2026+ is incorrect and the chip should
-// flag it. The corresponding FDL 10/2025 article is usually 1:1
+// flag it. The corresponding Federal Decree-Law No. 10 of 2025 article is usually 1:1
 // equivalent (the UAE legislator preserved numbering for most CDD /
 // STR / retention obligations) so the operator can usually just
 // swap "20/2018" for "10/2025" in the model's answer.
@@ -118,7 +118,7 @@ const PATTERNS: Pattern[] = [
       return ok ? { verified: true } : { verified: false, note: `FATF only has Recs 1-40; cited R.${n}` };
     },
   },
-  // FDL 10/2025 Art.X — "FDL 10/2025 Art.16", "Federal Decree-Law
+  // Federal Decree-Law No. 10 of 2025 Art.X — "Federal Decree-Law No. 10 of 2025 Art.16", "Federal Decree-Law
   // No. (10) of 2025 Art. 16", etc.
   {
     rx: /\b(?:FDL|Federal\s+Decree[- ]Law)\s*(?:No\.?\s*\(?\s*)?(\d+)\)?\s*(?:\/|\s+of\s+)\s*(\d{4})(?:\s*Art\.?\s*(\d+))?/gi,
@@ -131,17 +131,17 @@ const PATTERNS: Pattern[] = [
         if (art == null) return { verified: true };
         return VALID_FDL_10_2025_ARTS.has(art)
           ? { verified: true }
-          : { verified: false, note: `FDL 10/2025 Art.${art} not in bundled article catalogue` };
+          : { verified: false, note: `Federal Decree-Law No. 10 of 2025 Art.${art} not in bundled article catalogue` };
       }
       if (law === "20" && year === "2018") {
         const recognised = art == null || SUPERSEDED_FDL_20_2018_ARTS.has(art);
         if (recognised) {
           return {
             verified: false,
-            note: `FDL 20/2018 was repealed by FDL 10/2025 — cite the new law${art != null ? ` (likely FDL 10/2025 Art.${art})` : ""}`,
+            note: `Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025 — cite the new law${art != null ? ` (likely Federal Decree-Law No. 10 of 2025 Art.${art})` : ""}`,
           };
         }
-        return { verified: false, note: `FDL 20/2018 Art.${art} unknown (and the law has been repealed; cite FDL 10/2025)` };
+        return { verified: false, note: `Federal Decree-Law No. 20 of 2018 Art.${art} unknown (and the law has been repealed; cite Federal Decree-Law No. 10 of 2025)` };
       }
       return { verified: false, note: `FDL ${law}/${year} not in catalogue` };
     },
@@ -153,13 +153,13 @@ const PATTERNS: Pattern[] = [
     verify: (m): { verified: boolean; note?: string } => {
       const key = `${m[2]}-${m[1]}`;
       // Cabinet Resolution 10/2019 was the implementing regulation
-      // for the now-repealed FDL 20/2018; it has been superseded by
+      // for the now-repealed Federal Decree-Law No. 20 of 2018; it has been superseded by
       // Cabinet Resolution 134/2025. Flag it the same way as the
       // parent law so the chip alerts the operator.
       if (key === "2019-10") {
         return {
           verified: false,
-          note: "Cabinet Resolution 10/2019 was the FDL 20/2018 implementing regulation — superseded by Cabinet Resolution 134/2025",
+          note: "Cabinet Resolution 10/2019 was the Federal Decree-Law No. 20 of 2018 implementing regulation — superseded by Cabinet Resolution 134/2025",
         };
       }
       return VALID_CABINET_RESOLUTIONS.has(key)

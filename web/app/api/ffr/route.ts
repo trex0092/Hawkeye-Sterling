@@ -3,7 +3,7 @@
 // I4: Funds Freeze Report (FFR) — UAE regulatory filing endpoint.
 // Handles FFR incidents and asset freezes under:
 //   - Cabinet Resolution 74/2020 Art.4 (24-hour asset freeze obligation)
-//   - UAE FDL No.10/2025 Art.26 (freeze reporting to CBUAE/FIU)
+//   - Federal Decree-Law No. 10 of 2025 Art.26 (freeze reporting to CBUAE/FIU)
 //   - MoE Circular 08/AML/2021 §6 (DPMS-specific freeze obligations)
 //
 // Project 06 in Asana handles FFR Incidents and Asset Freezes.
@@ -115,7 +115,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     status: "draft",
     slaDeadline,
     slaStatus,
-    regulatoryAnchor: "Cabinet Resolution 74/2020 Art.4 — 24-hour mandatory asset freeze. UAE FDL No.10/2025 Art.26 — freeze reporting to FIU.",
+    regulatoryAnchor: "Cabinet Resolution 74/2020 Art.4 — 24-hour mandatory asset freeze. Federal Decree-Law No. 10 of 2025 Art.26 — freeze reporting to FIU.",
     tenant,
   };
 

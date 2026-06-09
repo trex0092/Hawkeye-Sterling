@@ -141,7 +141,7 @@ async function handleGoaml(req: Request): Promise<Response> {
   try {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
-  // goAML filing is a direct regulatory submission (UAE FDL 10/2025 Art.15).
+  // goAML filing is a direct regulatory submission (UAE Federal Decree-Law No. 10 of 2025 Art.15).
   // Only MLRO or CO portal sessions may submit to the UAE FIU.
   const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
   if (roleBlock) return roleBlock;
@@ -274,7 +274,7 @@ async function handleGoaml(req: Request): Promise<Response> {
   // GOAML_RENTITY_ID when HAWKEYE_ENTITIES is unset.
   // getEntityForSubmission() throws when the resolved entity has a placeholder
   // goamlRentityId (e.g. "REPLACE_ME") — placeholder IDs cause the UAE FIU to
-  // reject every filing (FDL 10/2025 Art.15). Configure the real Rentity ID
+  // reject every filing (Federal Decree-Law No. 10 of 2025 Art.15). Configure the real Rentity ID
   // in Netlify environment variables before deploying to production (F-03 fix).
   let reportingEntity: ReturnType<typeof getEntityForSubmission>;
   try {
@@ -333,7 +333,7 @@ async function handleGoaml(req: Request): Promise<Response> {
 
   // ── Egress gate (CG-7) — tipping-off compliance pre-check ───────────────────
   // Run before XML serialisation so we never produce an artefact that would
-  // constitute tipping-off under FDL No.10/2025 Art.29 / FATF R.21.
+  // constitute tipping-off under Federal Decree-Law No. 10 of 2025 Art.29 / FATF R.21.
   const egressResult = await runEgressCheck(body.narrative, "goAML STR filing");
   if (!egressResult.allowed) {
     await writeAuditChainEntry({

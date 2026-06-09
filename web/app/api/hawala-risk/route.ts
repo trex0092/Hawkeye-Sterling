@@ -1,6 +1,6 @@
 // POST /api/hawala-risk
 // Hawala / Informal Value Transfer System (IVTS) risk assessment.
-// Implements FATF Guidance on Hawala (2013) and UAE FDL 10/2025 Art.14
+// Implements FATF Guidance on Hawala (2013) and UAE Federal Decree-Law No. 10 of 2025 Art.14
 // scoring logic covering unregistered MTO status, high-risk corridor pairs,
 // volume thresholds, counterparty sanctions exposure, and record-keeping gaps.
 
@@ -104,11 +104,11 @@ function computeHawalaRisk(body: RequestBody): ScoringResult {
   const src = (body.countryCode ?? "").toUpperCase().trim();
 
   // -------------------------------------------------------------------------
-  // (a) Unregistered MTO — illegal in UAE under FDL 10/2025 Art.14: +40
+  // (a) Unregistered MTO — illegal in UAE under Federal Decree-Law No. 10 of 2025 Art.14: +40
   // -------------------------------------------------------------------------
   if (!body.isRegisteredMTO) {
     score += 40;
-    flags.push("UNREGISTERED_MTO:+40 — operating without MTO licence is illegal in UAE (FDL 10/2025 Art.14)");
+    flags.push("UNREGISTERED_MTO:+40 — operating without MTO licence is illegal in UAE (Federal Decree-Law No. 10 of 2025 Art.14)");
     ivtsTypologies.push("Unlicensed money or value transfer service (FATF R.14)");
   }
 
@@ -334,7 +334,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const ivtsTypologies = [...new Set(scoring.ivtsTypologies)];
 
   const regulatoryBasis: string[] = [
-    "UAE FDL 10/2025 Art.14",
+    "UAE Federal Decree-Law No. 10 of 2025 Art.14",
     "FATF Guidance on Hawala 2013",
     "FATF R.14 (Money or Value Transfer Services)",
   ];

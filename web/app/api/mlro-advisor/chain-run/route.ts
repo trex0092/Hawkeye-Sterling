@@ -15,7 +15,7 @@ export interface ChainRunResult {
   chainDuration: number;
 }
 
-const SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with deep expertise in UAE AML/CFT law (FDL 10/2025, CBUAE AML Standards), FATF Recommendations, and financial crime typologies. You produce concise, actionable analysis for compliance officers. Respond in plain prose — no markdown headers, no bullet points — focused and professional.`;
+const SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with deep expertise in UAE AML/CFT law (Federal Decree-Law No. 10 of 2025, CBUAE AML Standards), FATF Recommendations, and financial crime typologies. You produce concise, actionable analysis for compliance officers. Respond in plain prose — no markdown headers, no bullet points — focused and professional.`;
 
 export async function POST(req: Request) {
   const gate = await enforce(req);
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         ok: true,
         subjectBrief: `[Demo] Subject brief for ${subject} in ${jurisdiction}. Risk score: ${riskScore}/100. Key risk factors include jurisdiction exposure and transaction pattern anomalies consistent with layering typologies.`,
         typologyMatch: `[Demo] Typology match for ${subject}: Trade-Based Money Laundering (FATF R.22), Structuring below reporting thresholds (FATF R.20), and potential use of shell entities for placement (FATF R.24).`,
-        strRecommendation: `[Demo] Recommendation: FILE STR. The subject presents a composite risk score of ${riskScore}/100 with indicators meeting the reasonable suspicion threshold under UAE FDL 10/2025 Art.26. Recommended narrative opening: "This report concerns [${subject}], a [entity type] operating in [${jurisdiction}], whose account activity has given rise to suspicion of money laundering pursuant to UAE FDL 10/2025."`,
+        strRecommendation: `[Demo] Recommendation: FILE STR. The subject presents a composite risk score of ${riskScore}/100 with indicators meeting the reasonable suspicion threshold under UAE Federal Decree-Law No. 10 of 2025 Art.26. Recommended narrative opening: "This report concerns [${subject}], a [entity type] operating in [${jurisdiction}], whose account activity has given rise to suspicion of money laundering pursuant to UAE Federal Decree-Law No. 10 of 2025."`,
         chainDuration: 0,
       } satisfies ChainRunResult,
       { headers: gate.headers },
@@ -127,7 +127,7 @@ Transaction Pattern: ${transactionPattern || "Not provided"}`,
       messages: [
         {
           role: "user",
-          content: `Given the subject brief and typology matches below, provide an STR disposition decision: FILE, DEFER, or CLOSE — with a one-sentence rationale citing UAE FDL 10/2025 or FATF R.20 where applicable. Then write the first 2–3 sentences of a recommended STR narrative opening that an MLRO could use in a goAML submission. Write in plain prose only.
+          content: `Given the subject brief and typology matches below, provide an STR disposition decision: FILE, DEFER, or CLOSE — with a one-sentence rationale citing UAE Federal Decree-Law No. 10 of 2025 or FATF R.20 where applicable. Then write the first 2–3 sentences of a recommended STR narrative opening that an MLRO could use in a goAML submission. Write in plain prose only.
 
 Subject Brief: ${subjectBrief}
 

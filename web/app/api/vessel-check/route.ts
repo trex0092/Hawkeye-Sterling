@@ -233,7 +233,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         _governance: {
           humanReviewRequired: true,
           degradedServices: ["vessel_screening"],
-          reviewNote: "FDL No.10/2025 Art.15: AI-generated screening results are invalid when an upstream data source is offline.",
+          reviewNote: "Federal Decree-Law No. 10 of 2025 Art.15: AI-generated screening results are invalid when an upstream data source is offline.",
         },
       },
       { status: 503, headers: { ...CORS, ...gateHeaders } },

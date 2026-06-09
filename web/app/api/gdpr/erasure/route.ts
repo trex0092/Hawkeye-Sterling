@@ -6,7 +6,7 @@
 // the AML record-retention obligation supersedes the right to erasure. Instead
 // this endpoint pseudonymises the subject — replaces PII with a redaction token
 // while preserving the compliance skeleton (risk score, case linkages, audit
-// trail anchors) needed to satisfy FDL 10/2025 Art.20 and UAE FATF obligations.
+// trail anchors) needed to satisfy Federal Decree-Law No. 10 of 2025 Art.20 and UAE FATF obligations.
 //
 // Business logic:
 //   1. Require auth (API key or portal admin).

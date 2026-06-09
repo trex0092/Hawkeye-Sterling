@@ -2,7 +2,7 @@
 //
 // C3: Multi-perspective MLRO deep analysis engine.
 // Runs three analytical lenses on a screening subject:
-//   1. executor   — primary MLRO risk analysis with UAE FDL No.10/2025 anchoring
+//   1. executor   — primary MLRO risk analysis with Federal Decree-Law No. 10 of 2025 anchoring
 //   2. advisor    — senior compliance review and recommendation
 //   3. challenger — adversarial probe for false positives and alternative interpretations
 //
@@ -80,7 +80,7 @@ function buildExecutorPrompt(body: Body, pastAnalyses: string = ""): string {
 
   return `You are the MLRO Executor for Hawkeye Sterling, a UAE-licensed DPMS.
 Analyse the following subject for money laundering, terrorist financing, and sanctions risk
-under UAE FDL No.10/2025, Cabinet Resolution 134/2025, Cabinet Resolution 74/2020,
+under Federal Decree-Law No. 10 of 2025, Cabinet Resolution 134/2025, Cabinet Resolution 74/2020,
 MoE Circular 08/AML/2021, LBMA RGG v9, and FATF Recommendations.
 
 SUBJECT: ${sanitizeField(body.subjectName ?? "")}
@@ -294,7 +294,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         riskFactors: Array.isArray(executorResult["riskFactors"]) ? executorResult["riskFactors"] : [],
         redLines: Array.isArray(executorResult["redLines"]) ? executorResult["redLines"] : [],
         disposition: executorResult["disposition"] ?? "escalate",
-        regulatoryAnchors: ["UAE FDL No.10/2025", "Cabinet Resolution 134/2025", "Cabinet Resolution 74/2020", "FATF Recommendations"],
+        regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025", "Cabinet Resolution 134/2025", "Cabinet Resolution 74/2020", "FATF Recommendations"],
       },
       advisor: mode !== "speed" ? {
         review: advisorResult["review"] ?? "",

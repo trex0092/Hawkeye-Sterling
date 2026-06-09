@@ -8,7 +8,7 @@ import { walkOwnershipChain, type OwnershipGraph } from "@/lib/intelligence/owne
 
 // Module 37 — Corporate Ownership Explorer
 // Ultimate Beneficial Owner mapping, ownership tree visualisation, and
-// shell company risk assessment per FATF R.10, UAE FDL 10/2025 Art.11,
+// shell company risk assessment per FATF R.10, UAE Federal Decree-Law No. 10 of 2025 Art.11,
 // and CBUAE AML Standards.
 
 const ENTITY_TYPE_ICON: Record<string, string> = {
@@ -124,7 +124,7 @@ export default function OwnershipPage() {
         titleEm="explorer."
         intro={
           <>
-            <strong>FATF R.10 · UAE FDL 10/2025 Art.11 · CBUAE AML Standards §4.</strong>{" "}
+            <strong>FATF R.10 · UAE Federal Decree-Law No. 10 of 2025 Art.11 · CBUAE AML Standards §4.</strong>{" "}
             Corporate structure penetration — map UBOs through multi-layer entities, identify shell company
             risk, flag jurisdiction layering, and surface beneficial ownership disclosure gaps.
           </>

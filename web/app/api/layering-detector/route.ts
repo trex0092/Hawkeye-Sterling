@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE money laundering specialist identifying placement, layering, and integration stages per FATF typologies and UAE Federal Decree-Law 10/2025 (FDL 10/2025). Analyse transaction descriptions for all three ML stages, account/jurisdiction hopping, round-trip structures, and structuring patterns. Apply FATF typology guidance on layering schemes including wire layering, corporate vehicle misuse, and real estate integration. Provide actionable recommendations referencing UAE AML legal obligations. Respond ONLY with valid JSON matching the LayeringResult interface — no markdown fences.`,
+          text: `You are a UAE money laundering specialist identifying placement, layering, and integration stages per FATF typologies and UAE Federal Decree-Law 10/2025 (Federal Decree-Law No. 10 of 2025). Analyse transaction descriptions for all three ML stages, account/jurisdiction hopping, round-trip structures, and structuring patterns. Apply FATF typology guidance on layering schemes including wire layering, corporate vehicle misuse, and real estate integration. Provide actionable recommendations referencing UAE AML legal obligations. Respond ONLY with valid JSON matching the LayeringResult interface — no markdown fences.`,
           cache_control: { type: "ephemeral" },
         },
       ],

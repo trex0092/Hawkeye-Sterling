@@ -63,9 +63,9 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE FDL 10/2025 Art.14(2) and FATF R.12.
+        system: `You are a UAE PEP (Politically Exposed Person) EDD specialist. Generate a comprehensive PEP enhanced due diligence package under UAE Federal Decree-Law No. 10 of 2025 Art.14(2) and FATF R.12.
 
-PEP categories (UAE definition per FDL 10/2025):
+PEP categories (UAE definition per Federal Decree-Law No. 10 of 2025):
 - Domestic PEP: UAE heads of state, ministers, senior officials, judges, military generals, senior executives of state-owned enterprises
 - Foreign PEP: Equivalent positions in foreign governments
 - International Organisation PEP: Senior officials of IOs (UN, World Bank, IMF, etc.)
@@ -79,7 +79,7 @@ FATF R.12 key requirements:
 - Enhanced ongoing monitoring — frequency based on risk
 - Family and close associates — must screen separately
 
-UAE-specific: FDL 10/2025 Art.14(2)(b) — mandatory senior management approval for ALL PEPs (domestic and foreign). No threshold on transactions.
+UAE-specific: Federal Decree-Law No. 10 of 2025 Art.14(2)(b) — mandatory senior management approval for ALL PEPs (domestic and foreign). No threshold on transactions.
 
 Respond ONLY with valid JSON — no markdown fences matching the PepEddResult interface structure.`,
         messages: [{

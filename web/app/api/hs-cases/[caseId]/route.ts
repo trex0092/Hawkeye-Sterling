@@ -117,7 +117,7 @@ export async function PATCH(
       escalationReason,
     ) ?? updated;
 
-    // ── Filing deadline (UAE FDL 10/2025 Art.17): set when entering "escalated" ──
+    // ── Filing deadline (UAE Federal Decree-Law No. 10 of 2025 Art.17): set when entering "escalated" ──
     if (status === "escalated" && !existing.filingDeadline) {
       updated = await setFilingDeadline(tenant, caseId) ?? updated;
     }

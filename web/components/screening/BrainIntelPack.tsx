@@ -501,7 +501,7 @@ export function BrainCausalChain({ result }: { result: SuperBrainResult }) {
 
   const terminal =
     result.composite.score >= 85
-      ? "→ FREEZE + FFR within 5 business days (FDL 10/2025 Art.26-27)"
+      ? "→ FREEZE + FFR within 5 business days (Federal Decree-Law No. 10 of 2025 Art.26-27)"
       : result.composite.score >= 60
         ? "→ Escalate to MLRO for EDD decision"
         : result.composite.score >= 35
@@ -538,7 +538,7 @@ export function BrainPolicyCitation({ result }: { result: SuperBrainResult }) {
   if (result.pep && result.pep.salience > 0) {
     cites.push({
       finding: "PEP classification — EDD required",
-      citation: "FATF R.12 · FDL 10/2025 Art.17",
+      citation: "FATF R.12 · Federal Decree-Law No. 10 of 2025 Art.17",
     });
   }
   if (result.screen.hits.length > 0) {
@@ -550,7 +550,7 @@ export function BrainPolicyCitation({ result }: { result: SuperBrainResult }) {
   if (result.adverseMedia.length > 0) {
     cites.push({
       finding: "Adverse-media signal — constructive-knowledge assessment",
-      citation: "FDL 10/2025 Art.2(3)",
+      citation: "Federal Decree-Law No. 10 of 2025 Art.2(3)",
     });
   }
   if (result.jurisdiction?.cahra) {
@@ -567,7 +567,7 @@ export function BrainPolicyCitation({ result }: { result: SuperBrainResult }) {
   }
   cites.push({
     finding: "Ten-year audit retention",
-    citation: "FDL 10/2025 Art.24 · Cabinet Res 134/2025 Art.18",
+    citation: "Federal Decree-Law No. 10 of 2025 Art.24 · Cabinet Res 134/2025 Art.18",
   });
   return (
     <Card title={`Policy citations (${cites.length})`}>

@@ -3,7 +3,7 @@
 // POST /api/real-estate-risk
 //
 // Deterministic rule-based scoring for UAE DNFBP-regulated real estate
-// transactions per UAE Federal Decree-Law 10/2025 (FDL 10/2025) Art.14,
+// transactions per UAE Federal Decree-Law 10/2025 (Federal Decree-Law No. 10 of 2025) Art.14,
 // RERA AML Guidelines 2024, and FATF Recommendation 22.
 //
 // Risk factors assessed:
@@ -141,7 +141,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (valueAed > HIGH_VALUE_THRESHOLD_AED) {
     riskScore += 10;
     flags.push(
-      `high_value_property — property value AED ${valueAed.toLocaleString("en-AE", { maximumFractionDigits: 0 })} exceeds AED 2,000,000 EDD threshold per UAE FDL 10/2025 Art.14`,
+      `high_value_property — property value AED ${valueAed.toLocaleString("en-AE", { maximumFractionDigits: 0 })} exceeds AED 2,000,000 EDD threshold per UAE Federal Decree-Law No. 10 of 2025 Art.14`,
     );
     requiredChecks.push("Enhanced Due Diligence (EDD) mandatory — value exceeds AED 2,000,000 threshold");
     requiredChecks.push("Source of funds declaration required");
@@ -157,7 +157,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     requiredChecks.push("File STR if cash component exceeds AED 55,000 — cash prohibition applies");
     if (valueAed > UAE_CASH_LIMIT_AED) {
       flags.push("cash_prohibition_breach — cash transaction value exceeds AED 55,000 UAE cash payment limit");
-      requiredChecks.push("Regulatory escalation required — mandatory STR filing under FDL 10/2025");
+      requiredChecks.push("Regulatory escalation required — mandatory STR filing under Federal Decree-Law No. 10 of 2025");
     }
   }
 
@@ -198,7 +198,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (body.buyerType === "corporate") {
     riskScore += 20;
     flags.push(
-      "corporate_buyer_ubo_complexity — corporate purchaser introduces layered ownership structure; UBO identification required per UAE FDL 10/2025 Art.10 and Cabinet Decision 58/2020",
+      "corporate_buyer_ubo_complexity — corporate purchaser introduces layered ownership structure; UBO identification required per UAE Federal Decree-Law No. 10 of 2025 Art.10 and Cabinet Decision 58/2020",
     );
     requiredChecks.push("Full UBO registry check — identify all natural persons owning > 25% directly or indirectly");
     requiredChecks.push("Obtain corporate ownership chart and constitutional documents");
@@ -318,9 +318,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     riskLevel,
     flags,
     dnfbpObligations: [
-      "UAE FDL 10/2025 Art.14 — DNFBP real estate EDD obligations",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.14 — DNFBP real estate EDD obligations",
       "RERA AML Guidelines 2024 — real estate broker CDD requirements",
-      "UAE FDL 10/2025 Art.10 — beneficial ownership identification",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.10 — beneficial ownership identification",
       "FATF Recommendation 22 — DNFBP customer due diligence",
       "FATF Recommendation 23 — DNFBP reporting obligations",
       "UAE Cabinet Decision 58/2020 — UBO registration requirements",

@@ -132,14 +132,14 @@ export function getEntity(id?: string | null): ReportingEntity {
 /**
  * Like `getEntity()` but throws if the resolved entity has a placeholder
  * `goamlRentityId`. Call this from any route that submits to the UAE FIU
- * — a placeholder ID causes the FIU to reject every filing (FDL 10/2025 Art.15).
+ * — a placeholder ID causes the FIU to reject every filing (Federal Decree-Law No. 10 of 2025 Art.15).
  */
 export function getEntityForSubmission(id?: string | null): ReportingEntity {
   const entity = getEntity(id);
   if (PLACEHOLDER_RENTITY_IDS.has(entity.goamlRentityId)) {
     throw new Error(
       `goAML reporting entity "${entity.name}" (id: "${entity.id}") has a placeholder goamlRentityId: "${entity.goamlRentityId}". ` +
-      `Replace it with the real FIU-assigned goAML Rentity ID in Netlify environment variables before filing (FDL 10/2025 Art.15).`,
+      `Replace it with the real FIU-assigned goAML Rentity ID in Netlify environment variables before filing (Federal Decree-Law No. 10 of 2025 Art.15).`,
     );
   }
   return entity;

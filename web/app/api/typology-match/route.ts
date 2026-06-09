@@ -113,7 +113,7 @@ Output ONLY valid JSON, no markdown fences, in this exact shape:
       "tool": "string — e.g. 'goAML query', 'GLEIF lookup', 'Adverse media search'"
     }
   ],
-  "strThreshold": "string — assessment of whether STR threshold is reached under FDL 10/2025 Art.15",
+  "strThreshold": "string — assessment of whether STR threshold is reached under Federal Decree-Law No. 10 of 2025 Art.15",
   "predicate": "string — likely predicate offence e.g. 'Tax evasion', 'Corruption', 'Drug trafficking'",
   "uaeCaseContext": "string — UAE-specific context: DPMS sector risks, MoE guidance, goAML typologies",
   "regulatoryBasis": "string — FDL/FATF/MoE references"

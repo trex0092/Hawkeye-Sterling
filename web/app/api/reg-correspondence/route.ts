@@ -109,15 +109,15 @@ const AUTHORITY_DETAILS: Record<RecipientAuthority, { fullName: string; address:
 };
 
 const CORRESPONDENCE_REGULATORY_BASIS: Record<CorrespondenceType, string> = {
-  str_cover_letter: "FDL 10/2025 Art.15 (STR filing obligation); CBUAE AML Standards §9; goAML Filing Procedures",
-  cbuae_audit_response: "FDL 10/2025 Art.19 (record keeping); CBUAE AML Standards §12 (supervisory cooperation)",
-  examination_document_response: "FDL 10/2025 Art.19; CR No.134/2025 Art.20",
-  voluntary_disclosure: "FDL 10/2025 Art.15(5) (voluntary disclosure provisions); FATF R.20",
-  freeze_notification_response: "FDL 10/2025 Art.24 (freezing obligations); CR No.134/2025 Art.28",
+  str_cover_letter: "Federal Decree-Law No. 10 of 2025 Art.15 (STR filing obligation); CBUAE AML Standards §9; goAML Filing Procedures",
+  cbuae_audit_response: "Federal Decree-Law No. 10 of 2025 Art.19 (record keeping); CBUAE AML Standards §12 (supervisory cooperation)",
+  examination_document_response: "Federal Decree-Law No. 10 of 2025 Art.19; CR No.134/2025 Art.20",
+  voluntary_disclosure: "Federal Decree-Law No. 10 of 2025 Art.15(5) (voluntary disclosure provisions); FATF R.20",
+  freeze_notification_response: "Federal Decree-Law No. 10 of 2025 Art.24 (freezing obligations); CR No.134/2025 Art.28",
   correspondent_bank_edd_response: "FATF R.13 (correspondent banking); CBUAE AML Standards §7.4",
-  regulator_inquiry_response: "FDL 10/2025 Art.17 (cooperation with competent authorities); FATF R.31",
-  customer_exit_notification: "FDL 10/2025 Art.10 (CDD obligations); CBUAE AML Standards §5.3",
-  suspicious_activity_escalation: "FDL 10/2025 Art.15; FATF R.20; CBUAE AML Standards §9.2",
+  regulator_inquiry_response: "Federal Decree-Law No. 10 of 2025 Art.17 (cooperation with competent authorities); FATF R.31",
+  customer_exit_notification: "Federal Decree-Law No. 10 of 2025 Art.10 (CDD obligations); CBUAE AML Standards §5.3",
+  suspicious_activity_escalation: "Federal Decree-Law No. 10 of 2025 Art.15; FATF R.20; CBUAE AML Standards §9.2",
 };
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -151,7 +151,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 700,
-    system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under FDL 10/2025, CBUAE AML Standards, and CR No.134/2025.
+    system: `You are a UAE AML compliance specialist and legal drafter with expertise in regulatory correspondence for DPMS (gold and precious metals dealers) under Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, and CR No.134/2025.
 
 Draft formal regulatory correspondence with:
 - Correct formal salutation and closing

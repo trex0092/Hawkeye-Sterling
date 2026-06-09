@@ -761,7 +761,7 @@ export default function AccessControlPage() {
           { value: String(roleChangesThisWeek), label: "Role changes this week" },
           { value: String(ALL_MODULES.length), label: "Modules protected" },
         ]}
-        intro="Manage platform users, roles, and module permissions. All access changes are logged in the immutable permission audit trail in accordance with UAE FDL 10/2025 Art.20 segregation-of-duties requirements."
+        intro="Manage platform users, roles, and module permissions. All access changes are logged in the immutable permission audit trail in accordance with UAE Federal Decree-Law No. 10 of 2025 Art.20 segregation-of-duties requirements."
       />
 
       {/* Tabs */}

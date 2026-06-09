@@ -361,7 +361,7 @@ export default function MoeSurveyPage() {
                       <div><FieldLabel>Deputy MLRO name (if appointed)</FieldLabel>
                         <input value={survey.mlroDeputyName} onChange={(e) => update({ mlroDeputyName: e.target.value })} className={inputCls} placeholder="Leave blank if none" /></div>
                     </div>
-                    <Toggle checked={survey.mlroIndependent} onChange={(v) => update({ mlroIndependent: v })} label="MLRO is independent — reports to Board without commercial interference (FDL 10/2025 Art.17)" />
+                    <Toggle checked={survey.mlroIndependent} onChange={(v) => update({ mlroIndependent: v })} label="MLRO is independent — reports to Board without commercial interference (Federal Decree-Law No. 10 of 2025 Art.17)" />
                   </>
                 )}
 
@@ -388,7 +388,7 @@ export default function MoeSurveyPage() {
                       <Toggle checked={survey.cnmrProcedure} onChange={(v) => update({ cnmrProcedure: v })} label="CNMR filing procedure documented (5-business-day deadline)" />
                       <Toggle checked={survey.dpmsrProcedure} onChange={(v) => update({ dpmsrProcedure: v })} label="DPMSR AED 55,000 threshold procedure documented (CR134/2025)" />
                       <Toggle checked={survey.boVerificationProcedure} onChange={(v) => update({ boVerificationProcedure: v })} label="Beneficial Ownership (BO) verification procedure documented (CR 134/2025 Art.5)" />
-                      <Toggle checked={survey.recordRetention5Year} onChange={(v) => update({ recordRetention5Year: v })} label="10-year minimum record retention confirmed (FDL No.10/2025 Art.19)" />
+                      <Toggle checked={survey.recordRetention5Year} onChange={(v) => update({ recordRetention5Year: v })} label="10-year minimum record retention confirmed (Federal Decree-Law No. 10 of 2025 Art.19)" />
                     </div>
                   </>
                 )}
@@ -442,7 +442,7 @@ export default function MoeSurveyPage() {
                 {sec.id === "pf-risk" && (
                   <>
                     <div className="bg-amber-dim border border-amber/20 rounded p-3 text-11 text-ink-1 mb-2">
-                      <strong>FATF Recommendation 1 (2023 revision)</strong> and <strong>FDL 10/2025</strong> require a <em>standalone</em> Proliferation Financing (PF) risk assessment — separate from the ML/TF BWRA. DPMS dealers are high-risk for PF given dual-use nature of precious metals (UNSCR 1718/1737/2231).
+                      <strong>FATF Recommendation 1 (2023 revision)</strong> and <strong>Federal Decree-Law No. 10 of 2025</strong> require a <em>standalone</em> Proliferation Financing (PF) risk assessment — separate from the ML/TF BWRA. DPMS dealers are high-risk for PF given dual-use nature of precious metals (UNSCR 1718/1737/2231).
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div><FieldLabel>PF risk assessment date</FieldLabel>
@@ -583,7 +583,7 @@ export default function MoeSurveyPage() {
                 {sec.id === "internal-audit" && (
                   <>
                     <div className="bg-amber-dim border border-amber/20 rounded p-3 text-11 text-ink-1 mb-2">
-                      <strong>FDL No.10/2025 Art.20</strong> requires periodic independent AML/CFT review. MoE inspectors will ask for the last audit report, findings, and board sign-off.
+                      <strong>Federal Decree-Law No. 10 of 2025 Art.20</strong> requires periodic independent AML/CFT review. MoE inspectors will ask for the last audit report, findings, and board sign-off.
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><FieldLabel>Last AML/CFT audit date</FieldLabel>
@@ -634,7 +634,7 @@ export default function MoeSurveyPage() {
                           <option value="annually">Annually</option>
                         </select></div>
                     </div>
-                    <Toggle checked={survey.whistleblowerChannelExists} onChange={(v) => update({ whistleblowerChannelExists: v })} label="Whistleblower / internal reporting channel exists — staff can report concerns without fear of retaliation (FDL No.10/2025 Art.24)" />
+                    <Toggle checked={survey.whistleblowerChannelExists} onChange={(v) => update({ whistleblowerChannelExists: v })} label="Whistleblower / internal reporting channel exists — staff can report concerns without fear of retaliation (Federal Decree-Law No. 10 of 2025 Art.24)" />
                   </>
                 )}
 

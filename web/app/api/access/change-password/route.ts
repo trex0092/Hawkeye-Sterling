@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Current password is incorrect or account not found" }, { status: 403 });
   }
 
-  // FDL 10/2025 Art.24: every access-control change must be in the audit chain.
+  // Federal Decree-Law No. 10 of 2025 Art.24: every access-control change must be in the audit chain.
   void writeAuditChainEntry({
     event: "access.password_changed",
     actor: session.username,

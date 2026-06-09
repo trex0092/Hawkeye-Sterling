@@ -152,7 +152,7 @@ test.describe("Four-eyes approval workflow — API routes", () => {
       },
     });
 
-    // The route should reject self-approval per FDL 10/2025 Art.16
+    // The route should reject self-approval per Federal Decree-Law No. 10 of 2025 Art.16
     expect(approveRes.status()).toBeGreaterThanOrEqual(400);
   });
 });

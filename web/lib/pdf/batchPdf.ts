@@ -115,7 +115,7 @@ export async function exportBatchPdf(results: BatchRowResult[], summary: BatchSu
     { label:"DURATION",          value:`${durationS} s`,    sub:`${summary.total} Subjects` },
     { label:"OFFICER",           value:"L. Fernanda",        sub:"CO/MLRO" },
     { label:"REPORT IDENTIFIER", value:ref,                 sub:"Immutable  ·  Signed" },
-    { label:"RETENTION",         value:"10 years",          sub:"FDL 10/2025" },
+    { label:"RETENTION",         value:"10 years",          sub:"Federal Decree-Law No. 10 of 2025" },
   ]);
   coverFooter(doc);
 
@@ -213,7 +213,7 @@ export async function exportBatchPdf(results: BatchRowResult[], summary: BatchSu
   const total = doc.getNumberOfPages()-1;
   for (let p=2; p<=doc.getNumberOfPages(); p++) {
     doc.setPage(p);
-    contentFrame(doc, ref, "FDL 10/2025 ART.9  ·  FATF R.10  ·  CBUAE AML","STANDARDS §4", p-1, total);
+    contentFrame(doc, ref, "Federal Decree-Law No. 10 of 2025 ART.9  ·  FATF R.10  ·  CBUAE AML","STANDARDS §4", p-1, total);
   }
 
   doc.save(`hawkeye-batch-${ref}.pdf`);

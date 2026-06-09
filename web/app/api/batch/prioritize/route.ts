@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are an AML compliance expert specialising in screening prioritisation under FATF Recommendations, UAE FDL 10/2025, CBUAE AML Standards, and OFAC/HMT/EU sanctions frameworks.
+          text: `You are an AML compliance expert specialising in screening prioritisation under FATF Recommendations, UAE Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, and OFAC/HMT/EU sanctions frameworks.
 
 Your task: analyse the provided batch subjects and rank them by screening urgency. Consider:
 1. Time elapsed since last screening — subjects not screened in >30 days need review; >90 days are critical

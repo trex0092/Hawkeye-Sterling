@@ -326,7 +326,7 @@ export default function LoginPage() {
             lineHeight: 1.6,
           }}
         >
-          Regulated under UAE FDL 10/2025 · Access logged per Art.26-27
+          Regulated under UAE Federal Decree-Law No. 10 of 2025 · Access logged per Art.26-27
           <br />
           Unauthorized access is a criminal offence
         </div>

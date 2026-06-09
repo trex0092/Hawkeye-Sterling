@@ -292,7 +292,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       alerts: [
         ...(mandatoryDown > 0 ? [{
           severity: "critical",
-          message: `${mandatoryDown} mandatory sanctions list(s) down — UAE FDL No.10/2025 Art.20 compliance at risk`,
+          message: `${mandatoryDown} mandatory sanctions list(s) down — Federal Decree-Law No. 10 of 2025 Art.20 compliance at risk`,
           affectedLists: sanctions.filter((s) => mandatoryIds.has(s.listId) && s.status !== "healthy").map((s) => s.listId),
           action: "POST /api/sanctions/refresh or POST /api/admin/trigger-list-refresh",
         }] : []),
@@ -314,7 +314,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         }] : []),
         ...(auditCheck.status !== "operational" ? [{
           severity: "high",
-          message: "Audit chain degraded — UAE FDL No.10/2025 Art.24 compliance at risk",
+          message: "Audit chain degraded — Federal Decree-Law No. 10 of 2025 Art.24 compliance at risk",
           action: "Check AUDIT_CHAIN_SECRET environment variable",
         }] : []),
       ],

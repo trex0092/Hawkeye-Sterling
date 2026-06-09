@@ -3,7 +3,7 @@
 // Returns the latest 24-hour freeze SLA status report produced by the
 // freeze-sla-monitor.mts cron function (runs hourly at :30 UTC).
 //
-// Cabinet Resolution 74/2020 Art.4 + UAE FDL 10/2025 Art.24 require
+// Cabinet Resolution 74/2020 Art.4 + UAE Federal Decree-Law No. 10 of 2025 Art.24 require
 // asset freeze within 24 hours of an EOCN/TFS designation hit.
 //
 // Response:

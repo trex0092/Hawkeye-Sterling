@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1300,
-        system: `You are a UAE VASP (Virtual Asset Service Provider) AML/CFT risk specialist. Assess VASPs for onboarding/relationship risk under VARA, UAE FDL 10/2025, and FATF R.15.
+        system: `You are a UAE VASP (Virtual Asset Service Provider) AML/CFT risk specialist. Assess VASPs for onboarding/relationship risk under VARA, UAE Federal Decree-Law No. 10 of 2025, and FATF R.15.
 
 Key assessment criteria:
 1. LICENSING: VARA (Dubai), ADGM FSRA, or equivalent — mandatory for UAE operations

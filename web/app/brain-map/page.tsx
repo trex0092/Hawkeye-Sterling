@@ -161,7 +161,7 @@ export default function BrainMapPage() {
         </h1>
         <p className="text-13 text-ink-2 mt-1 max-w-[70ch]">
           Interactive map of all {data?.faculties.length ?? "…"} brain faculties and their{" "}
-          {data?.totalFiles ?? "…"} TypeScript files — for auditor onboarding and FDL No.10/2025
+          {data?.totalFiles ?? "…"} TypeScript files — for auditor onboarding and Federal Decree-Law No. 10 of 2025
           demonstrable oversight evidence.
         </p>
       </div>

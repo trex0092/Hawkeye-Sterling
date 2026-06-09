@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const systemPrompt = `You are a senior UAE AML/CFT analyst specialising in DPMS, gold trading, and transaction monitoring. You receive raw transaction narratives or monitoring alert text and produce a structured AML analysis.
 
 Your analysis must be grounded in:
-- UAE FDL 10/2025 (AML Law) and Cabinet Resolution 134/2025
+- UAE Federal Decree-Law No. 10 of 2025 (AML Law) and Cabinet Resolution 134/2025
 - FATF 40 Recommendations — especially R.10, R.12, R.15, R.16, R.19, R.20, R.21, R.29
 - UAE FIU goAML STR filing standards
 - EOCN sanctions regime
@@ -64,7 +64,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "typologyFatfRef": "<FATF/FDL citation>",
   "strRequired": <true|false>,
   "strBasis": "<one-sentence basis for STR determination>",
-  "strDeadline": "<deadline per FDL 10/2025>",
+  "strDeadline": "<deadline per Federal Decree-Law No. 10 of 2025>",
   "riskVerdict": "critical"|"high"|"medium"|"low"|"clear",
   "redFlags": [{"indicator": "<flag>", "severity": "critical"|"high"|"medium", "fatfRef": "<ref>"}],
   "recommendedAction": "file_str"|"escalate_mlro"|"enhanced_dd"|"monitor"|"clear",

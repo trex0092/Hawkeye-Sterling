@@ -1,11 +1,11 @@
 // GET /api/compliance/uae-requirements
 //
 // Returns a structured reference of UAE AML/CFT regulatory requirements
-// covering FDL 10/2025 key articles, CBUAE AML/CFT Standards, regulatory
+// covering Federal Decree-Law No. 10 of 2025 key articles, CBUAE AML/CFT Standards, regulatory
 // deadlines, current compliance dates, and penalties summary.
 //
 // Regulatory framework:
-//   · UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) — AML/CFT
+//   · UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025) — AML/CFT
 //   · CBUAE AML/CFT Standards v3 (effective 2024-07-01)
 //   · FATF 40 Recommendations (FATF 4th Round Mutual Evaluation: 2026)
 
@@ -310,21 +310,21 @@ const REGULATORY_DEADLINES: RegulatoryDeadline[] = [
   {
     obligation: "STR/SAR Filing",
     deadline: "48 hours from the moment suspicion is formed",
-    legalBasis: "UAE FDL 10/2025 Art.17",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.17",
     notes:
       "The 48-hour clock starts when any employee, officer, or system formally records suspicion — not when investigation is concluded. MLRO must log the suspicion formation timestamp.",
   },
   {
     obligation: "Annual Enterprise-Wide Risk Assessment (EWRA) Update",
     deadline: "31 December each calendar year",
-    legalBasis: "CBUAE AML/CFT Standards v3 — Standard 1; FDL 10/2025 Art.4",
+    legalBasis: "CBUAE AML/CFT Standards v3 — Standard 1; Federal Decree-Law No. 10 of 2025 Art.4",
     notes:
       "Board approval required. The EWRA must be submitted to the CBUAE supervisor on request. Material changes during the year require an interim update.",
   },
   {
     obligation: "PEP Relationship Annual Review",
     deadline: "Within 12 months of the previous review date",
-    legalBasis: "UAE FDL 10/2025 Art.32; CBUAE Standard 4",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.32; CBUAE Standard 4",
     notes:
       "Senior management sign-off required at each annual review. Review must reassess risk rating, source of wealth, and beneficial ownership in addition to standard CDD refresh.",
   },
@@ -332,7 +332,7 @@ const REGULATORY_DEADLINES: RegulatoryDeadline[] = [
     obligation: "Sanctions List Refresh",
     deadline: "Daily (best practice); 24-hour maximum permitted lag",
     legalBasis:
-      "Cabinet Resolution No. 74 of 2020 (TFS); UAE FDL 10/2025 Art.4; CBUAE Sanctions Compliance Guidance",
+      "Cabinet Resolution No. 74 of 2020 (TFS); UAE Federal Decree-Law No. 10 of 2025 Art.4; CBUAE Sanctions Compliance Guidance",
     notes:
       "Institutions must monitor OFAC SDN, EU Consolidated, UN Consolidated, HM Treasury, and UAE Local Terrorist Designation (LTD) lists. Automated feeds are strongly recommended.",
   },
@@ -346,7 +346,7 @@ const REGULATORY_DEADLINES: RegulatoryDeadline[] = [
   {
     obligation: "Record Retention (CDD, transactions, STRs, compliance decisions)",
     deadline: "Minimum 5 years from relationship end or transaction date",
-    legalBasis: "UAE FDL 10/2025 Art.9; FATF Recommendation 11",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.9; FATF Recommendation 11",
     notes:
       "Records related to ongoing investigations or litigation must be held until formally released by the competent authority. AML audit chain records under Art.24 are subject to 10-year retention per some supervisory interpretations.",
   },
@@ -378,7 +378,7 @@ const REGULATORY_DEADLINES: RegulatoryDeadline[] = [
 
 const COMPLIANCE_DATES: ComplianceDate[] = [
   {
-    event: "UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) — Effective Date",
+    event: "UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025) — Effective Date",
     effectiveDate: "2025-01-01",
     status: "in-force",
     notes:
@@ -414,7 +414,7 @@ const COMPLIANCE_DATES: ComplianceDate[] = [
     event: "Cabinet Resolution No. 74 of 2020 on TFS — In Force",
     effectiveDate: "2020-09-10",
     status: "in-force",
-    notes: "Governs targeted financial sanctions (TFS) implementation in the UAE. Complementary to FDL 10/2025.",
+    notes: "Governs targeted financial sanctions (TFS) implementation in the UAE. Complementary to Federal Decree-Law No. 10 of 2025.",
   },
 ];
 
@@ -427,7 +427,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Mandatory remediation plan with CBUAE oversight",
       "Reputational damage and potential licence conditions",
     ],
-    legalBasis: "UAE FDL 10/2025 Chapter 8 (Penalties)",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Chapter 8 (Penalties)",
   },
   {
     violationType: "Failure to file STR within 48 hours (Art.17)",
@@ -437,7 +437,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Suspension of MLRO and responsible officers pending investigation",
       "Regulatory referral for criminal prosecution in cases of wilful concealment",
     ],
-    legalBasis: "UAE FDL 10/2025 Chapter 8 (Penalties); Art.17",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Chapter 8 (Penalties); Art.17",
   },
   {
     violationType: "Tipping-off (Art.18)",
@@ -447,7 +447,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Imprisonment of up to 1 year for individuals under UAE Penal Code provisions",
       "Regulatory action against the institution for control failures",
     ],
-    legalBasis: "UAE FDL 10/2025 Art.18; UAE Penal Code",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.18; UAE Penal Code",
   },
   {
     violationType: "Failure to maintain records (Art.9)",
@@ -456,7 +456,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Data reconstruction order at institution's cost",
       "Enhanced supervisory oversight",
     ],
-    legalBasis: "UAE FDL 10/2025 Art.9; FATF R.11",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.9; FATF R.11",
   },
   {
     violationType: "Failure to implement transaction monitoring (Art.14)",
@@ -465,7 +465,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Mandatory independent audit of the transaction monitoring framework",
       "Potential suspension of new product/customer approvals",
     ],
-    legalBasis: "UAE FDL 10/2025 Art.14",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.14",
   },
   {
     violationType: "Failure to apply enhanced due diligence — PEPs or high-risk (Art.7, Art.32)",
@@ -474,7 +474,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Senior management personal liability",
       "Mandatory remediation and enhanced monitoring period",
     ],
-    legalBasis: "UAE FDL 10/2025 Art.7, Art.32; CBUAE Standards 3 and 7",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.7, Art.32; CBUAE Standards 3 and 7",
   },
   {
     violationType: "Correspondent banking violations (Art.25) — including shell bank relationships",
@@ -484,7 +484,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "Referral to criminal prosecution for wilful violations",
       "Regulatory embargo on new correspondent banking approvals",
     ],
-    legalBasis: "UAE FDL 10/2025 Art.25; CBUAE Standard 5",
+    legalBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.25; CBUAE Standard 5",
   },
   {
     violationType: "Wilful ML/TF facilitation or obstruction of authorities",
@@ -496,7 +496,7 @@ const PENALTIES_SUMMARY: PenaltySummary[] = [
       "International regulatory notifications (FATF egmont network)",
     ],
     legalBasis:
-      "UAE FDL 10/2025 Chapter 8; UAE Federal Law No. 3 of 1987 (Penal Code); FATF R.3 (criminalisation of ML)",
+      "UAE Federal Decree-Law No. 10 of 2025 Chapter 8; UAE Federal Law No. 3 of 1987 (Penal Code); FATF R.3 (criminalisation of ML)",
   },
 ];
 
@@ -515,7 +515,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
     ok: true,
     generatedAt: new Date().toISOString(),
     jurisdiction: "UAE",
-    primaryLegislation: "UAE Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering and Combating the Financing of Terrorism and Financing of Illegal Organisations (FDL 10/2025)",
+    primaryLegislation: "UAE Federal Decree-Law No. 10 of 2025 on Anti-Money Laundering and Combating the Financing of Terrorism and Financing of Illegal Organisations (Federal Decree-Law No. 10 of 2025)",
     fdl102025Articles: FDL_10_2025_ARTICLES,
     cbuaeStandards: CBUAE_STANDARDS,
     regulatoryDeadlines: REGULATORY_DEADLINES,

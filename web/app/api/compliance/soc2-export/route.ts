@@ -3,7 +3,7 @@
 // SOC2-ready audit log export (audit follow-up #56). Returns an
 // immutable, signed bundle of audit-chain entries + journal records +
 // regulatory metadata for the requested time window. Designed for SOC2
-// CC7.2 (audit log review) + ISO 27001 A.12.4 + FDL 10/2025 Art.24.
+// CC7.2 (audit log review) + ISO 27001 A.12.4 + Federal Decree-Law No. 10 of 2025 Art.24.
 //
 // Output: JSON bundle with HMAC-SHA256 signature on the canonicalised
 // payload — verifiable independently by the auditor.
@@ -153,7 +153,7 @@ async function handleGet(req: Request): Promise<NextResponse> {
       standardsCovered: [
         "SOC2 CC7.2 (audit log review)",
         "ISO 27001 A.12.4 (logging and monitoring)",
-        "UAE FDL 10/2025 Art.20-24 (record retention + tamper-evident)",
+        "UAE Federal Decree-Law No. 10 of 2025 Art.20-24 (record retention + tamper-evident)",
         "PDPL Art.13 (right of access)",
       ],
     },

@@ -4,7 +4,7 @@
 // generation for SAR/STR filings using Claude.
 //
 // Supported jurisdictions:
-//   uae  → FDL 20/2018 Article 26 (now consolidated under FDL 10/2025)
+//   uae  → Federal Decree-Law No. 20 of 2018 Article 26 (now consolidated under Federal Decree-Law No. 10 of 2025)
 //   uk   → POCA 2002
 //   us   → BSA Title 31
 //   au   → AML/CTF Act 2006
@@ -52,12 +52,12 @@ function buildSystemPrompt(jurisdiction: SarNarrativeRequest["jurisdiction"]): s
 
 REGULATORY FRAMEWORK:
 - UAE Federal Decree-Law No. 20 of 2018 (Anti-Money Laundering), Article 26: mandatory STR reporting obligation
-- UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025), Art. 15-17: reporting obligations and timelines
+- UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025), Art. 15-17: reporting obligations and timelines
 - Cabinet Resolution No. 10 of 2019: implementing regulations
 - CBUAE AML/CFT Standards: narrative quality requirements
 - Mandatory submission via goAML to the UAE Financial Intelligence Unit (FIU/EOCN)
 
-Filing deadline: 30 days from suspicion formation (FDL 10/2025 Art. 17).
+Filing deadline: 30 days from suspicion formation (Federal Decree-Law No. 10 of 2025 Art. 17).
 Tipping-off prohibition: Art. 29 — do not include any language that could alert the subject.`,
 
     uk: `You are a senior UK MLRO drafting a Suspicious Activity Report (SAR) narrative for submission to the National Crime Agency (NCA).

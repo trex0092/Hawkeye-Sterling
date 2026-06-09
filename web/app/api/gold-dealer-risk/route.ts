@@ -5,7 +5,7 @@
 // with cash purchases of gold being the primary money laundering vehicle.
 //
 // Regulatory basis:
-//   - UAE FDL 10/2025 (Federal Decree-Law on AML/CFT)
+//   - UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law on AML/CFT)
 //   - UAE Cabinet Decision 10/2019 Art.7 (DNFBP obligations)
 //   - FATF Guidance on Dealers in Precious Metals and Stones (DPMS)
 //   - Dubai Multi Commodities Centre (DMCC) Responsible Sourcing Programme
@@ -97,7 +97,7 @@ const SANCTIONED_DESTINATIONS = new Set([
 /**
  * AED cash transaction reporting threshold per UAE regulations.
  * Transactions at or above AED 55,000 in cash must be reported as
- * a Cash Transaction Report (CTR) under UAE FDL 10/2025.
+ * a Cash Transaction Report (CTR) under UAE Federal Decree-Law No. 10 of 2025.
  */
 const AED_CASH_REPORTING_THRESHOLD = 55_000;
 
@@ -194,12 +194,12 @@ function computeGoldDealerRisk(body: RequestBody): ScoringResult {
 
   // -------------------------------------------------------------------------
   // (g) No KYC on file: +25
-  //     DNFBP obligations under UAE FDL 10/2025 and Cabinet Decision 10/2019
+  //     DNFBP obligations under UAE Federal Decree-Law No. 10 of 2025 and Cabinet Decision 10/2019
   //     require CDD for all transactions above thresholds
   // -------------------------------------------------------------------------
   if (body.hasKycOnFile === false) {
     score += 25;
-    flags.push("no_kyc_on_file:+25 (DNFBP CDD requirement not met — UAE FDL 10/2025 Art.6)");
+    flags.push("no_kyc_on_file:+25 (DNFBP CDD requirement not met — UAE Federal Decree-Law No. 10 of 2025 Art.6)");
     typologies.add("CDD failure — anonymous precious metals transaction in breach of DNFBP obligations");
   }
 
@@ -280,7 +280,7 @@ function buildUaeRegulatoryStatus(body: RequestBody, riskLevel: RiskLevel, flags
     issues.push("DMCC/regulatory authority registration not confirmed");
   }
   if (body.hasKycOnFile === false) {
-    issues.push("CDD documentation absent — UAE FDL 10/2025 Art.6 breach");
+    issues.push("CDD documentation absent — UAE Federal Decree-Law No. 10 of 2025 Art.6 breach");
   }
   if (flags.some((f) => f.startsWith("cash_exceeds_aed_limit"))) {
     issues.push("Cash CTR filing mandatory (UAE FIU — goAML submission required within 48 hours)");
@@ -319,7 +319,7 @@ function buildRecommendation(
     case "CDD":
       return (
         "Apply standard Customer Due Diligence (CDD): verify customer identity, obtain transaction " +
-        "purpose, document source of funds. Retain records for minimum 5 years per UAE FDL 10/2025."
+        "purpose, document source of funds. Retain records for minimum 5 years per UAE Federal Decree-Law No. 10 of 2025."
       );
     default:
       return (
@@ -396,7 +396,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     reportingThreshold,
     recommendation,
     regulatoryBasis: [
-      "UAE FDL 10/2025",
+      "UAE Federal Decree-Law No. 10 of 2025",
       "FATF Guidance on Dealers in Precious Metals",
       "UAE Cabinet Decision 10/2019 Art.7",
     ],

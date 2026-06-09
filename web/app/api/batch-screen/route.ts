@@ -394,7 +394,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (elevated.length > 30) lines.push(`  … and ${elevated.length - 30} more`);
     lines.push(``);
     lines.push(`Summary: critical ${summary.critical} · high ${summary.high} · medium ${summary.medium} · low ${summary.low} · clear ${summary.clear}`);
-    lines.push(`Legal   : FDL 10/2025 Art.26-27 · CR 134/2025 Art.18`);
+    lines.push(`Legal   : Federal Decree-Law No. 10 of 2025 Art.26-27 · CR 134/2025 Art.18`);
     // Egress gate: compliance pre-check before MLRO inbox delivery.
     const egressResult = await runEgressCheck(lines.join("\n"), "Batch screening alert");
     if (!egressResult.allowed) {

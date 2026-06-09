@@ -12,7 +12,7 @@
 //   4. Produce completeness checklist
 //   5. Return filing-ready package
 //
-// Regulatory basis: FDL 10/2025 Art.16; CBUAE AML Standards §10; goAML CTR Guide
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.16; CBUAE AML Standards §10; goAML CTR Guide
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -220,7 +220,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       "3. Retain CTR reference for 10-year record keeping",
       "4. No requirement to notify subject of CTR filing",
     ] : ["CTR threshold not reached — no filing required"],
-    regulatoryBasis: "FDL 10/2025 Art.16; CBUAE AML Standards §10; Cabinet Decision No. 10/2019",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.16; CBUAE AML Standards §10; Cabinet Decision No. 10/2019",
     generatedAt: new Date().toISOString(),
   }, { headers: gate.headers });
 }

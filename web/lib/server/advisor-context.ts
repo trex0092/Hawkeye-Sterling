@@ -40,7 +40,7 @@ export function buildJurisdictionComparator(jurisdictions: string[]): string {
     `  · Detected jurisdictions: ${jurisdictions.join(" · ")}.`,
     "  · Format your answer as a markdown comparison table with one column per jurisdiction.",
     "  · Each row covers a specific obligation (CDD / EDD threshold / reporting deadline / FATF anchor).",
-    "  · Cite the primary source per cell (e.g. 'FATF R.10', 'FDL 10/2025 Art.16', '5AMLD Art.18a').",
+    "  · Cite the primary source per cell (e.g. 'FATF R.10', 'Federal Decree-Law No. 10 of 2025 Art.16', '5AMLD Art.18a').",
     "  · After the table, summarise the divergence (which jurisdiction is strictest) in 2 sentences.",
     "",
   ];
@@ -312,7 +312,7 @@ export interface MlroAdvisorResult {
   elapsedMs: number;
 }
 
-const ADVISOR_SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with 20+ years of UAE AML/CFT compliance experience. You provide expert, actionable analysis under UAE FDL No.10/2025, Cabinet Resolution No.134/2025, and FATF Recommendations.
+const ADVISOR_SYSTEM_PROMPT = `You are a senior MLRO (Money Laundering Reporting Officer) with 20+ years of UAE AML/CFT compliance experience. You provide expert, actionable analysis under Federal Decree-Law No. 10 of 2025, Cabinet Resolution No.134/2025, and FATF Recommendations.
 
 Requirements:
 - Cite specific regulatory references (FATF Rec numbers, FDL articles, Cabinet Resolutions)

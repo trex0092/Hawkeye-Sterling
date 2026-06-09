@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT financial intelligence expert specialising in money laundering typology analysis under FATF standards and UAE FDL 10/2025. Construct detailed money laundering scenario analyses and return a JSON object with exactly these fields: { "scenarioTitle": string, "predicate": string, "placement": string, "layering": string, "integration": string, "totalAmountAed": number, "keyVehicles": string[], "redFlagSummary": string[], "typologyCode": string, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT financial intelligence expert specialising in money laundering typology analysis under FATF standards and UAE Federal Decree-Law No. 10 of 2025. Construct detailed money laundering scenario analyses and return a JSON object with exactly these fields: { "scenarioTitle": string, "predicate": string, "placement": string, "layering": string, "integration": string, "totalAmountAed": number, "keyVehicles": string[], "redFlagSummary": string[], "typologyCode": string, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

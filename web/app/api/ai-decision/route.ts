@@ -202,7 +202,7 @@ function buildLearningContext(feedback: FeedbackRecord[]): string {
 
 // ── Decision prompt ───────────────────────────────────────────────────────────
 
-const STATIC_SYSTEM_PROMPT = `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF (FDL No.10/2025, in force 14 Oct 2025), Cabinet Resolution No. 134 of 2025 (CR No.134/2025), and CBUAE AML Standards. FDL No. 20/2018 and Cabinet Decision No. 10/2019 have been superseded and must NOT be cited.
+const STATIC_SYSTEM_PROMPT = `You are the Hawkeye Sterling AI Decision Engine — an AML compliance automation agent for a UAE-regulated gold trading firm operating under Federal Decree-Law No. 10 of 2025 on AML/CFT/CPF (Federal Decree-Law No. 10 of 2025, in force 14 Oct 2025), Cabinet Resolution No. 134 of 2025 (CR No.134/2025), and CBUAE AML Standards. Federal Decree-Law No. 20 of 2018 and Cabinet Decision No. 10/2019 have been superseded and must NOT be cited.
 
 Your role is to AUTOMATICALLY decide the disposition for each screened subject. You must output a single JSON object with no markdown fences.
 
@@ -335,8 +335,8 @@ async function createAsanaTask(
     `NEXT STEPS`,
     ...nextSteps.map((s) => `• ${s}`),
     ``,
-    `Legal basis : FDL 10/2025 Art.18, Art.20, Art.26-27 · CBUAE AML Standards`,
-    `Auto-created by Hawkeye Sterling AI Decision Engine — MLRO four-eyes review required per FDL No.10/2025 Art.18`,
+    `Legal basis : Federal Decree-Law No. 10 of 2025 Art.18, Art.20, Art.26-27 · CBUAE AML Standards`,
+    `Auto-created by Hawkeye Sterling AI Decision Engine — MLRO four-eyes review required per Federal Decree-Law No. 10 of 2025 Art.18`,
   ].join("\n");
 
   try {
@@ -382,7 +382,7 @@ async function createAsanaTask(
 }
 
 // ADD-03: Immediately after creating the parent decision task, create a
-// blocking subtask enforcing four-eyes MLRO review per FDL No. 10/2025 Art. 18.
+// blocking subtask enforcing four-eyes MLRO review per Federal Decree-Law No. 10 of 2025 Art. 18.
 async function createMlroReviewSubtask(
   parentTaskGid: string,
   decisionId: string,
@@ -394,7 +394,7 @@ async function createMlroReviewSubtask(
   const subtaskNotes = [
     `MLRO FOUR-EYES REVIEW — MANDATORY`,
     ``,
-    `This subtask is a blocking gate under FDL No. 10/2025 Art. 18.`,
+    `This subtask is a blocking gate under Federal Decree-Law No. 10 of 2025 Art. 18.`,
     `NO compliance action (CDD completion, onboarding, offboarding, STR filing,`,
     `transaction blocking) may be taken until this subtask is marked complete`,
     `by the designated MLRO or authorised deputy.`,
@@ -409,9 +409,9 @@ async function createMlroReviewSubtask(
     `[ ] Sanctions hits (if any) independently verified`,
     `[ ] Adverse media review completed`,
     `[ ] Risk rating concurred with or overridden with documented rationale`,
-    `[ ] FDL No. 10/2025 Art. 18 sign-off recorded in goAML audit trail`,
+    `[ ] Federal Decree-Law No. 10 of 2025 Art. 18 sign-off recorded in goAML audit trail`,
     ``,
-    `Legal basis: FDL No. 10/2025 Art. 18 — AI-generated compliance decisions`,
+    `Legal basis: Federal Decree-Law No. 10 of 2025 Art. 18 — AI-generated compliance decisions`,
     `require human review before any action is taken.`,
   ].join("\n");
   try {
@@ -462,7 +462,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "name and subjectId are required" }, { status: 400 , headers: gate.headers });
   }
 
-  // ── Data integrity gate (FDL 10/2025 Art.18) ─────────────────────────────
+  // ── Data integrity gate (Federal Decree-Law No. 10 of 2025 Art.18) ─────────────────────────────
   // Verify critical sanctions lists are loaded before generating any decision.
   const integrity = await checkListsIntegrity();
   if (!integrity.listsVerified) {
@@ -546,7 +546,7 @@ export async function POST(req: Request) {
       rationale = parsed.rationale ?? "Decision based on risk profile analysis.";
       keyFactors = Array.isArray(parsed.keyFactors) ? parsed.keyFactors : [];
       nextSteps = Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
-      regulatoryBasis = parsed.regulatoryBasis ?? "FDL 10/2025";
+      regulatoryBasis = parsed.regulatoryBasis ?? "Federal Decree-Law No. 10 of 2025";
     } catch (llmErr) {
       // Fallback to rule-based — surface degraded flag so callers know
       console.warn("[ai-decision] LLM call failed — falling back to rule-based:", llmErr instanceof Error ? llmErr.message : String(llmErr));
@@ -557,7 +557,7 @@ export async function POST(req: Request) {
       rationale = `Rule-based decision: risk score ${body.riskScore}, ${body.sanctionsHits.length} sanctions hits.`;
       keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
       nextSteps = defaultNextSteps(decision);
-      regulatoryBasis = "FDL 10/2025 Art.20";
+      regulatoryBasis = "Federal Decree-Law No. 10 of 2025 Art.20";
       isDegraded = true;
     }
   } else {
@@ -567,7 +567,7 @@ export async function POST(req: Request) {
     rationale = `Rule-based decision: risk score ${body.riskScore}, ${body.sanctionsHits.length} sanctions hits. No AI API configured.`;
     keyFactors = [`Risk score: ${body.riskScore}/100`, `Sanctions hits: ${body.sanctionsHits.length}`];
     nextSteps = defaultNextSteps(decision);
-    regulatoryBasis = "FDL 10/2025 Art.20";
+    regulatoryBasis = "Federal Decree-Law No. 10 of 2025 Art.20";
     isDegraded = true;
   }
 
@@ -577,7 +577,7 @@ export async function POST(req: Request) {
   let fourEyesWarning = false;
   if (body.test !== true) {
     asana = await createAsanaTask(body, decision, rationale, nextSteps, decisionId, integrity);
-    // ADD-03: Await the blocking MLRO review subtask (four-eyes enforcement per FDL 10/2025 Art.18).
+    // ADD-03: Await the blocking MLRO review subtask (four-eyes enforcement per Federal Decree-Law No. 10 of 2025 Art.18).
     if (asana.taskGid) {
       const subtaskResult = await createMlroReviewSubtask(asana.taskGid, decisionId, body.name, integrity.listsVerified).catch((err: unknown) => {
         console.error("[ai-decision] MLRO four-eyes subtask failed — compliance gate may be missing:", err);
@@ -617,7 +617,7 @@ export async function POST(req: Request) {
     _governance: {
       humanReviewRequired: true,
       reviewNote:
-        "AI-generated output — MLRO review required before any compliance action per FDL No.10/2025 Art.18.",
+        "AI-generated output — MLRO review required before any compliance action per Federal Decree-Law No. 10 of 2025 Art.18.",
     },
     ...(body.test === true
       ? { asanaSkipped: true as const }
@@ -647,7 +647,7 @@ export async function POST(req: Request) {
     incrementCounter('hawkeye_ai_decision_degraded_total', 1, { route: 'ai-decision' });
   }
 
-  // Audit chain entry for AI decision (FDL 10/2025 Art.18 — fire-and-forget).
+  // Audit chain entry for AI decision (Federal Decree-Law No. 10 of 2025 Art.18 — fire-and-forget).
   void writeAuditChainEntry(
     {
       event: 'ai_decision.generated',

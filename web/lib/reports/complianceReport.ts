@@ -874,7 +874,7 @@ function formatAdverseMedia(sb: ReportSuperBrain): string[] {
     "Source posture    : open-source / classifier-derived. Constructive-knowledge",
   );
   lines.push(
-    "                    threshold (FDL 10/2025 Art.2(3)) requires analyst review",
+    "                    threshold (Federal Decree-Law No. 10 of 2025 Art.2(3)) requires analyst review",
   );
   lines.push(
     "                    and live-news corroboration before SAR / EDD action.",
@@ -1021,14 +1021,14 @@ function formatAnalysis(type: ReportType, input: ReportInput): string[] {
     lines.push(
       "review and live-news corroboration before constructive-knowledge can be",
     );
-    lines.push("asserted under FDL 10/2025 Art.2(3).");
+    lines.push("asserted under Federal Decree-Law No. 10 of 2025 Art.2(3).");
   }
   if (type === "PEP") {
     lines.push(
       "PEP status alone does not constitute a suspicion trigger; it invokes EDD",
     );
     lines.push(
-      "and senior-management approval under FATF Recommendation 12 / FDL 10/2025",
+      "and senior-management approval under FATF Recommendation 12 / Federal Decree-Law No. 10 of 2025",
     );
     lines.push("Art.17.");
   }

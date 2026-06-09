@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT forensic finance expert specialising in mixed funds tracing under UAE FDL 10/2025 Art.26 and FATF R.4. Analyse mixed funds scenarios and return a JSON object with exactly these fields: { "taintPercentage": number (0-100), "taintRating": "critical"|"high"|"medium"|"low", "taintedAmount": number, "cleanAmount": number, "tracingMethod": "FIFO"|"proportional"|"lowest_intermediate_balance", "legalAnalysis": string, "confiscationRisk": boolean, "evidenceStrength": "strong"|"moderate"|"weak", "investigativeSteps": string[], "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT forensic finance expert specialising in mixed funds tracing under UAE Federal Decree-Law No. 10 of 2025 Art.26 and FATF R.4. Analyse mixed funds scenarios and return a JSON object with exactly these fields: { "taintPercentage": number (0-100), "taintRating": "critical"|"high"|"medium"|"low", "taintedAmount": number, "cleanAmount": number, "tracingMethod": "FIFO"|"proportional"|"lowest_intermediate_balance", "legalAnalysis": string, "confiscationRisk": boolean, "evidenceStrength": "strong"|"moderate"|"weak", "investigativeSteps": string[], "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

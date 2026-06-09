@@ -5,7 +5,7 @@
 // Aggregates real-time data from the HS case store, feedback loop, STR/SAR
 // register, screening history, and sanctions list metadata to produce the
 // full set of metrics required for MLRO dashboards and regulator reporting
-// under UAE FDL No.10/2025, FATF Effectiveness IO.6, and CBUAE Supervisory
+// under Federal Decree-Law No. 10 of 2025, FATF Effectiveness IO.6, and CBUAE Supervisory
 // Expectations.
 //
 // Metrics returned:
@@ -95,7 +95,7 @@ interface SarFilingMetrics {
   /** % of SARs that breached the 48 h window. */
   overduePct: number;
   overdueCount: number;
-  regulatoryReference: "UAE FDL No.10/2025 Art.17";
+  regulatoryReference: "Federal Decree-Law No. 10 of 2025 Art.17";
 }
 
 interface CaseManagementKpis {
@@ -249,7 +249,7 @@ function mockSarFilingMetrics(): SarFilingMetrics {
     onTimePct: 100,
     overduePct: 0,
     overdueCount: 0,
-    regulatoryReference: "UAE FDL No.10/2025 Art.17",
+    regulatoryReference: "Federal Decree-Law No. 10 of 2025 Art.17",
   };
 }
 
@@ -563,7 +563,7 @@ async function deriveSarMetrics(tenant: string): Promise<SarFilingMetrics | null
       onTimePct,
       overduePct: parseFloat((100 - onTimePct).toFixed(1)),
       overdueCount,
-      regulatoryReference: "UAE FDL No.10/2025 Art.17",
+      regulatoryReference: "Federal Decree-Law No. 10 of 2025 Art.17",
     };
   } catch {
     return null;

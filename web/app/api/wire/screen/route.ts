@@ -1,6 +1,6 @@
 // POST /api/wire/screen — FATF R.16 SWIFT MT103 wire-transfer screening.
 //
-// UAE FDL 10/2025 and FATF Recommendation 16 require originator + beneficiary
+// UAE Federal Decree-Law No. 10 of 2025 and FATF Recommendation 16 require originator + beneficiary
 // + intermediary information on every cross-border wire and that the
 // reporting entity screen all parties against sanctions / PEP / adverse-
 // media lists at submission time. A MT103 parser exists at
@@ -201,7 +201,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       regulationBasis: [
         "FATF Recommendation 16 (Wire Transfers)",
         "UAE Cabinet Resolution 74/2020 (originator information)",
-        "UAE FDL 10/2025 Art.18 (cross-border wire screening)",
+        "UAE Federal Decree-Law No. 10 of 2025 Art.18 (cross-border wire screening)",
       ],
     },
     { headers: gate.headers },

@@ -351,7 +351,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       ongoingMonitoringFrequency: "monthly",
       exitTriggers: [],
       networkRiskNarrative: "PEP network analysis unavailable — ANTHROPIC_API_KEY not configured.",
-      regulatoryBasis: "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
+      regulatoryBasis: "FATF R.12; Federal Decree-Law No. 10 of 2025 Art.12; CBUAE AML Standards §6",
       graphSummary: { hop1Count: 0, hop2Count: 0, hop3Count: 0, hop4Count: 0 },
       networkFlags: [],
       networkSummary: {
@@ -387,7 +387,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT PEP intelligence specialist with expertise in political risk, beneficial ownership, and deep network analysis under FATF R.12, FDL 10/2025 Art.12, and CBUAE AML Standards §6.
+          text: `You are a UAE AML/CFT PEP intelligence specialist with expertise in political risk, beneficial ownership, and deep network analysis under FATF R.12, Federal Decree-Law No. 10 of 2025 Art.12, and CBUAE AML Standards §6.
 
 Build a comprehensive PEP network graph up to ${networkDepth} hops from the subject PEP, identifying ALL persons and entities that require screening under UAE AML law.
 
@@ -503,7 +503,7 @@ Return ONLY valid JSON with this exact structure:
       ongoingMonitoringFrequency: result.ongoingMonitoringFrequency ?? "quarterly",
       exitTriggers: Array.isArray(result.exitTriggers) ? result.exitTriggers : [],
       networkRiskNarrative: result.networkRiskNarrative ?? "",
-      regulatoryBasis: result.regulatoryBasis ?? "FATF R.12; FDL 10/2025 Art.12; CBUAE AML Standards §6",
+      regulatoryBasis: result.regulatoryBasis ?? "FATF R.12; Federal Decree-Law No. 10 of 2025 Art.12; CBUAE AML Standards §6",
       graphSummary: hopCounts,
       networkFlags,
       networkSummary,

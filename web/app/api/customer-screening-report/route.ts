@@ -51,13 +51,13 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `SCR-${dd}-${mm}-${yyyy}`;
-  const regs = "UAE FDL 10/2025 · CBUAE AML STANDARDS · FATF R.10";
+  const regs = "UAE Federal Decree-Law No. 10 of 2025 · CBUAE AML STANDARDS · FATF R.10";
 
   const cover: CoverData = {
     reportId, regs,
     module: "CUSTOMER SCREENING",
     title: "Customer Screening Report",
-    subtitle: "Sanctions, PEP, and adverse media screening report prepared for MLRO review under UAE FDL 10/2025 and CBUAE AML Standards.",
+    subtitle: "Sanctions, PEP, and adverse media screening report prepared for MLRO review under UAE Federal Decree-Law No. 10 of 2025 and CBUAE AML Standards.",
     subjectLabel: "SUBJECT",
     subjectName: body.subjectName,
     subjectMeta: `${body.jurisdiction.toUpperCase()} · ${reportId}`,
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       { label: "OFFICER",           value: "L. Fernanda", sub: "CO/MLRO" },
       { label: "FIU REGISTRATION",  value: "FIU-AE-DMCC-0428", sub: "goAML Reporting Entity" },
       { label: "REPORT IDENTIFIER", value: reportId, sub: "Immutable · Signed" },
-      { label: "RETENTION",         value: "10 years", sub: "FDL 10/2025 ART.24" },
+      { label: "RETENTION",         value: "10 years", sub: "Federal Decree-Law No. 10 of 2025 ART.24" },
     ],
   };
 

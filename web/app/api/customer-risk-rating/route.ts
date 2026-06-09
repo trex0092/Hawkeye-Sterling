@@ -467,7 +467,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const regulatoryBasis = [
     "UAE CBUAE AML/CFT Standards",
     "FATF RBA Guidance",
-    "UAE FDL 10/2025",
+    "UAE Federal Decree-Law No. 10 of 2025",
   ];
 
   void writeAuditChainEntry(

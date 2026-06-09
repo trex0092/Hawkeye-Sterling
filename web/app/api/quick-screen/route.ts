@@ -198,7 +198,7 @@ function buildScreeningWarnings(health: ListHealthSnapshot): string[] {
   return warnings;
 }
 
-// Verdict reliability guard (CG / FATF R.10 / FDL 10/2025 Art.18).
+// Verdict reliability guard (CG / FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.18).
 // A clean ("clear") verdict is only a documentable negative finding when it was
 // produced against a fresh, fully-loaded corpus. Returns an explicit
 // machine-readable reliability flag + human qualifier so a stale/static-seed
@@ -1119,7 +1119,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // corpus loaded from the live source. When it isn't, surface an explicit
     // machine-readable reliability flag + qualifier so a downstream UI / MLRO
     // cannot mistake "we didn't see anything (against stale lists)" for a
-    // documentable negative finding (FATF R.10 / FDL 10/2025 Art.18).
+    // documentable negative finding (FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.18).
     const { clearVerdictReliable, verdictQualifier, maxListAgeHours, corpusDegraded } =
       computeVerdictReliability(result.severity, result.hits.length, listHealth, corpusHealth);
     const verdictIsClear = result.severity === "clear" && result.hits.length === 0;

@@ -69,7 +69,7 @@ export function exportEwraBoardReport(
 
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
   doc.text(doc.splitTextToSize(
-    "Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
+    "Annual enterprise-wide risk assessment under UAE Federal Decree-Law No. 10 of 2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
     380
   ), PW/2, 272, {align:"center"});
 
@@ -150,7 +150,7 @@ export function exportEwraBoardReport(
   const total = doc.getNumberOfPages()-1;
   for (let p=2; p<=doc.getNumberOfPages(); p++) {
     doc.setPage(p);
-    contentFrame(doc, ref, "FDL 10/2025 ART.4  ·  FATF R.1  ·  CBUAE AML","STANDARDS §2", p-1, total);
+    contentFrame(doc, ref, "Federal Decree-Law No. 10 of 2025 ART.4  ·  FATF R.1  ·  CBUAE AML","STANDARDS §2", p-1, total);
   }
 
   doc.save(`${ref}-${dd}-${mm}-${yyyy}.pdf`);
@@ -202,7 +202,7 @@ export function exportStrDraft(str: StrDraftInput): void {
 
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
   doc.text(doc.splitTextToSize(
-    "Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE FDL 10/2025 Art.14 and CBUAE AML Standards §8.",
+    "Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE Federal Decree-Law No. 10 of 2025 Art.14 and CBUAE AML Standards §8.",
     380
   ), PW/2, 272, {align:"center"});
 
@@ -217,7 +217,7 @@ export function exportStrDraft(str: StrDraftInput): void {
     { label:"OFFICER",           value:"L. Fernanda",        sub:"CO/MLRO" },
     { label:"FIU REGISTRATION",  value:"FIU-AE-DMCC-0428",  sub:"goAML Reporting Entity" },
     { label:"REPORT IDENTIFIER", value:ref,                 sub:"Draft  ·  Pre-filing" },
-    { label:"RETENTION",         value:"10 years",          sub:"FDL 10/2025 ART.24" },
+    { label:"RETENTION",         value:"10 years",          sub:"Federal Decree-Law No. 10 of 2025 ART.24" },
   ]);
   coverFooter(doc);
 
@@ -267,7 +267,7 @@ export function exportStrDraft(str: StrDraftInput): void {
   // Disclaimer
   y = guard(doc,y,30);
   doc.setFont("times","italic"); doc.setFontSize(7.5); doc.setTextColor(GRAY_D[0],GRAY_D[1],GRAY_D[2]);
-  const disc = "This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.";
+  const disc = "This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE Federal Decree-Law No. 10 of 2025 Art.14.";
   const dl = doc.splitTextToSize(disc, CW); doc.text(dl, ML, y); y+=dl.length*10+12;
 
   // Signature footer
@@ -281,7 +281,7 @@ export function exportStrDraft(str: StrDraftInput): void {
   const total = doc.getNumberOfPages()-1;
   for (let p=2; p<=doc.getNumberOfPages(); p++) {
     doc.setPage(p);
-    contentFrame(doc, ref, "FDL 10/2025 ART.14  ·  CBUAE AML STANDARDS","§8  ·  FATF R.20", p-1, total);
+    contentFrame(doc, ref, "Federal Decree-Law No. 10 of 2025 ART.14  ·  CBUAE AML STANDARDS","§8  ·  FATF R.20", p-1, total);
   }
 
   doc.save(`${ref}.pdf`);
@@ -381,7 +381,7 @@ export function exportGapAnalysis(
     moduleName: "Management Oversight",
     reportRef: `GAP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`,
     institution: institutionName,
-    regulatoryBasis: "UAE FDL 10/2025 Art.20 · CBUAE AML Standards §6",
+    regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.20 · CBUAE AML Standards §6",
     confidential: true,
     sections,
   });
@@ -435,7 +435,7 @@ export function exportScreeningReport(
     content:
       "This screening report is produced for MLRO and compliance team use only. " +
       "Results must be reviewed against primary source data before a final disposition is recorded. " +
-      "Screening performed under UAE FDL 10/2025 Art.9 and FATF R.10.",
+      "Screening performed under UAE Federal Decree-Law No. 10 of 2025 Art.9 and FATF R.10.",
   });
 
   exportToPdf({
@@ -443,7 +443,7 @@ export function exportScreeningReport(
     moduleName: "Name Screening",
     reportRef: `SCR-${Date.now()}`,
     institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 Art.9 · FATF R.10 · CBUAE AML Standards §4",
+    regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.9 · FATF R.10 · CBUAE AML Standards §4",
     confidential: true,
     sections,
   });
@@ -583,7 +583,7 @@ export function exportRiskProfileSummary(data: RiskProfileForExport): void {
     moduleName: "MLRO Advisory",
     reportRef: `RPS-${Date.now()}`,
     institution: "Hawkeye Sterling DPMS",
-    regulatoryBasis: "UAE FDL 10/2025 · FATF Recommendations · CBUAE AML Standards",
+    regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 · FATF Recommendations · CBUAE AML Standards",
     confidential: true,
     sections,
   });

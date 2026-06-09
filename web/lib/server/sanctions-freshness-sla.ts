@@ -41,7 +41,7 @@ export interface FreshnessSla {
  * Lists not mentioned here fall back to FRESHNESS_SLA_DEFAULT.
  */
 export const FRESHNESS_SLAS: readonly FreshnessSla[] = [
-  // UAE EOCN — most critical for UAE FDL No.10/2025 Art.20 compliance.
+  // UAE EOCN — most critical for Federal Decree-Law No. 10 of 2025 Art.20 compliance.
   { listId: "uae_eocn",        warningHours: 12, criticalHours: 24 },
   { listId: "uae_ltl",         warningHours: 12, criticalHours: 24 },
   { listId: "lseg_uae_eocn",   warningHours: 12, criticalHours: 24 },

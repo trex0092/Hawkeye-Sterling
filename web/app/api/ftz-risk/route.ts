@@ -47,7 +47,7 @@ interface FtzRiskResponse {
 /**
  * Known UAE free trade zones with their incremental risk scores.
  * Scores represent the delta applied on top of the base (0).
- * Sources: FATF TBML 2020, CBUAE FTZ Sector Guidance, UAE FDL 10/2025.
+ * Sources: FATF TBML 2020, CBUAE FTZ Sector Guidance, UAE Federal Decree-Law No. 10 of 2025.
  */
 const FTZ_RISK_MAP: Record<string, { delta: number; label: string }> = {
   // Very high risk — historically linked to TBML / shell formation abuse
@@ -186,7 +186,7 @@ function buildRecommendation(score: number, indicators: string[]): string {
     return (
       "File Suspicious Activity Report (SAR/STR). Freeze relationship pending MLRO review. " +
       "Obtain UBO declarations, audited financials, and physical-presence evidence. " +
-      "Escalate to Senior Management under UAE FDL 10/2025 Art. 16."
+      "Escalate to Senior Management under UAE Federal Decree-Law No. 10 of 2025 Art. 16."
     );
   }
   if (score >= 45) {
@@ -410,7 +410,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     shellCompanyIndicators,
     recommendation,
     regulatoryBasis: [
-      "UAE FDL 10/2025",
+      "UAE Federal Decree-Law No. 10 of 2025",
       "CBUAE FTZ Sector Guidance",
       "FATF TBML Report 2020",
     ],

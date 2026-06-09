@@ -9,7 +9,7 @@
 //   POST /api/ewra/threat-intel  — real-time threat intelligence feed
 //
 // Regulatory basis: FATF Recommendation 1 (risk-based approach);
-// UAE FDL 10/2025 Art.5 — obliged entity risk assessment requirement;
+// UAE Federal Decree-Law No. 10 of 2025 Art.5 — obliged entity risk assessment requirement;
 // CBUAE AML/CFT Supervisory Standards — risk appetite framework.
 
 export const runtime = "nodejs";
@@ -265,7 +265,7 @@ The overallScore should reflect the FATF category scores and sector modifier abo
     // ── Persist snapshot for future trend analysis (non-blocking) ────────────
     void saveEwraSnapshot({ overallScore: inherentScore, generatedAt, sector, jurisdiction });
 
-    // FATF R.1 / FDL 10/2025 Art.5 — EWRA generation is a board-level
+    // FATF R.1 / Federal Decree-Law No. 10 of 2025 Art.5 — EWRA generation is a board-level
     // compliance event; must be on the tamper-evident chain.
     void writeAuditChainEntry(
       {

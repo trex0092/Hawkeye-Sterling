@@ -162,7 +162,7 @@ Triage and recommend actions.`,
     matches: filteredMatches,
     triage,
     sweepNarrative: aiNarrative,
-    regulatoryBasis: "FDL 10/2025 Art.14 (ongoing screening); CBUAE AML Standards §7.2; FATF R.10",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.14 (ongoing screening); CBUAE AML Standards §7.2; FATF R.10",
     sweptAt: new Date().toISOString(),
   }, { headers: gate.headers });
 }

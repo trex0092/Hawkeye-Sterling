@@ -249,7 +249,7 @@ export default function AnalyticsDashboardPage() {
               />
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col items-center gap-2 justify-center">
                 <div className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">FDL Reference</div>
-                <div className="text-11 text-center text-ink-2">FDL No.10/2025 Art.18</div>
+                <div className="text-11 text-center text-ink-2">Federal Decree-Law No. 10 of 2025 Art.18</div>
                 <div className="text-9 text-ink-4 text-center">Human oversight on all AI outputs</div>
               </div>
               <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 flex flex-col items-center gap-2 justify-center">

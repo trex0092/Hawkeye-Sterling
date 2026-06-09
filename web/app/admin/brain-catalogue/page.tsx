@@ -146,9 +146,9 @@ export default function BrainCataloguePage() {
 
   const catalogueChecklist: Array<{ label: string; count: number; guidance: string; threshold: number }> = [
     { label: "Faculties", count: catalogue?.faculties ?? 0, guidance: "Verify coverage vs CR 134/2025 — expected ≥15", threshold: 15 },
-    { label: "Reasoning modes", count: catalogue?.reasoningModes ?? 0, guidance: "412 unique post-dedup (444 raw across wave files). Stubs expected; verify no deprecated modes under FDL 10/2025", threshold: 1 },
+    { label: "Reasoning modes", count: catalogue?.reasoningModes ?? 0, guidance: "412 unique post-dedup (444 raw across wave files). Stubs expected; verify no deprecated modes under Federal Decree-Law No. 10 of 2025", threshold: 1 },
     { label: "Meta-cognition entries", count: catalogue?.metaCognition ?? 0, guidance: "Verify alignment with Art.18 oversight requirements", threshold: 1 },
-    { label: "MLRO skills", count: catalogue?.skills ?? 0, guidance: "Flag any deprecated skills under FDL 10/2025", threshold: 1 },
+    { label: "MLRO skills", count: catalogue?.skills ?? 0, guidance: "Flag any deprecated skills under Federal Decree-Law No. 10 of 2025", threshold: 1 },
   ];
 
   async function handleSignOff(e: React.FormEvent) {
@@ -191,7 +191,7 @@ export default function BrainCataloguePage() {
         Brain Catalogue Review
       </h1>
       <p style={{ color: MUTED, fontSize: 12, marginBottom: 24 }}>
-        MLRO sign-off per CR 134/2025 Art.18 · UAE FDL 10/2025 · ISO/IEC 42001
+        MLRO sign-off per CR 134/2025 Art.18 · UAE Federal Decree-Law No. 10 of 2025 · ISO/IEC 42001
       </p>
 
       {/* Review status banner */}
@@ -285,7 +285,7 @@ export default function BrainCataloguePage() {
         <div style={H2}>MLRO Sign-Off</div>
         <p style={{ fontSize: 12, color: MUTED, marginBottom: 16 }}>
           Signing off confirms you have reviewed the brain catalogue counts, integrity hashes, and soul status above,
-          and that the system remains compliant with CR 134/2025 Art.18 and FDL 10/2025.
+          and that the system remains compliant with CR 134/2025 Art.18 and Federal Decree-Law No. 10 of 2025.
         </p>
         <form onSubmit={(e) => { void handleSignOff(e); }} style={{ display: "grid", gap: 12 }}>
           <div>
@@ -348,7 +348,7 @@ export default function BrainCataloguePage() {
       {/* Regulatory anchor */}
       <div style={{ fontSize: 11, color: MUTED, marginTop: 8 }}>
         Regulatory basis: CR No.134/2025 Art.18 (MLRO review before case action) ·
-        UAE FDL No.10/2025 Art.14, 26-27 · ISO/IEC 42001 §6.1.2
+        Federal Decree-Law No. 10 of 2025 Art.14, 26-27 · ISO/IEC 42001 §6.1.2
       </div>
     </div>
   );

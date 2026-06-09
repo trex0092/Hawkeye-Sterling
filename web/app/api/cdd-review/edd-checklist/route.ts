@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML compliance specialist with expertise in Enhanced Due Diligence (EDD) requirements under UAE FDL 10/2025, CBUAE AML Standards, and FATF Recommendations. Generate tailored EDD checklists for high-risk customers based on their specific profile and risk factors.
+          text: `You are a UAE AML compliance specialist with expertise in Enhanced Due Diligence (EDD) requirements under UAE Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, and FATF Recommendations. Generate tailored EDD checklists for high-risk customers based on their specific profile and risk factors.
 
 Return ONLY valid JSON with this exact structure (no markdown fences):
 {
@@ -64,9 +64,9 @@ Guidelines:
 - verifications: 4-6 third-party verification tasks (databases, registries, senior approvals)
 - redFlagsToMonitor: 4-7 specific ongoing monitoring red flags for this client profile
 - estimatedDays: realistic estimate of days to complete the full EDD process (typically 7-21 days)
-- regulatoryBasis: always cite specific article/section (e.g. "UAE FDL 10/2025 Art.11", "CBUAE AML Standards §4.3", "FATF R.12")
+- regulatoryBasis: always cite specific article/section (e.g. "UAE Federal Decree-Law No. 10 of 2025 Art.11", "CBUAE AML Standards §4.3", "FATF R.12")
 - Tailor every item to the specific client type, jurisdiction, risk factors, and PEP/adverse media status
-- For PEP clients: include Board/CEO sign-off requirement per FDL 10/2025 Art.17
+- For PEP clients: include Board/CEO sign-off requirement per Federal Decree-Law No. 10 of 2025 Art.17
 - For VASPs: include blockchain analytics and Travel Rule verification
 - For corporate clients: include UBO mapping per FATF R.24/25`,
           cache_control: { type: "ephemeral" },

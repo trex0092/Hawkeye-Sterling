@@ -4,7 +4,7 @@
 // system (Asana MLRO inbox, goAML FIU submission) must pass through this
 // gate before the side-effect executes. Gate is OFF by default; set
 // EGRESS_GATE_ENABLED=true in Netlify env after MLRO confirms mandate
-// (FDL 10/2025 Art.16; UAE charter P3).
+// (Federal Decree-Law No. 10 of 2025 Art.16; UAE charter P3).
 //
 // When enabled the gate calls Claude Haiku for a fast tipping-off +
 // mandatory-sections pre-check. If the verdict is anything other than
@@ -28,7 +28,7 @@ export interface EgressCheckResult {
 }
 
 // Tipping-off patterns: phrases that could alert a subject that an STR/SAR
-// has been filed about them. Under UAE FDL 10/2025 Art.17 and FATF R.21
+// has been filed about them. Under UAE Federal Decree-Law No. 10 of 2025 Art.17 and FATF R.21
 // disclosing that a suspicious transaction report has been filed (or is
 // about to be filed) to the subject or their associates is a criminal offence.
 const TIPPING_OFF_PATTERNS = [
@@ -53,13 +53,13 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
   if (!apiKey) {
     // FAIL CLOSED: gate is enabled but no API key — hold the artefact for
     // manual MLRO review rather than silently approving it. This is a
-    // configuration error (FDL 10/2025 Art.17 tipping-off is criminal);
+    // configuration error (Federal Decree-Law No. 10 of 2025 Art.17 tipping-off is criminal);
     // never disable the gate implicitly due to infrastructure misconfiguration.
     console.error("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY absent — holding artefact for manual MLRO review");
     return {
       allowed: false,
       verdict: "held_review",
-      reason: "Egress gate misconfigured: ANTHROPIC_API_KEY absent. Artefact held for manual MLRO review before delivery (FDL 10/2025 Art.17).",
+      reason: "Egress gate misconfigured: ANTHROPIC_API_KEY absent. Artefact held for manual MLRO review before delivery (Federal Decree-Law No. 10 of 2025 Art.17).",
     };
   }
 
@@ -102,7 +102,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     });
   } catch (err) {
     // FAIL CLOSED on LLM error — hold for manual MLRO review rather than
-    // silently approving. Tipping-off (FDL 10/2025 Art.17) is criminal;
+    // silently approving. Tipping-off (Federal Decree-Law No. 10 of 2025 Art.17) is criminal;
     // infrastructure failures must not disable the compliance gate.
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[egress-check] LLM call failed — holding artefact for manual MLRO review:", msg);
@@ -117,7 +117,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     return {
       allowed: false,
       verdict: "held_review",
-      reason: `Egress gate LLM check failed (${msg}). Artefact held for manual MLRO review (FDL 10/2025 Art.17).`,
+      reason: `Egress gate LLM check failed (${msg}). Artefact held for manual MLRO review (Federal Decree-Law No. 10 of 2025 Art.17).`,
     };
   }
 
@@ -155,7 +155,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     return {
       allowed: false,
       verdict: "held_review",
-      reason: "Egress gate response unparseable. Artefact held for manual MLRO review (FDL 10/2025 Art.17).",
+      reason: "Egress gate response unparseable. Artefact held for manual MLRO review (Federal Decree-Law No. 10 of 2025 Art.17).",
     };
   }
 }
@@ -168,7 +168,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
  * set to "true". When enabled: first performs a fast regex tipping-off scan,
  * then calls Claude Haiku for a broader compliance review. Fails CLOSED on any
  * LLM error — artefact is held for manual MLRO review rather than auto-approved.
- * Tipping-off (FDL 10/2025 Art.17) is a criminal offence; infrastructure
+ * Tipping-off (Federal Decree-Law No. 10 of 2025 Art.17) is a criminal offence; infrastructure
  * failures must never silently disable this gate.
  *
  * @param narrative  The full text of the report / artefact being delivered.
@@ -183,12 +183,12 @@ export async function runEgressCheck(
     // Gate is ON by default — fail-closed for criminal-liability tipping-off risk.
     // Set EGRESS_GATE_DISABLED=true (opt-out) ONLY with written MLRO waiver.
     // Previous opt-in design (EGRESS_GATE_ENABLED=true) meant a fresh deployment
-    // ran without tipping-off checks, violating FDL 10/2025 Art.17 (F-02 fix).
+    // ran without tipping-off checks, violating Federal Decree-Law No. 10 of 2025 Art.17 (F-02 fix).
     const gateDisabled = process.env["EGRESS_GATE_DISABLED"] === "true";
     if (gateDisabled) {
       span.setAttribute('egress.gate_enabled', false);
       // Alert monitoring when gate is explicitly disabled so ops can detect
-      // deployments missing the MLRO waiver (FDL 10/2025 Art.17 is criminal).
+      // deployments missing the MLRO waiver (Federal Decree-Law No. 10 of 2025 Art.17 is criminal).
       console.error("[egress-check] EGRESS_GATE_DISABLED=true — tipping-off checks are DISABLED. Written MLRO waiver required before deploying with this flag.");
       incrementCounter('hawkeye_egress_gate_disabled_total', 1, {});
       return { allowed: true, verdict: "approved" };
@@ -203,7 +203,7 @@ export async function runEgressCheck(
         allowed: false,
         verdict: "held_tipping_off",
         reason:
-          "Narrative contains language that may constitute tipping-off under FDL 10/2025 Art.17. " +
+          "Narrative contains language that may constitute tipping-off under Federal Decree-Law No. 10 of 2025 Art.17. " +
           "Remove any references to the STR/SAR filing before delivery.",
       };
     }

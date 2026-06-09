@@ -3,7 +3,7 @@
 // Every FP resolution (`resolution === "false"`) must carry a reason code
 // from a fixed enum so the audit trail can be queried by category. Without
 // structured codes, a regulator asking "show me every FP disposition based
-// on DOB mismatch" has to grep free-text — not defensible under FDL 10/2025
+// on DOB mismatch" has to grep free-text — not defensible under Federal Decree-Law No. 10 of 2025
 // Art.24.
 //
 // The codes are sourced verbatim from the 195-item gap analysis (G-05):

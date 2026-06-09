@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML governance expert specialising in CBUAE AML Standards, UAE FDL 10/2025, LBMA RGG, and FATF Recommendations. Analyse governance data (approvals, meeting minutes, regulatory circulars) and produce a comprehensive gap analysis. Identify critical gaps, assign severity ratings, and provide prioritised recommendations. Return ONLY valid JSON with this exact structure (no markdown fences):
+          text: `You are a UAE AML governance expert specialising in CBUAE AML Standards, UAE Federal Decree-Law No. 10 of 2025, LBMA RGG, and FATF Recommendations. Analyse governance data (approvals, meeting minutes, regulatory circulars) and produce a comprehensive gap analysis. Identify critical gaps, assign severity ratings, and provide prioritised recommendations. Return ONLY valid JSON with this exact structure (no markdown fences):
 {
   "ok": true,
   "overallGrade": "A"|"B"|"C"|"D"|"F",

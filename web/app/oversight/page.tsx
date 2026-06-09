@@ -11,7 +11,7 @@ import type { BoardPackResult } from "@/app/api/oversight/board-pack/route";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 
 // Management Oversight — four-eyes approvals, board minutes, regulatory circulars.
-// Implements UAE FDL 10/2025 Art.20 (senior management accountability) and
+// Implements UAE Federal Decree-Law No. 10 of 2025 Art.20 (senior management accountability) and
 // CBUAE AML Standards §6 (governance & oversight).
 
 type ApprovalStatus = "pending" | "approved" | "rejected" | "escalated";
@@ -1180,7 +1180,7 @@ export default function OversightPage() {
         titleEm="oversight."
         intro={
           <>
-            <strong>FDL 10/2025 Art.20 · CBUAE AML Standards §6.</strong>{" "}
+            <strong>Federal Decree-Law No. 10 of 2025 Art.20 · CBUAE AML Standards §6.</strong>{" "}
             Four-eyes approval workflow, board & committee minutes, and regulatory circular disposition.
             All approvals require two independent signatories. SLA breaches escalate to MLRO automatically.
           </>
@@ -1838,7 +1838,7 @@ export default function OversightPage() {
                 )}
 
                 <div className="text-10 text-ink-3 font-mono border-t border-hair-2 pt-2">
-                  Generated: {new Date(packResult.generatedAt).toLocaleString("en-GB")} · UAE FDL 10/2025 Art.20 · CBUAE AML Standards §6
+                  Generated: {new Date(packResult.generatedAt).toLocaleString("en-GB")} · UAE Federal Decree-Law No. 10 of 2025 Art.20 · CBUAE AML Standards §6
                 </div>
               </div>
             )}
@@ -2077,7 +2077,7 @@ export default function OversightPage() {
               <div>
                 <div className="text-13 font-semibold text-ink-0">Regulatory Deadline Calendar</div>
                 <div className="text-11 text-ink-3 mt-0.5">
-                  Computed AML/CFT filing and review deadlines under UAE FDL 10/2025.
+                  Computed AML/CFT filing and review deadlines under UAE Federal Decree-Law No. 10 of 2025.
                 </div>
               </div>
             </div>

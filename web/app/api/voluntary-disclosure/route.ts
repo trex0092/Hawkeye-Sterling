@@ -1,7 +1,7 @@
 // GET  /api/voluntary-disclosure  — list all voluntary disclosures for the authenticated tenant
 // POST /api/voluntary-disclosure  — create a new voluntary disclosure
 //
-// Regulatory basis: FDL 10/2025 Art.25, CBUAE Enforcement Policy
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.25, CBUAE Enforcement Policy
 // Self-reporting before detection may qualify for enforcement mitigation.
 
 import { NextResponse } from "next/server";

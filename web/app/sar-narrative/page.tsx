@@ -1,7 +1,7 @@
 "use client";
 
 // SAR Narrative Generator — AI-assisted SAR/STR narrative drafting tool.
-// Jurisdiction-aware: UAE (FDL 10/2025), UK (POCA 2002), US (BSA Title 31),
+// Jurisdiction-aware: UAE (Federal Decree-Law No. 10 of 2025), UK (POCA 2002), US (BSA Title 31),
 // AU (AML/CTF Act 2006), SG (MAS Notice 626).
 
 import { useState, useRef } from "react";
@@ -45,7 +45,7 @@ interface NarrativeResult {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const JURISDICTION_LABELS: Record<Jurisdiction, string> = {
-  uae: "UAE — FDL 10/2025 / goAML",
+  uae: "UAE — Federal Decree-Law No. 10 of 2025 / goAML",
   uk: "UK — POCA 2002 / NCA SAR Online",
   us: "US — BSA Title 31 / FinCEN",
   au: "AU — AML/CTF Act 2006 / AUSTRAC",
@@ -183,7 +183,7 @@ export default function SarNarrativePage() {
           { value: "MLRO", label: "Review required" },
           { value: "AI", label: "Claude-powered" },
         ]}
-        intro="Generate jurisdiction-specific SAR/STR narratives using AI. Supports UAE (FDL 10/2025), UK (POCA 2002), US (BSA Title 31), Australia, Singapore, and FATF R.20 framework. All narratives require MLRO review and approval before filing."
+        intro="Generate jurisdiction-specific SAR/STR narratives using AI. Supports UAE (Federal Decree-Law No. 10 of 2025), UK (POCA 2002), US (BSA Title 31), Australia, Singapore, and FATF R.20 framework. All narratives require MLRO review and approval before filing."
       />
 
       {/* Warning banner */}

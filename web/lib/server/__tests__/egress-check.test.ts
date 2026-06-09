@@ -1,6 +1,6 @@
 // Unit tests for the egress gate fail-closed security behaviour.
 //
-// FDL 10/2025 Art.17 makes tipping-off a criminal offence. The gate must
+// Federal Decree-Law No. 10 of 2025 Art.17 makes tipping-off a criminal offence. The gate must
 // NEVER approve an artefact when it cannot verify compliance — missing API
 // key, LLM call failure, and unparseable response must all result in
 // held_review (not approved).

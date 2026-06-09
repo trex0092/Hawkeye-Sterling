@@ -442,7 +442,7 @@ function buildPepSection(body: GenerateReportBody, sectionNum: string): string {
     ? `<div style="margin-top:12px;padding:10px 14px;border-left:2px solid var(--pink);background:var(--pink-soft)">
         <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;font-weight:600;color:var(--pink);margin-bottom:4px">EDD Obligations</div>
         <div style="font-size:10.5px;color:var(--ink);font-family:var(--serif);line-height:1.6">
-          As a designated PEP (Tier ${escHtml(String(tier))}), this subject requires Enhanced Due Diligence per UAE FDL 10/2025 Art.12, FATF Recommendation 12, and applicable CBUAE guidance. Senior management approval is required for onboarding or continued relationship.
+          As a designated PEP (Tier ${escHtml(String(tier))}), this subject requires Enhanced Due Diligence per UAE Federal Decree-Law No. 10 of 2025 Art.12, FATF Recommendation 12, and applicable CBUAE guidance. Senior management approval is required for onboarding or continued relationship.
         </div>
       </div>`
     : "";
@@ -601,7 +601,7 @@ function buildAuditTrailSection(body: GenerateReportBody, sectionNum: string): s
 function buildRegulatorySection(body: GenerateReportBody, sectionNum: string): string {
   const findings = body.regulatoryFindings ?? [];
   const regs = body.applicableRegulations ?? [
-    "UAE FDL 10/2025 (AML/CFT)",
+    "UAE Federal Decree-Law No. 10 of 2025 (AML/CFT)",
     "CBUAE AML/CFT Framework 2020",
     "FATF Recommendations (2023)",
     "UAE PDPL Federal Decree-Law No. 45/2021",
@@ -665,21 +665,21 @@ function buildActionList(rec: string, _riskLevel: string): string[] {
       "File report in case management system with APPROVE disposition.",
       "Update customer risk rating to reflect current assessment.",
       "Schedule next periodic review per risk-based approach calendar.",
-      "Retain all supporting documentation for 10 years per UAE FDL 10/2025 Art.24.",
+      "Retain all supporting documentation for 10 years per UAE Federal Decree-Law No. 10 of 2025 Art.24.",
     ],
     EDD: [
       "Initiate Enhanced Due Diligence (EDD) review within 5 business days.",
       "Obtain senior management approval before proceeding with any transactions.",
       "Request additional documentation: source of funds, source of wealth, beneficial ownership.",
       "Escalate to MLRO if EDD cannot be completed within the required timeframe.",
-      "Retain all supporting documentation for 10 years per UAE FDL 10/2025 Art.24.",
+      "Retain all supporting documentation for 10 years per UAE Federal Decree-Law No. 10 of 2025 Art.24.",
     ],
     ESCALATE: [
       "Escalate immediately to MLRO / Compliance Officer for review.",
       "Do not process any pending transactions pending MLRO determination.",
       "Preserve all records, communications, and supporting documentation.",
       "MLRO to assess SAR/STR filing obligation within 5 business days.",
-      "Do not tip-off the subject or associated parties (UAE FDL 10/2025 Art.29).",
+      "Do not tip-off the subject or associated parties (UAE Federal Decree-Law No. 10 of 2025 Art.29).",
     ],
     FREEZE: [
       "Apply immediate account / asset freeze in accordance with applicable sanctions regulations.",
@@ -687,13 +687,13 @@ function buildActionList(rec: string, _riskLevel: string): string[] {
       "File STR/SAR with the UAE Financial Intelligence Unit (EOCN / goAML).",
       "Preserve all records and evidence — do not destroy or alter documentation.",
       "Engage legal counsel before communicating with the subject.",
-      "Do not tip-off the subject or associated parties (UAE FDL 10/2025 Art.29).",
+      "Do not tip-off the subject or associated parties (UAE Federal Decree-Law No. 10 of 2025 Art.29).",
     ],
     SAR_FILE: [
       "Prepare and file Suspicious Transaction Report (STR) via goAML within the statutory deadline.",
       "Obtain MLRO sign-off and four-eyes verification before submission.",
       "File all supporting documentation in the SAR package.",
-      "Do not tip-off the subject or associated parties (UAE FDL 10/2025 Art.29).",
+      "Do not tip-off the subject or associated parties (UAE Federal Decree-Law No. 10 of 2025 Art.29).",
       "Monitor for any subsequent activity and file follow-on reports as required.",
     ],
     CLOSE: [
@@ -766,7 +766,7 @@ function buildReport(body: GenerateReportBody): { html: string; reportId: string
   const tone = verdictBand(riskLevel);
   const rec = body.recommendation ?? (riskScore >= 75 ? "ESCALATE" : riskScore >= 50 ? "EDD" : "APPROVE");
 
-  const regsLabel = (body.applicableRegulations ?? ["UAE FDL 10/2025"]).slice(0, 2).join(" · ");
+  const regsLabel = (body.applicableRegulations ?? ["UAE Federal Decree-Law No. 10 of 2025"]).slice(0, 2).join(" · ");
 
   // Build cover page
   const coverMeta: CoverData["meta"] = [

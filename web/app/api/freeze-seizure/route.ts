@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT legal expert specialising in asset freezing and seizure procedures under UAE FDL 10/2025 and FATF standards. Analyse asset freeze/seizure scenarios and return a JSON object with exactly these fields: { "legalBasis": string, "eligibleAssets": string[], "freezeOrderDraft": string, "procedureSteps": string[], "timeConstraints": string, "internationalCooperation": boolean, "mutualLegalAssistance": boolean, "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT legal expert specialising in asset freezing and seizure procedures under UAE Federal Decree-Law No. 10 of 2025 and FATF standards. Analyse asset freeze/seizure scenarios and return a JSON object with exactly these fields: { "legalBasis": string, "eligibleAssets": string[], "freezeOrderDraft": string, "procedureSteps": string[], "timeConstraints": string, "internationalCooperation": boolean, "mutualLegalAssistance": boolean, "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

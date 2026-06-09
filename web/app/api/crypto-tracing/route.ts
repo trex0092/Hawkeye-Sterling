@@ -320,7 +320,7 @@ UAE — CBUAE Virtual Asset Guidance (2023):
 • VASPs operating in UAE mainland must obtain CBUAE license/approval.
 • AML/CFT requirements: Travel Rule compliance, transaction monitoring, sanctions screening, STR filing.
 • CBUAE Notice 35/2023: updated virtual asset guidance — enhanced due diligence for high-risk VA transactions.
-• UAE FDL 10/2025 (in force 14 Oct 2025): primary AML/CFT law; applies to VASPs.
+• UAE Federal Decree-Law No. 10 of 2025 (in force 14 Oct 2025): primary AML/CFT law; applies to VASPs.
 • STR filing to UAE FIU via goAML within 35 days of suspicion arising; immediately where TF suspected.
 • Record-keeping: 8 years from transaction date.
 

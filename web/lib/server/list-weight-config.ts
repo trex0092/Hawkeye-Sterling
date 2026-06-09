@@ -5,7 +5,7 @@
 // Operators can override individual weights without a code deploy via:
 //   SCREENING_LIST_WEIGHT_OVERRIDES='{"ofac_sdn":45,"uae_eocn":50}'
 //
-// FDL 10/2025 Art.18: weight changes that materially alter verdict outputs
+// Federal Decree-Law No. 10 of 2025 Art.18: weight changes that materially alter verdict outputs
 // must be documented, audited, and MLRO-signed before going live.
 
 const BASE_WEIGHTS: Record<string, number> = {

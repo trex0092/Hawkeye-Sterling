@@ -62,14 +62,14 @@ For each case you will score the SAR/STR narrative quality and completeness. Eva
 3. SUBJECT DETAILS (7 pts): Does the narrative include full name, ID/document number, occupation, AND relationship to the reporting institution? Partial credit for partial coverage.
 4. TRANSACTION DETAILS (8 pts): Are specific amounts (not vague "large sum"), dates, account numbers/instruments, and counterparties documented? Deduct heavily for vague language like "a large sum" or "recent transactions" with no specifics.
 5. LEGITIMACY DETERMINATION (4 pts): Does the narrative explain what steps the institution took to determine whether the activity was legitimate, and why it could not do so?
-6. REGULATORY BASIS (4 pts): Does the narrative explicitly cite FDL 10/2025 Art. 15 (reporting obligation) or another UAE AML law provision as the legal basis for filing?
+6. REGULATORY BASIS (4 pts): Does the narrative explicitly cite Federal Decree-Law No. 10 of 2025 Art. 15 (reporting obligation) or another UAE AML law provision as the legal basis for filing?
 
 ── GENERAL QUALITY (35 points total) ──
 7. WHO (5 pts): Is the subject clearly identified with full name, entity type, identification details?
 8. WHEN (5 pts): Are dates, time periods, and timelines documented?
 9. WHERE (5 pts): Are jurisdictions, accounts, and geographies identified?
 10. Red flags (10 pts): Are red flags documented with reference to FATF typologies or UAE AML guidelines?
-11. Tipping-off risk (5 pts): Is the narrative free of language that could constitute tipping-off under FDL 10/2025 Art. 29? (Score 5 if clean, 0 if tipping-off language present — flag as fatal.)
+11. Tipping-off risk (5 pts): Is the narrative free of language that could constitute tipping-off under Federal Decree-Law No. 10 of 2025 Art. 29? (Score 5 if clean, 0 if tipping-off language present — flag as fatal.)
 12. FATF R.20 elements (5 pts): Does it cover all mandatory elements for STR filing?
 
 ── TYPOLOGY MATCH (15 points) ──

@@ -2,7 +2,7 @@
 //
 // Tools that perform entity screening must block when critical sanctions lists
 // are absent — a missing list produces false CLEAR verdicts which violates
-// FDL No. 10/2025 Art. 15 and Cabinet Resolution No. 134/2025.
+// Federal Decree-Law No. 10 of 2025 Art. 15 and Cabinet Resolution No. 134/2025.
 //
 // Health is cached for CACHE_TTL_MS to avoid hammering Blobs on every call.
 

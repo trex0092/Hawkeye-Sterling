@@ -726,7 +726,7 @@ export default function TransactionMonitorPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-0.5">Structuring Analysis</div>
-              <div className="text-10 text-ink-3 font-mono">UAE CTR threshold AED {structuringResult.statistics.reportingThreshold.toLocaleString()} · FDL 10/2025 Art.16 · FATF R.3</div>
+              <div className="text-10 text-ink-3 font-mono">UAE CTR threshold AED {structuringResult.statistics.reportingThreshold.toLocaleString()} · Federal Decree-Law No. 10 of 2025 Art.16 · FATF R.3</div>
             </div>
             <button type="button" onClick={() => setStructuringResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear</button>
           </div>

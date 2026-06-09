@@ -210,8 +210,8 @@ REGULATORY FRAMEWORKS:
 - FATF Guidance on Insider Facilitation of Money Laundering and Terrorist Financing
 - Basel Committee on Banking Supervision — Sound Practices for the Management of Operational Risk (2021)
 - ACAMS Insider Threat Framework — financial institution specific
-- UAE FDL 10/2025 (Updated AML Law) — Art.26 whistleblower protections; staff screening obligations
-- UAE FDL 10/2025 — employee obligations and institutional liability for ML facilitation
+- UAE Federal Decree-Law No. 10 of 2025 (Updated AML Law) — Art.26 whistleblower protections; staff screening obligations
+- UAE Federal Decree-Law No. 10 of 2025 — employee obligations and institutional liability for ML facilitation
 - CBUAE AML Standards — §8 (HR screening), §6.4 (escalation procedures), internal controls
 - UAE Cabinet Decision on Implementing Regulations — employee fitness and propriety standards
 
@@ -222,7 +222,7 @@ FRAMEWORKS & MODELS:
 4. DLP triggers: large file transfers, USB activity, unusual API calls
 
 UAE-SPECIFIC CONTEXT:
-- UAE FDL 10/2025 Art.26 — mandatory whistleblower protection
+- UAE Federal Decree-Law No. 10 of 2025 Art.26 — mandatory whistleblower protection
 - CBUAE staff screening requirements — fitness and propriety
 - Dubai Police Financial Crimes Unit — criminal referral route
 - UAE FIU (goAML) — STR filing if ML facilitation confirmed

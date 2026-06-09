@@ -74,7 +74,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal",
     cadence: "annual",
     notes:
-      "All AML/CFT team members must have completed refresher training within 12 months. Per FDL 10/2025 Art.16.",
+      "All AML/CFT team members must have completed refresher training within 12 months. Per Federal Decree-Law No. 10 of 2025 Art.16.",
   },
   {
     id: "eocn-declaration",
@@ -101,7 +101,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "annual",
     notes:
-      "Board reviews and re-approves the AML/CFT Risk Appetite Statement per FDL 10/2025 Art.4. Output feeds the Entity-Wide Risk Assessment update.",
+      "Board reviews and re-approves the AML/CFT Risk Appetite Statement per Federal Decree-Law No. 10 of 2025 Art.4. Output feeds the Entity-Wide Risk Assessment update.",
   },
   {
     id: "board-aml-q2",
@@ -110,7 +110,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "quarterly",
     notes:
-      "MLRO presents quarterly AML/CFT metrics to the Board Audit Committee per FDL 10/2025 Art.15. Includes STR count, screening volumes, training status, and open corrective actions.",
+      "MLRO presents quarterly AML/CFT metrics to the Board Audit Committee per Federal Decree-Law No. 10 of 2025 Art.15. Includes STR count, screening volumes, training status, and open corrective actions.",
   },
   {
     id: "goaml-test",
@@ -137,7 +137,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal",
     cadence: "annual",
     notes:
-      "CDD refresh for all high-risk (non-PEP) customers not refreshed in 12 months. Minimum: updated ID documents, re-run sanctions screen, refresh source-of-funds narrative. Per FDL 10/2025 Art.11.",
+      "CDD refresh for all high-risk (non-PEP) customers not refreshed in 12 months. Minimum: updated ID documents, re-run sanctions screen, refresh source-of-funds narrative. Per Federal Decree-Law No. 10 of 2025 Art.11.",
   },
   {
     id: "sanctions-system-test",
@@ -200,7 +200,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "quarterly",
     notes:
-      "MLRO presents Q2 STR quality metrics: filing timeliness, FIU feedback received, false-positive rate, and lessons-learned from any declined or returned reports. Board confirms MLRO resource adequacy. Per FDL 10/2025 Art.15.",
+      "MLRO presents Q2 STR quality metrics: filing timeliness, FIU feedback received, false-positive rate, and lessons-learned from any declined or returned reports. Board confirms MLRO resource adequacy. Per Federal Decree-Law No. 10 of 2025 Art.15.",
   },
   {
     id: "risk-model-validation",
@@ -272,7 +272,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "annual",
     notes:
-      "Comprehensive annual report by the MLRO to the Board covering: STR filings YTD, open investigations, resource adequacy, training status, regulator correspondence, control deficiencies, and proposed programme improvements. Per FDL 10/2025 Art.15. Board provides written acknowledgement within 15 days.",
+      "Comprehensive annual report by the MLRO to the Board covering: STR filings YTD, open investigations, resource adequacy, training status, regulator correspondence, control deficiencies, and proposed programme improvements. Per Federal Decree-Law No. 10 of 2025 Art.15. Board provides written acknowledgement within 15 days.",
   },
   {
     id: "data-retention-audit",
@@ -281,7 +281,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal",
     cadence: "annual",
     notes:
-      "Annual audit to confirm: (1) all records required to be retained under FDL 10/2025 Art.24 are stored and accessible; (2) records older than 10 years from end of relationship are securely destroyed per the data destruction schedule; (3) destruction logs are maintained and reviewed by the MLRO. Report findings to the Data Protection Officer and Board Audit Committee.",
+      "Annual audit to confirm: (1) all records required to be retained under Federal Decree-Law No. 10 of 2025 Art.24 are stored and accessible; (2) records older than 10 years from end of relationship are securely destroyed per the data destruction schedule; (3) destruction logs are maintained and reviewed by the MLRO. Report findings to the Data Protection Officer and Board Audit Committee.",
   },
   {
     id: "outsourcing-register",
@@ -290,7 +290,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "annual",
     notes:
-      "MLRO reviews the outsourcing register to confirm: all AML/CFT outsourcing arrangements are documented, third-party providers have been assessed against annual risk criteria, and written agreements are current. Any provider failing the assessment is placed on a remediation or exit plan. Board approval required for any new outsourcing arrangement. Per FDL 10/2025 and CBUAE Outsourcing Guidance.",
+      "MLRO reviews the outsourcing register to confirm: all AML/CFT outsourcing arrangements are documented, third-party providers have been assessed against annual risk criteria, and written agreements are current. Any provider failing the assessment is placed on a remediation or exit plan. Board approval required for any new outsourcing arrangement. Per Federal Decree-Law No. 10 of 2025 and CBUAE Outsourcing Guidance.",
   },
   {
     id: "aml-programme-effectiveness",
@@ -317,7 +317,7 @@ const DEADLINES: Deadline[] = [
     authority: "UAE MoE",
     cadence: "quarterly",
     notes:
-      "Reconcile all DPMSR-eligible transactions from Q2 (April–June 2026) against filings submitted to MoE. Confirm no qualifying transaction was missed. Any gap must be remediated with a late filing and documented MLRO explanation. Per MoE Circular 2/2024 and FDL 10/2025 Art.17.",
+      "Reconcile all DPMSR-eligible transactions from Q2 (April–June 2026) against filings submitted to MoE. Confirm no qualifying transaction was missed. Any gap must be remediated with a late filing and documented MLRO explanation. Per MoE Circular 2/2024 and Federal Decree-Law No. 10 of 2025 Art.17.",
   },
   {
     id: "dpmsr-q3",
@@ -335,7 +335,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "annual",
     notes:
-      "Board reviews the MLRO Succession Plan and confirms the designated Deputy MLRO is appropriately qualified and authorised. Plan covers: notification timelines to CBUAE / MoE, handover procedures, access continuity, and interim reporting lines. Reviewed and approved by Board Audit Committee. Any vacancy in the MLRO role triggers an immediate Board notification to regulators within 30 days per FDL 10/2025 Art.15(5).",
+      "Board reviews the MLRO Succession Plan and confirms the designated Deputy MLRO is appropriately qualified and authorised. Plan covers: notification timelines to CBUAE / MoE, handover procedures, access continuity, and interim reporting lines. Reviewed and approved by Board Audit Committee. Any vacancy in the MLRO role triggers an immediate Board notification to regulators within 30 days per Federal Decree-Law No. 10 of 2025 Art.15(5).",
   },
   {
     id: "correspondent-q3",
@@ -398,7 +398,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal",
     cadence: "ad-hoc",
     notes:
-      "Second semi-annual EDD refresh on all active PEP-classified customers. H2 refresh additionally includes annual relationship review meeting notes and confirmation of continued senior-management approval per FDL 10/2025 Art.17.",
+      "Second semi-annual EDD refresh on all active PEP-classified customers. H2 refresh additionally includes annual relationship review meeting notes and confirmation of continued senior-management approval per Federal Decree-Law No. 10 of 2025 Art.17.",
   },
   {
     id: "oecd-step4-audit",
@@ -488,7 +488,7 @@ const DEADLINES: Deadline[] = [
     authority: "Internal / Board",
     cadence: "annual",
     notes:
-      "Annual review of all new products, services, or delivery channels launched in the prior 12 months. Confirm each received a pre-launch AML/CFT risk assessment per FDL 10/2025 Art.6. Any product launched without documented risk assessment triggers a retrospective assessment and board disclosure.",
+      "Annual review of all new products, services, or delivery channels launched in the prior 12 months. Confirm each received a pre-launch AML/CFT risk assessment per Federal Decree-Law No. 10 of 2025 Art.6. Any product launched without documented risk assessment triggers a retrospective assessment and board disclosure.",
   },
   {
     id: "de-risking-review",
@@ -539,10 +539,10 @@ const DEADLINES: Deadline[] = [
     id: "board-aml-q1-2026",
     title: "Board AML/CFT Quarterly Report — Q1 2026",
     due: "2026-04-30",
-    authority: "Board / FDL 10/2025",
+    authority: "Board / Federal Decree-Law No. 10 of 2025",
     cadence: "quarterly",
     notes:
-      "Q1 2026 quarterly AML/CFT report to Board. Mandatory contents per FDL 10/2025 and CR 134/2025: STR/SAR filing statistics, screening volumes and false-positive rate, CDD queue status, sanctions list effectiveness metrics, training completion rate, open corrective actions, and MLRO attestation. Board must formally acknowledge receipt. Signed minutes retained for 10 years.",
+      "Q1 2026 quarterly AML/CFT report to Board. Mandatory contents per Federal Decree-Law No. 10 of 2025 and CR 134/2025: STR/SAR filing statistics, screening volumes and false-positive rate, CDD queue status, sanctions list effectiveness metrics, training completion rate, open corrective actions, and MLRO attestation. Board must formally acknowledge receipt. Signed minutes retained for 10 years.",
   },
   {
     id: "eu-ai-act-review",
@@ -749,7 +749,7 @@ export default function EnforcementPage() {
               <strong>Every regulator-mandated deadline in one place.</strong>{" "}
               MoE annual reports, FIU quarterly reconciliations, LBMA Step-4
               audits, internal EDD sweeps — sorted by due date, colour-coded
-              by urgency. Overdue items require MLRO escalation under FDL 10/2025 Art.15.
+              by urgency. Overdue items require MLRO escalation under Federal Decree-Law No. 10 of 2025 Art.15.
             </>
           }
           kpis={[

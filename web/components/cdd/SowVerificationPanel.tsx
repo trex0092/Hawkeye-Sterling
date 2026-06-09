@@ -434,7 +434,7 @@ export function SowVerificationPanel({
       {/* Footer regulatory note */}
       <div className="px-4 py-2 bg-bg-1 border-t border-hair-2">
         <p className="text-9 font-mono text-ink-3">
-          CBUAE Rulebook §6.4 · MOE Circular 6/2025 §4.2 · FDL 10/2025 Art.14
+          CBUAE Rulebook §6.4 · MOE Circular 6/2025 §4.2 · Federal Decree-Law No. 10 of 2025 Art.14
         </p>
       </div>
     </div>

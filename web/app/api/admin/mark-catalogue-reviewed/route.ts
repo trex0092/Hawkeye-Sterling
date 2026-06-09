@@ -117,7 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // FDL 10/2025: governance actions must appear on the tamper-evident audit chain.
+  // Federal Decree-Law No. 10 of 2025: governance actions must appear on the tamper-evident audit chain.
   void writeAuditChainEntry({
     event: "admin.catalogue_reviewed",
     actor: reviewer,

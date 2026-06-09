@@ -2,7 +2,7 @@
 //
 // UNESCO Ethical Impact Assessment: mandatory assessment for high-risk AI
 // systems, aligned with UAE Federal Decree-Law No. 45/2021 (PDPL) and
-// UAE FDL 10/2025.
+// UAE Federal Decree-Law No. 10 of 2025.
 
 import { NextResponse } from "next/server";
 import { writeAuditEvent } from "@/lib/audit";
@@ -57,7 +57,7 @@ Output JSON (ONLY valid JSON, no markdown):
   "humanOversightStatus": "string — assessment of human oversight in this case",
   "mitigationMeasures": ["string array — steps taken or recommended to protect subject rights"],
   "subjectRights": ["string array — what this subject can request/exercise"],
-  "documentationRequired": ["string array — what records must be kept per UAE PDPL + FDL 10/2025"],
+  "documentationRequired": ["string array — what records must be kept per UAE PDPL + Federal Decree-Law No. 10 of 2025"],
   "unescoAlignment": "string — specific alignment with UNESCO AI Ethics principles",
   "reviewRecommendation": "string — recommended follow-up review timeline"
 }`;
@@ -90,14 +90,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       rightsImpacted: [
         "Right to non-discrimination (UAE PDPL Art.19, UNESCO Recommendation §22)",
         "Right to explanation of automated decision (UAE PDPL Art.20)",
-        "Right to human review (FDL 10/2025 Art.16)",
+        "Right to human review (Federal Decree-Law No. 10 of 2025 Art.16)",
         "Right to data correction (UAE PDPL Art.18)",
       ],
       proportionalityAssessment: `Risk-band ${impactLevel} — automated processing is proportionate to the AML/CFT compliance objective when combined with mandatory MLRO review at any escalation.`,
       humanOversightStatus: "All adverse dispositions require human MLRO sign-off; AI is advisory only (UNESCO §32).",
       mitigationMeasures: [
         "MLRO four-eyes review on every escalation",
-        "10-year audit retention (FDL 10/2025 Art.24)",
+        "10-year audit retention (Federal Decree-Law No. 10 of 2025 Art.24)",
         "Quarterly bias-monitoring across nationality / gender / age",
         "Right-to-explanation responses delivered within 30 days",
       ],

@@ -401,7 +401,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
         "FATF R.6 (TFS)",
         "UN Sanctions Vessel Lists",
         "IMO MSC.1/Circ.1638",
-        "UAE FDL 10/2025 Art.15",
+        "UAE Federal Decree-Law No. 10 of 2025 Art.15",
         "Cabinet Resolution 156/2025 (goods control)",
         "ITF FoC Registry 2024",
         "OFAC March 2024 Shadow Fleet Advisory",

@@ -57,7 +57,7 @@ export function sanctionsScreen(name: string, caseId?: string): Promise<Complian
       `Screen "${name}" against UN, OFAC SDN/CONS, EU FSF, UK OFSI, UAE EOCN, ` +
       `and OpenSanctions consolidated sources. Return: match status, confidence ` +
       `score, hit details (program / regime / dataset / lastChange), and the ` +
-      `recommended next action per UAE FDL 10/2025 Art.26-29.`,
+      `recommended next action per UAE Federal Decree-Law No. 10 of 2025 Art.26-29.`,
   });
 }
 
@@ -109,7 +109,7 @@ export function draftStr(
       "Draft an STR for the case details above in UAE FIU goAML format. Include " +
       "all required fields (rentity, reporting person, subject identity, " +
       "transactions, narrative, attachments). Apply tipping-off filters per " +
-      "FDL 10/2025 Art.29 — no language that could alert the subject. Return " +
+      "Federal Decree-Law No. 10 of 2025 Art.29 — no language that could alert the subject. Return " +
       "the structured envelope ready for the /api/sar-report serialiser.",
   });
 }

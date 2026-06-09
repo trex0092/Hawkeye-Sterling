@@ -67,14 +67,14 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE AML legal specialist mapping case facts to applicable predicate offences under UAE Federal Law No. 10/2025 (FDL), UAE Penal Code (Federal Law No. 3/1987 as amended), and FATF Recommendation 3's 23 designated predicate offences. Identify the primary predicate offence, secondary predicates, maximum penalties, and whether self-laundering applies. The ML offence in the UAE is codified in FDL 10/2025 Art.3 (previously UAE ML Law 20/2014).
+        system: `You are a UAE AML legal specialist mapping case facts to applicable predicate offences under UAE Federal Law No. 10/2025 (FDL), UAE Penal Code (Federal Law No. 3/1987 as amended), and FATF Recommendation 3's 23 designated predicate offences. Identify the primary predicate offence, secondary predicates, maximum penalties, and whether self-laundering applies. The ML offence in the UAE is codified in Federal Decree-Law No. 10 of 2025 Art.3 (previously UAE ML Law 20/2014).
 
 Respond ONLY with valid JSON — no markdown fences:
 {
   "primaryPredicate": {"offence": "<offence name>", "uaeLegalRef": "<UAE statute and article>", "fatfCategory": "<FATF R.3 category>", "maxPenalty": "<penalty description>", "imprisonmentYears": "<years or Life>", "fineAed": "<amount as string>"},
   "secondaryPredicates": [{"offence": "<offence>", "uaeLegalRef": "<citation>", "fatfCategory": "<FATF R.3 category>", "maxPenalty": "<penalty>", "overlap": "<explanation of overlap with primary>"}],
   "mlOffenceApplicable": <true|false>,
-  "mlLegalBasis": "<e.g. UAE FDL 10/2025 Art.3>",
+  "mlLegalBasis": "<e.g. UAE Federal Decree-Law No. 10 of 2025 Art.3>",
   "proceedsEstimate": "<estimate or cannot be determined>",
   "selfLaunderingApplicable": <true|false>,
   "strRequired": <true|false>,

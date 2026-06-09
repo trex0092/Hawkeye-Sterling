@@ -22,7 +22,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const gate = await enforce(req);
   if (!gate.ok) return gate.response;
 
-  // AI override is a regulated human-oversight action (UAE FDL 10/2025 Art.18).
+  // AI override is a regulated human-oversight action (UAE Federal Decree-Law No. 10 of 2025 Art.18).
   // Only MLRO or CO portal sessions may record an override — external API key
   // callers do not carry a role and cannot satisfy this gate.
   const roleBlock = await requireRole(req, ["mlro", "co", "admin"]);
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   writeAuditEvent(actor, "ai.human-override", aiModule);
   writeAuditEvent(actor, `ai.${humanDecision}`, `${aiModule}: ${aiRecommendation.slice(0, 100)}`);
 
-  // Server-side tamper-evident chain (FDL 10/2025 Art.24 — regulators require
+  // Server-side tamper-evident chain (Federal Decree-Law No. 10 of 2025 Art.24 — regulators require
   // verifiable record of human overrides of AI compliance decisions).
   await writeAuditChainEntry(
     {

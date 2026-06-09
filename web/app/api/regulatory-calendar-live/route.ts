@@ -48,9 +48,9 @@ const RAW_EVENTS: RawEvent[] = [
     title: "Enterprise-Wide Risk Assessment (EWRA) — Annual Review",
     deadline: "2026-06-30",
     category: "review",
-    authority: "UAE MoE / FDL 10/2025",
+    authority: "UAE MoE / Federal Decree-Law No. 10 of 2025",
     description: "Annual EWRA review and Board approval required. Must be submitted to UAE MoE within 30 days of Board sign-off. Covers ML/TF/PF risk across all business lines.",
-    regulatoryRef: "FDL 10/2025 Art.4",
+    regulatoryRef: "Federal Decree-Law No. 10 of 2025 Art.4",
   },
   {
     id: "cal-002",
@@ -59,7 +59,7 @@ const RAW_EVENTS: RawEvent[] = [
     category: "training",
     authority: "UAE MoE",
     description: "Annual AML/CFT training for all front-line staff, relationship managers, and operations teams. Training completion records must be maintained for 10 years.",
-    regulatoryRef: "FDL 10/2025 Art.22",
+    regulatoryRef: "Federal Decree-Law No. 10 of 2025 Art.22",
   },
   {
     id: "cal-003",
@@ -77,7 +77,7 @@ const RAW_EVENTS: RawEvent[] = [
     category: "filing",
     authority: "UAE FIU (goAML)",
     description: "Annual statistical summary of STRs, CTRs, and other reports submitted via goAML for the preceding calendar year. Includes narrative on typologies observed.",
-    regulatoryRef: "FDL 10/2025 Art.17",
+    regulatoryRef: "Federal Decree-Law No. 10 of 2025 Art.17",
   },
   {
     id: "cal-005",
@@ -104,7 +104,7 @@ const RAW_EVENTS: RawEvent[] = [
     category: "review",
     authority: "UAE MoE / CBUAE",
     description: "Periodic CDD refresh due for 3 high-risk customers. Enhanced due diligence including source of wealth re-verification, beneficial ownership update, and risk scoring review.",
-    regulatoryRef: "FDL 10/2025 Art.10",
+    regulatoryRef: "Federal Decree-Law No. 10 of 2025 Art.10",
   },
   {
     id: "cal-008",
@@ -112,7 +112,7 @@ const RAW_EVENTS: RawEvent[] = [
     deadline: "2026-06-30",
     category: "training",
     authority: "FATF / UAE MoE",
-    description: "Annual AML/CFT awareness training for Board members and senior management. Must cover typologies, regulatory updates (FDL 10/2025), and governance obligations.",
+    description: "Annual AML/CFT awareness training for Board members and senior management. Must cover typologies, regulatory updates (Federal Decree-Law No. 10 of 2025), and governance obligations.",
     regulatoryRef: "FATF R.18",
   },
   {

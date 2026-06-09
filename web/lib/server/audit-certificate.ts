@@ -3,7 +3,7 @@
 // On case closure / STR filing / disposition commit, downstream auditors
 // (UAE FIU, internal compliance review, external auditor) need to confirm
 // that the audit trail wasn't retroactively edited during the 10-year
-// retention window mandated by UAE PDPL 45/2021 Art.13 + FDL 10/2025 Art.24.
+// retention window mandated by UAE PDPL 45/2021 Art.13 + Federal Decree-Law No. 10 of 2025 Art.24.
 //
 // This module produces a signed snapshot of the audit-chain entries
 // relevant to a case + the case payload itself. The signature uses the
@@ -34,7 +34,7 @@ export interface AuditSnapshotInput {
   filingEntity?: string;
 }
 
-/** Regulatory attestation block — binds the certificate to UAE FDL 10/2025. */
+/** Regulatory attestation block — binds the certificate to UAE Federal Decree-Law No. 10 of 2025. */
 export interface RegulatoryAttestation {
   standard: string;
   article: string;
@@ -71,12 +71,12 @@ export interface AuditCertificate {
   publicKeyUrl: string;
   /** Always-true when the certificate carries a real Ed25519 signature. */
   signed: boolean;
-  /** UAE FDL 10/2025 regulatory attestation block. */
+  /** UAE Federal Decree-Law No. 10 of 2025 regulatory attestation block. */
   regulatoryAttestation: RegulatoryAttestation;
   /** Certificate metadata. */
   generatedBy: string;
   generatedAt: string;
-  /** Five years from generation — FDL 10/2025 Art.19 retention window. */
+  /** Five years from generation — Federal Decree-Law No. 10 of 2025 Art.19 retention window. */
   expiresAt: string;
   purpose: string;
 }
@@ -114,7 +114,7 @@ function readSessionSecret(): string {
  *   - snapshotSha256   SHA-256 of the canonical snapshot (what Ed25519 signs)
  *   - hmacSignature    HMAC-SHA256(contentHash + issuedAt + subjectId) using SESSION_SECRET
  *   - serialNumber     "HS-CERT-" + 8 random hex bytes
- *   - regulatoryAttestation   UAE FDL 10/2025 / CBUAE binding
+ *   - regulatoryAttestation   UAE Federal Decree-Law No. 10 of 2025 / CBUAE binding
  *   - certificate metadata (generatedBy, generatedAt, expiresAt, purpose)
  *
  * Verifiers reconstruct the snapshot from the published audit chain,
@@ -187,7 +187,7 @@ export function buildAuditCertificate(input: AuditSnapshotInput): AuditCertifica
 
   // ── Regulatory attestation block ───────────────────────────────────────────
   const regulatoryAttestation: RegulatoryAttestation = {
-    standard: "UAE FDL 10/2025",
+    standard: "UAE Federal Decree-Law No. 10 of 2025",
     article: "Art.19 (record keeping)",
     retentionPeriod: "5 years from last transaction date",
     jurisdictionCode: "AE",

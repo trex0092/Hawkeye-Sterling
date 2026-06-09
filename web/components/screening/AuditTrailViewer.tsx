@@ -274,7 +274,7 @@ export function AuditTrailViewer({
             Audit trail viewer
           </h2>
           <p className="font-mono text-10 uppercase tracking-wide-3 text-ink-2 mt-1">
-            HMAC-sealed chain · FDL 10/2025 Art.24 · 10-year retention
+            HMAC-sealed chain · Federal Decree-Law No. 10 of 2025 Art.24 · 10-year retention
           </p>
         </div>
         <div className="flex gap-2">

@@ -16,7 +16,7 @@
 //   - Structuring / smurfing
 //   - Professional money laundering networks
 //
-// Regulatory basis: FATF R.29; FDL 10/2025 Art.15
+// Regulatory basis: FATF R.29; Federal Decree-Law No. 10 of 2025 Art.15
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -261,7 +261,7 @@ Determine STR trigger, EDD requirement, typology chain, and risk narrative.`,
     typologyChain,
     matches: staticMatches,
     aiNarrative,
-    regulatoryBasis: "FATF 40 Recommendations; FDL 10/2025 Art.15 (STR); Art.8 (EDD); CBUAE AML Standards §9",
+    regulatoryBasis: "FATF 40 Recommendations; Federal Decree-Law No. 10 of 2025 Art.15 (STR); Art.8 (EDD); CBUAE AML Standards §9",
     analysedAt: new Date().toISOString(),
   }, { headers: gate.headers });
 }

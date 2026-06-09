@@ -150,7 +150,7 @@ async function handlePost(req: Request, ctx: RequestContext): Promise<NextRespon
     reason: entry.reason,
   });
 
-  // FDL 10/2025 Art.24: whitelist additions are AML decisions and must be in the tamper-evident chain.
+  // Federal Decree-Law No. 10 of 2025 Art.24: whitelist additions are AML decisions and must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "whitelist.entry_added", subjectId: entry.id, subjectName: entry.subjectName, reason: entry.reason, actor: entry.approvedBy },
     ctx.tenantId,
@@ -179,7 +179,7 @@ async function handleDelete(req: Request, ctx: RequestContext): Promise<NextResp
     entryId: id,
   });
 
-  // FDL 10/2025 Art.24: whitelist removals are AML decisions and must be in the tamper-evident chain.
+  // Federal Decree-Law No. 10 of 2025 Art.24: whitelist removals are AML decisions and must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "whitelist.entry_removed", subjectId: id, actor: ctx.tenantId },
     ctx.tenantId,

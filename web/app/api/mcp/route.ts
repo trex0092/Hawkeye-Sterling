@@ -144,7 +144,7 @@ function wrapWithGovernance(
   // well-formed body. listsVerified is the canonical signal from upstream.
   if (!listsVerified || missingLists.length > 0) {
     degradedServices.push("sanctions_lists");
-    // Cap confidence when sanctions corpus is incomplete (FDL 10/2025 Art.15).
+    // Cap confidence when sanctions corpus is incomplete (Federal Decree-Law No. 10 of 2025 Art.15).
     confidenceScore = Math.min(confidenceScore, 0.70);
   }
 
@@ -172,7 +172,7 @@ function wrapWithGovernance(
       confidenceScore: Math.round(confidenceScore * 100) / 100,
       humanReviewRequired: true,
       consequenceLevel: level,
-      reviewNote: "AI-generated output — MLRO review required before any compliance action. FDL No.10/2025 Art.18.",
+      reviewNote: "AI-generated output — MLRO review required before any compliance action. Federal Decree-Law No. 10 of 2025 Art.18.",
       // Four-eyes approval instructions for tools that can produce regulator-facing output.
       // Surfaces how to record approvals so operators see the path forward, not just a gate.
       // Applied to: action-level tools AND the supervised tools that drive case disposition.
@@ -181,7 +181,7 @@ function wrapWithGovernance(
           required: true,
           instructions: "Record two distinct approver sign-offs at POST /api/four-eyes before any regulator-facing submission or STR filing. Body: { caseId, actor (approver email/GID), decision: 'approve', rationale }. Two distinct actors are required — a single approver approving twice is rejected.",
           endpoint: "/api/four-eyes",
-          regulatoryBasis: ["UAE FDL 10/2025 Art.16 (dual-attestation)", "FATF R.26 (record-keeping + responsibility separation)"],
+          regulatoryBasis: ["UAE Federal Decree-Law No. 10 of 2025 Art.16 (dual-attestation)", "FATF R.26 (record-keeping + responsibility separation)"],
         },
       } : {}),
       ...(degradedServices.length > 0 ? { degradedServices } : {}),
@@ -825,16 +825,16 @@ const TOOLS: ToolDef[] = [
     },
     handler: async ({ suspicionBasis, subjectName, filingType, approver, ...rest }) => {
       const finalType = (filingType as string) ?? "STR";
-      // Enforce four-eyes approver for final regulatory filings per FDL 10/2025 Art.16.
+      // Enforce four-eyes approver for final regulatory filings per Federal Decree-Law No. 10 of 2025 Art.16.
       const requiresApprover = ["STR", "SAR", "CTR", "FFR"].includes(finalType);
       if (requiresApprover && !String(approver ?? "").trim()) {
         return {
           ok: false,
           errorCode: "APPROVER_REQUIRED",
           errorType: "validation",
-          message: `Four-eyes approver is required for ${finalType} filings (UAE FDL 10/2025 Art.16). Provide the 'approver' field with the name/email of the second authorised reviewer. Record approvals at POST /api/four-eyes with caseId + actor + decision=approve + rationale.`,
+          message: `Four-eyes approver is required for ${finalType} filings (UAE Federal Decree-Law No. 10 of 2025 Art.16). Provide the 'approver' field with the name/email of the second authorised reviewer. Record approvals at POST /api/four-eyes with caseId + actor + decision=approve + rationale.`,
           filingType: finalType,
-          _governance: { humanReviewRequired: true, regulatoryBasis: ["FDL 10/2025 Art.16", "FATF R.26"] },
+          _governance: { humanReviewRequired: true, regulatoryBasis: ["Federal Decree-Law No. 10 of 2025 Art.16", "FATF R.26"] },
         };
       }
       const subjectId = String(subjectName ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now().toString(36);
@@ -1592,7 +1592,7 @@ async function dispatch(msg: {
               _governance: {
                 humanReviewRequired: true,
                 reviewNote:
-                  "FDL No. 10/2025 Art. 15: AI-generated screening results are invalid when the underlying data corpus is incomplete.",
+                  "Federal Decree-Law No. 10 of 2025 Art. 15: AI-generated screening results are invalid when the underlying data corpus is incomplete.",
               },
               checkedAt: sanctionsHealth.checkedAt,
             }, null, 2),

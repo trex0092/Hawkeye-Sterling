@@ -17,7 +17,7 @@ interface AmAssessment {
   uaeSpecificRisks: string[];
 }
 
-// Adverse Media 10-Year Lookback — FDL 10/2025 Art.19 requires adverse
+// Adverse Media 10-Year Lookback — Federal Decree-Law No. 10 of 2025 Art.19 requires adverse
 // media analysis to cover a 10-year window. This module provides a
 // structured log of manually verified adverse media findings per subject,
 // with year-by-year coverage tracking and gap detection.
@@ -354,7 +354,7 @@ export default function AdverseMediaLookbackPage() {
           titleEm="lookback."
           intro={
             <>
-              <strong>10-year window per FDL 10/2025 Art.19.</strong> Every
+              <strong>10-year window per Federal Decree-Law No. 10 of 2025 Art.19.</strong> Every
               adverse media finding manually verified by an analyst is logged
               here with source, date, and severity. Year-by-year coverage
               tracks gaps in the lookback so auditors can verify the full

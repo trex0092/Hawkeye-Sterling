@@ -1,7 +1,7 @@
 // GET   /api/voluntary-disclosure/[id] — load a single voluntary disclosure
 // PATCH /api/voluntary-disclosure/[id] — update a voluntary disclosure
 //
-// Regulatory basis: FDL 10/2025 Art.25, CBUAE Enforcement Policy
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.25, CBUAE Enforcement Policy
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

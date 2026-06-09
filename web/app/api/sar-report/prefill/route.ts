@@ -161,7 +161,7 @@ function buildNarrative(
     const currencies = Array.from(new Set(transactions.map((t) => t.currency).filter(Boolean)));
     lines.push(`\nTransaction summary: ${transactions.length} transaction(s) totalling ${total.toLocaleString("en-US")} ${currencies.join("/") || "AED"}. Detail in the goAML transaction block.`);
   }
-  lines.push(`\nBased on the above signals the MLRO has elected to file this ${filingType} under UAE FDL 10/2025 Art.17 (48-hour STR obligation) for review by the UAE FIU.`);
+  lines.push(`\nBased on the above signals the MLRO has elected to file this ${filingType} under UAE Federal Decree-Law No. 10 of 2025 Art.17 (48-hour STR obligation) for review by the UAE FIU.`);
   lines.push(`\n[MLRO REVIEW REQUIRED — confirm or override every auto-filled field before submission. The screening signals above are an automated draft, not a final regulatory disposition.]`);
   return lines.join("\n");
 }

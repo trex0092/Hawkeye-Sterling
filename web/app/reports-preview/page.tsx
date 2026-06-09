@@ -271,7 +271,7 @@ function EwraPreview() {
         reportRef="EWRA-2026-BOARD"
         module="RISK ASSESSMENT"
         cap="E" rest="nterprise-Wide Risk Assessment — Board Report"
-        description="Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms."
+        description="Annual enterprise-wide risk assessment under UAE Federal Decree-Law No. 10 of 2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms."
         leftCard={<Card label="REPORTING ENTITY" title="Hawkeye Sterling DPMS" tags="LICENSED DPMS  ·  DMCC  ·  UAE  ·  EWRA-2026-BOARD" />}
         rightCard={<VerdictCard label="VERDICT" value="HIGH RISK" sub="Residual risk above board appetite in DPMS and cross-border wire categories." />}
         meta={<MetaGrid cells={[
@@ -285,7 +285,7 @@ function EwraPreview() {
       />
       {/* Content page 1 */}
       <div className="bg-white">
-        <ContentPageTop reportRef="EWRA-2026-BOARD" reg1="FDL 10/2025 ART.4  ·  FATF R.1  ·  CBUAE AML" reg2="STANDARDS §2" page={1} total={1} />
+        <ContentPageTop reportRef="EWRA-2026-BOARD" reg1="Federal Decree-Law No. 10 of 2025 ART.4  ·  FATF R.1  ·  CBUAE AML" reg2="STANDARDS §2" page={1} total={1} />
         <div className="px-10 pt-4 pb-6">
           <div style={{fontSize:16,fontWeight:700,color:"#141414",marginBottom:10}}>Enterprise-Wide Risk Assessment — Board Report</div>
           <VerdictBadge text="HIGH RISK" />
@@ -316,7 +316,7 @@ function EwraPreview() {
             ))}
           </div>
           <PartHeader label="PART FOUR" num="04" title="Regulatory context" />
-          <p style={{fontSize:9,color:"#141414",lineHeight:1.6,marginBottom:16}}>UAE FDL No.10/2025 Art.4 requires annual enterprise-wide risk assessments. This report satisfies the CBUAE AML Standards §2 board sign-off obligation. Next assessment due: 04/05/2027.</p>
+          <p style={{fontSize:9,color:"#141414",lineHeight:1.6,marginBottom:16}}>Federal Decree-Law No. 10 of 2025 Art.4 requires annual enterprise-wide risk assessments. This report satisfies the CBUAE AML Standards §2 board sign-off obligation. Next assessment due: 04/05/2027.</p>
           <SigFooter docRef="EWRA-2026-BOARD" signers={[
             {name:"L. Fernanda",role:"COMPLIANCE OFFICER / MLRO",id:"HS-MLRO-0428",date:TODAY},
             {name:"Board Chair",role:"AML SIGN-OFF",id:"Board Resolution 2026-04",date:TODAY},
@@ -335,7 +335,7 @@ function StrPreview() {
         reportRef="STR-DRAFT-04-05-2026"
         module="STR WORKBENCH"
         cap="S" rest="uspicious Transaction Report — Draft"
-        description="Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE FDL 10/2025 Art.14 and CBUAE AML Standards §8."
+        description="Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE Federal Decree-Law No. 10 of 2025 Art.14 and CBUAE AML Standards §8."
         leftCard={<Card label="SUBJECT OF REPORT" title="Mohammed Al-Rashidi" tags="INDIVIDUAL  ·  UAE  ·  AE-DU  ·  STR-DRAFT-04-05-2026" />}
         rightCard={<VerdictCard label="VERDICT" value="RISK 84/100" sub="Filing required within prescribed 30-day window." />}
         meta={<MetaGrid cells={[
@@ -344,11 +344,11 @@ function StrPreview() {
           {label:"OFFICER",           value:"L. Fernanda",        sub:"CO/MLRO"},
           {label:"FIU REGISTRATION",  value:"FIU-AE-DMCC-0428",  sub:"goAML Reporting Entity"},
           {label:"REPORT IDENTIFIER", value:"STR-DRAFT-04-05-2026",sub:"Draft  ·  Pre-filing"},
-          {label:"RETENTION",         value:"10 years",           sub:"FDL 10/2025 ART.24"},
+          {label:"RETENTION",         value:"10 years",           sub:"Federal Decree-Law No. 10 of 2025 ART.24"},
         ]} />}
       />
       <div className="bg-white">
-        <ContentPageTop reportRef="STR-DRAFT-04-05-2026" reg1="FDL 10/2025 ART.14  ·  CBUAE AML STANDARDS" reg2="§8  ·  FATF R.20" page={1} total={1} />
+        <ContentPageTop reportRef="STR-DRAFT-04-05-2026" reg1="Federal Decree-Law No. 10 of 2025 ART.14  ·  CBUAE AML STANDARDS" reg2="§8  ·  FATF R.20" page={1} total={1} />
         <div className="px-10 pt-4 pb-6">
           <div style={{fontSize:16,fontWeight:700,color:"#141414",marginBottom:10}}>Suspicious Transaction Report — Draft</div>
           <VerdictBadge text="RISK SCORE 84 / 100" />
@@ -375,7 +375,7 @@ function StrPreview() {
             ]}
             colWidths={["15%","20%","65%"]}
           />
-          <p style={{fontFamily:"Georgia,'Times New Roman',serif",fontStyle:"italic",fontSize:7.5,color:"#464646",lineHeight:1.5,marginBottom:16}}>This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.</p>
+          <p style={{fontFamily:"Georgia,'Times New Roman',serif",fontStyle:"italic",fontSize:7.5,color:"#464646",lineHeight:1.5,marginBottom:16}}>This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE Federal Decree-Law No. 10 of 2025 Art.14.</p>
           <SigFooter docRef="STR-DRAFT-04-05-2026" signers={[
             {name:"L. Fernanda",role:"CO/MLRO  ·  AUTHOR",id:"HS-MLRO-0428",date:TODAY},
             {name:"FIU goAML",role:"SUBMISSION PENDING",id:"FIU-AE-DMCC-0428",date:"—"},
@@ -412,11 +412,11 @@ function BatchPreview() {
           {label:"DURATION",          value:"4.2 s",                    sub:"247 Subjects"},
           {label:"OFFICER",           value:"L. Fernanda",               sub:"CO/MLRO"},
           {label:"REPORT IDENTIFIER", value:"HWK-BATCH-04052026",       sub:"Immutable  ·  Signed"},
-          {label:"RETENTION",         value:"10 years",                 sub:"FDL 10/2025"},
+          {label:"RETENTION",         value:"10 years",                 sub:"Federal Decree-Law No. 10 of 2025"},
         ]} />}
       />
       <div className="bg-white">
-        <ContentPageTop reportRef="HWK-BATCH-04052026" reg1="FDL 10/2025 ART.9  ·  FATF R.10  ·  CBUAE AML" reg2="STANDARDS §4" page={1} total={1} />
+        <ContentPageTop reportRef="HWK-BATCH-04052026" reg1="Federal Decree-Law No. 10 of 2025 ART.9  ·  FATF R.10  ·  CBUAE AML" reg2="STANDARDS §4" page={1} total={1} />
         <div className="px-10 pt-4 pb-6">
           <div style={{fontSize:16,fontWeight:700,color:"#141414",marginBottom:4}}>Batch Screening Audit Report</div>
           <div style={{fontSize:8.5,color:"#828282",marginBottom:14}}>247 subjects  ·  8 critical hits  ·  run duration 4.2 s</div>
@@ -483,7 +483,7 @@ function EvidencePackPreview() {
         reportRef="EVIDENCE-04052026-001"
         module="MLRO ADVISOR  —  MULTI-MODAL AI"
         cap="M" rest="LRO Advisor Evidence Pack"
-        description="Reasoning trail and classifier evidence supporting the advisor's verdict. Hash-chained for tamper-evident review under UAE FDL 10/2025 Art.14 and FATF R.20."
+        description="Reasoning trail and classifier evidence supporting the advisor's verdict. Hash-chained for tamper-evident review under UAE Federal Decree-Law No. 10 of 2025 Art.14 and FATF R.20."
         leftCard={<Card label="ADVISOR SESSION" title="Is Nikolai Volkov subject to sanctions?" tags="SANCTIONS  ·  PEP  ·  ADVERSE MEDIA  ·  EVIDENCE-04052026-001  ·  3,241 MS" />}
         rightCard={<VerdictCard label="VERDICT" value="ESCALATE" sub="File STR · obtain senior approval prior to relationship." />}
         meta={<MetaGrid cells={[
@@ -492,11 +492,11 @@ function EvidencePackPreview() {
           {label:"EXECUTOR",        value:"claude-sonnet-4-6",    sub:"Tool-calling"},
           {label:"OFFICER",         value:"L. Fernanda",           sub:"CO/MLRO"},
           {label:"INTEGRITY HASH",  value:"sha256:a3f9c2e1...d84b",sub:"HMAC-Verified"},
-          {label:"RETENTION",       value:"10 years",             sub:"FDL 10/2025"},
+          {label:"RETENTION",       value:"10 years",             sub:"Federal Decree-Law No. 10 of 2025"},
         ]} />}
       />
       <div className="bg-white">
-        <ContentPageTop reportRef="EVIDENCE-04052026-001" reg1="FDL 10/2025 ART.14  ·  FATF R.1-40  ·  CBUAE" reg2="AML STANDARDS" page={1} total={1} />
+        <ContentPageTop reportRef="EVIDENCE-04052026-001" reg1="Federal Decree-Law No. 10 of 2025 ART.14  ·  FATF R.1-40  ·  CBUAE" reg2="AML STANDARDS" page={1} total={1} />
         <div className="px-10 pt-4 pb-6">
           <div style={{fontSize:16,fontWeight:700,color:"#141414",marginBottom:10}}>MLRO Advisor Evidence Pack</div>
           <VerdictBadge text="ESCALATE" />
@@ -510,7 +510,7 @@ function EvidencePackPreview() {
             ["INTEGRITY HASH","sha256:a3f9c2e1...d84b (HMAC-verified)"],
           ]} />
           <PartHeader label="PART TWO" num="02" title="Narrative" />
-          <DropCapPara text="Based on the multi-modal analysis across sanctions lists, PEP databases, and adverse media sources, the subject presents a critical risk profile. OFAC SDN match at 94% confidence, Tier-2 PEP classification, and three corroborating adverse media articles collectively exceed the filing threshold under UAE FDL 10/2025 Art.14 and FATF R.20." />
+          <DropCapPara text="Based on the multi-modal analysis across sanctions lists, PEP databases, and adverse media sources, the subject presents a critical risk profile. OFAC SDN match at 94% confidence, Tier-2 PEP classification, and three corroborating adverse media articles collectively exceed the filing threshold under UAE Federal Decree-Law No. 10 of 2025 Art.14 and FATF R.20." />
           <PartHeader label="PART THREE" num="03" title="Reasoning trail" />
           <PlainTable
             head={["STEP","ACTOR","MODEL","SUMMARY"]}

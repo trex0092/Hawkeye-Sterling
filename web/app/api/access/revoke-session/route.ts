@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     };
     await appendPermissionLog(logEntry);
 
-    // FDL 10/2025 Art.20 — session revocation is a privileged access-control event;
+    // Federal Decree-Law No. 10 of 2025 Art.20 — session revocation is a privileged access-control event;
     // must be on the tamper-evident server-side chain.
     void writeAuditChainEntry(
       {

@@ -209,7 +209,7 @@ export default function OutsourcingRegisterPage() {
         {hasWarning && (
           <div className="bg-amber-950/20 border border-amber-500/30 text-amber-300 rounded-md px-4 py-3 text-sm flex items-start gap-2">
             <span className="font-bold shrink-0">Warning:</span>
-            <span>One or more AML/CFT-relevant arrangements are due for review or missing Board approval. Review required under FDL 10/2025 Art.18.</span>
+            <span>One or more AML/CFT-relevant arrangements are due for review or missing Board approval. Review required under Federal Decree-Law No. 10 of 2025 Art.18.</span>
           </div>
         )}
 
@@ -406,7 +406,7 @@ export default function OutsourcingRegisterPage() {
 
         <div className="bg-sky-950/20 border border-sky-500/30 rounded-md px-4 py-3 text-xs text-sky-300">
           <span className="font-semibold">Regulatory Note:</span>{" "}
-          AML/CFT outsourcing arrangements require annual MLRO review and Board approval per FDL 10/2025 Art.18.
+          AML/CFT outsourcing arrangements require annual MLRO review and Board approval per Federal Decree-Law No. 10 of 2025 Art.18.
         </div>
       </div>
     </ModuleLayout>

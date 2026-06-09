@@ -85,7 +85,7 @@ Key frameworks to apply:
 - UNSCR 2178 (foreign terrorist fighters — travel, financing)
 - UAE Federal Law No. 7/2014 on Combating Terrorism (CTF Law)
 - UAE Cabinet Decision 74/2020 (EOCN — implementing UNSCR 1267/1988 designations)
-- UAE FDL 10/2025 Art.21(2) (TF suspicion reporting — no threshold)
+- UAE Federal Decree-Law No. 10 of 2025 Art.21(2) (TF suspicion reporting — no threshold)
 
 TF typologies (from FATF Guidance on Terrorist Financing Risk Assessment 2019):
 1. Hawala/IVTS to conflict zones (Syria, Iraq, Yemen, Afghanistan, Sahel, Somalia)

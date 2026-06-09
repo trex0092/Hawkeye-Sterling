@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE AML network analysis specialist with expertise in entity relationship mapping, corporate structure analysis, and ML network identification. Map entities, identify connections (director, shareholder, address, transaction, family), detect circular ownership, shell network patterns, and layering structures. Apply UAE FDL 10/2025 beneficial ownership requirements and FATF R.24/25 transparency standards. Assign unique node IDs (N1, N2, etc.) to each entity. Respond ONLY with valid JSON matching the NetworkMapResult interface — no markdown fences.`,
+        system: `You are a UAE AML network analysis specialist with expertise in entity relationship mapping, corporate structure analysis, and ML network identification. Map entities, identify connections (director, shareholder, address, transaction, family), detect circular ownership, shell network patterns, and layering structures. Apply UAE Federal Decree-Law No. 10 of 2025 beneficial ownership requirements and FATF R.24/25 transparency standards. Assign unique node IDs (N1, N2, etc.) to each entity. Respond ONLY with valid JSON matching the NetworkMapResult interface — no markdown fences.`,
         messages: [{
           role: "user",
           content: `Entities (names/roles/descriptions): ${sanitizeText(body.entities, 3000)}

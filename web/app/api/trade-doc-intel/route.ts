@@ -156,7 +156,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
-    system: `You are a TBML (Trade-Based Money Laundering) intelligence specialist with expertise in precious metals, gold trading, and UAE DPMS compliance under FDL 10/2025 and FATF R.14.
+    system: `You are a TBML (Trade-Based Money Laundering) intelligence specialist with expertise in precious metals, gold trading, and UAE DPMS compliance under Federal Decree-Law No. 10 of 2025 and FATF R.14.
 
 Analyse the trade document for:
 1. TBML indicators: price manipulation, over/under-invoicing, multiple-invoicing, phantom shipments

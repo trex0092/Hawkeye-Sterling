@@ -16,7 +16,7 @@
 // Each pillar scored 0-100; composite = average of five.
 // Output: composite score, pillar scores, weaknesses, action plan, band.
 //
-// Regulatory basis: FDL 10/2025; FATF R.1, R.7, R.10, R.18-21; CBUAE AML/CFT Guidelines
+// Regulatory basis: Federal Decree-Law No. 10 of 2025; FATF R.1, R.7, R.10, R.18-21; CBUAE AML/CFT Guidelines
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -109,7 +109,7 @@ function scoreGovernance(inp: PillarInput): PillarScore {
   else weaknesses.push(`AML policy not updated in ${Math.round(policyAge / 365)} years`);
 
   if (inp.hasDedicatedMlro) { score += 20; strengths.push("Dedicated MLRO appointed"); }
-  else weaknesses.push("No dedicated MLRO — FDL 10/2025 Art.23 requires MLRO appointment");
+  else weaknesses.push("No dedicated MLRO — Federal Decree-Law No. 10 of 2025 Art.23 requires MLRO appointment");
 
   if (inp.mlroHasDirectBoardAccess) { score += 15; strengths.push("MLRO has direct board access"); }
   else weaknesses.push("MLRO does not have direct board/senior management access");
@@ -133,7 +133,7 @@ function scoreRiskAssessment(inp: PillarInput): PillarScore {
   const weaknesses: string[] = [];
 
   if (inp.ewraCompletedThisYear) { score += 30; strengths.push("EWRA completed this year (FDL Art.7)"); }
-  else weaknesses.push("EWRA not completed this year — annual requirement (FDL 10/2025 Art.7)");
+  else weaknesses.push("EWRA not completed this year — annual requirement (Federal Decree-Law No. 10 of 2025 Art.7)");
 
   if (inp.ewraCoversAllRiskAreas) { score += 20; strengths.push("EWRA covers all risk dimensions"); }
   else weaknesses.push("EWRA does not cover all required risk areas (customer, product, geography, channel)");
@@ -289,7 +289,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         priority: idx * 2 + wi + 1,
         action: w,
         pillar: p.name,
-        regulatoryBasis: "FDL 10/2025",
+        regulatoryBasis: "Federal Decree-Law No. 10 of 2025",
       }))
     )
     .slice(0, 10);
@@ -316,7 +316,7 @@ ${pillars.map((p) => `${p.name}: ${p.score}/100 (${p.band})`).join("\n")}
 Top weaknesses:
 ${topWeaknesses.slice(0, 6).map((w) => `- ${w}`).join("\n")}
 
-Write a practical 4-6 bullet remediation plan focused on the weakest areas (${weakPillars.map((p) => sanitizeField(p.name, 100)).join(", ")}). Each bullet should be actionable, time-bound, and cite the relevant UAE FDL 10/2025 article.`;
+Write a practical 4-6 bullet remediation plan focused on the weakest areas (${weakPillars.map((p) => sanitizeField(p.name, 100)).join(", ")}). Each bullet should be actionable, time-bound, and cite the relevant UAE Federal Decree-Law No. 10 of 2025 article.`;
 
       const msg = await anthropic.messages.create({
         model: "claude-haiku-4-5-20251001",

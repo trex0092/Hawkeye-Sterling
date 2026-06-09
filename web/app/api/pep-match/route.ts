@@ -146,7 +146,7 @@ function parseLine(line: string): PepRecord | null {
       // impossible to deduplicate hits across screening runs or correlate
       // entries in the audit trail. Use a SHA-256 digest of the record's name
       // + caption + first position as a stable surrogate key when no id is
-      // present in the source data (FDL 10/2025 Art.24 — 10-year retention).
+      // present in the source data (Federal Decree-Law No. 10 of 2025 Art.24 — 10-year retention).
       id: String(obj["id"] ?? `pep_${createHash("sha256").update([
         String(obj["caption"] ?? ""),
         arrStr(props["name"])[0] ?? "",

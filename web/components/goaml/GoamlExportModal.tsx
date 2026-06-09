@@ -348,7 +348,7 @@ export function GoamlExportModal({ open, onClose, prefill, onExportComplete }: G
                 value={draft.narrative}
                 onChange={(v) => update({ narrative: v })}
                 rows={8}
-                placeholder="Customer presented six AED 49,000 cash deposits across nine days, immediately wire-transferred to a counterparty in a FATF Call-for-Action jurisdiction. Pattern consistent with structuring (FDL 10/2025 Art.2)."
+                placeholder="Customer presented six AED 49,000 cash deposits across nine days, immediately wire-transferred to a counterparty in a FATF Call-for-Action jurisdiction. Pattern consistent with structuring (Federal Decree-Law No. 10 of 2025 Art.2)."
               />
               <div className="text-10 font-mono text-ink-3">
                 {draft.narrative.length} / 4000 characters

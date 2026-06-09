@@ -1,6 +1,6 @@
 // MCP Tool Risk Manifest
 // Classifies all 24 Hawkeye Sterling MCP tools by consequence level for audit
-// and governance purposes (ISO/IEC 42001, UAE FDL No.10/2025).
+// and governance purposes (ISO/IEC 42001, Federal Decree-Law No. 10 of 2025).
 //
 // Consequence levels:
 //   read-only   — no side effects; AI can call freely
@@ -24,7 +24,7 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
   intel_feed: {
     level: "supervised",
     description: "Adverse intel — GDELT 10-y, Google News RSS (7 locales), or both",
-    regulatoryNote: "Art.19 FDL 10/2025 lookback when source includes gdelt — findings require MLRO review",
+    regulatoryNote: "Art.19 Federal Decree-Law No. 10 of 2025 lookback when source includes gdelt — findings require MLRO review",
   },
   pep: {
     level: "supervised",
@@ -107,7 +107,7 @@ export const TOOL_MANIFEST: Record<string, ToolManifestEntry> = {
   generate_sar_report: {
     level: "supervised",
     description: "SAR/STR narrative + GoAML-compatible XML (draft only — filed via FIU GoAML portal)",
-    regulatoryNote: "DRAFT only. Human MLRO must file via goaml.uae.gov.ae — FDL 10/2025 Art.32",
+    regulatoryNote: "DRAFT only. Human MLRO must file via goaml.uae.gov.ae — Federal Decree-Law No. 10 of 2025 Art.32",
   },
   mlro_analyze: {
     level: "supervised",

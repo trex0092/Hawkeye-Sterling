@@ -63,7 +63,7 @@ export async function POST(req: Request) {
           type: "text",
           text: `You are an AML access-control specialist for Hawkeye Sterling, a UAE-regulated gold trading firm. The platform has five roles: viewer (read-only screening + audit trail), analyst (+ STR Cases, Investigation), supervisor (+ MLRO Advisor, Oversight, EWRA, Playbook), mlro (all except Access Control), admin (all modules including Access Control). Available modules: ${ALL_MODULES.join(", ")}.
 
-Given a new user's details, recommend the most appropriate role and modules, following the principle of least privilege and UAE FDL 10/2025 segregation-of-duties requirements.
+Given a new user's details, recommend the most appropriate role and modules, following the principle of least privilege and UAE Federal Decree-Law No. 10 of 2025 segregation-of-duties requirements.
 
 Return ONLY valid JSON (no markdown fences):
 {

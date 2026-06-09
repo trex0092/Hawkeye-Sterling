@@ -3,7 +3,7 @@
 // Storage layout:
 //   hawkeye-cdd/<tenant>/reviews/<id>.json   full CddReviewRecord
 //
-// Review cadences (FDL 10/2025 Art.11 + FATF R.10):
+// Review cadences (Federal Decree-Law No. 10 of 2025 Art.11 + FATF R.10):
 //   high risk    → 90 days
 //   medium risk  → 180 days
 //   standard     → 365 days

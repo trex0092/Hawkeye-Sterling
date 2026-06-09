@@ -8,7 +8,7 @@
 // Charter / regulatory:
 //   · GDPR Art.17 (right to erasure)
 //   · PDPL Art.13 (data minimisation + erasure)
-//   · UAE FDL 10/2025 Art.20-24 — AML records have a 10-year MANDATORY
+//   · UAE Federal Decree-Law No. 10 of 2025 Art.20-24 — AML records have a 10-year MANDATORY
 //     retention. Erasure DOES NOT delete the audit chain (Art.24
 //     tamper-evident); only PII fields outside the legal-basis scope
 //     are masked. The brain's reasoning trail and case identifiers
@@ -52,8 +52,8 @@ interface ErasureReceipt {
 }
 
 const RETENTION_EXCEPTIONS = [
-  "UAE FDL 10/2025 Art.20 — AML 10y retention overrides erasure for AML records",
-  "UAE FDL 10/2025 Art.24 — audit chain MUST be retained tamper-evident",
+  "UAE Federal Decree-Law No. 10 of 2025 Art.20 — AML 10y retention overrides erasure for AML records",
+  "UAE Federal Decree-Law No. 10 of 2025 Art.24 — audit chain MUST be retained tamper-evident",
   "FATF R.11 — transaction record-keeping ≥ 5 years",
   "Cabinet Resolution 74/2020 — TFS records retained per supervisor instruction",
 ];
@@ -173,7 +173,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     caseShaAfter,
     ...(body.reason ? { reason: body.reason } : {}),
     legalBasisRetained: [
-      "AML / CFT investigation (FDL 10/2025 Art.4-15)",
+      "AML / CFT investigation (Federal Decree-Law No. 10 of 2025 Art.4-15)",
       "Audit trail integrity (Art.24)",
       "Tax + transaction record-keeping (FATF R.11)",
     ],
@@ -185,7 +185,7 @@ async function handlePost(req: Request): Promise<NextResponse> {
     // best-effort
   }
 
-  // FDL 10/2025 Art.24: GDPR erasure requests are compliance events and must be in the tamper-evident chain.
+  // Federal Decree-Law No. 10 of 2025 Art.24: GDPR erasure requests are compliance events and must be in the tamper-evident chain.
   void writeAuditChainEntry(
     { event: "gdpr.erasure_request", receiptId, subjectId: body.caseId, actor: gate.keyId },
     tenant,

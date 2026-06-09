@@ -1,7 +1,7 @@
 // POST /api/smart-disambiguate
 //
 // Smart Hit Disambiguation Engine — resolves hundreds of screening hits for
-// high-frequency names (Mohamed, Ahmed, etc.) in seconds under UAE FDL 10/2025
+// high-frequency names (Mohamed, Ahmed, etc.) in seconds under UAE Federal Decree-Law No. 10 of 2025
 // and FATF R.10 guidance.
 
 import { NextResponse } from "next/server";
@@ -73,7 +73,7 @@ interface DisambiguationResult {
   processingTime: string;
 }
 
-const SYSTEM_PROMPT = `You are a UAE AML screening specialist with deep expertise in name disambiguation for high-frequency names across South Asian, Arab, African, East Asian and CJK populations. Your goal is to resolve large volumes of screening hits with maximum precision under FDL 10/2025 and FATF R.10.
+const SYSTEM_PROMPT = `You are a UAE AML screening specialist with deep expertise in name disambiguation for high-frequency names across South Asian, Arab, African, East Asian and CJK populations. Your goal is to resolve large volumes of screening hits with maximum precision under Federal Decree-Law No. 10 of 2025 and FATF R.10.
 
 DISAMBIGUATION RULES (apply in strict priority order):
 1. GENDER MISMATCH → confirmed_false_positive (male hit for female client or vice versa)

@@ -100,7 +100,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
   const flags: RiskFlag[] = [];
   const regulatoryBasis: string[] = [
     "FATF Recommendation 13 — Correspondent Banking",
-    "UAE FDL 10/2025 Art.25 — Correspondent Relationships",
+    "UAE Federal Decree-Law No. 10 of 2025 Art.25 — Correspondent Relationships",
   ];
 
   const cc = body.countryCode.trim().toUpperCase();
@@ -112,7 +112,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
       code: "COUNTRY_FATF_BLACKLIST",
       description: `Country code "${cc}" is on the FATF Black List (High-Risk Jurisdictions subject to a Call for Action).`,
       score: 30,
-      regulatoryBasis: "FATF Recommendation 13 & 19; UAE FDL 10/2025 Art.25",
+      regulatoryBasis: "FATF Recommendation 13 & 19; UAE Federal Decree-Law No. 10 of 2025 Art.25",
     });
   } else if (FATF_GREY_LIST.has(cc)) {
     score += 30;
@@ -120,7 +120,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
       code: "COUNTRY_FATF_GREYLIST",
       description: `Country code "${cc}" is on the FATF Grey List (Jurisdictions under Increased Monitoring).`,
       score: 30,
-      regulatoryBasis: "FATF Recommendation 13 & 19; UAE FDL 10/2025 Art.14 & Art.25",
+      regulatoryBasis: "FATF Recommendation 13 & 19; UAE Federal Decree-Law No. 10 of 2025 Art.14 & Art.25",
     });
   }
 
@@ -131,7 +131,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
       code: "COUNTRY_CAHRA",
       description: `Country code "${cc}" is designated as a Conflict/Arms/Humanitarian/Regime-risk area (CAHRA). Correspondent relationships require senior management approval.`,
       score: 40,
-      regulatoryBasis: "FATF Recommendation 13; CBUAE AML Standards — CAHRA guidance; UAE FDL 10/2025 Art.25(3)",
+      regulatoryBasis: "FATF Recommendation 13; CBUAE AML Standards — CAHRA guidance; UAE Federal Decree-Law No. 10 of 2025 Art.25(3)",
     });
     if (!regulatoryBasis.includes("CBUAE AML Standards — CAHRA jurisdictions")) {
       regulatoryBasis.push("CBUAE AML Standards — CAHRA jurisdictions");
@@ -157,7 +157,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
       code: "NESTED_CORRESPONDENT_RELATIONSHIP",
       description: "Nested correspondent relationship identified. FATF Recommendation 13 prohibits a respondent bank from using the correspondent's account to offer banking services to unidentified third-party institutions (shell bank facilitation).",
       score: 25,
-      regulatoryBasis: "FATF Recommendation 13 — Nested/Payable-Through Accounts; UAE FDL 10/2025 Art.25(4)",
+      regulatoryBasis: "FATF Recommendation 13 — Nested/Payable-Through Accounts; UAE Federal Decree-Law No. 10 of 2025 Art.25(4)",
     });
   }
 
@@ -171,7 +171,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
         code: `SHELL_BANK_INDICATOR_${normalised.replace(/\s+/g, "_").toUpperCase()}`,
         description: `Shell bank indicator detected: "${indicator}". Banks lacking physical presence, regulatory supervision, SWIFT membership, or using PO Box-only addresses are prohibited correspondents under FATF R.13.`,
         score: 15,
-        regulatoryBasis: "FATF Recommendation 13 — Shell Bank Prohibition; Basel Committee on Correspondent Banking (2016); UAE FDL 10/2025 Art.25(2)",
+        regulatoryBasis: "FATF Recommendation 13 — Shell Bank Prohibition; Basel Committee on Correspondent Banking (2016); UAE Federal Decree-Law No. 10 of 2025 Art.25(2)",
       });
     }
   }
@@ -187,7 +187,7 @@ function assessCorrespondentRisk(body: RequestBody): CorrespondentRiskResult {
         code: `HIGH_RISK_SERVICE_${normalised.replace(/[\s/]+/g, "_").toUpperCase()}`,
         description: `High-risk service identified: "${svc}". This service type is associated with elevated ML/TF typologies and requires enhanced due diligence under FATF guidance.`,
         score: svcScore,
-        regulatoryBasis: "FATF Guidance on Correspondent Banking (2016); CBUAE AML Standards §7; UAE FDL 10/2025 Art.25",
+        regulatoryBasis: "FATF Guidance on Correspondent Banking (2016); CBUAE AML Standards §7; UAE Federal Decree-Law No. 10 of 2025 Art.25",
       });
     }
   }

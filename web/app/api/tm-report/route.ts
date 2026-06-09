@@ -200,7 +200,7 @@ async function handleTmReport(req: Request, ctx: RequestContext): Promise<NextRe
     `Hawkeye           : https://hawkeye-sterling.netlify.app/transaction-monitor`,
   );
   lines.push(
-    `Legal basis       : FDL 10/2025 · CR 134/2025 · MoE Circular 2/2024 (DPMS)`,
+    `Legal basis       : Federal Decree-Law No. 10 of 2025 · CR 134/2025 · MoE Circular 2/2024 (DPMS)`,
   );
 
   if (!asanaEnabled) {

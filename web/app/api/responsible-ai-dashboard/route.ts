@@ -5,7 +5,7 @@
 // dashboard payload so the MLRO can assess overall AI governance health at a
 // glance.
 //
-// Regulatory basis: UAE FDL 10/2025 Art.18 (AI audit trail), FATF R.10
+// Regulatory basis: UAE Federal Decree-Law No. 10 of 2025 Art.18 (AI audit trail), FATF R.10
 // (non-discrimination), UNESCO Principle 3 (Fairness).
 
 import { NextResponse } from "next/server";

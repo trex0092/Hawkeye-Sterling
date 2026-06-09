@@ -370,7 +370,7 @@ export default function BatchPage() {
             <>
               <strong>Drop a CSV · screen up to 500 subjects at once.</strong>{" "}
               Live streaming progress, severity chart, sortable/filterable results table.
-              Export as CSV or PDF audit report signed per FDL 10/2025 Art.24.
+              Export as CSV or PDF audit report signed per Federal Decree-Law No. 10 of 2025 Art.24.
             </>
           }
           kpis={

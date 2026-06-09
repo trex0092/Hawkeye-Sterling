@@ -7,7 +7,7 @@ import { apiErrorMessage } from "@/lib/client/error-utils";
 
 // Module 36 — PEP Profile Builder
 // Comprehensive Politically Exposed Person risk assessment per FATF R.12/R.13,
-// UAE FDL 10/2025 Art.14, and CBUAE AML Standards.
+// UAE Federal Decree-Law No. 10 of 2025 Art.14, and CBUAE AML Standards.
 
 const TIER_CONFIG = {
   tier1: { label: "Tier 1 PEP", color: "text-red", bg: "bg-red/10 border-red/30", dot: "bg-red" },
@@ -116,7 +116,7 @@ export default function PepProfilePage() {
         titleEm="profiles."
         intro={
           <>
-            <strong>FATF R.12 · UAE FDL 10/2025 Art.14 · CBUAE AML Standards §5.</strong>{" "}
+            <strong>FATF R.12 · UAE Federal Decree-Law No. 10 of 2025 Art.14 · CBUAE AML Standards §5.</strong>{" "}
             Comprehensive Politically Exposed Person risk profiling — tier classification, source of wealth
             assessment, political network mapping, and required EDD measures.
           </>

@@ -125,7 +125,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     `goaml.submission.${body.status}`,
     `${body.reportRef} — ${existing.reportCode} / ${existing.subjectName}${isResubmit ? ` (retry #${updated.retryCount})` : ""}`,
   );
-  // Server-side chain entry — STR/SAR status changes are FDL 10/2025 Art.17 events.
+  // Server-side chain entry — STR/SAR status changes are Federal Decree-Law No. 10 of 2025 Art.17 events.
   await writeAuditChainEntry(
     {
       event: `goaml.submission.${body.status}`,

@@ -1,7 +1,7 @@
 // POST /api/gold-provenance
 //
 // Gold & Precious Metals Supply Chain Provenance Tracker.
-// Specific to UAE DPMS obligations under FDL 10/2025 and OECD 5-Step Guidance.
+// Specific to UAE DPMS obligations under Federal Decree-Law No. 10 of 2025 and OECD 5-Step Guidance.
 //
 // Tracks the full custody chain: extraction → refinery → exporter →
 // transit country → importer → trader → end buyer.
@@ -170,7 +170,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       overallRisk,
       ...staticAnalysis,
       requiredCertifications: REQUIRED_CERTS[body.commodity] ?? [],
-      regulatoryBasis: "OECD 5-Step Due Diligence Guidance; FDL 10/2025 Art.8; FATF R.14; Kimberley Process; LBMA GDL",
+      regulatoryBasis: "OECD 5-Step Due Diligence Guidance; Federal Decree-Law No. 10 of 2025 Art.8; FATF R.14; Kimberley Process; LBMA GDL",
       aiEnriched: false,
     }, { headers: gate.headers });
   }
@@ -240,7 +240,7 @@ Analyse for DPMS/CAHRA compliance.`,
     ...staticAnalysis,
     ...aiResult,
     requiredCertifications: REQUIRED_CERTS[body.commodity] ?? [],
-    regulatoryBasis: "OECD 5-Step Due Diligence Guidance; FDL 10/2025 Art.8; FATF R.14; Kimberley Process; LBMA GDL",
+    regulatoryBasis: "OECD 5-Step Due Diligence Guidance; Federal Decree-Law No. 10 of 2025 Art.8; FATF R.14; Kimberley Process; LBMA GDL",
     aiEnriched: true,
     analyzedAt: new Date().toISOString(),
   }, { headers: gate.headers });

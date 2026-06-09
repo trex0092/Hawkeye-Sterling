@@ -26,7 +26,7 @@ export interface MlroMemoResult {
 // COMPLIANCE FIX: The fallback memo reference must be deterministic.
 // Using Math.random() here produces a different reference each time the
 // offline fallback fires, making it impossible to deduplicate or correlate
-// fallback-mode memo records in the audit trail (FDL 10/2025 Art.24).
+// fallback-mode memo records in the audit trail (Federal Decree-Law No. 10 of 2025 Art.24).
 // The fallback reference is a compile-time constant; per-request references
 // are derived in buildRequest() from the request timestamp, which IS stable
 // within a single invocation.
@@ -34,11 +34,11 @@ const FALLBACK_YEAR = new Date().getFullYear();
 const FALLBACK: MlroMemoResult = {
   memoRef: `MLRO-MEMO-${FALLBACK_YEAR}-OFFLINE`,
   decision: "file_str",
-  decisionBasis: "Reasonable grounds to suspect ML/TF per UAE FDL 10/2025 Art.21. Pattern consistent with structuring and layering typology.",
+  decisionBasis: "Reasonable grounds to suspect ML/TF per UAE Federal Decree-Law No. 10 of 2025 Art.21. Pattern consistent with structuring and layering typology.",
   riskRating: "high",
   auditElements: { subjectIdentified: true, activityDocumented: true, redFlagsListed: true, regulatoryBasisCited: true, decisionRationalePresent: true, deadlineNoted: true },
   qualityScore: 82,
-  regulatoryBasis: "UAE FDL 10/2025 Art.21, Art.26; FATF R.20; Cabinet Resolution 134/2025",
+  regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.21, Art.26; FATF R.20; Cabinet Resolution 134/2025",
   memo: `MLRO DECISION MEMORANDUM
 Reference: MLRO-MEMO-[YEAR]-[NUMBER]
 Date: [DATE]
@@ -79,17 +79,17 @@ Account Reference: [REF]
 ────────────────────────────────────────────────────
 5. REGULATORY ANALYSIS
 ────────────────────────────────────────────────────
-The subject's activity is consistent with [typology] as documented in FATF Guidance [reference]. The MLRO is satisfied, on the balance of reasonable grounds as required under UAE FDL 10/2025 Art.21(1), that the funds may constitute proceeds of a predicate offence or be intended for use in money laundering.
+The subject's activity is consistent with [typology] as documented in FATF Guidance [reference]. The MLRO is satisfied, on the balance of reasonable grounds as required under UAE Federal Decree-Law No. 10 of 2025 Art.21(1), that the funds may constitute proceeds of a predicate offence or be intended for use in money laundering.
 
 ────────────────────────────────────────────────────
 6. MLRO DECISION
 ────────────────────────────────────────────────────
 DECISION: FILE SUSPICIOUS TRANSACTION REPORT (STR)
 
-The MLRO has determined that an STR must be filed with the UAE FIU via goAML within 2 business days of this determination, pursuant to UAE FDL 10/2025 Art.26.
+The MLRO has determined that an STR must be filed with the UAE FIU via goAML within 2 business days of this determination, pursuant to UAE Federal Decree-Law No. 10 of 2025 Art.26.
 
 Filing deadline: [DATE + 2 BUSINESS DAYS]
-Tipping-off prohibition applies per FDL 10/2025 Art.25.
+Tipping-off prohibition applies per Federal Decree-Law No. 10 of 2025 Art.25.
 
 ────────────────────────────────────────────────────
 7. SIGN-OFF
@@ -97,7 +97,7 @@ Tipping-off prohibition applies per FDL 10/2025 Art.25.
 MLRO: _____________________ Date: ___________
 Deputy MLRO: ______________ Date: ___________
 
-This memorandum forms part of the entity's AML/CFT audit trail and is to be retained for a minimum of 8 years pursuant to UAE FDL 10/2025 Art.16.`,
+This memorandum forms part of the entity's AML/CFT audit trail and is to be retained for a minimum of 8 years pursuant to UAE Federal Decree-Law No. 10 of 2025 Art.16.`,
 };
 
 interface MlroMemoBody {
@@ -133,7 +133,7 @@ export const POST = (req: Request) => withMlroLlm<MlroMemoBody, MlroMemoResult>(
     // COMPLIANCE FIX: derive a stable memo reference from the request content
     // so re-submitting the same case always produces the same reference number.
     // Math.random() previously produced a non-reproducible reference, breaking
-    // audit-trail deduplication (FDL 10/2025 Art.24 — 10-year retention).
+    // audit-trail deduplication (Federal Decree-Law No. 10 of 2025 Art.24 — 10-year retention).
     const memoSeed = createHash("sha256")
       .update(`${body.subjectName}|${body.activitySummary}|${body.caseRef ?? ""}`)
       .digest("hex")

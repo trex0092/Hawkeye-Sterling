@@ -10,7 +10,7 @@
 //   • All four fields required and non-empty
 //   • Item must exist and be in "pending" status
 //   • No duplicate approver (same actor cannot sign twice)
-//   • No self-approval (actor !== item.initiatedBy) — UAE FDL 10/2025 Art.16
+//   • No self-approval (actor !== item.initiatedBy) — UAE Federal Decree-Law No. 10 of 2025 Art.16
 //   • Two distinct "approve" decisions required to flip status to "approved"
 
 import { NextResponse } from "next/server";
@@ -98,7 +98,7 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
   const rationale = validateString(raw["rationale"], { required: true, maxLength: 4_000 });
 
   // Minimum rationale: 20 characters — matches four-eyes-gate.ts enforcement.
-  // Prevents trivially empty sign-offs per UAE FDL 10/2025 Art.16.
+  // Prevents trivially empty sign-offs per UAE Federal Decree-Law No. 10 of 2025 Art.16.
   const rationaleLength = rationale ? rationale.trim().length : 0;
 
   if (!itemId || !actor || !decision || !rationale || rationaleLength < 20) {
@@ -147,14 +147,14 @@ async function handler(req: Request, ctx: RequestContext): Promise<NextResponse>
     );
   }
 
-  // 6. Self-approval guard — UAE FDL 10/2025 Art.16. Case-insensitive compare
+  // 6. Self-approval guard — UAE Federal Decree-Law No. 10 of 2025 Art.16. Case-insensitive compare
   // so "Alice Smith" cannot bypass the check by approving as "alice smith".
   if (actor === (item.initiatedBy ?? "").toLowerCase().trim()) {
     return NextResponse.json(
       {
         ok: false,
         error: "self_approval_not_permitted",
-        hint: "UAE FDL 10/2025 Art.16 requires two distinct actors",
+        hint: "UAE Federal Decree-Law No. 10 of 2025 Art.16 requires two distinct actors",
       },
       { status: 409 },
     );

@@ -155,7 +155,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     status: "draft",
     createdAt: new Date().toISOString(),
     tenant,
-    regulatoryReference: "MoE Circular 08/AML/2021 §4 — DPMS threshold transaction reporting. UAE FDL No.10/2025 Art.15.",
+    regulatoryReference: "MoE Circular 08/AML/2021 §4 — DPMS threshold transaction reporting. Federal Decree-Law No. 10 of 2025 Art.15.",
   };
 
   try {

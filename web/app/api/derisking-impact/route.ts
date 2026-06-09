@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in de-risking impact assessment under FATF guidance (2021) and UAE FDL 10/2025. Assess de-risking decisions and return a JSON object with exactly these fields: { "justificationStrength": "strong"|"moderate"|"weak", "fatfConformant": boolean, "affectedCustomerCount": number, "reputationalRisk": "high"|"medium"|"low", "alternativesMitigants": string[], "exitProcessRequirements": string[], "documentationRequired": string[], "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in de-risking impact assessment under FATF guidance (2021) and UAE Federal Decree-Law No. 10 of 2025. Assess de-risking decisions and return a JSON object with exactly these fields: { "justificationStrength": "strong"|"moderate"|"weak", "fatfConformant": boolean, "affectedCustomerCount": number, "reputationalRisk": "high"|"medium"|"low", "alternativesMitigants": string[], "exitProcessRequirements": string[], "documentationRequired": string[], "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

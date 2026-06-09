@@ -417,7 +417,7 @@ export default function AuditTrailPage() {
 
         {entries.length > 0 && (
           <p className="text-10.5 text-ink-3 mt-3 leading-relaxed">
-            {entries.length} entries · retention target 10 years (FDL 10/2025 Art.24) ·
+            {entries.length} entries · retention target 10 years (Federal Decree-Law No. 10 of 2025 Art.24) ·
             chain integrity: {chainStatus?.ok ? "verified" : `BROKEN at entry ${chainStatus?.brokenAt}`}
           </p>
         )}

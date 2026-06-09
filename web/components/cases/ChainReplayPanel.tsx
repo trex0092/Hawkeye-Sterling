@@ -5,7 +5,7 @@
 // Paste-a-runId reasoning-chain replay UI. Loads the persisted verdict
 // + chain via /api/cases/<id> (existing endpoint), renders every
 // ReasoningChainNode in order so an MLRO or auditor can see EXACTLY
-// what the brain did at disposition day. FDL 10/2025 Art.24 + Art.20
+// what the brain did at disposition day. Federal Decree-Law No. 10 of 2025 Art.24 + Art.20
 // (tamper-evident retention) + Charter P9 (explicit calibration trail).
 
 import { useState, useRef, useEffect } from "react";

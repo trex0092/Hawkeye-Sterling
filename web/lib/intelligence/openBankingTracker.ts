@@ -68,7 +68,7 @@ export interface OpenBankingRiskSignals {
   publiclyListed: boolean;
 }
 
-// FATF + UAE FDL 10/2025 high-risk jurisdictions (subset for sovereign-risk uplift).
+// FATF + UAE Federal Decree-Law No. 10 of 2025 high-risk jurisdictions (subset for sovereign-risk uplift).
 const CAHRA_ISO2: ReadonlySet<string> = new Set([
   "IR", "RU", "KP", "SY", "SD", "AF", "BY", "CU", "MM", "VE", "YE", "LB", "IQ", "LY", "SS",
 ]);

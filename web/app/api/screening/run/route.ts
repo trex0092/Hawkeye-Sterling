@@ -18,7 +18,7 @@
 //      - match rationale on every hit
 //      - negative evidence (what was checked and found clear)
 //      - confidence calibration note
-//      - screeningTrace (tier-by-tier audit trail for FDL 10/2025 Art.18)
+//      - screeningTrace (tier-by-tier audit trail for Federal Decree-Law No. 10 of 2025 Art.18)
 //      - generation timestamp + schema version
 //      - auditable request-id header
 //
@@ -319,7 +319,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const ts       = new Date().toISOString();
   const resultId = buildResultId(subject, ts, callerRequestId);
 
-  // Tier trace — captures each pipeline stage for FDL 10/2025 Art.18
+  // Tier trace — captures each pipeline stage for Federal Decree-Law No. 10 of 2025 Art.18
   // explainability. Written to the audit chain with the screening result.
   const screeningTrace: Record<string, unknown> = {
     staleHoursThreshold: thresholds.staleListHours,
@@ -498,7 +498,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       provisionalScreening: uaeStale,
       ...(requiresReverification ? {
         requiresReverification: true,
-        reverificationReason: "Screened while one or more mandatory lists were stale (>36h). Result must be re-verified after the next successful sanctions list refresh. UAE FDL No.10/2025 Art.15.",
+        reverificationReason: "Screened while one or more mandatory lists were stale (>36h). Result must be re-verified after the next successful sanctions list refresh. Federal Decree-Law No. 10 of 2025 Art.15.",
       } : {}),
 
       adversarialRisk: adversarialCheck.risk !== "none" ? adversarialCheck.risk : undefined,

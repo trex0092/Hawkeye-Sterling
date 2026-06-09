@@ -374,7 +374,7 @@ export default function AIGovernancePage() {
         <>
           <Section title="AI Governance Gap Analysis">
             <p style={{ fontSize: 13, color: "var(--color-ink-2)", marginBottom: 12 }}>
-              AI-assisted gap analysis against UAE FDL 10/2025, CBUAE AML Standards, LBMA RGG, and FATF Recommendations.
+              AI-assisted gap analysis against UAE Federal Decree-Law No. 10 of 2025, CBUAE AML Standards, LBMA RGG, and FATF Recommendations.
             </p>
             <button type="button" onClick={() => { void runGap(); }} disabled={ldGap}
               style={{ background: "rgba(59,130,246,.12)", border: "1px solid rgba(59,130,246,.35)", color: "#3b82f6", borderRadius: 5, padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: ldGap ? "not-allowed" : "pointer" }}>

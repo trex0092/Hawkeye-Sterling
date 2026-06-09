@@ -126,7 +126,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         "Beneficial ownership register extract",
       ],
     },
-    regulatoryBasis: "FDL 10/2025 Art.14 (record keeping) · CBUAE AML Standards §8 · FATF R.10",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.14 (record keeping) · CBUAE AML Standards §8 · FATF R.10",
     retentionPeriod: "10 years from case closure",
   };
 

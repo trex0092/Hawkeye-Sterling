@@ -118,17 +118,17 @@ export async function POST(req: Request) {
   else if (structuringRisk === "low") recommendedAction = "monitor";
 
   const patternDescription = structuringDetected
-    ? `${nearThreshold.length} of ${amounts.length} transactions fall in the AED ${Math.round(CTR_THRESHOLD * 0.8).toLocaleString()}–${(CTR_THRESHOLD - 1).toLocaleString()} sub-threshold zone (${Math.round((nearThreshold.length / amounts.length) * 100)}% of volume), consistent with deliberate avoidance of the AED 55,000 CTR obligation under UAE FDL 10/2025 Art.17.`
+    ? `${nearThreshold.length} of ${amounts.length} transactions fall in the AED ${Math.round(CTR_THRESHOLD * 0.8).toLocaleString()}–${(CTR_THRESHOLD - 1).toLocaleString()} sub-threshold zone (${Math.round((nearThreshold.length / amounts.length) * 100)}% of volume), consistent with deliberate avoidance of the AED 55,000 CTR obligation under UAE Federal Decree-Law No. 10 of 2025 Art.17.`
     : ctrRequired
     ? `${ctrCount} transaction(s) meet or exceed the AED 55,000 CTR threshold requiring mandatory reporting.`
     : `No structuring pattern detected. Transactions spread across normal distribution bands.`;
 
   const actionRationale = recommendedAction === "file_ctr_and_str"
-    ? `CTR filing required for ${ctrCount} transaction(s) at/above AED 55,000 (FDL 10/2025 Art.17). Separately, structuring pattern constitutes reasonable grounds for STR suspicion under FDL 10/2025 Art.26 — structuring is a predicate ML offence under Federal Law 4/2002.`
+    ? `CTR filing required for ${ctrCount} transaction(s) at/above AED 55,000 (Federal Decree-Law No. 10 of 2025 Art.17). Separately, structuring pattern constitutes reasonable grounds for STR suspicion under Federal Decree-Law No. 10 of 2025 Art.26 — structuring is a predicate ML offence under Federal Law 4/2002.`
     : recommendedAction === "file_str"
-    ? `Structuring pattern meets the suspicion threshold for STR filing under FDL 10/2025 Art.26. No threshold applies. Structuring (smurfing) is a predicate ML offence (Federal Law 4/2002 Art.2). File STR within 2 business days of MLRO determination.`
+    ? `Structuring pattern meets the suspicion threshold for STR filing under Federal Decree-Law No. 10 of 2025 Art.26. No threshold applies. Structuring (smurfing) is a predicate ML offence (Federal Law 4/2002 Art.2). File STR within 2 business days of MLRO determination.`
     : recommendedAction === "file_ctr"
-    ? `${ctrCount} transaction(s) at/above AED 55,000 require mandatory CTR filing under FDL 10/2025 Art.17. No structuring pattern detected.`
+    ? `${ctrCount} transaction(s) at/above AED 55,000 require mandatory CTR filing under Federal Decree-Law No. 10 of 2025 Art.17. No structuring pattern detected.`
     : recommendedAction === "escalate_mlro"
     ? `Borderline proximity to threshold warrants MLRO review to determine whether a suspicious pattern can be established. Monitor for further sub-threshold deposits.`
     : "Transaction pattern does not meet STR or CTR filing thresholds at this stage.";
@@ -149,9 +149,9 @@ export async function POST(req: Request) {
     structuringBands,
     recommendedAction,
     actionRationale,
-    ...(ctrRequired && { ctrDeadline: "Same business day or next business day (FDL 10/2025 Art.17)" }),
-    ...(structuringDetected && { strBasis: "UAE FDL 10/2025 Art.26; Federal Law 4/2002 Art.2 (structuring as ML predicate); FATF R.20" }),
-    regulatoryBasis: "UAE FDL 10/2025 Art.17 (CTR ≥ AED 55,000); Art.26 (STR — no threshold); Federal Law 4/2002 Art.2 (ML predicates including structuring); FATF R.20; CBUAE Anti-Money Laundering Guidelines 2021",
+    ...(ctrRequired && { ctrDeadline: "Same business day or next business day (Federal Decree-Law No. 10 of 2025 Art.17)" }),
+    ...(structuringDetected && { strBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.26; Federal Law 4/2002 Art.2 (structuring as ML predicate); FATF R.20" }),
+    regulatoryBasis: "UAE Federal Decree-Law No. 10 of 2025 Art.17 (CTR ≥ AED 55,000); Art.26 (STR — no threshold); Federal Law 4/2002 Art.2 (ML predicates including structuring); FATF R.20; CBUAE Anti-Money Laundering Guidelines 2021",
   };
 
   return NextResponse.json({ ok: true, ...result }, { headers: gate.headers });

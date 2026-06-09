@@ -1,7 +1,7 @@
 // POST /api/hs-cases/:caseId/close
 // Requires dispositionVerdict + dispositionRationale.
 // Governance: all AI-generated outputs require MLRO human review before
-// closure (FDL No.10/2025 Art.18).
+// closure (Federal Decree-Law No. 10 of 2025 Art.18).
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -51,7 +51,7 @@ export async function POST(
   }
   if (existing.fourEyesRequired && existing.fourEyesStatus !== "approved") {
     return NextResponse.json(
-      { ok: false, error: "four-eyes approval required before closing this case (FDL No.10/2025 Art.16)" },
+      { ok: false, error: "four-eyes approval required before closing this case (Federal Decree-Law No. 10 of 2025 Art.16)" },
       { status: 403, headers: gate.headers },
     );
   }

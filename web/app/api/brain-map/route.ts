@@ -41,7 +41,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "screening",
     fileCount: 18,
     keyComponents: ["SanctionsOrchestrator", "SanctionsDeltaEngine", "SanctionsEntity"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18", "FATF R.6", "Cabinet Decision 74/2020"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18", "FATF R.6", "Cabinet Decision 74/2020"],
     color: "#D20055",
   },
   {
@@ -51,7 +51,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "screening",
     fileCount: 14,
     keyComponents: ["EntityResolutionPipeline", "SearchReasoning", "PhoneticMatcher", "ArabicNormalizer"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18", "FATF R.10"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18", "FATF R.10"],
     color: "#9333ea",
   },
   {
@@ -61,7 +61,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "media",
     fileCount: 22,
     keyComponents: ["AdverseMediaNLP", "ArticleGroupingEngine", "MediaIngestionService", "SourceReliabilityEngine"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18", "FATF R.12"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18", "FATF R.12"],
     color: "#0ea5e9",
   },
   {
@@ -71,7 +71,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "intelligence",
     fileCount: 16,
     keyComponents: ["RelationshipIntelligence", "NetworkGraphBuilder", "UboChainAnalyzer"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18", "FATF R.10 UBO"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18", "FATF R.10 UBO"],
     color: "#f59e0b",
   },
   {
@@ -81,7 +81,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "analysis",
     fileCount: 20,
     keyComponents: ["ContextualScoringEngine", "RiskPolicyEngine", "ContradictionAnalyzer", "EvidenceValidator"],
-    regulatoryAnchors: ["FDL 10/2025", "FATF R.1 Risk-Based Approach"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025", "FATF R.1 Risk-Based Approach"],
     color: "#10b981",
   },
   {
@@ -91,7 +91,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "governance",
     fileCount: 12,
     keyComponents: ["DecisionGovernance", "EscalationEngine", "PolicyGuardrails"],
-    regulatoryAnchors: ["FDL 10/2025 Art.16", "FATF R.20 STR"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.16", "FATF R.20 STR"],
     color: "#ef4444",
   },
   {
@@ -101,7 +101,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "audit",
     fileCount: 10,
     keyComponents: ["AuditLedger", "EvidenceSigner", "ReplayEngine"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18 AI audit trail", "SOC2 CC7.4"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18 AI audit trail", "SOC2 CC7.4"],
     color: "#6366f1",
   },
   {
@@ -111,7 +111,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "crypto",
     fileCount: 8,
     keyComponents: ["CybercrimeClassifier", "CryptoRiskScorer", "MixerDetector"],
-    regulatoryAnchors: ["FDL 10/2025", "FATF R.15 Virtual Assets"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025", "FATF R.15 Virtual Assets"],
     color: "#f97316",
   },
   {
@@ -121,7 +121,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "modes",
     fileCount: 158,
     keyComponents: ["TypologyMatchEngine", "WaveTypologyBatch", "DpmsTypologies"],
-    regulatoryAnchors: ["FATF Typologies Report", "FDL 10/2025"],
+    regulatoryAnchors: ["FATF Typologies Report", "Federal Decree-Law No. 10 of 2025"],
     color: "#14b8a6",
   },
   {
@@ -131,7 +131,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "governance",
     fileCount: 6,
     keyComponents: ["AdversarialProbes", "EvalHarness", "RefusalRouter"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18", "NIST AI RMF MEASURE-2.7"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18", "NIST AI RMF MEASURE-2.7"],
     color: "#dc2626",
   },
   {
@@ -151,7 +151,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "governance",
     fileCount: 3,
     keyComponents: ["DriftMonitor", "DriftThresholdGate"],
-    regulatoryAnchors: ["NIST AI RMF MANAGE-2.4", "FDL 10/2025 Art.18"],
+    regulatoryAnchors: ["NIST AI RMF MANAGE-2.4", "Federal Decree-Law No. 10 of 2025 Art.18"],
     color: "#ec4899",
   },
   {
@@ -171,7 +171,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "audit",
     fileCount: 3,
     keyComponents: ["CitationValidator", "TaxonomicGuard"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18 — no hallucinated citations"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18 — no hallucinated citations"],
     color: "#78716c",
   },
   {
@@ -181,7 +181,7 @@ const FACULTIES: BrainFaculty[] = [
     category: "intelligence",
     fileCount: 5,
     keyComponents: ["ModelRouter", "LlmFallback", "CircuitBreaker"],
-    regulatoryAnchors: ["FDL 10/2025 Art.18 resilience", "SOC2 CC6.1"],
+    regulatoryAnchors: ["Federal Decree-Law No. 10 of 2025 Art.18 resilience", "SOC2 CC6.1"],
     color: "#0284c7",
   },
 ];

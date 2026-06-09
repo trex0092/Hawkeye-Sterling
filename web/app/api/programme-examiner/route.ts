@@ -74,7 +74,7 @@ const IO_DESCRIPTIONS: Record<string, string> = {
 // so IO.3 and IO.4 carry a structural penalty unless specific evidence is provided.
 // Using a deterministic offset instead of Math.random() ensures the heuristic
 // path is reproducible — a regulator can re-run the same facts and get the same
-// score, satisfying the audit-defensibility requirement (FDL 10/2025 Art.24).
+// score, satisfying the audit-defensibility requirement (Federal Decree-Law No. 10 of 2025 Art.24).
 const IO_DETERMINISTIC_OFFSETS: Record<string, number> = {
   "IO.1":  0,   // risk understanding — directly mapped from facts
   "IO.2":  0,   // international cooperation — no facts collected; neutral
@@ -164,7 +164,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const response = await client.messages.create({
     model: "claude-opus-4-7",
     max_tokens: 2000,
-    system: `You are a FATF Mutual Evaluation Team Leader with 20 years of experience conducting mutual evaluations under the 2013 FATF Methodology. You are conducting a virtual assessment of a UAE DPMS (gold and precious metals dealer) AML/CFT programme under FDL 10/2025 and CBUAE AML Standards.
+    system: `You are a FATF Mutual Evaluation Team Leader with 20 years of experience conducting mutual evaluations under the 2013 FATF Methodology. You are conducting a virtual assessment of a UAE DPMS (gold and precious metals dealer) AML/CFT programme under Federal Decree-Law No. 10 of 2025 and CBUAE AML Standards.
 
 Score each of FATF's 11 Immediate Outcomes (IO.1–IO.11) from 0–100 based on the programme facts provided. For DPMS-specific obligations, focus on: IO.1 (risk understanding), IO.3 (supervision), IO.4 (STR quality), IO.11 (beneficial ownership).
 

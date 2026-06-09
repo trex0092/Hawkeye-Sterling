@@ -128,11 +128,11 @@ interface Body {
 const SYSTEM_PROMPT_BASE =
   "You are the MLRO Advisor — a regulator-grade compliance assistant for AML/CFT/sanctions/PEP/adverse-media questions. " +
   "You answer in 4-10 short paragraphs (or a tight bullet list when the question asks for steps/thresholds). " +
-  "Cite the regulatory anchor inline (e.g. 'FATF R.10', 'UAE FDL 10/2025 Art.16', 'Cabinet Resolution 134/2025', 'Wolfsberg FAQ', '5AMLD Art.18a'). " +
+  "Cite the regulatory anchor inline (e.g. 'FATF R.10', 'UAE Federal Decree-Law No. 10 of 2025 Art.16', 'Cabinet Resolution 134/2025', 'Wolfsberg FAQ', '5AMLD Art.18a'). " +
   "Never invent regulations or section numbers. If the brain context below already cites the exact anchor, REUSE it verbatim. " +
   "IMPORTANT — UAE law update: Federal Decree-Law (20) of 2018 has been REPEALED and replaced by Federal Decree-Law (10) of 2025. " +
-  "Cite FDL 10/2025 for all current obligations (CDD, STR, retention, tipping-off, MLRO appointment). " +
-  "Never cite FDL 20/2018 except when explicitly answering a historical / pre-2025 question. " +
+  "Cite Federal Decree-Law No. 10 of 2025 for all current obligations (CDD, STR, retention, tipping-off, MLRO appointment). " +
+  "Never cite Federal Decree-Law No. 20 of 2018 except when explicitly answering a historical / pre-2025 question. " +
   "Implementing regulation is Cabinet Resolution 134/2025 (which supersedes Cabinet Resolution 10/2019). " +
   "Do not include extended thinking or chain-of-thought; deliver the answer directly. " +
   "Never tip off subjects, never disclose internal SAR/STR filings to customers, never give legal advice — only compliance guidance.";
@@ -199,7 +199,7 @@ function verifyAnswer(
       axis: "citation_missing",
       detail:
         "Answer cites no recognised regulatory anchor. Cite at least one " +
-        "primary source (FATF Rec, FDL 10/2025 article, Cabinet Resolution, " +
+        "primary source (FATF Rec, Federal Decree-Law No. 10 of 2025 article, Cabinet Resolution, " +
         "5/6AMLD, MLR 2017, BSA, etc.).",
     });
   }
@@ -390,7 +390,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!apiKey) {
     return NextResponse.json({
       ok: true,
-      answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Based on the UAE AML/CFT framework and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance on this matter. All compliance decisions must be documented and filed in accordance with FDL No.10/2025 and CR No.134/2025.`,
+      answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is currently unavailable (ANTHROPIC_API_KEY not configured). Based on the UAE AML/CFT framework and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance on this matter. All compliance decisions must be documented and filed in accordance with Federal Decree-Law No. 10 of 2025 and CR No.134/2025.`,
       elapsedMs: Date.now() - startedAt,
       advisorScore: null,
       citationReport: null,
@@ -458,7 +458,7 @@ export async function POST(req: Request): Promise<Response> {
       // API error — return offline response instead of 502
       return NextResponse.json({
         ok: true,
-        answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is temporarily unavailable. Based on established UAE AML/CFT principles under FDL No.10/2025 and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance. All compliance decisions must be documented in accordance with FDL No.10/2025 Art.26-27.`,
+        answer: `**MLRO Advisory — Offline Mode**\n\nYour question: *${question}*\n\nThe AI advisor is temporarily unavailable. Based on established UAE AML/CFT principles under Federal Decree-Law No. 10 of 2025 and FATF Recommendations, please consult your compliance officer or MLRO directly for guidance. All compliance decisions must be documented in accordance with Federal Decree-Law No. 10 of 2025 Art.26-27.`,
         elapsedMs: Date.now() - startedAt,
         advisorScore: null,
         citationReport: null,
@@ -508,7 +508,7 @@ export async function POST(req: Request): Promise<Response> {
     const probeWrap = extractAndStripProbe(answer, "escalate");
     answer = probeWrap.cleanAnswer;
 
-    // Hard-block check: FDL 20/2018 was repealed by FDL 10/2025. If it still
+    // Hard-block check: Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025. If it still
     // appears in the answer after the retry cycle, escalate the warning and
     // force the operator to treat this as a manual-review-required output.
     const hasFdl20_2018 = /\bFDL\s*(No\.?\s*)?20[/\-]?2018\b/i.test(answer) ||
@@ -519,7 +519,7 @@ export async function POST(req: Request): Promise<Response> {
         ...verification.defects.filter((d) => d.axis !== "citation_broken"),
         {
           axis: "citation_broken",
-          detail: "HARD BLOCK: Answer cites repealed FDL 20/2018. This law was superseded by FDL 10/2025 (in force 14 Oct 2025). Replace every 'FDL 20/2018' reference with the correct FDL 10/2025 article. Do not use this output for any compliance decision.",
+          detail: "HARD BLOCK: Answer cites repealed Federal Decree-Law No. 20 of 2018. This law was superseded by Federal Decree-Law No. 10 of 2025 (in force 14 Oct 2025). Replace every 'Federal Decree-Law No. 20 of 2018' reference with the correct Federal Decree-Law No. 10 of 2025 article. Do not use this output for any compliance decision.",
         },
       ];
     }
@@ -535,7 +535,7 @@ export async function POST(req: Request): Promise<Response> {
     // Append mandatory audit line before scoring so the quality gate's
     // missing_audit_line check does not penalise every response.
     // Pattern matched by AUDIT_LINE_PATTERN = /AUDIT[_ ]?LINE/i in qualityGates.ts.
-    const auditLine = `\n\n---\nAUDIT LINE | Tool: mlro_advisor_quick | ${new Date().toISOString()} | Question: ${String(question ?? "").slice(0, 80)} | Disposition: pending MLRO review | Human sign-off required before any compliance action (FDL 10/2025 Art.24)`;
+    const auditLine = `\n\n---\nAUDIT LINE | Tool: mlro_advisor_quick | ${new Date().toISOString()} | Question: ${String(question ?? "").slice(0, 80)} | Disposition: pending MLRO review | Human sign-off required before any compliance action (Federal Decree-Law No. 10 of 2025 Art.24)`;
     answer = answer + auditLine;
 
     // Confidence + citations + follow-ups — same intelligence pack the

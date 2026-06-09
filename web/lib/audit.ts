@@ -5,7 +5,7 @@
 // Storage strategy (two-tier for compliance):
 //   1. localStorage — fast, synchronous, available offline. Primary for UI.
 //   2. Server-side HMAC chain (via POST /api/audit/client-event) — durable,
-//      tamper-evident, regulator-accessible. Required by FDL 10/2025 Art.24.
+//      tamper-evident, regulator-accessible. Required by Federal Decree-Law No. 10 of 2025 Art.24.
 //
 // writeAuditEvent() writes to localStorage immediately (synchronous) and
 // then fires a fire-and-forget POST to persist server-side. The server write
@@ -102,7 +102,7 @@ export function writeAuditEvent(
     );
   }
   // Persist to server-side HMAC chain (fire-and-forget) so the event survives
-  // browser cache clears and is accessible to regulators per FDL 10/2025 Art.24.
+  // browser cache clears and is accessible to regulators per Federal Decree-Law No. 10 of 2025 Art.24.
   persistToServer(actor, action, target);
   return entry;
 }

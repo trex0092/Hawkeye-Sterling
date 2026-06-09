@@ -42,7 +42,7 @@ const TOPIC_RULES: ReadonlyArray<{
     "Cabinet Res 74/2020 Art.4-7",
   ]},
   // PEP
-  { match: /\bPEP\b|politically exposed/i, citations: ["FATF R.12", "FDL 10/2025 Art.13"] },
+  { match: /\bPEP\b|politically exposed/i, citations: ["FATF R.12", "Federal Decree-Law No. 10 of 2025 Art.13"] },
   // Correspondent banking
   { match: /correspondent|nested/i, citations: ["FATF R.13"] },
   // Wire / travel rule
@@ -50,9 +50,9 @@ const TOPIC_RULES: ReadonlyArray<{
   // VASP / virtual / crypto / digital assets / NFT
   { match: /VASP|virtual asset|\bcrypto\b|NFT|digital asset/i, citations: ["FATF R.15", "VARA VASP Rulebook 2024"] },
   // STR / SAR / suspicion
-  { match: /\bSTR\b|\bSAR\b|suspicio|tipping/i, citations: ["FATF R.20", "FATF R.21", "FDL 10/2025 Art.15", "FDL 10/2025 Art.16", "goAML XML Schema v4.0"] },
+  { match: /\bSTR\b|\bSAR\b|suspicio|tipping/i, citations: ["FATF R.20", "FATF R.21", "Federal Decree-Law No. 10 of 2025 Art.15", "Federal Decree-Law No. 10 of 2025 Art.16", "goAML XML Schema v4.0"] },
   // CDD / KYC / onboarding
-  { match: /\bCDD\b|\bKYC\b|onboard|periodic review/i, citations: ["FATF R.10", "FDL 10/2025 Art.13"] },
+  { match: /\bCDD\b|\bKYC\b|onboard|periodic review/i, citations: ["FATF R.10", "Federal Decree-Law No. 10 of 2025 Art.13"] },
   // UBO / beneficial owner / shell / complex structure
   { match: /UBO|beneficial owner|shell company|complex structure|legal arrangement|trust/i, citations: ["FATF R.24", "FATF R.25", "Cabinet Res 16/2021"] },
   // DPMS / precious metals / gold / refinery
@@ -71,21 +71,21 @@ const TOPIC_RULES: ReadonlyArray<{
   // Proliferation
   { match: /proliferation|dual-?use|WMD|chemical|nuclear/i, citations: ["FATF R.7", "Cabinet Res 74/2020 Art.4-7"] },
   // Transaction monitoring / structuring / cash threshold
-  { match: /structuring|smurfing|cash threshold|transaction monit/i, citations: ["FATF R.10", "FDL 10/2025 Art.20"] },
+  { match: /structuring|smurfing|cash threshold|transaction monit/i, citations: ["FATF R.10", "Federal Decree-Law No. 10 of 2025 Art.20"] },
   // Adverse media / lookback
-  { match: /adverse media|lookback/i, citations: ["FDL 10/2025 Art.20", "FDL 10/2025 Art.24"] },
+  { match: /adverse media|lookback/i, citations: ["Federal Decree-Law No. 10 of 2025 Art.20", "Federal Decree-Law No. 10 of 2025 Art.24"] },
   // Record-keeping / audit
-  { match: /record[- ]?keeping|retention|audit chain|tamper|evidence pack/i, citations: ["FDL 10/2025 Art.20", "FDL 10/2025 Art.24", "FATF R.11"] },
+  { match: /record[- ]?keeping|retention|audit chain|tamper|evidence pack/i, citations: ["Federal Decree-Law No. 10 of 2025 Art.20", "Federal Decree-Law No. 10 of 2025 Art.24", "FATF R.11"] },
   // Four-eyes / dual approval / MLRO sign-off
-  { match: /four-?eyes|dual approval|MLRO sign-?off|deputy MLRO/i, citations: ["FDL 10/2025 Art.46"] },
+  { match: /four-?eyes|dual approval|MLRO sign-?off|deputy MLRO/i, citations: ["Federal Decree-Law No. 10 of 2025 Art.46"] },
   // Data privacy / PDPL / breach
-  { match: /PDPL|data protection|privacy|data breach/i, citations: ["FDL 45/2021 Art.6", "FDL 45/2021 Art.13"] },
+  { match: /PDPL|data protection|privacy|data breach/i, citations: ["Federal Decree-Law No. 45 of 2021 Art.6", "Federal Decree-Law No. 45 of 2021 Art.13"] },
   // Hawala / MSB
   { match: /hawala|MSB|money service|remittance|money transfer/i, citations: ["FATF R.16", "FATF R.10"] },
   // Tax / FCPA / bribery
   { match: /tax evasion|FCPA|bribery|corruption/i, citations: ["FATF R.10", "FATF R.20"] },
   // Insider / fraud / account takeover
-  { match: /insider threat|internal fraud|account takeover|social engineering/i, citations: ["FATF R.20", "FDL 10/2025 Art.15"] },
+  { match: /insider threat|internal fraud|account takeover|social engineering/i, citations: ["FATF R.20", "Federal Decree-Law No. 10 of 2025 Art.15"] },
   // Environmental crime
   { match: /environmental|illegal extraction|wildlife|illegal logging/i, citations: ["FATF R.20"] },
   // Insurance / private banking
@@ -98,7 +98,7 @@ const TOPIC_RULES: ReadonlyArray<{
 const BASELINE_CITATIONS: ReadonlyArray<string> = [
   "FATF R.1",          // RBA — universal
   "FATF R.10",         // CDD — universal
-  "FDL 10/2025 Art.13", // UAE CDD — UAE primary law
+  "Federal Decree-Law No. 10 of 2025 Art.13", // UAE CDD — UAE primary law
 ];
 
 export function inferAnchorIds(p: Pick<Playbook, "name" | "summary" | "triggers">): string[] {
@@ -147,9 +147,9 @@ function normaliseCitation(raw: string): string | undefined {
   const fatf = /^FATF\s*R\.?\s*(\d+)$/i.exec(r);
   if (fatf) return `FATF R.${fatf[1]}`;
   const fdl1 = /^FDL\s*10\/2025\s*Art\.?\s*(\d+)$/i.exec(r);
-  if (fdl1) return `FDL 10/2025 Art.${fdl1[1]}`;
+  if (fdl1) return `Federal Decree-Law No. 10 of 2025 Art.${fdl1[1]}`;
   const fdl2 = /^FDL\s*45\/2021\s*Art\.?\s*(\d+)$/i.exec(r);
-  if (fdl2) return `FDL 45/2021 Art.${fdl2[1]}`;
+  if (fdl2) return `Federal Decree-Law No. 45 of 2021 Art.${fdl2[1]}`;
   const cab = /^Cabinet\s*Res\s*(\d+)\/(\d+)$/i.exec(r);
   if (cab) {
     // Try the most specific known forms first.

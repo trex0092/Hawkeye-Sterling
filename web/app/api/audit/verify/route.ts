@@ -69,7 +69,7 @@ function entryInWindow(
 async function handleGet(req: Request): Promise<Response> {
   // requireAuth: true — audit verification is a sensitive MLRO operation.
   // Without authentication, any caller could enumerate the audit chain.
-  // FDL 10/2025 Art.24: audit records must only be accessible to authorised persons.
+  // Federal Decree-Law No. 10 of 2025 Art.24: audit records must only be accessible to authorised persons.
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 

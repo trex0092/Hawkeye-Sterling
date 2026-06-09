@@ -1,7 +1,7 @@
 // POST /api/insurance-risk
 // Insurance sector AML risk assessment.
 // Implements FATF Report on Money Laundering Through the Insurance Sector,
-// UAE FDL 10/2025 Art.14, and IAIS AML/CFT Guidance scoring logic covering
+// UAE Federal Decree-Law No. 10 of 2025 Art.14, and IAIS AML/CFT Guidance scoring logic covering
 // cash premium payments, single-premium life policies, early redemption cycles,
 // third-party premium payers, unrelated beneficiaries, high-risk nationalities,
 // investment-linked high-premium policies, marine cargo TBML, and crypto premiums.
@@ -404,7 +404,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const regulatoryBasis: string[] = [
     "FATF Report on Money Laundering Through the Insurance Sector",
-    "UAE FDL 10/2025 Art.14",
+    "UAE Federal Decree-Law No. 10 of 2025 Art.14",
     "IAIS AML/CFT Guidance",
   ];
 

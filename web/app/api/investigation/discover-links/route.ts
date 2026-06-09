@@ -153,7 +153,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are an AML/CFT link-analysis intelligence engine trained in FATF typologies, UAE AML Standards (FDL 10/2025, CBUAE), OFAC/UN sanctions networks, and financial crime network analysis. Your role is to identify hidden connections between entities that investigators may have missed.
+          text: `You are an AML/CFT link-analysis intelligence engine trained in FATF typologies, UAE AML Standards (Federal Decree-Law No. 10 of 2025, CBUAE), OFAC/UN sanctions networks, and financial crime network analysis. Your role is to identify hidden connections between entities that investigators may have missed.
 
 You analyse:
 - Shared jurisdictions suggesting layering or placement structures

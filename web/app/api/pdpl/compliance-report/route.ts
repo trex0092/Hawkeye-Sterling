@@ -52,7 +52,7 @@ export async function GET(_req: NextRequest) {
       article: 'Art.17',
       title: 'Right to Erasure',
       status: 'partial',
-      notes: 'AML records exempt from erasure (FDL 10/2025 Art.20). Erasure request intake available at /api/pdpl/erasure. Non-AML discretionary data review process pending.',
+      notes: 'AML records exempt from erasure (Federal Decree-Law No. 10 of 2025 Art.20). Erasure request intake available at /api/pdpl/erasure. Non-AML discretionary data review process pending.',
       controls: [
         'Erasure request endpoint at /api/pdpl/erasure',
         'AML exemption documented and communicated to requestors',
@@ -92,13 +92,13 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json({
     ok: true,
     generatedAt: new Date().toISOString(),
-    framework: 'UAE Personal Data Protection Law (FDL 45/2021)',
+    framework: 'UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)',
     overallStatus: nonCompliant > 0 ? 'non-compliant' : partial > 0 ? 'partial' : 'compliant',
     summary: { compliant, partial, nonCompliant, exempt: articles.filter(a => a.status === 'exempt').length },
     articles,
     legalReferences: [
       'UAE Federal Decree-Law No. 45 of 2021 on Personal Data Protection',
-      'UAE FDL 10/2025 Art.20 (AML record retention)',
+      'UAE Federal Decree-Law No. 10 of 2025 Art.20 (AML record retention)',
       'CBUAE AML/CFT Standards (2023)',
     ],
   });

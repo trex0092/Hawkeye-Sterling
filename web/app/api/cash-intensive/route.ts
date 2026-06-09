@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       system: [
         {
           type: "text",
-          text: `You are a UAE AML/CFT compliance expert specialising in cash-intensive business risk assessment under MoE Circular 2/2024 and UAE FDL 10/2025. Assess cash-intensive business scenarios and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "cashRiskScore": number (0-100), "redFlags": string[], "typologiesMatched": string[], "controlGaps": string[], "enhancedMeasures": string[], "reportingObligations": string[], "regulatoryBasis": string }`,
+          text: `You are a UAE AML/CFT compliance expert specialising in cash-intensive business risk assessment under MoE Circular 2/2024 and UAE Federal Decree-Law No. 10 of 2025. Assess cash-intensive business scenarios and return a JSON object with exactly these fields: { "riskRating": "critical"|"high"|"medium"|"low", "cashRiskScore": number (0-100), "redFlags": string[], "typologiesMatched": string[], "controlGaps": string[], "enhancedMeasures": string[], "reportingObligations": string[], "regulatoryBasis": string }`,
           cache_control: { type: "ephemeral" },
         },
       ],

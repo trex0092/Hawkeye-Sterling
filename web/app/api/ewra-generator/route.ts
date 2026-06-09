@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF/CPF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements.\n\nIMPORTANT — CPF (Counter-Proliferation Financing) is a STANDALONE risk domain alongside AML and TF, mandated by UAE FDL 10/2025 Art.1 and FATF R.7. Assess CPF risk separately: dual-use goods exposure, sanctions evasion for WMD programs, front company indicators, and proliferation network red flags. Include CPF-specific mitigations such as UNSC Resolution 1540 compliance checks and dual-use goods controls. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
+        system: `You are a UAE Enterprise-Wide Risk Assessment (EWRA) specialist with expertise in CBUAE guidelines, FATF Recommendation 1 risk-based approach, and sector-specific ML/TF/CPF risk profiling. Generate comprehensive EWRAs assessing four risk dimensions: customer, product/service, geographic, and channel risks. Apply UAE national risk assessment findings, FATF grey-list/blacklist status, sector typologies, and CBUAE-specific requirements. Determine inherent risk, control effectiveness, and residual risk. Include realistic mitigation measures and Board approval requirements.\n\nIMPORTANT — CPF (Counter-Proliferation Financing) is a STANDALONE risk domain alongside AML and TF, mandated by UAE Federal Decree-Law No. 10 of 2025 Art.1 and FATF R.7. Assess CPF risk separately: dual-use goods exposure, sanctions evasion for WMD programs, front company indicators, and proliferation network red flags. Include CPF-specific mitigations such as UNSC Resolution 1540 compliance checks and dual-use goods controls. Respond ONLY with valid JSON matching the EwraResult interface — no markdown fences.`,
         messages: [{
           role: "user",
           content: `Institution Type: ${sanitizeField(body.institutionType, 500)}
@@ -89,7 +89,7 @@ Generate a comprehensive EWRA for this institution. Return complete EwraResult J
     if (result.productRisk && !Array.isArray(result.productRisk.keyFactors)) result.productRisk.keyFactors = [];
     if (result.geographicRisk && !Array.isArray(result.geographicRisk.keyFactors)) result.geographicRisk.keyFactors = [];
     if (result.channelRisk && !Array.isArray(result.channelRisk.keyFactors)) result.channelRisk.keyFactors = [];
-    // FATF R.1 / FDL 10/2025 Art.4 — EWRA generation is a compliance-critical
+    // FATF R.1 / Federal Decree-Law No. 10 of 2025 Art.4 — EWRA generation is a compliance-critical
     // event that must appear on the tamper-evident audit chain.
     void writeAuditChainEntry(
       {

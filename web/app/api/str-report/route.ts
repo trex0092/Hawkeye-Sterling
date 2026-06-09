@@ -47,14 +47,14 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `STR-DRAFT-${dd}-${mm}-${yyyy}`;
-  const regs = "FDL 10/2025 ART.14 · CBUAE AML STANDARDS §8 · FATF R.20";
+  const regs = "Federal Decree-Law No. 10 of 2025 ART.14 · CBUAE AML STANDARDS §8 · FATF R.20";
   const tone = body.composite >= 70 ? "ember" : body.composite >= 50 ? "amber" : "sage";
 
   const cover: CoverData = {
     reportId, regs,
     module: "STR WORKBENCH",
     title: "Suspicious Transaction Report — Draft",
-    subtitle: "Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE FDL 10/2025 Art.14 and CBUAE AML Standards §8.",
+    subtitle: "Draft STR prepared for MLRO review. Documents structuring pattern and supporting transactions for submission via goAML under UAE Federal Decree-Law No. 10 of 2025 Art.14 and CBUAE AML Standards §8.",
     subjectLabel: "SUBJECT OF REPORT",
     subjectName: body.subject,
     subjectMeta: `${body.jurisdiction.toUpperCase()} · ${reportId}`,
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       { label: "OFFICER",           value: "L. Fernanda", sub: "CO/MLRO" },
       { label: "FIU REGISTRATION",  value: "FIU-AE-DMCC-0428", sub: "goAML Reporting Entity" },
       { label: "REPORT IDENTIFIER", value: reportId, sub: "Draft · Pre-filing" },
-      { label: "RETENTION",         value: "10 years", sub: "FDL 10/2025 ART.24" },
+      { label: "RETENTION",         value: "10 years", sub: "Federal Decree-Law No. 10 of 2025 ART.24" },
     ],
   };
 
@@ -94,7 +94,7 @@ ${hsSection({ num:"01", kicker:"part one", title:"Report details", tight:true, c
 ${hsSection({ num:"02", kicker:"part two", title:"Narrative", tight:true, content: hsNarrative(body.narrative, true) })}
 ${body.transactions.length > 0 ? hsSection({ num:"03", kicker:"part three", title:"Supporting transactions", tight:true,
   content: hsTable(["Date","Amount (AED)","Description"], txRows) }) : ""}
-<div class="hs-cnote">This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE FDL 10/2025 Art.14.</div>
+<div class="hs-cnote">This draft STR has been prepared for MLRO review. It must not be disclosed to the subject. Filing is required within the timeframe prescribed by CBUAE AML Standards §8 and UAE Federal Decree-Law No. 10 of 2025 Art.14.</div>
 ${hsSignatureBlock([
   { name:"L. Fernanda",      role:"CO/MLRO · Author",                 lic:"HS-MLRO-0428",       date: dateStr },
   { name:"FIU goAML",        role:"Submission pending",                lic:"FIU-AE-DMCC-0428",   date:"—" },

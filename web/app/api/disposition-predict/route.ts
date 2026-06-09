@@ -50,7 +50,7 @@ const DEGRADED_PAYLOAD = {
     { disposition: "manual-review", probability: 1, confidence: "low", drivers: ["AI analysis unavailable"] },
   ],
   primaryRecommendation: "Refer to senior MLRO for manual disposition decision.",
-  regulatoryBasis: "UAE FDL No.20/2018 Art.18 — risk-based due diligence",
+  regulatoryBasis: "Federal Decree-Law No. 20 of 2018 Art.18 — risk-based due diligence",
   degraded: true,
 };
 
@@ -105,7 +105,7 @@ Rules:
 - Include all four dispositions; assign realistic probabilities based on the profile.
 - High score (≥70) or PEP tier 1 → escalate/block must have highest combined probability.
 - drivers: 2–3 bullet factors that most influenced each disposition.
-- regulatoryBasis: cite the single most relevant UAE FDL 20/2018 or FATF Recommendation.`;
+- regulatoryBasis: cite the single most relevant UAE Federal Decree-Law No. 20 of 2018 or FATF Recommendation.`;
 
   try {
     const client = getAnthropicClient(apiKey, BUDGET_MS);

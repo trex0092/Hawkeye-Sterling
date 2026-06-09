@@ -4,7 +4,7 @@
 //
 // Complements /api/cdd-adequacy (AI adequacy scoring) with persistent storage
 // of review outcomes so MLRO has a full audit trail of CDD refresh cadences,
-// overdue subjects, and adequacy scores under FDL 10/2025 Art.11 + FATF R.10.
+// overdue subjects, and adequacy scores under Federal Decree-Law No. 10 of 2025 Art.11 + FATF R.10.
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

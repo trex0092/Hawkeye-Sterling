@@ -12,7 +12,7 @@
 //   - chain     = entries linked by previousHash == prior.id
 //
 // Any of those three properties failing on ANY entry means the chain
-// is broken; regulator-defensibility under FDL 10/2025 Art.24
+// is broken; regulator-defensibility under Federal Decree-Law No. 10 of 2025 Art.24
 // requires the verifier to surface ALL three classes.
 
 import { createHash, createHmac } from 'node:crypto';
@@ -346,7 +346,7 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
     // F-40: In production, missing AUDIT_CHAIN_SECRET means the chain is forgeable —
     // any actor with Blobs write access can silently modify or fabricate entries.
     // Fail closed rather than produce an unprotected chain that satisfies no
-    // regulator under FDL 10/2025 Art.24.
+    // regulator under Federal Decree-Law No. 10 of 2025 Art.24.
     if (process.env["NODE_ENV"] === "production") {
       console.error(
         "[audit-chain] AUDIT_CHAIN_SECRET absent or too short in production — " +

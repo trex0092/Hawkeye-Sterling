@@ -1,6 +1,6 @@
 // POST /api/cdd-adequacy
 //
-// AI adequacy assessment for periodic CDD reviews under FDL 10/2025 Art.11
+// AI adequacy assessment for periodic CDD reviews under Federal Decree-Law No. 10 of 2025 Art.11
 // and FATF Recommendation 10.  Sends the full review portfolio to Claude
 // Haiku and returns per-subject adequacy scores plus portfolio-level status.
 
@@ -48,7 +48,7 @@ interface RequestBody {
   reviews: ReviewInput[];
 }
 
-const SYSTEM_PROMPT = `You are a UAE AML compliance officer assessing the adequacy of periodic CDD reviews under FDL 10/2025 Art.11 and FATF Recommendation 10. Review cadences: high risk = 90 days, medium = 180 days, standard = 365 days. For overdue or at-risk subjects, identify what enhanced measures are needed.
+const SYSTEM_PROMPT = `You are a UAE AML compliance officer assessing the adequacy of periodic CDD reviews under Federal Decree-Law No. 10 of 2025 Art.11 and FATF Recommendation 10. Review cadences: high risk = 90 days, medium = 180 days, standard = 365 days. For overdue or at-risk subjects, identify what enhanced measures are needed.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -135,7 +135,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       `${reviews.length} subjects assessed — portfolio: ${parsed.portfolioStatus} · critical: ${(parsed.criticalSubjects ?? []).length}`,
     );
 
-    // FDL 10/2025 Art.11 / FATF R.10 — CDD adequacy assessment is a
+    // Federal Decree-Law No. 10 of 2025 Art.11 / FATF R.10 — CDD adequacy assessment is a
     // compliance-critical event; must be on the tamper-evident chain.
     void writeAuditChainEntry(
       {

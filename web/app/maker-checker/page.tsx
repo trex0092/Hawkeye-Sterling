@@ -9,7 +9,7 @@ import type {
 } from "@/lib/server/maker-checker";
 
 // Maker-Checker Queue — four-eyes enforcement for high-risk AML decisions.
-// UAE FDL 10/2025 Art.16 · FATF R.28
+// UAE Federal Decree-Law No. 10 of 2025 Art.16 · FATF R.28
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -291,7 +291,7 @@ export default function MakerCheckerPage() {
           <>
             All high-risk compliance decisions — STR filings, risk overrides, whitelist additions, PEP clearances,
             and case closures — require a second operator&apos;s approval before execution. Self-approval is
-            prohibited under UAE FDL 10/2025 Art.16 (four-eyes principle) and FATF Recommendation 28.
+            prohibited under UAE Federal Decree-Law No. 10 of 2025 Art.16 (four-eyes principle) and FATF Recommendation 28.
           </>
         }
       />

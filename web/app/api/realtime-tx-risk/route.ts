@@ -16,7 +16,7 @@
 //   - Time-of-day anomaly (outside business hours)
 //   - Unusual amount (statistical outlier vs. customer baseline)
 //
-// Regulatory basis: FDL 10/2025 Art.16 (CTR triggers); FATF R.20
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.16 (CTR triggers); FATF R.20
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
@@ -343,7 +343,7 @@ Transaction details:
 Risk flags triggered:
 ${flags.map((f) => `- [${f.severity.toUpperCase()}] ${f.code}: ${f.description}`).join("\n")}
 
-Provide a concise 2-3 sentence AML compliance narrative explaining the risk, citing the most relevant UAE FDL 10/2025 articles. Be specific, not generic.`;
+Provide a concise 2-3 sentence AML compliance narrative explaining the risk, citing the most relevant UAE Federal Decree-Law No. 10 of 2025 articles. Be specific, not generic.`;
 
       const msg = await anthropic.messages.create({
         model: "claude-haiku-4-5-20251001",

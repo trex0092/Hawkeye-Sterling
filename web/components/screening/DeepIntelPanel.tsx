@@ -1758,7 +1758,7 @@ function getFilingRequirements(subject: Subject): FilingRequirement[] {
       filingType: "Suspicious Transaction Report (STR)",
       threshold: 60,
       required: isHighRisk,
-      reason: "UAE FDL 10/2025 Art.15 — STR mandatory for suspected ML/TF",
+      reason: "UAE Federal Decree-Law No. 10 of 2025 Art.15 — STR mandatory for suspected ML/TF",
       module: "/goaml",
     },
     {

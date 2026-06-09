@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE MLRO building a goAML STR timeline from case notes. Organise events chronologically, identify when suspicion crystalised (FATF R.20 "reasonable grounds"), and produce a goAML-ready narrative block. The STR deadline is 2 business days from crystallisation per UAE FDL 10/2025 Art.26.
+        system: `You are a UAE MLRO building a goAML STR timeline from case notes. Organise events chronologically, identify when suspicion crystalised (FATF R.20 "reasonable grounds"), and produce a goAML-ready narrative block. The STR deadline is 2 business days from crystallisation per UAE Federal Decree-Law No. 10 of 2025 Art.26.
 
 Respond ONLY with valid JSON — no markdown fences:
 {

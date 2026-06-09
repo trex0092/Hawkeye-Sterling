@@ -70,7 +70,7 @@ function buildSpec(baseUrl: string) {
         "endpoints.  All routes are protected by Bearer JWT authentication.",
         "",
         "**Regulatory alignment:** FATF Recommendations (2023 revision),",
-        "UAE FDL 10/2025 (AML/CFT), OFAC SDN, UN Security Council, EU",
+        "UAE Federal Decree-Law No. 10 of 2025 (AML/CFT), OFAC SDN, UN Security Council, EU",
         "Consolidated List, UKOFSI, goAML XML schema v5.x.",
         "",
         "**Rate limits:** Tier-based (see `X-RateLimit-*` response headers).",
@@ -794,7 +794,7 @@ function buildSpec(baseUrl: string) {
             "off-plan purchase, price manipulation, corporate buyer complexity,",
             "high-risk buyer nationality, and rapid resale.",
             "",
-            "**UAE FDL 10/2025 Art.14 / RERA AML Guidelines 2024 / FATF R.22.**",
+            "**UAE Federal Decree-Law No. 10 of 2025 Art.14 / RERA AML Guidelines 2024 / FATF R.22.**",
           ].join("\n"),
           requestBody: {
             required: true,
@@ -857,7 +857,7 @@ function buildSpec(baseUrl: string) {
             "risk, refining chain opacity, DMCC Responsible Sourcing compliance,",
             "and customer type risk.",
             "",
-            "**UAE FDL 10/2025 / FATF DPMS Guidance / DMCC Responsible Sourcing Programme.**",
+            "**UAE Federal Decree-Law No. 10 of 2025 / FATF DPMS Guidance / DMCC Responsible Sourcing Programme.**",
           ].join("\n"),
           requestBody: {
             required: true,
@@ -919,7 +919,7 @@ function buildSpec(baseUrl: string) {
             "volume thresholds, counterparty sanctions exposure, and",
             "record-keeping gaps.",
             "",
-            "**FATF Guidance on Hawala (2013) / UAE FDL 10/2025 Art.14.**",
+            "**FATF Guidance on Hawala (2013) / UAE Federal Decree-Law No. 10 of 2025 Art.14.**",
           ].join("\n"),
           requestBody: {
             required: true,
@@ -1314,7 +1314,7 @@ function buildSpec(baseUrl: string) {
             "narrative using Claude LLM.  Returns the narrative with word count,",
             "quality score, FATF coverage gaps, and goAML field mappings.",
             "",
-            "**UAE FDL 10/2025 Art.17:** 48-hour STR filing obligation.",
+            "**UAE Federal Decree-Law No. 10 of 2025 Art.17:** 48-hour STR filing obligation.",
           ].join("\n"),
           requestBody: {
             required: true,
@@ -1377,7 +1377,7 @@ function buildSpec(baseUrl: string) {
             "through the UAE FIU goAML portal.  Validates the output against the",
             "goAML XSD schema v5.x and returns any validation warnings.",
             "",
-            "**UAE FDL 10/2025 Art.17 / UAE FIU goAML Technical Guide v3.1.**",
+            "**UAE Federal Decree-Law No. 10 of 2025 Art.17 / UAE FIU goAML Technical Guide v3.1.**",
           ].join("\n"),
           requestBody: {
             required: true,

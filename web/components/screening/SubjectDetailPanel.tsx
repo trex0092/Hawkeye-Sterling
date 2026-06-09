@@ -312,7 +312,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
     if (cahra) escalateTo("medium");
     // AML policy: any adverse media signal — initial scan or live news — must
     // produce a non-zero severity band. Risk score cannot be zero when adverse
-    // media is detected (FATF R.10 / FDL 10/2025 Art.16).
+    // media is detected (FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.16).
     if (hasInitialAdverseMedia) escalateTo("medium");
     if (newsSeverity && newsSeverity !== "clear") escalateTo(newsSeverity);
     return band;
@@ -729,7 +729,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       `Hawkeye Sterling flagged ${subject.name} (${subject.id}) as requiring a ` +
       `suspicious-transaction report. Brain severity ${severity}; composite ` +
       `${composite}/100. Jurisdiction: ${subject.country || "—"}. ` +
-      `Constructive-knowledge standard (FDL 10/2025 Art.2(3)) assessed — ` +
+      `Constructive-knowledge standard (Federal Decree-Law No. 10 of 2025 Art.2(3)) assessed — ` +
       `MLRO to review before goAML submission.`;
     // Pre-fetch the JSON sidecar so the goAML envelope carries the
     // same payload + report SHA-256 (and signature, if signing is on)
@@ -1187,7 +1187,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
 
       {/* Critical sanctions blocking panel — shown when hits include OFAC SDN,
           UAE LTL, UAE EOCN, or UN Consolidated. Required by Cabinet Resolution
-          74/2020 and FDL No.10/2025 Art.14. */}
+          74/2020 and Federal Decree-Law No. 10 of 2025 Art.14. */}
       {screening.status === "success" && screening.result.hits.length > 0 && (
         <CriticalBlockingPanel
           subjectName={subject.name}
@@ -1235,7 +1235,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
       </Section>
 
       {/* Compliance categorization output — riskCategory, dueDiligence,
-          review schedule, SLA. FDL No.10/2025 Art.18. */}
+          review schedule, SLA. Federal Decree-Law No. 10 of 2025 Art.18. */}
       {categorizationDisplay && (
         <CategorizationOutput
           riskCategory={categorizationDisplay.riskCategory}
@@ -2179,7 +2179,7 @@ function CddPostureBadge({
   if (brainScore != null && brainScore >= 85) reasons.push(`composite ${brainScore}/100`);
   if (hasSanctionsHit) reasons.push("confirmed sanctions hit");
   if (hasRedline) reasons.push("redline fired");
-  // FATF R.12 / FDL 10/2025 Art.17: any PEP tier triggers EDD, not
+  // FATF R.12 / Federal Decree-Law No. 10 of 2025 Art.17: any PEP tier triggers EDD, not
   // just tier-1. Earlier logic left tier-2/3/4 PEPs and assessment-
   // only PEPs sitting on standard CDD.
   if (isPep) {
@@ -2188,7 +2188,7 @@ function CddPostureBadge({
       : "PEP";
     reasons.push(tierLabel);
   }
-  // FATF R.10 / FDL 10/2025 Art.16: any adverse-media positive
+  // FATF R.10 / Federal Decree-Law No. 10 of 2025 Art.16: any adverse-media positive
   // requires EDD until analyst review and live-news corroboration
   // clear it. Severity surfaced in rationale.
   if (hasAdverseMedia) {
@@ -2232,7 +2232,7 @@ function CddPostureBadge({
         <div className="text-10.5 text-ink-2 mt-1 leading-snug">
           Auto-escalated to Enhanced Due Diligence — {reasons.join(", ")}.
           {zeroTolerance &&
-            " Zero-tolerance thresholds crossed; refer MLRO to consider freeze / decline under FDL 10/2025 Art.26-27."}
+            " Zero-tolerance thresholds crossed; refer MLRO to consider freeze / decline under Federal Decree-Law No. 10 of 2025 Art.26-27."}
         </div>
       )}
     </div>

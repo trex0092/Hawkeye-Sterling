@@ -294,7 +294,7 @@ function runDeterministicTbml(input: FlatTbmlInput): TbmlDetectionResult {
       "Request additional documentation: certified invoice, bill of lading, certificate of origin. Conduct counterparty CDD refresh.";
   } else {
     recommendation =
-      "Standard monitoring. Retain documentary evidence per UAE FDL 10/2025 record-keeping obligations.";
+      "Standard monitoring. Retain documentary evidence per UAE Federal Decree-Law No. 10 of 2025 record-keeping obligations.";
   }
 
   return {
@@ -307,7 +307,7 @@ function runDeterministicTbml(input: FlatTbmlInput): TbmlDetectionResult {
     recommendation,
     regulatoryBasis: [
       "FATF TBML Report (2006, updated 2020)",
-      "UAE FDL 10/2025 Art.14",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.14",
       "Wolfsberg Trade Finance Principles (2019/2023)",
       "CBUAE AML Standards — Trade Finance Chapter",
     ],
@@ -405,7 +405,7 @@ REGULATORY FRAMEWORKS:
 - BIS (Bank for International Settlements) trade finance guidance on ML/TF risk
 - ICC (International Chamber of Commerce) Uniform Customs and Practice for Documentary Credits (UCP 600)
 - ICC Uniform Rules for Collections (URC 522)
-- UAE FDL 10/2025 (AML Law, in force 14 Oct 2025)
+- UAE Federal Decree-Law No. 10 of 2025 (AML Law, in force 14 Oct 2025)
 - CBUAE AML Standards for Banks — trade finance chapter
 - UAE Cabinet Decision on DNFBP obligations in trade finance
 - UAE Strategic Goods Control & Dual-Use Goods regime

@@ -1,7 +1,7 @@
 // Hawkeye Sterling — Maker-Checker enforcement for high-risk decisions.
 //
 // Implements the two-person integrity (TPI) control required by:
-//   UAE FDL 10/2025 Art.16 — Four-eyes principle for material AML decisions
+//   UAE Federal Decree-Law No. 10 of 2025 Art.16 — Four-eyes principle for material AML decisions
 //   FATF R.28             — Internal controls, compliance, audit
 //
 // Supported action types:
@@ -110,7 +110,7 @@ export async function createMakerCheckerRequest(
 
 /**
  * Approve a pending maker-checker request. The checker must be a different
- * user from the initiator (four-eyes principle — UAE FDL 10/2025 Art.16).
+ * user from the initiator (four-eyes principle — UAE Federal Decree-Law No. 10 of 2025 Art.16).
  */
 export async function approveMakerCheckerRequest(
   id: string,
@@ -125,7 +125,7 @@ export async function approveMakerCheckerRequest(
   if (existing.status !== "pending") throw new Error(`request is already ${existing.status}`);
   if (existing.initiatorId === checkerId) {
     throw new Error(
-      "checker must differ from initiator — self-approval is prohibited (UAE FDL 10/2025 Art.16 four-eyes principle)",
+      "checker must differ from initiator — self-approval is prohibited (UAE Federal Decree-Law No. 10 of 2025 Art.16 four-eyes principle)",
     );
   }
 
@@ -170,7 +170,7 @@ export async function rejectMakerCheckerRequest(
   if (existing.status !== "pending") throw new Error(`request is already ${existing.status}`);
   if (existing.initiatorId === checkerId) {
     throw new Error(
-      "checker must differ from initiator — self-rejection is prohibited (UAE FDL 10/2025 Art.16 four-eyes principle)",
+      "checker must differ from initiator — self-rejection is prohibited (UAE Federal Decree-Law No. 10 of 2025 Art.16 four-eyes principle)",
     );
   }
 

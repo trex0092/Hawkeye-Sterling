@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `HWK-BATCH-${dd}-${mm}-${yyyy}`;
-  const regs = "FDL 10/2025 · CBUAE AML STANDARDS · FATF R.10";
+  const regs = "Federal Decree-Law No. 10 of 2025 · CBUAE AML STANDARDS · FATF R.10";
   const durSec = (body.durationMs / 1000).toFixed(1)+"s";
 
   const cover: CoverData = {
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       { label: "DURATION",          value: durSec, sub: `${body.totalScreened} subjects` },
       { label: "OFFICER",           value: "L. Fernanda", sub: "CO/MLRO" },
       { label: "REPORT IDENTIFIER", value: reportId, sub: "Immutable · Signed" },
-      { label: "RETENTION",         value: "10 years", sub: "FDL 10/2025" },
+      { label: "RETENTION",         value: "10 years", sub: "Federal Decree-Law No. 10 of 2025" },
     ],
   };
 

@@ -1,7 +1,7 @@
 // GET  /api/outsourcing-register  — list all arrangements for the authenticated tenant
 // POST /api/outsourcing-register  — create a new outsourcing arrangement
 //
-// Regulatory basis: FDL 10/2025 Art.18, CBUAE Outsourcing Guidance, FATF R.2
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.18, CBUAE Outsourcing Guidance, FATF R.2
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

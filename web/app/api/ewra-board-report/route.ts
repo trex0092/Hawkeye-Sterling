@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const { dateStr, time } = nowMeta();
   const dd = dateStr.slice(0,2), mm = dateStr.slice(3,5), yyyy = dateStr.slice(6);
   const reportId = `EWRA-${dd}-${mm}-${yyyy}`;
-  const regs = "FDL 10/2025 ART.4 · FATF R.1 · CBUAE AML STANDARDS §2";
+  const regs = "Federal Decree-Law No. 10 of 2025 ART.4 · FATF R.1 · CBUAE AML STANDARDS §2";
 
   const risk = (boardReport.overallRisk ?? "high").toUpperCase();
   const tone = risk === "CRITICAL" || risk === "HIGH" ? "ember" : risk === "MEDIUM" ? "amber" : "sage";
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     reportId, regs,
     module: "RISK ASSESSMENT",
     title: "Enterprise-Wide Risk Assessment — Board Report",
-    subtitle: "Annual enterprise-wide risk assessment under UAE FDL 10/2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
+    subtitle: "Annual enterprise-wide risk assessment under UAE Federal Decree-Law No. 10 of 2025 Art.4 and CBUAE AML Standards §2. Scope: customer, geographic, products, channels, delivery mechanisms.",
     subjectLabel: "REPORTING ENTITY",
     subjectName: "Hawkeye Sterling DPMS",
     subjectMeta: `LICENSED DPMS · DMCC · UAE · ${reportId}`,
@@ -95,7 +95,7 @@ ${hsFinis(reportId, 2, 2)}`;
     ],
   });
 
-  // FATF R.1 / FDL 10/2025 Art.4 — board EWRA report generation is a
+  // FATF R.1 / Federal Decree-Law No. 10 of 2025 Art.4 — board EWRA report generation is a
   // board-level compliance event; must be on the tamper-evident chain.
   void writeAuditChainEntry(
     {

@@ -6,7 +6,7 @@ import type { AdverseMediaLiveResult } from "@/app/api/adverse-media-live/route"
 import type { RegulatoryItem } from "@/app/api/regulatory-feed/route";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
-// Live Adverse Media Monitor — FDL 10/2025 Art.10 (ongoing CDD monitoring)
+// Live Adverse Media Monitor — Federal Decree-Law No. 10 of 2025 Art.10 (ongoing CDD monitoring)
 // and Art.19 (10-year lookback). Uses GDELT Project API (free, no key).
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -408,7 +408,7 @@ export default function AdverseMediaLivePage() {
         intro={
           <>
             <strong>FATF R.10</strong> (ongoing CDD monitoring) ·{" "}
-            <strong>FDL 10/2025 Art.10</strong> (continuous monitoring
+            <strong>Federal Decree-Law No. 10 of 2025 Art.10</strong> (continuous monitoring
             obligation) · <strong>Art.19</strong> (10-year lookback). Search
             for adverse media on any subject using GDELT Project&apos;s real-time
             global news index. Results are scored by hit volume, negative tone,

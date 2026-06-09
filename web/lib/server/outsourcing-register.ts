@@ -1,10 +1,10 @@
-// Outsourcing / Third-Party Register store — FDL 10/2025 Art.18
+// Outsourcing / Third-Party Register store — Federal Decree-Law No. 10 of 2025 Art.18
 //
 // Provides CRUD operations for outsourcing arrangement records.
 // AML/CFT outsourcing arrangements require annual MLRO review and Board approval
-// per FDL 10/2025 Art.18 and CBUAE Outsourcing Guidance.
+// per Federal Decree-Law No. 10 of 2025 Art.18 and CBUAE Outsourcing Guidance.
 //
-// Regulatory basis: FDL 10/2025 Art.18, CBUAE Outsourcing Guidance, FATF R.2
+// Regulatory basis: Federal Decree-Law No. 10 of 2025 Art.18, CBUAE Outsourcing Guidance, FATF R.2
 
 import { randomBytes } from "node:crypto";
 import { getJson, setJson, listKeys } from "@/lib/server/store";

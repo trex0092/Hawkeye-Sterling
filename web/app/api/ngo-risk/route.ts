@@ -145,7 +145,7 @@ function computeNgoRiskScore(body: RequestBody): ScoringResult {
     score += 40;
     flags.push("unregistered_entity:+40");
     cftRisks.push(
-      "Unregistered entity — operating without regulatory oversight is prohibited under UAE Cabinet Decision No. 10/2019 and FDL 10/2025 Art.14",
+      "Unregistered entity — operating without regulatory oversight is prohibited under UAE Cabinet Decision No. 10/2019 and Federal Decree-Law No. 10 of 2025 Art.14",
     );
   }
 
@@ -208,7 +208,7 @@ function computeNgoRiskScore(body: RequestBody): ScoringResult {
     score += 25;
     flags.push(`anonymous_funding_source:+25 ("${src}")`);
     cftRisks.push(
-      `Anonymous/untraceable funding source detected: "${src}" — prevents beneficial owner identification required under FDL 10/2025 Art.14`,
+      `Anonymous/untraceable funding source detected: "${src}" — prevents beneficial owner identification required under Federal Decree-Law No. 10 of 2025 Art.14`,
     );
   }
 
@@ -286,7 +286,7 @@ function deriveUaeComplianceStatus(
   if (riskLevel === "medium") {
     return "REQUIRES_REVIEW — Standard due diligence with additional documentation; annual monitoring required";
   }
-  return "COMPLIANT — Standard ongoing monitoring applies under UAE FDL 10/2025";
+  return "COMPLIANT — Standard ongoing monitoring applies under UAE Federal Decree-Law No. 10 of 2025";
 }
 
 /** Generate a concise recommendation string from the scoring result. */
@@ -411,7 +411,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     regulatoryBasis: [
       "FATF R.8",
       "UAE Cabinet Decision No. 10/2019",
-      "UAE FDL 10/2025 Art.14",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.14",
     ],
   };
 

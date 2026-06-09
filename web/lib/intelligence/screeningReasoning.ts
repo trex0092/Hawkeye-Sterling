@@ -572,14 +572,14 @@ export function buildScreeningReasoning(opts: {
   if (opts.coverage.warnings.length > 0) {
     lines.push("Coverage warnings: " + opts.coverage.warnings.join("; "));
   }
-  lines.push("Regulatory basis: FATF R.10 (CDD), FDL 10/2025 Art.10/Art.19 (ongoing monitoring + 10-year evidence-of-search).");
+  lines.push("Regulatory basis: FATF R.10 (CDD), Federal Decree-Law No. 10 of 2025 Art.10/Art.19 (ongoing monitoring + 10-year evidence-of-search).");
 
   const rationale = lines.join(" ");
 
   // Art.19 negative-finding entry when result is CLEAR with no hits.
   let art19NegativeFinding: string | undefined;
   if (opts.result.hits.length === 0 && consensus.sourcesFor === 0) {
-    art19NegativeFinding = `[Art.19] Negative finding logged ${new Date().toISOString()}: subject "${opts.subject.name}" screened against ${opts.coverage.totalConfigured} sources; zero affirming evidence. Documented per FDL 10/2025 Art.19 evidence-of-search obligation.`;
+    art19NegativeFinding = `[Art.19] Negative finding logged ${new Date().toISOString()}: subject "${opts.subject.name}" screened against ${opts.coverage.totalConfigured} sources; zero affirming evidence. Documented per Federal Decree-Law No. 10 of 2025 Art.19 evidence-of-search obligation.`;
   }
 
   // Append signals to the rationale

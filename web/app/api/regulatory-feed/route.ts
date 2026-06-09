@@ -322,15 +322,15 @@ async function fetchUnScFeed(): Promise<RegulatoryItem[]> {
 const UAE_STATIC: RegulatoryItem[] = [
   {
     id: "uae-001",
-    title: "FDL 10/2025 — UAE AML/CFT Law in Force",
+    title: "Federal Decree-Law No. 10 of 2025 — UAE AML/CFT Law in Force",
     url: "https://www.moet.gov.ae/en/legislation/laws/federal-decree-law-no-10-of-2025",
     pubDate: "2025-01-01",
     publishedAt: "2025-01-01",
     source: "UAE Cabinet",
     tone: "green",
     category: "legislation",
-    summary: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
-    snippet: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing FDL 20/2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+    summary: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing Federal Decree-Law No. 20 of 2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
+    snippet: "Federal Decree-Law No. 10 of 2025 on AML/CFT entered into force, replacing Federal Decree-Law No. 20 of 2018. Key changes: DPMS obligations, 10-year retention, enhanced UBO requirements.",
   },
   {
     id: "uae-002",
@@ -742,7 +742,7 @@ const STATIC_ITEMS: RegulatoryItem[] = [
     source: "MoET",
     category: "AML/CFT",
     tone: "amber",
-    snippet: "Primary AML/CFT legislation. Mandates EWRA, CDD, STR filing, 10-year retention, MLRO appointment. Replaces FDL 20/2018 provisions.",
+    snippet: "Primary AML/CFT legislation. Mandates EWRA, CDD, STR filing, 10-year retention, MLRO appointment. Replaces Federal Decree-Law No. 20 of 2018 provisions.",
   },
   {
     id: "static-cr-134-2025",

@@ -85,7 +85,7 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
       {/* Regulatory notice */}
       <p className="text-11 text-ink-1 mb-3 leading-relaxed">
         Subject <strong className="text-ink-0">{subjectName}</strong> has hits on designated lists.
-        Per Cabinet Resolution 74/2020 and FDL No.10/2025 Art.14, transactions must be suspended
+        Per Cabinet Resolution 74/2020 and Federal Decree-Law No. 10 of 2025 Art.14, transactions must be suspended
         and the case must be reported to the MLRO immediately. All AI-generated outputs require
         human MLRO review before any compliance action (Art.18).
       </p>
@@ -126,7 +126,7 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
           <span className="text-11 text-red">{error}</span>
         )}
         <span className="text-10 text-ink-3 ml-auto font-mono">
-          FDL No.10/2025 Art.14 · Cabinet Resolution 74/2020
+          Federal Decree-Law No. 10 of 2025 Art.14 · Cabinet Resolution 74/2020
         </span>
       </div>
     </div>

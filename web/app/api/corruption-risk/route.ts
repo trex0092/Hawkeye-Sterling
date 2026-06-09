@@ -56,8 +56,8 @@ LEGAL & REGULATORY FRAMEWORK:
 
 PEP OBLIGATIONS:
 - FATF Recommendation 12 — domestic PEPs, foreign PEPs, and international organisation PEPs; enhanced CDD, senior management approval, enhanced ongoing monitoring, source of wealth and source of funds verification
-- UAE FDL 10/2025 Art.14 — PEP definition, tiers, mandatory enhanced measures, senior management approval requirements
-- UAE FDL 10/2025 Art.15 — ongoing monitoring obligations for high-risk clients including PEPs
+- UAE Federal Decree-Law No. 10 of 2025 Art.14 — PEP definition, tiers, mandatory enhanced measures, senior management approval requirements
+- UAE Federal Decree-Law No. 10 of 2025 Art.15 — ongoing monitoring obligations for high-risk clients including PEPs
 - CBUAE AML Standards §5 — PEP risk classification, review frequency, approval chains
 - FATF Guidance on PEPs (2013, updated 2022) — stepdown criteria, family members and close associates scope
 
@@ -178,7 +178,7 @@ Adverse Media (Corruption): ${body.adverseMediaCorruption ? "YES — adverse med
 Jurisdiction CPI Score: ${body.jurisdictionCPI !== undefined ? body.jurisdictionCPI : "Not provided"}/100
 Additional Context: ${body.context ?? "None provided"}
 
-Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obligations, UAE FDL 10/2025 requirements, OECD/UK Bribery Act/FCPA/UNCAC frameworks, sector-specific corruption typologies, and concrete approval and reporting requirements.`,
+Produce a fully weaponized corruption risk assessment covering FATF R.12 PEP obligations, UAE Federal Decree-Law No. 10 of 2025 requirements, OECD/UK Bribery Act/FCPA/UNCAC frameworks, sector-specific corruption typologies, and concrete approval and reporting requirements.`,
         },
       ],
     });

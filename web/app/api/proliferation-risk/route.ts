@@ -336,7 +336,7 @@ function buildRecommendation(
     }
     parts.push(
       "Escalate to MLRO. Engage UAE FIU goAML reporting channel. " +
-      "Preserve all transaction records per UAE FDL 10/2025 Art.24.",
+      "Preserve all transaction records per UAE Federal Decree-Law No. 10 of 2025 Art.24.",
     );
     return parts.join(" ");
   }
@@ -420,7 +420,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Add UAE FDL reference for WMD-destination cases
   if (detail.isWmdDestination) {
     regulatoryBasis.push(
-      "UAE FDL 10/2025 Art.21(3) — Proliferation Financing STR obligation (no threshold)",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.21(3) — Proliferation Financing STR obligation (no threshold)",
       "UAE Cabinet Decision 57/2020 — DPRK Implementing Measures",
     );
   }

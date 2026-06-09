@@ -170,7 +170,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   ]).catch(() => null);
 
   // Write audit chain entry — every adverse-media query is a compliance action.
-  // FDL 10/2025 Art.20 requires traceable records for SAR-triggering intelligence.
+  // Federal Decree-Law No. 10 of 2025 Art.20 requires traceable records for SAR-triggering intelligence.
   void writeAuditChainEntry({
     event: "adverse_media.completed",
     actor: gate.keyId,
@@ -198,7 +198,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       verdict,
       // Taranis AI → Hawkeye enrichment layer (story clustering, IOC extraction, cybercrime labels)
       ...(enrichment ? { enrichment } : {}),
-      // Compliance disclosure: AI-generated content (FDL 10/2025 Art.22)
+      // Compliance disclosure: AI-generated content (Federal Decree-Law No. 10 of 2025 Art.22)
       aiGenerated: true,
       aiModel: "keyword-classifier+mlro-analyser",
       // Degraded flag when LLM screening is intentionally disabled — callers
@@ -452,7 +452,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     system: [
       {
         type: "text",
-        text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from a multi-source adverse-media corpus (GDELT + 12 vendor feeds) covering the subject's entire lifetime (Art.19 FDL 10/2025).
+        text: `You are an MLRO adverse-media intelligence system operating for a UAE-regulated financial institution. You have been given REAL live news articles fetched from a multi-source adverse-media corpus (GDELT + 12 vendor feeds) covering the subject's entire lifetime (Art.19 Federal Decree-Law No. 10 of 2025).
 
 CRITICAL INSTRUCTION: Base your assessment SOLELY on the articles provided by the user. Do NOT use your training knowledge to add, invent, or assume facts not present in the article list. If no articles were found, return riskTier "unknown" (not "clear") with zero counts — "clear" means data was found and was clean; "unknown" means data was unavailable.
 

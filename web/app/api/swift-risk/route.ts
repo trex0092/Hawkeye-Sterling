@@ -1,6 +1,6 @@
 // POST /api/swift-risk
 // SWIFT / cross-border payment risk assessment.
-// Implements FATF Recommendation 16 (Wire Transfers), UAE FDL 10/2025 Art.14,
+// Implements FATF Recommendation 16 (Wire Transfers), UAE Federal Decree-Law No. 10 of 2025 Art.14,
 // and SWIFT gpi Compliance Analytics checks.
 
 import { NextResponse } from "next/server";
@@ -282,7 +282,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     recommendation,
     regulatoryBasis: [
       "FATF R.16",
-      "UAE FDL 10/2025 Art.14",
+      "UAE Federal Decree-Law No. 10 of 2025 Art.14",
       "SWIFT gpi Compliance Analytics",
     ],
   };

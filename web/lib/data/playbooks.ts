@@ -1343,9 +1343,9 @@ const PLAYBOOK_SEEDS: readonly Playbook[] = Object.freeze([
   },
   {
     id: "playbook-fiu_goaml",
-    name: "FIU UAE — goAML Filing Workflow (FDL 10/2025 Art.15)",
-    summary: "FIU UAE — goAML Filing Workflow (FDL 10/2025 Art.15)",
-    triggers: ["FIU UAE — goAML Filing Workflow (FDL 10/2025 Art.15) trigger event"],
+    name: "FIU UAE — goAML Filing Workflow (Federal Decree-Law No. 10 of 2025 Art.15)",
+    summary: "FIU UAE — goAML Filing Workflow (Federal Decree-Law No. 10 of 2025 Art.15)",
+    triggers: ["FIU UAE — goAML Filing Workflow (Federal Decree-Law No. 10 of 2025 Art.15) trigger event"],
     requiredSkills: [
       "skills-goaml-reporting",
       "skills-fiu-correspondence",
@@ -3420,9 +3420,9 @@ const PLAYBOOK_SEEDS: readonly Playbook[] = Object.freeze([
   },
   {
     id: "playbook-fdl-10-2025-art-13",
-    name: "FDL 10/2025 Art.13 — CDD Trigger Workflow",
-    summary: "FDL 10/2025 Art.13 — CDD Trigger Workflow",
-    triggers: ["FDL 10/2025 Art.13 — CDD Trigger Workflow trigger event"],
+    name: "Federal Decree-Law No. 10 of 2025 Art.13 — CDD Trigger Workflow",
+    summary: "Federal Decree-Law No. 10 of 2025 Art.13 — CDD Trigger Workflow",
+    triggers: ["Federal Decree-Law No. 10 of 2025 Art.13 — CDD Trigger Workflow trigger event"],
     requiredSkills: [
       "skills-kyc-cdd-edd-expertise",
       "skills-record-keeping",
@@ -5082,9 +5082,9 @@ const PLAYBOOK_SEEDS: readonly Playbook[] = Object.freeze([
   },
   {
     id: "playbook-fdl-10-2025-art-15",
-    name: "FDL 10/2025 Art.15 — MLRO Designation & Independence",
-    summary: "FDL 10/2025 Art.15 — MLRO Designation & Independence",
-    triggers: ["FDL 10/2025 Art.15 — MLRO Designation & Independence trigger event"],
+    name: "Federal Decree-Law No. 10 of 2025 Art.15 — MLRO Designation & Independence",
+    summary: "Federal Decree-Law No. 10 of 2025 Art.15 — MLRO Designation & Independence",
+    triggers: ["Federal Decree-Law No. 10 of 2025 Art.15 — MLRO Designation & Independence trigger event"],
     requiredSkills: [
       "skills-goaml-reporting",
       "skills-fiu-correspondence",

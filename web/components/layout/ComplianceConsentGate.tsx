@@ -6,7 +6,7 @@
 //
 // This satisfies the OFAC requirement that users of sanctions-screening tools
 // explicitly acknowledge they understand the legal obligations before accessing
-// the data, and UAE FDL 10/2025 Art.16 which requires identity attestation
+// the data, and UAE Federal Decree-Law No. 10 of 2025 Art.16 which requires identity attestation
 // on controlled actions.
 
 import { useEffect, useState } from "react";
@@ -81,7 +81,7 @@ export function ComplianceConsentGate({ children, toolName = "this tool" }: Comp
               </li>
             </ul>
             <p className="text-11 text-ink-3">
-              This acknowledgement is valid for {CONSENT_TTL_DAYS} days. Ref: OFAC / UAE FDL 10/2025 Art.16.
+              This acknowledgement is valid for {CONSENT_TTL_DAYS} days. Ref: OFAC / UAE Federal Decree-Law No. 10 of 2025 Art.16.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">

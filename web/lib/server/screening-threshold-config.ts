@@ -3,7 +3,7 @@
 // Changing a value requires no code deploy — just an env var update and
 // Lambda recycle.
 //
-// FDL 10/2025 Art.18: threshold changes that alter verdict outcomes must be
+// Federal Decree-Law No. 10 of 2025 Art.18: threshold changes that alter verdict outcomes must be
 // recorded in the audit chain and signed off by the MLRO before deployment.
 
 export interface ScreeningThresholds {

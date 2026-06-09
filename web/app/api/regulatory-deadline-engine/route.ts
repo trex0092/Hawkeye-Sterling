@@ -124,7 +124,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.16; CBUAE CTR Circular",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.16; CBUAE CTR Circular",
       penaltyExposure: "AED 100,000–1,000,000 per unreported transaction",
       action: "Submit goAML CTR XML via UAE FIU portal within 2 business days of the cash transaction date",
     });
@@ -142,7 +142,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.15; goAML STR Guide",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.15; goAML STR Guide",
       penaltyExposure: "Criminal liability; AED 200,000–1,000,000",
       action: "File STR via goAML portal; do not tip off customer; document suspicion basis",
     });
@@ -162,7 +162,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.8; CBUAE AML Standards §4",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.8; CBUAE AML Standards §4",
       penaltyExposure: "AED 100,000–500,000 for inadequate CDD",
       action: "Complete CDD refresh: verify documents, re-run sanctions screening, update risk score",
     });
@@ -181,7 +181,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.7; CBUAE AML Standards §2",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.7; CBUAE AML Standards §2",
       penaltyExposure: "AED 300,000–1,000,000 for absence of risk assessment",
       action: "Update EWRA: reassess product/customer/geographic/channel risks; board approval required",
     });
@@ -194,7 +194,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: 30,
       priority: "urgent",
       status: "upcoming",
-      regulatoryBasis: "FDL 10/2025 Art.7; CBUAE AML Standards §2",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.7; CBUAE AML Standards §2",
       penaltyExposure: "AED 300,000–1,000,000",
       action: "Complete initial EWRA and submit to board for approval",
     });
@@ -213,7 +213,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.22; CBUAE AML Standards §14",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.22; CBUAE AML Standards §14",
       penaltyExposure: "AED 100,000–500,000 for untrained staff",
       action: "Complete annual AML/CFT training for all relevant staff; record attendance and assessment scores",
     });
@@ -232,7 +232,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.23; CBUAE AML Standards §3",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.23; CBUAE AML Standards §3",
       penaltyExposure: "AED 200,000–1,000,000",
       action: "Prepare annual AML/CFT report for board: STR/CTR statistics, training completion, audit findings, remediation",
     });
@@ -251,7 +251,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       daysRemaining: days,
       priority: priorityFor(days),
       status: statusFor(days),
-      regulatoryBasis: "FDL 10/2025 Art.4; CR 134/2025 Art.14",
+      regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.4; CR 134/2025 Art.14",
       penaltyExposure: "Business closure; AED 50,000–500,000",
       action: "Renew DPMS registration via MoE portal; update AML Policy and Procedure documents",
     });
@@ -285,7 +285,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     daysRemaining: 180,
     priority: "scheduled",
     status: "upcoming",
-    regulatoryBasis: "FDL 10/2025 Art.19; FATF R.11",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.19; FATF R.11",
     penaltyExposure: "AED 200,000–1,000,000",
     action: "Audit document archive: ensure all CDD, transaction records, screening evidence retained ≥10 years from relationship end",
   });
@@ -300,7 +300,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     daysRemaining: pkcyDays,
     priority: priorityFor(pkcyDays),
     status: statusFor(pkcyDays),
-    regulatoryBasis: "FDL 10/2025 Art.14; CBUAE AML Standards §7.2 (ongoing monitoring)",
+    regulatoryBasis: "Federal Decree-Law No. 10 of 2025 Art.14; CBUAE AML Standards §7.2 (ongoing monitoring)",
     action: `Run pKYC sweep for all ${risk}-risk customers; escalate material changes to MLRO`,
   });
 
@@ -327,7 +327,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       planned: deadlines.filter((d) => d.priority === "planned").length,
     },
     deadlines,
-    regulatoryFramework: "FDL 10/2025; CR 134/2025; CBUAE AML Standards; UAEFIU goAML Directives",
+    regulatoryFramework: "Federal Decree-Law No. 10 of 2025; CR 134/2025; CBUAE AML Standards; UAEFIU goAML Directives",
     generatedAt: new Date().toISOString(),
     referenceDate: isoDate(ref),
   }, { headers: gate.headers });

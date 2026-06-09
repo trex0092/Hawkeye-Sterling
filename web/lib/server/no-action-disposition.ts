@@ -1,7 +1,7 @@
 // I-10 — structured no-action disposition validator.
 //
 // Every alert that the MLRO leaves unactioned (resolution: "unspecified")
-// must carry an immutable, queryable justification per FDL 10/2025 Art.19
+// must carry an immutable, queryable justification per Federal Decree-Law No. 10 of 2025 Art.19
 // and the regulator-readiness audit-trail requirements. Free-text "reason?"
 // alone is not enough — the gap analysis (I-10) requires four fields to
 // permanently bind to the entry:
