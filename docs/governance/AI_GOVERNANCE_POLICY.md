@@ -56,6 +56,25 @@ This policy is issued pursuant to, and must be read in conjunction with:
 | **LBMA Responsible Gold Guidance (RGG)** | Supply-chain due diligence for DPMS precious metals sector |
 | **OECD Due Diligence Guidance for Responsible Supply Chains (DDG)** | Annex II CAHRA documentation requirements |
 
+### 1.3 Strategic AI Objectives
+
+The following measurable objectives define performance and compliance targets for all AI systems under this policy. Reviewed annually at the Board Risk Committee and updated with the Risk Tolerance Matrix (§4).
+
+| Objective ID | Objective | Target | Measurement | Review |
+|---|---|---|---|---|
+| OBJ-001 | False Negative Rate | < 1% across validated screening cases | Brier ledger + MLRO confirmation | Quarterly |
+| OBJ-002 | False Positive Rate | < 5% across all screening outputs | Monthly bias-monitor report | Monthly |
+| OBJ-003 | Sanctions list freshness | ≤ 24 hours at time of every screening | `/api/sanctions/status`; automated stale alert | Continuous |
+| OBJ-004 | Model drift | Score ≤ 0.15 at all times | `GET /api/mlro/drift-alerts` | Continuous |
+| OBJ-005 | FFR filing SLA (zero tolerance) | 0% SLA breaches | Filing timestamp audit log | Per filing |
+| OBJ-006 | STR/SAR filing SLA | ≤ 1% SLA breaches | Filing timestamp audit log | Monthly |
+| OBJ-007 | Human oversight compliance | 100% of CRITICAL/HIGH outputs MLRO-reviewed before action | Four-eyes gate enforcement log | Continuous |
+| OBJ-008 | Charter compliance | 0 undetected charter violations in production outputs | Quarterly MLRO 50-sample audit | Quarterly |
+| OBJ-009 | Bias ratio (name-script) | ≤ 1.15 internal target; regulatory floor 1.5 | Bias monitor + `GET /api/mlro/brier` | Monthly |
+| OBJ-010 | AI system availability | ≥ 99.9% uptime (screening + MLRO advisory) | `/api/status` external monitor | Continuous |
+
+Progress against objectives is reported at the Friday governance committee and to the Board Risk Committee quarterly.
+
 ---
 
 ## 2. Scope
@@ -93,6 +112,23 @@ This policy does not cover:
 - Internal IT infrastructure and business productivity tools with no AML/CFT output
 - Third-party vendor platforms not integrated into the Hawkeye Sterling pipeline
 - Manual analytical work performed entirely by human officers without AI assistance
+
+### 2.4 AI Ethics Commitment
+
+Hawkeye Sterling affirms the following ethical principles in the design, deployment, and oversight of all AI systems covered by this policy, aligned with the UNESCO Recommendation on the Ethics of AI (2021).
+
+| Principle | Commitment | Technical Implementation |
+|---|---|---|
+| **Non-Discrimination** | AI must not produce outputs that discriminate on the basis of name script, nationality, ethnicity, religion, or other protected characteristics | `bias-monitor.ts` monitors bias ratio per name-script group; biasRatio alert threshold 1.15; regulatory floor 1.5 enforced in code |
+| **Transparency** | Every output must declare its data sources, confidence basis, methodology, and limitations | Charter P7 (scope declaration), P9 (methodology disclosure), P10 (gap reporting) |
+| **Explainability** | Reasoning behind every screening verdict must be traceable and communicable to a human officer | `web/lib/intelligence/explainability.ts`; per-signal attribution; counterfactual analysis; SHAP-style feature importance |
+| **Human Oversight** | AI proposes; the MLRO decides. No AI system may autonomously take regulated action | `four-eyes-gate.ts`; Auto-Dispositioner (PILOT — advisory only); mandatory MLRO sign-off on all filings |
+| **Fairness** | Performance disparities across demographic groups must be measured, documented, and minimised | `docs/testing/FAIRNESS_TESTING_RESULTS.md`; disaggregated FPR/FNR by entity type, jurisdiction, complexity, data availability |
+| **Privacy** | Personal data processed only under a valid lawful basis and for declared AML/CFT purposes | `docs/GDPR.md`; `docs/data-governance/DATA_LINEAGE.md §6`; data minimisation enforced |
+| **Safety** | Failure modes must fail-closed — an AI failure must never result in an unlawful outcome | Egress gate (`egress-check.ts`) fails closed; circuit breaker; hallucination gate; 24-probe adversarial suite |
+| **Accountability** | Responsibility for AI decisions attributed to named human officers, not to the AI system | Audit chain records MLRO identity, timestamp, and decision rationale on every disposition |
+
+The MLRO is the accountable officer for the ethical operation of all AI systems. Annual certification (§8) includes attestation that this ethics framework has been reviewed and remains current.
 
 ---
 
@@ -257,6 +293,22 @@ If any of the following conditions are detected post-deployment, an immediate ro
 
 Changes to third-party data sources (e.g., sanctions list format changes, NewsAPI schema updates) that affect the AI pipeline are treated as Minor changes and require MLRO notification within 24 hours. Changes to underlying AI model providers (e.g., Claude model version updates) are treated as Major changes.
 
+### 5.5 Prompt Security Requirements
+
+All system prompts and prompt templates in the AI pipeline are subject to the following security and governance controls (ISO/IEC 42001:2023 Annex A.6.2.6; NIST AI RMF GOVERN 1.6).
+
+**Prompt Integrity:** Every `SYSTEM_PROMPT` constant must be registered in `scripts/prompt-hash-manifest.json` and validated by `node scripts/validate-prompt-hashes.mjs` in CI. Unregistered or modified prompts fail the CI gate. Satisfies UAE FDL 10/2025 Art. 18.
+
+**Prompt Injection Protection:** All user-supplied inputs are sanitised through `web/lib/server/sanitize-prompt.ts`. Prompt injection patterns are detected by the adversarial probe suite (`web/lib/server/adversarial-probes.ts`, category `prompt_injection`).
+
+**Approved Model Versions:** All models used in production are registered in `MODEL_REGISTRY` (`web/lib/server/ai-governance.ts`) with `riskTier`, `approval`, and `cardRef` populated. Unregistered models may not be used in production. Model version changes are Major changes requiring MLRO approval.
+
+**LLM Output Validation:** All generated outputs are subject to: (1) charter compliance validation (`src/brain/redlines.ts`); (2) tipping-off guard (`src/brain/tipping-off-guard.ts`); (3) hallucination detection gate (`web/lib/server/hallucination-gate.ts`, fire-and-forget); (4) egress compliance check (`web/lib/server/egress-check.ts`).
+
+**Prompt Caching Security:** Prompt caching is enabled on all 74 LLM-calling routes. Cached system-prompt blocks are static and immutable; dynamic context is passed only in the user turn.
+
+**Incident Response:** Any detected prompt injection attempt, charter violation, or hallucination gate alert is logged to the audit chain and treated as at minimum a MEDIUM severity incident.
+
 ---
 
 ## 6. Stakeholder Engagement and Accountability
@@ -287,6 +339,51 @@ Changes to third-party data sources (e.g., sanctions list format changes, NewsAP
 ### 6.3 Conflict of Interest Controls
 
 No individual who is under assessment, named in an adverse-media finding, or personally involved in a transaction under investigation may access or influence the AI pipeline outputs for that case. Segregation of Duties (SoD) controls enforced by RBAC (`src/enterprise/rbac.ts`) implement this requirement technically. Any SoD violation is a zero-tolerance incident under the risk appetite framework.
+
+### 6.4 Interested Parties Register
+
+In accordance with ISO/IEC 42001:2023 clause 4.2 (Understanding the needs and expectations of interested parties), the following stakeholder categories are identified as having a material interest in the AI systems operated under this policy.
+
+| Stakeholder | Type | Key Interests / Expectations | Engagement Mechanism | Frequency |
+|---|---|---|---|---|
+| **MLRO** | Internal | Accuracy of AI proposals; audit trail completeness; charter compliance | Governance committee; daily platform use; annual certification | Weekly |
+| **Compliance Officer** | Internal | Regulatory metrics; incident log; performance KPIs | Governance committee; monthly KPI reports | Weekly |
+| **Data Science Lead** | Internal | Model performance (Brier scores, drift); training data quality | Governance committee; quarterly model card updates | Weekly |
+| **Engineering Lead** | Internal | System reliability; security posture; deployment safety | Governance committee; change control log | Weekly |
+| **CEO** | Internal | Regulatory standing; reputational risk; board obligations | Quarterly Board Risk Committee reports; CRITICAL incident escalations | Quarterly |
+| **Board Risk Committee** | Internal | Risk appetite compliance; strategic governance; regulatory exposure | Quarterly AI governance report; CRITICAL incident notifications ≤24h | Quarterly |
+| **UAE Financial Intelligence Unit (FIU)** | Regulatory | Accurate and timely STR/SAR/FFR filings; AML/CFT programme effectiveness | goAML submissions; regulatory inspections | As required |
+| **Central Bank of UAE (CBUAE)** | Regulatory | Licensed entity AML/CFT controls; documentation | Regulatory examinations; prudential reporting | Annually / as required |
+| **Ministry of Economy (MoE DNFBP)** | Regulatory | DNFBP compliance; documentation readiness | DNFBP inspections; annual compliance submissions | Annually / as required |
+| **Customers / Screening Subjects** | External | Accuracy of results; data protection rights; fair treatment | Data subject rights process (`docs/GDPR.md`); corrections endpoint | On demand |
+| **External Auditors** | External | AI documentation, model cards, audit logs; assurance independence | `docs/operations/AUDIT_PREP_CHECKLIST.md` audit access protocol | Annually / as required |
+| **Legal Counsel** | Internal/External | Tipping-off risk; PDPL compliance; litigation hold | Ad-hoc governance committee; legal review on incidents | As required |
+
+Stakeholder expectations are reviewed annually as part of the Annual Certification process (§8) and whenever a material change to the regulatory environment or organisational structure occurs.
+
+### 6.5 AI Communication Protocol
+
+The following protocol governs internal and external communications on AI system governance, performance, and incidents.
+
+**Routine Internal Communications**
+
+| Communication | Content | From | To | Frequency |
+|---|---|---|---|---|
+| Governance committee pack | Drift alerts, incident log, mode performance, upcoming changes | Engineering + Data Science | Committee members | Weekly (by 08:30 Friday) |
+| Governance committee minutes | Decisions, action items, escalations | Compliance Officer | Committee members + archive | Within 2 hours of meeting |
+| Quarterly AI governance report | KPI summary, incident trends, model performance, objectives progress | MLRO | Board Risk Committee | Quarterly |
+| Annual certification | Full governance attestation (§8.2) | MLRO + CEO | Board + regulatory file | Annually by 31 January |
+
+**Incident Communications**
+
+| Severity | First Notification | Escalation | External Disclosure |
+|---|---|---|---|
+| CRITICAL | MLRO within 1 hour | CEO same business day; Board Risk Committee within 24 hours | MLRO + Legal determine; self-disclosure to UAE FIU may be required (D15) |
+| HIGH | MLRO within 4 hours | CEO + Board Risk Committee at next committee | Assess regulatory notification requirement |
+| MEDIUM | MLRO within 24 hours | Governance committee at next weekly meeting | Generally no external disclosure; document rationale |
+| LOW | MLRO within 5 business days | Governance committee next standing agenda | No external disclosure |
+
+**External and Regulatory Communications:** All external communications on AI governance matters must be approved by the MLRO and Legal Counsel before issuance, logged in the incident/communications register, and reviewed for tipping-off risk (FDL 20/2018 Art. 25). No staff member may communicate directly with a regulator or external auditor on AI governance matters without prior MLRO coordination.
 
 ---
 
@@ -411,6 +508,6 @@ The following uses of Hawkeye Sterling AI systems are absolutely prohibited. The
 | Next mandatory review | 2027-05-06 |
 | Approver (MLRO) | [Signature required] |
 | Approver (CEO) | [Signature required] |
-| Related documents | `docs/governance/AI_INVENTORY.md`, `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`, `docs/data-governance/DATA_LINEAGE.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md` |
+| Related documents | `docs/governance/AI_INVENTORY.md`, `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`, `docs/data-governance/DATA_LINEAGE.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md`, `docs/governance/STATEMENT_OF_APPLICABILITY.md`, `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md`, `docs/operations/THIRD_PARTY_MANAGEMENT.md` |
 | Regulatory references | UAE FDL 10/2025; FDL 20/2018 as amended; Cabinet Decision 74/2020; Cabinet Resolution 16/2021; FATF Recommendations |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |

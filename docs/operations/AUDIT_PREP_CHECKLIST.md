@@ -17,6 +17,40 @@
 
 ---
 
+## 0. Internal Audit Governance (ISO/IEC 42001:2023 Clause 9.2)
+
+### 0.1 Internal Audit Charter
+
+This section establishes the internal audit function for Hawkeye Sterling's AI Management System, satisfying ISO/IEC 42001:2023 clause 9.2 and FATF R.18 (internal audit and compliance).
+
+**Audit Scope:** All five AI systems (HS-001 through HS-005), their supporting data pipelines, governance documentation, human oversight controls, and compliance controls as defined in the AI Governance Policy (`docs/governance/AI_GOVERNANCE_POLICY.md`).
+
+**Audit Frequency:**
+- **Quarterly minimum:** MLRO-led internal audit covering model performance, bias metrics, charter compliance sampling, and audit chain integrity
+- **Annual comprehensive:** Full review of all AIMS controls, objectives, model cards, and governance documentation — feeds the annual certification (AI Governance Policy §8)
+- **Ad-hoc:** Triggered by any CRITICAL incident, material change to AI systems, or regulatory request
+
+**Independence:** The internal audit function reports to the MLRO. For matters involving the MLRO directly, the Compliance Officer chairs. External auditors may be invited for independence assurance on an annual basis.
+
+**Reporting Line:** Internal audit findings → MLRO → CEO → Board Risk Committee (material findings within 10 business days of audit completion).
+
+**Audit Authority:** This document, in conjunction with `docs/governance/AI_GOVERNANCE_POLICY.md`, constitutes the Internal Audit Charter for Hawkeye Sterling's AI Management System.
+
+### 0.2 Management Review Schedule
+
+In accordance with ISO/IEC 42001:2023 clause 9.3, the following management review cadences are established:
+
+| Review | Frequency | Chair | Inputs | Outputs |
+|---|---|---|---|---|
+| **Governance Committee Weekly** | Weekly (Friday 09:00 GST) | MLRO | Drift alerts, incident log, mode performance, upcoming changes | Minutes with action items; escalations to Board |
+| **Governance Committee Quarterly Summary** | Quarterly | MLRO | Full-quarter incident trends, KPI progress, compliance gap status, objectives review | Quarterly summary report to Board Risk Committee |
+| **Board Risk Committee Annual Review** | Annually (Q1) | Board Chair | Quarterly summaries, annual certification, external audit findings, objectives achievement | Board resolution on AI risk appetite, objectives for next year, resource allocation |
+| **Annual Certification Review** | Annually by 31 January | MLRO + CEO | All items listed in AI Governance Policy §8.1 | Signed annual certification (AI Governance Policy §8.2) |
+
+Governance committee quarterly summaries feed directly into the Board Risk Committee annual review per ISO/IEC 42001:2023 clause 9.3 (Management review). Action items from the Board are tracked in the governance committee minutes until closed. The Board Risk Committee's decisions on AI risk appetite changes require formal resolution and are recorded in board minutes.
+
+---
+
 ## 1. Emergency Contacts
 
 | Role | Name | Contact | Availability |
@@ -120,6 +154,18 @@ The following documents form the standard audit package for an AI governance ins
 
 - [ ] **ISO27001.md** — ISO 27001 compliance documentation
   - Location: `docs/ISO27001.md`
+
+- [ ] **STATEMENT_OF_APPLICABILITY.md** — ISO/IEC 42001:2023 Annex A control mapping
+  - Location: `docs/governance/STATEMENT_OF_APPLICABILITY.md`
+  - Owner: MLRO
+
+- [ ] **THIRD_PARTY_MANAGEMENT.md** — Vendor register for all data sources
+  - Location: `docs/operations/THIRD_PARTY_MANAGEMENT.md`
+  - Owner: Engineering Lead + MLRO
+
+- [ ] **STAKEHOLDER_FEEDBACK_LOG.md** — Interested parties feedback log
+  - Location: `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md`
+  - Owner: Compliance Officer
 
 ---
 

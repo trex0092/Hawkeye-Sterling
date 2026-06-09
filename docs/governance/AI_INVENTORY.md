@@ -17,7 +17,8 @@
 4. [HS-003 Adverse Media Analyser](#4-hs-003-adverse-media-analyser)
 5. [HS-004 MLRO Auto-Dispositioner](#5-hs-004-mlro-auto-dispositioner)
 6. [HS-005 STR/SAR Generator](#6-hs-005-strsар-generator)
-7. [Inventory Change Log](#7-inventory-change-log)
+7. [Competency and Training Requirements](#7-competency-and-training-requirements)
+8. [Inventory Change Log](#8-inventory-change-log)
 
 ---
 
@@ -26,6 +27,17 @@
 This document is the authoritative register of all AI systems deployed within the Hawkeye Sterling AML/CFT compliance platform. It is maintained in accordance with UAE Federal Decree-Law No. 10 of 2025 (FDL 10/2025) and the AI Governance Policy (`docs/governance/AI_GOVERNANCE_POLICY.md`).
 
 Each entry records: system identity, version, deployment status, technical architecture, data sources, output taxonomy, performance metrics, known limitations, human oversight requirements, and risk classification.
+
+### 1.1 AI System Context (ISO/IEC 42001:2023 Clause 5.3)
+
+| Context Dimension | Value |
+|---|---|
+| **Purpose of AI Deployment** | Regulatory decision-support for AML/CFT/CPF compliance — screening, analysis, narrative generation, and MLRO advisory. All AI outputs are decision support only; the MLRO makes every final compliance decision. |
+| **Governance Scope** | Five AI systems (HS-001 through HS-005) operating in production or controlled pilot status |
+| **Primary Stakeholders** | MLRO (accountability); Compliance Officer (oversight); Data Science Lead (model); Engineering Lead (infrastructure); CEO + Board Risk Committee (strategic) |
+| **Regulatory Context** | UAE FDL 10/2025 (AI governance, Art. 18 audit trail); FDL 20/2018 (AML/CFT offences); Cabinet Decision 74/2020 (TFS); FATF R.1, R.10, R.12, R.18; UAE PDPL |
+| **Human Oversight Requirement** | **Mandatory for all systems.** AI proposes; the MLRO decides. No system may autonomously file reports, freeze funds, or terminate relationships (charter P3). |
+| **Applicable ISO Standard** | ISO/IEC 42001:2023 (AI Management System) — this inventory is the AIMS AI System Inventory per Annex A.6.2.3 |
 
 ### System Summary
 
@@ -165,6 +177,16 @@ The engine supports all 35 disposition codes (D00–D35) as defined in `src/brai
 
 **MANDATORY.** No screening verdict may be actioned without MLRO review. The engine outputs decision support only. The MLRO dispositions every case. This requirement is non-negotiable and is enforced by the charter (prohibition P3) and RBAC controls.
 
+### 2.10 AI Objectives (ISO/IEC 42001:2023 Annex A.6.2.4)
+
+| Objective ID | Objective | Target | Measurement |
+|---|---|---|---|
+| HS001-OBJ-001 | False Negative Rate — missed sanctions/PEP matches | < 1% across validated cases | Brier ledger + MLRO ground-truth confirmation |
+| HS001-OBJ-002 | False Positive Rate — legitimate subjects incorrectly flagged | < 5% across all outputs | Monthly bias-monitor report |
+| HS001-OBJ-003 | Sanctions list freshness at time of screening | ≤ 24 hours | `/api/sanctions/status`; automated STALE alert |
+| HS001-OBJ-004 | Name-script bias ratio | ≤ 1.15 (internal); ≤ 1.5 (regulatory floor) | `bias-monitor.ts` per name-script group |
+| HS001-OBJ-005 | Charter compliance (no P1–P10 violations) | 0 undetected violations | Quarterly 50-sample MLRO audit |
+
 ---
 
 ## 3. HS-002 Reasoning Modes
@@ -268,6 +290,15 @@ Returns modes ranked by Brier score ascending (best-performing first). Reviewed 
 - Per-mode Brier scores require a minimum sample size (n ≥ 30) before being statistically reliable
 - Meta-cognition contradiction detection operates on the narrative text level; semantic contradiction in structured data fields requires additional validation
 
+### 3.10 AI Objectives (ISO/IEC 42001:2023 Annex A.6.2.4)
+
+| Objective ID | Objective | Target | Measurement |
+|---|---|---|---|
+| HS002-OBJ-001 | Mode Brier score (lower = better calibrated) | Mean Brier score < 0.25 across production modes | `GET /api/mlro/brier` |
+| HS002-OBJ-002 | Model drift score | ≤ 0.15 at all times | `GET /api/mlro/drift-alerts` |
+| HS002-OBJ-003 | MLRO override rate on Auto-Dispositioner proposals | ≤ 15% (alert threshold) | Override rate logged in governance committee minutes |
+| HS002-OBJ-004 | Modes with insufficient data (n < 30) | ≤ 10% of active modes | Mode performance leaderboard |
+
 ---
 
 ## 4. HS-003 Adverse Media Analyser
@@ -364,6 +395,15 @@ The canonical search query (`ADVERSE_MEDIA_QUERY` in `src/brain/adverse-media.ts
 
 All adverse-media findings require MLRO review before inclusion in a disposition decision. The analyser classifies and ranks; it does not dispose. Unresolved adverse-media findings must be resolved within 5 business days per the risk appetite framework.
 
+### 4.12 AI Objectives (ISO/IEC 42001:2023 Annex A.6.2.4)
+
+| Objective ID | Objective | Target | Measurement |
+|---|---|---|---|
+| HS003-OBJ-001 | Adverse media false positive rate | ≤ 3.5% (baseline 3.2%) | Validated sample review — quarterly |
+| HS003-OBJ-002 | Refresh latency (NewsAPI/CSE) | < 5 minutes | API response timestamp monitoring |
+| HS003-OBJ-003 | Unresolved adverse-media findings | ≤ 5% open beyond 5 business days | MLRO case log |
+| HS003-OBJ-004 | Multilingual coverage (languages with active keyword packs) | ≥ 6 languages | Language pack audit — annual |
+
 ---
 
 ## 5. HS-004 MLRO Auto-Dispositioner
@@ -444,6 +484,14 @@ The Auto-Dispositioner automatically outputs `ESCALATE` (suppressing any disposi
 - `charterAllowed: false`
 - `structuralIssues.length > 0`
 - Any fired redline ID matching confirmed sanctions patterns
+
+### 5.8 AI Objectives (ISO/IEC 42001:2023 Annex A.6.2.4)
+
+| Objective ID | Objective | Target | Measurement |
+|---|---|---|---|
+| HS004-OBJ-001 | MLRO override rate (pilot phase) | ≤ 15% (alert threshold); investigate if > 25% | Override rate logged at governance committee |
+| HS004-OBJ-002 | Escalation coverage (confidence < 65% always escalates) | 100% — zero bypass | Hard gate in `applyConfidenceGate()`; gate tests PASS |
+| HS004-OBJ-003 | Pilot → Production readiness review | 90-day post-pilot review before promotion | Board approval required per §5.3 constraint 2 |
 
 ---
 
@@ -534,9 +582,49 @@ No technical mechanism exists to bypass this gate in production. Any attempt to 
 - SFTP transport requires manually managed server credentials; certificate rotation is a manual process
 - Stub transport is the default in non-production environments; operators must explicitly configure the HTTPS transport in production
 
+### 6.9 AI Objectives (ISO/IEC 42001:2023 Annex A.6.2.4)
+
+| Objective ID | Objective | Target | Measurement |
+|---|---|---|---|
+| HS005-OBJ-001 | STR/SAR filing SLA compliance | ≤ 1% SLA breaches (statutory ASAP; internal target 24h) | Filing timestamp audit log |
+| HS005-OBJ-002 | FFR filing SLA compliance | 0% SLA breaches — zero tolerance | Filing timestamp audit log |
+| HS005-OBJ-003 | Tipping-off guard coverage | 0 undetected tipping-off phrases in production outputs | Tipping-off guard test suite PASS; MLRO review on each STR |
+| HS005-OBJ-004 | goAML submission success rate | ≥ 99.9% | Submission receipt audit log |
+
 ---
 
-## 7. Inventory Change Log
+## 7. Competency and Training Requirements (ISO/IEC 42001:2023 Clause 7.2)
+
+This section documents the competency requirements for personnel operating, maintaining, and overseeing Hawkeye Sterling's AI systems, satisfying ISO/IEC 42001:2023 Clause 7.2 (Competence).
+
+### 7.1 Competency Requirements by Role
+
+| Role | Required Competencies | Verification Method | Review Cadence |
+|---|---|---|---|
+| **MLRO** | AML/CFT regulatory knowledge (UAE FDL 10/2025, FDL 20/2018, FATF); AI governance principles (ISO 42001); ability to interpret screening outputs, confidence taxonomy, and mode performance; disposition workflow (D00–D35); tipping-off risk identification | MLRO certification or equivalent; annual governance certification (§8); charter competency attestation | Annual |
+| **Compliance Officer** | AML/CFT compliance programme oversight; AI performance KPI interpretation; governance committee procedures; incident management | Internal training record; governance committee attendance log | Annual |
+| **Data Science Lead** | Model validation and drift monitoring; Brier score analysis; fairness testing methodology; bias monitor interpretation; model card authorship; reasoning mode categorisation | Model card sign-off; drift analysis reports; quarterly fairness audit | Quarterly |
+| **Engineering Lead** | AI system deployment and rollback procedures; audit chain integrity verification (HMAC); circuit breaker operation; cron health monitoring; HMAC key management; incident response (technical) | Pre-deployment checklist completion; incident response participation; quarterly DR test | Quarterly |
+| **All staff with pipeline access** | Data protection (UAE PDPL); tipping-off prohibition (FDL 20/2018 Art. 25); RBAC and need-to-know principles; incident reporting obligations | Annual AI governance awareness training; PDPL refresher | Annual |
+
+### 7.2 Training Records
+
+Training completion records are maintained by the Compliance Officer and reviewed at the Annual Certification process (AI Governance Policy §8.1). Evidence of training must be available for regulatory inspection.
+
+| Training Programme | Target Audience | Frequency | Evidence |
+|---|---|---|---|
+| AI Governance Policy orientation | All staff with pipeline access | On-boarding + annually | Signed acknowledgement |
+| AML/CFT regulatory update | MLRO, Compliance Officer, Data Science Lead | Annually (or on material regulatory change) | Training attendance record |
+| Model governance and drift monitoring | Data Science Lead, Engineering Lead | Annually | Competency assessment |
+| Technical operations (cron, audit chain, circuit breakers) | Engineering Lead | Annually | Competency assessment |
+| Data protection (PDPL / GDPR) | All staff | Annually | Training completion certificate |
+| Incident response simulation | MLRO, Engineering Lead, Data Science Lead | Annually | Drill report |
+
+*Training records are retained for 10 years per FDL 10/2025 Art. 24 (record class: `audit_report`).*
+
+---
+
+## 8. Inventory Change Log
 
 | Date | System | Change | Version | Approved By |
 |---|---|---|---|---|

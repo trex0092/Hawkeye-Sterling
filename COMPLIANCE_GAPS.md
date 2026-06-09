@@ -1,6 +1,10 @@
-# Hawkeye Sterling — Compliance Gaps
+# Hawkeye Sterling — Compliance Gaps and CAPA Register
+
+**Document ID:** HS-CAPA-001  
 **Date:** 2026-06-04 (last updated)  
-**Status:** Items marked CLOSED have been addressed in code. Items marked Open require an explicit human or MLRO decision before they can be considered resolved.
+**ISO 42001 Classification:** CAPA Register — ISO/IEC 42001:2023 Clause 8.5.2 (Nonconformity and Corrective Action)  
+**Status:** Items marked CLOSED have been addressed in code. Items marked Open require an explicit human or MLRO decision before they can be considered resolved.  
+**Effectiveness Check:** Each closed item includes root-cause analysis and corrective action evidence. Items are re-evaluated quarterly for recurrence at the governance committee.
 
 ---
 
@@ -247,6 +251,62 @@ The hard safety rail is enforced in code: `FATF_BIAS_RATIO_FLOOR = 1.5` in `web/
 
 ---
 
+## Improvement Initiatives — ISO/IEC 42001:2023 Clause 10.3
+
+The following table maps each resolved compliance gap and security fix to the AI management system improvement it delivers, satisfying the continual improvement documentation requirement of ISO/IEC 42001:2023 Clause 10.3.
+
+| Item ID | Root Cause | Corrective Action | Improvement Delivered | Effectiveness Evidence |
+|---|---|---|---|---|
+| CG-1 | Anonymous access permitted on screening route | `enforce(req, { requireAuth: true })` + CI auth-coverage gate | All screening actions traceable to authenticated operator identity | CI gate passes on every PR |
+| CG-2 | No documented false-positive disambiguation mechanism | Whitelist API + tamper-evident audit trail; CO+MLRO workflow | Documented disambiguation basis for every "no match" determination; Cabinet Decision 74/2020 satisfied | MLRO-approved workflow; audit trail confirmed |
+| CG-3 | Risk-tier cadences insufficient for minimum screening frequency | Global 3×/day floor; hourly cron; per-subject Asana reports | All customers screened ≥3×/day; FATF R.10/R.12 satisfied | Unit tests PASS; 3 Asana reports per subject per day |
+| CG-4 | Invalid goAML Rentity IDs in default config | Operator-confirmed IDs (HS1–HS6) hardcoded via `HS_DEFAULTS`; placeholder guard | Valid reporting entity identifiers in all filings; UAE FIU rejection risk eliminated | Placeholder guard active; operator attestation on file |
+| CG-5 | Google Fonts CDN caused UAE PDPL cross-border transfer | Migrated to `fonts.bunny.net` (GDPR/PDPL-compliant, EU-hosted) | No personal data transferred to Google; PDPL compliance restored | Zero `fonts.googleapis.com` references (grep confirmed) |
+| CG-6 | Netlify Blobs lacks 10-year WORM retention guarantee | Operator retention decision; WORM S3 upgrade path implemented | Audit records durably retained; WORM upgrade available without further development | `audit-chain-s3-backup.mts` ready; operator attestation |
+| CG-7 | Egress gate not wired to all narrative-generating routes | `runEgressCheck()` added to `/api/goaml` and `/api/sar-report` | 100% of regulatory narrative routes protected; FDL 10/2025 Art. 17 satisfied | Tipping-off guard tests PASS; MLRO scope review confirmed |
+| CG-8 | HSTS preload ineffective without hstspreload.org submission | Confirmed `*.netlify.app` already preloaded by Netlify | First-visit HTTPS enforcement active; no operator action required | Chrome/Firefox HSTS preload list: `netlify.app` entry confirmed |
+| CG-9 | Regulatory filing routes accepted any API key (no RBAC) | `requireRole()` RBAC middleware wired to SAR, goAML, four-eyes, ai-override | Only MLRO/CO/admin roles can generate regulatory filings or override AI decisions | Role gate tests PASS; CI security audit passes |
+| CG-GOV-001 | 338 of 463 reasoning modes had `0.0.0-pending` version | All modes given explicit version pins; `check-mode-versions.mjs` CI gate | Every reasoning mode has auditable version identity; FDL 10/2025 Art. 16/FATF R.18 satisfied | CI gate PASS; `getMissingVersionPins()` returns empty |
+| CG-BIAS-001 | Regulatory floor (1.5) not matched to internal early-warning | Bias threshold set to 1.15 (stricter); FATF floor hard-coded as unbreakable ceiling | Earlier bias detection; margin of safety before regulatory breach | `FATF_BIAS_RATIO_FLOOR = 1.5` enforced in code; MLRO acknowledgement on file |
+| Fix-1.x–3.1 | Multiple attack surfaces in Phase 1–3 security review | 15 specific fixes: auth, rate limiting, PII exposure, path traversal, SAST, JWT, hallucination gate, dependency | Reduced attack surface; SAST blocks CI on ERROR findings; all tests pass | `npm run typecheck` + `npx vitest run`: zero errors, all tests PASS |
+
+---
+
+---
+
+## CG-ISO-001 — ISO/IEC 42001:2023 Statement of Applicability missing
+
+**Risk:** HIGH (certification / audit readiness)  
+**Status:** CLOSED (2026-06-09)
+
+**Description:** ISO/IEC 42001:2023 requires a Statement of Applicability (SOA) mapping all Annex A control objectives (A.5–A.12) to implemented controls. No SOA existed.
+
+**Resolution:** `docs/governance/STATEMENT_OF_APPLICABILITY.md` created — maps all applicable ISO 42001:2023 Annex A controls to evidence locations in the codebase and documentation. Two control areas excluded with documented justification (AI system sale to third parties; autonomous physical actions).
+
+---
+
+## CG-ISO-002 — Third-Party Management Records missing
+
+**Risk:** HIGH (supply chain risk — ISO 42001 Clause 8.4; FATF R.1)  
+**Status:** CLOSED (2026-06-09)
+
+**Description:** No formal vendor register existed for the 10+ data sources (UN, OFAC, OpenSanctions, NewsAPI, GDELT, etc.) that feed the AI screening pipeline. SLAs, contingency plans, and DPA status were undocumented as a unified register.
+
+**Resolution:** `docs/operations/THIRD_PARTY_MANAGEMENT.md` created — registers 11 vendors (V-001 through V-011) with risk classification, SLA targets, breach escalation procedures, contingency plans, and DPA status.
+
+---
+
+## CG-ISO-003 — Stakeholder Feedback Records missing
+
+**Risk:** MEDIUM (ISO 42001 Clause 4.2 — interested parties)  
+**Status:** CLOSED (2026-06-09)
+
+**Description:** No formal mechanism existed for collecting, recording, and responding to feedback from interested parties (MLRO, regulatory bodies, external auditors, customers).
+
+**Resolution:** `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md` created — defines 7 feedback collection channels, log format, response procedure, escalation rules, and quarterly review process. Initial log entries seeded from governance committee inaugural meeting.
+
+---
+
 ## Resolution Checklist
 
 | ID | Owner | Target Date | Status |
@@ -262,3 +322,6 @@ The hard safety rail is enforced in code: `FATF_BIAS_RATIO_FLOOR = 1.5` in `web/
 | CG-9 | Engineering | 2026-05-27 | CLOSED — requireRole() RBAC wired to SAR, goAML, four-eyes, ai-override |
 | CG-GOV-001 | MLRO / CO | 2026-05-31 | CLOSED — all 463 modes have explicit version pins; CI gate passes |
 | CG-BIAS-001 | MLRO | 2026-06-04 | CLOSED — MLRO acknowledgement recorded; 1.5 floor enforced in code |
+| CG-ISO-001 | MLRO / Engineering | 2026-06-09 | CLOSED — Statement of Applicability created at `docs/governance/STATEMENT_OF_APPLICABILITY.md` |
+| CG-ISO-002 | Engineering Lead | 2026-06-09 | CLOSED — Third-Party Management register created at `docs/operations/THIRD_PARTY_MANAGEMENT.md` |
+| CG-ISO-003 | Compliance Officer | 2026-06-09 | CLOSED — Stakeholder Feedback Log created at `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md` |

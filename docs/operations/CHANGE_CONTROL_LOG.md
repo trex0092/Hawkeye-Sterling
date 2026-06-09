@@ -37,6 +37,7 @@ Every entry is append-only. No entry may be modified or deleted after approval. 
 | **Approved By** | MLRO (required for any mode, charter, or governance change) |
 | **PR / Commit** | GitHub PR number or commit SHA |
 | **Test Results** | Pass/fail summary and link to test run |
+| **Improvement Driver** | *(Optional — ISO 42001 Clause 10.3)* The improvement trigger for this change: e.g., `CG-3 mandate`, `MLRO feedback`, `governance committee recommendation`, `regulatory update`, `post-incident finding`. Existing entries prior to 2026-06-09 may have `—` for this field. |
 
 ---
 

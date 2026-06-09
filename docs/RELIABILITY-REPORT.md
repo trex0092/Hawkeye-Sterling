@@ -74,6 +74,22 @@ behaviour for each is documented in
 
 ## 4. Single points of failure
 
+### 4.1 Recovery Procedures
+
+The following procedures define recovery actions for each SPOF, along with RTO/RPO targets and the quarterly DR test schedule.
+
+| System | RTO | RPO | Recovery Steps |
+|---|---|---|---|
+| **Netlify Blobs** | < 5 min (degraded mode) | 36 h (sanctions stale threshold) | (1) `candidates-loader.ts` auto-detects Blobs unavailable and falls back to seed corpus. (2) Engineering Lead verifies Netlify Blobs health via Netlify dashboard. (3) Manually trigger `POST /api/sanctions/ingest` to refresh lists once Blobs are healthy. (4) Alert MLRO if fallback exceeds 36 hours. |
+| **Anthropic API** | < 15 min (graceful degrade) | N/A — stateless LLM | (1) All LLM call sites catch errors and degrade to deterministic rule-based output. (2) Engineering Lead verifies API status at `status.anthropic.com`. (3) `llm-fallback.ts` routes to Groq cost-fallback if configured. (4) MLRO is notified if AI advisory is unavailable for > 30 min. |
+| **Netlify Scheduled Functions** | < 1 h | < 24 h (next scheduled run) | (1) `fireAlert()` webhook fires on any cron failure. (2) Engineering Lead triggers manual execution: `POST /api/sanctions/ingest` (sanctions), `POST /api/ongoing/run` (monitoring). (3) Verify via `/api/sanctions/status` that lists are fresh. |
+| **Audit Chain** | < 24 h | < 24 h (last nightly backup) | (1) Restore from S3 backup (`netlify/functions/audit-chain-s3-backup.mts`). (2) Run `/api/audit/verify` to validate HMAC chain integrity. (3) Document any gap in audit chain in incident log. |
+| **AUDIT_CHAIN_SECRET rotation** | Planned maintenance only | N/A | (1) New secret written alongside old (dual-key window). (2) `keyId` field on new entries identifies the active key. (3) Verifier reads both secrets until all pre-rotation entries are past their retention period. |
+
+**Escalation on SPOF event:** MLRO notified within 1 hour of any CRITICAL SPOF. Board Risk Committee notified within 24 hours if SPOF results in screening being unavailable for > 4 hours or audit chain integrity being uncertain.
+
+**DR Test Schedule:** Recovery procedures are tested quarterly (January, April, July, October). Test results are recorded in the governance committee minutes and any gaps are tracked in `COMPLIANCE_GAPS.md`.
+
 The following are SPOFs by design (their failure is operationally
 recoverable, not technically prevented):
 
