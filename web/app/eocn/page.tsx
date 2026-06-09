@@ -523,16 +523,6 @@ export default function EocnPage() {
               Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            title="Refresh list"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-green/40 text-11 font-mono font-semibold text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
-          >
-            <span className="text-13 leading-none">↻</span>
-            <span className="uppercase tracking-wide-2">{refreshing ? "Refreshing…" : "Refresh"}</span>
-          </button>
         </div>
       </div>
 

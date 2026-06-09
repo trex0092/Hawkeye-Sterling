@@ -212,15 +212,9 @@ export default function SarQaPage() {
         />
 
 
-        <div className="mt-4 flex items-center justify-end gap-3">
-          {aiScoreError && (
-            <span className="text-11 text-red">{aiScoreError}</span>
-          )}
-          <button type="button" onClick={() => void runAiQa()} disabled={aiScoreLoading || cases.length === 0}
-            className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40">
-            {aiScoreLoading ? "Scoring…" : "✦AI"}
-          </button>
-        </div>
+        {aiScoreError && (
+          <div className="mt-4 text-11 text-red text-right">{aiScoreError}</div>
+        )}
 
         <div className="mt-6 space-y-3">
           {cases.length === 0 ? (

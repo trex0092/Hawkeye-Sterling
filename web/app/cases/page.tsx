@@ -200,13 +200,6 @@ export default function CasesPage() {
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
           <div className="flex items-start justify-between mb-0">
             <CasesHero />
-            <div className="mt-1 flex items-center gap-2">
-              <button type="button" onClick={() => void runBatchTriage()} disabled={triageLoading || cases.length === 0}
-                className="inline-flex items-center gap-1.5 text-11 font-semibold px-3 py-1.5 rounded border border-brand/40 bg-brand-dim text-brand hover:bg-brand/20 disabled:opacity-40">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" style={{ animation: "live-pulse 2s ease-in-out infinite" }} />
-                {triageLoading ? "Triaging…" : "✦AI"}
-              </button>
-            </div>
           </div>
           <CasesToolbar query={query} onQueryChange={setQuery} />
           {triageError && (
