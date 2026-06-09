@@ -346,7 +346,7 @@ export default function EntityGraphPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="entity-graph" asanaLabel="Entity Graph" engineLabel="Entity Intelligence">
+    <ModuleLayout asanaModule="entity-graph" asanaLabel="Entity Graph" engineLabel="Entity Intelligence" onRun={() => void search()}>
       <ModuleHero
         eyebrow=""
         title="Corporate Entity"

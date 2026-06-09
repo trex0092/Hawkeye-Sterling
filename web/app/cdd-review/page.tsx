@@ -726,6 +726,9 @@ export default function CddReviewPage() {
     <ModuleLayout
       asanaModule="cdd-review"
       asanaLabel="CDD Review"
+      onCsv={() => exportCsv(sorted)}
+      onRun={() => void runEddCompleteness()}
+      onAdd={() => { setDraft(BLANK); document.querySelector<HTMLElement>("[data-cdd-add-form]")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
       sidebarActions={
         <ActionButton
           variant="ai"
@@ -1797,7 +1800,7 @@ export default function CddReviewPage() {
       </div>
 
       {/* ── Section 4: Add Subject Form ── */}
-      <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
+      <div data-cdd-add-form className="bg-bg-panel border border-hair-2 rounded-lg p-4 mt-6">
         <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">Add subject to review register</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="flex flex-col gap-1">

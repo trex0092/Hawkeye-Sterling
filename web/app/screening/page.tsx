@@ -1361,7 +1361,7 @@ export default function ScreeningPage() {
   return (
     <>
       <Header />
-      <ModuleActionBar asanaModule="screening" asanaLabel="Screening" />
+      <ModuleActionBar asanaModule="screening" asanaLabel="Screening" onCsv={exportFilteredCsv} onRun={() => void runBulkRescreen()} onAdd={() => setFormOpen(true)} />
       <div className={`grid min-h-[calc(100vh-84px)] grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line${(selected || compareIds.size === 2) && !formOpen ? " lg:grid-cols-[220px_1fr_480px]" : ""}`}>
         <div className="hidden md:block">
           <Sidebar />

@@ -170,7 +170,7 @@ export default function BatchScreeningPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="batch-screening" asanaLabel="Batch Screening">
+    <ModuleLayout asanaModule="batch-screening" asanaLabel="Batch Screening" onRun={() => void run()}>
       <div className="mb-6 border-b-2 border-ink-0 pb-4">
         <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">
           <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />

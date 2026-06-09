@@ -178,7 +178,7 @@ export default function SarQaPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="sar-qa" asanaLabel="SAR Quality Assurance">
+    <ModuleLayout asanaModule="sar-qa" asanaLabel="SAR Quality Assurance" onRun={() => void _runAiQa()}>
         <ModuleHero
 
           eyebrow=""

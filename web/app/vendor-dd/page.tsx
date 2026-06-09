@@ -187,6 +187,7 @@ export default function SupplierDdPage() {
     <ModuleLayout
       asanaModule="vendor-dd"
       asanaLabel="Vendor Due Diligence"
+      onAdd={() => { setShowForm(true); setForm(EMPTY_FORM); }}
       sidebarActions={
         <ActionButton
           variant="add"
