@@ -358,7 +358,7 @@ export default function PredictiveRiskPage() {
     "w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand";
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onRun={() => void runScore()}>
       <ModuleHero
         eyebrow=""
         title="Predictive Risk Scoring"

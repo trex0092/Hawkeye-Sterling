@@ -119,7 +119,7 @@ export default function DataQualityPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality">
+    <ModuleLayout asanaModule="data-quality" asanaLabel="Data Quality" onRun={() => void generatePlan()}>
         <ModuleHero
 
           eyebrow=""

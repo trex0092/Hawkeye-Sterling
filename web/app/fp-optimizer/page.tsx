@@ -151,7 +151,7 @@ export default function FpOptimizerPage() {
   const kpiThresholds = analysisResult ? String(analysisResult.thresholdSuggestions.length) : "—";
 
   return (
-    <ModuleLayout engineLabel="ML FP Optimizer">
+    <ModuleLayout engineLabel="ML FP Optimizer" onRun={() => void analyzePatterns()}>
       <ModuleHero
         eyebrow=""
         title="False Positive"

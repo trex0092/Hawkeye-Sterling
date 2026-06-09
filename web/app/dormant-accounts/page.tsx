@@ -198,7 +198,7 @@ export default function DormantAccountsPage() {
 
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onRun={() => void fetchAccounts()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Dormant Account"

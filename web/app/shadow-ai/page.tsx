@@ -147,6 +147,7 @@ export default function ShadowAIPage() {
 
   return (
     <ModuleLayout
+      onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "Report Shadow AI"}

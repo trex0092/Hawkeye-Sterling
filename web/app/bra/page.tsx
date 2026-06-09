@@ -117,7 +117,7 @@ export default function BraPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Business Risk"

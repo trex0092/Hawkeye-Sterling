@@ -721,7 +721,7 @@ export default function AIGovernancePage() {
   }
 
   return (
-    <ModuleLayout asanaModule="ai-governance" asanaLabel="AI Governance Framework">
+    <ModuleLayout asanaModule="ai-governance" asanaLabel="AI Governance Framework" onRun={() => void runGap()}>
       <ModuleHero eyebrow="Governance & Audit" title="AI Governance" titleEm="Framework." />
 
       {/* Tab bar */}
