@@ -185,10 +185,8 @@ export default function PlaybookPage() {
         <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-3">
           <span className="text-14">🎯</span>
           <span className="text-13 font-semibold text-ink-0">Scenario Simulator</span>
-          <span className="text-10 font-mono text-ink-3">AML scenario analysis</span>
           <span className="text-ink-3 text-12 mx-1">·</span>
           <span className="text-13 font-semibold text-ink-0">Ask the Playbook</span>
-          <span className="text-10 font-mono text-ink-3">compliance Q&amp;A</span>
         </div>
         <div className="p-4 space-y-3">
           <textarea

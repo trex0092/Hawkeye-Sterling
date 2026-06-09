@@ -945,27 +945,6 @@ export default function TypologyLibraryPage() {
         </div>
       </div>
 
-      {/* Sector Filter Chips */}
-      <div className="mb-6">
-        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Sector</div>
-        <div className="flex flex-wrap gap-2">
-          {FILTER_CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => handleFilterClick(cat.key)}
-              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
-                activeFilter === cat.key
-                  ? "bg-brand text-white border-brand"
-                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Results */}
       {loading && (
         <div className="flex items-center justify-center py-16">
