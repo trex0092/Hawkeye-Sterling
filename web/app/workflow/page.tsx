@@ -762,7 +762,7 @@ export default function WorkflowPage() {
   };
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="workflow" asanaLabel="Workflow">
       {/* Modals */}
       {showNewForm && (
         <RuleFormModal

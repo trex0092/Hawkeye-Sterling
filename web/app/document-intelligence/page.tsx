@@ -555,7 +555,7 @@ export default function DocumentIntelligencePage() {
   const [activeTab, setActiveTab] = useState<Tab>("Document Analysis");
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="document-intelligence" asanaLabel="Document Intelligence">
       <div className="p-6 max-w-5xl mx-auto">
         <ModuleHero
           eyebrow=""

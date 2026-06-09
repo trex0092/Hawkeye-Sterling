@@ -166,6 +166,8 @@ export default function AIIncidentPlaybookPage() {
 
   return (
     <ModuleLayout
+      asanaModule="ai-incident-playbook"
+      asanaLabel="AI Incident Log"
       onRun={() => void fetchIncidents()}
       onAdd={() => setShowForm(true)}
       sidebarActions={

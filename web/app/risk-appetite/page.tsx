@@ -202,7 +202,7 @@ export default function RiskAppetitePage() {
     : 0;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="risk-appetite" asanaLabel="Risk Appetite" onRun={() => void fetchConfig()}>
       <div className="p-6 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">

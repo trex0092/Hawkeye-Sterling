@@ -181,6 +181,8 @@ export default function PKycPage() {
 
   return (
     <ModuleLayout
+      asanaModule="pkyc"
+      asanaLabel="Perpetual KYC"
       onAdd={() => setShowEnroll(true)}
       onRun={handleRunAll}
     >

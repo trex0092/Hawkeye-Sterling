@@ -4,7 +4,7 @@ export const metadata = { title: "Contact Us — Hawkeye Sterling" };
 
 export default function ContactPage() {
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="contact" asanaLabel="Contact">
       <ModuleHero
         eyebrow=""
         title="Contact"

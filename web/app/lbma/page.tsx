@@ -91,7 +91,7 @@ export default function LbmaPage() {
   }
 
   return (
-    <ModuleLayout onRun={() => void load()} onAdd={() => setShowForm(true)}>
+    <ModuleLayout asanaModule="lbma" asanaLabel="LBMA Responsible Gold" onRun={() => void load()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="LBMA Responsible Gold"

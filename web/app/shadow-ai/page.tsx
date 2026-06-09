@@ -147,6 +147,9 @@ export default function ShadowAIPage() {
 
   return (
     <ModuleLayout
+      asanaModule="shadow-ai"
+      asanaLabel="Shadow AI Monitor"
+      onRun={() => void fetchEntries()}
       onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>

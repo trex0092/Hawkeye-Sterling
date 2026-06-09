@@ -578,7 +578,7 @@ export default function RegulatoryFilingPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="regulatory-filing" asanaLabel="Regulatory Filing">
       <div className="px-6 py-6 max-w-[900px]">
         <ModuleHero
           eyebrow=""

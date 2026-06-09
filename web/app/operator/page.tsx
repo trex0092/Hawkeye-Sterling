@@ -141,7 +141,7 @@ export default function OperatorConsolePage() {
   }, [entries, stats.errors]);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="operator" asanaLabel="Operator Settings">
       <ModuleHero
         eyebrow=""
         title="Operator Console"

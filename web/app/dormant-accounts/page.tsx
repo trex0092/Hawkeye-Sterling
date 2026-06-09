@@ -198,7 +198,7 @@ export default function DormantAccountsPage() {
 
 
   return (
-    <ModuleLayout onRun={() => void fetchAccounts()} onAdd={() => setShowForm(true)}>
+    <ModuleLayout asanaModule="dormant-accounts" asanaLabel="Dormant Accounts" onRun={() => void fetchAccounts()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Dormant Account"

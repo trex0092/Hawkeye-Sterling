@@ -4,7 +4,7 @@ export const metadata = { title: "Privacy Policy — Hawkeye Sterling" };
 
 export default function PrivacyPage() {
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="privacy" asanaLabel="Privacy">
       <ModuleHero
         eyebrow=""
         title="Privacy"

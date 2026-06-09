@@ -135,7 +135,7 @@ export default function BoardDashboardPage() {
   }, []);
 
   return (
-    <ModuleLayout engineLabel="Board View" onRun={() => void load()}>
+    <ModuleLayout asanaModule="board-dashboard" asanaLabel="Board Dashboard" engineLabel="Board View" onRun={() => void load()}>
       <ModuleHero
         eyebrow=""
         title="Board"

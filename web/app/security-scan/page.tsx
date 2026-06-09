@@ -125,7 +125,7 @@ export default function SecurityScanPage() {
   const statusIcon = result?.status === "PASSED" ? "✅" : result?.status === "ATTENTION" ? "⚠️" : result?.status === "FAILED" ? "❌" : "🔍";
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="security-scan" asanaLabel="Security Scan" onRun={() => void runScan()}>
       <ModuleHero
         eyebrow={`🛡️ Hawkeye Security Suite — ${statusIcon} ${statusLabel}`}
         title="Platform Security Scan"

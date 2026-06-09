@@ -258,7 +258,7 @@ export default function TrainingTrackerPage() {
     }`;
 
   return (
-    <ModuleLayout onAdd={() => document.querySelector<HTMLElement>("[data-training-add-form] input")?.focus()}>
+    <ModuleLayout asanaModule="training-tracker" asanaLabel="Training Tracker" onAdd={() => document.querySelector<HTMLElement>("[data-training-add-form] input")?.focus()}>
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">

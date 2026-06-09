@@ -568,6 +568,8 @@ export default function EsgRiskPage() {
 
   return (
     <ModuleLayout
+      asanaModule="esg-risk"
+      asanaLabel="ESG Risk"
       engineLabel="ESG risk engine"
       onRun={() => void generate()}
       sidebarActions={

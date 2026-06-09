@@ -107,9 +107,48 @@ function projectGidForModule(module: string): string {
     case "grievances-whistleblowing":
       return asanaGids.incidents();
     case "analyst-behavior":
+    case "board-dashboard":
+    case "env-check":
+    case "fp-optimizer":
+    case "gdpr":
+    case "operator":
+    case "privacy":
+    case "risk-appetite":
+    case "rmap":
+    case "security-scan":
+    case "shadow-ai":
+    case "system-card":
+    case "system-status":
+    case "vendor-ai-audit":
+    case "webhooks":
       return asanaGids.governance();
     case "intel-status":
+    case "comtrade":
+    case "geopolitical":
       return asanaGids.mlro();
+    case "ai-incident-playbook":
+      return asanaGids.incidents();
+    case "lbma":
+      return asanaGids.supplyChain();
+    case "pkyc":
+    case "document-intelligence":
+      return asanaGids.kyc();
+    case "training-tracker":
+      return asanaGids.training();
+    case "tm-rules":
+      return asanaGids.tm();
+    case "audit-findings":
+    case "bra":
+    case "coi-register":
+    case "dormant-accounts":
+    case "esg-risk":
+    case "outsourcing-register":
+    case "pnmr":
+    case "predictive-risk":
+    case "regulatory-filing":
+    case "voluntary-disclosure":
+    case "workflow":
+      return asanaGids.complianceOps();
     default:
       return asanaGids.master();
   }
@@ -220,6 +259,42 @@ const MODULE_LABELS: Record<string, string> = {
   "analyst-behavior":       "UEBA — Analyst Behaviour Analytics",
   "intel-status":           "Intelligence Source Health",
   "admin-tenants":          "Tenant Administration",
+  // Additional modules
+  "ai-incident-playbook":   "AI Incident Log",
+  "audit-findings":         "Audit Findings",
+  "board-dashboard":        "Board Dashboard",
+  bra:                      "Business Risk Assessment",
+  "coi-register":           "COI Register",
+  comtrade:                 "COMTRADE Trade Intelligence",
+  contact:                  "Contact",
+  "document-intelligence":  "Document Intelligence",
+  "dormant-accounts":       "Dormant Accounts",
+  "env-check":              "Environment Check",
+  "esg-risk":               "ESG Risk",
+  "fp-optimizer":           "False Positive Optimizer",
+  functions:                "Functions",
+  gdpr:                     "GDPR / PDPL",
+  geopolitical:             "Geopolitical Intelligence",
+  lbma:                     "LBMA Responsible Gold",
+  operator:                 "Operator Settings",
+  "outsourcing-register":   "Outsourcing Register",
+  pkyc:                     "Perpetual KYC",
+  pnmr:                     "PNMR Filing",
+  "predictive-risk":        "Predictive Risk",
+  privacy:                  "Privacy",
+  "regulatory-filing":      "Regulatory Filing",
+  "risk-appetite":          "Risk Appetite",
+  rmap:                     "RMAP Smelter Database",
+  "security-scan":          "Security Scan",
+  "shadow-ai":              "Shadow AI Monitor",
+  "system-card":            "AI System Card",
+  "system-status":          "System Status",
+  "tm-rules":               "TM Rule Management",
+  "training-tracker":       "Training Tracker",
+  "vendor-ai-audit":        "Vendor AI Audit",
+  "voluntary-disclosure":   "Voluntary Disclosure",
+  webhooks:                 "Webhooks",
+  workflow:                 "Workflow",
 };
 
 // Project board label — shown in the Asana task notes.
@@ -305,6 +380,41 @@ const PROJECT_BOARD: Record<string, string> = {
   "analyst-behavior":       "13 · Compliance Governance",
   "intel-status":           "15 · MLRO Workbench",
   "admin-tenants":          "00 · Master Inbox",
+  "ai-incident-playbook":   "19 · Incidents & Grievances",
+  "audit-findings":         "09 · Compliance Ops — Daily & Weekly Tasks",
+  "board-dashboard":        "13 · Compliance Governance",
+  bra:                      "09 · Compliance Ops — Daily & Weekly Tasks",
+  "coi-register":           "09 · Compliance Ops — Daily & Weekly Tasks",
+  comtrade:                 "15 · MLRO Workbench",
+  contact:                  "00 · Master Inbox",
+  "document-intelligence":  "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  "dormant-accounts":       "09 · Compliance Ops — Daily & Weekly Tasks",
+  "env-check":              "13 · Compliance Governance",
+  "esg-risk":               "09 · Compliance Ops — Daily & Weekly Tasks",
+  "fp-optimizer":           "01 · Screening — Sanctions & Adverse Media",
+  functions:                "00 · Master Inbox",
+  gdpr:                     "13 · Compliance Governance",
+  geopolitical:             "15 · MLRO Workbench",
+  lbma:                     "16 · Supply Chain, ESG & LBMA Gold",
+  operator:                 "13 · Compliance Governance",
+  "outsourcing-register":   "09 · Compliance Ops — Daily & Weekly Tasks",
+  pkyc:                     "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
+  pnmr:                     "05 · STR/SAR/CTR/PMR GoAML Filings",
+  "predictive-risk":        "09 · Compliance Ops — Daily & Weekly Tasks",
+  privacy:                  "13 · Compliance Governance",
+  "regulatory-filing":      "09 · Compliance Ops — Daily & Weekly Tasks",
+  "risk-appetite":          "13 · Compliance Governance",
+  rmap:                     "16 · Supply Chain, ESG & LBMA Gold",
+  "security-scan":          "13 · Compliance Governance",
+  "shadow-ai":              "13 · Compliance Governance",
+  "system-card":            "13 · Compliance Governance",
+  "system-status":          "13 · Compliance Governance",
+  "tm-rules":               "08 · Transaction Monitoring",
+  "training-tracker":       "12 · Training",
+  "vendor-ai-audit":        "13 · Compliance Governance",
+  "voluntary-disclosure":   "09 · Compliance Ops — Daily & Weekly Tasks",
+  webhooks:                 "13 · Compliance Governance",
+  workflow:                 "09 · Compliance Ops — Daily & Weekly Tasks",
 };
 
 // Per-module compliance report summaries — used in Asana task notes.

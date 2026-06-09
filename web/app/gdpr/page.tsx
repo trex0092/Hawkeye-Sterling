@@ -329,7 +329,7 @@ function RetentionPanel() {
 
 export default function GdprPage() {
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="gdpr" asanaLabel="GDPR / PDPL">
       <ModuleHero
         eyebrow=""
         title="GDPR Data Subject"
