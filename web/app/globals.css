@@ -250,9 +250,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* ── Compliance print header — hidden on screen, visible only when printing ── */
 .compliance-print-header { display: none; }
 
+/* ── Compliance print report body — hidden on screen, visible only when printing ── */
+.compliance-print-report { display: none; }
+
 /* ── Print / PDF export ─────────────────────────────────────────────────── */
 @media print {
   .compliance-print-header { display: block !important; }
+  .compliance-print-report { display: block !important; }
   /* Force white background regardless of theme */
   html, body { background: #fff !important; color: #000 !important; }
 
