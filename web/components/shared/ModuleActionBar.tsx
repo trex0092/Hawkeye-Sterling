@@ -105,9 +105,12 @@ export function ModuleActionBar({
 
   if (!mounted) return null;
 
-  const bar = (
-    <div style={{ position: "fixed", bottom: 20, right: 4, zIndex: 9999, display: "flex", flexDirection: "column", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
-      {BTNS.map((b) => {
+  const LEFT_KEYS  = ["asana", "ai", "csv", "run"]     as const;
+  const RIGHT_KEYS = ["pdf", "refresh", "add", "sync"] as const;
+
+  const renderCol = (keys: readonly string[]) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {BTNS.filter((b) => (keys as readonly string[]).includes(b.key)).map((b) => {
         let label: string = b.label;
         if (b.key === "asana") {
           if (asanaStatus === "posting") label = "ASANA…";
@@ -118,6 +121,13 @@ export function ModuleActionBar({
           <AppBtn key={b.key} label={label} color={b.color} dim={b.dim} border={b.border} onClick={() => { void handle(b.key); }} />
         );
       })}
+    </div>
+  );
+
+  const bar = (
+    <div style={{ position: "fixed", bottom: 20, right: 4, zIndex: 9999, display: "flex", flexDirection: "row", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+      {renderCol(LEFT_KEYS)}
+      {renderCol(RIGHT_KEYS)}
     </div>
   );
 
