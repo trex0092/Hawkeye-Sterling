@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { ModuleActionBar } from "@/components/shared/ModuleActionBar";
+import { CompliancePrintHeader } from "./CompliancePrintHeader";
 import {
   type SidebarFilterItem,
 } from "./SidebarParts";
@@ -92,6 +93,7 @@ export function ModuleLayout<K extends string = string>({
         </div>
 
         <main className="px-4 py-4 md:px-10 md:py-8 overflow-y-auto">
+          <CompliancePrintHeader reportTitle={asanaLabel} reportModule={asanaModule} />
           {children}
         </main>
       </div>

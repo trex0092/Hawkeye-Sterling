@@ -247,8 +247,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Compliance print header — hidden on screen, visible only when printing ── */
+.compliance-print-header { display: none; }
+
 /* ── Print / PDF export ─────────────────────────────────────────────────── */
 @media print {
+  .compliance-print-header { display: block !important; }
   /* Force white background regardless of theme */
   html, body { background: #fff !important; color: #000 !important; }
 
