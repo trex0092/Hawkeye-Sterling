@@ -22,9 +22,14 @@ interface RiskEntry {
 }
 
 interface RiskRegisterData {
+  ok?: boolean;
+  generatedAt?: string;
+  overallStatus?: string;
   totalModels: number;
   overdueCount: number;
+  criticalOrHighOverdueCount?: number;
   entries: RiskEntry[];
+  overdueModels?: { modelId: string; purpose: string; riskTier: string; nextAttestationDue: string }[];
 }
 
 interface RmfFunction {
@@ -37,9 +42,13 @@ interface RmfFunction {
 }
 
 interface RmfStatusData {
+  ok?: boolean;
+  generatedAt?: string;
+  tenantId?: string;
   overallRmfScore: number;
   rmfFunctions: RmfFunction[];
-  overdueCount: number;
+  overdueCount?: number;
+  models?: unknown[];
   atlasTactics: { id: string; name: string; phase: string; probeIds: string[]; covered: boolean }[];
   atlasGapCount: number;
   policyVersion: string;
@@ -62,11 +71,13 @@ interface AIIncident {
 }
 
 interface GapResult {
+  ok?: boolean;
   overallGrade: "A" | "B" | "C" | "D" | "F";
   gradeRationale: string;
   criticalGaps: string[];
   findings: { area: string; finding: string; severity: "critical" | "high" | "medium" | "low"; regulatoryRef: string }[];
   recommendations: { priority: "immediate" | "short-term" | "medium-term"; action: string; owner: string; deadline: string }[];
+  regulatoryRisks?: { risk: string; likelihood: string; impact: string; mitigant: string }[];
   summary: string;
 }
 
@@ -619,7 +630,7 @@ export default function AIGovernancePage() {
                           <Pill label={inc.status}   colour={INC_CLR[inc.status] ?? "#888"} />
                           <span style={{ fontWeight: 600, fontSize: 13 }}>{inc.title}</span>
                           {inc.regulatoryNotificationRequired && (
-                            <Pill label={inc.regulatoryNotificationSent ? "notified" : "notification due"} colour={inc.regulatoryNotificationSent ? "#22c55e" : "#ef4444"} />
+                            <Pill label={(inc.regulatoryNotificationSent ?? false) ? "notified" : "notification due"} colour={(inc.regulatoryNotificationSent ?? false) ? "#22c55e" : "#ef4444"} />
                           )}
                           <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--color-ink-2)" }}>{inc.detectedAt.slice(0, 10)}</span>
                         </div>

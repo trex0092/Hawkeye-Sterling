@@ -32,7 +32,7 @@ function MobileNavInner({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   if (!isOpen) return null;
 
   return (
-    <div className="md:hidden">
+    <div className="print-hide md:hidden">
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-50 bg-black/50"

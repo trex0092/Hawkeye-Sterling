@@ -85,7 +85,7 @@ export function ModuleLayout<K extends string = string>({
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} onAi={onAi} onAdd={onAdd} onRun={onRun} />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
-        <div className="hidden md:block">
+        <div className="print-sidebar hidden md:block">
           <Sidebar>
             {sidebarExtra}
           </Sidebar>

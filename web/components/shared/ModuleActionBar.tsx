@@ -127,7 +127,7 @@ export function ModuleActionBar({
   );
 
   const bar = (
-    <div style={{ position: "fixed", top: 60, right: 4, zIndex: 9999, display: "flex", flexDirection: "row", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="print-hide" style={{ position: "fixed", top: 60, right: 4, zIndex: 9999, display: "flex", flexDirection: "row", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
       {renderCol(LEFT_KEYS)}
       {renderCol(RIGHT_KEYS)}
     </div>

@@ -56,7 +56,13 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return NextResponse.json({ ok: false, error: "governance-gap temporarily unavailable - please retry." }, { status: 503 , headers: gate.headers });
+  if (!apiKey) {
+    void writeAuditChainEntry(
+      { event: "governance_gap_unavailable", actor: gate.keyId, error: "missing_anthropic_key" },
+      tenantIdFromGate(gate),
+    ).catch(() => undefined);
+    return NextResponse.json({ ok: false, error: "governance-gap temporarily unavailable - please retry." }, { status: 503, headers: gate.headers });
+  }
 
   try {
     const client = getAnthropicClient(apiKey, 4_500);

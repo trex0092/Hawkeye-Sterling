@@ -246,3 +246,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Print / PDF export ─────────────────────────────────────────────────── */
+@media print {
+  /* Force white background regardless of theme */
+  html, body { background: #fff !important; color: #000 !important; }
+
+  /* Hide all app chrome — only the module content prints */
+  .print-hide,
+  header,
+  [data-mobile-nav] { display: none !important; }
+
+  /* Portal-rendered fixed elements (action bar, toasts, modals) */
+  body > div[style*="position: fixed"],
+  body > div[style*="position:fixed"] { display: none !important; }
+
+  /* Remove sidebar column — full width content */
+  .print-sidebar { display: none !important; }
+
+  /* Remove padding so content reaches the page edge */
+  main { padding: 8px !important; overflow: visible !important; }
+
+  /* Avoid page breaks inside cards and table rows */
+  tr, .print-no-break { page-break-inside: avoid; break-inside: avoid; }
+
+  /* Ensure links are readable */
+  a { color: #000 !important; text-decoration: underline; }
+
+  /* Page margins */
+  @page { margin: 1cm; }
+}

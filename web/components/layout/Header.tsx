@@ -31,7 +31,7 @@ export function Header({ onMenuOpen }: { onMenuOpen?: () => void } = {}) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
+    <header className="print-hide sticky top-0 z-40 bg-bg-panel border-b border-hair-2 shadow-header">
       <nav className="flex items-center gap-2 h-[54px] px-4 md:px-6 overflow-x-auto">
         {/* Hamburger — mobile only */}
         {onMenuOpen && (
