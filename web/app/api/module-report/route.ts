@@ -149,6 +149,10 @@ function projectGidForModule(module: string): string {
     case "voluntary-disclosure":
     case "workflow":
       return asanaGids.complianceOps();
+    case "screening-four-eyes":
+      return asanaGids.fourEyes();
+    case "functions":
+      return asanaGids.governance();
     default:
       return asanaGids.master();
   }
@@ -168,6 +172,7 @@ const MODULE_LABELS: Record<string, string> = {
   // 03 · Audit Log
   "audit-trail":            "Audit Trail",
   // 04 · Four-Eyes Approvals
+  "screening-four-eyes":    "Four-Eyes Queue",
   "cdd-review":             "CDD Review",
   "ubo-declaration":        "UBO Declaration",
   // 05 · STR/SAR
@@ -308,6 +313,7 @@ const PROJECT_BOARD: Record<string, string> = {
   rmi:                      "02 · Central MLRO Daily Digest",
   oversight:                "02 · Central MLRO Daily Digest",
   "audit-trail":            "03 · Audit Log 10-Year Trail",
+  "screening-four-eyes":    "04 · Four-Eyes Approvals",
   "cdd-review":             "04 · Four-Eyes Approvals",
   "ubo-declaration":        "04 · Four-Eyes Approvals",
   "str-cases":              "05 · STR/SAR/CTR/PMR GoAML Filings",

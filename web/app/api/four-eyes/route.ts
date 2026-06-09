@@ -391,11 +391,17 @@ async function handlePatch(req: Request, ctx: RequestContext): Promise<NextRespo
   if (operator === existing.initiatedBy) {
     return NextResponse.json({ ok: false, error: "second approver must be different from initiator (FATF four-eyes)" }, { status: 403 , headers: {} });
   }
+  // Re-read immediately before write to close the TOCTOU window — a concurrent
+  // PATCH could have approved this item between our first read and this write.
+  const freshRecord = await getJson<FourEyesItem>(`four-eyes/${id}`);
+  if (!freshRecord || freshRecord.status !== "pending") {
+    return NextResponse.json({ ok: false, error: freshRecord ? `item already ${freshRecord.status}` : "not found" }, { status: 409 , headers: {} });
+  }
   const now = new Date().toISOString();
   const updated: FourEyesItem =
     action === "approve"
-      ? { ...existing, status: "approved", approvedBy: operator, approvedAt: now }
-      : { ...existing, status: "rejected", rejectedBy: operator, rejectedAt: now,
+      ? { ...freshRecord, status: "approved", approvedBy: operator, approvedAt: now }
+      : { ...freshRecord, status: "rejected", rejectedBy: operator, rejectedAt: now,
           ...(stringField(raw["rejectionReason"]) ? { rejectionReason: stringField(raw["rejectionReason"])! } : {}) };
   await setJson(`four-eyes/${id}`, updated);
 

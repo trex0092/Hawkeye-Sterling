@@ -18,6 +18,7 @@ import { tenantIdFromGate } from "@/lib/server/tenant";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { sanitizeField, sanitizeLlmInput } from "@/lib/server/sanitize-prompt";
 import { checkHallucination } from "@/lib/server/hallucination-gate";
+import { runEgressCheck } from "@/lib/server/egress-check";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -209,6 +210,23 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json(
         { ok: false, error: "SAR narrative generation failed — empty response from AI model." },
         { status: 503, headers: gate.headers },
+      );
+    }
+
+    // Egress gate — block tipping-off content before returning to client.
+    // Federal Decree-Law No. 10 of 2025 Art.17 / FATF R.21.
+    const egressResult = await runEgressCheck(narrative, "SAR narrative generation");
+    if (!egressResult.allowed) {
+      void writeAuditChainEntry({
+        event: "egress.tipping_off_blocked",
+        actor: gate.keyId,
+        subjectName: body.subjectName,
+        reason: egressResult.reason,
+        verdict: egressResult.verdict,
+      }, tenant).catch(() => {});
+      return NextResponse.json(
+        { ok: false, error: "SAR narrative held by egress gate — possible tipping-off content detected. Please review and revise.", egressVerdict: egressResult.verdict },
+        { status: 422, headers: gate.headers },
       );
     }
 
