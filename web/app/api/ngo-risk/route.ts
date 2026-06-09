@@ -133,7 +133,7 @@ interface ScoringResult {
 
 /**
  * Deterministic rule-based CFT risk scoring per FATF R.8 and
- * UAE Cabinet Decision No. 10 of 2019.
+ * Cabinet Resolution No. (134) of 2025.
  */
 function computeNgoRiskScore(body: RequestBody): ScoringResult {
   let score = 0;
