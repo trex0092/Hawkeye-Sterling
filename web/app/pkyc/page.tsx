@@ -182,25 +182,8 @@ export default function PKycPage() {
 
   return (
     <ModuleLayout
-      sidebarActions={
-        <>
-          <ActionButton
-            variant="add"
-            type="button"
-            onClick={() => setShowEnroll(true)}
-          >
-            + Enroll Subject
-          </ActionButton>
-          <ActionButton
-            variant="screening"
-            type="button"
-            onClick={handleRunAll}
-            disabled={running}
-          >
-            {running ? "Running…" : "▶ Run Due"}
-          </ActionButton>
-        </>
-      }
+      onAdd={() => setShowEnroll(true)}
+      onRun={handleRunAll}
     >
       {/* Hero */}
       <div className="flex items-start justify-between gap-4 mb-6">
