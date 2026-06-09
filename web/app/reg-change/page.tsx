@@ -317,7 +317,7 @@ export default function RegChangePage() {
     : [];
 
   return (
-    <ModuleLayout engineLabel="Regulatory change engine" asanaModule="reg-change" asanaLabel="Regulatory Change Manager" onRun={() => void load()} onSync={() => void load()}>
+    <ModuleLayout engineLabel="Regulatory change engine" asanaModule="reg-change" asanaLabel="Regulatory Change Manager" onRun={() => void generate()} onSync={() => void generate()}>
       <ModuleHero
         eyebrow=""
         title="Regulatory"

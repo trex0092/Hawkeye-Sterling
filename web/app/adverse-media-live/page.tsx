@@ -400,7 +400,7 @@ export default function AdverseMediaLivePage() {
       ];
 
   return (
-    <ModuleLayout asanaModule="adverse-media-live" asanaLabel="Live Adverse Media Feed" onRun={() => { if (lastSearched) void doSearch(lastSearched); }} onSync={() => void load()}>
+    <ModuleLayout asanaModule="adverse-media-live" asanaLabel="Live Adverse Media Feed" onRun={() => { if (lastSearched) void doSearch(lastSearched); }} onSync={() => { if (lastSearched) void doSearch(lastSearched); }}>
       <ModuleHero
         eyebrow=""
         title="Adverse media"

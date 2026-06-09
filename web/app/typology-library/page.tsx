@@ -851,7 +851,7 @@ export default function TypologyLibraryPage() {
   };
 
   return (
-    <ModuleLayout engineLabel="Typology engine" asanaModule="typology-library" asanaLabel="Typology Library" onRun={() => void handleSearch()} onSync={() => void fetchMatrix()}>
+    <ModuleLayout engineLabel="Typology engine" asanaModule="typology-library" asanaLabel="Typology Library" onRun={() => void handleSearch()} onSync={() => void handleSearch()}>
       <ModuleHero
         eyebrow=""
         title="Typology"

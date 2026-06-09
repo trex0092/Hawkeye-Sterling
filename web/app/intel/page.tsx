@@ -328,7 +328,7 @@ function RegulatoryFeedPanel() {
 
 export default function IntelPage() {
   return (
-    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence" hideDetailPanel onSync={() => void load()}>
+    <ModuleLayout asanaModule="intel" asanaLabel="OSINT Intelligence" hideDetailPanel>
       <ModuleHero
         eyebrow=""
         title="Intel"
