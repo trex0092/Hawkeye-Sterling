@@ -246,7 +246,7 @@ export default function RmiPage() {
   const [mineralFilter, setMineralFilter] = useState<FilterMineral>("all");
   const [_showAuditLog, _setShowAuditLog] = useState(false);
   const [rmiAssess, setRmiAssess] = useState<RmiAssessment | null>(null);
-  const [rmiAssessLoading, setRmiAssessLoading] = useState(false);
+  const [_rmiAssessLoading, setRmiAssessLoading] = useState(false);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [edits, setEdits] = useState<Record<string, SmelterEdit>>({});
   const [editingId, setEditingId] = useState<string | null>(null);

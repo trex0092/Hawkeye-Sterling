@@ -101,7 +101,7 @@ export default function SarQaPage() {
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [reasonDraft, setReasonDraft] = useState<Record<string, ChallengeReason>>({});
   const [aiScores, setAiScores] = useState<Record<string, QaScore>>({});
-  const [aiScoreLoading, setAiScoreLoading] = useState(false);
+  const [_aiScoreLoading, setAiScoreLoading] = useState(false);
   const [aiScoreError, setAiScoreError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -122,7 +122,7 @@ export default function SarQaPage() {
     };
   }, []);
 
-  const runAiQa = async () => {
+  const _runAiQa = async () => {
     setAiScoreLoading(true);
     setAiScoreError(null);
     try {

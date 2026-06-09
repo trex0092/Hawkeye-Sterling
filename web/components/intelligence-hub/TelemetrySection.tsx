@@ -39,7 +39,7 @@ export function TelemetrySection() {
     setFires(loadModeFires());
   }, []);
 
-  const refresh = () => setFires(loadModeFires());
+  const _refresh = () => setFires(loadModeFires());
   const reset = () => {
     if (!confirm("Clear all mode-firing telemetry? This cannot be undone.")) return;
     clearModeFires();

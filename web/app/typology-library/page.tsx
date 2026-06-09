@@ -831,7 +831,7 @@ export default function TypologyLibraryPage() {
     }
   };
 
-  const handleFilterClick = (key: FilterKey) => {
+  const _handleFilterClick = (key: FilterKey) => {
     setActiveFilter(key);
     void handleSearch(undefined, key);
   };
