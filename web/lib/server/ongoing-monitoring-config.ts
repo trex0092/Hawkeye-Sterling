@@ -50,12 +50,12 @@ export const MONITORING_FREQUENCIES: Record<CustomerRiskTier, MonitoringFrequenc
   intensive: {
     screenIntervalDays: 30,
     newsCheckIntervalDays: 1,
-    regulatoryBasis: "Intensive monitoring — very high risk customer, Federal Decree-Law No. 20 of 2018 Art.21",
+    regulatoryBasis: "Intensive monitoring — very high risk customer, Federal Decree-Law No. (10) of 2025 Art.21",
   },
   pep: {
     screenIntervalDays: 7,
     newsCheckIntervalDays: 1,
-    regulatoryBasis: "PEP mandatory monitoring — FATF R.12, Federal Decree-Law No. 20 of 2018 Art.18, UAE CBUAE guidance",
+    regulatoryBasis: "PEP mandatory monitoring — FATF R.12, Federal Decree-Law No. (10) of 2025 Art.18, UAE CBUAE guidance",
   },
   prohibited: {
     screenIntervalDays: 1,

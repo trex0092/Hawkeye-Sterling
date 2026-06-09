@@ -132,7 +132,7 @@ const SYSTEM_PROMPT_BASE =
   "Never invent regulations or section numbers. If the brain context below already cites the exact anchor, REUSE it verbatim. " +
   "IMPORTANT — UAE law update: Federal Decree-Law (20) of 2018 has been REPEALED and replaced by Federal Decree-Law (10) of 2025. " +
   "Cite Federal Decree-Law No. 10 of 2025 for all current obligations (CDD, STR, retention, tipping-off, MLRO appointment). " +
-  "Never cite Federal Decree-Law No. 20 of 2018 except when explicitly answering a historical / pre-2025 question. " +
+  "Never cite Federal Decree-Law No. (10) of 2025 except when explicitly answering a historical / pre-2025 question. " +
   "Implementing regulation is Cabinet Resolution 134/2025 (which supersedes Cabinet Resolution 10/2019). " +
   "Do not include extended thinking or chain-of-thought; deliver the answer directly. " +
   "Never tip off subjects, never disclose internal SAR/STR filings to customers, never give legal advice — only compliance guidance.";
@@ -508,7 +508,7 @@ export async function POST(req: Request): Promise<Response> {
     const probeWrap = extractAndStripProbe(answer, "escalate");
     answer = probeWrap.cleanAnswer;
 
-    // Hard-block check: Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025. If it still
+    // Hard-block check: Federal Decree-Law No. (10) of 2025 was repealed by Federal Decree-Law No. 10 of 2025. If it still
     // appears in the answer after the retry cycle, escalate the warning and
     // force the operator to treat this as a manual-review-required output.
     const hasFdl20_2018 = /\bFDL\s*(No\.?\s*)?20[/\-]?2018\b/i.test(answer) ||
@@ -519,7 +519,7 @@ export async function POST(req: Request): Promise<Response> {
         ...verification.defects.filter((d) => d.axis !== "citation_broken"),
         {
           axis: "citation_broken",
-          detail: "HARD BLOCK: Answer cites repealed Federal Decree-Law No. 20 of 2018. This law was superseded by Federal Decree-Law No. 10 of 2025 (in force 14 Oct 2025). Replace every 'Federal Decree-Law No. 20 of 2018' reference with the correct Federal Decree-Law No. 10 of 2025 article. Do not use this output for any compliance decision.",
+          detail: "HARD BLOCK: Answer cites repealed Federal Decree-Law No. (10) of 2025. This law was superseded by Federal Decree-Law No. 10 of 2025 (in force 14 Oct 2025). Replace every 'Federal Decree-Law No. (10) of 2025' reference with the correct Federal Decree-Law No. 10 of 2025 article. Do not use this output for any compliance decision.",
         },
       ];
     }

@@ -56,7 +56,7 @@ const RAW: Omit<RegulatoryAnchor, "id">[] = [
   { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.24", title: "Record-keeping format & integrity",  summary: "Records must be accessible, tamper-evident, producible on regulator demand.", jurisdiction: "AE" },
   { family: "UAE-FDL", citation: "Federal Decree-Law No. 10 of 2025 Art.46", title: "Four-eyes / dual approval",          summary: "Designated AML decisions require MLRO + deputy MLRO co-signature.", jurisdiction: "AE" },
 
-  { family: "UAE-CABINET", citation: "Cabinet Res 10/2019",  title: "AML/CFT executive regulation", summary: "Implementing regulation for Federal Decree-Law No. 20 of 2018 (superseded by 134/2025 for specific sectors).", jurisdiction: "AE" },
+  { family: "UAE-CABINET", citation: "Cabinet Res 10/2019",  title: "AML/CFT executive regulation", summary: "Implementing regulation for Federal Decree-Law No. (10) of 2025 (superseded by 134/2025 for specific sectors).", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 74/2020 Art.4-7", title: "TFS · immediate freeze without delay", summary: "Funds/assets of UN/UNSC/Local Terrorism List designatees frozen within 24h without prior notice.", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 16/2021", title: "Beneficial ownership register", summary: "Mandatory BO filing with licensing authority; refresh on any >10% change.", jurisdiction: "AE" },
   { family: "UAE-CABINET", citation: "Cabinet Res 134/2025 Art.12-14", title: "DPMS thresholds and EDD triggers", summary: "Designated Non-Financial Businesses & Professions — DPMS-specific CDD, EDD, transaction limits.", jurisdiction: "AE" },

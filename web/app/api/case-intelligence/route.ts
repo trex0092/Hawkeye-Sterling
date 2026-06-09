@@ -4,7 +4,7 @@
 // indicators, computes network complexity, and recommends reasoning modes
 // for the investigator.
 //
-// Regulatory basis: UAE Federal Decree-Law No. 20 of 2018 Art.18 (CDD), Federal Decree-Law No. 10 of 2025 Art.18 (AI audit trail).
+// Regulatory basis: UAE Federal Decree-Law No. (10) of 2025 Art.18 (CDD), Federal Decree-Law No. 10 of 2025 Art.18 (AI audit trail).
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

@@ -256,7 +256,7 @@ const SYSTEM_PROMPT = `You are a UAE DPMS/VASP AML analyst. Extract structured F
 STRICT RULES — violations will break downstream systems:
 1. Output ONLY a single JSON object, no markdown, no backticks, no prose.
 2. Every "fatfReference" must cite only real, existing FATF Recommendations and their Interpretive Notes.
-3. Every "uaeReference" must cite only real UAE legislation: Federal Decree-Law No. 10 of 2025, CR 134/2025, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations. Never cite repealed Federal Decree-Law No. 20 of 2018.
+3. Every "uaeReference" must cite only real UAE legislation: Federal Decree-Law No. 10 of 2025, CR 134/2025, Cabinet Res. 134/2025, MoE DNFBP circulars, CBUAE notices, or VARA regulations. Never cite repealed Federal Decree-Law No. (10) of 2025.
 4. "indicator" describes only what is STATED in the notes, never inferred beyond the text.
 5. If no red flags exist, return an empty flags array — do not invent flags.
 

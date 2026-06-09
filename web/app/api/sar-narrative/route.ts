@@ -4,7 +4,7 @@
 // generation for SAR/STR filings using Claude.
 //
 // Supported jurisdictions:
-//   uae  → Federal Decree-Law No. 20 of 2018 Article 26 (now consolidated under Federal Decree-Law No. 10 of 2025)
+//   uae  → Federal Decree-Law No. (10) of 2025 Article 26 (now consolidated under Federal Decree-Law No. 10 of 2025)
 //   uk   → POCA 2002
 //   us   → BSA Title 31
 //   au   → AML/CTF Act 2006
@@ -51,7 +51,7 @@ function buildSystemPrompt(jurisdiction: SarNarrativeRequest["jurisdiction"]): s
     uae: `You are a senior UAE AML compliance officer drafting a Suspicious Activity Report (SAR/STR) narrative.
 
 REGULATORY FRAMEWORK:
-- UAE Federal Decree-Law No. 20 of 2018 (Anti-Money Laundering), Article 26: mandatory STR reporting obligation
+- UAE Federal Decree-Law No. (10) of 2025 (Anti-Money Laundering), Article 26: mandatory STR reporting obligation
 - UAE Federal Decree-Law No. 10 of 2025 (Federal Decree-Law No. 10 of 2025), Art. 15-17: reporting obligations and timelines
 - Cabinet Resolution No. 10 of 2019: implementing regulations
 - CBUAE AML/CFT Standards: narrative quality requirements

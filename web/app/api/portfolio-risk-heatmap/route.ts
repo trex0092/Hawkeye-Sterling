@@ -3,7 +3,7 @@
 // Portfolio-level risk visualisation data. Aggregates typology frequencies,
 // risk tier distributions, and top risk factor trends across all tenant cases.
 //
-// Regulatory basis: UAE Federal Decree-Law No. 20 of 2018 Art.18 (CDD), FATF R.1 (risk-based approach).
+// Regulatory basis: UAE Federal Decree-Law No. (10) of 2025 Art.18 (CDD), FATF R.1 (risk-based approach).
 
 import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";

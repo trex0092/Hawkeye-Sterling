@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 700,
-        system: `You are a UAE AML policy specialist with expertise in UAE Federal Decree-Law No. 10 of 2025 requirements, CBUAE AML/CFT Guidelines, and FATF Recommendations. Review AML/CFT policy documents for compliance with current UAE law, identify missing mandatory provisions (especially PF, UBO, EWRA, tipping off), flag outdated regulatory references (Federal Decree-Law No. 20 of 2018 → Federal Decree-Law No. 10 of 2025), and provide specific suggested text for gaps. Score overall compliance on a 0-100 scale. Identify both strengths and weaknesses. Respond ONLY with valid JSON matching the PolicyReviewResult interface — no markdown fences.`,
+        system: `You are a UAE AML policy specialist with expertise in UAE Federal Decree-Law No. 10 of 2025 requirements, CBUAE AML/CFT Guidelines, and FATF Recommendations. Review AML/CFT policy documents for compliance with current UAE law, identify missing mandatory provisions (especially PF, UBO, EWRA, tipping off), flag outdated regulatory references (Federal Decree-Law No. (10) of 2025 → Federal Decree-Law No. 10 of 2025), and provide specific suggested text for gaps. Score overall compliance on a 0-100 scale. Identify both strengths and weaknesses. Respond ONLY with valid JSON matching the PolicyReviewResult interface — no markdown fences.`,
         messages: [{
           role: "user",
           content: `Policy Text: ${sanitizeText(body.policyText, 2000)}

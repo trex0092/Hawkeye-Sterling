@@ -38,7 +38,7 @@ export const JURISDICTIONAL_CONFLICTS: JurisdictionalConflict[] = [
     regimes: ["EU_GDPR", "UAE_FDL", "UAE_DATA_LAW"],
     severity: "high",
     description:
-      "GDPR Art.17 grants data subjects a right to erasure, but UAE Federal Decree-Law No. 10 of 2025 Art.16 (replacing the previous Federal Decree-Law No. 20 of 2018) requires reporting institutions to retain CDD and transaction records for 10 years from end-of-relationship. An EU resident asking for deletion of UAE-held AML records cannot be honoured during the retention window.",
+      "GDPR Art.17 grants data subjects a right to erasure, but UAE Federal Decree-Law No. 10 of 2025 Art.16 (replacing the previous Federal Decree-Law No. (10) of 2025) requires reporting institutions to retain CDD and transaction records for 10 years from end-of-relationship. An EU resident asking for deletion of UAE-held AML records cannot be honoured during the retention window.",
     mitigation: [
       "Decline erasure under GDPR Art.17(3)(b) — compliance with a legal obligation under the law of a Member State or third-country law to which the controller is subject.",
       "Document the rejection with the specific UAE FDL/AML basis and inform the data subject of the retention period in writing.",

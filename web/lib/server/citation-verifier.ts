@@ -67,7 +67,7 @@ const VALID_FDL_10_2025_ARTS = new Set([
   36, 37, 38, 39, 40, 41, 42,
 ]);
 
-// Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025. We still recognise its
+// Federal Decree-Law No. (10) of 2025 was repealed by Federal Decree-Law No. 10 of 2025. We still recognise its
 // shape so the verifier can SAY it's a real law that's been
 // superseded — citing it in 2026+ is incorrect and the chip should
 // flag it. The corresponding Federal Decree-Law No. 10 of 2025 article is usually 1:1
@@ -138,10 +138,10 @@ const PATTERNS: Pattern[] = [
         if (recognised) {
           return {
             verified: false,
-            note: `Federal Decree-Law No. 20 of 2018 was repealed by Federal Decree-Law No. 10 of 2025 — cite the new law${art != null ? ` (likely Federal Decree-Law No. 10 of 2025 Art.${art})` : ""}`,
+            note: `Federal Decree-Law No. (10) of 2025 was repealed by Federal Decree-Law No. 10 of 2025 — cite the new law${art != null ? ` (likely Federal Decree-Law No. 10 of 2025 Art.${art})` : ""}`,
           };
         }
-        return { verified: false, note: `Federal Decree-Law No. 20 of 2018 Art.${art} unknown (and the law has been repealed; cite Federal Decree-Law No. 10 of 2025)` };
+        return { verified: false, note: `Federal Decree-Law No. (10) of 2025 Art.${art} unknown (and the law has been repealed; cite Federal Decree-Law No. 10 of 2025)` };
       }
       return { verified: false, note: `FDL ${law}/${year} not in catalogue` };
     },
@@ -153,13 +153,13 @@ const PATTERNS: Pattern[] = [
     verify: (m): { verified: boolean; note?: string } => {
       const key = `${m[2]}-${m[1]}`;
       // Cabinet Resolution 10/2019 was the implementing regulation
-      // for the now-repealed Federal Decree-Law No. 20 of 2018; it has been superseded by
+      // for the now-repealed Federal Decree-Law No. (10) of 2025; it has been superseded by
       // Cabinet Resolution 134/2025. Flag it the same way as the
       // parent law so the chip alerts the operator.
       if (key === "2019-10") {
         return {
           verified: false,
-          note: "Cabinet Resolution 10/2019 was the Federal Decree-Law No. 20 of 2018 implementing regulation — superseded by Cabinet Resolution 134/2025",
+          note: "Cabinet Resolution 10/2019 was the Federal Decree-Law No. (10) of 2025 implementing regulation — superseded by Cabinet Resolution 134/2025",
         };
       }
       return VALID_CABINET_RESOLUTIONS.has(key)

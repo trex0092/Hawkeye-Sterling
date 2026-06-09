@@ -5,7 +5,7 @@
 //   FATF Recommendation 1 (risk-based approach) / INR.1
 //   CBUAE AML/CFT Supervisory Standards (2024 revision)
 //   UAE Federal Decree-Law No. 10 of 2025 — Federal Decree-Law on AML/CFT
-//   UAE Federal Decree-Law No. 20 of 2018 — Dealers in Precious Metals and Stones
+//   UAE Federal Decree-Law No. (10) of 2025 — Dealers in Precious Metals and Stones
 //   ISO 31000:2018 — Risk management framework (residual risk treatment)
 
 import { getJson, setJson } from "@/lib/server/store";
@@ -164,7 +164,7 @@ export function computeFatfCategoryScore(category: FatfRiskFactor["category"]): 
 // Additive modifiers (basis points on 0-100 scale) for UAE-designated
 // high-risk sectors. Applied to the inherent risk score before residual
 // risk calculation. Source: CBUAE AML/CFT Sectoral Risk Assessment 2024;
-// UAE Federal Decree-Law No. 20 of 2018 (DPMS); UAE MoE Free Zone CDD Circular 2022.
+// UAE Federal Decree-Law No. (10) of 2025 (DPMS); UAE MoE Free Zone CDD Circular 2022.
 
 export interface SectorRiskModifier {
   sector: string;
@@ -178,7 +178,7 @@ export const UAE_SECTOR_MODIFIERS: SectorRiskModifier[] = [
     sector: "Gold trading / precious metals",
     keywords: ["gold", "precious metal", "bullion", "dpms", "gold trading"],
     modifier: 20,
-    regulatoryBasis: "UAE Federal Decree-Law No. 20 of 2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
+    regulatoryBasis: "UAE Federal Decree-Law No. (10) of 2025; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
   },
   {
     sector: "Real estate",
@@ -202,7 +202,7 @@ export const UAE_SECTOR_MODIFIERS: SectorRiskModifier[] = [
     sector: "Precious stones",
     keywords: ["precious stone", "gemstone", "diamond", "jewellery", "jewelry", "gems"],
     modifier: 15,
-    regulatoryBasis: "UAE Federal Decree-Law No. 20 of 2018; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
+    regulatoryBasis: "UAE Federal Decree-Law No. (10) of 2025; MoEI DPMS Registration; CBUAE SRA 2024 §4.3",
   },
 ];
 

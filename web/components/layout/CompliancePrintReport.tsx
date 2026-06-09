@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 // the governing regulatory framework, the institution's compliance
 // requirements, the automated monitoring controls the module provides, the
 // reporting obligations it discharges, and the key risk indicators it
-// surfaces. Content is UAE AML/CFT-specific (Federal Decree-Law No. 20 of 2018, Federal Decree-Law No. 10 of 2025,
+// surfaces. Content is UAE AML/CFT-specific (Federal Decree-Law No. (10) of 2025, Federal Decree-Law No. 10 of 2025,
 // Cabinet Decision 10/2019, FATF, CBUAE) and runs 250–500 words per module.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -38,8 +38,8 @@ const REPORTS: Record<string, ReportData> = {
       "In operation the module sits upstream of case management and the STR workflow: a disclosure that establishes reasonable grounds for suspicion is converted into an investigation and, where the threshold is met, an onward report to the UAE FIU. Supervisors examine whether the channel is genuinely accessible, whether reporters are demonstrably protected, and whether disclosures are acted upon rather than absorbed. Because the regime depends on trust, any leak of a reporter's identity or evidence of retaliation is treated as a serious control failure. The append-only audit record of receipt, assessment, and disposition is the institution's proof that good-faith reports were handled lawfully and without suppression.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.15 — protection of persons reporting suspicions in good faith",
-      "UAE Cabinet Decision No.10/2019 Art.20 — internal policies, controls and procedures",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — protection of persons reporting suspicions in good faith",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — internal policies, controls and procedures",
       "FATF Recommendation 18 — internal controls and whistleblower protection",
       "CBUAE AML/CFT Standards — confidential reporting and non-retaliation",
       "SOC2 CC2.2 — internal communication of compliance concerns",
@@ -79,8 +79,8 @@ const REPORTS: Record<string, ReportData> = {
       "Within the wider programme the pKYC engine is the mechanism that keeps the risk-based approach honest between formal reviews: it consumes the same screening, transaction, and ownership signals that the rest of the platform produces and turns them into a live risk rating. Examiners increasingly expect this continuous posture rather than annual snapshots, and they probe whether a documented event actually triggered a timely response. Every re-rating is written to the audit chain with its rationale so the institution can demonstrate, for any point in time, why a customer sat in the band it did and what action followed a material change in circumstances.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.16 — ongoing monitoring of the business relationship",
-      "UAE Cabinet Decision No.10/2019 Art.7 — keeping CDD information up to date",
+      "Federal Decree-Law No. (10) of 2025 Art.16 — ongoing monitoring of the business relationship",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — keeping CDD information up to date",
       "FATF Recommendation 10 — ongoing due diligence and scrutiny of transactions",
       "CBUAE AML/CFT Standards — risk-based, continuous customer review",
       "FATF Recommendation 1 — risk-based application of resources",
@@ -120,8 +120,8 @@ const REPORTS: Record<string, ReportData> = {
       "Operationally the wizard is the first and most consequential control point in the customer lifecycle, because deficiencies admitted here propagate into every downstream screening and monitoring decision. The gated design means an analyst cannot shortcut verification under commercial pressure, and the risk tier assigned at onboarding sets the cadence for future review. Supervisors test onboarding by reconstructing sample files end to end, expecting to see identification, beneficial-ownership resolution, purpose of relationship, and pre-activation screening all evidenced before the first transaction. A complete, reproducible onboarding record is therefore both an efficiency asset and the institution's primary defence when the genesis of a relationship is later questioned.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.18 — customer due diligence obligations",
-      "UAE Cabinet Decision No.10/2019 Art.4–6 — identification and verification",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — customer due diligence obligations",
+      "Cabinet Resolution No. (134) of 2025 Art.4–6 — identification and verification",
       "FATF Recommendation 10 — CDD and prohibition on anonymous accounts",
       "FATF Recommendation 12 — politically exposed persons at onboarding",
       "CBUAE AML/CFT Standards — risk-based onboarding and verification",
@@ -161,8 +161,8 @@ const REPORTS: Record<string, ReportData> = {
       "The portal is governed on the principle that customer-supplied data is a claim, not a fact, until the institution's controls have tested it. Documents are screened and risk-assessed on receipt, AI-generated assessments are held for analyst confirmation, and provenance is recorded so that any later challenge can be traced to its source. This matters because regulators expect verification from reliable and independent sources rather than uncritical acceptance of self-attestation. By combining a low-friction submission experience with disciplined verification and PII redaction before any model processing, the module reconciles the commercial need for fast onboarding with the regulatory need for a defensible, auditable evidence trail.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.18 — customer due diligence",
-      "UAE Cabinet Decision No.10/2019 Art.4 — verification from reliable sources",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — customer due diligence",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — verification from reliable sources",
       "Federal Decree-Law No. 10 of 2025 — governance of AI-assisted risk assessment",
       "FATF Recommendation 10 — identification and verification",
       "CBUAE AML/CFT Standards — reliable and independent data sources",
@@ -203,8 +203,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "UAE Cabinet Decision No.58/2020 — regulation of beneficial-owner procedures",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — identification of beneficial owners",
-      "UAE Cabinet Decision No.10/2019 Art.6 — beneficial-ownership verification",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — identification of beneficial owners",
+      "Cabinet Resolution No. (134) of 2025 Art.6 — beneficial-ownership verification",
       "FATF Recommendation 24 — transparency of legal persons",
       "FATF Recommendation 25 — transparency of legal arrangements",
     ],
@@ -243,8 +243,8 @@ const REPORTS: Record<string, ReportData> = {
       "Because political exposure elevates corruption and laundering risk irrespective of any single transaction, the module treats PEP status as a standing condition that drives enhanced measures for the life of the relationship. Senior-management approval is enforced as a gate, source of wealth and funds is documented, and the network of family members and close associates is mapped so that risk routed through proxies is not missed. Supervisors expect a clear, evidenced rationale for continuing each PEP relationship and proportionate ongoing scrutiny. The profile, its approvals, and its EDD measures are all written to the audit chain, giving the institution a defensible account of how a sensitive relationship was governed.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.18 — enhanced measures for higher-risk customers",
-      "UAE Cabinet Decision No.10/2019 Art.15 — politically exposed persons",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — enhanced measures for higher-risk customers",
+      "Cabinet Resolution No. (134) of 2025 Art.15 — politically exposed persons",
       "FATF Recommendation 12 — domestic and foreign PEPs and their associates",
       "FATF Recommendation 22 — PEP obligations for DNFBPs",
       "CBUAE AML/CFT Standards — source of wealth and senior approval",
@@ -285,7 +285,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF guidance on environmental crime as a money-laundering predicate",
-      "Federal Decree-Law No. 20 of 2018 — proceeds of predicate offences",
+      "Federal Decree-Law No. (10) of 2025 — proceeds of predicate offences",
       "OECD Due Diligence Guidance — responsible business conduct",
       "UAE Ministerial Decree No.68/2024 — responsible sourcing obligations",
       "CBUAE AML/CFT Standards — risk-based customer assessment",
@@ -326,9 +326,9 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 1 — risk-based approach across relationships",
-      "Federal Decree-Law No. 20 of 2018 — sanctions and predicate-offence exposure",
+      "Federal Decree-Law No. (10) of 2025 — sanctions and predicate-offence exposure",
       "CBUAE AML/CFT Standards — third-party and outsourcing risk",
-      "UAE Cabinet Decision No.10/2019 — reliance on third parties",
+      "Cabinet Resolution No. (134) of 2025 — reliance on third parties",
       "OECD Guidelines — anti-bribery in business relationships",
     ],
     requirements: [
@@ -366,8 +366,8 @@ const REPORTS: Record<string, ReportData> = {
       "Periodic review is the regulatory backstop to event-driven monitoring: even absent a specific trigger, the institution must confirm that its understanding of a customer remains accurate and that the evidence on file still meets current standards. The module schedules reviews by risk band, tests the adequacy of existing CDD, and escalates deficiencies for remediation, maintaining a register that makes overdue work visible. Examiners routinely sample the review backlog, expecting high-risk relationships to be refreshed on the tightest cadence and any uplift in risk to be actioned. Recording each review outcome and rationale in the audit chain converts an otherwise invisible obligation into demonstrable, defensible practice.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.7 — keeping CDD current",
-      "Federal Decree-Law No. 20 of 2018 Art.16 — ongoing monitoring",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — keeping CDD current",
+      "Federal Decree-Law No. (10) of 2025 Art.16 — ongoing monitoring",
       "FATF Recommendation 10 — ongoing due diligence",
       "CBUAE AML/CFT Standards — periodic review by risk rating",
       "FATF Recommendation 1 — risk-based allocation of review effort",
@@ -407,8 +407,8 @@ const REPORTS: Record<string, ReportData> = {
       "Because every downstream control inherits the quality of its inputs, the module treats data completeness and accuracy as a first-order compliance concern rather than an operational nicety. Degraded name, identifier, or beneficial-ownership data quietly undermines sanctions screening and transaction monitoring, and supervisors increasingly characterise such gaps as control failures in their own right. By quantifying deficiencies per customer, prioritising them by risk impact, and generating remediation plans, the module makes data integrity measurable and its improvement auditable. Validation against reliable, independent sources and an audit-chain record of remediation give the institution evidence that the foundations of its screening and monitoring are sound and actively maintained.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.4 — reliable, accurate CDD data",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — completeness of customer information",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — reliable, accurate CDD data",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — completeness of customer information",
       "FATF Recommendation 10 — adequacy of identification data",
       "CBUAE AML/CFT Standards — data integrity and record adequacy",
       "SOC2 CC7.x — data-processing integrity",
@@ -451,7 +451,7 @@ const REPORTS: Record<string, ReportData> = {
       "FATF Recommendation 24 — transparency of legal persons",
       "FATF Recommendation 25 — transparency of legal arrangements",
       "UAE Cabinet Decision No.58/2020 — beneficial-ownership procedures",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — beneficial-ownership identification",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — beneficial-ownership identification",
       "CBUAE AML/CFT Standards — control-structure analysis",
     ],
     requirements: [
@@ -489,9 +489,9 @@ const REPORTS: Record<string, ReportData> = {
       "Internal actors present a distinct threat — collusion, control override, and insider facilitation — and supervisors expect screening and monitoring of staff commensurate with their roles and access. The module maintains the staff registry, tracks identity-document and authorisation expiry, applies role-based access on a least-privilege basis, and runs AI-assisted scans for internal financial-crime risk such as undisclosed conflicts or sanctions exposure. Fit-and-proper expectations make this a recurring examination topic, particularly for staff in customer-facing and approval roles. Recording vetting decisions in the audit chain allows the institution to show that the human layer of its control environment is itself screened, governed, and kept current.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20–21 — staff screening and training",
+      "Cabinet Resolution No. (134) of 2025 Art.20–21 — staff screening and training",
       "FATF Recommendation 18 — employee screening and internal controls",
-      "Federal Decree-Law No. 20 of 2018 — internal control obligations",
+      "Federal Decree-Law No. (10) of 2025 — internal control obligations",
       "CBUAE AML/CFT Standards — fit-and-proper and staff vetting",
       "SOC2 CC1.4 — competence and accountability of personnel",
     ],
@@ -530,11 +530,11 @@ const REPORTS: Record<string, ReportData> = {
       "Training is a baseline obligation and a frequent examination point precisely because an untrained workforce silently weakens every other control. The module converts the obligation from an unverifiable assertion into an auditable record: it tracks role-appropriate completion, competency, and deadlines, and escalates overdue or failed training before it becomes a finding. Supervisors expect curricula to be refreshed as typologies evolve and to reach the staff whose roles carry the most risk. By retaining completion evidence in the audit chain and surfacing gaps by business unit, the module lets the institution demonstrate that its people are equipped to recognise and act on the risks the platform is designed to detect.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.21 — ongoing employee training",
-      "Federal Decree-Law No. 20 of 2018 — staff awareness obligations",
+      "Cabinet Resolution No. (134) of 2025 Art.21 — ongoing employee training",
+      "Federal Decree-Law No. (10) of 2025 — staff awareness obligations",
       "FATF Recommendation 18 — ongoing training programmes",
       "CBUAE AML/CFT Standards — role-appropriate, refreshed training",
-      "Federal Decree-Law No. 20 of 2018 Art.20 — staff competence and awareness",
+      "Federal Decree-Law No. (10) of 2025 Art.20 — staff competence and awareness",
     ],
     requirements: [
       "Deliver role-appropriate AML/CFT training to all relevant staff",
@@ -571,8 +571,8 @@ const REPORTS: Record<string, ReportData> = {
       "Documented, authority-appropriate approval is central to a defensible control environment because it ensures that risk is accepted knowingly, by an empowered approver, and reproducibly for audit. The module routes higher-risk decisions to the correct seniority, enforces four-eyes authorisation where required, and prevents activation until sign-off is complete. Supervisors test whether approvals were granted at the right level and whether activation ever preceded them, treating both as governance weaknesses. By recording the approver, rationale, and risk score for every decision in the audit chain, the module gives the institution a complete account of who accepted which risk, on what basis, and when — the evidence an examiner expects to see.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.15 — senior approval for high-risk relationships",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — enhanced measures and approval",
+      "Cabinet Resolution No. (134) of 2025 Art.15 — senior approval for high-risk relationships",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — enhanced measures and approval",
       "FATF Recommendation 12 — senior approval for PEP relationships",
       "CBUAE AML/CFT Standards — governance of risk acceptance",
       "SOC2 CC5.x — authorisation controls",
@@ -614,8 +614,8 @@ const REPORTS: Record<string, ReportData> = {
       "In operation the engine sits ahead of every value transfer, and its effectiveness is judged on two axes: whether matching is calibrated to catch near-miss, transliteration, and alias variants without drowning analysts in noise, and whether each alert is dispositioned with a reasoned, evidenced rationale. Examiners reconstruct sample alerts to test both. A confirmed match triggers freezing and reporting without delay, while a dismissed alert must carry a defensible justification. Because the cost of a single missed designation is a strict-liability breach, the audit-chain record of every screening decision is the institution's proof that this most consequential control was both correctly tuned and conscientiously worked.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.18 — screening within CDD",
-      "UAE Cabinet Decision No.10/2019 — targeted financial sanctions obligations",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — screening within CDD",
+      "Cabinet Resolution No. (134) of 2025 — targeted financial sanctions obligations",
       "FATF Recommendation 6 — targeted financial sanctions (terrorism)",
       "FATF Recommendation 7 — proliferation-financing sanctions",
       "CBUAE Guidance on Targeted Financial Sanctions",
@@ -656,8 +656,8 @@ const REPORTS: Record<string, ReportData> = {
       "Ongoing scrutiny of transactions against the customer's expected profile is a core FATF obligation, and the module operationalises it at scale by combining rule-based detection with behavioural and peer-group analytics. Alerts are scored, prioritised, and worked to a disposition within defined timeframes, with reportable activity referred to the STR workflow. Supervisors assess effectiveness, not merely the existence of rules, probing whether structuring, rapid movement, and profile deviations are actually detected and whether tuning has quietly suppressed genuine alerts. By preserving an auditable basis for each alert and outcome, the module lets the institution evidence that suspicious activity is identified, escalated, and reported rather than lost in unmanaged noise.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.16 — ongoing monitoring of transactions",
-      "UAE Cabinet Decision No.10/2019 Art.7 — scrutiny of transactions",
+      "Federal Decree-Law No. (10) of 2025 Art.16 — ongoing monitoring of transactions",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — scrutiny of transactions",
       "FATF Recommendation 10 — ongoing due diligence",
       "FATF Recommendation 20 — reporting of suspicious transactions",
       "CBUAE AML/CFT Standards — risk-based monitoring",
@@ -697,8 +697,8 @@ const REPORTS: Record<string, ReportData> = {
       "Risk status is not static — a customer cleared at onboarding can be designated tomorrow — and the module closes that gap by re-evaluating the subject population on list updates and risk-based cadences. It detects status changes between formal reviews and escalates newly surfaced matches without delay, maintaining a complete re-screening trail. Supervisors expect continuous, not episodic, sanctions and adverse-media coverage and will test whether a newly listed party transacted undetected. By recording re-screening outcomes in the audit chain, the institution can show that clearance was maintained dynamically and that emerging risk on existing relationships was caught and acted upon rather than carried silently.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.16 — ongoing monitoring",
-      "UAE Cabinet Decision No.10/2019 Art.7 — keeping information current",
+      "Federal Decree-Law No. (10) of 2025 Art.16 — ongoing monitoring",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — keeping information current",
       "FATF Recommendation 10 — ongoing due diligence",
       "FATF Recommendation 6 — continuous sanctions obligations",
       "CBUAE AML/CFT Standards — continuous re-screening",
@@ -738,8 +738,8 @@ const REPORTS: Record<string, ReportData> = {
       "A defensible case file — showing what was investigated, what was found, and why a decision was reached — is essential both to effective filing and to demonstrating consistent investigative standards. The module consolidates related alerts, screening hits, and grievances into a single case, enforces a documented lifecycle, and preserves the evidentiary record that underpins any onward report. Examiners sample closed cases to test whether dispositions were reasoned and whether linked activity was joined rather than fragmented across unconnected records. By writing every case action to the audit chain, the institution can reconstruct its reasoning for any decision and show that alerts were worked to a uniform, reviewable standard.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.15 — assessment of suspicions",
-      "UAE Cabinet Decision No.10/2019 Art.17 — internal suspicious-activity process",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — assessment of suspicions",
+      "Cabinet Resolution No. (134) of 2025 Art.17 — internal suspicious-activity process",
       "FATF Recommendation 20 — suspicious-transaction reporting",
       "CBUAE AML/CFT Standards — investigation and record-keeping",
       "SOC2 CC7.3 — incident investigation and resolution",
@@ -779,8 +779,8 @@ const REPORTS: Record<string, ReportData> = {
       "The enterprise-wide assessment is the document that evidences the institution's understanding of its own ML/TF risk and justifies the calibration of every downstream control. The module aggregates customer, product, channel, and geographic risk into a board-approved view and links that view to the controls it warrants, refreshing on material change. Supervisors treat the EWRA as foundational and test whether controls actually follow from assessed risk and whether the assessment reflects current typologies. By versioning each assessment in the audit chain and generating a board-ready report, the module lets the institution demonstrate not only that it assessed its risk, but that senior management owned the conclusions and acted on them.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 — risk-based approach foundation",
-      "UAE Cabinet Decision No.10/2019 Art.3 — business risk assessment",
+      "Federal Decree-Law No. (10) of 2025 — risk-based approach foundation",
+      "Cabinet Resolution No. (134) of 2025 Art.3 — business risk assessment",
       "FATF Recommendation 1 — assessing and mitigating risk",
       "CBUAE AML/CFT Standards — enterprise risk assessment",
       "FATF Methodology — institutional risk understanding",
@@ -820,8 +820,8 @@ const REPORTS: Record<string, ReportData> = {
       "Filing a suspicious report is the institution's single most important AML obligation, and the suite governs it as a controlled gateway rather than an ad hoc act. Four-eyes quality review tests narrative completeness and evidentiary support, the egress gate guards against inadvertent tipping-off, and goAML validation ensures the FIU can ingest the result. Supervisors examine both timeliness and quality, since a late or defective report is simultaneously a compliance failure and a lost intelligence opportunity. By recording the full review and submission chain immutably — including the TOCTOU-safe sign-off — the institution can prove that each report met quality standards and was filed promptly and lawfully.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.15 — obligation to report suspicion",
-      "UAE Cabinet Decision No.10/2019 Art.17 — STR procedures",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — obligation to report suspicion",
+      "Cabinet Resolution No. (134) of 2025 Art.17 — STR procedures",
       "FATF Recommendation 20 — prompt suspicious-transaction reporting",
       "FATF Recommendation 21 — tipping-off prohibition",
       "CBUAE Notice 2021/8 — goAML filing requirements",
@@ -862,8 +862,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "CBUAE Notice 2021/8 — goAML registration and filing",
-      "Federal Decree-Law No. 20 of 2018 Art.15 — reporting to the FIU",
-      "UAE Cabinet Decision No.10/2019 Art.17 — reporting procedures",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — reporting to the FIU",
+      "Cabinet Resolution No. (134) of 2025 Art.17 — reporting procedures",
       "FATF Recommendation 20 — suspicious-transaction reporting",
       "FATF Recommendation 21 — tipping-off prohibition",
     ],
@@ -1148,7 +1148,7 @@ const REPORTS: Record<string, ReportData> = {
       "An unimplemented regulatory change is a latent compliance gap, and the module converts the stream of updates into a managed, auditable pipeline so that obligations are met before they take effect. It identifies new and amended requirements, maps each to affected controls and policy, assigns ownership and deadlines, and tracks implementation to completion. Supervisors expect institutions to keep pace with evolving requirements and will test whether changes were implemented by their effective dates. By recording each change and its implementation in the audit chain, the institution can demonstrate that it adapts its programme proactively and that no applicable obligation was allowed to lapse into a silent control deficiency.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — keeping policies current",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — keeping policies current",
       "FATF Recommendation 1 — responsiveness to evolving risk",
       "CBUAE AML/CFT Standards — regulatory-change governance",
       "Federal Decree-Law No. 10 of 2025 — AI-governance obligations tracking",
@@ -1190,7 +1190,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF guidance on trade-based money laundering",
-      "Federal Decree-Law No. 20 of 2018 — proceeds and predicate offences",
+      "Federal Decree-Law No. (10) of 2025 — proceeds and predicate offences",
       "UAE Ministerial Decree No.68/2024 — responsible sourcing",
       "FATF Recommendation 16 — wire-transfer / trade data",
       "CBUAE AML/CFT Standards — trade-finance risk",
@@ -1232,7 +1232,7 @@ const REPORTS: Record<string, ReportData> = {
     regulatory: [
       "UAE Cabinet Decision No.74/2020 — targeted financial sanctions",
       "EOCN guidance on TFS implementation",
-      "Federal Decree-Law No. 20 of 2018 — sanctions compliance",
+      "Federal Decree-Law No. (10) of 2025 — sanctions compliance",
       "FATF Recommendation 6 — terrorism-related TFS",
       "FATF Recommendation 7 — proliferation-financing TFS",
     ],
@@ -1395,7 +1395,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "UAE Cabinet Resolution No.134/2025 Art.3 — DPMS cash reporting",
-      "Federal Decree-Law No. 20 of 2018 — DNFBP obligations",
+      "Federal Decree-Law No. (10) of 2025 — DNFBP obligations",
       "FATF Recommendation 22 — DNFBP customer due diligence",
       "FATF Recommendation 23 — DNFBP reporting",
       "CBUAE / MOE AML/CFT Standards for DPMS",
@@ -1436,10 +1436,10 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "UAE Ministry of Economy survey MOET/AML/001/2026",
-      "Federal Decree-Law No. 20 of 2018 — DNFBP supervisory obligations",
-      "UAE Cabinet Decision No.10/2019 — supervisory cooperation",
+      "Federal Decree-Law No. (10) of 2025 — DNFBP supervisory obligations",
+      "Cabinet Resolution No. (134) of 2025 — supervisory cooperation",
       "FATF Recommendation 28 — DNFBP supervision",
-      "Federal Decree-Law No. 20 of 2018 — supervisory information obligations",
+      "Federal Decree-Law No. (10) of 2025 — supervisory information obligations",
     ],
     requirements: [
       "Complete all mandatory survey fields accurately",
@@ -1476,8 +1476,8 @@ const REPORTS: Record<string, ReportData> = {
       "Failing to meet an enforcement or remediation deadline compounds the original issue and signals weak governance, so the module centralises these obligations and drives them to evidenced completion. It tracks regulatory deadlines and commitments, assigns ownership, captures remediation evidence, and escalates at-risk items before they slip. Supervisors revisit prior findings expecting closure with proof, and recurring or overdue items are read as systemic weakness. By recording enforcement actions and their remediation in the audit chain, the institution can demonstrate disciplined follow-through on supervisory commitments and show that issues raised in examination were resolved within the agreed timeframes rather than left to recur.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 — supervisory and enforcement framework",
-      "UAE Cabinet Decision No.10/2019 — remediation obligations",
+      "Federal Decree-Law No. (10) of 2025 — supervisory and enforcement framework",
+      "Cabinet Resolution No. (134) of 2025 — remediation obligations",
       "FATF Recommendation 35 — sanctions for non-compliance",
       "CBUAE AML/CFT Standards — remediation tracking",
       "SOC2 CC4.x — monitoring and remediation",
@@ -1517,8 +1517,8 @@ const REPORTS: Record<string, ReportData> = {
       "Effective AML governance requires demonstrable board-level oversight, not merely operational execution, and the module preserves the decision record that proves it occurred. It captures board and senior-management sign-offs, minutes, and the deliberation behind key decisions, and tracks those decisions through to implementation. Supervisors expect to see active engagement with AML risk at the most senior level and will test whether decisions were minuted and actioned. By recording governance actions in the audit chain, the institution can evidence that the Board owned and directed the compliance framework — accepting risk knowingly, challenging management where appropriate, and ensuring that its instructions translated into operational change rather than remaining unimplemented intentions.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — governance and oversight",
-      "Federal Decree-Law No. 20 of 2018 — senior-management responsibility",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — governance and oversight",
+      "Federal Decree-Law No. (10) of 2025 — senior-management responsibility",
       "FATF Recommendation 1 — senior-management accountability",
       "CBUAE AML/CFT Standards — board oversight",
       "SOC2 CC1.2 — board independence and oversight",
@@ -1559,7 +1559,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 1 — effective, risk-based resource use",
-      "UAE Cabinet Decision No.10/2019 Art.7 — effective monitoring",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — effective monitoring",
       "CBUAE AML/CFT Standards — monitoring effectiveness",
       "Federal Decree-Law No. 10 of 2025 — governance of AI-assisted tuning",
       "FATF Methodology — monitoring effectiveness",
@@ -1599,7 +1599,7 @@ const REPORTS: Record<string, ReportData> = {
       "Monitoring rules must evolve with typologies and risk, but uncontrolled changes can silently create detection gaps, so the module imposes a governed lifecycle on every rule. Proposals are risk-justified, tested before deployment, approved, versioned, and retired under change control. Supervisors expect rule changes to be deliberate and reversible, and will test whether a change ever removed coverage without compensating detection. By recording each rule version and its rationale in the audit chain, the institution can reconstruct exactly what its monitoring estate looked for at any point in time and demonstrate that changes to that estate were tested, authorised, and aligned to current typologies rather than introduced informally.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.7 — effective monitoring",
+      "Cabinet Resolution No. (134) of 2025 Art.7 — effective monitoring",
       "FATF Recommendation 10 — ongoing monitoring",
       "FATF Recommendation 1 — risk-based calibration",
       "CBUAE AML/CFT Standards — monitoring governance",
@@ -1640,8 +1640,8 @@ const REPORTS: Record<string, ReportData> = {
       "Open audit findings are a direct indicator of control health and a frequent supervisory focus, so the module ensures identified weaknesses are resolved within governed timeframes rather than merely catalogued. It records findings with severity and ownership, tracks remediation against target dates, and captures the evidence that demonstrates closure. Examiners revisit prior findings and treat recurrence as a sign of unaddressed root cause. By maintaining the findings register in the audit chain and escalating overdue high-severity items, the institution can show effective follow-through on internal and external audit — converting the assurance function's observations into demonstrable control improvements rather than a list of unresolved issues.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — independent audit",
-      "Federal Decree-Law No. 20 of 2018 — internal control adequacy",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — independent audit",
+      "Federal Decree-Law No. (10) of 2025 — internal control adequacy",
       "FATF Recommendation 18 — independent audit function",
       "CBUAE AML/CFT Standards — audit and remediation",
       "SOC2 CC4.2 — evaluation and remediation of deficiencies",
@@ -1681,8 +1681,8 @@ const REPORTS: Record<string, ReportData> = {
       "FATF requires risk to be understood at a level granular enough to calibrate controls, and an enterprise average can mask acute risk concentrated in a particular business line or product. The module assesses ML/TF risk at line and product level, documents the drivers, and links the assessment to the controls each unit requires. Supervisors test whether granular risk actually informs control design and whether emerging product risk is captured. By versioning each assessment in the audit chain and reconciling it with the enterprise-wide view, the institution can demonstrate that resources and controls are allocated to where its risk truly sits rather than spread uniformly against an unrepresentative average.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.3 — business risk assessment",
-      "Federal Decree-Law No. 20 of 2018 — risk-based approach",
+      "Cabinet Resolution No. (134) of 2025 Art.3 — business risk assessment",
+      "Federal Decree-Law No. (10) of 2025 — risk-based approach",
       "FATF Recommendation 1 — assessing and mitigating risk",
       "CBUAE AML/CFT Standards — business-line risk",
       "FATF Methodology — risk understanding",
@@ -1723,7 +1723,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "CBUAE dormant-account regulations",
-      "Federal Decree-Law No. 20 of 2018 Art.16 — ongoing monitoring",
+      "Federal Decree-Law No. (10) of 2025 Art.16 — ongoing monitoring",
       "FATF Recommendation 10 — ongoing due diligence",
       "CBUAE AML/CFT Standards — dormant-account controls",
       "FATF Recommendation 10 — ongoing monitoring of activity",
@@ -1763,8 +1763,8 @@ const REPORTS: Record<string, ReportData> = {
       "Outsourcing does not transfer accountability — the institution remains responsible for outsourced AML-relevant activity — and the module evidences that each arrangement is assessed, governed, and monitored. It registers material outsourcing, classifies risk, defines oversight and audit rights, and monitors provider compliance. Supervisors expect critical functions to retain adequate oversight and will test for concentration risk and loss of audit visibility. By recording outsourcing decisions and provider-compliance monitoring in the audit chain, the institution can demonstrate that delegating a function did not delegate its responsibility, and that it retained the rights, visibility, and controls needed to answer for outsourced activity exactly as it would for work performed in-house.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 — reliance and outsourcing",
-      "Federal Decree-Law No. 20 of 2018 — retained responsibility",
+      "Cabinet Resolution No. (134) of 2025 — reliance and outsourcing",
+      "Federal Decree-Law No. (10) of 2025 — retained responsibility",
       "FATF Recommendation 17 — reliance on third parties",
       "CBUAE outsourcing regulations",
       "SOC2 CC9.2 — vendor and business-partner management",
@@ -1804,8 +1804,8 @@ const REPORTS: Record<string, ReportData> = {
       "Undisclosed conflicts can quietly compromise the independence of compliance and approval decisions, so the module surfaces and manages actual and potential conflicts across the institution. It captures conflicts, assesses their impact on AML decision-making, tracks mitigation, and enforces exclusion of conflicted parties from affected decisions. Supervisors expect conflicts to be identified and managed rather than left to influence outcomes silently, particularly in approval and investigation roles. By maintaining the conflicts register in the audit chain, the institution can demonstrate that a conflicted approver or investigator did not unduly shape a risk decision, and that integrity safeguards were applied where personal interests and compliance responsibilities intersected.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — governance integrity",
-      "Federal Decree-Law No. 20 of 2018 — internal control independence",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — governance integrity",
+      "Federal Decree-Law No. (10) of 2025 — internal control independence",
       "FATF Recommendation 18 — internal controls",
       "CBUAE AML/CFT Standards — conflict management",
       "SOC2 CC1.x — integrity and ethical values",
@@ -1845,8 +1845,8 @@ const REPORTS: Record<string, ReportData> = {
       "When a breach is identified, the decision to disclose proactively — and the manner of doing so — carries significant regulatory consequence, and the module ensures those decisions are governed and evidenced. It assesses identified breaches for disclosure, routes the decision through approval, supports complete and prompt submission, and tracks resulting remediation. Supervisors view candid self-reporting and demonstrable remediation favourably, while a concealed material breach is treated severely. By recording disclosure decisions and their basis in the audit chain, the institution can demonstrate a cooperative compliance posture and show that, where it fell short, it surfaced the issue, addressed the root cause, and engaged the regulator transparently.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 — cooperation with supervisors",
-      "UAE Cabinet Decision No.10/2019 — supervisory engagement",
+      "Federal Decree-Law No. (10) of 2025 — cooperation with supervisors",
+      "Cabinet Resolution No. (134) of 2025 — supervisory engagement",
       "FATF Recommendation 35 — proportionate sanctions",
       "CBUAE AML/CFT Standards — self-reporting",
       "FATF Recommendation 35 — proportionate, cooperative resolution",
@@ -1887,7 +1887,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "Federal Decree-Law No. 10 of 2025 Art.18 — AI decision audit trail",
-      "Federal Decree-Law No. 20 of 2018 — record-keeping obligations",
+      "Federal Decree-Law No. (10) of 2025 — record-keeping obligations",
       "FATF Recommendation 11 — record retention",
       "CBUAE AML/CFT Standards — auditability",
       "SOC2 CC7.x — operational monitoring",
@@ -1970,9 +1970,9 @@ const REPORTS: Record<string, ReportData> = {
       "The MLRO holds personal regulatory responsibility for reporting decisions, and AI can accelerate analysis but cannot assume that accountability, so the module enforces human-in-the-loop oversight as a hard constraint. It synthesises case data, regulatory references, and typology knowledge to inform the officer's judgement, redacts PII before model processing, and gates output through hallucination checks. Supervisors and Federal Decree-Law No. 10 of 2025 expect consequential AI use to be governed and the human decision-maker to remain in control. By recording the AI's contribution to each decision in the audit chain, the institution can demonstrate that the MLRO's judgement — not the model's — drove every reportable decision, and that AI assistance was transparent, bounded, and accountable.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.15 — MLRO reporting responsibility",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — MLRO reporting responsibility",
       "Federal Decree-Law No. 10 of 2025 — AI governance and human oversight",
-      "UAE Cabinet Decision No.10/2019 Art.16 — MLRO appointment",
+      "Cabinet Resolution No. (134) of 2025 Art.16 — MLRO appointment",
       "FATF Recommendation 20 — suspicious-transaction reporting",
       "UNESCO AI Ethics Recommendation — human oversight",
     ],
@@ -2052,7 +2052,7 @@ const REPORTS: Record<string, ReportData> = {
       "When a supervisor calls, the ability to produce complete, reconcilable evidence quickly is itself a measure of control maturity, and the module pre-stages and assembles that evidence on demand. It consolidates audit-chain records, policies, screening and filing evidence, and governance artefacts into a coherent, navigable submission. Examiners judge institutions partly on responsiveness, and a scramble to assemble evidence signals weak record-keeping. By integrating with the audit chain and verifying evidence integrity, the module lets the institution respond comprehensively and without delay, demonstrating that its compliance history is not only sound but readily provable — that every control area can be evidenced on request with traceable, integrity-checked records.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 — supervisory cooperation",
+      "Federal Decree-Law No. (10) of 2025 — supervisory cooperation",
       "Federal Decree-Law No. 10 of 2025 Art.18 — AI audit-trail disclosure",
       "FATF Recommendation 11 — record availability",
       "FATF Recommendation 27 — supervisory powers",
@@ -2093,9 +2093,9 @@ const REPORTS: Record<string, ReportData> = {
       "A current, authoritative regulatory reference is foundational, because controls and decisions must trace to actual obligations rather than stale or misremembered rules. The module maintains a searchable repository of UAE and FATF instruments, tracks amendments and supersessions, and links obligations to the platform controls they justify. Supervisors expect consistent interpretation across staff and will probe whether controls rest on current text. By keeping the library current and recording updates in the audit chain, the institution ensures that its people and its AI faculties reason from the obligations actually in force, and that any reliance on superseded text is identified before it produces a control built on an outdated legal foundation.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 — primary AML/CFT law",
+      "Federal Decree-Law No. (10) of 2025 — primary AML/CFT law",
       "Federal Decree-Law No. 10 of 2025 — AI governance",
-      "UAE Cabinet Decision No.10/2019 — implementing regulations",
+      "Cabinet Resolution No. (134) of 2025 — implementing regulations",
       "FATF Recommendations and Methodology",
       "CBUAE AML/CFT Standards",
     ],
@@ -2134,8 +2134,8 @@ const REPORTS: Record<string, ReportData> = {
       "Policies are the institution's stated commitments and SOPs translate them into action, so the module governs both through approval, versioning, and periodic review. It maintains a board-approved programme charter, version-controls each document, schedules reviews, and maps documents to the obligations they govern. Supervisors expect policies to be current, owned at board level, and actually followed, and will test whether SOPs match real practice. By recording policy changes and approvals in the audit chain, the institution can demonstrate a living control framework — one whose documented commitments are current, authorised, and aligned to regulation, rather than a static binder that has drifted out of step with how the institution genuinely operates.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — policies and procedures",
-      "Federal Decree-Law No. 20 of 2018 — internal control framework",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — policies and procedures",
+      "Federal Decree-Law No. (10) of 2025 — internal control framework",
       "FATF Recommendation 18 — internal policies and controls",
       "CBUAE AML/CFT Standards — documented procedures",
       "SOC2 CC5.3 — policy deployment",
@@ -2176,7 +2176,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF typologies and red-flag guidance",
-      "Federal Decree-Law No. 20 of 2018 — predicate-offence awareness",
+      "Federal Decree-Law No. (10) of 2025 — predicate-offence awareness",
       "FATF Recommendation 1 — understanding evolving risk",
       "CBUAE AML/CFT Standards — typology awareness",
       "FATF Methodology — risk understanding",
@@ -2216,8 +2216,8 @@ const REPORTS: Record<string, ReportData> = {
       "Consistency is a hallmark of a mature control environment, and playbooks ensure critical processes are executed the same defensible way regardless of who performs them. The module maintains step-by-step procedures for alert investigation, filing, sanctions response, and other key processes, aligned to current obligations and version-controlled. Supervisors expect uniform execution and will note divergence between documented procedure and actual practice. By training staff on playbook execution and recording usage in the audit chain, the institution can demonstrate that its critical compliance processes are repeatable and standardised — codifying institutional knowledge so that quality does not depend on the individual analyst and so that examiners encounter consistency rather than improvisation.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — documented procedures",
-      "Federal Decree-Law No. 20 of 2018 — internal controls",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — documented procedures",
+      "Federal Decree-Law No. (10) of 2025 — internal controls",
       "FATF Recommendation 18 — internal procedures",
       "CBUAE AML/CFT Standards — operational consistency",
       "SOC2 CC5.x — control execution",
@@ -2258,7 +2258,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "Federal Decree-Law No. 45 of 2021 — Personal Data Protection Law",
-      "Federal Decree-Law No. 20 of 2018 — record-keeping obligations",
+      "Federal Decree-Law No. (10) of 2025 — record-keeping obligations",
       "FATF Recommendation 11 — record retention",
       "Federal Decree-Law No. 10 of 2025 — AI data governance",
       "GDPR/PDPL — data-subject rights",
@@ -2301,7 +2301,7 @@ const REPORTS: Record<string, ReportData> = {
       "Federal Decree-Law No. 10 of 2025 — AI incident governance",
       "NIST AI RMF — MANAGE function (incident response)",
       "UNESCO AI Ethics Recommendation — accountability",
-      "Federal Decree-Law No. 20 of 2018 — operational-control obligations",
+      "Federal Decree-Law No. (10) of 2025 — operational-control obligations",
       "SOC2 CC7.3/CC7.4 — incident response",
     ],
     requirements: [
@@ -2342,7 +2342,7 @@ const REPORTS: Record<string, ReportData> = {
       "Federal Decree-Law No. 10 of 2025 — comprehensive AI governance",
       "NIST AI Risk Management Framework — GOVERN/MAP/MEASURE/MANAGE",
       "UNESCO Recommendation on the Ethics of AI",
-      "Federal Decree-Law No. 20 of 2018 — accountable decision-making",
+      "Federal Decree-Law No. (10) of 2025 — accountable decision-making",
       "ISO/IEC 42001 — AI management systems",
     ],
     requirements: [
@@ -2383,7 +2383,7 @@ const REPORTS: Record<string, ReportData> = {
       "Federal Decree-Law No. 10 of 2025 — governance of all AI use",
       "Federal Decree-Law No. 45 of 2021 — data-protection in AI processing",
       "NIST AI RMF — MAP function (context and inventory)",
-      "Federal Decree-Law No. 20 of 2018 — data-handling controls",
+      "Federal Decree-Law No. (10) of 2025 — data-handling controls",
       "SOC2 CC6.x — unauthorised-tool controls",
     ],
     requirements: [
@@ -2464,8 +2464,8 @@ const REPORTS: Record<string, ReportData> = {
       "Open-source signals can corroborate or contradict customer-supplied data and surface risk invisible to internal systems, and the module gathers this intelligence systematically rather than anecdotally. It harvests domains, usernames, and public footprints from reliable sources, records provenance, and feeds findings into the institution's risk assessment within lawful boundaries. Supervisors expect verification from independent sources rather than uncritical acceptance of self-attestation. By recording OSINT use and provenance in the audit chain, the institution can demonstrate that its diligence reached beyond the customer's own representations — testing claimed identities and relationships against externally verifiable evidence and escalating adverse public information that contradicts the picture a customer has presented.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.4 — independent-source verification",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — due diligence enrichment",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — independent-source verification",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — due diligence enrichment",
       "FATF Recommendation 10 — reliable information sources",
       "CBUAE AML/CFT Standards — adverse-information gathering",
       "FATF Recommendation 10 — corroboration from independent sources",
@@ -2506,10 +2506,10 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 24 — legal-person identification",
-      "UAE Cabinet Decision No.10/2019 Art.4 — reliable sources",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — entity verification",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — reliable sources",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — entity verification",
       "FATF Recommendation 16 — originator/beneficiary identification",
-      "UAE Cabinet Decision No.10/2019 Art.4 — verification from reliable sources",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — verification from reliable sources",
     ],
     requirements: [
       "Verify entities against the GLEIF registry",
@@ -2547,8 +2547,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 24/25 — ownership and control transparency",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — connected-party identification",
-      "UAE Cabinet Decision No.10/2019 — relationship analysis",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — connected-party identification",
+      "Cabinet Resolution No. (134) of 2025 — relationship analysis",
       "FATF Recommendation 10 — beneficial-ownership networks",
       "FATF Recommendation 10 — connected-party and ownership networks",
     ],
@@ -2587,8 +2587,8 @@ const REPORTS: Record<string, ReportData> = {
       "Web infrastructure can corroborate or undermine a counterparty's claimed legitimacy, since fraudulent operations frequently share tell-tale infrastructure traits, and the module brings this technical intelligence into the risk picture. It analyses domains and hosting, detects recently registered or suspicious domains and infrastructure shared with known-bad actors, and records findings with provenance. Supervisors expect diligence on entities whose legitimacy is asserted online to be more than superficial. By feeding infrastructure signals into risk assessment and recording them in the audit chain, the institution can demonstrate that it tested the digital footprint behind a counterparty's claims — distinguishing established, verifiable operations from hastily constructed fronts that exhibit the technical hallmarks of fraud.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.4 — independent verification",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — diligence enrichment",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — independent verification",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — diligence enrichment",
       "FATF Recommendation 10 — reliable information",
       "CBUAE AML/CFT Standards — counterparty verification",
       "FATF Recommendation 10 — independent corroboration of identity",
@@ -2630,7 +2630,7 @@ const REPORTS: Record<string, ReportData> = {
     regulatory: [
       "FATF Recommendation 15 — virtual assets and VASPs",
       "FATF Travel Rule — originator/beneficiary information",
-      "Federal Decree-Law No. 20 of 2018 — virtual-asset proceeds",
+      "Federal Decree-Law No. (10) of 2025 — virtual-asset proceeds",
       "CBUAE / VARA virtual-asset regulations",
       "FATF Recommendation 6/7 — sanctions on virtual assets",
     ],
@@ -2670,7 +2670,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 6/7 — sanctions screening",
-      "Federal Decree-Law No. 20 of 2018 — sanctions compliance",
+      "Federal Decree-Law No. (10) of 2025 — sanctions compliance",
       "OFAC/UN maritime sanctions advisories",
       "FATF Recommendation 16 — trade-finance data",
       "CBUAE Guidance on Targeted Financial Sanctions",
@@ -2711,7 +2711,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 10 — scrutiny of transactions",
-      "Federal Decree-Law No. 20 of 2018 — detection of suspicious activity",
+      "Federal Decree-Law No. (10) of 2025 — detection of suspicious activity",
       "FATF Methodology — analytical effectiveness",
       "CBUAE AML/CFT Standards — anomaly detection",
       "FATF Recommendation 10 — analytical scrutiny of transactions",
@@ -2751,8 +2751,8 @@ const REPORTS: Record<string, ReportData> = {
       "Complex investigations require synthesis across many sources, and fragmentation breeds gaps and inconsistency, so the workbench consolidates screening, network, transaction, and intelligence data into a single investigative surface. It documents the analyst's reasoning, supports a defensible disposition, and preserves the working record that underpins any onward report. Supervisors sample investigations expecting coherent, evidenced reasoning rather than disconnected notes. By recording each investigation step in the audit chain, the institution can demonstrate that its deepest enquiries were conducted to a consistent standard — drawing the available evidence together, reasoning transparently to a conclusion, and referring reportable findings onward — so that the quality of an investigation does not depend on which analyst happened to own it.",
     ],
     regulatory: [
-      "Federal Decree-Law No. 20 of 2018 Art.15 — assessment of suspicion",
-      "UAE Cabinet Decision No.10/2019 Art.17 — investigation process",
+      "Federal Decree-Law No. (10) of 2025 Art.15 — assessment of suspicion",
+      "Cabinet Resolution No. (134) of 2025 Art.17 — investigation process",
       "FATF Recommendation 20 — suspicious-activity assessment",
       "CBUAE AML/CFT Standards — investigation rigour",
       "SOC2 CC7.3 — investigation and resolution",
@@ -2793,8 +2793,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
-      "UAE Cabinet Decision No.10/2019 Art.4 — geographic risk",
-      "Federal Decree-Law No. 20 of 2018 — risk-based approach",
+      "Cabinet Resolution No. (134) of 2025 Art.4 — geographic risk",
+      "Federal Decree-Law No. (10) of 2025 — risk-based approach",
       "FATF high-risk and monitored jurisdictions lists",
       "CBUAE AML/CFT Standards — country-risk assessment",
     ],
@@ -2834,7 +2834,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
-      "Federal Decree-Law No. 20 of 2018 — sanctions and geographic risk",
+      "Federal Decree-Law No. (10) of 2025 — sanctions and geographic risk",
       "FATF Recommendation 6/7 — evolving sanctions",
       "CBUAE Guidance on Targeted Financial Sanctions",
       "FATF Recommendation 1 — dynamic risk understanding",
@@ -2875,7 +2875,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
-      "Federal Decree-Law No. 20 of 2018 — geographic risk-based approach",
+      "Federal Decree-Law No. (10) of 2025 — geographic risk-based approach",
       "FATF Recommendation 1 — portfolio risk understanding",
       "CBUAE AML/CFT Standards — geographic oversight",
       "FATF Recommendation 1 — portfolio-level risk understanding",
@@ -2916,7 +2916,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 6/7 — sanctions implementation",
-      "Federal Decree-Law No. 20 of 2018 — sanctions evasion as an offence",
+      "Federal Decree-Law No. (10) of 2025 — sanctions evasion as an offence",
       "CBUAE Guidance on Targeted Financial Sanctions",
       "FATF guidance on sanctions-evasion typologies",
       "UAE Cabinet Decision No.74/2020 — TFS",
@@ -2958,8 +2958,8 @@ const REPORTS: Record<string, ReportData> = {
     regulatory: [
       "FATF Recommendation 24/25 — ownership transparency",
       "FATF Recommendation 15 — virtual assets",
-      "Federal Decree-Law No. 20 of 2018 Art.18 — due diligence",
-      "UAE Cabinet Decision No.10/2019 — investigation tools",
+      "Federal Decree-Law No. (10) of 2025 Art.18 — due diligence",
+      "Cabinet Resolution No. (134) of 2025 — investigation tools",
       "CBUAE AML/CFT Standards — investigative capability",
     ],
     requirements: [
@@ -2998,7 +2998,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "Federal Decree-Law No. 10 of 2025 Art.18 — AI decision audit trail",
-      "Federal Decree-Law No. 20 of 2018 — record-keeping",
+      "Federal Decree-Law No. (10) of 2025 — record-keeping",
       "FATF Recommendation 11 — record retention",
       "CBUAE AML/CFT Standards — auditability",
       "SOC2 CC7.x — audit logging",
@@ -3041,7 +3041,7 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 1 — current risk understanding",
-      "Federal Decree-Law No. 20 of 2018 — awareness of risk developments",
+      "Federal Decree-Law No. (10) of 2025 — awareness of risk developments",
       "FATF Recommendation 19 — high-risk-country awareness",
       "CBUAE AML/CFT Standards — adverse-media monitoring",
       "FATF Recommendation 19 — awareness of high-risk-country developments",
@@ -3204,8 +3204,8 @@ const REPORTS: Record<string, ReportData> = {
       "Controls executed by people can be undermined by people, and supervisors expect institutions to monitor for internal control failure and misconduct, so the module surveils analyst activity for indicators of error, override, or impropriety. It detects anomalous disposition patterns, control bypass, and inconsistent decision-making while respecting proportionality and staff rights. Examiners treat the integrity of the human control layer as part of the overall control environment. By recording monitoring findings in the audit chain, the institution can demonstrate that the analysts operating its controls were themselves subject to oversight — that anomalous behaviour, overrides, and inconsistency were surfaced for review — providing assurance that the discretion inherent in compliance work was exercised with integrity rather than abused.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — internal controls",
-      "Federal Decree-Law No. 20 of 2018 — control integrity",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — internal controls",
+      "Federal Decree-Law No. (10) of 2025 — control integrity",
       "FATF Recommendation 18 — internal-control monitoring",
       "CBUAE AML/CFT Standards — staff oversight",
       "SOC2 CC1.x — accountability",
@@ -3245,8 +3245,8 @@ const REPORTS: Record<string, ReportData> = {
       "Effective board oversight depends on clear, relevant, and timely information, and FATF and CBUAE expect demonstrable board engagement with AML risk, so the module translates operational detail into governance-relevant signal. It presents board-level compliance metrics and key risk indicators with trends, supporting informed decision-making at the most senior level. Supervisors test whether directors received and acted on adequate information. By recording board reporting in the audit chain, the institution can demonstrate that its Board was genuinely equipped to discharge its oversight responsibility — that material risk was surfaced to directors in a form they could act upon, and that senior engagement with the AML and AI-governance programme was substantive and evidenced rather than nominal.",
     ],
     regulatory: [
-      "UAE Cabinet Decision No.10/2019 Art.20 — board oversight",
-      "Federal Decree-Law No. 20 of 2018 — senior accountability",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — board oversight",
+      "Federal Decree-Law No. (10) of 2025 — senior accountability",
       "FATF Recommendation 1 — senior-management oversight",
       "CBUAE AML/CFT Standards — board reporting",
       "SOC2 CC1.2 — board oversight",
@@ -3287,8 +3287,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "FATF Recommendation 1 — risk monitoring",
-      "UAE Cabinet Decision No.10/2019 — risk-based management",
-      "Federal Decree-Law No. 20 of 2018 — ongoing risk awareness",
+      "Cabinet Resolution No. (134) of 2025 — risk-based management",
+      "Federal Decree-Law No. (10) of 2025 — ongoing risk awareness",
       "CBUAE AML/CFT Standards — risk indicators",
       "SOC2 CC4.1 — performance monitoring",
     ],
@@ -3328,8 +3328,8 @@ const REPORTS: Record<string, ReportData> = {
     ],
     regulatory: [
       "Federal Decree-Law No. 45 of 2021 — data-access controls",
-      "UAE Cabinet Decision No.10/2019 Art.20 — access governance",
-      "Federal Decree-Law No. 20 of 2018 — confidentiality of records",
+      "Cabinet Resolution No. (134) of 2025 Art.20 — access governance",
+      "Federal Decree-Law No. (10) of 2025 — confidentiality of records",
       "SOC2 CC6.1 — logical access controls",
       "FATF Recommendation 18 — internal-control access",
     ],

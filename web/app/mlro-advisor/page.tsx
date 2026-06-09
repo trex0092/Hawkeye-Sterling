@@ -643,8 +643,8 @@ interface SanctionsListHit { list: string; listAuthority: string; hitType: "conf
 interface SanctionsExposureResult { overallExposure: "confirmed_hit"|"high"|"medium"|"low"|"none"; immediateFreeze: boolean; freezeBasis?: string; listHits: SanctionsListHit[]; assetFreezeRequired: boolean; dealingProhibition: boolean; tippingOffRisk: boolean; recommendedAction: "freeze_immediately"|"file_str"|"escalate_mlro"|"enhanced_screening"|"clear"; actionRationale: string; frozenAssetReportingDeadline?: string; applicableRegime: string[]; complianceObligations: string[]; regulatoryBasis: string }
 
 // ── Suggested questions ───────────────────────────────────────────────────────
-// Sources: UAE Federal Decree-Law No. 10 of 2025 & Cabinet Resolution 134/2025 (which together
-// repealed and replaced the previous Federal Decree-Law No. 20 of 2018 + Cabinet Decision No.10/2019),
+// Sources: UAE Federal Decree-Law No. (10) of 2025 & Cabinet Resolution No. (134) of 2025 (which together
+// repealed and replaced the previous Federal Decree-Law No. (20) of 2018 + Cabinet Decision No. (10) of 2019),
 // MoE DPMS rules, UAE FIU (goAML), EOCN sanctions guidance, LBMA Responsible
 // Gold Guidance, OECD CAHRA 5-step Due Diligence, FATF 40 Recommendations,
 // RMI RMAP / CMRT, ESG frameworks (EU CSDDD / CSRD), UN Guiding Principles

@@ -49,7 +49,7 @@ function escalationPath(owner: string): string {
 // Standing UAE / international framework every module is governed under,
 // in addition to the module-specific legal basis.
 const STANDING_FRAMEWORK =
-  "Federal Decree-Law No.10/2025 & Cabinet Decision No.10/2019; " +
+  "Federal Decree-Law No.10/2025 & Cabinet Resolution No. (134) of 2025; " +
   "FATF Recommendations & Methodology; MoE AML/CFT Guidance for DNFBPs/DPMS.";
 
 // Builds the full, sectioned audit-ready compliance report posted to a

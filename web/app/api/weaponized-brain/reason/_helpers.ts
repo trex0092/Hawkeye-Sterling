@@ -545,7 +545,7 @@ export function generateNarrative(input: ReasonInput, result: ReasoningResult): 
   if (redFlags.length === 0) redFlags.push("(no discrete red flags fired — composite score reflects accumulated weaker signals)");
 
   const legalBasis: string[] = [
-    "Federal Decree-Law No. 10 of 2025 Art. 16(2) — duty to file Suspicious Transaction Report on reasonable suspicion (replaces former Federal Decree-Law No. 20 of 2018)",
+    "Federal Decree-Law No. 10 of 2025 Art. 16(2) — duty to file Suspicious Transaction Report on reasonable suspicion (replaces former Federal Decree-Law No. (10) of 2025)",
     "Cabinet Decision 74/2020 — UAE TFS implementation: freeze and notify obligations",
     "FATF Recommendation 10 INR.10(b) — enhanced CDD on higher-risk relationships",
     "FATF Recommendation 20 — STR filing on suspicion of ML/TF predicate",
