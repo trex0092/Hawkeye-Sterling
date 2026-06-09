@@ -276,7 +276,7 @@ export default function MakerCheckerPage() {
   const pendingCount = items.filter((i) => i.status === "pending").length;
 
   return (
-    <ModuleLayout engineLabel="Maker-checker engine" asanaModule="maker-checker" asanaLabel="Maker-Checker">
+    <ModuleLayout engineLabel="Maker-checker engine" asanaModule="maker-checker" asanaLabel="Maker-Checker" onSync={() => void loadItems()}>
       <ModuleHero
         eyebrow=""
         title="Maker-Checker"

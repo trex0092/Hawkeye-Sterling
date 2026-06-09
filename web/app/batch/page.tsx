@@ -360,7 +360,7 @@ export default function BatchPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen">
+    <ModuleLayout asanaModule="batch" asanaLabel="Batch Screen" onCsv={downloadCsv}>
       <div>
         <ModuleHero
           eyebrow=""

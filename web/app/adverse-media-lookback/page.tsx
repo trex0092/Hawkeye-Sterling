@@ -346,7 +346,7 @@ export default function AdverseMediaLookbackPage() {
   );
 
   return (
-    <ModuleLayout asanaModule="adverse-media-lookback" asanaLabel="Adverse Media Lookback">
+    <ModuleLayout asanaModule="adverse-media-lookback" asanaLabel="Adverse Media Lookback" onAdd={_add}>
         <ModuleHero
 
           eyebrow=""

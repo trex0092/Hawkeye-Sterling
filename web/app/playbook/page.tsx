@@ -158,7 +158,7 @@ export default function PlaybookPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="playbook" asanaLabel="Playbook">
+    <ModuleLayout asanaModule="playbook" asanaLabel="Playbook" onRun={() => void runSimulator()}>
       <ModuleHero
 
         eyebrow=""

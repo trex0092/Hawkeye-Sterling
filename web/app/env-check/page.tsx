@@ -58,7 +58,7 @@ export default function EnvCheckPage() {
     : [];
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="env-check" asanaLabel="Environment Check">
       <ModuleHero
         eyebrow=""
         title="Environment Check"

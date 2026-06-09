@@ -197,7 +197,7 @@ export default function OsintPage() {
   const hasResults = domainResult || sherlockResult || socialResult;
 
   return (
-    <ModuleLayout asanaModule="osint" asanaLabel="OSINT Intelligence">
+    <ModuleLayout asanaModule="osint" asanaLabel="OSINT Intelligence" onRun={() => void run()}>
       <ModuleHero
 
         eyebrow=""

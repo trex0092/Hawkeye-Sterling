@@ -46,3 +46,24 @@ pro-rated credit:
 
 Status dashboard: `https://hawkeye-sterling.netlify.app/status` (also
 JSON-consumable at `/api/status`).
+
+## Data Backup and Recovery
+
+### Backup
+
+| Data Class | Primary Store | Backup Method | Frequency | Retention |
+| --- | --- | --- | --- | --- |
+| Audit chain | Netlify Blobs | S3-compatible nightly export (`netlify/functions/audit-chain-s3-backup.mts`) | Nightly 02:00 UTC | 10 years |
+| Sanctions snapshots | Netlify Blobs | Operator local export + Asana mirror | Per ingest | 10 years |
+| Configuration / code | GitHub | Git history | Per commit | Indefinite |
+
+### Recovery Objectives
+
+| Tier | RTO | RPO | Mechanism |
+| --- | --- | --- | --- |
+| Screening (sanctions-only fallback) | < 5 min | 36 h (stale threshold) | Seed corpus fallback in `candidates-loader.ts` |
+| Full screening pipeline | < 30 min | < 24 h (last list ingest) | Restore Netlify Blobs; trigger manual sanctions refresh |
+| Audit trail | < 24 h | < 24 h | Restore from S3 backup; verify HMAC chain via `/api/audit/verify` |
+| MLRO advisory (LLM) | < 15 min | N/A — stateless | Deterministic rule-based classifier runs while Anthropic API is unavailable |
+
+Full disaster recovery procedures — failover steps, escalation timelines, and quarterly DR test schedule — are documented in `docs/RELIABILITY-REPORT.md §4.1`. Recovery testing results are reported to the Board Risk Committee and recorded in governance committee minutes.

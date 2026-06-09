@@ -1111,6 +1111,8 @@ export default function ShipmentsPage() {
       asanaModule="shipments"
       asanaLabel="Shipments"
       engineLabel="Bullion compliance engine"
+      onAdd={() => setShowAdd(true)}
+      onRun={() => void _runTbmlScan(live)}
       sidebarActions={
         showAdd ? null : (
           <>

@@ -81,7 +81,7 @@ export default function FunctionsPage() {
   const summary = data?.summary;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="functions" asanaLabel="Functions" onSync={() => void load()}>
       <ModuleHero
         eyebrow=""
         title="Scheduled Functions"

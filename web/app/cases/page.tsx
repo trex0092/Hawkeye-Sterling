@@ -187,7 +187,7 @@ export default function CasesPage() {
   return (
     <>
       <Header />
-      <ModuleActionBar asanaModule="cases" asanaLabel="Cases" />
+      <ModuleActionBar asanaModule="cases" asanaLabel="Cases" onRun={() => void _runBatchTriage()} />
       <div className="grid min-h-[calc(100vh-54px)] grid-cols-1 md:grid-cols-[220px_1fr]">
         <div className="hidden md:block">
           <CasesSidebar

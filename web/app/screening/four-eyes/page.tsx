@@ -140,7 +140,7 @@ export default function FourEyesPage() {
   return (
     <>
       <Header />
-      <ModuleActionBar asanaModule="screening-four-eyes" asanaLabel="Four-Eyes Screening" />
+      <ModuleActionBar asanaModule="screening-four-eyes" asanaLabel="Four-Eyes Screening" onRun={() => void refresh()} onSync={() => void refresh()} />
       <main className="max-w-5xl mx-auto px-10 py-8">
         <div className="mb-6">
           <div className="flex items-center gap-1.5 font-mono text-11 tracking-wide-8 uppercase text-brand mb-2">

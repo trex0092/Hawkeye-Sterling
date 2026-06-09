@@ -163,7 +163,7 @@ export default function SystemStatusPage() {
   const blockedItems = pendingItems.filter((i) => i.filingBlocked);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="system-status" asanaLabel="System Status" onRun={() => void load()} onSync={() => void load()}>
       <ModuleHero
         eyebrow=""
         title="System Status"

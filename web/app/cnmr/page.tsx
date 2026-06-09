@@ -260,6 +260,8 @@ export default function CnmrPage() {
       asanaModule="cnmr"
       asanaLabel="CNMR Workflow"
       engineLabel="CNMR compliance engine"
+      onRun={() => void loadCases()}
+      onSync={() => void loadCases()}
       sidebarActions={
         !showNew ? (
           <ActionButton variant="add" type="button" onClick={() => setShowNew(true)}>

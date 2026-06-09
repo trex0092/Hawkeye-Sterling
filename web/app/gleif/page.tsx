@@ -122,7 +122,7 @@ function GleifInner() {
   };
 
   return (
-    <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI">
+    <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI" onRun={() => void (tab === "lookup" ? lookupLei() : searchGleif())}>
       <ModuleHero
 
         eyebrow=""

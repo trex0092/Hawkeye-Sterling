@@ -117,7 +117,7 @@ export default function BraPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="bra" asanaLabel="Business Risk Assessment" onRun={() => void fetchRecords()} onSync={() => void fetchRecords()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Business Risk"

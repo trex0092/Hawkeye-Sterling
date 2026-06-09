@@ -605,6 +605,7 @@ export default function StrCasesPage() {
     <ModuleLayout
       asanaModule="str-cases"
       asanaLabel="STR / SAR Cases"
+      onRun={() => void runTriage()}
       sidebarActions={
         <>
           <ActionButton

@@ -169,7 +169,7 @@ export default function AuditTrailPage() {
     : null;
 
   return (
-    <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail" hideDetailPanel>
+    <ModuleLayout asanaModule="audit-trail" asanaLabel="Audit Trail" hideDetailPanel onCsv={handleExportCsv} onRun={() => void runAnomalyScan()}>
       <div>
         <div className="mb-8">
           <h1 className="font-display font-normal text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">

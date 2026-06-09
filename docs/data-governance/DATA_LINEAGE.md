@@ -50,6 +50,22 @@ Undisclosed data gaps, unvalidated ingestion, or untraceable source provenance a
 
 ## 2. Data Source Registry
 
+### 2.0 AI Context and Applicability Assessment (ISO/IEC 42001:2023 Clause 5.3)
+
+This section documents the context within which the AI systems operate, satisfying ISO/IEC 42001:2023 Clause 5.3 (Understanding the context of the AI system) and providing the applicability basis for data governance controls.
+
+| Context Dimension | Description |
+|---|---|
+| **Use Case** | AML/CFT/CPF compliance screening — sanctions, PEP, and adverse-media detection for financial institutions and DNFBPs operating under UAE law |
+| **Primary Users** | MLRO; Compliance Officer; Data Science Lead (system monitoring); Engineering Lead (infrastructure) |
+| **Affected Persons** | Financial services customers, counterparties, and beneficial owners screened against authoritative lists |
+| **Application Domain** | Regulatory decision-support for financial crime detection; outputs inform (but do not replace) human compliance decisions |
+| **Regulatory Environment** | UAE FDL 10/2025 (primary AML/CFT AI governance); FDL 20/2018 (AML/CFT offences); Cabinet Decision 74/2020 (targeted sanctions); FATF Recommendations R.1, R.10, R.11, R.12; UAE PDPL |
+| **Deployment Context** | Cloud-hosted (Netlify serverless + Docker + k8s); tenant-isolated; HMAC-signed audit chain; dual-secret JWT auth |
+| **Known Data Limitations** | See §7 (Data Quality Risk Register) — principal gaps: UAE EOCN in PDF format; local-language media gaps; GDELT noise; sub-national PEP gaps |
+| **AI System Scope** | Five systems in scope: HS-001 (Screening), HS-002 (Reasoning Modes), HS-003 (Adverse Media), HS-004 (Auto-Dispositioner — PILOT), HS-005 (STR/SAR Generator). Full inventory in `docs/governance/AI_INVENTORY.md` |
+| **Out of Scope** | Internal IT systems with no AML/CFT output; manual analytical work by human officers without AI assistance; third-party platforms not integrated into the pipeline |
+
 ### 2.1 Sanctions Lists
 
 #### DS-001: UN Security Council Consolidated List
@@ -579,19 +595,23 @@ Engineering Lead maintains a cross-border transfer register documenting transfer
 
 ---
 
-## 7. Known Data Quality Limitations
+## 7. Data Quality Risk Register (ISO/IEC 42001:2023 Clause 8.2)
 
-| Limitation | Affected Sources | Impact | Mitigation |
-|---|---|---|---|
-| UAE EOCN PDF format | DS-006 | Manual extraction required; risk of transcription error | Dual-review by Compliance Officer and Engineering Lead; Phase 2 PDF parser delivery prioritised |
-| Local-language media gap | DS-008, DS-011 | Adverse media in non-indexed local outlets missed | Extended RSS feed list; MLRO manual monitoring for high-risk jurisdictions |
-| Paywalled content | DS-008, DS-010 | Full article text unavailable | Subscriptions maintained where material; gap declared in scope section of screening output |
-| Sub-national PEP gaps | DS-007 | Some sub-national PEPs not in OpenSanctions | Manual supplementation for high-risk cases; quarterly coverage audit |
-| Transliteration variants | DS-001 to DS-006 | Name variants across scripts may not match | Fuzzy matching at engine layer; POSSIBLE confidence maximum for transliterated matches without native-script corroboration |
-| GDELT noise | DS-009 | High false-positive rate for geopolitical events | Corroboration required from DS-008 or DS-010 before actioning GDELT-only findings |
-| NewsAPI historical limit | DS-008 | Articles older than 30 days not accessible via API | Manual research or archive subscriptions for historical adverse media |
-| RSS polling lag | DS-011 | Up to 30-minute delay on breaking news | NewsAPI real-time queries used for high-priority subjects |
-| UN/OFAC publication lag | DS-001, DS-002 | 24–48-hour gap between UNSC resolution and list update | Supplementary manual monitoring of official UN/OFAC announcement channels |
+*Reframed from "Known Data Quality Limitations" to a formal Data Quality Risk Register per ISO/IEC 42001:2023 Clause 8.2 (AI risk assessment). Each row represents an identified data quality risk with likelihood, impact, mitigation, and residual risk assessment.*
+
+| Risk ID | Risk Description | Affected Sources | Likelihood | Impact | Mitigation | Residual Risk | Owner | Review Date |
+|---|---|---|---|---|---|---|---|---|
+| DQR-001 | UAE EOCN list in PDF format — manual extraction risk of transcription error | DS-006 | MEDIUM | HIGH — missed designation | Dual-review by Compliance Officer and Engineering Lead; Phase 2 PDF parser delivery prioritised | MEDIUM | Engineering Lead | 2026-08-06 |
+| DQR-002 | Local-language media gap — adverse media in non-indexed regional outlets missed | DS-008, DS-011 | HIGH | MEDIUM — missed adverse media | Extended RSS feed list; MLRO manual monitoring for high-risk jurisdictions | MEDIUM | MLRO | 2026-08-06 |
+| DQR-003 | Paywalled content — full article text unavailable from premium sources | DS-008, DS-010 | HIGH | LOW — gap declared in output | Subscriptions maintained where material; gap declared in scope section per charter P7 | LOW | Engineering Lead | 2026-08-06 |
+| DQR-004 | Sub-national PEP gaps — some sub-national PEPs not in OpenSanctions | DS-007 | MEDIUM | HIGH — missed PEP | Manual supplementation for high-risk cases; quarterly coverage audit | MEDIUM | Data Science Lead | 2026-08-06 |
+| DQR-005 | Transliteration variants — name variants across scripts may not match | DS-001 to DS-006 | HIGH | HIGH — missed sanctions match | Fuzzy matching at engine layer; POSSIBLE confidence maximum for transliterated matches without native-script corroboration | LOW-MEDIUM | Data Science Lead | 2026-08-06 |
+| DQR-006 | GDELT noise — high false-positive rate for geopolitical events | DS-009 | HIGH | LOW — operational noise | Corroboration required from DS-008 or DS-010 before actioning GDELT-only findings | LOW | Engineering Lead | 2026-08-06 |
+| DQR-007 | NewsAPI historical limit — articles older than 30 days not accessible via API | DS-008 | MEDIUM | MEDIUM — historical gaps | Manual research or archive subscriptions for historical adverse media | MEDIUM | Engineering Lead | 2026-08-06 |
+| DQR-008 | RSS polling lag — up to 30-minute delay on breaking news | DS-011 | HIGH | LOW — short delay | NewsAPI real-time queries used for high-priority subjects | LOW | Engineering Lead | 2026-08-06 |
+| DQR-009 | UN/OFAC publication lag — 24–48-hour gap between UNSC resolution and list update | DS-001, DS-002 | LOW-MEDIUM | HIGH — designation window | Supplementary manual monitoring of official UN/OFAC announcement channels; STALE_AT_HOURS alert | LOW | Engineering Lead | 2026-08-06 |
+
+**Risk Register Review:** The Data Quality Risk Register is reviewed quarterly in conjunction with the data lineage review. Any risk whose residual risk has changed or whose mitigation has lapsed is escalated to the MLRO at the next governance committee meeting.
 
 ---
 

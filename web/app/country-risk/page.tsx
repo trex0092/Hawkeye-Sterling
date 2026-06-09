@@ -467,7 +467,7 @@ function CountryRiskInner() {
   };
 
   return (
-    <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk" asanaLabel="Country Risk">
+    <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk" asanaLabel="Country Risk" onRun={() => void runCompare()}>
       <ModuleHero
         eyebrow=""
         title="Country"

@@ -354,7 +354,7 @@ export default function AdminTenantsPage() {
   );
 
   return (
-    <ModuleLayout engineLabel="Multi-Tenant Admin" asanaModule="admin-tenants" asanaLabel="Tenant Management">
+    <ModuleLayout engineLabel="Multi-Tenant Admin" asanaModule="admin-tenants" asanaLabel="Tenant Management" onSync={() => void fetchTenants()}>
       <ModuleHero
         eyebrow=""
         title="Tenant"

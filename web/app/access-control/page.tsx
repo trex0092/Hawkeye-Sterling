@@ -749,7 +749,7 @@ export default function AccessControlPage() {
   const totalAuditEvents = log.length;
 
   return (
-    <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions">
+    <ModuleLayout engineLabel="Access control engine" asanaModule="access-control" asanaLabel="Access & Permissions" onAdd={() => setShowAddForm(true)} onSync={() => { void fetchUsers(); void fetchLog(); }}>
       <ModuleHero
 
         eyebrow=""

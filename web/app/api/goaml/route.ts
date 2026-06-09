@@ -444,7 +444,9 @@ async function handleGoaml(req: Request): Promise<Response> {
   });
   } catch (err) {
     span.setStatus({ code: SpanStatus.ERROR });
-    throw err; // intentional rethrow — span.end() fires in finally below
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[goaml] unexpected error:", msg);
+    return NextResponse.json({ ok: false, error: "Internal server error", code: "GOAML_INTERNAL" }, { status: 500 });
   } finally {
     span.end();
   }

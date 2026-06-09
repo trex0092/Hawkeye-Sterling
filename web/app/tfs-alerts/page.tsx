@@ -674,6 +674,8 @@ export default function TFSAlertsPage() {
       engineLabel="TFS alert monitor"
       asanaModule="tfs-alerts"
       asanaLabel="TFS Alerts"
+      onRun={() => void checkForAlerts()}
+      onSync={() => void checkForAlerts()}
       sidebarActions={
         <ActionButton
           variant="screening"

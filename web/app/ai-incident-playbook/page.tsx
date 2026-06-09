@@ -166,6 +166,11 @@ export default function AIIncidentPlaybookPage() {
 
   return (
     <ModuleLayout
+      asanaModule="ai-incident-playbook"
+      asanaLabel="AI Incident Log"
+      onRun={() => void fetchIncidents()}
+      onSync={() => void fetchIncidents()}
+      onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "Log AI Incident"}

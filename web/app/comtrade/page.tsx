@@ -109,7 +109,7 @@ export default function ComtradePage() {
   const rows = result?.data ?? [];
 
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="comtrade" asanaLabel="COMTRADE Trade Intelligence">
       <ModuleHero
         eyebrow=""
         title="Comtrade TBML Risk Query"

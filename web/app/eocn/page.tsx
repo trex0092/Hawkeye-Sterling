@@ -434,7 +434,7 @@ export default function EocnPage() {
   const lastUpdate = LIST_UPDATES[0];
 
   return (
-    <ModuleLayout asanaModule="eocn" asanaLabel="EOCN Trade Compliance" engineLabel="EOCN sanctions engine">
+    <ModuleLayout asanaModule="eocn" asanaLabel="EOCN Trade Compliance" engineLabel="EOCN sanctions engine" onRun={() => void _handleRefresh()} onSync={() => void _handleRefresh()}>
       <ModuleHero
 
         eyebrow=""

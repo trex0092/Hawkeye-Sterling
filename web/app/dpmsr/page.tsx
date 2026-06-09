@@ -214,7 +214,7 @@ export default function DpmsrPage() {
   const filed = obligations.filter((o) => o.status === "filed").length;
 
   return (
-    <ModuleLayout asanaModule="dpmsr" asanaLabel="DPMSR Filing Queue" engineLabel="DPMSR threshold engine">
+    <ModuleLayout asanaModule="dpmsr" asanaLabel="DPMSR Filing Queue" engineLabel="DPMSR threshold engine" onSync={() => void loadObligations()}>
       <ModuleHero
 
         eyebrow=""

@@ -34,7 +34,7 @@ function ListItem({ children, tone = "neutral" }: { children: React.ReactNode; t
 
 export default function SystemCardPage() {
   return (
-    <ModuleLayout>
+    <ModuleLayout asanaModule="system-card" asanaLabel="AI System Card">
       <ModuleHero
         eyebrow=""
         title="System"

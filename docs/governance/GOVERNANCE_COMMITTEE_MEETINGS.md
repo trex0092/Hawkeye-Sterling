@@ -68,6 +68,18 @@ Emergency sessions may be convened at any time by the MLRO where a CRITICAL inci
 
 Decisions are made by consensus. Where consensus cannot be reached, the MLRO has casting authority. All decisions are recorded in the minutes with the rationale and the name of each attendee who voted, objected, or abstained.
 
+### 1.7 Relationship to Management Review (ISO/IEC 42001:2023 Clause 9.3)
+
+This governance committee is the primary operational-level management review body for the Hawkeye Sterling AI Management System. Its outputs feed into the broader management review hierarchy as follows:
+
+- **Weekly committee minutes** → MLRO internal record; action items tracked until closed
+- **Quarterly committee summary** (compiled by Compliance Officer in January, April, July, October) → submitted to Board Risk Committee as the quarterly AI governance report; covers: KPI trend analysis, incident trends, objectives progress, compliance gap status, model performance summary, upcoming material changes
+- **Board Risk Committee annual review** (Q1 each year) → receives full-year quarterly summaries, annual certification, and external audit findings; ratifies AI risk appetite and objectives for the coming year
+
+This structure satisfies ISO/IEC 42001:2023 clause 9.3 (Management review), ensuring that top management reviews the AIMS at planned intervals and that committee outputs inform top-level decision-making on AI governance.
+
+**Action item carry-forward:** Any action item from a quarterly summary that remains open when presented to the Board Risk Committee is escalated as a board-level action with a named executive owner and a committed resolution date.
+
 ---
 
 ## 2. Standing Agenda Template
@@ -411,6 +423,20 @@ Confirmed by Chair:   [MLRO Name], [date]
 ## 5. Meeting Archive
 
 Minutes are archived below in reverse chronological order. All minutes are retained for 10 years per FDL 10/2025 Art. 24 (record class: `audit_report`).
+
+### 5.1 Continual Improvement Actions Register (ISO/IEC 42001:2023 Clause 10.3)
+
+This register tracks improvement actions identified at governance committee meetings, distinct from incident-driven corrective actions (which are logged in `COMPLIANCE_GAPS.md`). Each item represents a proactive enhancement to the AI management system.
+
+| Action Ref | Source | Improvement Description | Owner | Identified | Target Date | Status | Closure Evidence |
+|---|---|---|---|---|---|---|---|
+| IMP-2026-001 | Governance committee 2026-05-09 | Establish weekly pre-meeting preparation schedule to ensure data packs are ready by 08:30 each Friday | Engineering Lead | 2026-05-09 | 2026-05-13 | Closed 2026-05-13 | Schedule confirmed in operation |
+| IMP-2026-002 | Governance committee 2026-05-09 | Configure drift alert webhook notifications for on-call engineering to reduce detection-to-notification lag | Engineering Lead | 2026-05-09 | 2026-05-13 | Closed 2026-05-13 | Webhook configured; alert test confirmed |
+| IMP-2026-003 | Governance committee 2026-05-09 | Define initial RSS feed list for DS-011 to broaden adverse media coverage for regional outlets | Engineering Lead | 2026-05-09 | 2026-05-16 | Open | — |
+| IMP-2026-004 | Governance committee 2026-05-09 | Complete model cards HS-001 through HS-005 with MLRO signatures to satisfy FDL 10/2025 Art. 18 | Data Science Lead | 2026-05-09 | 2026-05-23 | Closed 2026-05-23 | All 5 model cards signed; in `docs/model-cards/` |
+| IMP-2026-005 | Governance committee 2026-05-09 | Schedule first quarterly data lineage review; document cadence for subsequent reviews | Engineering Lead | 2026-05-09 | 2026-06-01 | Open | — |
+
+*New improvement actions are added to this register at each governance committee meeting. Items open for > 8 weeks without documented progress are escalated to the Board Risk Committee.*
 
 ---
 

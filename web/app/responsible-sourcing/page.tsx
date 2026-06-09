@@ -252,7 +252,7 @@ export default function ResponsibleSourcingPage() {
   const isComplete = completedSteps === 5;
 
   return (
-    <ModuleLayout asanaModule="responsible-sourcing" asanaLabel="Responsible Sourcing MD 68/2024" engineLabel="Responsible sourcing engine">
+    <ModuleLayout asanaModule="responsible-sourcing" asanaLabel="Responsible Sourcing MD 68/2024" engineLabel="Responsible sourcing engine" onSync={() => void loadWorkflow()}>
       <ModuleHero
 
         eyebrow=""

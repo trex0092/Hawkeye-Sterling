@@ -108,7 +108,7 @@ export default function PepProfilePage() {
   const recCfg = result ? RECOMMENDATION_CONFIG[result.recommendation] : null;
 
   return (
-    <ModuleLayout asanaModule="pep-profile" asanaLabel="PEP Profile Builder" engineLabel="PEP risk engine">
+    <ModuleLayout asanaModule="pep-profile" asanaLabel="PEP Profile Builder" engineLabel="PEP risk engine" onRun={() => void buildProfile()}>
       <ModuleHero
 
         eyebrow=""

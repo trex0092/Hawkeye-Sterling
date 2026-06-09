@@ -181,8 +181,11 @@ export default function PKycPage() {
 
   return (
     <ModuleLayout
+      asanaModule="pkyc"
+      asanaLabel="Perpetual KYC"
       onAdd={() => setShowEnroll(true)}
       onRun={handleRunAll}
+      onSync={() => void load()}
     >
       {/* Hero */}
       <div className="flex items-start justify-between gap-4 mb-6">

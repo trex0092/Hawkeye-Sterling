@@ -290,6 +290,7 @@ export default function TrainingPage() {
     <ModuleLayout
       asanaModule="training"
       asanaLabel="Training"
+      onAdd={add}
       sidebarActions={
         activeTab === "log" ? (
           <ActionButton

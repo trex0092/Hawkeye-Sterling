@@ -347,6 +347,9 @@ export default function ApprovalsPage() {
     <ModuleLayout
       asanaModule="approvals"
       asanaLabel="Approvals"
+      onRun={() => void load()}
+      onSync={() => void load()}
+      onAdd={() => setShowForm(true)}
       sidebarActions={
         !showForm && editingId === null ? (
           <ActionButton variant="add" type="button" onClick={() => setShowForm(true)}>

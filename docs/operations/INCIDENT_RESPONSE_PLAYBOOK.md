@@ -564,3 +564,56 @@ Post-incident review findings are presented at the next Friday governance commit
 | Related documents | `docs/governance/AI_GOVERNANCE_POLICY.md`, `docs/governance/AI_INVENTORY.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md` |
 | Regulatory references | UAE FDL 10/2025 Art. 24 (audit requirements); FDL 20/2018 Art. 25 (tipping-off); Cabinet Decision 74/2020 Art. 4–7 (FFR timelines); FATF R.18 |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `incident_report`) |
+
+---
+
+## Appendix A — LLM Risk Controls (ISO/IEC 42001:2023 Clause 8.4; 2026 Focus)
+
+This appendix documents the risk controls applied to Large Language Model (LLM) components within Hawkeye Sterling, satisfying ISO/IEC 42001:2023 requirements for generative AI risk management and the 2026 Focus additions on LLM Risk Management.
+
+### A.1 Approved Models and Version Control
+
+| Model Usage | Approved Model(s) | Registry Entry | Version Control |
+|---|---|---|---|
+| Primary AML/CFT reasoning and narrative generation | Claude (Anthropic) — registered in `MODEL_REGISTRY` | `web/lib/server/ai-governance.ts` | `riskTier`, `approval`, `cardRef` required for all entries |
+| Cost fallback | Groq models — registered in `MODEL_REGISTRY` | `src/integrations/model-router.ts` | Same registry requirements |
+
+Model version changes are **Major changes** requiring MLRO approval before deployment (AI Governance Policy §5.1).
+
+### A.2 Prompt Security and Integrity
+
+| Control | Implementation | CI Gate |
+|---|---|---|
+| Prompt hash integrity | Every `SYSTEM_PROMPT` constant registered in `scripts/prompt-hash-manifest.json` | `node scripts/validate-prompt-hashes.mjs` — fails build on mismatch |
+| Prompt injection protection | User inputs sanitised via `web/lib/server/sanitize-prompt.ts` | Adversarial probe suite: `prompt_injection` category |
+| Prompt caching | `cache_control: { type: "ephemeral" }` on all 74 LLM-calling routes | Enforced by CCL-2026-019 |
+
+### A.3 LLM Output Validation Gates
+
+All LLM-generated outputs pass through the following validation pipeline before reaching the MLRO or any downstream action:
+
+| Gate | Implementation | Failure Mode |
+|---|---|---|
+| Charter compliance | `src/brain/redlines.ts` — 10 prohibitions (P1–P10) | Output blocked; MLRO notified |
+| Tipping-off detection | `src/brain/tipping-off-guard.ts` — 11 pattern rules | Output blocked; block event logged to audit chain |
+| Egress compliance | `web/lib/server/egress-check.ts` | Returns `held_review`; never `allowed` on error path |
+| Hallucination detection | `web/lib/server/hallucination-gate.ts` — fire-and-forget post-response | Does not block response; MLRO flagged async |
+
+### A.4 Adversarial and Red-Team Controls
+
+| Control | Implementation | Frequency |
+|---|---|---|
+| Adversarial probe suite | `web/lib/server/adversarial-probes.ts` — 24 probes across 10 categories including prompt injection, jailbreak, hallucination, PII exfiltration, governance evasion | Monthly automated red-team run via `scripts/ai-security-review.mjs` |
+| MITRE ATLAS mapping | Probes mapped to AML.T0025, AML.T0043 and NIST AI RMF (GOVERN/MEASURE) | Per probe metadata |
+| Prompt injection simulation | Category `prompt_injection` in adversarial suite | Monthly |
+
+### A.5 Incident Classification for LLM Failures
+
+| LLM Failure Type | Severity | Response |
+|---|---|---|
+| Prompt injection attempt detected in production | HIGH | Log to audit chain; MLRO notification within 4 hours; investigate source |
+| Charter violation in LLM output (P1–P10 breach) | HIGH | Block output; MLRO notification; root-cause analysis |
+| Hallucination gate fires on regulatory narrative | MEDIUM | Fire-and-forget flag to MLRO; no output blocking |
+| LLM produces tipping-off language | CRITICAL | Block output; MLRO notification within 1 hour; audit chain entry |
+| Model produces output inconsistent with approved version | HIGH | Rollback per AI Governance Policy §5.3; MLRO notification |
+| Anthropic API unavailable | MEDIUM | Degrade to deterministic output; Groq fallback if configured; MLRO notification if > 30 min |

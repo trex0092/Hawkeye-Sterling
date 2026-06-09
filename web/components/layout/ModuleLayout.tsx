@@ -31,8 +31,10 @@ interface ModuleLayoutProps<K extends string = string> {
   // actions placement.
   sidebarActions?: ReactNode | undefined;
   onAi?: (() => void) | undefined;
+  onCsv?: (() => void) | undefined;
   onAdd?: (() => void) | undefined;
   onRun?: (() => void) | undefined;
+  onSync?: (() => void) | undefined;
   detailPanel?: ReactNode | undefined;
   // Hide the right-hand activity/engine feed column entirely (reclaims its
   // width). Used by pages that are themselves a live feed (e.g. /intel).
@@ -65,8 +67,10 @@ export function ModuleLayout<K extends string = string>({
   hideDetailPanel: _hideDetailPanel = false,
   engineLabel: _engineLabel = "Compliance engine",
   onAi,
+  onCsv,
   onAdd,
   onRun,
+  onSync,
   asanaModule,
   asanaLabel,
 }: ModuleLayoutProps<K>) {
@@ -85,7 +89,7 @@ export function ModuleLayout<K extends string = string>({
     <>
       <Header onMenuOpen={() => setMobileNavOpen(true)} />
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-      <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} onAi={onAi} onAdd={onAdd} onRun={onRun} />
+      <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} onAi={onAi} onCsv={onCsv} onAdd={onAdd} onRun={onRun} onSync={onSync} />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="print-sidebar hidden md:block">
           <Sidebar>
