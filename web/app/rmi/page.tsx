@@ -365,7 +365,7 @@ export default function RmiPage() {
   const activeSuppliers = liveSmelters.filter((s) => s.activeSupplier).length;
 
   return (
-    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine">
+    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine" onRun={runRmiAssessment}>
       <ModuleHero
 
         eyebrow=""
@@ -408,26 +408,17 @@ export default function RmiPage() {
         </div>
       </div>
 
-      {/* AI Supply Chain Assessment button */}
-      <div className="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={runRmiAssessment}
-          disabled={rmiAssessLoading}
-          className="px-4 py-2 text-12 font-semibold rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
-        >
-          {rmiAssessLoading ? "Assessing…" : "✦AI"}
-        </button>
-        {rmiAssess && (
+      {rmiAssess && (
+        <div className="mb-4 flex justify-end">
           <button
             type="button"
             onClick={() => setRmiAssess(null)}
             className="text-11 text-ink-3 hover:text-ink-1 underline"
           >
-            Clear
+            Clear assessment
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* AI Assessment panel */}
       {rmiAssess && (
