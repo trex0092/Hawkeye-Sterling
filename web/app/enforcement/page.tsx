@@ -775,9 +775,6 @@ export default function EnforcementPage() {
           ]}
         />
 
-        <div className="mt-4 flex justify-end">
-          <AddDeadlineForm onAdd={onAdd} />
-        </div>
 
         {overlay.deletedIds.length > 0 && (
           <div className="mt-4 flex items-center justify-between bg-amber-dim border border-amber/30 rounded-lg px-3 py-2">

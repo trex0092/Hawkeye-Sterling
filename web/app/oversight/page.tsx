@@ -1217,16 +1217,8 @@ export default function OversightPage() {
       {/* APPROVALS TAB */}
       {tab === "approvals" && (
         <div className="flex flex-col gap-4">
-          {showAddApproval ? (
+          {showAddApproval && (
             <AddApprovalForm onAdd={addApproval} onCancel={() => setShowAddApproval(false)} />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAddApproval(true)}
-              className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-            >
-              + Add
-            </button>
           )}
           {liveApprovals.map((a) => (
             <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
@@ -1334,16 +1326,8 @@ export default function OversightPage() {
       {/* MINUTES TAB */}
       {tab === "minutes" && (
         <div className="flex flex-col gap-4">
-          {showAddMinute ? (
+          {showAddMinute && (
             <AddMinuteForm onAdd={addMinute} onCancel={() => setShowAddMinute(false)} />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAddMinute(true)}
-              className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-            >
-              + Add
-            </button>
           )}
           {liveMinutes.map((m) => {
             const expanded = expandedMinute === m.id;
@@ -1514,16 +1498,8 @@ export default function OversightPage() {
             </table>
           </div>
 
-          {showAddCircular ? (
+          {showAddCircular && (
             <AddCircularForm onAdd={addCircular} onCancel={() => setShowAddCircular(false)} />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAddCircular(true)}
-              className="text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-            >
-              + Add
-            </button>
           )}
         </>
       )}
