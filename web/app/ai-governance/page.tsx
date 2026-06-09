@@ -428,7 +428,8 @@ export default function AIGovernancePage() {
 
       // 3 — Risk Management (Risk Register)
       case 3:
-        if (ldRisk || !riskData) return ldRisk ? <Spinner /> : <Spinner />;
+        if (ldRisk) return <Spinner />;
+        if (!riskData) return errRisk ? <Err msg={errRisk} /> : <Spinner />;
         if (errRisk) return <Err msg={errRisk} />;
         return (
           <Section title={`AI Risk Register — ${riskData.totalModels} models · ${riskData.overdueCount} overdue`}>
@@ -468,7 +469,8 @@ export default function AIGovernancePage() {
 
       // 5 — Model Lifecycle Oversight
       case 5:
-        if (ldRisk || !riskData) return ldRisk ? <Spinner /> : <Spinner />;
+        if (ldRisk) return <Spinner />;
+        if (!riskData) return errRisk ? <Err msg={errRisk} /> : <Spinner />;
         if (errRisk) return <Err msg={errRisk} />;
         return (
           <>
@@ -525,7 +527,8 @@ export default function AIGovernancePage() {
 
       // 7 — Compliance & Audit
       case 7:
-        if (ldRmf || !rmfData) return ldRmf ? <Spinner /> : <Spinner />;
+        if (ldRmf) return <Spinner />;
+        if (!rmfData) return errRmf ? <Err msg={errRmf} /> : <Spinner />;
         if (errRmf) return <Err msg={errRmf} />;
         return (
           <>
@@ -561,7 +564,8 @@ export default function AIGovernancePage() {
 
       // 8 — Monitoring & Reporting (full RMF + ATLAS)
       case 8:
-        if (ldRmf || !rmfData) return ldRmf ? <Spinner /> : <Spinner />;
+        if (ldRmf) return <Spinner />;
+        if (!rmfData) return errRmf ? <Err msg={errRmf} /> : <Spinner />;
         if (errRmf) return <Err msg={errRmf} />;
         return (
           <>
@@ -612,7 +616,8 @@ export default function AIGovernancePage() {
 
       // 9 — Incident Management
       case 9:
-        if (ldInc || !incidents) return ldInc ? <Spinner /> : <Spinner />;
+        if (ldInc) return <Spinner />;
+        if (!incidents) return errInc ? <Err msg={errInc} /> : <Spinner />;
         if (errInc) return <Err msg={errInc} />;
         return (
           <>
