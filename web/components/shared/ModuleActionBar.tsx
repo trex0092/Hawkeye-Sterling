@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 // Standardised 8-button action bar — portalled to document.body so
@@ -9,13 +9,42 @@ import { createPortal } from "react-dom";
 //
 // Default behaviours (no props needed):
 //   AI      → fires CustomEvent("hawkeye:ai") + opens /mlro-advisor in new tab (or onAi callback)
-//   CSV     → fires CustomEvent("hawkeye:csv") — modules listen + onCsv callback
-//   RUN     → fires CustomEvent("hawkeye:run") — modules listen + onRun callback
+//   CSV     → extracts visible table from DOM and downloads as CSV (or onCsv callback)
+//   RUN     → reloads page (or onRun callback)
 //   PDF     → window.print() (browser saves as PDF)
 //   REFRESH → window.location.reload()
-//   +ADD    → fires CustomEvent("hawkeye:add") — modules listen + onAdd callback
+//   +ADD    → fires CustomEvent("hawkeye:add") + shows brief toast (or onAdd callback)
 //   SYNC    → window.location.reload()
 //   ASANA   → POST /api/module-report
+
+function extractTableAsCsv(): string {
+  const tables = Array.from(document.querySelectorAll("table"));
+  if (!tables.length) return "";
+  // Pick the table with the most rows
+  let table = tables[0]!;
+  for (const t of tables) {
+    if (t.rows.length > table.rows.length) table = t;
+  }
+  const rows: string[] = [];
+  for (const row of Array.from(table.rows)) {
+    const cells = Array.from(row.cells).map((cell) => {
+      const text = cell.textContent?.trim().replace(/"/g, '""') ?? "";
+      return `"${text}"`;
+    });
+    rows.push(cells.join(","));
+  }
+  return rows.join("\n");
+}
+
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface ModuleActionBarProps {
   asanaModule?: string;
@@ -28,6 +57,7 @@ interface ModuleActionBarProps {
 }
 
 type AsanaStatus = "idle" | "posting" | "sent" | "error";
+type ToastMsg = { text: string; key: number };
 
 const BTNS = [
   { key: "asana",   label: "ASANA",     color: "#10b981", dim: "rgba(16,185,129,0.10)",  border: "rgba(16,185,129,0.30)"  },
@@ -53,6 +83,17 @@ export function ModuleActionBar({
 }: ModuleActionBarProps) {
   const [asanaStatus, setAsanaStatus] = useState<AsanaStatus>("idle");
   const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState<ToastMsg | null>(null);
+
+  const showToast = useCallback((text: string) => {
+    setToast({ text, key: Date.now() });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -86,10 +127,21 @@ export function ModuleActionBar({
       case "csv":
         if (onCsv) { onCsv(); return; }
         window.dispatchEvent(new CustomEvent("hawkeye:csv", { bubbles: true }));
+        {
+          const csv = extractTableAsCsv();
+          if (csv) {
+            const slug = (asanaModule ?? "export").replace(/[^a-z0-9-]/gi, "-");
+            downloadCsv(csv, `${slug}-${new Date().toISOString().slice(0, 10)}.csv`);
+            showToast("CSV downloaded");
+          } else {
+            showToast("No table data found on this page");
+          }
+        }
         return;
       case "run":
         if (onRun) { onRun(); return; }
         window.dispatchEvent(new CustomEvent("hawkeye:run", { bubbles: true }));
+        window.location.reload();
         return;
       case "pdf":
         window.print();
@@ -101,6 +153,7 @@ export function ModuleActionBar({
       case "add":
         if (onAdd) { onAdd(); return; }
         window.dispatchEvent(new CustomEvent("hawkeye:add", { bubbles: true }));
+        showToast("Use the form on this page to add a new record");
         return;
     }
   };
@@ -127,10 +180,28 @@ export function ModuleActionBar({
   );
 
   const bar = (
-    <div className="print-hide" style={{ position: "fixed", top: 60, right: 4, zIndex: 9999, display: "flex", flexDirection: "row", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
-      {renderCol(LEFT_KEYS)}
-      {renderCol(RIGHT_KEYS)}
-    </div>
+    <>
+      <div className="print-hide" style={{ position: "fixed", top: 60, right: 4, zIndex: 9999, display: "flex", flexDirection: "row", gap: 2, pointerEvents: "auto", background: "#0f0f0f", padding: "4px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+        {renderCol(LEFT_KEYS)}
+        {renderCol(RIGHT_KEYS)}
+      </div>
+      {toast && (
+        <div
+          key={toast.key}
+          className="print-hide"
+          style={{
+            position: "fixed", bottom: 24, right: 16, zIndex: 10000,
+            background: "#1a1a2e", border: "1px solid rgba(59,130,246,0.4)",
+            borderRadius: 6, padding: "8px 14px",
+            color: "#93c5fd", fontSize: 11, fontWeight: 600,
+            letterSpacing: "0.04em", pointerEvents: "none",
+            animation: "fadeInUp 0.2s ease",
+          }}
+        >
+          {toast.text}
+        </div>
+      )}
+    </>
   );
 
   return createPortal(bar, document.body);
