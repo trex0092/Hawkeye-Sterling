@@ -34,7 +34,12 @@ const { writeAuditChainEntryMock, screeningAuditWriteMock, loadCandidatesMock, l
 vi.mock('@netlify/blobs', () => {
   const memStore = new Map<string, string>();
   const store = {
-    get: async (key: string) => memStore.get(key) ?? null,
+    get: async (key: string, opts?: { type?: string }) => {
+      const raw = memStore.get(key) ?? null;
+      if (raw === null) return null;
+      if (opts?.type === 'json') return JSON.parse(raw);
+      return raw;
+    },
     set: async (key: string, value: string) => { memStore.set(key, value); },
     delete: async (key: string) => { memStore.delete(key); },
     list: async (opts?: { prefix?: string }) => {

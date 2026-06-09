@@ -26,7 +26,12 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 vi.mock('@netlify/blobs', () => {
   const mem = new Map<string, string>();
   const store = {
-    get: async (key: string) => mem.get(key) ?? null,
+    get: async (key: string, opts?: { type?: string }) => {
+      const raw = mem.get(key) ?? null;
+      if (raw === null) return null;
+      if (opts?.type === 'json') return JSON.parse(raw);
+      return raw;
+    },
     set: async (key: string, value: string) => { mem.set(key, value); },
     setJSON: async (key: string, value: unknown) => { mem.set(key, JSON.stringify(value)); },
     delete: async (key: string) => { mem.delete(key); },
