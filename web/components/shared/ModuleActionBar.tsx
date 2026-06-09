@@ -54,6 +54,7 @@ interface ModuleActionBarProps {
   onCsv?: () => void;
   onRun?: () => void;
   onAdd?: () => void;
+  onSync?: () => void;
 }
 
 type AsanaStatus = "idle" | "posting" | "sent" | "error";
@@ -80,6 +81,7 @@ export function ModuleActionBar({
   onCsv,
   onRun,
   onAdd,
+  onSync,
 }: ModuleActionBarProps) {
   const [asanaStatus, setAsanaStatus] = useState<AsanaStatus>("idle");
   const [mounted, setMounted] = useState(false);
@@ -147,7 +149,10 @@ export function ModuleActionBar({
         window.print();
         return;
       case "refresh":
+        window.location.reload();
+        return;
       case "sync":
+        if (onSync) { onSync(); showToast("Synced ✓"); return; }
         window.location.reload();
         return;
       case "add":

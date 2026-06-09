@@ -182,6 +182,7 @@ export default function AuditFindingsPage() {
       asanaModule="audit-findings"
       asanaLabel="Audit Findings"
       onRun={() => void fetchFindings()}
+      onSync={() => void fetchFindings()}
       onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>

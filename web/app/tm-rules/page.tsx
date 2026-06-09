@@ -191,7 +191,7 @@ export default function TmRulesPage() {
   const rejectedCount = records.filter((r) => r.status === "rejected").length;
 
   return (
-    <ModuleLayout asanaModule="tm-rules" asanaLabel="TM Rule Management" onAdd={() => setShowForm(true)}>
+    <ModuleLayout asanaModule="tm-rules" asanaLabel="TM Rule Management" onAdd={() => setShowForm(true)} onSync={() => void fetchRecords()}>
       <ModuleHero
         eyebrow=""
         title="TM Rule Change"

@@ -172,6 +172,7 @@ export default function CoiRegisterPage() {
       asanaModule="coi-register"
       asanaLabel="COI Register"
       onRun={() => void fetchDeclarations()}
+      onSync={() => void fetchDeclarations()}
       onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>

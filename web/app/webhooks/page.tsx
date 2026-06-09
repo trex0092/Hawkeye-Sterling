@@ -493,7 +493,7 @@ export default function WebhooksPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="webhooks" asanaLabel="Webhooks">
+    <ModuleLayout asanaModule="webhooks" asanaLabel="Webhooks" onSync={() => void loadWebhooks()}>
       <div className="flex-1 p-6 max-w-6xl mx-auto">
         <ModuleHero
           eyebrow=""

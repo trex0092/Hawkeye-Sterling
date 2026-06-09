@@ -150,7 +150,7 @@ export default function KriDashboardPage() {
   }, []);
 
   return (
-    <ModuleLayout asanaModule="kri-dashboard" asanaLabel="KRI Dashboard" engineLabel="Risk Indicators" onRun={() => void load()}>
+    <ModuleLayout asanaModule="kri-dashboard" asanaLabel="KRI Dashboard" engineLabel="Risk Indicators" onRun={() => void load()} onSync={() => void load()}>
       <ModuleHero
         eyebrow=""
         title="KRI"

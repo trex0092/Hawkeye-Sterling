@@ -348,6 +348,7 @@ export default function ApprovalsPage() {
       asanaModule="approvals"
       asanaLabel="Approvals"
       onRun={() => void load()}
+      onSync={() => void load()}
       onAdd={() => setShowForm(true)}
       sidebarActions={
         !showForm && editingId === null ? (

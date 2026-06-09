@@ -186,7 +186,7 @@ export default function OutsourcingRegisterPage() {
   const hasWarning = amlCftArrangements.some((a) => a.status === "under_review" || !a.boardApproved);
 
   return (
-    <ModuleLayout asanaModule="outsourcing-register" asanaLabel="Outsourcing Register" onRun={() => void fetchArrangements()} onAdd={() => setShowForm(true)}>
+    <ModuleLayout asanaModule="outsourcing-register" asanaLabel="Outsourcing Register" onRun={() => void fetchArrangements()} onSync={() => void fetchArrangements()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Outsourcing"

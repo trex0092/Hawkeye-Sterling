@@ -177,7 +177,7 @@ export default function OecdDdgPage() {
   if (loading) return <div className="p-8 text-12 text-ink-3">Loading…</div>;
 
   return (
-    <ModuleLayout asanaModule="oecd-ddg" asanaLabel="OECD 5-Step DDG" engineLabel="Supply chain due diligence engine">
+    <ModuleLayout asanaModule="oecd-ddg" asanaLabel="OECD 5-Step DDG" engineLabel="Supply chain due diligence engine" onSync={() => void loadRecords()}>
       <ModuleHero
         eyebrow=""
         title="OECD 5-step due diligence"

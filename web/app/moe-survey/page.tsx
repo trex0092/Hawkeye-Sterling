@@ -226,7 +226,7 @@ export default function MoeSurveyPage() {
   const sectionComplete = (id: string) => survey.sections.find((s) => s.id === id)?.completed ?? false;
 
   return (
-    <ModuleLayout asanaModule="moe-survey" asanaLabel="MoE 2026 AML/CFT Survey" engineLabel="Compliance survey engine">
+    <ModuleLayout asanaModule="moe-survey" asanaLabel="MoE 2026 AML/CFT Survey" engineLabel="Compliance survey engine" onSync={() => void loadSurvey()}>
       <ModuleHero
 
         eyebrow=""

@@ -762,7 +762,7 @@ export default function WorkflowPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="workflow" asanaLabel="Workflow">
+    <ModuleLayout asanaModule="workflow" asanaLabel="Workflow" onSync={() => void fetchRules()}>
       {/* Modals */}
       {showNewForm && (
         <RuleFormModal

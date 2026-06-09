@@ -206,7 +206,7 @@ export default function GeopoliticalPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="geopolitical" asanaLabel="Geopolitical Intelligence" engineLabel="Geopolitical intelligence" onRun={() => void fetchEvents()}>
+    <ModuleLayout asanaModule="geopolitical" asanaLabel="Geopolitical Intelligence" engineLabel="Geopolitical intelligence" onRun={() => void fetchEvents()} onSync={() => void fetchEvents()}>
       <ModuleHero
         eyebrow=""
         title="Geopolitical"

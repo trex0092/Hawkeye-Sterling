@@ -109,7 +109,7 @@ export default function PnmrQueuePage() {
   ];
 
   return (
-    <ModuleLayout asanaModule="pnmr" asanaLabel="PNMR Filing" onRun={() => void fetchRecords()}>
+    <ModuleLayout asanaModule="pnmr" asanaLabel="PNMR Filing" onRun={() => void fetchRecords()} onSync={() => void fetchRecords()}>
       <ModuleHero
         eyebrow=""
         title="PNMR"

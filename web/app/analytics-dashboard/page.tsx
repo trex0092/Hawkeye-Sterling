@@ -159,7 +159,7 @@ export default function AnalyticsDashboardPage() {
   useEffect(load, []);
 
   return (
-    <ModuleLayout asanaModule="analytics-dashboard" asanaLabel="Analytics Dashboard" onRun={load}>
+    <ModuleLayout asanaModule="analytics-dashboard" asanaLabel="Analytics Dashboard" onRun={load} onSync={load}>
       <div className="mb-6 border-b-2 border-ink-0 pb-4 flex items-end justify-between">
         <div>
           <div className="flex items-center gap-1.5 text-10.5 font-semibold uppercase tracking-wide-4 text-brand mb-1">

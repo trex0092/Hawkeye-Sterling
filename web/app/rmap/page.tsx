@@ -81,7 +81,7 @@ export default function RmapPage() {
   }
 
   return (
-    <ModuleLayout asanaModule="rmap" asanaLabel="RMAP Smelter Database" onRun={() => void fetchSmelters()}>
+    <ModuleLayout asanaModule="rmap" asanaLabel="RMAP Smelter Database" onRun={() => void fetchSmelters()} onSync={() => void fetchSmelters()}>
       <ModuleHero
         eyebrow=""
         title="RMAP Smelter"

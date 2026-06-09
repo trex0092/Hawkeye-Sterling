@@ -370,6 +370,7 @@ export default function InspectionRoomPage() {
       asanaModule="inspection-room"
       asanaLabel="Inspection Room"
       onRun={refresh}
+      onSync={refresh}
       sidebarActions={
         <>
           <ActionButton variant="import" type="button" onClick={handlePrint}>

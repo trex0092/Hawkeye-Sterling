@@ -572,6 +572,7 @@ export default function EsgRiskPage() {
       asanaLabel="ESG Risk"
       engineLabel="ESG risk engine"
       onRun={() => void generate()}
+      onSync={() => void generate()}
       sidebarActions={
         <>
           <ActionButton
