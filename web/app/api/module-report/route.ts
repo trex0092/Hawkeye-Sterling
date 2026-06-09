@@ -69,6 +69,7 @@ function projectGidForModule(module: string): string {
     case "oversight":
     case "enforcement":
     case "responsible-ai":
+    case "ai-governance":
     case "eval-kpi":
     case "analytics-dashboard":
     case "kri-dashboard":
@@ -164,6 +165,7 @@ const MODULE_LABELS: Record<string, string> = {
   ewra:                     "Enterprise-Wide Risk Assessment",
   "api-docs":               "API Documentation",
   "responsible-ai":         "Responsible AI Governance",
+  "ai-governance":          "AI Governance Framework",
   "eval-kpi":               "Eval KPIs & Performance Metrics",
   // 14 · Routines
   "ongoing-monitor":        "Ongoing Monitor",

@@ -391,7 +391,7 @@ export default function AIGovernancePage() {
                   {gapResult.findings.map((f, i) => (
                     <div key={i} style={{ border: `1px solid ${SEV_CLR[f.severity]}30`, borderRadius: 5, padding: "10px 14px" }}>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
-                        <Pill label={f.severity} colour={SEV_CLR[f.severity]} />
+                        <Pill label={f.severity} colour={SEV_CLR[f.severity] ?? "#888"} />
                         <span style={{ fontSize: 12, fontWeight: 600 }}>{f.area}</span>
                         <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--color-ink-2)" }}>{f.regulatoryRef}</span>
                       </div>
