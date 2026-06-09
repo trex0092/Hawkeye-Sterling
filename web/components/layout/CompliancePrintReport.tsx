@@ -296,12 +296,14 @@ const REPORTS: Record<string, ReportData> = {
       "Map ESG governance failings to financial-crime risk",
       "Apply enhanced scrutiny where ESG risk is elevated",
       "Document the ESG dimension of the risk-based approach",
+      "Integrate ESG-linked predicate risk into the customer risk rating",
     ],
     controls: [
       "ESG scoring with an explicit money-laundering risk overlay",
       "Regulatory-exposure mapping per customer",
       "Escalation where ESG risk crosses defined thresholds",
       "Audit-chain record of ESG assessments",
+      "ESG-to-AML risk-mapping engine",
     ],
     reporting: [
       "ESG-risk exposure reporting to compliance and risk committees",
@@ -335,12 +337,14 @@ const REPORTS: Record<string, ReportData> = {
       "Identify beneficial ownership of material suppliers",
       "Document the diligence basis for each supplier decision",
       "Re-screen suppliers on a defined cadence",
+      "Obtain senior approval for engaging high-risk suppliers",
     ],
     controls: [
       "Automated supplier screening and AI risk assessment",
       "Risk-tiered diligence requirements per supplier",
       "Periodic re-screening of the supplier register",
       "Audit-chain record of supplier risk decisions",
+      "Supplier re-screening on a defined cadence",
     ],
     reporting: [
       "Escalation of high-risk supplier engagements to compliance",
@@ -381,6 +385,7 @@ const REPORTS: Record<string, ReportData> = {
       "AI adequacy check against current CDD standards",
       "Automated re-screening at review",
       "Audit-chain record of each review decision",
+      "Overdue-review ageing tracker by risk band",
     ],
     reporting: [
       "Overdue-review reporting to compliance management",
@@ -414,12 +419,14 @@ const REPORTS: Record<string, ReportData> = {
       "Remediate deficient records within defined timeframes",
       "Validate data against reliable, independent sources",
       "Evidence remediation in the audit trail",
+      "Establish data-quality thresholds per risk-relevant field",
     ],
     controls: [
       "Per-customer completeness and accuracy scoring",
       "AI-generated, prioritised remediation plans",
       "Source-validation checks on key data fields",
       "Audit-chain record of remediation actions",
+      "Cross-system data-consistency reconciliation",
     ],
     reporting: [
       "Data-quality scorecards to compliance and data governance",
@@ -453,12 +460,14 @@ const REPORTS: Record<string, ReportData> = {
       "Assess jurisdiction-layering and secrecy-haven exposure",
       "Reconcile structure against declared beneficial ownership",
       "Document control analysis for the CDD record",
+      "Challenge and resolve implausible or circular structures",
     ],
     controls: [
       "Multi-layer ownership-chain traversal",
       "Shell and layering risk scoring",
       "Jurisdiction-risk overlay on each entity in the chain",
       "Audit-chain record of structure analyses",
+      "Jurisdiction-secrecy risk overlay per entity in the chain",
     ],
     reporting: [
       "Escalation of high-opacity structures to compliance",
@@ -492,12 +501,14 @@ const REPORTS: Record<string, ReportData> = {
       "Apply role-based access aligned to least privilege",
       "Track and remediate expiring credentials",
       "Evidence employee screening and vetting decisions",
+      "Re-screen employees on role or access change",
     ],
     controls: [
       "Employee screening and AI internal-risk scan",
       "Document-expiry tracking and alerting",
       "Role-based access mapping",
       "Audit-chain record of vetting decisions",
+      "Least-privilege access entitlement review",
     ],
     reporting: [
       "Escalation of adverse employee-screening findings",
@@ -523,6 +534,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 — staff awareness obligations",
       "FATF Recommendation 18 — ongoing training programmes",
       "CBUAE AML/CFT Standards — role-appropriate, refreshed training",
+      "UAE FDL No.20/2018 Art.20 — staff competence and awareness",
     ],
     requirements: [
       "Deliver role-appropriate AML/CFT training to all relevant staff",
@@ -530,12 +542,14 @@ const REPORTS: Record<string, ReportData> = {
       "Record completion and competency per employee",
       "Escalate overdue or failed training",
       "Retain training records for the statutory period",
+      "Tailor curricula to role-specific financial-crime risk",
     ],
     controls: [
       "Per-employee completion and deadline tracking",
       "Overdue-training escalation",
       "Competency and assessment recording",
       "Audit-chain record of completion evidence",
+      "Per-role curriculum assignment and completion enforcement",
     ],
     reporting: [
       "Training-completion reporting to compliance and the Board",
@@ -569,12 +583,14 @@ const REPORTS: Record<string, ReportData> = {
       "Record the approver, rationale, and risk score for each decision",
       "Prevent activation absent required approval",
       "Maintain an auditable approval history",
+      "Record an explicit risk-acceptance rationale for each approval",
     ],
     controls: [
       "Risk-scored approval routing",
       "Four-eyes enforcement on qualifying decisions",
       "Approval-status lifecycle tracking",
       "Audit-chain record of every approval",
+      "Approver-authority validation against the decision's risk tier",
     ],
     reporting: [
       "Approval-exception reporting to compliance",
@@ -595,7 +611,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "Customer Screening is the institution's primary control against transacting with sanctioned, politically exposed, or adverse-media-linked parties. It screens customers and connected parties against consolidated sanctions lists, PEP databases, and multi-language adverse-media sources, scoring matches and routing them for analyst disposition.",
       "Sanctions screening is a strict-liability area: the institution must not make funds or services available, directly or indirectly, to a listed party. The module enforces pre-transaction screening, name-matching tuned to balance recall and precision, and a fully evidenced disposition trail for every alert.",
-      "Sanctions screening operates as a strict-liability control: the institution must not make funds or services available, directly or indirectly, to a listed party, and a single missed match can constitute a breach. The module screens before transacting, tunes matching to balance recall against precision, and routes every alert to a documented disposition, re-screening as lists change. Examiners probe both the calibration of matching and the quality of dispositions, expecting near-miss and transliteration variants to be caught rather than dismissed. Confirmed matches trigger freezing and reporting without delay, and the audit-chain record of each decision is the institution's proof that its most consequential control operated as designed.",
+      "In operation the engine sits ahead of every value transfer, and its effectiveness is judged on two axes: whether matching is calibrated to catch near-miss, transliteration, and alias variants without drowning analysts in noise, and whether each alert is dispositioned with a reasoned, evidenced rationale. Examiners reconstruct sample alerts to test both. A confirmed match triggers freezing and reporting without delay, while a dismissed alert must carry a defensible justification. Because the cost of a single missed designation is a strict-liability breach, the audit-chain record of every screening decision is the institution's proof that this most consequential control was both correctly tuned and conscientiously worked.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.18 — screening within CDD",
@@ -659,6 +675,7 @@ const REPORTS: Record<string, ReportData> = {
       "Behavioural-deviation and peer-group analytics",
       "Alert scoring and investigator routing",
       "Audit-chain record of alerts and dispositions",
+      "Peer-group and expected-profile deviation analytics",
     ],
     reporting: [
       "STR/SAR filing to the UAE FIU for reportable activity",
@@ -692,12 +709,14 @@ const REPORTS: Record<string, ReportData> = {
       "Escalate newly surfaced matches without delay",
       "Maintain a complete re-screening audit trail",
       "Align monitoring cadence to subject risk",
+      "Align re-screening cadence to each subject's risk band",
     ],
     controls: [
       "Automated re-screening on list refresh",
       "Status-change detection and alerting",
       "Risk-based monitoring cadence",
       "Audit-chain record of re-screening outcomes",
+      "List-delta detection to re-screen only changed designations efficiently",
     ],
     reporting: [
       "Immediate escalation of newly listed subjects",
@@ -731,12 +750,14 @@ const REPORTS: Record<string, ReportData> = {
       "Reach and record a reasoned disposition",
       "Refer reportable cases to STR/SAR workflow",
       "Preserve the full case record for the statutory period",
+      "Join related alerts and signals to prevent fragmented investigation",
     ],
     controls: [
       "Case lifecycle and status tracking",
       "Linkage of alerts, screening hits, and grievances",
       "Disposition workflow with documented rationale",
       "Audit-chain record of all case actions",
+      "Cross-case linkage detection for connected activity",
     ],
     reporting: [
       "STR/SAR filing for cases meeting the suspicion threshold",
@@ -770,12 +791,14 @@ const REPORTS: Record<string, ReportData> = {
       "Obtain board approval of the assessment",
       "Drive control calibration from the assessment outcomes",
       "Review and refresh on material change and periodically",
+      "Link assessed risk to specific control calibrations",
     ],
     controls: [
       "Multi-factor risk aggregation",
       "AI-assisted board-report generation",
       "Risk-appetite and control-linkage mapping",
       "Audit-chain record of assessment versions",
+      "Customer / product / channel / geography risk-factor aggregation",
     ],
     reporting: [
       "Board approval and review of the EWRA",
@@ -809,12 +832,14 @@ const REPORTS: Record<string, ReportData> = {
       "Ensure narrative completeness and evidentiary support",
       "Export in valid goAML XML format",
       "Preserve the full filing record and acknowledgements",
+      "File within the regulatory timeframe without tipping off",
     ],
     controls: [
       "Four-eyes QA workflow with TOCTOU-safe sign-off",
       "Egress tipping-off gate on narrative content",
       "goAML XML validation and export",
       "Audit-chain record of review and submission",
+      "Narrative completeness and evidentiary-support validation",
     ],
     reporting: [
       "STR/SAR submission to the UAE FIU via goAML",
@@ -848,12 +873,14 @@ const REPORTS: Record<string, ReportData> = {
       "Apply the egress tipping-off gate to narrative content",
       "Use registered goAML Rentity identifiers",
       "Retain submissions and FIU acknowledgements",
+      "Track and remediate FIU rejections and resubmissions",
     ],
     controls: [
       "goAML XML schema validation",
       "Egress tipping-off gate enforcement",
       "Mandatory-field completeness checks",
       "Audit-chain record of each export",
+      "Registered Rentity-identifier validation before egress",
     ],
     reporting: [
       "Submission of validated reports to the UAE FIU",
@@ -887,12 +914,14 @@ const REPORTS: Record<string, ReportData> = {
       "Screen for forced-labour and UFLPA exposure",
       "Verify RMI/RMAP conformance where minerals are involved",
       "Document supply-chain due-diligence decisions",
+      "Document mitigation for each identified supply-chain risk",
     ],
     controls: [
       "OECD five-step workflow enforcement",
       "Geographic and TBML risk scoring",
       "RMI/RMAP conformance linkage",
       "Audit-chain record of due-diligence steps",
+      "Trade-based-laundering anomaly scoring on documentation and valuation",
     ],
     reporting: [
       "Responsible-sourcing reporting per Decree 68/2024",
@@ -926,12 +955,14 @@ const REPORTS: Record<string, ReportData> = {
       "Integrate conformance into sourcing risk decisions",
       "Maintain a current conformance register",
       "Document conformance evidence for audit",
+      "Escalate sourcing from non-conformant smelters",
     ],
     controls: [
       "RMAP conformance status tracking",
       "Non-conformant-source alerting",
       "Linkage to responsible-sourcing workflow",
       "Audit-chain record of conformance checks",
+      "Non-conformant-source alerting against the sourcing register",
     ],
     reporting: [
       "Conformance-status reporting to sourcing governance",
@@ -965,12 +996,14 @@ const REPORTS: Record<string, ReportData> = {
       "Design and implement risk-mitigation strategies",
       "Obtain independent third-party audit where required",
       "Publicly report on supply-chain due diligence",
+      "Publish annual supply-chain due-diligence reporting",
     ],
     controls: [
       "OECD five-step workflow enforcement",
       "Risk identification and mitigation tracking",
       "Third-party audit linkage",
       "Audit-chain record of each step",
+      "OECD five-step progress tracking per supply chain",
     ],
     reporting: [
       "Annual responsible-sourcing reporting per Decree 68/2024",
@@ -1004,12 +1037,14 @@ const REPORTS: Record<string, ReportData> = {
       "Design and implement a risk-management strategy (Step 3)",
       "Support independent third-party audit (Step 4)",
       "Report annually on supply-chain due diligence (Step 5)",
+      "Evidence completion of each of the five framework steps",
     ],
     controls: [
       "Five-step workflow enforcement and progress tracking",
       "Risk-assessment and mitigation recording",
       "Audit and reporting linkage",
       "Audit-chain record of framework completion",
+      "Step-level risk-assessment and mitigation recording",
     ],
     reporting: [
       "Annual five-step due-diligence report",
@@ -1035,22 +1070,27 @@ const REPORTS: Record<string, ReportData> = {
       "OECD Due Diligence Guidance — minerals supply chains",
       "UAE Ministerial Decree No.68/2024 — responsible sourcing",
       "LBMA Responsible Gold Guidance",
+      "OECD Due Diligence Guidance — conformant-facility validation",
     ],
     requirements: [
       "Maintain a current conformant-facility reference list",
       "Validate sourcing against conformant status",
       "Flag de-listed or lapsed facilities",
       "Evidence the conformance basis for sourcing decisions",
+      "Validate sourcing only against current conformant facilities",
+      "Flag de-listed or lapsed facilities promptly",
     ],
     controls: [
       "Conformant-facility reference data management",
       "Status-change and de-listing alerts",
       "Linkage to sourcing-validation workflows",
       "Audit-chain record of reference-data updates",
+      "Conformance status-change alerting",
     ],
     reporting: [
       "Conformance-data currency reporting to governance",
       "Escalation of sourcing against de-listed facilities",
+      "Escalation of sourcing against de-listed facilities to governance",
     ],
     risks: [
       "Sourcing validated against stale conformance data",
@@ -1079,12 +1119,14 @@ const REPORTS: Record<string, ReportData> = {
       "Assess gold-sourcing geographic risk",
       "Document the responsible-gold diligence basis",
       "Re-validate conformance periodically",
+      "Re-validate refiner conformance on a periodic basis",
     ],
     controls: [
       "Refiner-conformance verification",
       "Supply-chain declaration capture and validation",
       "Geographic-risk overlay on gold sourcing",
       "Audit-chain record of gold diligence",
+      "Supply-chain declaration capture and validation for gold",
     ],
     reporting: [
       "Responsible-gold reporting to governance",
@@ -1118,12 +1160,14 @@ const REPORTS: Record<string, ReportData> = {
       "Assign ownership and implementation deadlines",
       "Implement changes before effective dates",
       "Evidence completion of each regulatory change",
+      "Assign ownership and a deadline to each regulatory change",
     ],
     controls: [
       "Regulatory-change register and impact mapping",
       "AI-assisted implementation calendar",
       "Deadline tracking and escalation",
       "Audit-chain record of change implementation",
+      "Effective-date deadline tracking and escalation",
     ],
     reporting: [
       "Regulatory-change status reporting to governance",
@@ -1157,12 +1201,14 @@ const REPORTS: Record<string, ReportData> = {
       "Validate documentation, routing, and valuation consistency",
       "Escalate anomalous shipments for investigation",
       "Retain shipment records for the statutory period",
+      "Escalate shipments with anomalous valuation or routing",
     ],
     controls: [
       "Chain-of-custody tracking",
       "AI TBML anomaly screening",
       "Documentation-consistency checks",
       "Audit-chain record of shipment reviews",
+      "Documentation-consistency checks across the consignment",
     ],
     reporting: [
       "STR/SAR referral where TBML is indicated",
@@ -1196,12 +1242,14 @@ const REPORTS: Record<string, ReportData> = {
       "Freeze designated-party assets without delay",
       "Report freezing actions within mandated timeframes",
       "Screen continuously against the control list",
+      "Maintain current NAS/ARS registration without lapse",
     ],
     controls: [
       "NAS/ARS registration tracking",
       "Control-list maintenance and screening",
       "Freeze-and-report workflow enforcement",
       "Audit-chain record of sanctions actions",
+      "Continuous control-list screening with freeze-and-report workflow",
     ],
     reporting: [
       "Freezing reports to the competent UAE authority",
@@ -1235,12 +1283,14 @@ const REPORTS: Record<string, ReportData> = {
       "File CNMR/PNMR within mandated timeframes",
       "Track remediation tasks to closure",
       "Evidence alert processing end-to-end",
+      "Action positive matches without delay",
     ],
     controls: [
       "EOCN alert ingestion and Gmail monitoring",
       "Name-match screening engine",
       "CNMR/PNMR filing orchestration",
       "Audit-chain record of alert handling",
+      "EOCN alert ingestion with designated-channel monitoring",
     ],
     reporting: [
       "CNMR/PNMR filing to EOCN",
@@ -1266,6 +1316,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE Cabinet Decision No.74/2020 — TFS reporting",
       "FATF Recommendation 6 — terrorism-related TFS",
       "CBUAE Guidance on Targeted Financial Sanctions",
+      "UAE Cabinet Decision No.74/2020 — TFS screening and reporting",
     ],
     requirements: [
       "Screen the customer base against current designations",
@@ -1273,12 +1324,14 @@ const REPORTS: Record<string, ReportData> = {
       "File the CNMR within the mandated period",
       "Retain the submission and acknowledgement",
       "Evidence screening completeness",
+      "Evidence completeness of base-population screening",
     ],
     controls: [
       "Consolidated screening-result assembly",
       "CNMR format validation",
       "Filing-deadline tracking",
       "Audit-chain record of submissions",
+      "Consolidated screening-result assembly and validation",
     ],
     reporting: [
       "CNMR submission to EOCN",
@@ -1304,6 +1357,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE Cabinet Decision No.74/2020 — freezing obligations",
       "FATF Recommendation 6 — terrorism-related TFS",
       "FATF Recommendation 7 — proliferation-financing TFS",
+      "UAE Cabinet Decision No.74/2020 Art.— freezing without delay",
     ],
     requirements: [
       "Queue and prioritise confirmed positive matches",
@@ -1311,12 +1365,14 @@ const REPORTS: Record<string, ReportData> = {
       "File the PNMR within the mandated window",
       "Evidence the freeze-and-report chain",
       "Retain submissions and acknowledgements",
+      "Minimise the interval between match confirmation and freezing",
     ],
     controls: [
       "Positive-match queue and prioritisation",
       "Freeze-and-report workflow enforcement",
       "Filing-deadline tracking",
       "Audit-chain record of each PNMR",
+      "Positive-match prioritisation queue",
     ],
     reporting: [
       "PNMR submission to EOCN",
@@ -1350,12 +1406,14 @@ const REPORTS: Record<string, ReportData> = {
       "File the DPMS cash report within the mandated period",
       "Apply CDD to qualifying transactions",
       "Retain reports for the statutory period",
+      "Detect structuring designed to stay below the AED 55,000 threshold",
     ],
     controls: [
       "Threshold-based cash-transaction detection",
       "DPMSR assembly and validation",
       "Filing-deadline tracking",
       "Audit-chain record of submissions",
+      "Threshold-based qualifying-transaction detection",
     ],
     reporting: [
       "DPMSR submission to the competent authority",
@@ -1381,6 +1439,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 — DNFBP supervisory obligations",
       "UAE Cabinet Decision No.10/2019 — supervisory cooperation",
       "FATF Recommendation 28 — DNFBP supervision",
+      "UAE FDL No.20/2018 — supervisory information obligations",
     ],
     requirements: [
       "Complete all mandatory survey fields accurately",
@@ -1388,12 +1447,14 @@ const REPORTS: Record<string, ReportData> = {
       "Submit within the mandated deadline",
       "Retain the submission record",
       "Reconcile survey data with internal records",
+      "Reconcile survey responses with internal records",
     ],
     controls: [
       "Survey data collection and validation",
       "Completeness checks against mandatory fields",
       "Deadline tracking and escalation",
       "Audit-chain record of submission",
+      "Mandatory-field completeness validation before submission",
     ],
     reporting: [
       "Survey submission to the Ministry of Economy",
@@ -1427,12 +1488,14 @@ const REPORTS: Record<string, ReportData> = {
       "Evidence completion against each deadline",
       "Escalate at-risk or overdue items",
       "Maintain an auditable enforcement record",
+      "Assign ownership and evidence closure for each commitment",
     ],
     controls: [
       "Deadline and action tracking",
       "Ownership assignment and escalation",
       "Remediation-evidence capture",
       "Audit-chain record of enforcement actions",
+      "Commitment deadline tracking with escalation",
     ],
     reporting: [
       "Enforcement-status reporting to the Board",
@@ -1466,12 +1529,14 @@ const REPORTS: Record<string, ReportData> = {
       "Maintain minutes of governance deliberations",
       "Track decisions to implementation",
       "Preserve the governance record for audit",
+      "Track board decisions through to implementation",
     ],
     controls: [
       "Decision and sign-off recording",
       "Minutes capture and retention",
       "Decision-to-action tracking",
       "Audit-chain record of governance actions",
+      "Minutes capture with decision-to-action linkage",
     ],
     reporting: [
       "Governance-decision reporting to supervisors",
@@ -1505,12 +1570,14 @@ const REPORTS: Record<string, ReportData> = {
       "Preserve detection effectiveness through tuning",
       "Govern and approve tuning changes",
       "Evidence the basis for each change",
+      "Preserve detection effectiveness through any tuning change",
     ],
     controls: [
       "False-positive pattern analytics",
       "Threshold-tuning recommendation with rationale",
       "Effectiveness-preservation checks",
       "Audit-chain record of tuning decisions",
+      "Effectiveness-impact validation on proposed thresholds",
     ],
     reporting: [
       "Tuning-recommendation reporting to compliance",
@@ -1544,12 +1611,14 @@ const REPORTS: Record<string, ReportData> = {
       "Govern and approve rule changes",
       "Track rule versions and retirements",
       "Evidence the basis for each change",
+      "Test each rule before production deployment",
     ],
     controls: [
       "Rule lifecycle and version tracking",
       "Pre-deployment testing workflow",
       "Approval gating on rule changes",
       "Audit-chain record of rule versions",
+      "Rule version control with retirement tracking",
     ],
     reporting: [
       "Rule-change reporting to compliance governance",
@@ -1583,12 +1652,14 @@ const REPORTS: Record<string, ReportData> = {
       "Evidence closure of each finding",
       "Escalate overdue or systemic findings",
       "Maintain an auditable findings register",
+      "Evidence closure of each finding before sign-off",
     ],
     controls: [
       "Findings register with severity tracking",
       "Remediation ownership and deadline tracking",
       "Closure-evidence capture",
       "Audit-chain record of findings lifecycle",
+      "Severity-weighted remediation deadline tracking",
     ],
     reporting: [
       "Findings-status reporting to the Board",
@@ -1622,12 +1693,14 @@ const REPORTS: Record<string, ReportData> = {
       "Link assessment to control calibration",
       "Refresh on material change and periodically",
       "Reconcile with the enterprise-wide assessment",
+      "Reconcile business-line risk with the enterprise-wide assessment",
     ],
     controls: [
       "Business-line risk scoring",
       "Product-risk factor mapping",
       "Control-linkage tracking",
       "Audit-chain record of assessment versions",
+      "Product-level risk-factor scoring",
     ],
     reporting: [
       "Business-risk reporting to governance",
@@ -1653,6 +1726,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 Art.16 — ongoing monitoring",
       "FATF Recommendation 10 — ongoing due diligence",
       "CBUAE AML/CFT Standards — dormant-account controls",
+      "FATF Recommendation 10 — ongoing monitoring of activity",
     ],
     requirements: [
       "Identify and flag dormant accounts",
@@ -1660,12 +1734,14 @@ const REPORTS: Record<string, ReportData> = {
       "Monitor dormant accounts for anomalous activity",
       "Re-verify CDD on reactivation",
       "Evidence dormant-account monitoring",
+      "Re-verify CDD on reactivation of a dormant account",
     ],
     controls: [
       "Dormancy detection and flagging",
       "Reactivation-trigger monitoring",
       "Enhanced scrutiny on dormant activity",
       "Audit-chain record of dormancy events",
+      "Reactivation-trigger monitoring with enhanced scrutiny",
     ],
     reporting: [
       "Escalation of anomalous reactivations",
@@ -1699,12 +1775,14 @@ const REPORTS: Record<string, ReportData> = {
       "Define oversight and audit rights",
       "Monitor provider performance and compliance",
       "Evidence retained institutional responsibility",
+      "Define audit and oversight rights for each arrangement",
     ],
     controls: [
       "Outsourcing register and risk classification",
       "Oversight-arrangement tracking",
       "Provider-compliance monitoring",
       "Audit-chain record of outsourcing decisions",
+      "Provider-compliance monitoring against AML obligations",
     ],
     reporting: [
       "Outsourcing-risk reporting to governance",
@@ -1738,12 +1816,14 @@ const REPORTS: Record<string, ReportData> = {
       "Define and track mitigation measures",
       "Exclude conflicted parties from affected decisions",
       "Maintain an auditable conflicts register",
+      "Exclude conflicted parties from affected decisions",
     ],
     controls: [
       "Conflict capture and assessment",
       "Mitigation tracking",
       "Decision-exclusion enforcement",
       "Audit-chain record of conflict management",
+      "Conflict-impact assessment on AML decision points",
     ],
     reporting: [
       "Conflicts reporting to governance",
@@ -1769,6 +1849,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE Cabinet Decision No.10/2019 — supervisory engagement",
       "FATF Recommendation 35 — proportionate sanctions",
       "CBUAE AML/CFT Standards — self-reporting",
+      "FATF Recommendation 35 — proportionate, cooperative resolution",
     ],
     requirements: [
       "Assess identified breaches for disclosure",
@@ -1776,12 +1857,14 @@ const REPORTS: Record<string, ReportData> = {
       "Submit disclosures completely and promptly",
       "Track resulting remediation to closure",
       "Evidence the disclosure and its basis",
+      "Track remediation arising from each disclosure to closure",
     ],
     controls: [
       "Breach-assessment workflow",
       "Disclosure-approval gating",
       "Remediation tracking",
       "Audit-chain record of disclosures",
+      "Disclosure-decision approval gating",
     ],
     reporting: [
       "Voluntary disclosure to the competent authority",
@@ -1815,12 +1898,14 @@ const REPORTS: Record<string, ReportData> = {
       "Prevent any action compromising audit integrity",
       "Log all operator actions",
       "Support reproducible audit retrieval",
+      "Log all operator actions for accountability",
     ],
     controls: [
       "Append-only HMAC-SHA256 audit chain",
       "Role-based operator access",
       "Operator-action logging",
       "Tamper-evidence verification",
+      "Role-based operator access with tamper-evidence checks",
     ],
     reporting: [
       "Audit-trail evidence packs for supervisors",
@@ -1854,12 +1939,14 @@ const REPORTS: Record<string, ReportData> = {
       "Trend indicators to detect degradation",
       "Act on adverse KPI movements",
       "Evidence KPI review and response",
+      "Act on adverse KPI movements within defined timeframes",
     ],
     controls: [
       "KPI computation and trending",
       "Threshold-based alerting on degradation",
       "Effectiveness dashboarding",
       "Audit-chain record of KPI reviews",
+      "Threshold-based alerting on effectiveness degradation",
     ],
     reporting: [
       "KPI reporting to the Board and supervisors",
@@ -1895,12 +1982,14 @@ const REPORTS: Record<string, ReportData> = {
       "Record the AI contribution to each decision",
       "Apply PII redaction before model processing",
       "Govern AI use under the responsible-AI framework",
+      "Record the AI contribution to each MLRO decision",
     ],
     controls: [
       "Human-in-the-loop decision enforcement",
       "PII redaction in the LLM pipeline",
       "Hallucination gating on AI output",
       "Audit-chain record of AI-assisted decisions",
+      "PII redaction and hallucination gating in the assist pipeline",
     ],
     reporting: [
       "AI-assisted-decision reporting to governance",
@@ -1934,12 +2023,14 @@ const REPORTS: Record<string, ReportData> = {
       "Maintain transparency and explainability",
       "Document fairness and ethics assessments",
       "Remediate bias breaches promptly",
+      "Remediate bias-threshold breaches promptly",
     ],
     controls: [
       "Bias-ratio monitoring (threshold 1.15)",
       "Human-oversight enforcement",
       "Fairness and ethics scorecards",
       "Audit-chain record of AI governance",
+      "Bias-ratio monitoring against the institutional threshold",
     ],
     reporting: [
       "Bias and fairness reporting to governance",
@@ -1973,12 +2064,14 @@ const REPORTS: Record<string, ReportData> = {
       "Ensure evidence integrity and traceability",
       "Support timely supervisory responses",
       "Preserve the composition of each evidence pack",
+      "Verify integrity and traceability of assembled evidence",
     ],
     controls: [
       "On-demand evidence-pack assembly",
       "Audit-chain integration",
       "Evidence-integrity verification",
       "Audit-chain record of pack generation",
+      "On-demand, audit-chain-integrated evidence assembly",
     ],
     reporting: [
       "Evidence-pack delivery to supervisors",
@@ -2012,16 +2105,19 @@ const REPORTS: Record<string, ReportData> = {
       "Track amendments and supersessions",
       "Link obligations to platform controls",
       "Evidence the currency of the library",
+      "Link each obligation to the controls that satisfy it",
     ],
     controls: [
       "Searchable regulatory repository",
       "Amendment and version tracking",
       "Obligation-to-control linkage",
       "Audit-chain record of library updates",
+      "Amendment and supersession version tracking",
     ],
     reporting: [
       "Library-currency reporting to governance",
       "Escalation of unincorporated amendments",
+      "Escalation of unincorporated amendments to compliance",
     ],
     risks: [
       "Reliance on superseded regulatory text",
@@ -2050,12 +2146,14 @@ const REPORTS: Record<string, ReportData> = {
       "Review and refresh on a defined cadence",
       "Align documents to current obligations",
       "Evidence approval and distribution",
+      "Obtain board approval for the programme charter",
     ],
     controls: [
       "Policy versioning and approval tracking",
       "Periodic-review scheduling",
       "Obligation-alignment mapping",
       "Audit-chain record of policy changes",
+      "Periodic-review scheduling with overdue escalation",
     ],
     reporting: [
       "Policy-currency reporting to the Board",
@@ -2089,16 +2187,19 @@ const REPORTS: Record<string, ReportData> = {
       "Make typologies searchable for investigators",
       "Link typologies to monitoring rules",
       "Refresh as new methods emerge",
+      "Refresh the library as new typologies emerge",
     ],
     controls: [
       "AI-searchable typology repository",
       "UAE-localised content curation",
       "Typology-to-rule linkage",
       "Audit-chain record of library updates",
+      "Typology-to-monitoring-rule linkage",
     ],
     reporting: [
       "Typology-coverage reporting to governance",
       "Escalation of newly emerging typologies",
+      "Escalation of newly emerging typologies for rule updates",
     ],
     risks: [
       "Detection gaps for emerging typologies",
@@ -2127,16 +2228,19 @@ const REPORTS: Record<string, ReportData> = {
       "Version-control and review playbooks",
       "Train staff on playbook execution",
       "Evidence consistent application",
+      "Train staff on playbook execution",
     ],
     controls: [
       "Playbook repository and versioning",
       "Obligation-alignment mapping",
       "Execution-consistency tracking",
       "Audit-chain record of playbook use",
+      "Procedure version control and obligation alignment",
     ],
     reporting: [
       "Playbook-currency reporting to governance",
       "Escalation of process deviations",
+      "Escalation of recurring process deviations to governance",
     ],
     risks: [
       "Inconsistent execution of key processes",
@@ -2165,12 +2269,14 @@ const REPORTS: Record<string, ReportData> = {
       "Preserve AML records against improper erasure",
       "Balance data rights against retention obligations",
       "Evidence the handling of each request",
+      "Resolve retention/erasure conflicts explicitly",
     ],
     controls: [
       "Request intake and lifecycle tracking",
       "Correction workflow with retention safeguards",
       "Audit-chain record of corrections",
       "Retention-conflict resolution logic",
+      "Correction workflow with AML-retention safeguards",
     ],
     reporting: [
       "Data-request handling reporting to governance",
@@ -2204,12 +2310,14 @@ const REPORTS: Record<string, ReportData> = {
       "Escalate by severity to appropriate authority",
       "Recover and restore safe operation",
       "Evidence the full incident lifecycle",
+      "Notify regulators where an AI incident is reportable",
     ],
     controls: [
       "Failure-mode-specific response playbooks",
       "Detection and containment workflow",
       "Severity-based escalation",
       "Audit-chain record of AI incidents",
+      "Failure-mode-specific detection and containment workflow",
     ],
     reporting: [
       "AI-incident reporting to governance and the Board",
@@ -2243,12 +2351,14 @@ const REPORTS: Record<string, ReportData> = {
       "Govern the model lifecycle with approval gates",
       "Monitor AI against the NIST AI RMF",
       "Manage AI incidents and drive continuous improvement",
+      "Maintain the AI risk register with current mitigations",
     ],
     controls: [
       "Eleven-component governance dashboard",
       "AI risk register and model-lifecycle tracking",
       "NIST AI RMF scorecard and MITRE ATLAS heatmap",
       "Audit-chain record of governance actions",
+      "NIST AI RMF scorecard and MITRE ATLAS coverage tracking",
     ],
     reporting: [
       "AI-governance reporting to the Board",
@@ -2282,12 +2392,14 @@ const REPORTS: Record<string, ReportData> = {
       "Remediate or sanction shadow AI",
       "Maintain an AI-usage inventory",
       "Evidence remediation actions",
+      "Maintain an accurate, current AI-usage inventory",
     ],
     controls: [
       "Shadow-AI detection and inventory",
       "No-DPA vendor flagging",
       "Data-classification risk scoring",
       "Audit-chain record of remediation",
+      "No-DPA vendor flagging with data-classification risk scoring",
     ],
     reporting: [
       "Shadow-AI exposure reporting to governance",
@@ -2321,12 +2433,14 @@ const REPORTS: Record<string, ReportData> = {
       "Verify penetration testing and security posture",
       "Confirm SLAs and support commitments",
       "Maintain a CBUAE-aligned vendor audit trail",
+      "Re-assess vendor AI on a defined cadence",
     ],
     controls: [
       "Vendor-AI due-diligence workflow",
       "Model-card and DPA review tracking",
       "Penetration-test and SLA verification",
       "Audit-chain record of vendor assessments",
+      "Model-card, DPA, and penetration-test verification tracking",
     ],
     reporting: [
       "Vendor-AI risk reporting to governance",
@@ -2354,6 +2468,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 Art.18 — due diligence enrichment",
       "FATF Recommendation 10 — reliable information sources",
       "CBUAE AML/CFT Standards — adverse-information gathering",
+      "FATF Recommendation 10 — corroboration from independent sources",
     ],
     requirements: [
       "Gather open-source intelligence from reliable sources",
@@ -2361,16 +2476,19 @@ const REPORTS: Record<string, ReportData> = {
       "Record provenance of OSINT findings",
       "Integrate findings into risk assessment",
       "Respect lawful data-gathering boundaries",
+      "Integrate corroborated findings into the risk assessment",
     ],
     controls: [
       "Domain and username harvesting",
       "Adverse-footprint detection",
       "Provenance recording",
       "Audit-chain record of OSINT use",
+      "Provenance recording for each OSINT finding",
     ],
     reporting: [
       "OSINT findings into case and CDD records",
       "Escalation of adverse OSINT signals",
+      "Routing of adverse OSINT signals into case records",
     ],
     risks: [
       "Adverse public footprint contradicting CDD",
@@ -2391,6 +2509,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE Cabinet Decision No.10/2019 Art.4 — reliable sources",
       "UAE FDL No.20/2018 Art.18 — entity verification",
       "FATF Recommendation 16 — originator/beneficiary identification",
+      "UAE Cabinet Decision No.10/2019 Art.4 — verification from reliable sources",
     ],
     requirements: [
       "Verify entities against the GLEIF registry",
@@ -2398,16 +2517,19 @@ const REPORTS: Record<string, ReportData> = {
       "Record the verification basis",
       "Re-verify on status change",
       "Integrate LEI data into entity CDD",
+      "Re-verify entity status on registry change",
     ],
     controls: [
       "GLEIF registry lookup and matching",
       "LEI status verification",
       "Verification-basis recording",
       "Audit-chain record of lookups",
+      "GLEIF registry matching with status validation",
     ],
     reporting: [
       "Entity-verification evidence into CDD",
       "Escalation of lapsed or invalid LEIs",
+      "Escalation of lapsed or invalid LEIs to compliance",
     ],
     risks: [
       "Lapsed or revoked LEI status",
@@ -2428,6 +2550,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 Art.18 — connected-party identification",
       "UAE Cabinet Decision No.10/2019 — relationship analysis",
       "FATF Recommendation 10 — beneficial-ownership networks",
+      "FATF Recommendation 10 — connected-party and ownership networks",
     ],
     requirements: [
       "Map relationships across connected parties",
@@ -2435,16 +2558,19 @@ const REPORTS: Record<string, ReportData> = {
       "Identify clusters indicative of organised risk",
       "Integrate network risk into assessment",
       "Record network-analysis findings",
+      "Integrate detected network risk into customer assessment",
     ],
     controls: [
       "Relationship and ownership graphing",
       "High-risk-link detection",
       "Cluster-risk analysis",
       "Audit-chain record of graph analyses",
+      "High-risk-link and cluster detection",
     ],
     reporting: [
       "Network-risk findings into case records",
       "Escalation of high-risk connections",
+      "Routing of high-risk network findings into case records",
     ],
     risks: [
       "Hidden links to sanctioned parties",
@@ -2465,6 +2591,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 Art.18 — diligence enrichment",
       "FATF Recommendation 10 — reliable information",
       "CBUAE AML/CFT Standards — counterparty verification",
+      "FATF Recommendation 10 — independent corroboration of identity",
     ],
     requirements: [
       "Analyse domain and infrastructure risk signals",
@@ -2472,16 +2599,19 @@ const REPORTS: Record<string, ReportData> = {
       "Identify infrastructure shared with bad actors",
       "Record findings with provenance",
       "Integrate signals into risk assessment",
+      "Record infrastructure findings with provenance",
     ],
     controls: [
       "Domain and infrastructure analysis",
       "Risk-signal detection",
       "Provenance recording",
       "Audit-chain record of analyses",
+      "Recently-registered and shared-infrastructure detection",
     ],
     reporting: [
       "Domain-intelligence findings into CDD",
       "Escalation of high-risk infrastructure",
+      "Routing of high-risk infrastructure findings into CDD",
     ],
     risks: [
       "Recently registered domains masking new fronts",
@@ -2510,12 +2640,14 @@ const REPORTS: Record<string, ReportData> = {
       "Apply travel-rule information requirements",
       "Record virtual-asset risk decisions",
       "Re-screen on new intelligence",
+      "Re-screen wallet exposure on new threat intelligence",
     ],
     controls: [
       "Wallet and address screening",
       "Exposure and counterparty risk scoring",
       "Travel-rule data checks",
       "Audit-chain record of crypto-risk decisions",
+      "Travel-rule originator/beneficiary data validation",
     ],
     reporting: [
       "Crypto-risk findings into case records",
@@ -2549,12 +2681,14 @@ const REPORTS: Record<string, ReportData> = {
       "Assess vessel ownership and flag risk",
       "Record vessel-screening decisions",
       "Re-screen on list and intelligence updates",
+      "Re-screen vessels on list and intelligence updates",
     ],
     controls: [
       "Vessel sanctions screening",
       "Dark-fleet indicator detection",
       "Ownership and flag-risk analysis",
       "Audit-chain record of vessel checks",
+      "Dark-fleet AIS-manipulation indicator detection",
     ],
     reporting: [
       "Vessel-risk findings into trade-finance diligence",
@@ -2580,6 +2714,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 — detection of suspicious activity",
       "FATF Methodology — analytical effectiveness",
       "CBUAE AML/CFT Standards — anomaly detection",
+      "FATF Recommendation 10 — analytical scrutiny of transactions",
     ],
     requirements: [
       "Apply Benford testing to appropriate datasets",
@@ -2587,16 +2722,19 @@ const REPORTS: Record<string, ReportData> = {
       "Treat deviations as investigative leads, not conclusions",
       "Record analysis parameters and results",
       "Integrate findings into investigation",
+      "Treat statistical deviations as leads, not conclusions",
     ],
     controls: [
       "Benford's-law digit-distribution testing",
       "Statistical-significance flagging",
       "Parameter and result recording",
       "Audit-chain record of analyses",
+      "Digit-distribution significance flagging",
     ],
     reporting: [
       "Anomaly findings into case records",
       "Escalation of significant deviations",
+      "Routing of significant deviations into investigation",
     ],
     risks: [
       "Fabricated or manipulated transaction data",
@@ -2625,12 +2763,14 @@ const REPORTS: Record<string, ReportData> = {
       "Reach a defensible disposition",
       "Refer reportable findings to STR/SAR workflow",
       "Preserve the investigation record",
+      "Refer reportable findings to the STR/SAR workflow",
     ],
     controls: [
       "Unified investigative data surface",
       "Working-record documentation",
       "Disposition workflow",
       "Audit-chain record of investigation steps",
+      "Unified multi-source investigative data surface",
     ],
     reporting: [
       "STR/SAR referral for reportable findings",
@@ -2664,16 +2804,19 @@ const REPORTS: Record<string, ReportData> = {
       "Incorporate country risk into customer rating",
       "Refresh country risk on list and event changes",
       "Document the country-risk basis",
+      "Refresh country risk on list and event changes",
     ],
     controls: [
       "Single-country risk scoring",
       "FATF-list integration",
       "Country-risk-to-rating linkage",
       "Audit-chain record of assessments",
+      "FATF high-risk-list integration into ratings",
     ],
     reporting: [
       "Country-risk exposure reporting to governance",
       "Escalation of high-risk-jurisdiction exposure",
+      "Escalation of high-risk-jurisdiction exposure to governance",
     ],
     risks: [
       "Exposure to FATF-listed high-risk jurisdictions",
@@ -2702,16 +2845,19 @@ const REPORTS: Record<string, ReportData> = {
       "Trigger re-assessment on material shifts",
       "Update geographic risk dynamically",
       "Record event-driven risk changes",
+      "Trigger re-assessment on material geopolitical shifts",
     ],
     controls: [
       "Live geopolitical event monitoring",
       "Portfolio-impact mapping",
       "Dynamic risk-map updating",
       "Audit-chain record of risk changes",
+      "Live-event to portfolio-exposure mapping",
     ],
     reporting: [
       "Geopolitical-exposure reporting to governance",
       "Escalation of newly elevated geographies",
+      "Escalation of newly elevated geographies to compliance",
     ],
     risks: [
       "New sanctions actions affecting the portfolio",
@@ -2732,6 +2878,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 — geographic risk-based approach",
       "FATF Recommendation 1 — portfolio risk understanding",
       "CBUAE AML/CFT Standards — geographic oversight",
+      "FATF Recommendation 1 — portfolio-level risk understanding",
     ],
     requirements: [
       "Aggregate country risk into a portfolio view",
@@ -2739,16 +2886,19 @@ const REPORTS: Record<string, ReportData> = {
       "Support strategic geographic oversight",
       "Keep the risk map current",
       "Record the basis of map ratings",
+      "Keep the geographic risk map current",
     ],
     controls: [
       "Global risk heat-mapping",
       "Concentration and hot-spot highlighting",
       "Map-currency maintenance",
       "Audit-chain record of map updates",
+      "Concentration and hot-spot highlighting",
     ],
     reporting: [
       "Geographic-exposure overview to the Board",
       "Escalation of concentration risk",
+      "Escalation of geographic concentration risk to the Board",
     ],
     risks: [
       "Undetected geographic concentration",
@@ -2777,12 +2927,14 @@ const REPORTS: Record<string, ReportData> = {
       "Surface transshipment and layering patterns",
       "Escalate suspected evasion promptly",
       "Record evasion-detection findings",
+      "Escalate suspected evasion to TFS and STR workflows",
     ],
     controls: [
       "Evasion-typology pattern detection",
       "Front-company and obfuscation analysis",
       "Layering and transshipment detection",
       "Audit-chain record of findings",
+      "Front-company and ownership-obfuscation analysis",
     ],
     reporting: [
       "Escalation of suspected sanctions evasion",
@@ -2816,16 +2968,19 @@ const REPORTS: Record<string, ReportData> = {
       "Detect synthetic and fabricated identities",
       "Record tool outputs in the case file",
       "Use tools within governed boundaries",
+      "Record tool outputs in the relevant case file",
     ],
     controls: [
       "UBO walker, crypto-exposure, synthetic-ID tooling",
       "Unified investigative toolkit",
       "Output recording to case files",
       "Audit-chain record of tool use",
+      "Unified UBO-walker, crypto-exposure, and synthetic-ID tooling",
     ],
     reporting: [
       "Tool findings into investigation records",
       "Escalation of high-risk findings",
+      "Escalation of high-risk tool findings to investigation",
     ],
     risks: [
       "Concealed beneficial ownership",
@@ -2854,12 +3009,14 @@ const REPORTS: Record<string, ReportData> = {
       "Retain records for the statutory period",
       "Support verifiable retrieval",
       "Prevent unauthorised alteration",
+      "Prevent unauthorised alteration of records",
     ],
     controls: [
       "Append-only HMAC-SHA256 audit chain",
       "Per-request signing",
       "Integrity verification",
       "Retention enforcement",
+      "Per-request signing with integrity verification",
     ],
     reporting: [
       "Audit-trail evidence to supervisors",
@@ -2887,6 +3044,7 @@ const REPORTS: Record<string, ReportData> = {
       "UAE FDL No.20/2018 — awareness of risk developments",
       "FATF Recommendation 19 — high-risk-country awareness",
       "CBUAE AML/CFT Standards — adverse-media monitoring",
+      "FATF Recommendation 19 — awareness of high-risk-country developments",
     ],
     requirements: [
       "Aggregate regulatory and adverse-media intelligence",
@@ -2894,16 +3052,19 @@ const REPORTS: Record<string, ReportData> = {
       "Surface portfolio-relevant developments",
       "Route intelligence into risk processes",
       "Record intelligence-driven actions",
+      "Route portfolio-relevant intelligence into risk processes",
     ],
     controls: [
       "Unified real-time intelligence aggregation",
       "Seven-language adverse-media coverage",
       "Relevance filtering and routing",
       "Audit-chain record of intelligence actions",
+      "Seven-language adverse-media aggregation with relevance filtering",
     ],
     reporting: [
       "Intelligence-driven risk alerts to compliance",
       "Escalation of material developments",
+      "Escalation of material developments to compliance",
     ],
     risks: [
       "Missed designations or regulatory changes",
@@ -2932,16 +3093,19 @@ const REPORTS: Record<string, ReportData> = {
       "Support red-team and security oversight",
       "Document APIs for governed integration",
       "Record operational actions",
+      "Document APIs for governed integration",
     ],
     controls: [
       "Consolidated operational console",
       "Telemetry and status surfacing",
       "Red-team and security-audit access",
       "Audit-chain record of operational use",
+      "Consolidated telemetry, red-team, and security surfacing",
     ],
     reporting: [
       "Operational-health reporting to governance",
       "Escalation of system-health degradation",
+      "Escalation of system-health degradation to governance",
     ],
     risks: [
       "Operational risk obscured by fragmentation",
@@ -2970,16 +3134,19 @@ const REPORTS: Record<string, ReportData> = {
       "Keep the system card current with model changes",
       "Make disclosures accessible to stakeholders",
       "Evidence the accuracy of disclosures",
+      "Keep the system card current with model changes",
     ],
     controls: [
       "System-card authoring and versioning",
       "Model-change-driven updates",
       "Disclosure-accuracy review",
       "Audit-chain record of card versions",
+      "Model-change-driven disclosure updates",
     ],
     reporting: [
       "Transparency disclosure to regulators",
       "Escalation of disclosure inaccuracies",
+      "Escalation of disclosure inaccuracies for correction",
     ],
     risks: [
       "Stale system card after model change",
@@ -3008,12 +3175,14 @@ const REPORTS: Record<string, ReportData> = {
       "Remediate within risk-based timeframes",
       "Track remediation to closure",
       "Evidence security posture",
+      "Remediate vulnerabilities within risk-based timeframes",
     ],
     controls: [
       "Dependency and SAST scanning",
       "Severity-based prioritisation",
       "Remediation tracking",
       "Audit-chain record of security findings",
+      "Severity-based finding prioritisation",
     ],
     reporting: [
       "Security-posture reporting to governance",
@@ -3047,12 +3216,14 @@ const REPORTS: Record<string, ReportData> = {
       "Investigate indicators of error or misconduct",
       "Respect proportionality and staff rights",
       "Evidence behavioural-monitoring actions",
+      "Respect proportionality and staff rights in monitoring",
     ],
     controls: [
       "Analyst-activity anomaly detection",
       "Override and bypass monitoring",
       "Consistency analysis",
       "Audit-chain record of monitoring findings",
+      "Override, bypass, and consistency anomaly detection",
     ],
     reporting: [
       "Behavioural-anomaly escalation to compliance",
@@ -3086,12 +3257,14 @@ const REPORTS: Record<string, ReportData> = {
       "Support informed board decision-making",
       "Keep the dashboard current",
       "Evidence board review of the information",
+      "Evidence board review of the reported information",
     ],
     controls: [
       "Executive compliance dashboarding",
       "Key-risk-indicator surfacing",
       "Trend analysis",
       "Audit-chain record of board reporting",
+      "Key-risk-indicator surfacing with trend analysis",
     ],
     reporting: [
       "Board-level compliance reporting",
@@ -3125,16 +3298,19 @@ const REPORTS: Record<string, ReportData> = {
       "Set and monitor thresholds",
       "Escalate adverse movements",
       "Evidence KRI review and response",
+      "Escalate adverse KRI movements for response",
     ],
     controls: [
       "KRI computation and trending",
       "Threshold-based alerting",
       "Risk-radar dashboarding",
       "Audit-chain record of KRI reviews",
+      "Threshold-based KRI alerting",
     ],
     reporting: [
       "KRI reporting to risk committees and the Board",
       "Escalation of threshold breaches",
+      "Escalation of threshold breaches to risk committees",
     ],
     risks: [
       "Rising risk undetected without indicators",
@@ -3163,12 +3339,14 @@ const REPORTS: Record<string, ReportData> = {
       "Restrict regulated data to authorised roles",
       "Review access entitlements periodically",
       "Evidence access decisions and changes",
+      "Review access entitlements on a periodic basis",
     ],
     controls: [
       "Role-based access control",
       "Session and authentication governance",
       "Least-privilege enforcement",
       "Audit-chain record of access changes",
+      "Session and authentication lifecycle governance",
     ],
     reporting: [
       "Access-review reporting to governance",
