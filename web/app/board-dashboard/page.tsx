@@ -135,7 +135,7 @@ export default function BoardDashboardPage() {
   }, []);
 
   return (
-    <ModuleLayout engineLabel="Board View">
+    <ModuleLayout engineLabel="Board View" onRun={() => void load()}>
       <ModuleHero
         eyebrow=""
         title="Board"

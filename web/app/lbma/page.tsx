@@ -91,7 +91,7 @@ export default function LbmaPage() {
   }
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onRun={() => void load()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="LBMA Responsible Gold"

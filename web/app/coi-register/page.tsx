@@ -169,6 +169,8 @@ export default function CoiRegisterPage() {
 
   return (
     <ModuleLayout
+      onRun={() => void fetchDeclarations()}
+      onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "New Declaration"}

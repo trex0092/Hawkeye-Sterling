@@ -191,7 +191,7 @@ export default function TmRulesPage() {
   const rejectedCount = records.filter((r) => r.status === "rejected").length;
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="TM Rule Change"

@@ -177,7 +177,7 @@ export default function VoluntaryDisclosurePage() {
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <ModuleLayout>
+    <ModuleLayout onRun={() => void fetchRecords()} onAdd={() => setShowForm(true)}>
       <ModuleHero
         eyebrow=""
         title="Voluntary Disclosure"

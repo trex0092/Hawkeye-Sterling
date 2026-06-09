@@ -3485,7 +3485,7 @@ export default function MlroAdvisorPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor">
+    <ModuleLayout asanaModule="mlro-advisor" asanaLabel="MLRO Advisor" engineLabel="MLRO Advisor" onRun={() => void handleAsk()}>
       <ModuleHero
 
         eyebrow=""

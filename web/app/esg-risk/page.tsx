@@ -569,6 +569,7 @@ export default function EsgRiskPage() {
   return (
     <ModuleLayout
       engineLabel="ESG risk engine"
+      onRun={() => void generate()}
       sidebarActions={
         <>
           <ActionButton

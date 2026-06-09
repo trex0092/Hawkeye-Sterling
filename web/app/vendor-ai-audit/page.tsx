@@ -147,6 +147,8 @@ export default function VendorAIAuditPage() {
 
   return (
     <ModuleLayout
+      onRun={() => void fetchAssessments()}
+      onAdd={() => setShowForm(true)}
       sidebarActions={
         <ActionButton variant="add" type="button" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "Assess New Vendor"}
