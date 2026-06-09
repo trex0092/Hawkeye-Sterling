@@ -788,13 +788,6 @@ export default function AccessControlPage() {
             <h2 className="text-14 font-semibold text-ink-0">
               {loadingUsers ? "Loading users…" : `${users.length} users`}
             </h2>
-            <button
-              type="button"
-              onClick={() => { setShowAddForm((v) => !v); setAddError(""); }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 transition-colors"
-            >
-              <span className="text-14 leading-none">+</span> Add user
-            </button>
           </div>
 
           {/* Credentials display after adding a user */}
