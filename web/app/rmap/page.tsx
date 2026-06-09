@@ -91,13 +91,7 @@ export default function RmapPage() {
 
       <div className="w-full pb-16 space-y-5">
 
-        {/* Regulatory callout */}
-        <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30 text-xs text-amber-300 font-mono">
-          RMI RMAP · OECD DDG Step 2 · UAE FDL 10/2025 Art.21 — Smelter/refiner certification must
-          be verified annually. Non-conformant or suspended smelters require enhanced due diligence.
-        </div>
-
-        {/* Search + export bar */}
+        {/* Search bar */}
         <div className="flex gap-2 items-center flex-wrap">
           <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-0">
             <input
@@ -123,12 +117,6 @@ export default function RmapPage() {
               </button>
             )}
           </form>
-          <button
-            onClick={() => void downloadCmrt()}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 shrink-0"
-          >
-            Download CMRT CSV
-          </button>
         </div>
 
         {error && (

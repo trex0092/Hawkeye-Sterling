@@ -212,13 +212,6 @@ export default function OecdDdgPage() {
                   min={2020}
                   max={2030}
                 />
-                <button
-                  type="button"
-                  onClick={() => void createRecord()}
-                  className="px-3 py-1 text-11 font-semibold rounded border border-brand/40 bg-brand-dim text-brand hover:bg-brand/20"
-                >
-                  + New
-                </button>
               </div>
             </div>
             {records.length === 0 ? (

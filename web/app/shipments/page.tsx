@@ -1154,21 +1154,6 @@ export default function ShipmentsPage() {
         <AddShipmentForm onAdd={onAddRow} onCancel={() => setShowAdd(false)} />
       ) : (
         <div className="flex items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setShowAdd(true)}
-            className="self-start text-11 font-semibold px-4 py-2 rounded border border-brand text-brand hover:bg-brand-dim transition-colors"
-          >
-            + Add
-          </button>
-          <button
-            type="button"
-            disabled={tbmlLoading}
-            onClick={() => void runTbmlScan(visible)}
-            className="self-start text-11 font-semibold px-4 py-2 rounded border border-amber/60 text-amber bg-amber-dim hover:bg-amber/20 transition-colors disabled:opacity-50"
-          >
-            {tbmlLoading ? "Scanning…" : "✦AI"}
-          </button>
           {tbml && (
             <button
               type="button"

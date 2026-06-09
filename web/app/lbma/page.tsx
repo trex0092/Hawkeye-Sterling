@@ -101,15 +101,6 @@ export default function LbmaPage() {
 
       <div className="w-full pb-16 space-y-5">
 
-        {/* Action bar */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "+ New Questionnaire"}
-          </button>
-        </div>
 
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
