@@ -1115,17 +1115,6 @@ export default function ShipmentsPage() {
       sidebarActions={
         showAdd ? null : (
           <>
-            <ActionButton variant="add" type="button" onClick={() => setShowAdd(true)}>
-              + Add
-            </ActionButton>
-            <ActionButton
-              variant="ai"
-              type="button"
-              disabled={tbmlLoading}
-              onClick={() => void runTbmlScan(visible)}
-            >
-              {tbmlLoading ? "Scanning…" : "✦AI"}
-            </ActionButton>
             {tbml && (
               <button
                 type="button"

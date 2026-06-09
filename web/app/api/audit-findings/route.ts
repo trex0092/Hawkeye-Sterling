@@ -21,13 +21,20 @@ export async function GET(req: Request): Promise<NextResponse> {
   const gate = await enforce(req, { requireAuth: true });
   if (!gate.ok) return gate.response;
 
-  const tenantId = tenantIdFromGate(gate);
-  const records = await loadAllAuditFindings(tenantId);
-
-  return NextResponse.json(
-    { ok: true, count: records.length, records },
-    { headers: gate.headers },
-  );
+  try {
+    const tenantId = tenantIdFromGate(gate);
+    const records = await loadAllAuditFindings(tenantId);
+    return NextResponse.json(
+      { ok: true, count: records.length, records },
+      { headers: gate.headers },
+    );
+  } catch (err) {
+    console.error("[audit-findings] GET failed:", err instanceof Error ? err.message : String(err));
+    return NextResponse.json(
+      { ok: false, error: "Unable to load audit findings" },
+      { status: 503, headers: gate.headers },
+    );
+  }
 }
 
 export async function POST(req: Request): Promise<NextResponse> {

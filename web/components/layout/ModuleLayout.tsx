@@ -28,6 +28,8 @@ interface ModuleLayoutProps<K extends string = string> {
   // each button is one tap target — matches Asana's "+ Add task" / quick
   // actions placement.
   sidebarActions?: ReactNode | undefined;
+  onAdd?: (() => void) | undefined;
+  onRun?: (() => void) | undefined;
   detailPanel?: ReactNode | undefined;
   // Hide the right-hand activity/engine feed column entirely (reclaims its
   // width). Used by pages that are themselves a live feed (e.g. /intel).
@@ -59,6 +61,8 @@ export function ModuleLayout<K extends string = string>({
   detailPanel: _detailPanel,
   hideDetailPanel: _hideDetailPanel = false,
   engineLabel: _engineLabel = "Compliance engine",
+  onAdd,
+  onRun,
   asanaModule,
   asanaLabel,
 }: ModuleLayoutProps<K>) {
@@ -77,7 +81,7 @@ export function ModuleLayout<K extends string = string>({
     <>
       <Header onMenuOpen={() => setMobileNavOpen(true)} />
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-      <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} />
+      <ModuleActionBar asanaModule={asanaModule} asanaLabel={asanaLabel} onAdd={onAdd} onRun={onRun} />
       <div className="grid min-h-[calc(100vh-84px)] print:block grid-cols-1 md:grid-cols-[220px_1fr] border-t-2 border-brand-line">
         <div className="hidden md:block">
           <Sidebar>

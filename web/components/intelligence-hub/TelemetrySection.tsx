@@ -152,13 +152,6 @@ export function TelemetrySection() {
         </select>
         <button
           type="button"
-          onClick={refresh}
-          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70"
-        >
-          ↻
-        </button>
-        <button
-          type="button"
           onClick={reset}
           className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-400 hover:border-red-500/60 ml-auto"
         >

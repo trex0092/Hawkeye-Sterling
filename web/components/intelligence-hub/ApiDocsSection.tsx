@@ -226,39 +226,11 @@ export function ApiDocsSection() {
   return (
     <div>
       {/* Hero */}
-      <div className="flex items-start justify-between gap-6 flex-wrap mb-6">
-        <div>
-          <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-widest uppercase text-ink-3 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
-            REST · JSON · OpenAPI 3.1
-          </div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-ink-0 leading-snug mb-1">
-            Hawkeye Sterling API
-          </h1>
-          <p className="text-[13px] text-ink-2 max-w-lg leading-relaxed">
-            Regulator-grade AML/CFT screening engine for UAE-licensed precious-metals
-            businesses. Direct-source sanctions ingestion, full reasoning-chain
-            transparency, and a content-frozen compliance charter (P1–P10).
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-green/10 text-green border border-green/20">
-              v2.0 · stable
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-10 font-semibold font-mono bg-blue/10 text-blue border border-blue/20">
-              OAS 3.1
-            </span>
-          </div>
-          <a
-            href="/openapi.json"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-10 font-mono text-ink-3 hover:text-brand transition-colors underline-offset-2 hover:underline"
-          >
-            openapi.json ↗
-          </a>
-        </div>
+      <div className="mb-8">
+        <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 mb-2 text-ink-0">
+          Hawkeye{" "}
+          <em className="italic text-brand">Sterling API.</em>
+        </h1>
       </div>
 
       {/* Endpoint group cards */}

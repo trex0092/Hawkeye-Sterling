@@ -246,7 +246,7 @@ export function SecurityAuditSection() {
   ];
 
   return (
-    <div className="px-4 md:px-8 py-6 max-w-3xl">
+    <div className="px-4 md:px-8 py-6 w-full">
       <ModuleHero
         eyebrow="Security Suite"
         title="Security audit"
