@@ -35,6 +35,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Grievances & Whistleblowing module operationalises the institution's protected-disclosure regime, providing a confidential, retaliation-proof channel through which employees, customers, and third parties can report suspected money laundering, terrorist financing, sanctions evasion, or internal misconduct. Each report is logged to the immutable audit chain at the point of receipt, assigned a unique case reference, and routed to the Money Laundering Reporting Officer (MLRO) for triage independent of any line management that might be implicated.",
       "By separating intake from investigation and enforcing anonymity by default, the module discharges the institution's obligation to maintain effective internal controls and to protect persons who report suspicions in good faith. It forms the human-intelligence complement to the platform's automated screening and monitoring faculties.",
+      "In operation the module sits upstream of case management and the STR workflow: a disclosure that establishes reasonable grounds for suspicion is converted into an investigation and, where the threshold is met, an onward report to the UAE FIU. Supervisors examine whether the channel is genuinely accessible, whether reporters are demonstrably protected, and whether disclosures are acted upon rather than absorbed. Because the regime depends on trust, any leak of a reporter's identity or evidence of retaliation is treated as a serious control failure. The append-only audit record of receipt, assessment, and disposition is the institution's proof that good-faith reports were handled lawfully and without suppression.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.15 — protection of persons reporting suspicions in good faith",
@@ -75,6 +76,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "Perpetual KYC (pKYC) replaces periodic, calendar-driven customer reviews with continuous, event-driven re-assessment of the customer base. The module ingests changes in screening status, transactional behaviour, beneficial ownership, and external risk signals, recalculating each customer's risk rating in near-real time and triggering enhanced due diligence the moment a threshold is breached rather than at the next scheduled review.",
       "This addresses a core supervisory expectation that customer due diligence be kept current throughout the relationship, not merely captured at onboarding. By collapsing the latency between a risk-relevant event and the institution's response, pKYC materially reduces the window during which a compromised relationship can be exploited.",
+      "Within the wider programme the pKYC engine is the mechanism that keeps the risk-based approach honest between formal reviews: it consumes the same screening, transaction, and ownership signals that the rest of the platform produces and turns them into a live risk rating. Examiners increasingly expect this continuous posture rather than annual snapshots, and they probe whether a documented event actually triggered a timely response. Every re-rating is written to the audit chain with its rationale so the institution can demonstrate, for any point in time, why a customer sat in the band it did and what action followed a material change in circumstances.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.16 — ongoing monitoring of the business relationship",
@@ -115,6 +117,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Onboarding Wizard enforces a structured, gated new-customer flow that collects identity, beneficial-ownership, source-of-funds, and purpose-of-relationship data before any account is activated. Each step is validated against the institution's risk-based CDD policy, and the customer cannot progress until the mandatory evidence for their assessed risk tier has been captured and screened.",
       "By front-loading verification and screening at account opening, the module ensures the institution satisfies its obligation to identify and verify every customer — and to apply enhanced measures to higher-risk relationships — before funds move. The flow writes a complete onboarding audit record that can be reproduced for a regulator on demand.",
+      "Operationally the wizard is the first and most consequential control point in the customer lifecycle, because deficiencies admitted here propagate into every downstream screening and monitoring decision. The gated design means an analyst cannot shortcut verification under commercial pressure, and the risk tier assigned at onboarding sets the cadence for future review. Supervisors test onboarding by reconstructing sample files end to end, expecting to see identification, beneficial-ownership resolution, purpose of relationship, and pre-activation screening all evidenced before the first transaction. A complete, reproducible onboarding record is therefore both an efficiency asset and the institution's primary defence when the genesis of a relationship is later questioned.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.18 — customer due diligence obligations",
@@ -155,6 +158,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Client Portal provides a controlled, self-service interface through which corporate and individual customers submit KYC documentation, declare beneficial ownership, and respond to information requests. Every submission is screened and risk-assessed on receipt, and the AI risk-assessment faculty produces a structured rationale that an analyst reviews before acceptance.",
       "The portal reduces manual data handling while preserving the integrity of the CDD record: submissions are validated, screened, and logged automatically, and no customer-supplied assertion is treated as verified until it has passed the institution's controls. This supports both efficient onboarding and a defensible, reproducible evidence trail.",
+      "The portal is governed on the principle that customer-supplied data is a claim, not a fact, until the institution's controls have tested it. Documents are screened and risk-assessed on receipt, AI-generated assessments are held for analyst confirmation, and provenance is recorded so that any later challenge can be traced to its source. This matters because regulators expect verification from reliable and independent sources rather than uncritical acceptance of self-attestation. By combining a low-friction submission experience with disciplined verification and PII redaction before any model processing, the module reconciles the commercial need for fast onboarding with the regulatory need for a defensible, auditable evidence trail.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.18 — customer due diligence",
@@ -195,6 +199,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The UBO Declaration module captures, verifies, and maintains the ultimate beneficial ownership of corporate customers, resolving ownership and control down to natural persons in line with the UAE beneficial-ownership regime. Declared structures are tested against ownership and control thresholds, screened, and risk-scored, with discrepancies against external registry data flagged for investigation.",
       "Accurate beneficial-ownership information is foundational to effective sanctions screening and AML risk assessment: an institution cannot meaningfully screen or risk-rate a relationship whose true owners it has not identified. The module enforces this identification and keeps it current as ownership changes.",
+      "Accurate beneficial-ownership data is the keystone on which screening and risk-rating depend, since an institution cannot meaningfully assess a relationship whose true controllers it has not identified. The module enforces resolution to natural persons, applies the ownership and control thresholds, and reconciles declarations against independent registry data, flagging divergence for investigation. Examiners frequently focus here because opaque ownership is the classic vehicle for sanctions evasion and laundering, and they expect the institution to challenge implausible structures rather than record them passively. Maintaining the register as ownership changes — and evidencing each change in the audit chain — is what keeps the rest of the control stack pointed at the right people.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.58/2020 — regulation of beneficial-owner procedures",
@@ -235,6 +240,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The PEP Profiles module manages the identification, classification, and enhanced ongoing scrutiny of politically exposed persons, their family members, and close associates. Each profile records the PEP tier, the source-of-wealth and source-of-funds assessment, a network map of associated parties, and the specific enhanced due diligence measures applied to the relationship.",
       "Because PEP status elevates corruption and laundering risk irrespective of any specific transaction, the module enforces senior-management approval for establishing or continuing such relationships and ensures the enhanced monitoring obligations persist for as long as the elevated risk endures.",
+      "Because political exposure elevates corruption and laundering risk irrespective of any single transaction, the module treats PEP status as a standing condition that drives enhanced measures for the life of the relationship. Senior-management approval is enforced as a gate, source of wealth and funds is documented, and the network of family members and close associates is mapped so that risk routed through proxies is not missed. Supervisors expect a clear, evidenced rationale for continuing each PEP relationship and proportionate ongoing scrutiny. The profile, its approvals, and its EDD measures are all written to the audit chain, giving the institution a defensible account of how a sensitive relationship was governed.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.18 — enhanced measures for higher-risk customers",
@@ -275,6 +281,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The ESG Risk module overlays environmental, social, and governance risk onto the institution's financial-crime assessment, recognising that ESG failings — environmental crime, forced labour, bribery, and sanctions-linked governance breaches — are frequently predicate offences for money laundering. It scores customers and counterparties on ESG factors and maps that exposure to AML and regulatory risk.",
       "This integrated view ensures that financial-crime controls are informed by the broader risk picture and that exposures such as supply-chain forced labour or environmental-crime proceeds are surfaced rather than siloed in a separate, non-AML workstream.",
+      "The module reflects the supervisory reality that environmental crime, forced labour, and bribery are predicate offences whose proceeds can enter the institution through ostensibly legitimate counterparties. By scoring ESG factors and mapping them explicitly to money-laundering and sanctions risk, it prevents these exposures from being siloed in a non-financial-crime workstream where they would escape AML scrutiny. This integrated view is increasingly expected as ESG and AML supervision converge, and it allows enhanced measures to be applied where governance failings or supply-chain exposure indicate heightened predicate risk. Assessments are retained in the audit chain so the institution can show that ESG signals informed, rather than bypassed, its financial-crime controls.",
     ],
     regulatory: [
       "FATF guidance on environmental crime as a money-laundering predicate",
@@ -313,6 +320,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Supplier Due Diligence module extends financial-crime controls to the institution's third-party and supplier relationships, screening vendors, assessing their AML/sanctions exposure, and documenting the due-diligence basis on which each is engaged. It recognises that suppliers can introduce sanctions, bribery, and laundering risk into the institution through procurement and outsourcing channels.",
       "By applying a risk-based diligence standard to suppliers — proportionate to the criticality and risk of each engagement — the module protects the institution from inadvertently transacting with sanctioned, conflicted, or high-risk third parties and creates an auditable record of supplier risk decisions.",
+      "Suppliers and outsourced providers are a recognised conduit for sanctions, bribery, and laundering risk, and the institution remains accountable for the third parties it engages. The module applies diligence proportionate to the criticality and risk of each engagement, screens vendors before onboarding, and resolves beneficial ownership for material suppliers. Supervisors expect procurement and compliance to share a documented basis for each engagement and to re-screen on a defined cadence rather than at the point of contract only. By recording supplier risk decisions in the audit chain, the institution can demonstrate that its perimeter controls extend beyond customers to the counterparties embedded in its own operations.",
     ],
     regulatory: [
       "FATF Recommendation 1 — risk-based approach across relationships",
@@ -351,6 +359,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The CDD Review module governs periodic re-KYC, ensuring that customer due diligence is refreshed at intervals appropriate to each customer's risk rating and that the adequacy of existing CDD is tested against current standards. It maintains the review register, schedules reviews by risk band, and records the outcome and rationale of each review.",
       "Periodic review is a regulatory backstop to event-driven monitoring: even where no specific trigger has fired, the institution must confirm that its understanding of the customer remains accurate and that the CDD on file remains sufficient. The module enforces this cadence and evidences its completion.",
+      "Periodic review is the regulatory backstop to event-driven monitoring: even absent a specific trigger, the institution must confirm that its understanding of a customer remains accurate and that the evidence on file still meets current standards. The module schedules reviews by risk band, tests the adequacy of existing CDD, and escalates deficiencies for remediation, maintaining a register that makes overdue work visible. Examiners routinely sample the review backlog, expecting high-risk relationships to be refreshed on the tightest cadence and any uplift in risk to be actioned. Recording each review outcome and rationale in the audit chain converts an otherwise invisible obligation into demonstrable, defensible practice.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.7 — keeping CDD current",
@@ -390,6 +399,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Data Quality module measures and remediates the completeness, accuracy, and timeliness of the CDD data that underpins every downstream control. Because screening, monitoring, and risk-rating are only as reliable as their inputs, the module quantifies data gaps per customer and generates AI-assisted remediation plans to close them.",
       "Robust data governance is an explicit supervisory expectation: incomplete or inaccurate customer data degrades sanctions screening and transaction monitoring and can itself constitute a control failure. This module makes data quality measurable and its remediation auditable.",
+      "Because every downstream control inherits the quality of its inputs, the module treats data completeness and accuracy as a first-order compliance concern rather than an operational nicety. Degraded name, identifier, or beneficial-ownership data quietly undermines sanctions screening and transaction monitoring, and supervisors increasingly characterise such gaps as control failures in their own right. By quantifying deficiencies per customer, prioritising them by risk impact, and generating remediation plans, the module makes data integrity measurable and its improvement auditable. Validation against reliable, independent sources and an audit-chain record of remediation give the institution evidence that the foundations of its screening and monitoring are sound and actively maintained.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.4 — reliable, accurate CDD data",
@@ -428,6 +438,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Ownership Explorer visualises and analyses corporate ownership and control structures, walking multi-layer chains to identify ultimate beneficial owners and to detect shell-company, jurisdiction-layering, and circular-ownership risk. It turns opaque corporate structures into navigable graphs that an analyst can interrogate and that the platform can risk-score.",
       "Complex ownership is a recognised laundering and sanctions-evasion technique. By making the full structure visible and flagging the hallmarks of deliberate obfuscation, the module supports both accurate beneficial-ownership identification and the detection of structures engineered to defeat screening.",
+      "Complex corporate structures are a deliberate obfuscation technique, and the module exists to make them legible: it walks multi-layer chains, resolves control to natural persons, and flags the hallmarks of engineered opacity such as circularity, nominee fronting, and secrecy-haven layering. This supports both accurate beneficial-ownership identification and the detection of structures built to defeat screening. Supervisors expect the institution to interrogate implausible arrangements rather than accept them, and to evidence that interrogation. By scoring structural risk and writing each analysis to the audit chain, the module turns a tangle of holding entities into a reviewable risk assessment that the institution can defend under examination.",
     ],
     regulatory: [
       "FATF Recommendation 24 — transparency of legal persons",
@@ -466,6 +477,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Employees module maintains the staff registry that underpins fit-and-proper, screening, and training obligations. It tracks employee identity documents, screening status, role-based access, and document expiry, and runs AI-assisted risk scans to surface internal financial-crime risk such as undisclosed conflicts or sanctions exposure among staff.",
       "Internal actors present a distinct AML threat — collusion, control override, and insider facilitation — and supervisors expect institutions to screen and monitor employees commensurate with their roles. This module operationalises that expectation and keeps the underlying records current.",
+      "Internal actors present a distinct threat — collusion, control override, and insider facilitation — and supervisors expect screening and monitoring of staff commensurate with their roles and access. The module maintains the staff registry, tracks identity-document and authorisation expiry, applies role-based access on a least-privilege basis, and runs AI-assisted scans for internal financial-crime risk such as undisclosed conflicts or sanctions exposure. Fit-and-proper expectations make this a recurring examination topic, particularly for staff in customer-facing and approval roles. Recording vetting decisions in the audit chain allows the institution to show that the human layer of its control environment is itself screened, governed, and kept current.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20–21 — staff screening and training",
@@ -504,6 +516,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Training module tracks the institution's mandatory AML/CFT training programme, recording course completion, competency, and deadlines for every employee and escalating overdue or failed training. Effective, role-appropriate, and regularly refreshed training is a baseline regulatory obligation and a frequent supervisory examination point.",
       "By evidencing who was trained, on what, and when — and by flagging gaps before they become findings — the module converts the training obligation from an unverifiable assertion into an auditable control with a defensible record.",
+      "Training is a baseline obligation and a frequent examination point precisely because an untrained workforce silently weakens every other control. The module converts the obligation from an unverifiable assertion into an auditable record: it tracks role-appropriate completion, competency, and deadlines, and escalates overdue or failed training before it becomes a finding. Supervisors expect curricula to be refreshed as typologies evolve and to reach the staff whose roles carry the most risk. By retaining completion evidence in the audit chain and surfacing gaps by business unit, the module lets the institution demonstrate that its people are equipped to recognise and act on the risks the platform is designed to detect.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.21 — ongoing employee training",
@@ -541,6 +554,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Approvals module is the institution's entity-approval tracker, governing the sign-off lifecycle for new relationships, high-risk customers, and destination countries. It records approval status, risk score, and the authorising party, enforcing that higher-risk decisions receive the appropriate level of senior or four-eyes authorisation before activation.",
       "Documented, authority-appropriate approval is central to a defensible control environment: it ensures risk acceptance is made knowingly, by an empowered approver, and is reproducible for audit. The module centralises and evidences these decisions.",
+      "Documented, authority-appropriate approval is central to a defensible control environment because it ensures that risk is accepted knowingly, by an empowered approver, and reproducibly for audit. The module routes higher-risk decisions to the correct seniority, enforces four-eyes authorisation where required, and prevents activation until sign-off is complete. Supervisors test whether approvals were granted at the right level and whether activation ever preceded them, treating both as governance weaknesses. By recording the approver, rationale, and risk score for every decision in the audit chain, the module gives the institution a complete account of who accepted which risk, on what basis, and when — the evidence an examiner expects to see.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.15 — senior approval for high-risk relationships",
@@ -581,6 +595,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "Customer Screening is the institution's primary control against transacting with sanctioned, politically exposed, or adverse-media-linked parties. It screens customers and connected parties against consolidated sanctions lists, PEP databases, and multi-language adverse-media sources, scoring matches and routing them for analyst disposition.",
       "Sanctions screening is a strict-liability area: the institution must not make funds or services available, directly or indirectly, to a listed party. The module enforces pre-transaction screening, name-matching tuned to balance recall and precision, and a fully evidenced disposition trail for every alert.",
+      "Sanctions screening operates as a strict-liability control: the institution must not make funds or services available, directly or indirectly, to a listed party, and a single missed match can constitute a breach. The module screens before transacting, tunes matching to balance recall against precision, and routes every alert to a documented disposition, re-screening as lists change. Examiners probe both the calibration of matching and the quality of dispositions, expecting near-miss and transliteration variants to be caught rather than dismissed. Confirmed matches trigger freezing and reporting without delay, and the audit-chain record of each decision is the institution's proof that its most consequential control operated as designed.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.18 — screening within CDD",
@@ -622,6 +637,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Transaction Monitor applies real-time and retrospective rules to detect patterns indicative of money laundering, terrorist financing, and sanctions evasion — structuring, rapid movement, unexplained third-party funding, and deviation from expected behaviour. Alerts are scored, prioritised, and routed to investigators with the supporting transaction context.",
       "Ongoing transaction monitoring is a core FATF obligation: institutions must scrutinise transactions throughout a relationship to ensure they are consistent with their knowledge of the customer. The module operationalises this at scale while preserving an auditable basis for each alert and disposition.",
+      "Ongoing scrutiny of transactions against the customer's expected profile is a core FATF obligation, and the module operationalises it at scale by combining rule-based detection with behavioural and peer-group analytics. Alerts are scored, prioritised, and worked to a disposition within defined timeframes, with reportable activity referred to the STR workflow. Supervisors assess effectiveness, not merely the existence of rules, probing whether structuring, rapid movement, and profile deviations are actually detected and whether tuning has quietly suppressed genuine alerts. By preserving an auditable basis for each alert and outcome, the module lets the institution evidence that suspicious activity is identified, escalated, and reported rather than lost in unmanaged noise.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.16 — ongoing monitoring of transactions",
@@ -661,6 +677,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Ongoing Monitor maintains continuous surveillance of existing subjects, re-screening them against updated sanctions, PEP, and adverse-media data and detecting status changes that warrant re-assessment. It ensures that a relationship cleared at onboarding does not silently drift into non-compliance as external risk data changes.",
       "Sanctions and risk status are not static; a customer clean today may be listed tomorrow. The module closes that gap by re-evaluating the subject population on list updates and defined cadences, and by escalating newly surfaced risk for action.",
+      "Risk status is not static — a customer cleared at onboarding can be designated tomorrow — and the module closes that gap by re-evaluating the subject population on list updates and risk-based cadences. It detects status changes between formal reviews and escalates newly surfaced matches without delay, maintaining a complete re-screening trail. Supervisors expect continuous, not episodic, sanctions and adverse-media coverage and will test whether a newly listed party transacted undetected. By recording re-screening outcomes in the audit chain, the institution can show that clearance was maintained dynamically and that emerging risk on existing relationships was caught and acted upon rather than carried silently.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.16 — ongoing monitoring",
@@ -699,6 +716,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "Case Management is the investigative backbone of the platform, consolidating alerts, screening hits, and grievances into structured cases with a documented investigation, disposition, and audit trail. It enforces a consistent investigative lifecycle and preserves the evidentiary record that underpins any onward STR/SAR filing.",
       "A defensible case file — showing what was investigated, what was found, and why a decision was reached — is essential both to effective filing and to demonstrating to a supervisor that alerts are being worked to a consistent standard. The module standardises and evidences that process.",
+      "A defensible case file — showing what was investigated, what was found, and why a decision was reached — is essential both to effective filing and to demonstrating consistent investigative standards. The module consolidates related alerts, screening hits, and grievances into a single case, enforces a documented lifecycle, and preserves the evidentiary record that underpins any onward report. Examiners sample closed cases to test whether dispositions were reasoned and whether linked activity was joined rather than fragmented across unconnected records. By writing every case action to the audit chain, the institution can reconstruct its reasoning for any decision and show that alerts were worked to a uniform, reviewable standard.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.15 — assessment of suspicions",
@@ -737,6 +755,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Enterprise-Wide / Business-Wide Risk Assessment module produces and maintains the institution's foundational money-laundering and terrorist-financing risk assessment, aggregating customer, product, channel, and geographic risk into a documented, board-approved view that drives the entire risk-based programme.",
       "FATF requires institutions to identify, assess, and understand their ML/TF risks and to apply resources proportionately. The EWRA is the document that evidences this understanding; the module keeps it current, defensible, and linked to the controls it justifies, and generates a board-ready report.",
+      "The enterprise-wide assessment is the document that evidences the institution's understanding of its own ML/TF risk and justifies the calibration of every downstream control. The module aggregates customer, product, channel, and geographic risk into a board-approved view and links that view to the controls it warrants, refreshing on material change. Supervisors treat the EWRA as foundational and test whether controls actually follow from assessed risk and whether the assessment reflects current typologies. By versioning each assessment in the audit chain and generating a board-ready report, the module lets the institution demonstrate not only that it assessed its risk, but that senior management owned the conclusions and acted on them.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 — risk-based approach foundation",
@@ -775,6 +794,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The STR/SAR Filing Suite governs the quality assurance and submission of suspicious transaction and activity reports, enforcing a four-eyes review of narrative quality and completeness before goAML XML export to the UAE Financial Intelligence Unit. It is the controlled gateway through which the institution discharges its single most important AML obligation.",
       "A defective or delayed STR is both a compliance failure and a lost intelligence opportunity. The suite ensures each report meets quality standards, passes the egress tipping-off gate, and is filed promptly, with the entire review and submission chain recorded immutably.",
+      "Filing a suspicious report is the institution's single most important AML obligation, and the suite governs it as a controlled gateway rather than an ad hoc act. Four-eyes quality review tests narrative completeness and evidentiary support, the egress gate guards against inadvertent tipping-off, and goAML validation ensures the FIU can ingest the result. Supervisors examine both timeliness and quality, since a late or defective report is simultaneously a compliance failure and a lost intelligence opportunity. By recording the full review and submission chain immutably — including the TOCTOU-safe sign-off — the institution can prove that each report met quality standards and was filed promptly and lawfully.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.15 — obligation to report suspicion",
@@ -813,6 +833,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The goAML Export module produces validated goAML XML for submission to the UAE Financial Intelligence Unit, mapping the institution's report data to the FIU schema and validating structure and mandatory fields before egress. It ensures that STRs, SARs, and other mandated reports reach the FIU in an accepted, machine-readable form.",
       "Correct goAML formatting and registration are prerequisites to discharging the reporting obligation: a report the FIU cannot ingest is, in effect, not filed. The module enforces schema validity, applies the egress tipping-off gate, and records each submission for audit.",
+      "A report the FIU cannot ingest is, in practical terms, not filed, so the module enforces schema validity, mandatory-field completeness, and correct Rentity identifiers before any egress. The tipping-off gate is applied to narrative content so that disclosure to an external system never alerts a subject, and acknowledgements are retained as proof of submission. Supervisors test whether the institution's goAML registration and filings are technically correct and whether rejections are tracked and corrected. By writing each export to the audit chain, the institution can demonstrate an unbroken, machine-readable reporting pathway to the UAE FIU and account for every report it was obliged to make.",
     ],
     regulatory: [
       "CBUAE Notice 2021/8 — goAML registration and filing",
@@ -851,6 +872,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "This module governs financial-crime and responsible-sourcing risk across the institution's supply chains, integrating geographic risk, CSDDD and UFLPA exposure, the OECD five-step due-diligence framework, and RMI/RMAP conformance. It is central to trade-based money-laundering (TBML) detection and to responsible-sourcing compliance under UAE Ministerial Decree 68/2024.",
       "Supply chains are a major vector for laundering, sanctions evasion, and predicate offences such as forced labour and environmental crime. The module applies structured due diligence to surface these exposures and to evidence the institution's responsible-sourcing obligations.",
+      "Supply chains are a major vector for trade-based laundering, sanctions evasion, and predicate offences such as forced labour and environmental crime, and the module brings structured diligence to that exposure. It runs the OECD five-step framework, scores geographic and counterparty risk, screens for UFLPA and forced-labour exposure, and links to RMI/RMAP conformance where minerals are involved. Supervisors expect responsible-sourcing obligations under Ministerial Decree 68/2024 to be evidenced rather than asserted. By recording each due-diligence step in the audit chain, the institution can show both that it identified trade-based and human-rights risk in its chains and that it mitigated and reported on that risk as required.",
     ],
     regulatory: [
       "UAE Ministerial Decree No.68/2024 — responsible sourcing",
@@ -889,6 +911,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The RMI / RMAP module tracks Responsible Minerals Initiative conformance and RMAP smelter-audit status across the institution's minerals supply chains. It identifies which smelters and refiners are conformant, surfaces those that are not, and links that status to the broader responsible-sourcing and AML risk assessment.",
       "For institutions exposed to gold and other minerals, sourcing from non-conformant or unaudited smelters carries acute laundering, sanctions, and reputational risk. The module makes conformance status explicit and auditable and feeds it into sourcing decisions.",
+      "For institutions exposed to gold and other minerals, sourcing from non-conformant or unaudited smelters carries acute laundering, sanctions, and reputational risk, so the module makes RMAP conformance an explicit, auditable input to sourcing decisions. It tracks which smelters and refiners are conformant, surfaces those that are not, and feeds that status into the responsible-sourcing and AML risk assessment. Supervisors and downstream counterparties increasingly expect conformance to be demonstrable, not presumed. By maintaining a current conformance register and recording each check in the audit chain, the institution can evidence that its minerals exposure flows through audited facilities and that non-conformant sources were identified and escalated.",
     ],
     regulatory: [
       "RMI RMAP Standard — smelter and refiner audit programme",
@@ -927,6 +950,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Responsible Sourcing module operationalises the OECD five-step due-diligence framework and UAE Ministerial Decree 68/2024, structuring the institution's identification and mitigation of supply-chain risks in minerals and other sensitive commodities. It guides the analyst through management-system establishment, risk identification, mitigation, third-party audit, and public reporting.",
       "Responsible sourcing is both a standalone regulatory obligation and an AML control: the same diligence that identifies human-rights and conflict risk also surfaces the laundering and sanctions exposure embedded in opaque commodity chains.",
+      "Responsible sourcing is both a standalone obligation under Ministerial Decree 68/2024 and an AML control, because the diligence that surfaces human-rights and conflict risk also reveals the laundering and sanctions exposure embedded in opaque commodity chains. The module structures the institution through the OECD five steps — management system, risk identification, mitigation, third-party audit, and public reporting — and tracks progress against each. Supervisors expect identified high-risk sourcing to be mitigated and reported rather than merely noted. By recording each step in the audit chain and linking to independent audit, the institution can demonstrate a complete, internationally benchmarked diligence cycle for its sensitive commodity supply chains.",
     ],
     regulatory: [
       "UAE Ministerial Decree No.68/2024 — responsible sourcing obligations",
@@ -965,6 +989,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "This module implements the OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas as a structured, five-step workflow. It standardises how the institution establishes controls, identifies and assesses risk, mitigates that risk, supports independent audit, and reports — providing a defensible, internationally recognised diligence backbone.",
       "Aligning to the OECD framework gives the institution a recognised benchmark against which supervisors and counterparties can assess its supply-chain controls, and ensures consistency across minerals, gold, and broader commodity-sourcing diligence.",
+      "Aligning to the OECD framework gives the institution a recognised benchmark against which supervisors and counterparties can judge its supply-chain controls, and the module enforces that framework as an auditable five-step workflow. Establishing management systems, identifying and assessing risk, implementing mitigation, supporting third-party audit, and reporting annually are tracked to completion rather than treated as aspirations. Examiners expect consistency across minerals, gold, and broader commodity diligence and will test whether Step 3 risks were actually mitigated. By recording framework completion in the audit chain, the institution can show a defensible, standardised diligence backbone that withstands scrutiny from regulators and responsible-sourcing schemes alike.",
     ],
     regulatory: [
       "OECD Due Diligence Guidance — five-step framework",
@@ -1003,6 +1028,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The RMAP Database maintains the institution's reference list of Responsible Minerals Assurance Process conformant smelters and refiners, providing the authoritative source against which sourcing decisions and supply-chain mapping are validated. It is the data foundation that the RMI/RMAP and responsible-sourcing workflows depend upon.",
       "An accurate, current conformant-facility list is essential to responsible-minerals diligence; sourcing validated against a stale list can inadvertently legitimise a de-listed facility. The module keeps this reference data current and auditable.",
+      "An accurate, current conformant-facility list is essential to responsible-minerals diligence, because sourcing validated against stale data can inadvertently legitimise a de-listed facility. The module maintains this authoritative reference, flags lapsed or withdrawn status, and feeds validation into the sourcing and supply-chain workflows that depend on it. Supervisors expect the institution to evidence the conformance basis for sourcing decisions rather than rely on outdated assumptions. By alerting on status changes and recording reference-data updates in the audit chain, the module ensures that every conformance-dependent decision rests on a verifiable, up-to-date foundation and that reliance on a de-listed facility is caught before it becomes an exposure.",
     ],
     regulatory: [
       "RMI RMAP Standard — conformant-facility programme",
@@ -1038,6 +1064,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The LBMA Gold module manages compliance with the London Bullion Market Association Responsible Gold Guidance, tracking refiner conformance and supply-chain declarations for gold sourcing. It is a specialised responsible-sourcing control for an asset class with elevated laundering, smuggling, and sanctions-evasion risk.",
       "Gold's fungibility and value density make it a favoured laundering vehicle. By enforcing LBMA-aligned declarations and refiner conformance, the module reduces the risk that the institution handles illicitly sourced or sanctions-tainted bullion.",
+      "Gold's fungibility and value density make it a favoured laundering and sanctions-evasion vehicle, so the module enforces LBMA Responsible Gold Guidance as a specialised control over an elevated-risk asset class. It verifies refiner conformance, captures and validates supply-chain declarations, and overlays geographic risk on gold sourcing. Supervisors and the LBMA scheme expect conformance and origin to be demonstrable, and smuggling or undeclared-origin indicators to be escalated. By recording each element of gold diligence in the audit chain, the institution reduces the risk of handling illicitly sourced or sanctions-tainted bullion and can evidence that its precious-metals flows were screened against the recognised responsible-gold standard.",
     ],
     regulatory: [
       "LBMA Responsible Gold Guidance — refiner conformance",
@@ -1076,6 +1103,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Regulatory Change Management module tracks new and amended regulations, maps each change to affected controls, and maintains an AI-assisted implementation calendar so that the institution adapts its programme before obligations take effect. It converts the stream of regulatory updates into a managed, auditable change pipeline.",
       "Supervisors expect institutions to keep pace with evolving requirements; an unimplemented regulatory change is a latent compliance gap. The module ensures changes are identified, assessed for impact, assigned, and implemented on schedule.",
+      "An unimplemented regulatory change is a latent compliance gap, and the module converts the stream of updates into a managed, auditable pipeline so that obligations are met before they take effect. It identifies new and amended requirements, maps each to affected controls and policy, assigns ownership and deadlines, and tracks implementation to completion. Supervisors expect institutions to keep pace with evolving requirements and will test whether changes were implemented by their effective dates. By recording each change and its implementation in the audit chain, the institution can demonstrate that it adapts its programme proactively and that no applicable obligation was allowed to lapse into a silent control deficiency.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — keeping policies current",
@@ -1114,6 +1142,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Shipments module tracks bullion and commodity chain-of-custody and applies AI-assisted trade-based money-laundering screening to shipment data. It correlates documentation, routing, and valuation to detect the over/under-invoicing, phantom-shipment, and mis-description patterns characteristic of TBML.",
       "Trade is among the most opaque laundering channels, and physical bullion movements carry heightened smuggling and sanctions risk. The module brings structured scrutiny to shipment data and preserves a chain-of-custody record for each consignment.",
+      "Trade is among the most opaque laundering channels, and physical bullion movements add heightened smuggling and sanctions risk, so the module brings structured scrutiny to shipment data. It maintains chain-of-custody for each consignment and applies AI-assisted screening for the over- and under-invoicing, phantom-shipment, and mis-description patterns characteristic of trade-based laundering. Supervisors expect documentation, routing, and valuation to be tested for consistency rather than accepted at face value. By recording each shipment review in the audit chain and escalating anomalies for investigation, the institution can evidence that its trade and bullion flows were examined for the manipulation techniques that conventional customer-level controls do not capture.",
     ],
     regulatory: [
       "FATF guidance on trade-based money laundering",
@@ -1152,6 +1181,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The EOCN module manages compliance with the UAE Executive Office for Control & Non-Proliferation regime, covering targeted financial sanctions, NAS/ARS registration, and maintenance of the local control list. It is the institution's interface to the UAE's domestic sanctions architecture and its obligations to freeze and report without delay.",
       "UAE TFS obligations are time-critical and strict: designated parties' funds must be frozen and the action reported within mandated windows. The module operationalises registration, list maintenance, and the freeze-and-report workflow.",
+      "UAE targeted financial sanctions obligations are time-critical and strict: designated parties' assets must be frozen and the action reported within mandated windows, and the module operationalises that regime end to end. It maintains NAS/ARS registration, keeps the local control list current, screens continuously, and drives the freeze-and-report workflow. Supervisors test whether freezing occurs without delay and whether registration and list maintenance are current, treating lapses as serious failures. By recording each sanctions action in the audit chain, the institution can demonstrate that it implemented the UAE's domestic sanctions architecture faithfully and that any designated party touching its systems was frozen and reported within the required timeframe.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.74/2020 — targeted financial sanctions",
@@ -1190,6 +1220,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "This module manages EOCN subscription alerts and the name-matching that drives Consolidated and Positive Name Match Report filing. It ingests sanctions-list updates, runs name-match screening, monitors the designated Gmail alert channel, and orchestrates the compliance tasks that follow, including Asana task creation for tracked remediation.",
       "Timely processing of sanctions alerts is the operational heart of TFS compliance. The module ensures that list updates and name matches are detected, triaged, and filed within mandated timeframes, with every step recorded.",
+      "Timely processing of sanctions alerts is the operational heart of TFS compliance, and the module ensures that list updates and name matches are detected, triaged, and filed within mandated timeframes. It ingests EOCN subscription alerts, monitors the designated Gmail channel, runs name-match screening, and orchestrates the CNMR and PNMR filings and remediation tasks that follow. Supervisors expect positive matches to be actioned without delay and the alert pipeline to be demonstrably unbroken. By recording alert handling end to end in the audit chain, the institution can evidence that sanctions intelligence flowed promptly into freezing and reporting, and that no designation sat unprocessed past its filing window.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.74/2020 — targeted financial sanctions",
@@ -1228,6 +1259,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The CNMR module manages Consolidated Name Match Report filing to the EOCN, consolidating screening outcomes against designated lists into the required periodic report. It evidences that the institution has screened its base against current designations and reported the results as mandated.",
       "The CNMR is a core UAE TFS deliverable: it demonstrates systematic screening of the customer base against designations. The module assembles, validates, and files the report and retains the submission record.",
+      "The Consolidated Name Match Report is a core UAE TFS deliverable because it demonstrates systematic screening of the customer base against current designations. The module assembles screening outcomes into the required format, validates them, files within the mandated period, and retains the submission and acknowledgement. Supervisors test both the completeness of base screening and the timeliness of filing, treating gaps as evidence of an ineffective sanctions programme. By recording each submission in the audit chain, the institution can show that it screened its entire population against designations and reported the result on schedule, providing the documentary proof that its TFS screening was comprehensive rather than partial.",
     ],
     regulatory: [
       "EOCN guidance — Consolidated Name Match Report",
@@ -1265,6 +1297,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The PNMR Queue manages Positive Name Match Reports to the EOCN, handling the time-critical workflow that follows a positive match against a designated party. It queues confirmed matches, drives the freeze-and-report action, and tracks each report to filed status within the mandated window.",
       "A positive match triggers the institution's most urgent obligations: freeze without delay and report immediately. The module ensures these matches are not lost in a general alert backlog and that each is actioned and evidenced.",
+      "A positive match triggers the institution's most urgent obligations — freeze without delay and report immediately — and the module ensures such matches are not lost in a general alert backlog. It queues confirmed positives, drives the freeze-and-report action, and tracks each report to filed status within the mandated window. Supervisors scrutinise the interval between match and freeze, since any asset movement before freezing is a critical failure. By recording the full freeze-and-report chain in the audit chain, the institution can evidence that each positive name match was actioned with the urgency the regime demands and that designated-party assets were immobilised and reported precisely as required.",
     ],
     regulatory: [
       "EOCN guidance — Positive Name Match Report",
@@ -1302,6 +1335,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The DPMSR module manages Dealers in Precious Metals and Stones cash-reporting obligations, capturing and reporting qualifying cash transactions at or above the AED 55,000 threshold under Cabinet Resolution 134/2025 Art.3. It is the specialised reporting control for the DPMS sector's elevated cash-laundering risk.",
       "Cash-intensive precious-metals dealing is a recognised laundering channel; mandatory reporting of large cash dealings is a key mitigant. The module identifies qualifying transactions, assembles the report, and files it within the mandated timeframe.",
+      "Cash-intensive precious-metals dealing is a recognised laundering channel, and mandatory reporting of large cash dealings under Cabinet Resolution 134/2025 is a key mitigant that the module operationalises. It identifies qualifying transactions at or above the AED 55,000 threshold, captures the required party and transaction detail, and files within the mandated period. Supervisors test for structuring designed to stay below the threshold and for unreported qualifying dealings. By applying CDD to qualifying transactions and recording each report in the audit chain, the institution can demonstrate that its DPMS cash exposure was captured and reported, and that attempts to fragment dealings beneath the reporting line were detected rather than facilitated.",
     ],
     regulatory: [
       "UAE Cabinet Resolution No.134/2025 Art.3 — DPMS cash reporting",
@@ -1340,6 +1374,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The MoE Survey module manages the mandatory Ministry of Economy AML/CFT survey (reference MOET/AML/001/2026) applicable to all DNFBPs, structuring data collection, validation, and timely submission. It ensures the institution discharges this supervisory return completely and on schedule.",
       "Mandatory supervisory surveys are a compliance obligation in their own right; non-response or late response is a reportable failing. The module assembles the required data, validates completeness, and tracks submission to closure.",
+      "A mandatory supervisory return is a compliance obligation in its own right, and non-response or late response is itself a reportable failing. The module structures collection of the Ministry of Economy survey data, validates completeness against the mandatory fields, and tracks submission against the deadline. Supervisors use such surveys to gauge sector compliance and will note inconsistency between a return and the institution's internal records. By reconciling survey data with internal sources and recording submission in the audit chain, the institution can demonstrate that it met the return completely and on time, and that the figures it reported to the Ministry are consistent with the evidence held within its own systems.",
     ],
     regulatory: [
       "UAE Ministry of Economy survey MOET/AML/001/2026",
@@ -1377,6 +1412,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Enforcement Tracker manages regulatory deadlines, enforcement actions, and remediation commitments, ensuring that obligations arising from supervisory engagement, examinations, and enforcement are tracked to completion with documented evidence. It is the institution's control against missed regulatory deadlines and unremediated findings.",
       "Failure to meet an enforcement or remediation deadline compounds the original issue and signals weak governance. The module centralises these obligations, tracks them against deadlines, and evidences remediation.",
+      "Failing to meet an enforcement or remediation deadline compounds the original issue and signals weak governance, so the module centralises these obligations and drives them to evidenced completion. It tracks regulatory deadlines and commitments, assigns ownership, captures remediation evidence, and escalates at-risk items before they slip. Supervisors revisit prior findings expecting closure with proof, and recurring or overdue items are read as systemic weakness. By recording enforcement actions and their remediation in the audit chain, the institution can demonstrate disciplined follow-through on supervisory commitments and show that issues raised in examination were resolved within the agreed timeframes rather than left to recur.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 — supervisory and enforcement framework",
@@ -1415,6 +1451,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Oversight module governs board and senior-management sign-off and the recording of minutes, evidencing the active governance that supervisors expect of an AML/CFT programme. It captures decisions, approvals, and the deliberation behind them, demonstrating that the Board owns and directs the compliance framework.",
       "Effective AML governance is not merely operational; it requires demonstrable board-level oversight. The module preserves the decision record — approvals, risk acceptances, and minutes — that proves this oversight occurred.",
+      "Effective AML governance requires demonstrable board-level oversight, not merely operational execution, and the module preserves the decision record that proves it occurred. It captures board and senior-management sign-offs, minutes, and the deliberation behind key decisions, and tracks those decisions through to implementation. Supervisors expect to see active engagement with AML risk at the most senior level and will test whether decisions were minuted and actioned. By recording governance actions in the audit chain, the institution can evidence that the Board owned and directed the compliance framework — accepting risk knowingly, challenging management where appropriate, and ensuring that its instructions translated into operational change rather than remaining unimplemented intentions.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — governance and oversight",
@@ -1453,6 +1490,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The False Positive Optimizer analyses alert and screening outcomes to identify systematic false-positive patterns and to recommend threshold and rule adjustments that reduce noise without degrading detection. It improves the efficiency and effectiveness of the monitoring estate while preserving an auditable basis for any tuning change.",
       "Excessive false positives waste investigative capacity and can mask genuine risk; supervisors expect tuning to be evidence-based and governed. The module makes optimisation data-driven and ensures every threshold change is justified and recorded.",
+      "Excessive false positives waste investigative capacity and can mask genuine risk, and supervisors expect tuning to be evidence-based and governed rather than ad hoc. The module analyses alert and screening outcomes to identify systematic false-positive patterns and recommends threshold and rule adjustments that reduce noise without degrading detection. Crucially, it requires each change to be justified and approved, guarding against tuning that quietly suppresses true alerts. By recording the rationale for every adjustment in the audit chain and checking that detection effectiveness is preserved, the institution can demonstrate that optimisation improved efficiency lawfully — sharpening the signal its analysts work rather than blunting the controls regulators rely upon.",
     ],
     regulatory: [
       "FATF Recommendation 1 — effective, risk-based resource use",
@@ -1491,6 +1529,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The TM Rule Management module governs the lifecycle of transaction-monitoring rules — proposal, testing, approval, deployment, and retirement — ensuring that every rule change is risk-justified, tested, governed, and auditable. It is the change-control discipline behind the monitoring estate.",
       "Monitoring rules must evolve with typologies and risk, but uncontrolled rule changes can silently create detection gaps. The module enforces a governed change process and preserves the rationale and approval for each rule version.",
+      "Monitoring rules must evolve with typologies and risk, but uncontrolled changes can silently create detection gaps, so the module imposes a governed lifecycle on every rule. Proposals are risk-justified, tested before deployment, approved, versioned, and retired under change control. Supervisors expect rule changes to be deliberate and reversible, and will test whether a change ever removed coverage without compensating detection. By recording each rule version and its rationale in the audit chain, the institution can reconstruct exactly what its monitoring estate looked for at any point in time and demonstrate that changes to that estate were tested, authorised, and aligned to current typologies rather than introduced informally.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.7 — effective monitoring",
@@ -1529,6 +1568,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Audit Findings module tracks internal and external audit findings through to remediation, recording severity, ownership, target dates, and evidence of closure. It ensures that identified control weaknesses are not merely noted but resolved within governed timeframes.",
       "Open audit findings are a direct indicator of control health and a frequent supervisory focus. The module centralises findings, drives them to closure, and preserves the remediation evidence that demonstrates effective follow-through.",
+      "Open audit findings are a direct indicator of control health and a frequent supervisory focus, so the module ensures identified weaknesses are resolved within governed timeframes rather than merely catalogued. It records findings with severity and ownership, tracks remediation against target dates, and captures the evidence that demonstrates closure. Examiners revisit prior findings and treat recurrence as a sign of unaddressed root cause. By maintaining the findings register in the audit chain and escalating overdue high-severity items, the institution can show effective follow-through on internal and external audit — converting the assurance function's observations into demonstrable control improvements rather than a list of unresolved issues.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — independent audit",
@@ -1567,6 +1607,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Business Risk Assessment module supports the assessment of money-laundering and terrorist-financing risk at the business-line and product level, complementing the enterprise-wide assessment with granular, unit-level risk understanding. It feeds control calibration and resource allocation across the institution.",
       "FATF requires risk to be understood at a level granular enough to calibrate controls; an enterprise average can mask acute line-level risk. The module captures this granularity and links it to the controls each business line requires.",
+      "FATF requires risk to be understood at a level granular enough to calibrate controls, and an enterprise average can mask acute risk concentrated in a particular business line or product. The module assesses ML/TF risk at line and product level, documents the drivers, and links the assessment to the controls each unit requires. Supervisors test whether granular risk actually informs control design and whether emerging product risk is captured. By versioning each assessment in the audit chain and reconciling it with the enterprise-wide view, the institution can demonstrate that resources and controls are allocated to where its risk truly sits rather than spread uniformly against an unrepresentative average.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.3 — business risk assessment",
@@ -1605,6 +1646,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Dormant Accounts module monitors inactive accounts for the distinctive risks they present — sudden reactivation, use as laundering conduits, and unauthorised access — applying heightened scrutiny to dormancy transitions. Dormant accounts are an attractive vehicle for illicit activity precisely because they attract less routine attention.",
       "Reactivation of a long-dormant account, or unexpected activity within one, is a recognised red flag. The module enforces monitoring of the dormant population and escalates anomalous transitions for review.",
+      "Dormant accounts are attractive vehicles for illicit activity precisely because they attract less routine attention, and reactivation of a long-idle account is a recognised red flag. The module flags dormancy, applies heightened scrutiny to reactivation, and monitors the dormant population for anomalous movement, requiring CDD re-verification when an account returns to life. Supervisors expect institutions to treat dormancy transitions as risk events rather than administrative ones. By recording dormancy events and reactivations in the audit chain, the institution can demonstrate that accounts outside the normal flow of attention were nonetheless monitored, and that any sudden return to activity was scrutinised before funds could move.",
     ],
     regulatory: [
       "CBUAE dormant-account regulations",
@@ -1642,6 +1684,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Outsourcing Register maintains the institution's record of outsourced functions and third-party service providers, capturing the risk assessment, due diligence, and oversight arrangements for each. It governs the residual responsibility the institution retains even when functions are delegated.",
       "Outsourcing does not transfer accountability: the institution remains responsible for outsourced AML-relevant activity. The module evidences that each arrangement is assessed, governed, and monitored, and that critical functions retain adequate oversight.",
+      "Outsourcing does not transfer accountability — the institution remains responsible for outsourced AML-relevant activity — and the module evidences that each arrangement is assessed, governed, and monitored. It registers material outsourcing, classifies risk, defines oversight and audit rights, and monitors provider compliance. Supervisors expect critical functions to retain adequate oversight and will test for concentration risk and loss of audit visibility. By recording outsourcing decisions and provider-compliance monitoring in the audit chain, the institution can demonstrate that delegating a function did not delegate its responsibility, and that it retained the rights, visibility, and controls needed to answer for outsourced activity exactly as it would for work performed in-house.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 — reliance and outsourcing",
@@ -1680,6 +1723,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Conflicts of Interest Register captures, assesses, and manages actual and potential conflicts across the institution, ensuring that conflicts which could compromise AML decision-making are identified and mitigated. Undisclosed conflicts can undermine the independence of compliance and approval decisions.",
       "A conflicted approver or investigator is a control weakness; supervisors expect conflicts to be surfaced and managed. The module maintains the register, tracks mitigation, and evidences that conflicts are not silently influencing risk decisions.",
+      "Undisclosed conflicts can quietly compromise the independence of compliance and approval decisions, so the module surfaces and manages actual and potential conflicts across the institution. It captures conflicts, assesses their impact on AML decision-making, tracks mitigation, and enforces exclusion of conflicted parties from affected decisions. Supervisors expect conflicts to be identified and managed rather than left to influence outcomes silently, particularly in approval and investigation roles. By maintaining the conflicts register in the audit chain, the institution can demonstrate that a conflicted approver or investigator did not unduly shape a risk decision, and that integrity safeguards were applied where personal interests and compliance responsibilities intersected.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — governance integrity",
@@ -1718,6 +1762,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Voluntary Disclosure module manages proactive disclosures to regulators of identified compliance breaches, structuring the assessment, approval, and submission of voluntary disclosures and tracking any resulting remediation. Proactive disclosure can mitigate enforcement consequences and demonstrates a cooperative compliance posture.",
       "When a breach is identified, the decision to disclose voluntarily — and the manner of doing so — carries significant regulatory consequence. The module ensures these decisions are governed, evidenced, and followed through to remediation.",
+      "When a breach is identified, the decision to disclose proactively — and the manner of doing so — carries significant regulatory consequence, and the module ensures those decisions are governed and evidenced. It assesses identified breaches for disclosure, routes the decision through approval, supports complete and prompt submission, and tracks resulting remediation. Supervisors view candid self-reporting and demonstrable remediation favourably, while a concealed material breach is treated severely. By recording disclosure decisions and their basis in the audit chain, the institution can demonstrate a cooperative compliance posture and show that, where it fell short, it surfaced the issue, addressed the root cause, and engaged the regulator transparently.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 — cooperation with supervisors",
@@ -1755,6 +1800,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Operator Console provides the immutable audit-trail and operational-control surface for compliance operators, exposing the append-only decision record and the levers needed to administer the platform within governed bounds. It is the operational window onto the institution's evidentiary backbone.",
       "An immutable, queryable audit trail is the foundation of regulatory defensibility. The console gives operators governed visibility into that trail and the platform's operational state without permitting any action that would compromise audit integrity.",
+      "An immutable, queryable audit trail is the foundation of regulatory defensibility, and the console gives operators governed visibility into that trail and the platform's state without permitting any action that would compromise its integrity. It exposes the append-only decision record, applies role-based access, and logs operator actions so that administration itself remains accountable. Supervisors expect the evidentiary backbone to be tamper-evident and any attempt to alter it to be detectable. By preserving the HMAC-signed chain and recording operator activity, the institution can demonstrate that its record of AI decisions, screening results, filings, and approvals is complete and unaltered, and that those who administer the platform do so within auditable bounds.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 Art.18 — AI decision audit trail",
@@ -1793,6 +1839,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Evaluation KPIs module surfaces the metrics that measure the effectiveness of the AML/CFT and AI-governance programme — detection rates, false-positive ratios, filing timeliness, model performance, and control coverage. It converts the FATF expectation of demonstrable effectiveness into tracked, reportable indicators.",
       "Supervisors increasingly assess effectiveness, not just technical compliance. The module quantifies how well controls actually perform and trends those indicators so that degradation is detected and addressed proactively.",
+      "Supervisors increasingly assess effectiveness rather than mere technical compliance, and the module quantifies how well controls actually perform through detection rates, false-positive ratios, filing timeliness, and model performance. It trends these indicators so that degradation is detected and addressed before it becomes a finding. Examiners expect the institution to know whether its programme works and to act when metrics deteriorate. By recording KPI reviews and responses in the audit chain, the institution can demonstrate a self-aware, outcome-focused compliance function — one that measures its own effectiveness against objectives and adjusts in response to evidence rather than waiting for a supervisor to identify that controls have quietly stopped performing.",
     ],
     regulatory: [
       "FATF Methodology — effectiveness assessment",
@@ -1833,6 +1880,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The MLRO Advisor provides AI-assisted decision support to the Money Laundering Reporting Officer, synthesising case data, regulatory references, and typology knowledge to inform — but never to replace — the MLRO's judgement. Every recommendation is governed under the institution's responsible-AI controls, with human oversight mandatory for any decision of consequence.",
       "The MLRO holds personal regulatory responsibility for reporting decisions; AI can accelerate analysis but cannot assume that accountability. The module enforces human-in-the-loop oversight, records the AI's contribution to each decision, and keeps the MLRO firmly in control.",
+      "The MLRO holds personal regulatory responsibility for reporting decisions, and AI can accelerate analysis but cannot assume that accountability, so the module enforces human-in-the-loop oversight as a hard constraint. It synthesises case data, regulatory references, and typology knowledge to inform the officer's judgement, redacts PII before model processing, and gates output through hallucination checks. Supervisors and FDL 10/2025 expect consequential AI use to be governed and the human decision-maker to remain in control. By recording the AI's contribution to each decision in the audit chain, the institution can demonstrate that the MLRO's judgement — not the model's — drove every reportable decision, and that AI assistance was transparent, bounded, and accountable.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.15 — MLRO reporting responsibility",
@@ -1871,6 +1919,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Responsible AI module operationalises UNESCO AI-ethics principles and UAE FDL 10/2025 obligations, monitoring fairness, bias, human oversight, and transparency across the platform's AI faculties. It enforces a bias-ratio threshold tighter than the FATF floor and surfaces ethics, fairness, and audit evidence for governance and regulators.",
       "AI in compliance must itself be governed: a biased or opaque model can produce discriminatory or indefensible outcomes. The module measures these risks continuously and provides the controls and evidence that demonstrate responsible, lawful AI use.",
+      "AI used in compliance must itself be governed, because a biased or opaque model can produce discriminatory or indefensible outcomes that undermine the very obligations it supports. The module monitors fairness, bias, human oversight, and transparency across the platform's faculties, enforcing a bias-ratio threshold set tighter than the FATF floor and surfacing ethics and audit evidence for governance. FDL 10/2025 and UNESCO principles expect measurable, accountable AI rather than untested automation. By recording AI-governance actions in the audit chain and remediating threshold breaches promptly, the institution can demonstrate that its models were monitored for fairness, kept under human oversight, and operated within ethical and legal bounds it can evidence to a regulator.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — AI governance and accountability",
@@ -1909,6 +1958,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Inspection Room assembles a regulator-ready evidence pack on demand, consolidating audit-chain records, policies, screening and filing evidence, and governance artefacts into a coherent, navigable submission. It is the institution's rapid-response capability for supervisory examinations and information requests.",
       "When a supervisor calls, the ability to produce complete, reconcilable evidence quickly is itself a measure of control maturity. The module pre-stages and assembles that evidence so the institution can respond comprehensively and without scramble.",
+      "When a supervisor calls, the ability to produce complete, reconcilable evidence quickly is itself a measure of control maturity, and the module pre-stages and assembles that evidence on demand. It consolidates audit-chain records, policies, screening and filing evidence, and governance artefacts into a coherent, navigable submission. Examiners judge institutions partly on responsiveness, and a scramble to assemble evidence signals weak record-keeping. By integrating with the audit chain and verifying evidence integrity, the module lets the institution respond comprehensively and without delay, demonstrating that its compliance history is not only sound but readily provable — that every control area can be evidenced on request with traceable, integrity-checked records.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 — supervisory cooperation",
@@ -1947,6 +1997,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Regulatory Library is a searchable repository of UAE and FATF regulatory instruments, giving compliance staff authoritative, current access to the obligations that govern their work. It underpins consistent interpretation and supports the regulatory references embedded throughout the platform.",
       "A current, authoritative regulatory reference is foundational: controls and decisions must trace to actual obligations. The module maintains this reference base and makes it readily searchable for staff and for the platform's AI faculties.",
+      "A current, authoritative regulatory reference is foundational, because controls and decisions must trace to actual obligations rather than stale or misremembered rules. The module maintains a searchable repository of UAE and FATF instruments, tracks amendments and supersessions, and links obligations to the platform controls they justify. Supervisors expect consistent interpretation across staff and will probe whether controls rest on current text. By keeping the library current and recording updates in the audit chain, the institution ensures that its people and its AI faculties reason from the obligations actually in force, and that any reliance on superseded text is identified before it produces a control built on an outdated legal foundation.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 — primary AML/CFT law",
@@ -1984,6 +2035,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Policies & SOPs module maintains the institution's AML programme charter, policies, and standard operating procedures, governing their approval, versioning, and periodic review. It is the documented control framework that supervisors expect every regulated institution to maintain and follow.",
       "Policies are the institution's stated commitments; SOPs translate them into action. The module ensures both are current, board-approved, version-controlled, and aligned to the regulatory obligations and controls they govern.",
+      "Policies are the institution's stated commitments and SOPs translate them into action, so the module governs both through approval, versioning, and periodic review. It maintains a board-approved programme charter, version-controls each document, schedules reviews, and maps documents to the obligations they govern. Supervisors expect policies to be current, owned at board level, and actually followed, and will test whether SOPs match real practice. By recording policy changes and approvals in the audit chain, the institution can demonstrate a living control framework — one whose documented commitments are current, authorised, and aligned to regulation, rather than a static binder that has drifted out of step with how the institution genuinely operates.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — policies and procedures",
@@ -2022,6 +2074,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Typology Library is a curated, AI-searchable repository of 500+ money-laundering typologies, including UAE-specific localised content, that equips investigators to recognise emerging laundering methods. It connects the institution's monitoring and investigation to the evolving threat landscape.",
       "Effective detection depends on knowing what to look for; typologies encode that knowledge. The module keeps the institution's typology base current and makes it searchable so that monitoring rules and investigations reflect real-world methods.",
+      "Effective detection depends on knowing what to look for, and typologies encode that knowledge, so the module maintains a curated, searchable repository of laundering methods including UAE-specific content. It connects monitoring and investigation to the evolving threat landscape and links typologies to the rules that detect them. Supervisors expect institutions to understand current and emerging methods relevant to their risk profile. By refreshing the library as new methods appear and recording updates in the audit chain, the institution can demonstrate that its detection logic reflects how laundering is actually conducted in its markets — and that investigators are equipped to recognise the patterns that distinguish illicit activity from legitimate complexity.",
     ],
     regulatory: [
       "FATF typologies and red-flag guidance",
@@ -2059,6 +2112,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Compliance Playbook provides step-by-step AML/CFT operational playbooks that standardise how staff execute key compliance processes, from alert investigation to STR filing to sanctions response. It codifies institutional knowledge into repeatable, auditable procedures.",
       "Consistency is a hallmark of a mature control environment; playbooks ensure that critical processes are executed the same defensible way regardless of who performs them. The module maintains these procedures and links them to the obligations they satisfy.",
+      "Consistency is a hallmark of a mature control environment, and playbooks ensure critical processes are executed the same defensible way regardless of who performs them. The module maintains step-by-step procedures for alert investigation, filing, sanctions response, and other key processes, aligned to current obligations and version-controlled. Supervisors expect uniform execution and will note divergence between documented procedure and actual practice. By training staff on playbook execution and recording usage in the audit chain, the institution can demonstrate that its critical compliance processes are repeatable and standardised — codifying institutional knowledge so that quality does not depend on the individual analyst and so that examiners encounter consistency rather than improvisation.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — documented procedures",
@@ -2096,6 +2150,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Data Corrections module manages data-subject access and correction requests, governing how the institution responds to individuals exercising their data rights while preserving AML record-keeping obligations. It balances data-protection rights against the regulatory imperative to retain compliance records.",
       "Data-subject rights and AML retention can conflict; corrections must be handled without compromising the integrity of the compliance record. The module governs this carefully — correcting genuine errors while preserving the auditable history regulators require.",
+      "Data-subject rights and AML retention can conflict, and corrections must be handled without compromising the integrity of the compliance record, so the module governs this balance deliberately. It processes access and correction requests within mandated timeframes, corrects genuine errors, and preserves AML records against improper erasure. Supervisors and the data-protection authority expect both rights to be respected — privacy and record-keeping — without one defeating the other. By recording the handling of each request in the audit chain and resolving retention conflicts explicitly, the institution can demonstrate that it honoured data-subject rights while preserving the auditable history regulators require, neither erasing records it must keep nor leaving genuine inaccuracies uncorrected.",
     ],
     regulatory: [
       "UAE FDL No.45/2021 — Personal Data Protection Law",
@@ -2134,6 +2189,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The AI Incident Playbook governs the institution's response to AI failures — hallucination, bias spikes, data poisoning, and prompt injection — under UAE FDL 10/2025. It defines detection, containment, escalation, and recovery for each failure mode, ensuring AI risks are managed with the same rigour as any operational incident.",
       "AI systems introduce novel failure modes that can produce non-compliant or harmful outcomes; FDL 10/2025 requires these to be governed. The module provides the structured response that contains AI incidents and evidences the institution's control over its AI estate.",
+      "AI systems introduce novel failure modes — hallucination, bias spikes, data poisoning, prompt injection — that can produce non-compliant or harmful outcomes, and FDL 10/2025 requires these to be governed with the rigour of any operational incident. The module defines detection, containment, escalation, and recovery for each mode and routes incidents by severity to the appropriate authority. Supervisors expect AI risk to be managed proactively and incidents to be evidenced and learned from. By recording the full incident lifecycle in the audit chain and feeding lessons into continuous improvement, the institution can demonstrate that its AI estate is controlled — that when a model fails, the failure is detected, contained, reported, and prevented from recurring.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — AI incident governance",
@@ -2172,6 +2228,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The AI Governance Framework is the institution's enterprise AI-governance hub, organising eleven components — stakeholder ownership, governance structure, policy, risk management, responsible-AI practice, model lifecycle, data governance, compliance and audit, monitoring, incident management, and continuous improvement — into a single, coherent oversight surface. It surfaces the NIST AI RMF scorecard, the AI risk register, MITRE ATLAS probe coverage, and model-lifecycle status.",
       "FDL 10/2025 requires demonstrable governance of AI used in regulated decisions. This module consolidates the institution's AI-governance evidence and controls so that accountability, risk, and oversight across the AI estate are visible, measurable, and defensible to a regulator.",
+      "FDL 10/2025 requires demonstrable governance of AI used in regulated decisions, and the module consolidates that governance into a single oversight surface spanning eleven components from stakeholder ownership to continuous improvement. It surfaces the NIST AI RMF scorecard, the AI risk register, MITRE ATLAS probe coverage, and model-lifecycle status so accountability and risk across the estate are visible and measurable. Supervisors expect AI to be governed as a managed risk, not deployed opaquely. By recording governance actions in the audit chain, the institution can demonstrate end-to-end control of its AI — who owns it, what risks it carries, how it is monitored, and how incidents and improvements are managed — in a form a regulator can examine.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — comprehensive AI governance",
@@ -2210,6 +2267,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Shadow AI Register detects and remediates unauthorised AI tools in use across the institution, identifying no-DPA vendors and data-classification risks that arise when staff adopt AI services outside governance. It closes the gap between sanctioned AI and the tools people actually use.",
       "Unsanctioned AI can exfiltrate regulated data to ungoverned services and produce decisions outside the institution's controls. The module surfaces this shadow estate, assesses its risk, and drives remediation so that all AI handling regulated data is governed.",
+      "Unsanctioned AI can exfiltrate regulated data to ungoverned services and produce decisions outside the institution's controls, so the module surfaces and remediates the shadow estate that sits beyond formal governance. It detects unauthorised tools, flags no-DPA vendors, scores data-classification risk, and drives remediation toward an accurate AI-usage inventory. FDL 10/2025 expects all AI use to be governed, and supervisors will probe whether regulated data has leaked to unapproved services. By recording remediation in the audit chain, the institution can demonstrate that AI handling regulated data is brought under governance rather than proliferating unseen — closing the gap between the AI it has sanctioned and the tools its people actually use.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — governance of all AI use",
@@ -2248,6 +2306,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Vendor AI Audit module conducts due diligence on third-party AI vendors, assessing data-processing agreements, model cards, penetration-test results, and service-level commitments, and preserving a CBUAE-aligned audit trail. It extends AI governance to the models the institution consumes from others.",
       "When AI capability is sourced externally, the institution remains accountable for its governance. The module ensures each AI vendor is assessed against DPA, security, transparency, and SLA criteria before and during use, with the assessment fully evidenced.",
+      "When AI capability is sourced externally the institution remains accountable for its governance, so the module subjects third-party AI vendors to due diligence before and during use. It assesses data-processing agreements, reviews model cards and transparency disclosures, verifies penetration testing and security posture, and confirms service-level commitments, preserving a CBUAE-aligned audit trail. Supervisors expect vendor AI to meet the same governance bar as in-house models. By recording vendor assessments in the audit chain, the institution can demonstrate that the models it consumes from others were vetted for data handling, transparency, security, and reliability — extending its AI governance perimeter to its supply chain rather than treating vendor models as ungoverned black boxes.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — third-party AI governance",
@@ -2288,6 +2347,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The OSINT module harvests open-source intelligence — domains, usernames, and public footprints — to enrich due diligence and investigation with externally verifiable information. It supports the independent-source verification that effective CDD requires and strengthens adverse-media and network analysis.",
       "Open-source signals can corroborate or contradict customer-supplied data and surface risk invisible to internal systems. The module gathers this intelligence systematically and feeds it into the institution's risk assessment with an auditable provenance.",
+      "Open-source signals can corroborate or contradict customer-supplied data and surface risk invisible to internal systems, and the module gathers this intelligence systematically rather than anecdotally. It harvests domains, usernames, and public footprints from reliable sources, records provenance, and feeds findings into the institution's risk assessment within lawful boundaries. Supervisors expect verification from independent sources rather than uncritical acceptance of self-attestation. By recording OSINT use and provenance in the audit chain, the institution can demonstrate that its diligence reached beyond the customer's own representations — testing claimed identities and relationships against externally verifiable evidence and escalating adverse public information that contradicts the picture a customer has presented.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.4 — independent-source verification",
@@ -2324,6 +2384,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The GLEIF / LEI Lookup module verifies legal entities against the Global Legal Entity Identifier Foundation registry, confirming identity, status, and registration data for corporate customers and counterparties. It provides an authoritative, independent source for entity verification.",
       "The LEI is a globally recognised, regulator-endorsed entity identifier; verifying against GLEIF strengthens the reliability of entity CDD. The module integrates this lookup into onboarding and ongoing diligence with a recorded verification basis.",
+      "The Legal Entity Identifier is a globally recognised, regulator-endorsed identifier, and verifying against the GLEIF registry strengthens the reliability of entity due diligence. The module confirms identity, status, and registration data for corporate customers and counterparties, records the verification basis, and re-verifies on status change. Supervisors expect entity identity to be confirmed from reliable, independent sources, and a lapsed or mismatched registration is a risk signal in itself. By integrating LEI data into entity CDD and recording lookups in the audit chain, the institution can demonstrate that the corporate entities it deals with were verified against an authoritative global reference rather than accepted on the basis of self-declared corporate detail.",
     ],
     regulatory: [
       "FATF Recommendation 24 — legal-person identification",
@@ -2360,6 +2421,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Entity Graph visualises relationships and ownership networks across customers, counterparties, and connected parties, revealing the connections that individual records conceal. It supports network-based risk detection — hidden links to sanctioned or high-risk parties, and clusters indicative of organised activity.",
       "Money laundering is frequently a network phenomenon; risk that is invisible at the single-entity level emerges in the graph. The module makes these relationships navigable and feeds network risk into the institution's assessment.",
+      "Money laundering is frequently a network phenomenon, and risk that is invisible at the single-entity level emerges in the graph, so the module makes relationships and ownership networks navigable. It maps connections across customers, counterparties, and connected parties, detects links to sanctioned or high-risk entities, and identifies clusters indicative of organised activity. Supervisors expect connected-party and beneficial-ownership networks to be understood, not just individual records. By recording network analyses in the audit chain, the institution can demonstrate that it looked beyond isolated relationships to the structures connecting them — surfacing hidden common control, concealed links to designated parties, and the clustering patterns that distinguish coordinated illicit networks from coincidental association.",
     ],
     regulatory: [
       "FATF Recommendation 24/25 — ownership and control transparency",
@@ -2396,6 +2458,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Domain Intelligence module analyses domains and web infrastructure associated with customers and counterparties, surfacing risk signals such as recently registered domains, suspicious hosting, and infrastructure shared with known-bad actors. It strengthens diligence on entities whose legitimacy is asserted online.",
       "Web infrastructure can corroborate or undermine a counterparty's claimed legitimacy; fraudulent operations frequently share tell-tale infrastructure traits. The module brings this technical intelligence into the risk picture with recorded provenance.",
+      "Web infrastructure can corroborate or undermine a counterparty's claimed legitimacy, since fraudulent operations frequently share tell-tale infrastructure traits, and the module brings this technical intelligence into the risk picture. It analyses domains and hosting, detects recently registered or suspicious domains and infrastructure shared with known-bad actors, and records findings with provenance. Supervisors expect diligence on entities whose legitimacy is asserted online to be more than superficial. By feeding infrastructure signals into risk assessment and recording them in the audit chain, the institution can demonstrate that it tested the digital footprint behind a counterparty's claims — distinguishing established, verifiable operations from hastily constructed fronts that exhibit the technical hallmarks of fraud.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.4 — independent verification",
@@ -2432,6 +2495,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Crypto Risk module assesses wallet and virtual-asset exposure, screening addresses and flows against sanctions and illicit-activity intelligence and scoring counterparty risk in line with the FATF travel-rule regime. It extends the institution's controls to virtual-asset risk.",
       "Virtual assets present distinct laundering and sanctions-evasion risk that traditional controls do not capture. The module brings wallet screening, exposure scoring, and travel-rule awareness into the institution's framework with an auditable basis.",
+      "Virtual assets present distinct laundering and sanctions-evasion risk that traditional controls do not capture, and the module extends the institution's framework to that exposure. It screens wallet addresses against sanctions and illicit-activity intelligence, scores counterparty and exposure risk, and applies travel-rule information requirements in line with FATF Recommendation 15. Supervisors and VARA expect virtual-asset risk to be assessed with the same rigour as fiat. By recording crypto-risk decisions in the audit chain and re-screening on new intelligence, the institution can demonstrate that its virtual-asset dealings were screened for exposure to sanctioned or illicit wallets, mixing and tumbling, and high-risk counterparties — closing a channel that conventional, account-centric monitoring would otherwise leave unexamined.",
     ],
     regulatory: [
       "FATF Recommendation 15 — virtual assets and VASPs",
@@ -2470,6 +2534,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Vessel Check module screens vessels for sanctions exposure and dark-fleet indicators — AIS gaps, flag-hopping, and ownership obfuscation — supporting trade-finance and maritime due diligence. It addresses the elevated sanctions-evasion risk in shipping.",
       "Maritime sanctions evasion relies on disguising vessel identity, ownership, and movement; detecting these patterns is essential to trade-related diligence. The module screens vessels and surfaces dark-fleet behaviour with a recorded basis.",
+      "Maritime sanctions evasion relies on disguising vessel identity, ownership, and movement, and detecting these patterns is essential to trade-related diligence, so the module screens vessels for sanctions exposure and dark-fleet indicators. It detects AIS gaps and spoofing, flag-hopping, and ownership obfuscation, and assesses flag and ownership risk. Supervisors expect trade-finance and maritime exposure to be screened against the evasion techniques highlighted in international advisories. By recording vessel checks in the audit chain, the institution can demonstrate that the vessels behind its trade exposure were screened not only against lists but for the behavioural signatures of evasion — surfacing the location manipulation and identity changes that conceal sanctioned trades and dark-fleet activity.",
     ],
     regulatory: [
       "FATF Recommendation 6/7 — sanctions screening",
@@ -2508,6 +2573,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Benford Analysis module applies Benford's-law statistical testing to transaction and financial data to surface anomalies indicative of fabrication or manipulation. It provides a quantitative, evidence-based screen for data that has been artificially constructed rather than naturally generated.",
       "Naturally occurring financial data follows predictable digit distributions; significant deviation can indicate manipulation or fraud. The module flags such deviations as investigative leads, complementing rule-based monitoring with statistical anomaly detection.",
+      "Naturally occurring financial data follows predictable digit distributions, and significant deviation can indicate fabrication or manipulation, so the module applies Benford's-law testing as a quantitative anomaly screen. It flags statistically significant deviations as investigative leads — not conclusions — and records the analysis parameters and results. Supervisors expect analytical techniques to complement rule-based monitoring in surfacing constructed or structured data. By treating deviations as leads for investigation and recording analyses in the audit chain, the institution can demonstrate that it brought statistical scrutiny to bear on its data, surfacing artificially structured amounts and fabricated figures that natural transaction activity would not produce and that conventional threshold rules would not necessarily catch.",
     ],
     regulatory: [
       "FATF Recommendation 10 — scrutiny of transactions",
@@ -2544,6 +2610,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Investigation Workbench is the analyst's consolidated environment for working complex cases, bringing screening, network, transaction, and intelligence data into a single investigative surface with a documented working record. It standardises how deep investigations are conducted and evidenced.",
       "Complex investigations require synthesis across many sources; fragmentation breeds gaps and inconsistency. The workbench consolidates the evidence and the analyst's reasoning into a coherent, auditable record that supports defensible disposition and onward filing.",
+      "Complex investigations require synthesis across many sources, and fragmentation breeds gaps and inconsistency, so the workbench consolidates screening, network, transaction, and intelligence data into a single investigative surface. It documents the analyst's reasoning, supports a defensible disposition, and preserves the working record that underpins any onward report. Supervisors sample investigations expecting coherent, evidenced reasoning rather than disconnected notes. By recording each investigation step in the audit chain, the institution can demonstrate that its deepest enquiries were conducted to a consistent standard — drawing the available evidence together, reasoning transparently to a conclusion, and referring reportable findings onward — so that the quality of an investigation does not depend on which analyst happened to own it.",
     ],
     regulatory: [
       "UAE FDL No.20/2018 Art.15 — assessment of suspicion",
@@ -2582,6 +2649,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Country Risk module produces single-country risk briefs that assess jurisdictional money-laundering, terrorist-financing, sanctions, and predicate-offence risk, informing geographic risk-rating across CDD and monitoring. Geography is a core risk factor in the FATF risk-based approach.",
       "A customer's or transaction's jurisdictional exposure materially affects its risk; FATF-identified high-risk jurisdictions require enhanced measures. The module provides current, structured country risk that feeds consistently into the institution's assessments.",
+      "Geography is a core risk factor in the FATF risk-based approach, and a customer's or transaction's jurisdictional exposure materially affects its risk, so the module produces structured single-country risk briefs. It assesses jurisdictional ML/TF, sanctions, and predicate-offence risk, integrates FATF high-risk and monitored lists, and feeds geographic risk into customer rating. Supervisors expect enhanced measures for high-risk jurisdictions and current country assessments. By linking country risk to ratings and recording assessments in the audit chain, the institution can demonstrate that geographic exposure was assessed consistently and reflected in how customers and transactions were treated — ensuring that connections to higher-risk and sanctioned jurisdictions drove proportionate scrutiny rather than passing unremarked.",
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
@@ -2619,6 +2687,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Geopolitical Intelligence module tracks live geopolitical events and maps their impact on the institution's portfolio and risk map, translating sanctions actions, conflicts, and political shifts into concrete exposure assessments. It keeps geographic risk dynamic rather than static.",
       "Sanctions regimes and risk geographies change rapidly with world events; a static country-risk model lags reality. The module connects live events to portfolio exposure so that emerging jurisdictional risk is recognised and acted upon promptly.",
+      "Sanctions regimes and risk geographies change rapidly with world events, and a static country-risk model lags reality, so the module keeps geographic risk dynamic by tracking live events and mapping their portfolio impact. It translates sanctions actions, conflicts, and political shifts into concrete exposure assessments and triggers re-assessment on material change. Supervisors expect institutions to respond promptly to emerging jurisdictional risk rather than on a fixed review cycle. By recording event-driven risk changes in the audit chain, the institution can demonstrate that it connected real-world developments to its actual exposure — recognising newly elevated geographies and sanctions actions as they emerged and adjusting its risk posture before the next scheduled country review.",
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
@@ -2656,6 +2725,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Country Risk Map presents a global heat-map of jurisdictional risk, giving compliance and governance a portfolio-wide view of geographic exposure at a glance. It aggregates country-level risk into a visual overview that supports strategic risk oversight.",
       "A consolidated geographic view reveals concentration and emerging hot-spots that line-level data obscures. The module visualises the institution's global risk surface so that geographic concentration and change are immediately apparent to decision-makers.",
+      "A consolidated geographic view reveals concentration and emerging hot-spots that line-level data obscures, and the module visualises the institution's global risk surface for strategic oversight. It aggregates country-level risk into a heat-map, highlights concentration and change, and supports board-level geographic decision-making. Supervisors expect senior management to understand where geographic risk concentrates across the portfolio. By keeping the map current and recording rating updates in the audit chain, the institution can demonstrate that its geographic exposure was understood at a portfolio level — that decision-makers could see, at a glance, where risk clustered and where new hot-spots were emerging, rather than relying solely on case-by-case country assessments that miss aggregate concentration.",
     ],
     regulatory: [
       "FATF Recommendation 19 — higher-risk countries",
@@ -2692,6 +2762,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Sanctions Evasion Detection module identifies typologies used to circumvent sanctions — front companies, ownership obfuscation, transshipment, and payment layering — applying pattern detection tuned to evasion methods. It targets the deliberate, sophisticated attempts to defeat the institution's sanctions controls.",
       "Determined actors actively engineer their activity to evade screening; detecting evasion requires looking beyond direct matches to the patterns of circumvention. The module brings this specialised detection to bear and evidences each finding.",
+      "Determined actors actively engineer their activity to defeat screening, and detecting evasion requires looking beyond direct matches to the patterns of circumvention, so the module targets sanctions-evasion typologies specifically. It surfaces front companies, ownership obfuscation, transshipment, and payment layering using detection tuned to evasion methods. Supervisors expect institutions to anticipate deliberate circumvention rather than rely on name-matching alone. By recording evasion-detection findings in the audit chain, the institution can demonstrate that it looked for the sophisticated structures designed to slip past its sanctions controls — identifying the restructured ownership, intermediary fronts, and layered payments through which sanctioned parties attempt to access the financial system indirectly.",
     ],
     regulatory: [
       "FATF Recommendation 6/7 — sanctions implementation",
@@ -2730,6 +2801,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Intelligence Tools module bundles advanced investigative capabilities — the UBO walker, crypto-exposure analysis, and synthetic-identity detection — into a unified analyst toolkit for deep due diligence. It equips investigators with specialised instruments for the hardest diligence problems.",
       "Certain risks — concealed beneficial ownership, crypto exposure, fabricated identities — require purpose-built tools. The module consolidates these capabilities so analysts can pursue complex questions without leaving the governed platform, preserving an auditable trail.",
+      "Certain risks — concealed beneficial ownership, crypto exposure, fabricated identities — require purpose-built instruments, and the module consolidates these into a unified analyst toolkit so investigators can pursue hard questions without leaving the governed platform. The UBO walker resolves control, crypto-exposure analysis assesses virtual-asset risk, and synthetic-identity detection surfaces fabricated profiles. Supervisors expect institutions to have the investigative capability their risk profile demands. By recording tool outputs in case files and the audit chain, the institution can demonstrate that its analysts were equipped for complex diligence — resolving opaque structures, testing for crypto exposure, and detecting synthetic identities — and that those enquiries were conducted within an auditable, controlled environment rather than scattered across ungoverned external tools.",
     ],
     regulatory: [
       "FATF Recommendation 24/25 — ownership transparency",
@@ -2767,6 +2839,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Audit Trail module exposes the institution's immutable, append-only decision record, providing tamper-evident evidence of every AI decision, screening result, filing, and four-eyes action. It is the evidentiary foundation on which regulatory defensibility rests.",
       "FDL 10/2025 Art.18 mandates an auditable trail for AI-assisted decisions, and FATF requires record retention. The module guarantees that every consequential action is recorded immutably and can be retrieved and verified on demand.",
+      "FDL 10/2025 Article 18 mandates an auditable trail for AI-assisted decisions and FATF requires record retention, so the module guarantees that every consequential action is recorded immutably and can be retrieved and verified on demand. It preserves an append-only, HMAC-signed chain with per-request signing and integrity verification, retaining records for the statutory period. Supervisors expect the evidentiary record to be tamper-evident and reproducible. By preventing unauthorised alteration and supporting verifiable retrieval, the institution can demonstrate that its record of AI decisions, screening results, filings, and four-eyes actions is complete and unaltered — providing the integrity-checked foundation on which every other claim of regulatory compliance ultimately rests.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 Art.18 — AI decision audit trail",
@@ -2807,6 +2880,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Live Intelligence Feed aggregates regulatory updates and seven-language adverse-media into a unified, real-time intelligence stream, keeping the institution abreast of emerging risk, designations, and developments relevant to its portfolio. It is the platform's forward-looking risk-awareness layer.",
       "Timely intelligence enables proactive rather than reactive compliance; multi-language coverage is essential in a region with diverse counterparties. The module surfaces relevant developments as they occur and routes them into the institution's risk processes.",
+      "Timely intelligence enables proactive rather than reactive compliance, and multi-language coverage is essential in a region with diverse counterparties, so the module aggregates regulatory updates and seven-language adverse-media into a unified real-time stream. It surfaces portfolio-relevant developments, designations, and emerging risk and routes them into the institution's risk processes. Supervisors expect adverse-media and regulatory monitoring to be genuinely effective across the languages relevant to the customer base. By recording intelligence-driven actions in the audit chain, the institution can demonstrate that it stayed abreast of developments affecting its portfolio — catching designations and adverse media as they emerged, including in non-English sources, and converting that awareness into timely risk decisions rather than retrospective discovery.",
     ],
     regulatory: [
       "FATF Recommendation 1 — current risk understanding",
@@ -2843,6 +2917,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Intelligence Hub consolidates the platform's analytical, telemetry, red-team, security-audit, status, and API-documentation surfaces into a single operational console. It provides compliance and operations staff a unified view of the system's intelligence faculties and operational health.",
       "Operational visibility across the platform's many faculties is essential to running a controlled environment; fragmentation obscures both capability and risk. The hub centralises these surfaces so that analytical power and system health are visible in one governed place.",
+      "Operational visibility across the platform's many faculties is essential to running a controlled environment, because fragmentation obscures both capability and risk, so the hub consolidates analytical, telemetry, red-team, security-audit, status, and API-documentation surfaces into one console. It gives compliance and operations staff a unified view of the system's intelligence faculties and operational health. Supervisors and FDL 10/2025 expect AI systems to be observable and their health monitored. By recording operational use in the audit chain, the institution can demonstrate that its platform was actively overseen — that system health, adversarial testing, and security posture were visible and managed in one place rather than scattered across disconnected tools where degradation or coverage gaps could go unnoticed.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — AI-system observability",
@@ -2880,6 +2955,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The System Card publishes the institution's model system card and governance disclosures, documenting model purpose, capabilities, limitations, and oversight in line with FDL 10/2025 transparency expectations. It is the public-facing transparency artefact for the platform's AI.",
       "Transparency about AI capability and limitation is both an ethical principle and a regulatory expectation; a clear system card lets stakeholders and regulators understand what the AI does and how it is governed. The module maintains this disclosure accurately and currently.",
+      "Transparency about AI capability and limitation is both an ethical principle and a regulatory expectation, and a clear system card lets stakeholders and regulators understand what the AI does and how it is governed. The module documents model purpose, capabilities, limitations, and oversight in line with FDL 10/2025, keeping the disclosure current as models change. Supervisors expect accurate, accessible disclosure rather than opaque deployment. By versioning the card in the audit chain and reviewing it for accuracy, the institution can demonstrate that it disclosed its AI honestly — describing not only what its models can do but their limits and the oversight surrounding them — so that reliance on the system is informed and the institution's transparency obligations are demonstrably met.",
     ],
     regulatory: [
       "UAE FDL No.10/2025 — AI transparency and disclosure",
@@ -2917,6 +2993,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Security Scan module surfaces dependency and code security findings, integrating the platform's SAST, dependency-audit, and vulnerability-scanning results into a compliance-visible view. It connects software-security posture to the operational-resilience obligations that underpin a trustworthy compliance platform.",
       "A compliance platform's integrity depends on its software security; unpatched vulnerabilities are an operational-risk and data-protection exposure. The module makes security findings visible and tracks their remediation alongside compliance controls.",
+      "A compliance platform's integrity depends on its software security, and unpatched vulnerabilities are an operational-risk and data-protection exposure, so the module makes dependency and code security findings compliance-visible. It integrates SAST, dependency-audit, and vulnerability results, prioritises by severity, and tracks remediation to closure. Supervisors and the PDPL expect the systems processing regulated data to be secured and maintained. By recording security findings and their remediation in the audit chain, the institution can demonstrate that the platform underpinning its controls was itself held to a security standard — that vulnerabilities in code and dependencies were identified, prioritised, and remediated within risk-based timeframes rather than allowed to accumulate into an integrity exposure of the compliance system itself.",
     ],
     regulatory: [
       "UAE FDL No.45/2021 — data-security obligations",
@@ -2955,6 +3032,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Analyst Behavior Monitor surveils analyst activity for indicators of error, override, or misconduct — anomalous disposition patterns, control bypass, and inconsistent decision-making. It provides assurance that the human layer of the control environment is itself functioning with integrity.",
       "Controls executed by people can be undermined by people; supervisors expect institutions to monitor for internal control failure and misconduct. The module surfaces behavioural anomalies for review while respecting proportionality and staff rights.",
+      "Controls executed by people can be undermined by people, and supervisors expect institutions to monitor for internal control failure and misconduct, so the module surveils analyst activity for indicators of error, override, or impropriety. It detects anomalous disposition patterns, control bypass, and inconsistent decision-making while respecting proportionality and staff rights. Examiners treat the integrity of the human control layer as part of the overall control environment. By recording monitoring findings in the audit chain, the institution can demonstrate that the analysts operating its controls were themselves subject to oversight — that anomalous behaviour, overrides, and inconsistency were surfaced for review — providing assurance that the discretion inherent in compliance work was exercised with integrity rather than abused.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — internal controls",
@@ -2993,6 +3071,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Board Dashboard presents board-level compliance metrics and risk indicators in a consolidated executive view, giving directors the information they need to discharge their oversight responsibility for the AML/CFT and AI-governance programme. It translates operational detail into governance-relevant signal.",
       "Effective board oversight depends on clear, relevant, and timely information; FATF and CBUAE expect demonstrable board engagement with AML risk. The module provides the executive view that enables and evidences that engagement.",
+      "Effective board oversight depends on clear, relevant, and timely information, and FATF and CBUAE expect demonstrable board engagement with AML risk, so the module translates operational detail into governance-relevant signal. It presents board-level compliance metrics and key risk indicators with trends, supporting informed decision-making at the most senior level. Supervisors test whether directors received and acted on adequate information. By recording board reporting in the audit chain, the institution can demonstrate that its Board was genuinely equipped to discharge its oversight responsibility — that material risk was surfaced to directors in a form they could act upon, and that senior engagement with the AML and AI-governance programme was substantive and evidenced rather than nominal.",
     ],
     regulatory: [
       "UAE Cabinet Decision No.10/2019 Art.20 — board oversight",
@@ -3031,6 +3110,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The KRI Dashboard tracks key risk indicators across the AML/CFT programme, providing early-warning signals of rising risk or control degradation through quantified, trended metrics. It is the institution's risk-radar, surfacing deterioration before it becomes a failing.",
       "Key risk indicators turn diffuse risk into measurable, actionable signal; trending them enables proactive intervention. The module computes and monitors KRIs against thresholds and escalates adverse movements for timely response.",
+      "Key risk indicators turn diffuse risk into measurable, actionable signal, and trending them enables proactive intervention, so the module functions as the institution's risk radar. It defines KRIs aligned to programme risk, computes and trends them, monitors thresholds, and escalates adverse movements before they become failings. Supervisors expect institutions to detect rising risk and control degradation early. By recording KRI reviews and responses in the audit chain, the institution can demonstrate that it watched the leading indicators of its own risk and control health — catching deterioration in detection effectiveness, filing timeliness, or other metrics while it was still a trend to be managed rather than a materialised failure to be explained.",
     ],
     regulatory: [
       "FATF Recommendation 1 — risk monitoring",
@@ -3068,6 +3148,7 @@ const REPORTS: Record<string, ReportData> = {
     summary: [
       "The Access Control module manages user roles, sessions, and permissions, enforcing least-privilege access to regulated data and functions across the platform. It is the logical-access foundation that protects sensitive compliance data and ensures that consequential actions are taken only by authorised parties.",
       "Logical access control is a baseline security and compliance obligation; over-broad access is both a data-protection risk and a control weakness. The module enforces role-appropriate access, governs sessions, and evidences who can do what across the platform.",
+      "Logical access control is a baseline security and compliance obligation, and over-broad access is both a data-protection risk and a control weakness, so the module enforces least-privilege access to regulated data and functions. It governs roles, sessions, and authentication, restricts regulated data to authorised roles, and supports periodic entitlement review. Supervisors and the PDPL expect access to sensitive compliance data to be controlled and reviewed. By recording access decisions and changes in the audit chain, the institution can demonstrate that consequential actions were taken only by authorised parties and that sensitive data was confined to those who needed it — providing the logical-access foundation that protects the confidentiality and integrity of the entire compliance platform.",
     ],
     regulatory: [
       "UAE FDL No.45/2021 — data-access controls",
