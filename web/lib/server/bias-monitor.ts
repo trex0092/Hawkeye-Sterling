@@ -326,9 +326,13 @@ function computeNationalityBias(pepEntries: PepNationalityEntry[]): {
   // Only consider entries that have been adjudicated (isHit=true so FP status is meaningful)
   const adjudicated = pepEntries.filter((e) => e.isHit);
 
-  const globalFP = adjudicated.length > 0
-    ? adjudicated.filter((e) => e.isFalsePos).length / adjudicated.length
-    : 0;
+  // No adjudicated baseline yet — ratios would be Infinity, causing false alerts
+  // on the first deployment before any FP adjudication has occurred.
+  if (adjudicated.length === 0) {
+    return { nationalityBiasScore: 0, nationalityGroups: [], nationalityBiasDetected: false };
+  }
+
+  const globalFP = adjudicated.filter((e) => e.isFalsePos).length / adjudicated.length;
 
   const byNationality = new Map<string, PepNationalityEntry[]>();
   for (const e of adjudicated) {

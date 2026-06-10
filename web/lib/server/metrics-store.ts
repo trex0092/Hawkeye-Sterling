@@ -27,7 +27,10 @@ declare global { var __hs_metrics_store: MetricsStore | undefined; }
 function getStore(): MetricsStore {
   if (!globalThis.__hs_metrics_store) {
     globalThis.__hs_metrics_store = {
-      counters: new Map<string, number>(),
+      // Pre-initialize the overflow sentinel so the first cardinality breach
+      // can increment it (the guard only bumps existing keys to avoid re-triggering
+      // the cardinality check, which would otherwise create an infinite loop).
+      counters: new Map<string, number>([['hawkeye_metrics_cardinality_overflow_total', 0]]),
       gauges: new Map<string, number>(),
     };
   }

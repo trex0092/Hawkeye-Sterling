@@ -69,6 +69,10 @@ export async function issueKey(params: {
   name: string;
   email: string;
   tier: TierId;
+  /** Optional role for RBAC on sensitive endpoints (e.g. 'mlro', 'co', 'admin'). */
+  role?: string;
+  /** Optional organisation ID for org-level quota pool enforcement. */
+  orgId?: string;
 }): Promise<IssuedKey> {
   const { id, plaintext } = newKeyPlaintext();
   const record: ApiKeyRecord = {
@@ -81,6 +85,8 @@ export async function issueKey(params: {
     usageMonthly: 0,
     usageResetAt: monthBoundary(),
     _version: 0,
+    ...(params.role ? { role: params.role } : {}),
+    ...(params.orgId ? { orgId: params.orgId } : {}),
   };
   // Write primary record and hash index atomically (best-effort; if the
   // index write fails the key still works via the fallback linear scan).

@@ -61,6 +61,7 @@ const MAX_ENTRIES = 5_000;
 // can apply institution-specific tolerance bands without a code deploy.
 // DRIFT_APPROVE_DELTA_PCT: integer percentage points (default 20 → 0.20 fraction)
 // DRIFT_SCORE_THRESHOLD_PTS: integer points of risk score deviation (default 15)
+// DRIFT_CONFIDENCE_THRESHOLD_PTS: integer points of mean confidence drop (default 15)
 function getDriftApproveThreshold(): number {
   const raw = process.env["DRIFT_APPROVE_DELTA_PCT"];
   if (raw !== undefined && raw !== "") {
@@ -71,6 +72,14 @@ function getDriftApproveThreshold(): number {
 }
 function getScoreDriftThreshold(): number {
   const raw = process.env["DRIFT_SCORE_THRESHOLD_PTS"];
+  if (raw !== undefined && raw !== "") {
+    const v = parseFloat(raw);
+    if (isFinite(v) && v > 0 && v <= 100) return v;
+  }
+  return 15;
+}
+function getDriftConfidenceThreshold(): number {
+  const raw = process.env["DRIFT_CONFIDENCE_THRESHOLD_PTS"];
   if (raw !== undefined && raw !== "") {
     const v = parseFloat(raw);
     if (isFinite(v) && v > 0 && v <= 100) return v;
@@ -155,7 +164,7 @@ async function _computeDriftReport(tenant: string, entries?: DriftEntry[]): Prom
       driftReason = `Approve rate increased by ${(approveIncrease * 100).toFixed(1)}% this week vs last week — possible model drift or gaming`;
     }
     const confDrop = lw.meanConfidence - tw.meanConfidence;
-    if (confDrop > 15) {
+    if (confDrop > getDriftConfidenceThreshold()) {
       driftDetected = true;
       driftReason = (driftReason ? driftReason + "; " : "") +
         `Mean confidence dropped ${confDrop.toFixed(1)} points — model uncertainty increasing`;
@@ -222,6 +231,19 @@ async function _computeDriftReport(tenant: string, entries?: DriftEntry[]): Prom
       lastWeekApproveRate: lw?.approveRate ?? null,
       detectedAt: new Date().toISOString(),
     }).catch(() => undefined);
+  } else {
+    // Always write a clean-run entry so regulators can verify drift checks ran
+    // during periods with no alerts (absence of entry is indistinguishable from
+    // the check never running without this record).
+    void writeAuditChainEntry({
+      event: "ai.model_drift_checked",
+      actor: "system",
+      driftDetected: false,
+      sampleSize: allRecent.length,
+      approveThreshold: getDriftApproveThreshold(),
+      scoreThreshold: getScoreDriftThreshold(),
+      confidenceThreshold: getDriftConfidenceThreshold(),
+    }, tenant).catch(() => undefined);
   }
 
   return report;

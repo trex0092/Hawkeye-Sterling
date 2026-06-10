@@ -327,6 +327,7 @@ async function _enforce(
   if (cronMatch) {
     const rl = await consumeRateLimit("cron_internal", "enterprise");
     if (!rl.allowed) {
+      logAuthFailure(req, "rate_limit_exceeded:cron_internal", 429);
       return {
         ok: false,
         response: NextResponse.json(
@@ -516,6 +517,7 @@ async function _enforce(
 
   const rl = await consumeRateLimit(keyId, tierId, cost);
   if (!rl.allowed) {
+    logAuthFailure(req, "rate_limit_exceeded", 429, { keyId: keyId.slice(0, 16) });
     return {
       ok: false,
       response: NextResponse.json(
