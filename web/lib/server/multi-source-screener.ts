@@ -484,6 +484,16 @@ export async function runMultiSourceScreening(
   const laneHealth: Record<string, LaneStatus> = {};
   const sourcesQueried: string[] = [];
 
+  // FP-60: common-name assessment feeds the brain's corroboration cap —
+  // high-frequency names with zero positive discriminators max out at MEDIUM.
+  // Done here (not in the brain) so src/brain stays dependency-free.
+  if (subject.commonName === undefined) {
+    try {
+      const { assessCommonName } = await import('../intelligence/commonNames');
+      subject = { ...subject, commonName: assessCommonName(subject.name).isCommon };
+    } catch { /* assessment unavailable — proceed without the cap */ }
+  }
+
   // Per-lane duration metrics — same counter family LatencyBudget emits, so
   // operators can see which lane is eating the 5s budget.
   const timed = <T>(phase: string, p: Promise<T>): Promise<T> => {

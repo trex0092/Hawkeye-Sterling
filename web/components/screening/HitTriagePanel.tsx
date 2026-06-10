@@ -179,6 +179,9 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
     { code: "FP_04", label: "FP-04 · Name match only — insufficient similarity" },
     { code: "FP_05", label: "FP-05 · Whitelisted — previously verified" },
     { code: "FP_06", label: "FP-06 · Other (requires reason text)" },
+    { code: "FP_07", label: "FP-07 · Entity type mismatch confirmed" },
+    { code: "FP_08", label: "FP-08 · ID number conflict confirmed" },
+    { code: "FP_09", label: "FP-09 · Multiple strong identifier conflicts (DOB + nationality)" },
   ];
 
   if (hits.length === 0) {

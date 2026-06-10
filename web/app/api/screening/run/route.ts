@@ -39,6 +39,9 @@ import { handlePostScreenResult } from "@/lib/server/post-screen-handler";
 import { scoreAndFilterArticles, aggregateMediaSeverity } from "@/lib/server/adverse-media-scorer";
 import { getScreeningThresholds } from "@/lib/server/screening-threshold-config";
 import { SCREENING_BUDGETS } from "@/lib/server/screening-budgets";
+import { fpTriageConfig } from "@brain/fp-triage-config.js";
+import { startDeepScan } from "@/lib/server/adverse-media-deep-scan";
+import { isHighRiskCountry } from "@/lib/intelligence/country-media-router";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -63,6 +66,10 @@ interface ScreeningRunRequest {
   candidates?: QuickScreenCandidate[];
   options?: QuickScreenOptions;
   requestId?: string;
+  // Worldwide adverse-media deep scan (async, fire-and-forget). Defaults to
+  // true when the sync adverse-media lane found anything or the subject sits
+  // in a high-risk jurisdiction; pass false to opt out, true to force.
+  deepScan?: boolean;
 }
 
 interface ValidationError {
@@ -132,6 +139,7 @@ function validateRequest(raw: unknown): { ok: true; value: ScreeningRunRequest }
       candidates: body["candidates"] as QuickScreenCandidate[] | undefined,
       options: body["options"] as QuickScreenOptions | undefined,
       requestId: typeof body["requestId"] === "string" ? body["requestId"] : undefined,
+      deepScan: typeof body["deepScan"] === "boolean" ? body["deepScan"] : undefined,
     },
   };
 }
@@ -317,7 +325,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400, headers: responseHeaders },
     );
   }
-  const { subject, candidates: callerCandidates, options, requestId: callerRequestId } = validation.value;
+  const { subject, candidates: callerCandidates, options, requestId: callerRequestId, deepScan: deepScanFlag } = validation.value;
 
   const ts       = new Date().toISOString();
   const resultId = buildResultId(subject, ts, callerRequestId);
@@ -412,6 +420,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   screeningTrace["sourcesQueried"] = msResult.sourcesQueried;
   screeningTrace["listsChecked"]   = listsLoaded;
   screeningTrace["hitsBeforeAdverseMedia"] = result.hits.length;
+  // FP-60 triage explainability (FDL 10/2025 Art.18) — which profile ran and
+  // how many hits it auto-dismissed, with the structured reason mix.
+  screeningTrace["fpTriageProfile"]    = fpTriageConfig().enabled ? fpTriageConfig().profile : "off";
+  screeningTrace["autoDismissedCount"] = result.autoDismissedCount ?? 0;
+  if (result.fpReasonBreakdown) screeningTrace["fpReasonBreakdown"] = result.fpReasonBreakdown;
 
   // ── Adverse media relevance scoring + deduplication ────────────────────────
   // Raw articles from LLM/news adapters are scored by relevance to the subject,
@@ -443,6 +456,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         laneHealth:          msResult.laneHealth,
         adverseMediaFound:   scoredArticles.length > 0,
         adverseMediaSeverity: mediaSeverity,
+        autoDismissedCount:  result.autoDismissedCount ?? 0,
+        ...(result.fpReasonBreakdown ? { fpReasonBreakdown: result.fpReasonBreakdown } : {}),
         screeningTrace,
       },
       tenant,
@@ -450,6 +465,35 @@ export async function POST(req: Request): Promise<NextResponse> {
     .catch((err) =>
       console.warn("[screening/run] audit chain write failed:", err instanceof Error ? err.message : String(err)),
     );
+
+  // ── Worldwide adverse-media deep scan (async, fire-and-forget) ────────────
+  // The exhaustive per-country sweep cannot fit the sync SLA, so it runs in
+  // the background and attaches via GET /api/adverse-media/deep-scan?scanId=.
+  // Triggered when the caller asks (deepScan: true), or by default when the
+  // sync lane found adverse media or the subject sits in a high-risk
+  // jurisdiction. Only the scan-record persist is awaited; the sweep never
+  // blocks or fails this response.
+  let deepScanId: string | null = null;
+  const wantDeepScan =
+    deepScanFlag ??
+    (scoredArticles.length > 0 ||
+      isHighRiskCountry(subject.nationality) ||
+      isHighRiskCountry(subject.jurisdiction));
+  if (wantDeepScan) {
+    try {
+      deepScanId = await startDeepScan(
+        {
+          name: subject.name,
+          ...(subject.nationality ? { nationality: subject.nationality } : {}),
+          ...(subject.jurisdiction ? { jurisdiction: subject.jurisdiction } : {}),
+        },
+        tenant,
+      );
+      screeningTrace["deepScanId"] = deepScanId ?? "not_started";
+    } catch (err) {
+      console.warn("[screening/run] deep scan kickoff failed (non-blocking):", err instanceof Error ? err.message : String(err));
+    }
+  }
 
   // ── Post-screen side-effects (fire-and-forget) ────────────────────────────
   // Single canonical call — eliminates the duplicated block that previously
@@ -519,6 +563,15 @@ export async function POST(req: Request): Promise<NextResponse> {
         found:     scoredArticles.length > 0,
         rawCount:  rawAdverseArticles.length,
       },
+
+      // Worldwide deep scan — async; poll the URL for the full per-country sweep.
+      ...(deepScanId ? {
+        deepScan: {
+          scanId: deepScanId,
+          status: "running" as const,
+          pollUrl: `/api/adverse-media/deep-scan?scanId=${deepScanId}`,
+        },
+      } : {}),
 
       provisionalScreening: uaeStale,
       ...(requiresReverification ? {

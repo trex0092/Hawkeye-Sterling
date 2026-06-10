@@ -78,6 +78,9 @@ describe('entity-screening-engine — three-tier pipeline', () => {
 
   it('entity-type mismatch is never resolved as same entity', () => {
     const org = candidate({
+      listId: 'eu_fsf',
+      listRef: 'EU.003',
+      regimes: ['eu_russia'],
       record: {
         id: 'cand-3',
         name: 'Mohammed Ali Hassan',
@@ -93,6 +96,25 @@ describe('entity-screening-engine — three-tier pipeline', () => {
     } else {
       expect(r.topMatchRiskTier).toBe('NONE');
     }
+  });
+
+  it('entity-type mismatch on a TFS-critical regime floors at LOW (reviewable, never alert-suppressed)', () => {
+    // FP-60: FP_LIKELY findings raise no alert, so a UN 1267 candidate must
+    // never bottom out there — the floor keeps the alert and the monitoring action.
+    const org = candidate({
+      record: {
+        id: 'cand-3b',
+        name: 'Mohammed Ali Hassan',
+        entityType: 'organisation',
+      },
+    });
+    const r = screenEntity(subject(), [org], {}, { authoritativeListSupplied: true, now: fixedNow });
+    expect(r.findings).toHaveLength(1);
+    const f = r.findings[0]!;
+    expect(f.attenuators).toContain('entity_type_mismatch');
+    expect(f.matchRiskTier).toBe('LOW');
+    expect(f.rationale).toContain('TFS-critical regime');
+    expect(r.alerts).toHaveLength(1);
   });
 
   it('name-only fuzzy match without strong IDs downgrades to LOW / FP_LIKELY', () => {
@@ -187,7 +209,12 @@ describe('entity-screening-engine — output envelope (P7)', () => {
   });
 
   it('FP_LIKELY findings do not raise alerts', () => {
+    // Non-critical regime: TFS-critical candidates are floored at LOW (FP-60)
+    // and DO alert — covered by the floor test above.
     const mismatch = candidate({
+      listId: 'eu_fsf',
+      listRef: 'EU.007',
+      regimes: ['eu_russia'],
       record: {
         id: 'cand-7',
         name: 'Mohammed Ali Hassan',

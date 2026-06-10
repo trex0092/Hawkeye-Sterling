@@ -30,6 +30,11 @@ export interface ResolutionResult {
   disagreements: string[];
   sharedIdentifiers: string[];
   conflictingIdentifiers: string[];
+  // Strong disambiguators with explicit contradictions ('dob', 'nationality',
+  // 'passport_number'). Structured counterpart of `disagreements` so callers
+  // can distinguish conflict types without string parsing. Absence of a
+  // disambiguator is never a conflict — it simply doesn't appear here.
+  strongConflicting: string[];
   rationale: string;
   caps: string[];
 }
@@ -55,6 +60,7 @@ export function resolveEntities(a: EntityRecord, b: EntityRecord): ResolutionRes
       disagreements: ['entity type differs'],
       sharedIdentifiers: [],
       conflictingIdentifiers: [],
+      strongConflicting: [],
       rationale: 'Entity types differ; not resolvable as same entity.',
       caps: ['entity-type-mismatch'],
     };
@@ -140,6 +146,7 @@ export function resolveEntities(a: EntityRecord, b: EntityRecord): ResolutionRes
     disagreements,
     sharedIdentifiers: sharedIds,
     conflictingIdentifiers: conflictingIds,
+    strongConflicting: [...strongConflicting],
     rationale: cal.rationale,
     caps: cal.caps,
   };

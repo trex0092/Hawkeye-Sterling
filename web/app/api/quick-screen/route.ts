@@ -623,6 +623,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Unique names stay at the tight default for performance.
     const cna = assessCommonName(subject.name);
     const isCommonName = cna.isCommon;
+    // FP-60: feeds the brain's common-name corroboration cap — hits with zero
+    // positive discriminators max out at MEDIUM severity (never dismissed).
+    if (subject.commonName === undefined) subject.commonName = isCommonName;
     const HIT_LIMIT_LOCAL = isCommonName ? 200 : 25;          // brain quickScreen
     const HIT_LIMIT_AUG_HIGH = isCommonName ? 100 : 15;        // per-vendor cap
     const HIT_LIMIT_AUG_LOW = isCommonName ? 100 : 10;
@@ -1270,6 +1273,9 @@ export async function POST(req: Request): Promise<NextResponse> {
       hitsCount: finalResult.hits.length,
       listsChecked: finalResult.listsChecked,
       listsDegraded: degradedListIds.length,
+      // FP-60 triage transparency — dismissal volume + structured reason mix.
+      autoDismissedCount: finalResult.autoDismissedCount ?? 0,
+      ...(finalResult.fpReasonBreakdown ? { fpReasonBreakdown: finalResult.fpReasonBreakdown } : {}),
     }).catch((err: unknown) => console.warn("[quick-screen] audit write failed:", err instanceof Error ? err.message : String(err)));
 
     // Auto-open a server-side case record when the screening yields hits.

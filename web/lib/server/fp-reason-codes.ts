@@ -18,7 +18,10 @@
 // FP-06 AND provide a non-empty `reason` string. The validator below
 // enforces both invariants.
 
-export const FP_REASON_CODES = ["FP_01", "FP_02", "FP_03", "FP_04", "FP_05", "FP_06"] as const;
+// FP-07..FP-09 extend the original G-05 set for the deterministic FP triage
+// layer (FP-60): codes emitted by quick-screen auto-resolve rules and the
+// entity-screening-engine multi-conflict attenuator.
+export const FP_REASON_CODES = ["FP_01", "FP_02", "FP_03", "FP_04", "FP_05", "FP_06", "FP_07", "FP_08", "FP_09"] as const;
 export type FpReasonCode = (typeof FP_REASON_CODES)[number];
 
 export const FP_REASON_LABEL: Record<FpReasonCode, string> = {
@@ -28,6 +31,9 @@ export const FP_REASON_LABEL: Record<FpReasonCode, string> = {
   FP_04: "Name match only — insufficient similarity",
   FP_05: "Whitelisted — previously verified",
   FP_06: "Other",
+  FP_07: "Entity type mismatch confirmed",
+  FP_08: "ID number conflict confirmed",
+  FP_09: "Multiple strong identifier conflicts (DOB + nationality)",
 };
 
 export function isFpReasonCode(value: unknown): value is FpReasonCode {

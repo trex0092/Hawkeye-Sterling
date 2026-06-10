@@ -29,6 +29,10 @@ export interface BiasEntry {
   severity:  string;       // clear|low|medium|high|critical
   hit:       boolean;      // any hit returned
   listIds?:  string[];     // which lists triggered hits (per-list source tracking)
+  // FP-60: hits auto-dismissed by deterministic triage in this screening.
+  // Lets the bias report compare dismissal rates across name scripts —
+  // FATF R.10 requires the FP suppression layer itself be non-discriminatory.
+  autoDismissed?: number;
 }
 
 // ── Per-list source bias tracking ────────────────────────────────────────────
@@ -186,6 +190,7 @@ export async function recordScreeningBias(
   severity: string,
   hitCount: number,
   listIds?: string[],
+  autoDismissedCount?: number,
 ): Promise<void> {
   try {
     const key = windowKey(tenant);
@@ -198,6 +203,7 @@ export async function recordScreeningBias(
       severity,
       hit: hitCount > 0,
       ...(listIds && listIds.length > 0 ? { listIds } : {}),
+      ...(autoDismissedCount !== undefined && autoDismissedCount > 0 ? { autoDismissed: autoDismissedCount } : {}),
     };
     const window = (await getJson<BiasEntry[]>(key).catch(() => null)) ?? [];
     const pruned = window

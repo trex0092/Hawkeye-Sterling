@@ -7,8 +7,11 @@ import {
 } from '../fp-reason-codes';
 
 describe('FP_REASON_CODES catalogue', () => {
-  it('contains exactly the six codes from the gap analysis (G-05)', () => {
-    expect(FP_REASON_CODES).toEqual(['FP_01', 'FP_02', 'FP_03', 'FP_04', 'FP_05', 'FP_06']);
+  it('contains the six G-05 codes plus the three FP-60 triage codes', () => {
+    expect(FP_REASON_CODES).toEqual([
+      'FP_01', 'FP_02', 'FP_03', 'FP_04', 'FP_05', 'FP_06',
+      'FP_07', 'FP_08', 'FP_09',
+    ]);
   });
 
   it('has a human-readable label for every code', () => {
@@ -27,7 +30,7 @@ describe('isFpReasonCode', () => {
   });
 
   it('returns false for unknown strings', () => {
-    expect(isFpReasonCode('FP_07')).toBe(false);
+    expect(isFpReasonCode('FP_10')).toBe(false);
     expect(isFpReasonCode('fp_01')).toBe(false); // case-sensitive
     expect(isFpReasonCode('')).toBe(false);
     expect(isFpReasonCode('other')).toBe(false);

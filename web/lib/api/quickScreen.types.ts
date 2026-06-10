@@ -33,6 +33,9 @@ export interface QuickScreenSubject {
   nationalIdNumber?: string; // legacy alias kept for existing callers
   nationalId?: string;       // Emirates ID, CPR, NRIC, etc.
   registrationNumber?: string; // company reg / trade licence (organisations)
+  // FP-60: common-name assessment flag — when true the brain caps hits with
+  // zero positive discriminators at MEDIUM severity (never dismissed).
+  commonName?: boolean;
 }
 
 export interface QuickScreenCandidate {
@@ -124,6 +127,11 @@ export interface QuickScreenHit {
   candidateEntityType?: EntityType;
   entityTypeMismatch?: boolean;
   autoResolution?: 'auto-dismissed' | 'flagged';
+  // FP-60: structured reason for the auto-resolution (FP_01..FP_09 + label).
+  autoResolutionReasonCode?: string;
+  autoResolutionReason?: string;
+  // Absolute DOB year difference when both sides carry a parseable DOB.
+  dobYearDelta?: number;
   // Source attribution — surfaced in audit trail, UI, and export.
   // Every hit MUST show where the match came from and why.
   sourceList?: string;          // exact list ID e.g. "ofac_sdn"
@@ -167,6 +175,9 @@ export interface QuickScreenResult {
   // Count of hits auto-classified as "likely_false_positive" by the
   // multi-factor disambiguation engine.
   likelyFalsePositiveCount?: number;
+  // FP-60 triage counters — dismissal volume and reason mix per screening.
+  autoDismissedCount?: number;
+  fpReasonBreakdown?: Record<string, number>;
   // Populated when the subject matched a tenant-scoped whitelist entry —
   // hits[] is then empty and severity is "clear". Callers can branch on
   // whitelisted !== undefined to render a different UI / verdict.

@@ -91,7 +91,10 @@ export type AttenuatorReason =
   | 'common_name_no_strong_id'
   | 'transliteration_no_native_corroboration'
   | 'list_version_stale'
-  | 'low_ensemble_score';
+  | 'low_ensemble_score'
+  // FP-60: DOB AND nationality both explicitly conflict with no shared strong
+  // identifier — deterministic mirror of smart-disambiguate rule 4 (FP_09).
+  | 'deterministic_fp_multi_conflict';
 
 export interface ScreeningContext {
   // Optional transaction / relationship signals the caller may supply. None
@@ -240,15 +243,19 @@ function toConfidenceTier(
   // but the recommended action is EDD / disambiguate — NOT "document FP" —
   // because P6 demands that distinct persons be kept as separate candidates
   // under investigation, not silently dismissed.
+  const multiConflict = attenuators.includes('deterministic_fp_multi_conflict');
   const fpSignals =
     attenuators.includes('entity_type_mismatch') ||
+    multiConflict ||
     (commonName && attenuators.includes('common_name_no_strong_id') && level === 'WEAK') ||
     (ensembleScore < 0.7 && level !== 'EXACT' && level !== 'STRONG' && level !== 'POSSIBLE');
 
-  if (fpSignals && (level === 'WEAK' || level === 'NO_MATCH')) {
+  // Double demographic contradiction (DOB + nationality, no shared strong
+  // ID) reaches FP_LIKELY from POSSIBLE too — two explicit conflicts are
+  // stronger disproof than a single weak signal.
+  if (fpSignals && (level === 'WEAK' || level === 'NO_MATCH' || (multiConflict && level === 'POSSIBLE'))) {
     return 'FP_LIKELY';
   }
-
   switch (level) {
     case 'EXACT':
       return 'CONFIRMED';
@@ -424,6 +431,17 @@ export function screenEntity(
     if (commonName && resolution.sharedIdentifiers.length === 0) {
       attenuators.push('common_name_no_strong_id');
     }
+    // FP-60: DOB and nationality both explicitly contradict and no strong
+    // identifier is shared — deterministic double-disproof (FP_09). Absent
+    // data never lands in strongConflicting, so missing DOB/nationality can
+    // never trigger this.
+    if (
+      resolution.strongConflicting.includes('dob') &&
+      resolution.strongConflicting.includes('nationality') &&
+      resolution.sharedIdentifiers.length === 0
+    ) {
+      attenuators.push('deterministic_fp_multi_conflict');
+    }
     // Transliteration heuristic: raw strings differ but phonetic matchers
     // agree. Charter caps this at POSSIBLE unless native-script corroborated.
     const subjRaw = subject.name.trim().toLowerCase();
@@ -484,9 +502,22 @@ export function screenEntity(
       confidence = 'POSSIBLE';
     }
 
-    const matchRiskTier = toConfidenceTier(confidence, attenuators, commonName, ensembleScore);
     const regimes = cand.regimes ?? [];
+    const tfsCritical = regimes.some((r) => TFS_CRITICAL_REGIMES.has(r));
+    const unflooredTier = toConfidenceTier(confidence, attenuators, commonName, ensembleScore);
+    // Critical-regime floor: FP_LIKELY findings raise no alert, so a
+    // TFS-critical candidate (UN 1267/1988, DPRK, Iran, UAE EOCN/LTL) must
+    // never bottom out there — LOW keeps the alert and the monitoring action.
+    const matchRiskTier = tfsCritical && unflooredTier === 'FP_LIKELY' ? 'LOW' : unflooredTier;
     const recommendedAction = actionFor(matchRiskTier, cand.nature, regimes, authoritative);
+
+    let rationale = resolution.rationale;
+    if (attenuators.includes('deterministic_fp_multi_conflict') && unflooredTier === 'FP_LIKELY') {
+      rationale += ' FP_09: DOB and nationality both conflict with no shared strong identifier — deterministic false-positive signal.';
+    }
+    if (tfsCritical && unflooredTier === 'FP_LIKELY') {
+      rationale += ' TFS-critical regime — FP downgrade floored at LOW (reviewable, alert retained).';
+    }
 
     const regimeAuthorities = regimes
       .map((id) => SANCTION_REGIME_BY_ID.get(id)?.authority)
@@ -512,7 +543,7 @@ export function screenEntity(
       amplifiers,
       attenuators,
       caps: resolution.caps,
-      rationale: resolution.rationale,
+      rationale,
       recommendedAction,
     };
     if (cand.listVersionDate !== undefined) finding.listVersionDate = cand.listVersionDate;

@@ -408,6 +408,13 @@ const ENTITY_STOP_WORDS = new Set([
   'and', 'the', 'for', 'of',
 ]);
 
+/** Count of non-stop-word tokens after normalisation. Lets quick-screen detect
+ *  subset matches driven by a single effective token (e.g. "Ahmad" ⊂
+ *  "Ahmad Al-Rashidi" scores 1.0 on partial_token_set) so they can be capped. */
+export function effectiveTokenCount(name: string): number {
+  return normalise(name).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t)).length;
+}
+
 export function matchPartialTokenSet(a: string, b: string, threshold = MATCHING_THRESHOLDS.partialToken): MatchScore {
   const ta = normalise(a).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));
   const tb = normalise(b).split(' ').filter((t) => Boolean(t) && !ENTITY_STOP_WORDS.has(t));

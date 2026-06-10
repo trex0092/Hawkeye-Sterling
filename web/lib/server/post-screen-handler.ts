@@ -149,5 +149,6 @@ export function handlePostScreenResult(ctx: PostScreenContext): void {
     result.severity,
     result.hits.length,
     hitListIds,
+    result.autoDismissedCount,
   ).catch(() => undefined);
 }
