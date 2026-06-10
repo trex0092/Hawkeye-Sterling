@@ -303,6 +303,18 @@ export default function RmiPage() {
     });
   };
 
+  const addSmelter = () => {
+    const id = `custom-${Date.now()}`;
+    const blank: Smelter = {
+      id, name: "New Smelter", country: "", countryCode: "", mineral: "gold",
+      rmapStatus: "not-enrolled", rmapId: "", cahraRisk: "low",
+      lastAuditDate: "", nextAuditDue: "", activeSupplier: true,
+      flags: [], notes: "",
+    };
+    setAddedSmelters((prev) => [blank, ...prev]);
+    startEdit(blank);
+  };
+
   const saveEdit = (id: string) => {
     const next = { ...edits, [id]: { ...edits[id], ...editDraft } };
     setEdits(next);
@@ -365,7 +377,7 @@ export default function RmiPage() {
   const activeSuppliers = liveSmelters.filter((s) => s.activeSupplier).length;
 
   return (
-    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine" onRun={() => void runRmiAssessment()}>
+    <ModuleLayout asanaModule="rmi" asanaLabel="Risk Management Information" engineLabel="Supply-chain compliance engine" onRun={() => void runRmiAssessment()} onAdd={addSmelter}>
       <ModuleHero
 
         eyebrow=""
@@ -535,17 +547,7 @@ export default function RmiPage() {
       <div className="flex justify-end mb-3">
         <button
           type="button"
-          onClick={() => {
-            const id = `custom-${Date.now()}`;
-            const blank: Smelter = {
-              id, name: "New Smelter", country: "", countryCode: "", mineral: "gold",
-              rmapStatus: "not-enrolled", rmapId: "", cahraRisk: "low",
-              lastAuditDate: "", nextAuditDue: "", activeSupplier: true,
-              flags: [], notes: "",
-            };
-            setAddedSmelters((prev) => [blank, ...prev]);
-            startEdit(blank);
-          }}
+          onClick={addSmelter}
           className="px-3 py-1.5 border border-brand/40 rounded text-11 font-semibold text-brand bg-brand-dim hover:bg-brand/20 transition-colors"
         >
           + Add smelter

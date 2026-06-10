@@ -387,6 +387,7 @@ export default function ClientPortalPage() {
     <ModuleLayout
       asanaModule="client-portal"
       asanaLabel="Client Portal"
+      onAdd={addShareholder}
       sidebarActions={
         <>
           <ActionButton variant="add" type="button" onClick={addShareholder}>

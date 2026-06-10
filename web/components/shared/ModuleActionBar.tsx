@@ -14,7 +14,11 @@ import { escapeCsvCell } from "@/lib/utils/escapeCsvCell";
 //   RUN     → reloads page (or onRun callback)
 //   PDF     → window.print() (browser saves as PDF)
 //   REFRESH → window.location.reload()
-//   +ADD    → fires CustomEvent("hawkeye:add") + shows brief toast (or onAdd callback)
+//   +ADD    → onAdd callback if provided; otherwise fires a cancelable
+//             CustomEvent("hawkeye:add") that any mounted component can claim
+//             via useHawkeyeAdd() (lib/client/use-hawkeye-add.ts). If nothing
+//             claims it, scrolls to and focuses the first form field on the
+//             page; if the page has no form, says so honestly.
 //   SYNC    → window.location.reload()
 //   ASANA   → POST /api/module-report
 
@@ -34,6 +38,22 @@ function extractTableAsCsv(): string {
     rows.push(cells.join(","));
   }
   return rows.join("\n");
+}
+
+// First visible, editable form field inside the page content — used as the
+// +ADD fallback target on pages whose "form" is the page itself (lookup
+// tools, wizards, inline row-adders).
+function findFirstFormField(): HTMLElement | null {
+  const root = document.querySelector("main") ?? document.body;
+  const candidates = root.querySelectorAll<HTMLElement>(
+    'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled])',
+  );
+  for (const el of Array.from(candidates)) {
+    if (el.closest("header, nav")) continue;
+    if (el.offsetParent === null) continue; // display:none / hidden ancestor
+    return el;
+  }
+  return null;
 }
 
 function downloadCsv(csv: string, filename: string) {
@@ -155,11 +175,24 @@ export function ModuleActionBar({
         if (onSync) { onSync(); showToast("Synced ✓"); return; }
         window.location.reload();
         return;
-      case "add":
+      case "add": {
         if (onAdd) { onAdd(); return; }
-        window.dispatchEvent(new CustomEvent("hawkeye:add", { bubbles: true }));
-        showToast("Use the form on this page to add a new record");
+        // dispatchEvent returns false when a listener called preventDefault()
+        // — i.e. a component on the page claimed the add action.
+        const claimed = !window.dispatchEvent(
+          new CustomEvent("hawkeye:add", { bubbles: true, cancelable: true }),
+        );
+        if (claimed) { showToast("Add form opened"); return; }
+        const field = findFirstFormField();
+        if (field) {
+          field.scrollIntoView({ behavior: "smooth", block: "center" });
+          field.focus({ preventScroll: true });
+          showToast("Jumped to this page's form");
+        } else {
+          showToast("This page has no add form");
+        }
         return;
+      }
     }
   };
 

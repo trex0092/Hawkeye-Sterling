@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
 import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
 
@@ -496,6 +497,7 @@ function ModelsTab() {
   const [overlay, setOverlay] = useState<ModelsOverlay>({ deletedIds: [], customModels: [] });
   const [showForm, setShowForm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  useHawkeyeAdd(() => setShowForm(true));
 
   useEffect(() => {
     setOverlay(loadModelsOverlay());
@@ -709,6 +711,7 @@ function IncidentsTab() {
   });
   const [showForm, setShowForm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  useHawkeyeAdd(() => setShowForm(true));
 
   useEffect(() => {
     setOverlay(loadIncidentsOverlay());
