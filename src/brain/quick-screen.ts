@@ -4,7 +4,8 @@
 // list. Designed for low-latency UI callers: no I/O, no network, no stubs —
 // callers own candidate acquisition (DB, file, API) and pass the rows in.
 
-import { matchEnsemble, type MatchingMethod } from './matching.js';
+import { matchEnsemble, effectiveTokenCount, type MatchingMethod } from './matching.js';
+import { fpTriageConfig } from './fp-triage-config.js';
 import {
   enrichHitWithDisambiguation,
   clusterLookalikes,
@@ -32,6 +33,10 @@ export interface QuickScreenSubject {
   passportNumber?: string;
   // Registration number for organisations (trade licence, company reg, etc.)
   registrationNumber?: string;
+  // Set by callers that have assessed name frequency (assessCommonName).
+  // Common-name hits with zero positive discriminators are capped at MEDIUM
+  // severity (never dismissed) — FATF R.10-safe FP attenuation.
+  commonName?: boolean;
 }
 
 export interface QuickScreenCandidate {
@@ -124,6 +129,15 @@ export interface QuickScreenHit {
   // tagged so the UI can collapse them; 'flagged' hits appear normally but carry
   // the flag label. Absent = standard hit.
   autoResolution?: 'auto-dismissed' | 'flagged';
+  // Structured FP reason code (FP_01..FP_09) for the rule that resolved this
+  // hit — required for FDL 10/2025 Art.24 queryable audit trail.
+  autoResolutionReasonCode?: string;
+  // Human-readable label for the resolving rule.
+  autoResolutionReason?: string;
+  // Absolute DOB year difference when both sides carry a parseable DOB.
+  // Drives the minDobYearDelta auto-resolve guard (Hijri/Gregorian conversion
+  // noise stays below the dismissal floor).
+  dobYearDelta?: number;
 }
 
 // Auto-resolve rules reduce manual review load for low-confidence hits.
@@ -134,11 +148,16 @@ export interface AutoResolveRule {
   listIdPattern?: string | RegExp; // match listId against this pattern (string = exact prefix)
   entityTypes?: EntityType[];      // apply only when subject.entityType is in this set
   maxBaseScore?: number;           // only apply when baseScore is at or below this value
+  maxAdjScore?: number;            // only apply when adjusted score is at or below this value
   requireDobConflict?: boolean;    // only apply when dobMatch === 'conflict'
+  minDobYearDelta?: number;        // only apply when the DOB year gap is at least this many years
   requireNationalityConflict?: boolean; // only apply when nationalityMatch === false
   requireNationalIdConflict?: boolean;  // only apply when nationalIdMatch === false
   requireEntityMismatch?: boolean; // only apply when entityTypeMismatch === true
+  requireFalsePositiveFlag?: boolean;   // only apply when falsePositiveFlag === 'likely_false_positive'
   action: 'auto-dismissed' | 'flagged';
+  reasonCode?: string;             // structured FP reason code (FP_01..FP_09)
+  reasonLabel?: string;            // human-readable rule description
 }
 
 export interface QuickScreenOptions {
@@ -149,8 +168,15 @@ export interface QuickScreenOptions {
   // Auto-resolve rules evaluated against each hit after scoring.
   // Pre-built profiles: 'conservative' | 'standard' | 'strict'.
   // 'conservative' = dismiss DOB conflicts on informational lists only.
-  // 'standard'     = dismiss DOB/nationality conflicts on all lists below 0.90 base.
+  // 'standard'     = deterministic FP triage mirroring the smart-disambiguate
+  //                  LLM rules: ID conflict, DOB+nationality double conflict,
+  //                  DOB conflict ≥ HAWKEYE_FP_DOB_DISMISS_MIN_YEARS, and
+  //                  entity-type mismatch below 0.90 dismiss on non-critical
+  //                  lists; the same conflicts on critical lists only flag.
   // 'strict'       = dismiss any conflict (DOB OR nationality) on non-critical lists.
+  // When UNDEFINED, the HAWKEYE_FP_AUTO_RESOLVE_PROFILE env profile applies
+  // (default 'standard'). Pass [] or set the profile to 'off' for legacy
+  // no-triage behaviour.
   autoResolveRules?: AutoResolveRule[] | 'conservative' | 'standard' | 'strict';
   clock?: () => number;
   now?: () => string;
@@ -184,6 +210,10 @@ export interface QuickScreenResult {
     topScore: number;                // 0..100
     weight: number;                  // list regulatory weight
   }>;
+  // FP triage transparency — counts over the returned hits. Audit-chain
+  // consumers persist these so dismissal volume is queryable per screening.
+  autoDismissedCount?: number;
+  fpReasonBreakdown?: Record<string, number>; // reasonCode → dismissed/flagged hit count
 }
 
 const DEFAULT_THRESHOLD = 0.82;
@@ -195,46 +225,146 @@ const CRITICAL_LIST_IDS = new Set([
 ]);
 
 
-const BUILTIN_PROFILES: Record<string, AutoResolveRule[]> = {
-  conservative: [
-    // Only dismiss DOB conflicts on informational lists with low base score
-    {
-      listIdPattern: /(jp_mof|ca_osfi|au_dfat|ch_seco)/,
-      maxBaseScore: 0.88,
-      requireDobConflict: true,
-      action: 'auto-dismissed',
-    },
-  ],
-  standard: [
-    // Dismiss ID conflicts everywhere except critical lists (guard in applyAutoResolveRule)
-    { requireNationalIdConflict: true, action: 'auto-dismissed' },
-    // Dismiss DOB conflicts on non-critical lists — no maxBaseScore constraint because
-    // a DOB conflict on an exact name match is the most dangerous false positive pattern
-    // (same name, different person). The critical list guard prevents OFAC/UN/UAE dismissal.
-    { requireDobConflict: true, action: 'auto-dismissed' },
-    // Flag DOB conflicts that survive the dismiss rule (i.e., critical list hits)
-    { requireDobConflict: true, action: 'flagged' },
-    // Flag nationality conflicts on lower-confidence hits
-    { requireNationalityConflict: true, maxBaseScore: 0.88, action: 'flagged' },
-  ],
-  strict: [
-    // Dismiss ID conflicts on any non-critical list
-    { requireNationalIdConflict: true, action: 'auto-dismissed' },
-    // Dismiss DOB or nationality conflicts on non-critical lists
-    { requireDobConflict: true, action: 'auto-dismissed' },
-    { requireNationalityConflict: true, maxBaseScore: 0.92, action: 'auto-dismissed' },
-    // Flag entity-type mismatches (always surface for MLRO)
-    { requireEntityMismatch: true, action: 'flagged' },
-    // Flag remaining nationality conflicts on critical lists
-    { requireNationalityConflict: true, action: 'flagged' },
-  ],
-};
+function builtinProfiles(): Record<string, AutoResolveRule[]> {
+  const cfg = fpTriageConfig();
+  return {
+    conservative: [
+      // Only dismiss DOB conflicts on informational lists with low base score
+      {
+        listIdPattern: /(jp_mof|ca_osfi|au_dfat|ch_seco)/,
+        maxBaseScore: 0.88,
+        requireDobConflict: true,
+        minDobYearDelta: cfg.dobDismissMinYears,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_01',
+        reasonLabel: 'Different DOB confirmed (informational list)',
+      },
+    ],
+    // Deterministic mirror of the smart-disambiguate LLM rules (rules 2-4, 9).
+    // Order matters: first matching rule wins. The CRITICAL_LIST_IDS guard in
+    // applyAutoResolveRule makes every 'auto-dismissed' rule fall through to a
+    // 'flagged' rule on critical lists — UN/OFAC/UAE hits are never dismissed.
+    standard: [
+      // LLM rule: ID conflict is definitive identity disproof.
+      {
+        requireNationalIdConflict: true,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_08',
+        reasonLabel: 'ID number conflict confirmed',
+      },
+      // LLM rule 4: DOB conflict + nationality conflict together — the
+      // disambiguation engine sets falsePositiveFlag when baseScore > 0.85
+      // and contradictionScore > 50 (double demographic contradiction).
+      {
+        requireFalsePositiveFlag: true,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_09',
+        reasonLabel: 'Multiple strong identifier conflicts (DOB + nationality)',
+      },
+      // LLM rule 3: DOB year conflict beyond the dismissal floor. The
+      // minDobYearDelta guard keeps Hijri/Gregorian conversion noise (±1-2y)
+      // and approximate list DOBs out of the dismissal path; those smaller
+      // conflicts fall through to the 'flagged' rule below.
+      {
+        requireDobConflict: true,
+        minDobYearDelta: cfg.dobDismissMinYears,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_01',
+        reasonLabel: `Different DOB confirmed (≥${cfg.dobDismissMinYears}y gap)`,
+      },
+      // Entity-type mismatch (individual ↔ organisation) below the dismissal
+      // score ceiling. Vessel↔org pairs never set entityTypeMismatch (their
+      // multiplier is 1.0) so they are exempt by construction.
+      {
+        requireEntityMismatch: true,
+        maxAdjScore: cfg.entityMismatchDismissMaxScore,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_07',
+        reasonLabel: 'Entity type mismatch confirmed',
+      },
+      // Critical-list fallthrough: the same conflicts surface as flagged hits
+      // (reviewable, never dismissed).
+      {
+        requireNationalIdConflict: true,
+        action: 'flagged',
+        reasonCode: 'FP_08',
+        reasonLabel: 'ID conflict on critical list — review required',
+      },
+      {
+        requireDobConflict: true,
+        action: 'flagged',
+        reasonCode: 'FP_01',
+        reasonLabel: 'DOB conflict — review required',
+      },
+      {
+        requireEntityMismatch: true,
+        action: 'flagged',
+        reasonCode: 'FP_07',
+        reasonLabel: 'Entity type mismatch — review required',
+      },
+      // Nationality conflict alone NEVER dismisses (FATF R.10 bias safety:
+      // nationality-keyed dismissal could skew biasRatio by script origin).
+      {
+        requireNationalityConflict: true,
+        action: 'flagged',
+        reasonCode: 'FP_02',
+        reasonLabel: 'Nationality conflict — review required',
+      },
+    ],
+    strict: [
+      {
+        requireNationalIdConflict: true,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_08',
+        reasonLabel: 'ID number conflict confirmed',
+      },
+      {
+        requireFalsePositiveFlag: true,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_09',
+        reasonLabel: 'Multiple strong identifier conflicts (DOB + nationality)',
+      },
+      {
+        requireDobConflict: true,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_01',
+        reasonLabel: 'Different DOB confirmed',
+      },
+      {
+        requireNationalityConflict: true,
+        maxBaseScore: 0.92,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_02',
+        reasonLabel: 'Different nationality confirmed',
+      },
+      {
+        requireEntityMismatch: true,
+        maxAdjScore: cfg.entityMismatchDismissMaxScore,
+        action: 'auto-dismissed',
+        reasonCode: 'FP_07',
+        reasonLabel: 'Entity type mismatch confirmed',
+      },
+      // Flag entity-type mismatches that survive (critical lists / high score)
+      { requireEntityMismatch: true, action: 'flagged', reasonCode: 'FP_07', reasonLabel: 'Entity type mismatch — review required' },
+      // Flag remaining conflicts on critical lists
+      { requireDobConflict: true, action: 'flagged', reasonCode: 'FP_01', reasonLabel: 'DOB conflict — review required' },
+      { requireNationalityConflict: true, action: 'flagged', reasonCode: 'FP_02', reasonLabel: 'Nationality conflict — review required' },
+    ],
+  };
+}
 
 function resolveAutoRules(
   opt: AutoResolveRule[] | 'conservative' | 'standard' | 'strict' | undefined,
 ): AutoResolveRule[] {
-  if (!opt) return [];
-  if (typeof opt === 'string') return BUILTIN_PROFILES[opt] ?? [];
+  // Undefined → apply the env-configured default profile (FP-60 triage).
+  // Callers that explicitly pass [] (or set HAWKEYE_FP_AUTO_RESOLVE_PROFILE=off
+  // / HAWKEYE_FP_TRIAGE_ENABLED=false) get legacy no-triage behaviour.
+  if (opt === undefined) {
+    const cfg = fpTriageConfig();
+    if (!cfg.enabled || cfg.profile === 'off') return [];
+    return builtinProfiles()[cfg.profile] ?? [];
+  }
+  if (typeof opt === 'string') return builtinProfiles()[opt] ?? [];
   return opt;
 }
 
@@ -252,10 +382,13 @@ function applyAutoResolveRule(
   }
   if (rule.entityTypes && subject.entityType && !rule.entityTypes.includes(subject.entityType)) return false;
   if (rule.maxBaseScore !== undefined && hit.baseScore > rule.maxBaseScore) return false;
+  if (rule.maxAdjScore !== undefined && hit.score > rule.maxAdjScore) return false;
   if (rule.requireDobConflict && hit.dobMatch !== 'conflict') return false;
+  if (rule.minDobYearDelta !== undefined && (hit.dobYearDelta === undefined || hit.dobYearDelta < rule.minDobYearDelta)) return false;
   if (rule.requireNationalityConflict && hit.nationalityMatch !== false) return false;
   if (rule.requireNationalIdConflict && hit.nationalIdMatch !== false) return false;
   if (rule.requireEntityMismatch && !hit.entityTypeMismatch) return false;
+  if (rule.requireFalsePositiveFlag && hit.falsePositiveFlag !== 'likely_false_positive') return false;
   return true;
 }
 
@@ -419,11 +552,22 @@ function parseDobParts(raw: string): DobParts | null {
   return null;
 }
 
-function matchDOB(subjectDob: string, candidateDob: string): { match: DobMatch; boost: number } {
+function matchDOB(subjectDob: string, candidateDob: string): { match: DobMatch; boost: number; yearDelta?: number } {
   const sp = parseDobParts(subjectDob);
   const cp = parseDobParts(candidateDob);
   if (!sp || !cp) return { match: 'none', boost: 0 };
-  if (sp.y !== cp.y) return { match: 'conflict', boost: -0.20 };
+  if (sp.y !== cp.y) {
+    const yearDelta = Math.abs(sp.y - cp.y);
+    // Hijri/Gregorian conversions and approximate list DOBs commonly disagree
+    // by a year — within the tolerance band the delta is neither confirmation
+    // nor conflict (no boost, no penalty, never dismissable). Gated by the
+    // master switch so HAWKEYE_FP_TRIAGE_ENABLED=false restores legacy scoring.
+    const cfg = fpTriageConfig();
+    if (cfg.enabled && yearDelta <= cfg.dobConflictToleranceYears) {
+      return { match: 'none', boost: 0, yearDelta };
+    }
+    return { match: 'conflict', boost: -0.20, yearDelta };
+  }
   // Years agree — check month+day for stronger confirmation
   if (sp.m !== undefined && cp.m !== undefined && sp.m === cp.m &&
       sp.d !== undefined && cp.d !== undefined && sp.d === cp.d) {
@@ -478,8 +622,11 @@ export function quickScreen(
   const now = opts.now ?? (() => new Date().toISOString());
   const breakdown = opts.includeScoreBreakdown ?? false;
   const autoRules = resolveAutoRules(opts.autoResolveRules);
-  // Pre-normalise per-list thresholds so every lookup is O(1)
-  const listThresholds = opts.listThresholds ?? {};
+  // Pre-normalise per-list thresholds so every lookup is O(1).
+  // When the caller supplies none, the HAWKEYE_LIST_THRESHOLDS env defaults
+  // apply (operator-tuned per-list noise floors, e.g. informational lists
+  // at 0.85). Ships empty by default.
+  const listThresholds = opts.listThresholds ?? fpTriageConfig().listThresholds;
 
   const start = clock();
   const subjectNames = [subject.name, ...(subject.aliases ?? [])].filter((n) => n && n.trim());
@@ -494,6 +641,7 @@ export function quickScreen(
     let bestScore = 0;
     let bestMethod: MatchingMethod = 'exact';
     let bestAlias: string | undefined;
+    let bestSubjectName = subject.name;
     let phonetic = false;
     let bestEns: ReturnType<typeof matchEnsemble> | undefined;
 
@@ -504,6 +652,7 @@ export function quickScreen(
           bestScore = ens.best.score;
           bestMethod = ens.best.method;
           bestAlias = cn === cand.name ? undefined : cn;
+          bestSubjectName = sn;
           // Accumulate phonetic agreement across comparisons: once a phonetically
           // related pair is found, retain that signal even if the final best-scoring
           // pair (e.g. an initials expansion) doesn't itself pass Soundex/Metaphone.
@@ -553,9 +702,11 @@ export function quickScreen(
     }
 
     // DOB discriminator — most important demographic discriminator
+    let dobYearDelta: number | undefined;
     if (subject.dateOfBirth && cand.dateOfBirth) {
-      const { match, boost } = matchDOB(subject.dateOfBirth, cand.dateOfBirth);
+      const { match, boost, yearDelta } = matchDOB(subject.dateOfBirth, cand.dateOfBirth);
       dobMatchResult = match;
+      dobYearDelta = yearDelta;
       adjScore = Math.min(1, Math.max(0, adjScore + boost));
     }
 
@@ -619,6 +770,40 @@ export function quickScreen(
           hit.reason = `entity-association(×${multiplier.toFixed(2)}) · ${hit.reason}`;
         }
       }
+      if (dobYearDelta !== undefined) hit.dobYearDelta = dobYearDelta;
+
+      // ── FP-60 score caps ────────────────────────────────────────────────
+      // Applied AFTER threshold filtering so the hit survives for review at
+      // MEDIUM severity instead of disappearing — attenuation, not suppression.
+      const triage = fpTriageConfig();
+      const hasPositiveDiscriminator =
+        dobMatchResult === 'exact' || dobMatchResult === 'year' ||
+        nationalityMatch === true || nationalIdMatch === true;
+      if (triage.enabled && !hasPositiveDiscriminator) {
+        // Weak-fuzzy single-token guard: subset/token matches driven by one
+        // effective token ("Ahmad" ⊂ "Ahmad Al-Rashidi" scores 1.0 on
+        // partial_token_set) cannot rank above MEDIUM without corroboration.
+        const isTokenSubsetMethod =
+          bestMethod === 'partial_token_set' || bestMethod === 'fuzzball_partial' || bestMethod === 'token_set';
+        if (isTokenSubsetMethod && hit.score > triage.singleTokenScoreCap) {
+          const matchedCandName = hit.matchedAlias ?? cand.name;
+          const shorterTokens = Math.min(
+            effectiveTokenCount(bestSubjectName),
+            effectiveTokenCount(matchedCandName),
+          );
+          if (shorterTokens === 1) {
+            hit.score = triage.singleTokenScoreCap;
+            hit.reason = `single-token-overlap(capped at ${triage.singleTokenScoreCap}) · ${hit.reason}`;
+          }
+        }
+        // Common-name corroboration cap: high-frequency names with zero
+        // positive discriminators max out at MEDIUM (0.84 → severity band
+        // 70-84). Never dismissed — the hit still surfaces and alerts.
+        if (triage.commonNameCapEnabled && subject.commonName === true && hit.score > 0.84) {
+          hit.score = 0.84;
+          hit.reason = `common-name-uncorroborated(capped at 0.84) · ${hit.reason}`;
+        }
+      }
 
       // D2: Secondary identifier disambiguation gate before HIGH severity.
       // If secondary identifiers are available but CONFLICT, downgrade the
@@ -670,6 +855,8 @@ export function quickScreen(
       for (const rule of autoRules) {
         if (applyAutoResolveRule(rule, hit, subject)) {
           hit.autoResolution = rule.action;
+          if (rule.reasonCode !== undefined) hit.autoResolutionReasonCode = rule.reasonCode;
+          if (rule.reasonLabel !== undefined) hit.autoResolutionReason = rule.reasonLabel;
           break;
         }
       }
@@ -773,6 +960,17 @@ export function quickScreen(
     (h) => (h as QuickScreenHit & { falsePositiveFlag?: string }).falsePositiveFlag === 'likely_false_positive',
   ).length;
 
+  // FP-60 triage counters — persisted to the audit chain by callers so
+  // dismissal volume and reason mix are queryable per screening.
+  let autoDismissedCount = 0;
+  const fpReasonBreakdown: Record<string, number> = {};
+  for (const h of finalHits) {
+    if (h.autoResolution === 'auto-dismissed') autoDismissedCount++;
+    if (h.autoResolution && h.autoResolutionReasonCode) {
+      fpReasonBreakdown[h.autoResolutionReasonCode] = (fpReasonBreakdown[h.autoResolutionReasonCode] ?? 0) + 1;
+    }
+  }
+
   return {
     subject,
     hits: finalHits,
@@ -790,6 +988,8 @@ export function quickScreen(
     ...(clipped.length > 0 ? { listBreakdown } : {}),
     ...(lookalikeClusters ? { lookalikeClusters } : {}),
     ...(likelyFalsePositiveCount > 0 ? { likelyFalsePositiveCount } : {}),
+    ...(autoDismissedCount > 0 ? { autoDismissedCount } : {}),
+    ...(Object.keys(fpReasonBreakdown).length > 0 ? { fpReasonBreakdown } : {}),
   };
 }
 

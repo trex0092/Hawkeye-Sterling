@@ -39,6 +39,7 @@ import { handlePostScreenResult } from "@/lib/server/post-screen-handler";
 import { scoreAndFilterArticles, aggregateMediaSeverity } from "@/lib/server/adverse-media-scorer";
 import { getScreeningThresholds } from "@/lib/server/screening-threshold-config";
 import { SCREENING_BUDGETS } from "@/lib/server/screening-budgets";
+import { fpTriageConfig } from "@brain/fp-triage-config.js";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -412,6 +413,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   screeningTrace["sourcesQueried"] = msResult.sourcesQueried;
   screeningTrace["listsChecked"]   = listsLoaded;
   screeningTrace["hitsBeforeAdverseMedia"] = result.hits.length;
+  // FP-60 triage explainability (FDL 10/2025 Art.18) — which profile ran and
+  // how many hits it auto-dismissed, with the structured reason mix.
+  screeningTrace["fpTriageProfile"]    = fpTriageConfig().enabled ? fpTriageConfig().profile : "off";
+  screeningTrace["autoDismissedCount"] = result.autoDismissedCount ?? 0;
+  if (result.fpReasonBreakdown) screeningTrace["fpReasonBreakdown"] = result.fpReasonBreakdown;
 
   // ── Adverse media relevance scoring + deduplication ────────────────────────
   // Raw articles from LLM/news adapters are scored by relevance to the subject,
@@ -443,6 +449,8 @@ export async function POST(req: Request): Promise<NextResponse> {
         laneHealth:          msResult.laneHealth,
         adverseMediaFound:   scoredArticles.length > 0,
         adverseMediaSeverity: mediaSeverity,
+        autoDismissedCount:  result.autoDismissedCount ?? 0,
+        ...(result.fpReasonBreakdown ? { fpReasonBreakdown: result.fpReasonBreakdown } : {}),
         screeningTrace,
       },
       tenant,

@@ -16,8 +16,9 @@
 //   TRL — Transliterations: must match across Arabic/CJK/Cyrillic variants
 //   FPT — False-positive traps: common names, partial overlaps, should NOT match
 
-import { describe, expect, it } from 'vitest';
-import { type QuickScreenCandidate, quickScreen } from '../quick-screen.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { type QuickScreenCandidate, type QuickScreenSubject, quickScreen } from '../quick-screen.js';
+import { resetFpTriageConfigForTests } from '../fp-triage-config.js';
 
 const MATCH_THRESHOLD = 0.75;   // score above which a hit is considered a match
 const BLOCK_THRESHOLD = 0.85;   // score below which FP traps must stay
@@ -262,6 +263,302 @@ describe("Screening benchmark — Empty corpus guard", () => {
     expect(result.hits.length).toBe(0);
     expect(result.severity).toBe("clear");
     expect(result.topScore).toBe(0);
+  });
+});
+
+// ── FP-60: False-positive reduction benchmark ─────────────────────────────────
+// Labeled corpus of known FALSE-POSITIVE pairs (same/similar name, explicitly
+// contradicting identity data) and known TRUE-MATCH pairs. Measures the FP
+// surfacing rate with deterministic triage OFF (legacy baseline) vs ON
+// (default 'standard' profile) and asserts:
+//   1. true-match recall stays 100% in BOTH arms (hard gate — a triage layer
+//      that drops a single true sanctions match is a regulatory breach);
+//   2. surfaced false positives drop by >= 60% vs baseline;
+//   3. critical-list hits are NEVER auto-dismissed in any arm;
+//   4. every dismissal carries a structured FP reason code;
+//   5. Arabic-script FP pairs are dismissed at the same rate as their Latin
+//      counterparts (FATF R.10 — the suppression layer itself must be
+//      non-discriminatory).
+
+interface LabeledPair {
+  id: string;
+  subject: QuickScreenSubject;
+  candidate: QuickScreenCandidate;
+  expectedReasonCode?: string;  // FP pairs that must be auto-dismissed (treated arm)
+  script?: 'latin' | 'arabic';
+}
+
+// False positives: name matches but the person/entity is demonstrably different.
+const FP_PAIRS: LabeledPair[] = [
+  // ── DOB + nationality double conflict → FP_09 (cross-region nationalities) ──
+  { id: 'fp09-1', subject: { name: 'Dmitri Sokolov', dateOfBirth: '1962-04-11', nationality: 'MX' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP09-1', name: 'Dmitri Sokolov', dateOfBirth: '1975-09-30', nationality: 'RU' },
+    expectedReasonCode: 'FP_09', script: 'latin' },
+  { id: 'fp09-2', subject: { name: 'Carlos Mendoza Rivera', dateOfBirth: '1988-01-20', nationality: 'BR' },
+    candidate: { listId: 'uk_ofsi', listRef: 'FP09-2', name: 'Carlos Mendoza Rivera', dateOfBirth: '1955-06-02', nationality: 'KP' },
+    expectedReasonCode: 'FP_09', script: 'latin' },
+  { id: 'fp09-3', subject: { name: 'Pavel Antonov', dateOfBirth: '1990-12-05', nationality: 'AR' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP09-3', name: 'Pavel Antonov', dateOfBirth: '1948-03-17', nationality: 'BY' },
+    expectedReasonCode: 'FP_09', script: 'latin' },
+  { id: 'fp09-4', subject: { name: 'Tariq Mansour', dateOfBirth: '1995-07-07', nationality: 'CA' },
+    candidate: { listId: 'uk_ofsi', listRef: 'FP09-4', name: 'Tariq Mansour', dateOfBirth: '1960-02-28', nationality: 'SY' },
+    expectedReasonCode: 'FP_09', script: 'latin' },
+  { id: 'fp09-5', subject: { name: 'Igor Vasiliev', dateOfBirth: '1983-10-14', nationality: 'AU' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP09-5', name: 'Igor Vasiliev', dateOfBirth: '1969-05-23', nationality: 'RU' },
+    expectedReasonCode: 'FP_09', script: 'latin' },
+
+  // ── DOB conflict ≥3 years (non-critical lists) → FP_01 ──────────────────────
+  { id: 'fp01-1', subject: { name: 'Hassan Al-Najjar', dateOfBirth: '1991-08-19' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP01-1', name: 'Hassan Al-Najjar', dateOfBirth: '1958-11-02' },
+    expectedReasonCode: 'FP_01', script: 'latin' },
+  { id: 'fp01-2', subject: { name: 'Omar Khalil Saad', dateOfBirth: '1987-03-09' },
+    candidate: { listId: 'jp_mof', listRef: 'FP01-2', name: 'Omar Khalil Saad', dateOfBirth: '1965-12-25' },
+    expectedReasonCode: 'FP_01', script: 'latin' },
+  { id: 'fp01-3', subject: { name: 'Viktor Baranov', dateOfBirth: '1979-06-30' },
+    candidate: { listId: 'ca_osfi', listRef: 'FP01-3', name: 'Viktor Baranov', dateOfBirth: '1952-01-15' },
+    expectedReasonCode: 'FP_01', script: 'latin' },
+  { id: 'fp01-4', subject: { name: 'Samir Haddad', dateOfBirth: '1993-04-04' },
+    candidate: { listId: 'au_dfat', listRef: 'FP01-4', name: 'Samir Haddad', dateOfBirth: '1971-09-09' },
+    expectedReasonCode: 'FP_01', script: 'latin' },
+  { id: 'fp01-5', subject: { name: 'Nikolai Fedorov', dateOfBirth: '1984-02-12' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP01-5', name: 'Nikolai Fedorov', dateOfBirth: '1959-07-21' },
+    expectedReasonCode: 'FP_01', script: 'latin' },
+
+  // ── National ID conflict → FP_08 ─────────────────────────────────────────────
+  { id: 'fp08-1', subject: { name: 'Khalid Mansoor', nationalId: '784-1985-1234567-1' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP08-1', name: 'Khalid Mansoor', nationalId: '784-1962-7654321-9' },
+    expectedReasonCode: 'FP_08', script: 'latin' },
+  { id: 'fp08-2', subject: { name: 'Yusuf Rahman', passportNumber: 'N4821736' },
+    candidate: { listId: 'uk_ofsi', listRef: 'FP08-2', name: 'Yusuf Rahman', passportNumber: 'P9173824' },
+    expectedReasonCode: 'FP_08', script: 'latin' },
+  { id: 'fp08-3', subject: { name: 'Andrei Morozov', nationalId: 'RU99887766' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP08-3', name: 'Andrei Morozov', nationalId: 'RU11223344' },
+    expectedReasonCode: 'FP_08', script: 'latin' },
+
+  // ── Entity-type mismatch below 0.90 → FP_07 (individual ↔ vessel ×0.75) ─────
+  { id: 'fp07-1', subject: { name: 'Golden Horizon', entityType: 'individual' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP07-1', name: 'Golden Horizon', entityType: 'vessel' },
+    expectedReasonCode: 'FP_07', script: 'latin' },
+  { id: 'fp07-2', subject: { name: 'Sea Pearl', entityType: 'individual' },
+    candidate: { listId: 'uk_ofsi', listRef: 'FP07-2', name: 'Sea Pearl', entityType: 'vessel' },
+    expectedReasonCode: 'FP_07', script: 'latin' },
+  { id: 'fp07-3', subject: { name: 'Blue Falcon', entityType: 'aircraft' },
+    candidate: { listId: 'eu_fsf', listRef: 'FP07-3', name: 'Blue Falcon', entityType: 'individual' },
+    expectedReasonCode: 'FP_07', script: 'latin' },
+
+  // ── Arabic-script counterparts (bias parity — same conflict patterns) ───────
+  { id: 'fp-ar-1', subject: { name: 'حسن النجار', dateOfBirth: '1991-08-19' },
+    candidate: { listId: 'eu_fsf', listRef: 'FPAR-1', name: 'حسن النجار', dateOfBirth: '1958-11-02' },
+    expectedReasonCode: 'FP_01', script: 'arabic' },
+  { id: 'fp-ar-2', subject: { name: 'عمر خليل سعد', dateOfBirth: '1987-03-09' },
+    candidate: { listId: 'jp_mof', listRef: 'FPAR-2', name: 'عمر خليل سعد', dateOfBirth: '1965-12-25' },
+    expectedReasonCode: 'FP_01', script: 'arabic' },
+  { id: 'fp-ar-3', subject: { name: 'طارق منصور', dateOfBirth: '1995-07-07', nationality: 'CA' },
+    candidate: { listId: 'uk_ofsi', listRef: 'FPAR-3', name: 'طارق منصور', dateOfBirth: '1960-02-28', nationality: 'SY' },
+    expectedReasonCode: 'FP_09', script: 'arabic' },
+  { id: 'fp-ar-4', subject: { name: 'خالد منصور', nationalId: '784-1985-1234567-1' },
+    candidate: { listId: 'eu_fsf', listRef: 'FPAR-4', name: 'خالد منصور', nationalId: '784-1962-7654321-9' },
+    expectedReasonCode: 'FP_08', script: 'arabic' },
+  { id: 'fp-ar-5', subject: { name: 'سمير حداد', dateOfBirth: '1993-04-04' },
+    candidate: { listId: 'au_dfat', listRef: 'FPAR-5', name: 'سمير حداد', dateOfBirth: '1971-09-09' },
+    expectedReasonCode: 'FP_01', script: 'arabic' },
+];
+
+// True matches: must remain review-eligible in BOTH arms — never dismissed.
+const TP_PAIRS: LabeledPair[] = [
+  // Exact match, no discriminators — most common true-hit shape.
+  { id: 'tp-1', subject: { name: 'Abdul Rahman Al-Harbi' },
+    candidate: { listId: 'un_1267', listRef: 'TP-1', name: 'Abdul Rahman Al-Harbi' } },
+  // DOB delta of exactly 1 year (Hijri/Gregorian conversion) — MUST NOT dismiss.
+  { id: 'tp-2', subject: { name: 'Mahmoud Al-Sayed', dateOfBirth: '1980-05-10' },
+    candidate: { listId: 'eu_fsf', listRef: 'TP-2', name: 'Mahmoud Al-Sayed', dateOfBirth: '1981-05-10' } },
+  // DOB conflict on a CRITICAL list — flagged for review, NEVER dismissed.
+  { id: 'tp-3', subject: { name: 'Saleh Al-Qahtani', dateOfBirth: '1990-01-01' },
+    candidate: { listId: 'un_1267', listRef: 'TP-3', name: 'Saleh Al-Qahtani', dateOfBirth: '1955-01-01' } },
+  { id: 'tp-4', subject: { name: 'Ibrahim Al-Asiri', nationalId: 'SA12345678' },
+    candidate: { listId: 'ofac_sdn', listRef: 'TP-4', name: 'Ibrahim Al-Asiri', nationalId: 'SA87654321' } },
+  // Transliterated matches with no DOB on either side.
+  { id: 'tp-5', subject: { name: 'فيصل المطيري' },
+    candidate: { listId: 'uae_eocn', listRef: 'TP-5', name: 'Faisal Al-Mutairi', aliases: ['فيصل المطيري'] } },
+  { id: 'tp-6', subject: { name: 'Sergei Volkov' },
+    candidate: { listId: 'eu_fsf', listRef: 'TP-6', name: 'Sergei Volkov' } },
+  // Alias-only match.
+  { id: 'tp-7', subject: { name: 'Abu Jaber' },
+    candidate: { listId: 'un_consolidated', listRef: 'TP-7', name: 'Jaber Al-Jaber', aliases: ['Abu Jaber'] } },
+  // Candidate DOB absent — absence is NEVER a conflict.
+  { id: 'tp-8', subject: { name: 'Walid Al-Shammari', dateOfBirth: '1972-09-13' },
+    candidate: { listId: 'uae_ltl', listRef: 'TP-8', name: 'Walid Al-Shammari' } },
+  // Subject nationality absent on candidate side.
+  { id: 'tp-9', subject: { name: 'Rashid Al-Dosari', nationality: 'AE' },
+    candidate: { listId: 'uae_eocn', listRef: 'TP-9', name: 'Rashid Al-Dosari' } },
+  // DOB exact corroboration.
+  { id: 'tp-10', subject: { name: 'Anton Kuznetsov', dateOfBirth: '1968-03-22' },
+    candidate: { listId: 'eu_fsf', listRef: 'TP-10', name: 'Anton Kuznetsov', dateOfBirth: '1968-03-22' } },
+  // National ID exact corroboration.
+  { id: 'tp-11', subject: { name: 'Majid Al-Otaibi', nationalId: '784199012345678' },
+    candidate: { listId: 'ofac_sdn', listRef: 'TP-11', name: 'Majid Al-Otaibi', nationalId: '784-1990-1234567-8' } },
+  // Nationality conflict ALONE — flag-only by design (bias safety), never dismissed.
+  { id: 'tp-12', subject: { name: 'Boris Lebedev', nationality: 'DE' },
+    candidate: { listId: 'eu_fsf', listRef: 'TP-12', name: 'Boris Lebedev', nationality: 'RU' } },
+  // Common name WITH corroborating DOB — cap must not apply.
+  { id: 'tp-13', subject: { name: 'Mohamed Ali', commonName: true, dateOfBirth: '1975-06-15' },
+    candidate: { listId: 'un_consolidated', listRef: 'TP-13', name: 'Mohamed Ali', dateOfBirth: '1975-06-15' } },
+  // Hyphen/spacing variation.
+  { id: 'tp-14', subject: { name: 'Ahmad AlRashidi' },
+    candidate: { listId: 'ofac_sdn', listRef: 'TP-14', name: 'Ahmad Al-Rashidi' } },
+  // Cyrillic transliteration pair.
+  { id: 'tp-15', subject: { name: 'Сергей Волков' },
+    candidate: { listId: 'eu_fsf', listRef: 'TP-15', name: 'Sergei Volkov' } },
+];
+
+const FP_BENCH_THRESHOLD = 0.6; // identical in both arms — translit TPs must clear it
+
+interface FpBenchMeasure {
+  fpSurfaced: number;
+  tpRecalled: number;
+  dismissedByScript: Record<string, { dismissed: number; total: number }>;
+  reasonCodes: Map<string, string | undefined>;
+  criticalDismissals: number;
+}
+
+function measureFpBenchmark(baseline: boolean): FpBenchMeasure {
+  // Baseline pins legacy behaviour via explicit empty rule set; treated arm
+  // passes undefined so the env-default 'standard' profile applies.
+  const opts = baseline
+    ? { scoreThreshold: FP_BENCH_THRESHOLD, autoResolveRules: [] as never[] }
+    : { scoreThreshold: FP_BENCH_THRESHOLD };
+
+  const CRITICAL = new Set(['un_consolidated', 'un_1267', 'ofac_sdn', 'uae_eocn', 'uae_ltl']);
+  const m: FpBenchMeasure = {
+    fpSurfaced: 0, tpRecalled: 0,
+    dismissedByScript: { latin: { dismissed: 0, total: 0 }, arabic: { dismissed: 0, total: 0 } },
+    reasonCodes: new Map(), criticalDismissals: 0,
+  };
+
+  for (const pair of FP_PAIRS) {
+    const result = quickScreen(pair.subject, [pair.candidate], opts);
+    const surfaced = result.hits.some((h) => h.autoResolution !== 'auto-dismissed');
+    const dismissedHit = result.hits.find((h) => h.autoResolution === 'auto-dismissed');
+    if (surfaced && result.hits.length > 0) m.fpSurfaced++;
+    if (result.hits.length === 0) m.fpSurfaced++; // never happens for this corpus; guard against silent drops
+    const script = pair.script ?? 'latin';
+    m.dismissedByScript[script]!.total++;
+    if (dismissedHit) {
+      m.dismissedByScript[script]!.dismissed++;
+      m.reasonCodes.set(pair.id, dismissedHit.autoResolutionReasonCode);
+      if (CRITICAL.has(dismissedHit.listId)) m.criticalDismissals++;
+    }
+  }
+
+  for (const pair of TP_PAIRS) {
+    const result = quickScreen(pair.subject, [pair.candidate], opts);
+    const recalled = result.hits.some((h) => h.autoResolution !== 'auto-dismissed');
+    if (recalled) m.tpRecalled++;
+    for (const h of result.hits) {
+      if (h.autoResolution === 'auto-dismissed' && CRITICAL.has(h.listId)) m.criticalDismissals++;
+    }
+  }
+  return m;
+}
+
+describe('Screening benchmark — FP-60 false-positive reduction', () => {
+  let baselineMeasure: FpBenchMeasure;
+  let treatedMeasure: FpBenchMeasure;
+
+  beforeAll(() => {
+    // Deterministic env for both arms: triage on, standard profile, defaults.
+    process.env['HAWKEYE_FP_TRIAGE_ENABLED'] = 'true';
+    process.env['HAWKEYE_FP_AUTO_RESOLVE_PROFILE'] = 'standard';
+    delete process.env['HAWKEYE_FP_DOB_DISMISS_MIN_YEARS'];
+    delete process.env['HAWKEYE_FP_DOB_CONFLICT_TOLERANCE_YEARS'];
+    resetFpTriageConfigForTests();
+    baselineMeasure = measureFpBenchmark(true);
+    treatedMeasure  = measureFpBenchmark(false);
+  });
+
+  afterAll(() => {
+    delete process.env['HAWKEYE_FP_TRIAGE_ENABLED'];
+    delete process.env['HAWKEYE_FP_AUTO_RESOLVE_PROFILE'];
+    resetFpTriageConfigForTests();
+  });
+
+  it('HARD GATE: true-match recall is 100% in the treated arm', () => {
+    expect(treatedMeasure.tpRecalled).toBe(TP_PAIRS.length);
+  });
+
+  it('corpus sanity: true-match recall is 100% in the baseline arm', () => {
+    expect(baselineMeasure.tpRecalled).toBe(TP_PAIRS.length);
+  });
+
+  it('corpus sanity: every FP pair surfaces in the baseline arm', () => {
+    expect(baselineMeasure.fpSurfaced).toBe(FP_PAIRS.length);
+  });
+
+  it('false positives surfaced drop by >= 60% vs baseline', () => {
+    const ceiling = Math.floor(baselineMeasure.fpSurfaced * 0.4);
+    expect(treatedMeasure.fpSurfaced).toBeLessThanOrEqual(ceiling);
+  });
+
+  it('critical-list hits are NEVER auto-dismissed in any arm', () => {
+    expect(baselineMeasure.criticalDismissals).toBe(0);
+    expect(treatedMeasure.criticalDismissals).toBe(0);
+  });
+
+  it('every dismissal carries the expected structured FP reason code', () => {
+    for (const pair of FP_PAIRS) {
+      if (!pair.expectedReasonCode) continue;
+      const code = treatedMeasure.reasonCodes.get(pair.id);
+      expect(code, `pair ${pair.id} should be dismissed with ${pair.expectedReasonCode}`).toBe(pair.expectedReasonCode);
+      expect(code).toMatch(/^FP_0[1-9]$/);
+    }
+  });
+
+  it('FATF R.10: Arabic-script FP pairs are dismissed at the same rate as Latin', () => {
+    const latin  = treatedMeasure.dismissedByScript['latin']!;
+    const arabic = treatedMeasure.dismissedByScript['arabic']!;
+    const latinRate  = latin.dismissed / latin.total;
+    const arabicRate = arabic.dismissed / arabic.total;
+    expect(Math.abs(latinRate - arabicRate)).toBeLessThanOrEqual(0.15);
+  });
+
+  it('DOB conflict on a critical list is flagged (reviewable), not dismissed', () => {
+    const tp3 = TP_PAIRS.find((p) => p.id === 'tp-3')!;
+    const result = quickScreen(tp3.subject, [tp3.candidate], { scoreThreshold: FP_BENCH_THRESHOLD });
+    expect(result.hits.length).toBeGreaterThan(0);
+    expect(result.hits[0]!.autoResolution).toBe('flagged');
+  });
+
+  it('common name with zero discriminators is capped at MEDIUM, never dismissed', () => {
+    const result = quickScreen(
+      { name: 'Mohamed Ali', commonName: true },
+      [{ listId: 'eu_fsf', listRef: 'CN-1', name: 'Mohamed Ali' }],
+      { scoreThreshold: FP_BENCH_THRESHOLD },
+    );
+    expect(result.hits.length).toBe(1);
+    expect(result.hits[0]!.autoResolution).not.toBe('auto-dismissed');
+    expect(result.hits[0]!.score).toBeLessThanOrEqual(0.84);
+    expect(result.severity).toBe('medium');
+  });
+
+  it('common name WITH corroborating DOB is not capped', () => {
+    const result = quickScreen(
+      { name: 'Mohamed Ali', commonName: true, dateOfBirth: '1975-06-15' },
+      [{ listId: 'eu_fsf', listRef: 'CN-2', name: 'Mohamed Ali', dateOfBirth: '1975-06-15' }],
+      { scoreThreshold: FP_BENCH_THRESHOLD },
+    );
+    expect(result.hits.length).toBe(1);
+    expect(result.hits[0]!.score).toBeGreaterThan(0.84);
+  });
+
+  it('single-token subset match without corroboration is capped at MEDIUM', () => {
+    const result = quickScreen(
+      { name: 'Ahmad' },
+      [{ listId: 'eu_fsf', listRef: 'ST-1', name: 'Ahmad Al-Rashidi' }],
+      { scoreThreshold: FP_BENCH_THRESHOLD },
+    );
+    expect(result.hits.length).toBe(1);
+    expect(result.hits[0]!.score).toBeLessThanOrEqual(0.74);
+    expect(['medium', 'low']).toContain(result.severity);
   });
 });
 

@@ -8,7 +8,7 @@
 //     subjectName: string,
 //     hitId: string,
 //     resolution: "positive" | "possible" | "false" | "unspecified",
-//     reasonCode?: "FP_01" | "FP_02" | "FP_03" | "FP_04" | "FP_05" | "FP_06",
+//     reasonCode?: "FP_01" | ... | "FP_09" (see fp-reason-codes.ts),
 //                              // REQUIRED when resolution === "false" (J-06 / G-05)
 //     reason?: string,         // free-text, REQUIRED when reasonCode === "FP_06"
 //                              // also REQUIRED when resolution === "unspecified" (I-10)
