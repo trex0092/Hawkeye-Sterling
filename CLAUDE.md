@@ -58,7 +58,11 @@ Operator: enterprise and regulator-grade financial institutions.
 | Four-eyes gate | `web/lib/server/four-eyes-gate.ts` |
 | Compliance charter / system prompt | `src/policy/systemPrompt.ts` |
 | Model router (Claude + Groq) | `src/integrations/model-router.ts` |
-| Eval harness (50 scenarios) | `src/brain/registry/eval-harness.ts` |
+| Eval harness (54 scenarios) | `src/brain/registry/eval-harness.ts` |
+| KRI registry (19 KRIs) | `src/brain/kri-registry.ts` |
+| Risk-appetite registry (25 dimensions) | `src/brain/risk-appetite.ts` |
+| Regulatory obligations register | `src/brain/regulatory-obligations.ts` |
+| Vendor register (code mirror of HS-OPS-003) | `src/brain/vendor-register.ts` |
 | Prompt hash manifest | `scripts/prompt-hash-manifest.json` |
 | Prompt hash validator | `scripts/validate-prompt-hashes.mjs` |
 | Brain integrity check | `scripts/brain-audit.mjs` |
@@ -68,6 +72,11 @@ Operator: enterprise and regulator-grade financial institutions.
 | Incident log | `docs/INCIDENTS.md` |
 | SOC2 mapping | `docs/SOC2.md` |
 | AI governance policy | `docs/governance/AI_GOVERNANCE_POLICY.md` |
+| AI risk register (ISO 42001 A.7.3) | `docs/governance/AI_RISK_REGISTER.md` |
+| Framework traceability matrix | `docs/governance/FRAMEWORK_COVERAGE.md` |
+| Identity/MFA attestation + access reviews | `docs/IDENTITY-ACCESS-ATTESTATION.md` |
+| Pen-test log | `docs/PENTEST-LOG.md` |
+| Inherited platform controls | `docs/INHERITED-CONTROLS.md` |
 | CI pipeline | `.github/workflows/ci.yml` |
 | CodeQL workflow | `.github/workflows/codeql.yml` |
 | SLSA release workflow | `.github/workflows/release.yml` |

@@ -36,6 +36,11 @@ export const KRIS: Kri[] = [
   { id: 'kri_data_quality', label: 'Customer-master data quality', signalId: 's_sys_brain_version', direction: 'higher_better', unit: 'score', band: { green: [95, 100], amber: [90, 95], red: [0, 90] }, appetiteDimension: 'data_quality_score' },
   { id: 'kri_alert_backlog_days', label: 'High-priority alert backlog (days)', signalId: 's_sys_brain_version', direction: 'lower_better', unit: 'days', band: { green: [0, 3], amber: [3, 7], red: [7, Infinity] } },
   { id: 'kri_cahra_without_docs', label: 'CAHRA inputs accepted without OECD docs', signalId: 's_sys_brain_version', direction: 'lower_better', unit: 'count', band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] }, appetiteDimension: 'cahra_supply_chain_exposure' },
+  { id: 'kri_regulatory_obligation_overdue', label: 'Regulatory obligations overdue', signalId: 's_sys_brain_version', direction: 'lower_better', unit: 'count', band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] }, appetiteDimension: 'regulatory_obligation_overdue' },
+  { id: 'kri_vendor_concentration', label: 'Single-vendor function concentration', signalId: 's_sys_brain_version', direction: 'lower_better', unit: '%', band: { green: [0, 20], amber: [20, 50], red: [50, 100] }, appetiteDimension: 'vendor_concentration' },
+  { id: 'kri_privacy_request_overdue', label: 'Privacy requests past statutory window', signalId: 's_sys_brain_version', direction: 'lower_better', unit: 'count', band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] }, appetiteDimension: 'privacy_request_overdue' },
+  { id: 'kri_training_completion', label: 'Staff AML/AI training completion', signalId: 's_sys_brain_version', direction: 'higher_better', unit: '%', band: { green: [98, 100], amber: [90, 98], red: [0, 90] } },
+  { id: 'kri_repeat_control_failures', label: 'Repeat control failures (rolling 12 months)', signalId: 's_sys_brain_version', direction: 'lower_better', unit: 'count', band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] }, appetiteDimension: 'repeat_control_failures' },
 ];
 
 export const KRI_BY_ID: Map<string, Kri> = new Map(KRIS.map((k) => [k.id, k]));

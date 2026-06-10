@@ -309,6 +309,21 @@ All system prompts and prompt templates in the AI pipeline are subject to the fo
 
 **Incident Response:** Any detected prompt injection attempt, charter violation, or hallucination gate alert is logged to the audit chain and treated as at minimum a MEDIUM severity incident.
 
+### 5.6 AI System Decommissioning (ISO/IEC 42001:2023 Annex A.10.5)
+
+Retiring an AI system (HS-001 through HS-005 or any future registered system) is a **Major change** and follows this procedure. Decommissioning triggers include: replacement by a successor system, pilot failure (e.g. HS-004 failing its pilot exit review), withdrawal of an underlying vendor model, or a regulatory prohibition.
+
+**Procedure:**
+
+1. **Proposal and impact assessment.** The Engineering Lead prepares a decommissioning proposal identifying: dependent routes and faculties, downstream consumers of the system's outputs, the successor arrangement (replacement system or documented capability loss), and the effect on AIMS objectives (§1.3).
+2. **Approval.** Major-change sign-off (§5.1): MLRO + Data Science Lead + Engineering Lead + CEO; governance committee ratification. Any decommissioning that reduces human-oversight coverage additionally requires Board notification per the Approval Authority Matrix in `docs/operations/CHANGE_CONTROL_LOG.md` §7.
+3. **Invocation freeze.** New invocations are disabled (route gate or feature flag) before any artefact is removed. The system runs zero-traffic for an observation window of 30 days; the Engineering Lead monitors for residual callers.
+4. **Audit-chain closure entry.** A `model.decommissioned` audit-chain entry is written via `writeAuditChainEntry()` recording: system ID, final version, decommissioning rationale, approval references, and the retention location of artefacts.
+5. **Registry and inventory update.** The system's `MODEL_REGISTRY` entry is removed only after the audit-chain closure entry exists; `docs/governance/AI_INVENTORY.md` is updated with status RETIRED and the retirement date; the model card is moved to `docs/model-cards/retired/` with a retirement header (never deleted).
+6. **Record retention.** The model card, registered prompts and hashes, evaluation results, fairness reports, and all audit-chain entries for the system are retained for 10 years from retirement (FDL 10/2025 Art. 24). Cached outputs and intermediate data are disposed of per the retention policy in `docs/data-governance/DATA_LINEAGE.md` §5.
+7. **Stakeholder notice.** Interested parties are informed via the §6.5 communication protocol; regulator-facing notice is issued where the system supported a filed control (MLRO + Legal approval required).
+8. **Closure.** A `MODE_DEPRECATION`/`GOVERNANCE` entry is appended to `docs/operations/CHANGE_CONTROL_LOG.md`; the decommissioning is reviewed at the next internal AIMS audit for completeness.
+
 ---
 
 ## 6. Stakeholder Engagement and Accountability
@@ -508,6 +523,6 @@ The following uses of Hawkeye Sterling AI systems are absolutely prohibited. The
 | Next mandatory review | 2027-05-06 |
 | Approver (MLRO) | [Signature required] |
 | Approver (CEO) | [Signature required] |
-| Related documents | `docs/governance/AI_INVENTORY.md`, `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`, `docs/data-governance/DATA_LINEAGE.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md`, `docs/governance/STATEMENT_OF_APPLICABILITY.md`, `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md`, `docs/operations/THIRD_PARTY_MANAGEMENT.md` |
+| Related documents | `docs/governance/AI_INVENTORY.md`, `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`, `docs/data-governance/DATA_LINEAGE.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md`, `docs/governance/STATEMENT_OF_APPLICABILITY.md`, `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md`, `docs/operations/THIRD_PARTY_MANAGEMENT.md`, `docs/governance/AI_RISK_REGISTER.md`, `docs/governance/FRAMEWORK_COVERAGE.md` |
 | Regulatory references | UAE FDL 10/2025; FDL 20/2018 as amended; Cabinet Decision 74/2020; Cabinet Resolution 16/2021; FATF Recommendations |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |

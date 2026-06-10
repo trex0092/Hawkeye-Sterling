@@ -337,7 +337,7 @@ function median(xs: number[]): number {
 // data/eval/scenarios/*.json once the corpus moves out of code.
 
 export const SEED_SCENARIOS: RegressionScenario[] = [
-  // ── Transactional Risk (10 scenarios) ────────────────────────────────────
+  // ── Transactional Risk (14 scenarios) ────────────────────────────────────
   {
     id: 'tx-001',
     cluster: 'transactional_risk',
@@ -450,6 +450,49 @@ export const SEED_SCENARIOS: RegressionScenario[] = [
       'PEP from high-risk jurisdiction mandates EDD under Art.18/19 and FATF R.12 regardless of documented wealth. Senior management approval required before proceeding. Documented wealth consistent with position does not remove EDD obligation — it satisfies source-of-funds; origin-of-wealth still required.',
     expectedTypologies: ['pep_high_value'],
     expectedJurisdictions: [],
+  },
+  {
+    id: 'tx-011',
+    cluster: 'transactional_risk',
+    question: 'Payment for a customer’s AED 1.2M gold consignment arrives by wire from a Hong Kong trading company that is not the customer and has no documented relationship to them. Customer describes the remitter only as a "financing partner". Controls?',
+    goldVerdict: 'escalate',
+    goldConfidence: 4,
+    goldCitations: ['FDL 10/2025 Art.16', 'FDL 10/2025 Art.18', 'FATF R.16'],
+    goldRationale:
+      'Payment from an unrelated third party with no documented commercial justification is a third-party-funding red flag. The remitter must be identified and the relationship evidenced before value is released; an unexplained intermediary in a different jurisdiction compounds the risk. EDD on the funding chain; STR if the relationship cannot be evidenced.',
+    expectedTypologies: ['third_party_funding'],
+    expectedJurisdictions: ['HK'],
+  },
+  {
+    id: 'tx-012',
+    cluster: 'transactional_risk',
+    question: 'A law firm’s client account remits AED 600,000 for a customer’s bullion purchase. The firm declines to identify the underlying funder, citing professional privilege. Proceed?',
+    goldVerdict: 'decline',
+    goldConfidence: 4,
+    goldCitations: ['FDL 10/2025 Art.12', 'FDL 10/2025 Art.16', 'FATF R.10'],
+    goldRationale:
+      'An intermediary that refuses to identify the party providing funds prevents completion of CDD on the true payer. Professional privilege does not relieve the DPMS of its own CDD obligation; inability to identify the funding party is a CDD failure requiring refusal of the transaction under Art.12, with STR consideration.',
+    expectedTypologies: ['third_party_funding'],
+  },
+  {
+    id: 'tx-013',
+    cluster: 'transactional_risk',
+    question: 'Customer attempting a AED 300,000 cash gold purchase asks staff how to keep the transaction "off the books", requests no receipt, and becomes evasive when asked about occupation and purpose. Risk assessment?',
+    goldVerdict: 'escalate',
+    goldConfidence: 5,
+    goldCitations: ['FDL 10/2025 Art.15', 'FDL 10/2025 Art.20', 'FATF Guidance DPMS para.3.2'],
+    goldRationale:
+      'Soliciting record avoidance, declining a receipt, and evasiveness on purpose and occupation are classic customer-behaviour red flags. The request itself evidences intent to defeat record-keeping controls. Do not complete the transaction as requested; escalate to MLRO and file an STR — the behaviour, not just the amount, grounds the suspicion.',
+  },
+  {
+    id: 'tx-014',
+    cluster: 'transactional_risk',
+    question: 'A prospective customer offers staff a "processing fee" to skip identity verification on a AED 95,000 gold coin purchase and insists it must complete before close of business today. What controls apply?',
+    goldVerdict: 'decline',
+    goldConfidence: 5,
+    goldCitations: ['FDL 10/2025 Art.12', 'FDL 10/2025 Art.20'],
+    goldRationale:
+      'An inducement to bypass CDD is both a mandatory decline (CDD cannot be completed lawfully) and an internal incident: the bribery attempt must be recorded and reported to the MLRO. Pressure to expedite is itself a red flag; the combination warrants an STR. Staff must not tip the customer off to the report.',
   },
 
   // ── Supplier Due Diligence (10 scenarios) ─────────────────────────────────
