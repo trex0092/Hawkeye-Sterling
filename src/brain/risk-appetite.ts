@@ -25,7 +25,11 @@ export type AppetiteDimension =
   | 'anonymous_transaction_rate'
   | 'cross_border_cash_exposure'
   | 'insider_access_anomaly_rate'
-  | 'model_drift_score';
+  | 'model_drift_score'
+  | 'regulatory_obligation_overdue'
+  | 'vendor_concentration'
+  | 'privacy_request_overdue'
+  | 'repeat_control_failures';
 
 export type AppetiteOperator = '<=' | '>=' | '<' | '>' | '==' | 'in';
 
@@ -61,6 +65,10 @@ export const RISK_APPETITE: AppetiteThreshold[] = [
   { dimension: 'cross_border_cash_exposure', label: 'Cross-border cash declarations missing or incomplete (DPMS)', operator: '==', value: 0, rationale: 'Cross-border cash declarations are mandatory under FDL No.10/2025 Art.18.', breachAction: 'block' },
   { dimension: 'insider_access_anomaly_rate', label: 'Privileged-user access anomalies unresolved per quarter', operator: '<=', value: 0, rationale: 'Any unresolved insider-access anomaly must trigger a SIEM investigation.', breachAction: 'escalate' },
   { dimension: 'model_drift_score', label: 'AI / rules-engine model drift score (normalised 0–1)', operator: '<=', value: 0.15, rationale: 'Model drift above 0.15 degrades screening accuracy below acceptable AUC threshold.', breachAction: 'board_review' },
+  { dimension: 'regulatory_obligation_overdue', label: 'Recurring regulatory obligations past due', operator: '==', value: 0, rationale: 'A missed standing obligation (board MI, fairness audit, DR test, attestation) is direct non-compliance — zero tolerance.', breachAction: 'escalate' },
+  { dimension: 'vendor_concentration', label: 'Platform functions on a single vendor with no alternate', operator: '<=', value: 40, unit: '%', rationale: 'ISO 42001 Clause 8.4 — single-provider dependency beyond this level concentrates supply-chain failure risk.', breachAction: 'escalate' },
+  { dimension: 'privacy_request_overdue', label: 'Data-subject requests past statutory response window', operator: '==', value: 0, rationale: 'UAE PDPL / GDPR response windows are statutory; any overdue request is a reportable privacy failure.', breachAction: 'escalate' },
+  { dimension: 'repeat_control_failures', label: 'Controls failing more than once in a rolling 12 months', operator: '==', value: 0, rationale: 'A repeat failure means the corrective action did not hold (SOC2 CC4) — systemic weakness, not noise.', breachAction: 'escalate' },
 ];
 
 export interface AppetiteEvaluation {

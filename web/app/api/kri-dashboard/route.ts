@@ -15,6 +15,9 @@ import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
 import { loadAllCases } from "@/lib/server/case-vault";
+import { getOverdueModels } from "@/lib/server/ai-governance";
+import { summarizeObligations } from "../../../../src/brain/regulatory-obligations.js";
+import { computeVendorConcentration } from "../../../../src/brain/vendor-register.js";
 import type { CaseRecord } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -109,6 +112,16 @@ async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
     ? Math.max(...criticalOpen.map((c) => now - new Date(c.opened).getTime()))
     : null;
   const alertBacklogDays = oldestOpenMs !== null ? oldestOpenMs / 86_400_000 : null;
+
+  // Regulatory obligations: standing-obligation register plus any MODEL_REGISTRY
+  // entries past their attestation date — both are missed compliance deadlines.
+  const obligations = summarizeObligations(now);
+  const overdueModels = getOverdueModels().length;
+  const regulatoryOverdue = obligations.overdue + overdueModels;
+
+  // Vendor concentration: % of platform functions served by a single provider
+  // with no alternate (ISO 42001 Clause 8.4 supply-chain risk).
+  const vendorConcentration = computeVendorConcentration();
 
   const KRIS: Array<Omit<KriResult, "status">> = [
     {
@@ -236,6 +249,56 @@ async function computeKris(cases: CaseRecord[]): Promise<KriResult[]> {
       band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] },
       direction: "lower_better",
       derivedFrom: "Requires supply-chain due-diligence feed (external)",
+    },
+    {
+      id: "kri_regulatory_obligation_overdue",
+      label: "Regulatory obligations overdue",
+      unit: "count",
+      value: regulatoryOverdue,
+      band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] },
+      direction: "lower_better",
+      derivedFrom:
+        overdueModels > 0 || obligations.overdueIds.length > 0
+          ? `Obligations register + model attestations — overdue: ${[...obligations.overdueIds, ...(overdueModels > 0 ? [`${overdueModels} model attestation(s)`] : [])].join(", ")}`
+          : "Obligations register (src/brain/regulatory-obligations.ts) + MODEL_REGISTRY attestation status",
+    },
+    {
+      id: "kri_vendor_concentration",
+      label: "Single-vendor function concentration",
+      unit: "%",
+      value: vendorConcentration.concentrationPct,
+      band: { green: [0, 20], amber: [20, 50], red: [50, 100] },
+      direction: "lower_better",
+      derivedFrom: vendorConcentration.singleProviderFunctions.length
+        ? `Vendor register (HS-OPS-003) — single-provider functions: ${vendorConcentration.singleProviderFunctions.join(", ")}`
+        : "Vendor register (HS-OPS-003) — no single-provider functions",
+    },
+    {
+      id: "kri_privacy_request_overdue",
+      label: "Privacy requests past statutory window",
+      unit: "count",
+      value: null,
+      band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] },
+      direction: "lower_better",
+      derivedFrom: "Requires privacy-request intake log (operator feed)",
+    },
+    {
+      id: "kri_training_completion",
+      label: "Staff AML/AI training completion",
+      unit: "%",
+      value: null,
+      band: { green: [98, 100], amber: [90, 98], red: [0, 90] },
+      direction: "higher_better",
+      derivedFrom: "Requires training tracker feed (external)",
+    },
+    {
+      id: "kri_repeat_control_failures",
+      label: "Repeat control failures (rolling 12 months)",
+      unit: "count",
+      value: null,
+      band: { green: [0, 0], amber: [0, 1], red: [1, Infinity] },
+      direction: "lower_better",
+      derivedFrom: "Requires control-test result log (calibration/CI feed)",
     },
   ];
 

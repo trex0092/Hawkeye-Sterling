@@ -1,7 +1,7 @@
 # Statement of Applicability — ISO/IEC 42001:2023
 
 **Document ID:** HS-SOA-001  
-**Version:** 1.0.0  
+**Version:** 1.1.0 — A.7.3 and A.10.5 closed (2026-06-10); v1.0.0 effective 2026-06-09  
 **Effective Date:** 2026-06-09  
 **Review Cycle:** Annual; updated on any material change to the AIMS scope or controls  
 **Owner:** MLRO  
@@ -47,7 +47,7 @@ This is a mandatory document for ISO/IEC 42001:2023 conformity.
 |---|---|---|---|---|
 | A.7.1 — AI risk assessment process | Yes | Yes | `docs/governance/AI_GOVERNANCE_POLICY.md` §3 (risk classification); `docs/data-governance/DATA_LINEAGE.md` §7 (Data Quality Risk Register) | Four-tier risk classification (CRITICAL/HIGH/MEDIUM/LOW); data quality risk register with 9 identified risks |
 | A.7.2 — AI risk criteria | Yes | Yes | `docs/governance/AI_GOVERNANCE_POLICY.md` §4 (risk tolerance matrix); §4.2 (zero-tolerance dimensions) | Quantitative thresholds: FNR < 1%, FPR < 5%, drift ≤ 0.15, FFR SLA breach = 0% |
-| A.7.3 — AI risk register | Yes | Partial | `COMPLIANCE_GAPS.md` (HS-CAPA-001 — CAPA Register); `docs/data-governance/DATA_LINEAGE.md` §7 | Risk tracking across CAPA register and data quality risk register; unified AI risk register (ISO formal format) to be produced in Q3 2026 |
+| A.7.3 — AI risk register | Yes | Yes | `docs/governance/AI_RISK_REGISTER.md` (HS-RISK-001); subsidiary: `COMPLIANCE_GAPS.md` (HS-CAPA-001), `docs/data-governance/DATA_LINEAGE.md` §7 | Unified AI risk register delivered 2026-06-10 (ahead of Q3 2026 target); 14 risks with treatment, controls, residual ratings; CAPA and data-quality registers feed it as subsidiary registers |
 
 ---
 
@@ -78,7 +78,7 @@ This is a mandatory document for ISO/IEC 42001:2023 conformity.
 | A.10.2 — AI system deployment | Yes | Yes | `docs/operations/CHANGE_CONTROL_LOG.md`; `Dockerfile`; `k8s/` | Deployment log; MLRO approval gate; rollback protocol |
 | A.10.3 — AI system monitoring | Yes | Yes | `web/lib/server/drift-monitor.ts`; `web/lib/server/bias-monitor.ts`; `GET /api/mlro/drift-alerts`; `GET /api/mlro/brier` | Daily calibration checks; monthly fairness audits; drift alerts |
 | A.10.4 — AI system change management | Yes | Yes | `docs/governance/AI_GOVERNANCE_POLICY.md` §5; `docs/operations/CHANGE_CONTROL_LOG.md` | Major/Minor/Emergency/Maintenance classification; rollback criteria |
-| A.10.5 — AI system decommissioning | Yes | Partial | `docs/governance/AI_INVENTORY.md` §7 (change log) | Decommissioning process not yet formally documented; to be added in Q3 2026 annual review |
+| A.10.5 — AI system decommissioning | Yes | Yes | `docs/governance/AI_GOVERNANCE_POLICY.md` §5.6 | Eight-step decommissioning procedure documented 2026-06-10: impact assessment, Major-change approval, invocation freeze, audit-chain closure entry, registry/inventory update, 10-year artefact retention, stakeholder notice, audit review |
 
 ---
 
@@ -116,10 +116,10 @@ The following ISO/IEC 42001:2023 Annex A controls are assessed as not applicable
 | Field | Value |
 |---|---|
 | Document ID | HS-SOA-001 |
-| Version | 1.0.0 |
+| Version | 1.1.0 (2026-06-10 — A.7.3 and A.10.5 moved Partial → Implemented) |
 | Created | 2026-06-09 |
 | Next mandatory review | 2027-06-09 |
 | Approver (MLRO) | [Signature required] |
-| Related documents | `docs/governance/AI_GOVERNANCE_POLICY.md`, `docs/governance/AI_INVENTORY.md`, `COMPLIANCE_GAPS.md` |
+| Related documents | `docs/governance/AI_GOVERNANCE_POLICY.md`, `docs/governance/AI_INVENTORY.md`, `COMPLIANCE_GAPS.md`, `docs/governance/AI_RISK_REGISTER.md`, `docs/governance/FRAMEWORK_COVERAGE.md` |
 | Regulatory references | ISO/IEC 42001:2023 Annex A; UAE FDL 10/2025 Art. 18 |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |
