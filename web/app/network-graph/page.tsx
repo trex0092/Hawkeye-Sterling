@@ -606,7 +606,7 @@ export default function NetworkGraphPage() {
             <div className="text-xs font-semibold uppercase tracking-widest text-brand mb-1">
               Intelligence
             </div>
-            <h1 className="text-2xl font-bold text-ink-0">
+            <h1 className="text-28 md:text-48 font-bold text-ink-0">
               Network Relationship{" "}
               <span className="text-brand">Graph.</span>
             </h1>

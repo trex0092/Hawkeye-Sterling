@@ -97,7 +97,7 @@ export default function ReplayPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             BUREAU II · SCREENING REPLAY
           </div>
-          <h1 className="font-display font-normal text-32 text-ink-0 leading-tight">
+          <h1 className="font-display font-normal text-28 md:text-48 text-ink-0 leading-tight">
             What did the brain <em className="italic text-brand">say then?</em>
           </h1>
           <p className="text-13 text-ink-2 mt-1">

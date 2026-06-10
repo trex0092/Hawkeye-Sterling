@@ -206,7 +206,7 @@ export default function RiskAppetitePage() {
       <div className="p-6 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold ">Risk Appetite Matrix</h1>
+          <h1 className="text-28 md:text-48 font-bold ">Risk Appetite Matrix</h1>
           <p className="text-sm text-ink-3 mt-1">
             Configure the scoring thresholds, customer-segment multipliers, and signal weights
             that drive automated compliance decisions.

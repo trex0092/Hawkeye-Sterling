@@ -794,7 +794,7 @@ export default function WorkflowPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Workflow Rules</h1>
+            <h1 className="text-28 md:text-48 font-bold">Workflow Rules</h1>
             <p className="text-sm text-ink-3 mt-1">
               Automate MLRO decisions: define conditions + actions that fire on screening events.
             </p>

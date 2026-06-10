@@ -354,8 +354,8 @@ const PAGE_CSS = `
     /* Main content padding */
     .gw-main-panel { padding: 16px 14px 40px !important; }
 
-    /* Hero title smaller */
-    .gw-hero-title { font-size: 36px !important; line-height: 1.1 !important; }
+    /* Hero title smaller — matches ModuleHero text-28 below md */
+    .gw-hero-title { font-size: 28px !important; line-height: 1.1 !important; }
 
     /* Content + form: stack vertically, form below */
     .gw-content-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
@@ -384,7 +384,6 @@ const PAGE_CSS = `
   }
 
   @media (max-width: 480px) {
-    .gw-hero-title { font-size: 28px !important; }
     .gw-pipeline-grid { grid-template-columns: 1fr !important; }
     .gw-penalty-items { grid-template-columns: 1fr !important; }
   }
@@ -774,7 +773,7 @@ export default function GrievancesWhistleblowingPage() {
             {/* ── HERO ── */}
             <section style={{ marginTop: 14, paddingBottom: 22, borderBottom: `1px solid ${V.line}` }}>
               <div>
-                <h1 className="gw-serif gw-hero-title" style={{ fontWeight: 400, fontSize: 54, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
+                <h1 className="gw-serif gw-hero-title" style={{ fontWeight: 400, fontSize: 48, letterSpacing: "-0.02em", lineHeight: 1.0, color: V.ink, margin: "6px 0 0" } as React.CSSProperties}>
                   A protected channel to <em style={{ fontStyle: "italic", color: V.ember }}>speak up.</em>
                 </h1>
               </div>

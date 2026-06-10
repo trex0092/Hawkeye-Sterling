@@ -262,7 +262,7 @@ export default function TrainingTrackerPage() {
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ink-0">Compliance Training Tracker</h1>
+          <h1 className="text-28 md:text-48 font-bold text-ink-0">Compliance Training Tracker</h1>
           <p className="text-sm text-ink-3 mt-1">
             Track staff AML / compliance training completions and renewal deadlines.
           </p>

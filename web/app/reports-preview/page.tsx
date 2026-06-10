@@ -565,7 +565,7 @@ export default function ReportsPreviewPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 shadow-[0_0_6px_var(--brand)] opacity-80" />
             PDF OUTPUT LIBRARY
           </div>
-          <h1 className="font-display font-normal text-28 md:text-40 leading-[1.1] tracking-tightest text-ink-0 mb-2">
+          <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest text-ink-0 mb-2">
             Report <em className="italic text-brand">designs.</em>
           </h1>
         </div>
