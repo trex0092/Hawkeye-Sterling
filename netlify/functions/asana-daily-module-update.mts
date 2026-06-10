@@ -27,22 +27,38 @@ export default async (_req: Request): Promise<Response> => {
     return new Response("skipped: no cron token", { status: 200 });
   }
 
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 50_000);
-    const res = await fetch(`${base}/api/asana-daily-module-update`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}` },
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    const body = await res.json().catch(() => ({}));
-    console.info("[asana-daily] result:", res.status, JSON.stringify(body));
-  } catch (err) {
-    // Always 200 — a failed daily attestation must not mark the scheduled
-    // function as hard-failed; it retries next day and logs the cause.
-    console.error("[asana-daily] failed:", err instanceof Error ? err.message : String(err));
+  // 2026-06-10 workspace rebuild: the route now fans each module's
+  // attestation out to its own board AND the digest (88 modules × 2 posts).
+  // Drive it in 4 sequential slices of 22 modules so every API call stays
+  // well inside the route budget; this function's own timeout is raised to
+  // 300s in netlify.toml ([functions."asana-daily-module-update"]).
+  const SLICE = 22;
+  const TOTAL = 88;
+  let posted = 0;
+  let failedCount = 0;
+  for (let offset = 0; offset < TOTAL; offset += SLICE) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60_000);
+      const res = await fetch(`${base}/api/asana-daily-module-update`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ offset, limit: SLICE }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      const body = await res.json().catch(() => ({})) as { posted?: number; failedCount?: number };
+      posted += body.posted ?? 0;
+      failedCount += body.failedCount ?? 0;
+      console.info("[asana-daily] slice:", offset, res.status, JSON.stringify(body));
+    } catch (err) {
+      // Always continue — a failed slice must not abort the remaining
+      // modules' attestations; it logs and the next day retries everything.
+      failedCount++;
+      console.error("[asana-daily] slice failed:", offset, err instanceof Error ? err.message : String(err));
+    }
   }
+  console.info("[asana-daily] done — posted:", posted, "failed:", failedCount);
   return new Response("ok", { status: 200 });
 };
 

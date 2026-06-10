@@ -94,6 +94,9 @@
 [functions."gdelt-prefetch"]
   timeout = 60
 
+[functions."asana-daily-module-update"]
+  timeout = 300
+
 # Cold-start mitigation (audit follow-up #37). The
 # `netlify/functions/warm-pool.mts` scheduled function pings the hot-path
 # API routes every 4 minutes (well inside the AWS Lambda ~15-minute idle
