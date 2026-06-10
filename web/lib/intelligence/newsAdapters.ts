@@ -93,10 +93,21 @@ export interface NewsArticle {
   sourceCategory?: "wire" | "investigative" | "regulatory" | "regional" | "social"; // editorial category
 }
 
+// Shared adapter search options. `language` (ISO 639-1) and `country`
+// (ISO 3166-1 alpha-2) widen coverage beyond the historical English-only
+// default — the worldwide adverse-media deep scan passes per-country values;
+// the synchronous screening path omits them (behaviour unchanged: "en").
+export interface NewsSearchOpts {
+  limit?: number;
+  since?: string;
+  language?: string;
+  country?: string;
+}
+
 export interface NewsAdapter {
   source?: string;
   isAvailable(): boolean;
-  search(_subjectName: string, _opts?: { limit?: number; since?: string }): Promise<NewsArticle[]>;
+  search(_subjectName: string, _opts?: NewsSearchOpts): Promise<NewsArticle[]>;
 }
 
 export const NULL_NEWS_ADAPTER: NewsAdapter = {
@@ -116,7 +127,7 @@ function newsApiAdapter(): NewsAdapter {
           q: `"${subjectName}"`,
           pageSize: String(opts?.limit ?? 25),
           sortBy: "publishedAt",
-          language: "en",
+          language: opts?.language ?? "en",
           apiKey: key,
           ...(opts?.since ? { from: opts.since } : {}),
         });
@@ -214,9 +225,10 @@ function gNewsAdapter(): NewsAdapter {
         const params = new URLSearchParams({
           q: `"${subjectName}"`,
           max: String(opts?.limit ?? 25),
-          lang: "en",
+          lang: opts?.language ?? "en",
           token: key,
           ...(opts?.since ? { from: opts.since } : {}),
+          ...(opts?.country ? { country: opts.country.toLowerCase() } : {}),
         });
         const res = await abortable(newsFetch(`https://gnews.io/api/v4/search?${params.toString()}`));
         if (!res.ok) {
@@ -240,7 +252,7 @@ function gNewsAdapter(): NewsAdapter {
             url: a.url!,
             publishedAt: a.publishedAt ?? new Date().toISOString(),
             ...(a.description ? { snippet: a.description } : {}),
-            language: "en",
+            language: opts?.language ?? "en",
           } as NewsArticle));
       } catch (err) {
         console.warn("[gnews] failed:", err instanceof Error ? err.message : err);
@@ -264,6 +276,8 @@ function mediaStackAdapter(): NewsAdapter {
           limit: String(opts?.limit ?? 25),
           sort: "published_desc",
           ...(opts?.since ? { date: `${opts.since},now` } : {}),
+          ...(opts?.language ? { languages: opts.language } : {}),
+          ...(opts?.country ? { countries: opts.country.toLowerCase() } : {}),
         });
         const res = await abortable(newsFetch(`http://api.mediastack.com/v1/news?${params.toString()}`));
         if (!res.ok) { console.warn(`[mediastack] HTTP ${res.status}`); return []; }
@@ -306,7 +320,8 @@ function currentsAdapter(): NewsAdapter {
           apiKey: key,
           keywords: subjectName,
           page_size: String(opts?.limit ?? 25),
-          language: "en",
+          language: opts?.language ?? "en",
+          ...(opts?.country ? { country: opts.country } : {}),
         });
         const res = await abortable(newsFetch(`https://api.currentsapi.services/v1/search?${params.toString()}`));
         if (!res.ok) { console.warn(`[currents] HTTP ${res.status}`); return []; }
@@ -348,8 +363,9 @@ function newsCatcherAdapter(): NewsAdapter {
         const params = new URLSearchParams({
           q: subjectName,
           page_size: String(opts?.limit ?? 25),
-          lang: "en",
+          lang: opts?.language ?? "en",
           sort_by: "date",
+          ...(opts?.country ? { countries: opts.country.toUpperCase() } : {}),
         });
         const res = await abortable(
           newsFetch(`https://api.newscatcherapi.com/v2/search?${params.toString()}`, {
@@ -717,7 +733,8 @@ function aylienAdapter(): NewsAdapter {
           title: `"${subjectName}"`,
           per_page: String(opts?.limit ?? 25),
           sort_by: "published_at",
-          language: "en",
+          language: opts?.language ?? "en",
+          ...(opts?.country ? { source_locations_country: opts.country.toUpperCase() } : {}),
         });
         const res = await abortable(
           newsFetch(`https://api.aylien.com/news/stories?${params.toString()}`, {
@@ -751,6 +768,14 @@ function aylienAdapter(): NewsAdapter {
   };
 }
 
+// ISO 639-1 → Webz.io language-name filter values.
+const WEBZ_LANGUAGE_NAMES: Record<string, string> = {
+  en: "english", ar: "arabic", ru: "russian", zh: "chinese", es: "spanish",
+  pt: "portuguese", fr: "french", tr: "turkish", de: "german", fa: "persian",
+  ur: "urdu", hi: "hindi", ja: "japanese", ko: "korean", it: "italian",
+  nl: "dutch", id: "indonesian", th: "thai", vi: "vietnamese", uk: "ukrainian",
+};
+
 // ── Webz.io (Webhose) — premium ────────────────────────────────────────
 function webzAdapter(): NewsAdapter {
   const key = process.env["WEBZ_API_KEY"];
@@ -759,9 +784,10 @@ function webzAdapter(): NewsAdapter {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
       try {
+        const webzLang = WEBZ_LANGUAGE_NAMES[opts?.language ?? "en"] ?? "english";
         const params = new URLSearchParams({
           token: key,
-          q: `"${subjectName}" language:english`,
+          q: `"${subjectName}" language:${webzLang}`,
           size: String(opts?.limit ?? 25),
         });
         const res = await abortable(
@@ -797,12 +823,18 @@ function eventRegistryAdapter(): NewsAdapter {
     isAvailable: () => true,
     search: async (subjectName, opts) => {
       try {
+        // Event Registry takes ISO 639-3 codes.
+        const ER_LANG: Record<string, string> = {
+          en: "eng", ar: "ara", ru: "rus", zh: "zho", es: "spa", pt: "por",
+          fr: "fra", tr: "tur", de: "deu", fa: "fas", ur: "urd", hi: "hin",
+          ja: "jpn", ko: "kor", it: "ita", nl: "nld", id: "ind", uk: "ukr",
+        };
         const body = {
           action: "getArticles",
           keyword: subjectName,
           articlesSortBy: "date",
           articlesCount: opts?.limit ?? 25,
-          lang: "eng",
+          lang: ER_LANG[opts?.language ?? "en"] ?? "eng",
           apiKey: key,
         };
         const res = await abortable(
@@ -3556,17 +3588,23 @@ const _newsCache = new Map<string, _NewsCacheEntry>();
 const _NEWS_CACHE_TTL_MS = 60 * 60 * 1_000;   // 60 minutes
 const _NEWS_CACHE_MAX = 1_000;
 
-function _newsCacheKey(name: string): string {
-  return name.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
+function _newsCacheKey(name: string, opts?: NewsSearchOpts): string {
+  const base = name.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
+  // Language/country fan-out must not share cache entries with the default
+  // English pass — a Turkish-language query for the same subject is a
+  // different result set.
+  const lang = opts?.language ?? "";
+  const country = opts?.country ?? "";
+  return lang || country ? `${base}|${lang}|${country}` : base;
 }
 
 export async function searchAllNews(
   subjectName: string,
-  opts?: { limit?: number; since?: string },
+  opts?: NewsSearchOpts,
 ): Promise<{ articles: NewsArticle[]; providersUsed: string[] }> {
   // Cache lookup — skip for since-bounded queries (caller wants fresh data).
   if (!opts?.since) {
-    const key = _newsCacheKey(subjectName);
+    const key = _newsCacheKey(subjectName, opts);
     const cached = _newsCache.get(key);
     if (cached && Date.now() - cached.cachedAt < _NEWS_CACHE_TTL_MS) {
       return { articles: cached.articles, providersUsed: cached.providersUsed };
@@ -3589,7 +3627,7 @@ export async function searchAllNews(
 
   // Cache the result (FIFO eviction when cap is reached).
   if (!opts?.since) {
-    const key = _newsCacheKey(subjectName);
+    const key = _newsCacheKey(subjectName, opts);
     if (_newsCache.size >= _NEWS_CACHE_MAX) {
       const firstKey = _newsCache.keys().next().value;
       if (firstKey !== undefined) _newsCache.delete(firstKey);
@@ -3614,7 +3652,7 @@ export async function searchAllNews(
  */
 export async function searchAllNewsWithStatus(
   subjectName: string,
-  opts?: { limit?: number; since?: string },
+  opts?: NewsSearchOpts,
 ): Promise<{
   articles: NewsArticle[];
   sourcesSucceeded: string[];

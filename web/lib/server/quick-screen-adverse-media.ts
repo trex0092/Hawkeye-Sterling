@@ -55,9 +55,18 @@ const GROUP_FATF_MAP: Partial<Record<AdverseKeywordGroup, string>> = {
   "environmental-crime": "FATF R.3 (predicate offences)",
 };
 
-const MAX_ITEMS = 10;
+// Worldwide-coverage caps (env-overridable). Raised from the historical
+// 10/6 so the summary no longer hides findings; the deep-scan endpoint
+// returns the uncapped set.
+function intEnv(key: string, fallback: number): number {
+  const raw = process.env[key];
+  if (raw === undefined || raw === "") return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 1 && n <= 1000 ? Math.floor(n) : fallback;
+}
+const MAX_ITEMS = intEnv("HAWKEYE_ADVERSE_MEDIA_MAX_ITEMS", 50);
 const MAX_CATEGORIES_PER_ITEM = 5;
-const MAX_PROVIDERS_SHOWN = 6;
+const MAX_PROVIDERS_SHOWN = intEnv("HAWKEYE_ADVERSE_MEDIA_MAX_PROVIDERS", 20);
 
 function articleId(a: ScoredArticle): string {
   return createHash("sha256")

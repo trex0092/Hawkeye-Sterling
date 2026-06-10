@@ -100,8 +100,8 @@ describe('buildAdverseMediaSummary', () => {
     expect(s?.itemCount).toBe(1);
   });
 
-  it('caps items at 10 and categories at 5 per item', () => {
-    const many = Array.from({ length: 14 }, (_, i) =>
+  it('caps items at 50 (worldwide default) and categories at 5 per item', () => {
+    const many = Array.from({ length: 60 }, (_, i) =>
       article({
         title: `${SUBJECT} charged with fraud, bribery, money laundering case ${i}`,
         snippet:
@@ -110,8 +110,9 @@ describe('buildAdverseMediaSummary', () => {
       }),
     );
     const s = buildAdverseMediaSummary(SUBJECT, many, ['newsapi']);
-    expect(s?.items.length).toBeLessThanOrEqual(10);
-    expect(s?.itemCount).toBe(14);
+    expect(s?.items.length).toBeLessThanOrEqual(50);
+    expect(s?.items.length).toBeGreaterThan(10); // historical 10-item cap removed
+    expect(s?.itemCount).toBe(60);
     for (const item of s?.items ?? []) {
       expect(item.categories.length).toBeLessThanOrEqual(5);
     }
@@ -132,10 +133,10 @@ describe('buildAdverseMediaSummary', () => {
     expect(s?.items[0]?.url).toBe('claude://finding/1');
   });
 
-  it('caps the provider label at 6 entries with +N more', () => {
-    const providers = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'];
+  it('caps the provider label at 20 entries (worldwide default) with +N more', () => {
+    const providers = Array.from({ length: 22 }, (_, i) => `p${i + 1}`);
     const s = buildAdverseMediaSummary(SUBJECT, [article({})], providers);
-    expect(s?.provider).toBe('p1, p2, p3, p4, p5, p6 +2 more');
+    expect(s?.provider).toBe(`${providers.slice(0, 20).join(', ')} +2 more`);
   });
 
   it('falls back to news-adapters label when articles exist without provider list', () => {
