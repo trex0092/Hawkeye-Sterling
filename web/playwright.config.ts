@@ -33,6 +33,13 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000",
+    // The E2E specs authenticate with `Bearer ${ADMIN_TOKEN}` and default to
+    // the same test-only value, so the suite is self-consistent without any
+    // environment setup. A real ADMIN_TOKEN in the environment (e.g. CI
+    // secrets) still wins. This is never the production token.
+    env: {
+      ADMIN_TOKEN: process.env["ADMIN_TOKEN"] ?? "test-admin-token-for-e2e",
+    },
     // Only reuse an already-running dev server locally; CI must start a fresh
     // one so a stale background process can't silently serve the tests.
     reuseExistingServer: !isCI,
