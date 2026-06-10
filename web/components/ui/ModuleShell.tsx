@@ -37,7 +37,7 @@ export function ModuleHeader({
       <div>
         <div className="flex items-center gap-3 mb-1">
           <span className={`w-2 h-2 rounded-full ${DOT_COLOR[dotColor]}`} />
-          <h1 className="font-display font-normal text-36 leading-[1.1] tracking-tightest m-0 text-ink-0">
+          <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 text-ink-0">
             {title}
             {titleEm && (
               <>
