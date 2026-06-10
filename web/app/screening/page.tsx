@@ -537,8 +537,8 @@ export default function ScreeningPage() {
 
   // AI natural-language search filter
   const [aiFilter, setAiFilter] = useState<NlSearchFilter | null>(null);
-  const [aiFilterLabel, setAiFilterLabel] = useState<string | null>(null);
-  const handleAiFilter = useCallback((filter: NlSearchFilter | null, label?: string) => {
+  const [_aiFilterLabel, setAiFilterLabel] = useState<string | null>(null);
+  const _handleAiFilter = useCallback((filter: NlSearchFilter | null, label?: string) => {
     setAiFilter(filter);
     setAiFilterLabel(filter ? (label ?? null) : null);
   }, []);
@@ -553,7 +553,7 @@ export default function ScreeningPage() {
 
   // Natural language search
   const [nlSearchActive, setNlSearchActive] = useState(false);
-  const [nlSearchLoading, setNlSearchLoading] = useState(false);
+  const [_nlSearchLoading, setNlSearchLoading] = useState(false);
   const [nlMatchIds, setNlMatchIds] = useState<ReadonlySet<string> | null>(null);
   const [nlInterpretation, setNlInterpretation] = useState<string>("");
   const [nlConfidence, setNlConfidence] = useState<number>(0);
@@ -805,7 +805,7 @@ export default function ScreeningPage() {
     });
   }, []);
 
-  const handleNLSearch = useCallback(async (q: string) => {
+  const _handleNLSearch = useCallback(async (q: string) => {
     if (!q.trim()) return;
     setNlSearchLoading(true);
     setNlError(null);
