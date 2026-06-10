@@ -39,6 +39,9 @@ export function handlePostScreenResult(ctx: PostScreenContext): void {
             "content-type": "application/json",
             "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
           },
+          // Fire-and-forget, but bounded — an unresponsive target must not
+          // pin this Lambda invocation open indefinitely.
+          signal: AbortSignal.timeout(5_000),
           body: JSON.stringify({
             subjectName:      subject.name,
             subjectId:        resultId,
@@ -67,6 +70,7 @@ export function handlePostScreenResult(ctx: PostScreenContext): void {
           void fetch(`${baseUrl}/api/hs-cases/${caseData.case.caseId}/enrich`, {
             method: "POST",
             headers: { "x-api-key": process.env["ADMIN_TOKEN"] ?? "" },
+            signal: AbortSignal.timeout(5_000),
           }).catch((e: unknown) => {
             console.warn("[post-screen] auto-enrich failed:", e instanceof Error ? e.message : String(e));
           });
@@ -79,6 +83,7 @@ export function handlePostScreenResult(ctx: PostScreenContext): void {
               "content-type": "application/json",
               "x-api-key": process.env["ADMIN_TOKEN"] ?? "",
             },
+            signal: AbortSignal.timeout(5_000),
             body: JSON.stringify({
               subjectId:   resultId,
               subjectName: subject.name,

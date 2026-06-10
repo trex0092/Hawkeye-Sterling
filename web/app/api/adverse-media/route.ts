@@ -28,10 +28,13 @@ import { groupArticles } from "../../../../src/brain/ArticleGroupingEngine.js";
 import { buildStories } from "../../../../src/brain/StoryEngine.js";
 import type { OsintItem } from "../../../../src/integrations/osint-pipeline.js";
 import type { NLPExtractionResult } from "../../../../src/brain/AdverseMediaNLP.js";
+import { SCREENING_BUDGETS } from "@/lib/server/screening-budgets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// In-band budget (SCREENING_BUDGETS.ADVERSE_MEDIA_ROUTE_BUDGET_MS) keeps the
+// response ≤5s; 10 gives 2x headroom for serialization.
+export const maxDuration = 10;
 
 const CORS: Record<string, string> = {
   // Prefer explicit NEXT_PUBLIC_APP_URL, then Netlify's runtime DEPLOY_URL (preview builds),
@@ -79,13 +82,16 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Bound the upstream call so a hung Taranis can't burn the GDELT fallback
   // budget. Any timeout or thrown error short-circuits to the GDELT live-feed
   // fallback below — never a silent CLEAR verdict.
-  const TARANIS_TIMEOUT_MS = 8_000;
+  const TARANIS_TIMEOUT_MS = SCREENING_BUDGETS.ADVERSE_MEDIA_TARANIS_OUTER_MS;
   const taranisResult = await Promise.race([
     searchAdverseMedia(subject, {
       ...(body.dateFrom !== undefined ? { dateFrom: body.dateFrom } : {}),
       ...(body.dateTo !== undefined ? { dateTo: body.dateTo } : {}),
       limit: typeof body.limit === "number" ? Math.max(1, Math.min(body.limit, 100)) : 50,
       minRelevance: typeof body.minRelevance === "number" ? Math.max(0, Math.min(body.minRelevance, 1)) : 0,
+      // Inner per-attempt cap (client retries once) — the outer race below is
+      // the true ceiling either way.
+      timeoutMs: SCREENING_BUDGETS.ADVERSE_MEDIA_TARANIS_INNER_MS,
     }),
     new Promise<{ ok: false; error: string }>((resolve) =>
       setTimeout(
@@ -105,8 +111,27 @@ export async function POST(req: Request): Promise<NextResponse> {
     // silent CLEAR or an unhandled 500.
     try {
       const elapsedMs = Date.now() - routeStartMs;
-      const remainingBudgetMs = Math.max(5_000, 27_000 - elapsedMs); // 27s safety buffer (30s maxDuration - 3s)
+      // Remaining slice of the route's 5s SLA budget — liveAdverseMedia
+      // derives its vendor + Claude deadlines from this.
+      const remainingBudgetMs = Math.max(1_500, SCREENING_BUDGETS.ADVERSE_MEDIA_ROUTE_BUDGET_MS - elapsedMs);
       const verdict = await liveAdverseMedia(subject, remainingBudgetMs);
+      // Audit chain — required for EVERY adverse-media verdict, including the
+      // fallback path (Federal Decree-Law No. 10 of 2025 Art.20). Fire-and-forget.
+      void writeAuditChainEntry({
+        event: "adverse_media.completed",
+        actor: gate.keyId,
+        subject,
+        riskTier: (verdict as unknown as Record<string, unknown>)["riskTier"] ?? "unknown",
+        sarRecommended: (verdict as unknown as Record<string, unknown>)["sarRecommended"] ?? false,
+        totalCount: verdict.totalItems,
+        adverseCount: verdict.adverseItems,
+        aiGenerated: true,
+        degraded: true,
+        degradedReason: isConfigError ? "taranis_not_configured" : "taranis_unavailable",
+        fallback: "gdelt_live",
+      }, tenantIdFromGate(gate)).catch((err: unknown) => {
+        console.error("[adverse-media] audit chain write failed:", err instanceof Error ? err.message : String(err));
+      });
       return NextResponse.json(
         {
           ok: true,
@@ -144,6 +169,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         analysedAt: now,
         modesCited: [],
       };
+      // Audit chain — the doubly-degraded path is still a compliance action
+      // the regulator must be able to trace (FDL No. 10 of 2025 Art.20).
+      void writeAuditChainEntry({
+        event: "adverse_media.completed",
+        actor: gate.keyId,
+        subject,
+        riskTier: "unknown",
+        sarRecommended: false,
+        totalCount: 0,
+        adverseCount: 0,
+        aiGenerated: false,
+        degraded: true,
+        degradedReason: "all_sources_unavailable",
+      }, tenantIdFromGate(gate)).catch((auditErr: unknown) => {
+        console.error("[adverse-media] audit chain write failed:", auditErr instanceof Error ? auditErr.message : String(auditErr));
+      });
       return NextResponse.json(
         {
           ok: true,
@@ -163,10 +204,18 @@ export async function POST(req: Request): Promise<NextResponse> {
   const verdict = analyseAdverseMediaResult(subject, taranisResult);
 
   // Enrich: IOC extraction, cybercrime classification, article grouping, story clustering.
-  // Bounded at 3 s; never blocks the verdict or the audit chain write.
+  // Bounded by the remaining route budget (≤1s); never blocks the verdict or
+  // the audit chain write.
+  const enrichBudgetMs = Math.max(
+    0,
+    Math.min(
+      SCREENING_BUDGETS.ADVERSE_MEDIA_ENRICHMENT_MS,
+      SCREENING_BUDGETS.ADVERSE_MEDIA_ROUTE_BUDGET_MS - (Date.now() - routeStartMs),
+    ),
+  );
   const enrichment = await Promise.race([
     buildEnrichment(taranisResult.items),
-    new Promise<null>(r => setTimeout(() => r(null), 3_000)),
+    new Promise<null>(r => setTimeout(() => r(null), enrichBudgetMs)),
   ]).catch(() => null);
 
   // Write audit chain entry — every adverse-media query is a compliance action.
@@ -326,13 +375,16 @@ function gdeltToTaranisItem(a: GdeltArticle, index: number): TaranisItem {
 // Primary analysis path: Claude provides narrative + structured findings.
 // Fallback path: when ANTHROPIC_API_KEY is absent, the deterministic
 // 737-keyword classifier runs directly on whatever articles are cached.
-async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
+async function liveAdverseMedia(subject: string, budgetMs: number = SCREENING_BUDGETS.ADVERSE_MEDIA_ROUTE_BUDGET_MS) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  const fnStart = Date.now();
+  const remaining = () => budgetMs - (Date.now() - fnStart);
 
   // Multi-source vendor news fan-out — fires IMMEDIATELY in parallel with the
-  // Blobs cache check. Hard 2 s cap on cold-cache paths; 500 ms grace on warm
-  // paths (Blobs has articles — vendor is bonus, not gating).
-  const VENDOR_DEADLINE_MS = 2_000;
+  // Blobs cache check. Budget-aware cap on cold-cache paths (≤1.5s, always
+  // leaving ~2s for Claude); 500 ms grace on warm paths (Blobs has articles —
+  // vendor is bonus, not gating).
+  const VENDOR_DEADLINE_MS = Math.min(SCREENING_BUDGETS.ADVERSE_MEDIA_VENDOR_MS, Math.max(300, remaining() - 2_000));
   const vendorPromise = searchAllNews(subject, { limit: 25 })
     .catch(() => ({ articles: [] as NewsArticle[], providersUsed: [] as string[] }));
 
@@ -341,6 +393,7 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   //    If no cached result exists for this subject, GDELT is skipped entirely —
   //    no live network call, zero latency impact.
   let items: GdeltArticle[] = [];
+  let gdeltCachedAt: string | null = null;
   try {
     const blobStore = getStore({ name: "gdelt-cache" });
     const cached = await blobStore.get(`gdelt:${subject}`, { type: "json" }) as {
@@ -349,10 +402,21 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
     } | null;
     if (cached?.articles && Array.isArray(cached.articles)) {
       items = cached.articles;
+      gdeltCachedAt = typeof cached.cachedAt === "string" ? cached.cachedAt : null;
     }
   } catch {
     // Blobs unavailable — proceed with vendor-only path (no live GDELT in request path).
   }
+
+  // Cache-staleness disclosure — the prefetch cadence is 6h, so anything
+  // older than 12h means the background warmer has missed ≥1 cycle and the
+  // MLRO must know the corpus is not current (FDL No. 10 of 2025 Art.19).
+  const gdeltCacheAgeHours = gdeltCachedAt !== null && Number.isFinite(Date.parse(gdeltCachedAt))
+    ? Math.round(((Date.now() - Date.parse(gdeltCachedAt)) / 3_600_000) * 10) / 10
+    : null;
+  const stalenessFields = gdeltCachedAt !== null
+    ? { gdeltCachedAt, gdeltCacheAgeHours, gdeltStale: (gdeltCacheAgeHours ?? 0) > 12 }
+    : {};
 
   // No live GDELT call from the request path — gdelt-prefetch.mts (every 6 h)
   // pre-warms the Blobs cache in the background. This keeps the hot path at:
@@ -423,14 +487,43 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
   if (!apiKey) {
     const taranisItems = items.map(gdeltToTaranisItem);
     const verdict = analyseAdverseMediaItems(subject, taranisItems);
-    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true, articles: items };
+    return { ...verdict, gdeltSource: true, gdeltArticleCount: items.length, keywordClassifierOnly: true, articles: items, ...stalenessFields };
+  }
+
+  // Deterministic fallback used whenever the Claude analysis can't run or
+  // can't be trusted (budget exhausted, LLM error, truncated/unparseable
+  // output). Only valid when articles exist — the classifier on an empty
+  // corpus would claim CLEAR for a check that retrieved no data.
+  const classifierFallback = (reason: string) => {
+    const verdict = analyseAdverseMediaItems(subject, items.map(gdeltToTaranisItem));
+    return {
+      ...verdict,
+      gdeltSource: true,
+      gdeltArticleCount: items.length,
+      keywordClassifierOnly: true,
+      claudeFallbackReason: reason,
+      articles: items,
+      ...stalenessFields,
+    };
+  };
+
+  // Budget-aware Claude call: cap at CLAUDE_MAX, and when the remaining
+  // budget can't fit a minimally-useful call, skip Claude entirely — a real
+  // deterministic verdict beats a timeout-induced "unknown".
+  const claudeBudgetMs = Math.min(SCREENING_BUDGETS.ADVERSE_MEDIA_CLAUDE_MAX_MS, remaining() - 150);
+  if (claudeBudgetMs < SCREENING_BUDGETS.ADVERSE_MEDIA_CLAUDE_MIN_MS) {
+    if (items.length > 0) return classifierFallback("insufficient_budget");
+    // No articles AND no budget — surface the degraded "unknown" verdict via
+    // the caller's catch path rather than a silent CLEAR.
+    throw new Error("adverse-media budget exhausted before Claude analysis and no cached/vendor articles available");
   }
 
   const now = new Date().toISOString();
 
-  // Claude analyses the top 20 articles for the structured verdict; ALL collected
+  // Claude analyses the top 10 articles for the structured verdict; ALL collected
   // articles are returned in the response payload for full MLRO evidence disclosure.
-  const CLAUDE_ARTICLE_WINDOW = 20;
+  // 10 findings ≈ 450-600 output tokens — fits the ≤3.2s budget on Haiku.
+  const CLAUDE_ARTICLE_WINDOW = 10;
   const articleBlock =
     items.length > 0
       ? items
@@ -445,10 +538,12 @@ async function liveAdverseMedia(subject: string, _budgetMs = 20_000) {
           .join("\n")
       : "No articles found across multi-source adverse-media corpus (lifetime — GDELT + NewsAPI, GNews, NewsData, MediaStack, Currents, NYT, MarketAux, NewsCatcher, Tiingo, AlphaVantage, WorldNews, MediaCloud — whichever keys are configured) for this subject.";
 
-  const client = getAnthropicClient(apiKey, 2_500);
-  const response = await client.messages.create({
+  const client = getAnthropicClient(apiKey, claudeBudgetMs);
+  let response: Awaited<ReturnType<typeof client.messages.create>>;
+  try {
+    response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1_200, // 20 articles × ~50 tok/finding + narrative ≈ 1100 tok
+    max_tokens: 700, // 10 articles × ~50 tok/finding + narrative ≈ 600 tok
     system: [
       {
         type: "text",
@@ -509,13 +604,21 @@ Articles from multi-source corpus (showing top ${Math.min(items.length, CLAUDE_A
 ${articleBlock}`,
       },
     ],
-  });
+    });
+  } catch (err) {
+    // Claude timed out or errored inside the budget. With articles in hand,
+    // degrade to the deterministic classifier — never a timeout-induced
+    // "unknown" when real evidence exists.
+    console.warn("[adverse-media] Claude call failed — keyword classifier fallback:", err instanceof Error ? err.message : String(err));
+    if (items.length > 0) return classifierFallback("llm_error");
+    throw err; // no articles either — caller's catch surfaces the degraded "unknown" verdict
+  }
 
   const text = response.content[0]?.type === "text" ? response.content[0].text : "";
   const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
   // Claude can occasionally return prose that doesn't parse — pull the
-  // outermost {…} block as a recovery, then surface a degraded verdict
-  // (NOT a silent CLEAR) if that still fails.
+  // outermost {…} block as a recovery. A truncated response (stop_reason
+  // max_tokens) is never trusted even if a {...} block parses.
   const tryParse = (raw: string): ReturnType<typeof analyseAdverseMediaResult> | null => {
     if (!raw) return null;
     try {
@@ -524,11 +627,17 @@ ${articleBlock}`,
       return null;
     }
   };
-  const parsed = tryParse(clean) ?? (() => {
+  const truncated = response.stop_reason === "max_tokens";
+  const parsed = truncated ? null : (tryParse(clean) ?? (() => {
     const m = clean.match(/\{[\s\S]*\}/);
     return m ? tryParse(m[0]) : null;
-  })();
-  if (parsed) return { ...parsed, articles: items };
+  })());
+  if (parsed) return { ...parsed, articles: items, ...stalenessFields };
+
+  // Unparseable/truncated Claude output: with articles in hand, the
+  // deterministic classifier produces a real tier; "unknown" is reserved
+  // for the genuinely-no-data case below.
+  if (items.length > 0) return classifierFallback(truncated ? "truncated" : "parse_failed");
 
   console.warn(`[adverse-media] Claude returned non-JSON (subject redacted) — surfacing degraded verdict`);
   const degraded: ReturnType<typeof analyseAdverseMediaResult> & {
@@ -561,6 +670,7 @@ ${articleBlock}`,
     gdeltArticleCount: items.length,
     claudeParseFailed: true,
     articles: items,
+    ...stalenessFields,
   };
   return degraded;
 }

@@ -1511,6 +1511,9 @@ function AdverseMediaTab({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subject: subject.name, limit: 50 }),
+        // Server budget is ≤5s; abort shortly after so a hung edge never
+        // leaves the tab stuck on "Scanning…" (error state has a Rescan button).
+        signal: AbortSignal.timeout(8_000),
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; verdict?: AmVerdict; degraded?: boolean; degradedReason?: string; error?: string };
       if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);

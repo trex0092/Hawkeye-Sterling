@@ -167,7 +167,9 @@ export async function getEntity(entityId: string): Promise<AlephEntity | null> {
     });
     if (!res.ok) return null;
     return await res.json() as AlephEntity;
-  } catch {
+  } catch (err) {
+    // Distinguish an outage from "entity not found" in the logs.
+    console.warn("[aleph] getEntity failed:", err instanceof Error ? err.message : String(err));
     return null;
   } finally {
     clearTimeout(t);
@@ -190,7 +192,8 @@ export async function getEntityNeighbours(
     if (!res.ok) return [];
     const data = await res.json() as { results?: AlephEntity[] };
     return data.results ?? [];
-  } catch {
+  } catch (err) {
+    console.warn("[aleph] getEntityNeighbours failed:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
@@ -209,11 +212,15 @@ export interface AlephCollection {
 
 export async function listCollections(limit = 50): Promise<AlephCollection[]> {
   try {
-    const res = await fetch(`${getBase()}/api/2/collections?limit=${limit}`, { headers: getHeaders() });
+    const res = await fetch(`${getBase()}/api/2/collections?limit=${limit}`, {
+      headers: getHeaders(),
+      signal: AbortSignal.timeout(ALEPH_TIMEOUT_MS),
+    });
     if (!res.ok) return [];
     const data = await res.json() as { results?: AlephCollection[] };
     return data.results ?? [];
-  } catch {
+  } catch (err) {
+    console.warn("[aleph] listCollections failed:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }

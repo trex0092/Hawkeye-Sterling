@@ -51,12 +51,17 @@ async function writeCache(key: string, articles: NewsArticle[]): Promise<void> {
     const store = getStore();
     const entry: CacheEntry = { cachedAt: new Date().toISOString(), articles };
     await store.set(key, JSON.stringify(entry));
-  } catch {
-    // non-critical
+  } catch (err) {
+    // Non-critical for the response, but a silent failure here means the 24h
+    // cache never warms and every screen pays the full LLM latency again.
+    console.warn("[claude-adverse-media] cache write failed:", err instanceof Error ? err.message : String(err));
   }
 }
 
-const TIMEOUT_MS = 35_000;
+// Must fit inside quick-screen's LLM adapter race (2.5s) plus the post-response
+// completion window — a longer timeout just guarantees losing the race and
+// returning nothing. Haiku with max_tokens 1000 typically answers in 1.5-3s.
+const TIMEOUT_MS = 3_500;
 
 interface ClaudeAdverseMediaItem {
   headline?: string;
@@ -154,13 +159,13 @@ export function llmAdverseMediaAdapter(opts: { jurisdiction?: string; entityType
         const client = getAnthropicClient(apiKey, TIMEOUT_MS);
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
-          max_tokens: 1500,
+          max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: buildUserPrompt(subjectName, opts.jurisdiction, opts.entityType) }],
         });
         const text = (msg.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "";
         const parsed = parseClaudeResponse(text);
-        if (!parsed || !parsed.found || !parsed.items) return [];
+        if (!parsed || !parsed.found || !Array.isArray(parsed.items)) return [];
 
         // Convert each item into a NewsArticle. Url is required by the
         // NewsArticle shape — we synthesize a deterministic placeholder

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { randomUUID, createHash } from "node:crypto";
 import { ScreeningAuditWriter } from "@/lib/server/screening-audit";
 import type {
@@ -52,6 +52,8 @@ import { saveEnrichmentJob, completeEnrichmentJob } from "@/lib/server/enrichmen
 import { UN_1267_DESIGNATED_ENTITIES } from "@/lib/intelligence/amlKeywords";
 import { bloomPreScreen, isFilterStale, isFilterPreExpiry, rebuildGlobalFilter, schedulePreExpiryRebuild } from "@/lib/server/bloom-filter";
 import { LatencyBudget } from "@/lib/server/latency-budget";
+import { buildAdverseMediaSummary } from "@/lib/server/quick-screen-adverse-media";
+import { SCREENING_BUDGETS } from "@/lib/server/screening-budgets";
 // ── In-memory result cache ─────────────────────────────────────────────────
 // Survives Next.js HMR by anchoring to globalThis (same pattern as store.ts).
 // TTL: 60 seconds — reduced from 3 min to limit stale CLEAR results for recently
@@ -405,6 +407,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       note: `UN 1267 pre-screen match: ${un1267Check.entity} (similarity=${un1267Check.similarity.toFixed(3)})`,
     }).catch((err: unknown) => console.warn("[quick-screen] UN 1267 audit write failed:", err instanceof Error ? err.message : String(err)));
     // Attach the UN 1267 flag as a top-level field on the response payload
+    phaseBudget.finish();
     return respond(200, {
       ok: true,
       ...un1267Result,
@@ -463,6 +466,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           approvedBy: match.approvedBy,
           approverRole: match.approverRole,
         }).catch((err: unknown) => console.warn("[quick-screen] whitelist audit write failed:", err instanceof Error ? err.message : String(err)));
+        phaseBudget.finish();
         return respond(200, { ok: true, ...whitelistedResult }, gateHeaders);
       }
     } catch (err) {
@@ -493,6 +497,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!cacheBypass) {
     const cached = _screenCache.get(cacheKey);
     if (cached && Date.now() - cached.cachedAt < SCREEN_CACHE_TTL_MS) {
+      phaseBudget.finish();
       return NextResponse.json(cached.result, {
         status: 200,
         headers: { ...CORS_HEADERS, ...gateHeaders, "x-cache": "HIT" },
@@ -718,6 +723,67 @@ export async function POST(req: Request): Promise<NextResponse> {
       } as QuickScreenResponse & { _bloomFastPath: boolean }, gateHeaders);
     }
 
+    // ── LLM adverse-media adapters: early kickoff ──────────────────────────
+    // Constructed and fired here — in parallel with the CPU-bound quickScreen()
+    // below — so they get the local-match wall-clock PLUS the augmentation
+    // window instead of the augmentation window alone. Token-cost neutral:
+    // these adapters previously fired on every full-path request from the
+    // augmentation block; the paths that return before this point (bloom
+    // fast-path, UN 1267, whitelist, cache hit) never reach the kickoff.
+    const llmAdapter = llmAdverseMediaAdapter({
+      jurisdiction: subject.jurisdiction,
+      entityType: subject.entityType,
+    });
+    const groqAdapter = groqAdverseMediaAdapter();
+    const geminiAdapter = geminiAdverseMediaAdapter();
+    const googleAdapter = googleAiModeAdapter();
+    const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
+    const canAug = subject.name.length >= 3;
+    type LlmResult = Awaited<ReturnType<typeof llmAdapter.search>>;
+    const llmEarlyP: Promise<LlmResult> = canAug && llmAdapter.isAvailable()
+      ? llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; })
+      : Promise.resolve<LlmResult>([]);
+    const groqEarlyP: Promise<LlmResult> = canAug && groqAdapter.isAvailable()
+      ? groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; })
+      : Promise.resolve<LlmResult>([]);
+    const geminiEarlyP: Promise<LlmResult> = canAug && geminiAdapter.isAvailable()
+      ? geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; })
+      : Promise.resolve<LlmResult>([]);
+    const googleEarlyP: Promise<LlmResult> = canAug && googleAdapter.isAvailable()
+      ? googleAdapter.search(subject.name, { limit: 10 }).catch((e): LlmResult => { warn(e); return []; })
+      : Promise.resolve<LlmResult>([]);
+
+    // Post-response completion: keep the instance alive after the response is
+    // sent until the adapter promises settle, so their 24h Blobs caches are
+    // written even when an adapter loses the in-band race. Next screen of the
+    // same subject then gets instant LLM adverse media. Fire-and-forget — must
+    // never touch the response path. after() throws outside a request scope
+    // (unit tests import this module directly) — degrade silently.
+    try {
+      after(() => Promise.allSettled([llmEarlyP, groqEarlyP, geminiEarlyP, googleEarlyP, earlyNewsPromise]).then(() => undefined));
+    } catch { /* after() unavailable outside request scope */ }
+
+    // Bounded peek used by the deadline early-return paths: collect whatever
+    // the news/LLM adverse-media promises have ALREADY produced (≤100ms wait)
+    // so even a deadline-bounded response carries adverse media instead of
+    // silently dropping it.
+    const peekAdverseMedia = async (): Promise<ReturnType<typeof buildAdverseMediaSummary>> => {
+      const grace = <T>(p: Promise<T>): Promise<T | null> =>
+        Promise.race([p, new Promise<null>((r) => setTimeout(() => r(null), 100))]);
+      const [n, l, g, m, gg] = await Promise.all([
+        grace(earlyNewsPromise), grace(llmEarlyP), grace(groqEarlyP), grace(geminiEarlyP), grace(googleEarlyP),
+      ]);
+      const articles = [...(l ?? []), ...(g ?? []), ...(m ?? []), ...(gg ?? []), ...(n?.articles ?? [])];
+      const providers = [
+        ...(n?.providersUsed ?? []),
+        ...(l && l.length > 0 ? ["claude-adverse-media"] : []),
+        ...(g && g.length > 0 ? ["groq-adverse-media"] : []),
+        ...(m && m.length > 0 ? ["gemini-adverse-media"] : []),
+        ...(gg && gg.length > 0 ? ["google-ai-mode"] : []),
+      ];
+      return buildAdverseMediaSummary(subject.name, articles, providers);
+    };
+
     phaseBudget.phase("quickscreen");
     const result = quickScreen(subject, candidates, screenOptions);
     phaseBudget.phase("augmentation");
@@ -816,7 +882,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // immediately. Sanctions hits are always present (local match is O(1));
     // only the enrichment layer (news, registries, LLM) is deferred.
     // The client can re-poll for an enriched result if needed.
-    const HARD_DEADLINE_MS = 3_000; // 3s hard cap — keeps end-to-end response in 3-5s target window
+    const HARD_DEADLINE_MS = SCREENING_BUDGETS.QUICK_SCREEN_HARD_DEADLINE_MS; // 3s hard cap — keeps end-to-end response within the 5s SLA
     const elapsedMs = Date.now() - t0;
     if (!enrichJobId && elapsedMs >= HARD_DEADLINE_MS - 100) {
       // Audit chain must fire even when the enrichment deadline is exceeded.
@@ -842,8 +908,12 @@ export async function POST(req: Request): Promise<NextResponse> {
         verdict: result.severity === "clear" && result.hits.length === 0 ? "clear" : result.severity,
         reliable: String(reliability1.clearVerdictReliable),
       });
+      // Surface whatever adverse media has already resolved (≤100ms peek) —
+      // a deadline-bounded response must not silently drop articles in hand.
+      const adverseMedia1 = await peekAdverseMedia();
       return respond(200, {
         ok: true, ...result,
+        ...(adverseMedia1 ? { adverseMedia: adverseMedia1 } : {}),
         enrichmentPending: true,
         enrichJobId: newJobId1,
         latencyMs: Date.now() - t0,
@@ -866,15 +936,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     // All augmentation layers are independent — kick every promise off at
     // once and await them together so they run in parallel, not serially.
     const commAdapter = bestCommercialAdapter();
-    const llmAdapter = llmAdverseMediaAdapter({
-      jurisdiction: subject.jurisdiction,
-      entityType: subject.entityType,
-    });
-    const groqAdapter = groqAdverseMediaAdapter();
-    const geminiAdapter = geminiAdverseMediaAdapter();
-    const googleAdapter = googleAiModeAdapter();
-    const warn = (err: unknown) => console.warn("[hawkeye] quick-screen: best-effort adapter failed:", err);
-    const canAug = subject.name.length >= 3;
+    // llmAdapter/groqAdapter/geminiAdapter/googleAdapter, warn and canAug are
+    // declared above (early kickoff, before quickScreen) — their searches have
+    // been in flight since before the local match ran.
     const hitGated = (result.hits.length < 3 || isCommonName) && canAug;
 
     type OSResult        = Awaited<ReturnType<typeof LIVE_OPENSANCTIONS_ADAPTER.lookup>>;
@@ -883,8 +947,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     type CRegResult      = Awaited<ReturnType<typeof searchCountryRegistries>>;
     type CSanResult      = Awaited<ReturnType<typeof searchCountrySanctions>>;
     type FreeResult      = Awaited<ReturnType<typeof searchFreeAdapters>>;
-    // NewsResult already declared above (earlyNewsPromise) — reuse the type alias.
-    type LlmResult       = Awaited<ReturnType<typeof llmAdapter.search>>;
+    // NewsResult and LlmResult already declared above (early kickoff) — reuse.
     type UrlIngestResult = Awaited<ReturnType<typeof ingestUrls>>;
 
     // Per-adapter timeout: wrap each external lookup so any single slow
@@ -893,11 +956,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     // ~2.5s; anything beyond that is almost certainly a transient hang
     // from a third-party that we'd rather degrade than block on. Returning
     // the empty type matches the existing .catch fallback contract.
-    const ADAPTER_TIMEOUT_MS = 1_500; // 1.5s cap keeps full pipeline within 3-5s target
+    const ADAPTER_TIMEOUT_MS = SCREENING_BUDGETS.QUICK_SCREEN_ADAPTER_TIMEOUT_MS; // 1.5s cap keeps full pipeline within the 5s SLA
     const adapterTimeout = <T>(p: Promise<T>, fallback: T): Promise<T> => {
       let to: NodeJS.Timeout | null = null;
       const timeoutP = new Promise<T>((resolve) => {
-        to = setTimeout(() => { warn("adapter timeout >1.5s"); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+        to = setTimeout(() => { warn(`adapter timeout >${ADAPTER_TIMEOUT_MS}ms`); resolve(fallback); }, ADAPTER_TIMEOUT_MS);
+      });
+      return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
+    };
+    // LLM adverse-media adapters get a longer in-band race: their promises
+    // started before quickScreen() so they have already consumed local-match
+    // wall-clock, and the overall deadlineP still bounds the whole block.
+    const LLM_ADAPTER_TIMEOUT_MS = SCREENING_BUDGETS.QUICK_SCREEN_LLM_ADAPTER_TIMEOUT_MS;
+    const adapterTimeoutLlm = <T>(p: Promise<T>, fallback: T): Promise<T> => {
+      let to: NodeJS.Timeout | null = null;
+      const timeoutP = new Promise<T>((resolve) => {
+        to = setTimeout(() => { warn(`LLM adapter timeout >${LLM_ADAPTER_TIMEOUT_MS}ms`); resolve(fallback); }, LLM_ADAPTER_TIMEOUT_MS);
       });
       return Promise.race([p, timeoutP]).finally(() => { if (to) clearTimeout(to); });
     };
@@ -921,14 +995,14 @@ export async function POST(req: Request): Promise<NextResponse> {
       canAug ? adapterTimeout(searchCountrySanctions(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): CSanResult => { warn(e); return { records: [], lists: [] }; }), { records: [], lists: [] } as CSanResult) : Promise.resolve<CSanResult>({ records: [], lists: [] }),
       canAug ? adapterTimeout(searchFreeAdapters(subject.name, subject.jurisdiction ?? undefined, ADAPTER_QUERY_LIMIT).catch((e): FreeResult => { warn(e); return { records: [], providersUsed: [] }; }), { records: [], providersUsed: [] } as FreeResult) : Promise.resolve<FreeResult>({ records: [], providersUsed: [] }),
       // Group C — news velocity + LLM adverse-media recall (Claude + Groq + Gemini + Google AI in parallel)
-      // earlyNewsPromise was started before quickScreen() ran; here we wrap it
-      // in adapterTimeout so the whole augmentation race is still bounded.
+      // All five promises started BEFORE quickScreen() ran (early kickoff);
+      // here we only bound how much longer the response waits for them.
       adapterTimeout(earlyNewsPromise, { articles: [], providersUsed: [] } as NewsResult),
-      canAug && llmAdapter.isAvailable() ? adapterTimeout(llmAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
-      canAug && groqAdapter.isAvailable() ? adapterTimeout(groqAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
-      canAug && geminiAdapter.isAvailable() ? adapterTimeout(geminiAdapter.search(subject.name, { limit: 15 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      adapterTimeoutLlm(llmEarlyP, [] as LlmResult),
+      adapterTimeoutLlm(groqEarlyP, [] as LlmResult),
+      adapterTimeoutLlm(geminiEarlyP, [] as LlmResult),
       // Group C+ — Google AI Mode search (synthesised OSINT)
-      canAug && googleAdapter.isAvailable() ? adapterTimeout(googleAdapter.search(subject.name, { limit: 10 }).catch((e): LlmResult => { warn(e); return []; }), [] as LlmResult) : Promise.resolve<LlmResult>([]),
+      adapterTimeoutLlm(googleEarlyP, [] as LlmResult),
       // Group D — public-API enrichment (IP / blockchain / breach / domain / phone / fraud)
       adapterTimeout(runEnrichmentAdapters(hints).catch((e): EnrichmentBundle => { warn(e); return NULL_ENRICHMENT; }), NULL_ENRICHMENT),
       // Group E — operator-supplied evidence URLs. Moved into the parallel race so
@@ -968,8 +1042,13 @@ export async function POST(req: Request): Promise<NextResponse> {
         verdict: result.severity === "clear" && result.hits.length === 0 ? "clear" : result.severity,
         reliable: String(reliability2.clearVerdictReliable),
       });
+      // The Promise.all lost the race, but individual news/LLM promises may
+      // have settled — surface whatever resolved (≤100ms peek) instead of
+      // silently dropping adverse media that is already in hand.
+      const adverseMedia2 = await peekAdverseMedia();
       return respond(200, {
         ok: true, ...result,
+        ...(adverseMedia2 ? { adverseMedia: adverseMedia2 } : {}),
         enrichmentPending: true,
         enrichJobId: newJobId2,
         latencyMs: Date.now() - t0,
@@ -1006,6 +1085,17 @@ export async function POST(req: Request): Promise<NextResponse> {
         providersUsed: [...newsArticles.providersUsed, "url-ingest"],
       };
     }
+
+    // Adverse-media summary — the same article set the reasoning layer
+    // consumes, scored with the relevance gate /api/screening/run applies to
+    // its Lane C output. This is the field the UI's "Worldwide Intel Feed"
+    // section renders; omitting it (the previous behavior) hid every article
+    // this route had already fetched. Pure function — zero added latency.
+    const adverseMediaSummary = buildAdverseMediaSummary(
+      subject.name,
+      newsArticles.articles,
+      newsArticles.providersUsed,
+    );
     // ── Reasoning layer ────────────────────────────────────────────────
     // Multi-source consensus + contradiction + coverage gap + audit
     // rationale. Pure-function — never fails the screening even if
@@ -1324,6 +1414,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         ...(eb.fraudShield.available
           ? { fraudShield: eb.fraudShield }
           : {}),
+        // Adverse media — scored, deduplicated, keyword-classified summary of
+        // the news + LLM-adapter articles fetched during this screen.
+        ...(adverseMediaSummary ? { adverseMedia: adverseMediaSummary } : {}),
         // Tell the operator UI whether common-name expansion fired so the
         // triage panel can show the appropriate banner.
         commonNameExpansion: isCommonName,
@@ -1399,6 +1492,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       { ok: false, errorCode: "HANDLER_EXCEPTION", errorType: "internal", tool: "screen_subject", error: "quick-screen failed", detail, requestId: randomUUID(), latencyMs: Date.now() - t0 } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; requestId: string; latencyMs: number },
       gateHeaders,
     );
+  } finally {
+    // Emit request-duration + SLA-bucket metrics on every screening path —
+    // finish() is idempotent, so paths that already called it are unaffected.
+    phaseBudget.finish();
   }
 }
 

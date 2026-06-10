@@ -1169,7 +1169,8 @@ export default function ScreeningPage() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ subject: subject.name, limit: 25 }),
           label: "Adverse-media auto-run failed",
-          timeoutMs: 45_000,
+          // Server budget is ≤5s — 8s covers edge/cold-start overhead.
+          timeoutMs: 8_000,
         },
       ).then((res) => {
         if (!res.ok || !res.data?.ok) return;

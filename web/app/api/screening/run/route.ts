@@ -38,6 +38,7 @@ import { checkAdversarialInput } from "@/lib/server/adversarial-guard";
 import { handlePostScreenResult } from "@/lib/server/post-screen-handler";
 import { scoreAndFilterArticles, aggregateMediaSeverity } from "@/lib/server/adverse-media-scorer";
 import { getScreeningThresholds } from "@/lib/server/screening-threshold-config";
+import { SCREENING_BUDGETS } from "@/lib/server/screening-budgets";
 import type {
   QuickScreenCandidate,
   QuickScreenOptions,
@@ -47,7 +48,9 @@ import type {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// In-band deadlines (SCREENING_BUDGETS) keep the response ≤5s; 10 gives 2x
+// headroom for serialization without letting a regression hide behind 30s.
+export const maxDuration = 10;
 
 const SCHEMA_VERSION = "1.0";
 const MAX_CANDIDATES = 5_000;
@@ -341,10 +344,37 @@ export async function POST(req: Request): Promise<NextResponse> {
     }, tenant).catch(() => undefined);
   }
 
-  // ── UAE list staleness + PEP screening (parallel) ──────────────────────────
-  const [uaeStale, pepResult] = await Promise.all([
-    isUaeListStale(thresholds.staleListHours),
-    runPepScreening(subject.name, subject.aliases ?? []),
+  // ── Multi-source sanctions screening — kicked off FIRST ───────────────────
+  // The lanes are the long pole, so they start before the pre-work await:
+  // wall-clock becomes max(prework, lanes) instead of their sum. Previously
+  // the PEP corpus load ran serially ahead of the lanes and could alone blow
+  // the 5s SLA on a cold start (its CDN fetch allows up to 30s).
+  const lanesPromise = runMultiSourceScreening(
+    subject,
+    options,
+    Array.isArray(callerCandidates) ? callerCandidates : undefined,
+  );
+  // Pre-attach a handler so a rejection while pre-work is awaited below is
+  // never reported as unhandled; the real handling is the try/catch around
+  // the await further down.
+  lanesPromise.catch(() => undefined);
+
+  // ── UAE list staleness + PEP screening (parallel, budget-capped) ───────────
+  type PepScreenResult = Awaited<ReturnType<typeof runPepScreening>>;
+  const [uaeStale, pepResult] = await Promise.race([
+    Promise.all([
+      isUaeListStale(thresholds.staleListHours),
+      runPepScreening(subject.name, subject.aliases ?? []),
+    ]),
+    new Promise<[boolean, PepScreenResult]>((resolve) =>
+      setTimeout(() => {
+        screeningTrace["preworkTimedOut"] = true;
+        // Degraded fallbacks: uaeStale=false (staleness unknown — the lane
+        // health + verdict-reliability layers still surface list quality),
+        // PEP source 'timeout' (consumers already tolerate non-corpus values).
+        resolve([false, { hits: [], source: "timeout", corpusSize: 0 }]);
+      }, SCREENING_BUDGETS.RUN_PREWORK_TIMEOUT_MS),
+    ),
   ]);
   screeningTrace["uaeListsStale"]  = uaeStale;
   screeningTrace["pepSource"]      = pepResult.source;
@@ -356,14 +386,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     firePepFamilyLookup(subject.name, tenant);
   }
 
-  // ── Multi-source sanctions screening ───────────────────────────────────────
   let msResult: Awaited<ReturnType<typeof runMultiSourceScreening>>;
   try {
-    msResult = await runMultiSourceScreening(
-      subject,
-      options,
-      Array.isArray(callerCandidates) ? callerCandidates : undefined,
-    );
+    msResult = await lanesPromise;
   } catch (err) {
     console.error("[screening/run] runMultiSourceScreening threw", { reqId, resultId, detail: err instanceof Error ? err.message : String(err) });
     return NextResponse.json(

@@ -590,6 +590,7 @@ describe('POST /api/quick-screen — UN 1267 pre-screen and corpus validation', 
       matchedDesignatedEntity: string;
       matchSimilarity: number;
       hits: Array<{ listId: string }>;
+      adverseMedia?: unknown;
     };
     expect(body.ok).toBe(true);
     expect(body.severity).toBe('critical');
@@ -598,6 +599,9 @@ describe('POST /api/quick-screen — UN 1267 pre-screen and corpus validation', 
     expect(body.matchSimilarity).toBeGreaterThanOrEqual(0.80);
     expect(body.hits.length).toBeGreaterThan(0);
     expect(body.hits[0]!.listId).toBe('un_1267');
+    // UN 1267 fast-path returns before any news source is queried — the
+    // response must NOT claim an adverse-media check that never ran.
+    expect(body.adverseMedia).toBeUndefined();
   });
 
   it('UN 1267 pre-screen: fires audit write with event=screening.completed', async () => {
@@ -701,6 +705,15 @@ describe('Screening API response contract', () => {
     expect(body).toHaveProperty('negativeEvidence');
     expect(body).toHaveProperty('confidenceNote');
     expect(body).toHaveProperty('unresolvedAmbiguity');
+    // Adverse media (Lane C) — always present on this route, with the scored
+    // article array and a lane-health entry the UI badge reads.
+    expect(body).toHaveProperty('adverseMedia');
+    const am = body['adverseMedia'] as Record<string, unknown>;
+    expect(Array.isArray(am['scoredArticles'])).toBe(true);
+    const laneHealth = body['laneHealth'] as Record<string, string> | undefined;
+    if (laneHealth) {
+      expect(['ok', 'degraded']).toContain(laneHealth['adverse_media']);
+    }
     // Subject echo
     expect(body).toHaveProperty('subject');
     const subject = body['subject'] as Record<string, unknown>;
@@ -730,5 +743,66 @@ describe('Screening API response contract', () => {
     expect(body).toHaveProperty('severity');
     expect(body).toHaveProperty('hits');
     expect(Array.isArray(body['hits'])).toBe(true);
+    // Default mocks: searchAllNews returns zero articles AND zero providers —
+    // nothing was queried, so the response must omit adverseMedia rather than
+    // claim a "checked, clear" negative finding.
+    expect(body['adverseMedia']).toBeUndefined();
+  });
+
+  it('/api/quick-screen surfaces adverseMedia when news adapters return articles', async () => {
+    if (typeof globalThis.__hs_screen_cache !== 'undefined') {
+      globalThis.__hs_screen_cache.clear();
+    }
+    const { searchAllNews } = await import('@/lib/intelligence/newsAdapters');
+    vi.mocked(searchAllNews).mockResolvedValueOnce({
+      articles: [
+        {
+          source: 'newsapi',
+          outlet: 'example.com',
+          title: 'Adverse Contract Person indicted for money laundering',
+          url: 'https://news.example.com/adverse-1',
+          publishedAt: '2026-05-01T00:00:00Z',
+          snippet: 'Adverse Contract Person was charged in a money laundering and fraud investigation.',
+        },
+        {
+          source: 'newsapi',
+          outlet: 'example.com',
+          title: 'Quarterly agricultural exports rise in unrelated region',
+          url: 'https://news.example.com/unrelated-1',
+          publishedAt: '2026-05-01T00:00:00Z',
+          snippet: 'Commodity prices were stable.',
+        },
+      ],
+      providersUsed: ['newsapi'],
+    });
+    const { POST } = await import('@/app/api/quick-screen/route') as {
+      POST: (req: Request) => Promise<Response>;
+    };
+
+    const req = makeRequest('http://localhost/api/quick-screen', {
+      body: {
+        subject: { name: 'Adverse Contract Person', entityType: 'individual' },
+        candidates: MINIMAL_CANDIDATES,
+      },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await jsonBody(res) as Record<string, unknown>;
+
+    const am = body['adverseMedia'] as Record<string, unknown> | undefined;
+    expect(am).toBeTruthy();
+    expect(am!['found']).toBe(true);
+    expect(['critical', 'high', 'medium']).toContain(am!['severity']);
+    expect(am!['provider']).toBe('newsapi');
+    expect(am!['fatfPredicates']).toContain('FATF R.3 (ML offence)');
+    const items = am!['items'] as Array<Record<string, unknown>>;
+    expect(items.length).toBeGreaterThan(0);
+    const first = items[0]!;
+    expect(typeof first['id']).toBe('string');
+    expect(String(first['title'])).toMatch(/indicted/i);
+    expect(first['url']).toBe('https://news.example.com/adverse-1');
+    expect(Array.isArray(first['categories'])).toBe(true);
+    expect((first['categories'] as string[]).length).toBeGreaterThan(0);
+    expect(first['severity']).toBeTruthy();
   });
 });

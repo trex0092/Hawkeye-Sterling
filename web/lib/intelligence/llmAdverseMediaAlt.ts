@@ -14,7 +14,9 @@
 import { NULL_NEWS_ADAPTER, type NewsAdapter, type NewsArticle } from "./newsAdapters";
 import { AML_KEYWORDS_EN } from "./amlKeywords";
 
-const TIMEOUT_MS = 12_000;
+// Must fit inside quick-screen's LLM adapter race (2.5s) plus the
+// post-response completion window — see llmAdverseMedia.ts.
+const TIMEOUT_MS = 3_500;
 
 interface AiAdverseMediaItem {
   headline?: string;

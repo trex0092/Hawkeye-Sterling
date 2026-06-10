@@ -3,14 +3,18 @@
 // Fires 4 parallel lanes for every screen and merges results:
 //   Lane A — Local corpus  (UN/OFAC/EU/UK/UAE/LSEG-supplement blobs) → quickScreen()  [always]
 //   Lane B — OpenSanctions (337 sources via Yente public API)                          [always]
-//   Lane C — Adverse media (Taranis AI → OSINT fallback)                               [best-effort, capped at 12 s]
+//   Lane C — Adverse media (Taranis AI → OSINT fallback)                               [best-effort, budget-capped]
 //   Lane D — LSEG World-Check One real-time                                            [only if LSEG_WC1_MCP_URL set]
 //
 // Hits from A/B/D are deduplicated by normalised candidate name.
 // Lane C result is included in the response but never blocks it.
+// All lane timeouts derive from SCREENING_BUDGETS so the /api/screening/run
+// response stays inside the 5-second SLA.
 
 import { createHash } from 'node:crypto';
 import { loadCandidates } from './candidates-loader';
+import { SCREENING_BUDGETS } from './screening-budgets';
+import { incrementCounter } from './metrics-store';
 import type {
   QuickScreenSubject,
   QuickScreenCandidate,
@@ -180,8 +184,8 @@ async function runLaneB(subject: QuickScreenSubject): Promise<LaneBResult> {
     ];
 
     const results = await Promise.race([
-      yenteMatch(queries, { threshold: 0.6, limit: 10, timeoutMs: 12_000 }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('yente timeout')), 14_000)),
+      yenteMatch(queries, { threshold: 0.6, limit: 10, timeoutMs: SCREENING_BUDGETS.RUN_LANE_B_YENTE_MS }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('yente timeout')), SCREENING_BUDGETS.RUN_LANE_B_OUTER_MS)),
     ]);
 
     const seen = new Set<string>();
@@ -242,6 +246,9 @@ async function runLaneC(subjectName: string): Promise<AdverseMediaSummary> {
     found: false, severity: 'none', itemCount: 0, adverseCount: 0,
     items: [], categories: [], provider: 'none', fatfPredicates: [],
   };
+  // Lane budget — Taranis gets the first slice; the OSINT fallback only runs
+  // when enough of the lane budget remains to be useful.
+  const laneDeadline = Date.now() + SCREENING_BUDGETS.RUN_LANE_C_TOTAL_MS;
 
   try {
     const [{ classifyI18n }, { discoverAdverseMedia }] = await Promise.all([
@@ -264,8 +271,8 @@ async function runLaneC(subjectName: string): Promise<AdverseMediaSummary> {
       try {
         const { searchAdverseMedia } = await import('../../../src/integrations/taranisAi.js') as typeof import('../../../src/integrations/taranisAi.js');
         const tr = await Promise.race([
-          searchAdverseMedia(subjectName, { limit: 25, timeoutMs: 8_000 }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('taranis timeout')), 9_000)),
+          searchAdverseMedia(subjectName, { limit: 25, timeoutMs: SCREENING_BUDGETS.RUN_LANE_C_TARANIS_INNER_MS }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('taranis timeout')), SCREENING_BUDGETS.RUN_LANE_C_TARANIS_OUTER_MS)),
         ]);
         if (tr.ok && tr.items.length > 0) {
           provider = 'taranis';
@@ -279,9 +286,17 @@ async function runLaneC(subjectName: string): Promise<AdverseMediaSummary> {
     }
 
     if (rawItems.length === 0) {
+      const remainingMs = laneDeadline - Date.now();
+      if (remainingMs < SCREENING_BUDGETS.RUN_LANE_C_OSINT_MIN_REMAINING_MS) {
+        // Not enough lane budget left for a useful OSINT pass — report a
+        // budget skip (mapped to laneHealth 'degraded') rather than blowing
+        // the 5s SLA. The MLRO sees the lane as degraded, never as a silent
+        // "checked, clear".
+        return { ...empty, provider: 'skipped_budget' };
+      }
       const osint = await Promise.race([
         discoverAdverseMedia({ subjectName, pageSize: 20 }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('osint timeout')), 10_000)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('osint timeout')), remainingMs)),
       ]);
       if (osint.ok && osint.items.length > 0) {
         provider = osint.provider;
@@ -383,7 +398,7 @@ async function runLaneD(subject: QuickScreenSubject): Promise<LaneDResult> {
 
     const wc1 = await Promise.race([
       screenName(subject.name, { ...(entityType !== undefined ? { entityType } : {}), limit: 10 }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('LSEG WC1 timeout')), 12_000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('LSEG WC1 timeout')), SCREENING_BUDGETS.RUN_LANE_D_OUTER_MS)),
     ]);
 
     if (!wc1.ok) {
@@ -453,7 +468,7 @@ function mergeHits(
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-const ADVERSE_MEDIA_TIMEOUT_MS = 12_000;
+const ADVERSE_MEDIA_TIMEOUT_MS = SCREENING_BUDGETS.RUN_LANE_C_TOTAL_MS;
 
 const EMPTY_ADVERSE: AdverseMediaSummary = {
   found: false, severity: 'none', itemCount: 0, adverseCount: 0,
@@ -469,17 +484,28 @@ export async function runMultiSourceScreening(
   const laneHealth: Record<string, LaneStatus> = {};
   const sourcesQueried: string[] = [];
 
+  // Per-lane duration metrics — same counter family LatencyBudget emits, so
+  // operators can see which lane is eating the 5s budget.
+  const timed = <T>(phase: string, p: Promise<T>): Promise<T> => {
+    const start = Date.now();
+    const record = () => {
+      incrementCounter('hawkeye_phase_duration_ms_total', Date.now() - start, { route: 'screening-run', phase });
+      incrementCounter('hawkeye_phase_calls_total', 1, { route: 'screening-run', phase });
+    };
+    return p.then((v) => { record(); return v; }, (e: unknown) => { record(); throw e; });
+  };
+
   const [laneASettled, laneBSettled, laneDSettled, laneCSettled] = await Promise.allSettled([
-    runLaneA(subject, options, callerCandidates),
-    runLaneB(subject),
-    runLaneD(subject),
+    timed('lane_a_local', runLaneA(subject, options, callerCandidates)),
+    timed('lane_b_opensanctions', runLaneB(subject)),
+    timed('lane_d_lseg', runLaneD(subject)),
     // Lane C: best-effort — always resolves (timeout produces empty summary)
-    Promise.race([
+    timed('lane_c_adverse_media', Promise.race([
       runLaneC(subject.name),
       new Promise<AdverseMediaSummary>((resolve) =>
         setTimeout(() => resolve({ ...EMPTY_ADVERSE, provider: 'timeout' }), ADVERSE_MEDIA_TIMEOUT_MS),
       ),
-    ]),
+    ])),
   ]);
 
   const laneA = laneASettled.status === 'fulfilled'
@@ -508,7 +534,7 @@ export async function runMultiSourceScreening(
   laneHealth['lseg_wc1'] = laneD.health;
   if (laneD.health !== 'skipped') sourcesQueried.push('lseg_wc1');
 
-  laneHealth['adverse_media'] = adverseMedia.provider !== 'none' && adverseMedia.provider !== 'timeout' && adverseMedia.provider !== 'error'
+  laneHealth['adverse_media'] = adverseMedia.provider !== 'none' && adverseMedia.provider !== 'timeout' && adverseMedia.provider !== 'error' && adverseMedia.provider !== 'skipped_budget'
     ? 'ok'
     : 'degraded';
   sourcesQueried.push('adverse_media');

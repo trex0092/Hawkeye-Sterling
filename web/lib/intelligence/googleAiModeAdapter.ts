@@ -16,7 +16,9 @@
 
 import { NULL_NEWS_ADAPTER, type NewsAdapter, type NewsArticle } from "./newsAdapters";
 
-const TIMEOUT_MS = 15_000;
+// Must fit inside quick-screen's LLM adapter race (2.5s) plus the
+// post-response completion window — see llmAdverseMedia.ts.
+const TIMEOUT_MS = 4_000;
 
 interface McpSearchResult {
   title?: string;

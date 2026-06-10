@@ -170,7 +170,10 @@ export async function getEntity(entityId: string, dataset = "default"): Promise<
     });
     if (!res.ok) return null;
     return await res.json() as FtmEntity;
-  } catch {
+  } catch (err) {
+    // Distinguish an outage from "entity not found" in the logs — a silent
+    // null here makes Yente downtime indistinguishable from a clean miss.
+    console.warn("[yente] getEntity failed:", err instanceof Error ? err.message : String(err));
     return null;
   } finally {
     clearTimeout(t);
@@ -190,11 +193,15 @@ export interface YenteDataset {
 
 export async function listDatasets(): Promise<YenteDataset[]> {
   try {
-    const res = await fetch(`${getBase()}/datasets`, { headers: getHeaders() });
+    const res = await fetch(`${getBase()}/datasets`, {
+      headers: getHeaders(),
+      signal: AbortSignal.timeout(YENTE_TIMEOUT_MS),
+    });
     if (!res.ok) return [];
     const data = await res.json() as { datasets?: YenteDataset[] };
     return data.datasets ?? [];
-  } catch {
+  } catch (err) {
+    console.warn("[yente] listDatasets failed:", err instanceof Error ? err.message : String(err));
     return [];
   }
 }
