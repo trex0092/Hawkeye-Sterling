@@ -1165,6 +1165,12 @@ export default function OversightPage() {
       asanaModule="oversight"
       asanaLabel="Oversight"
       engineLabel="Governance engine"
+      onAdd={() => {
+        if (tab === "minutes") setShowAddMinute(true);
+        else if (tab === "circulars") setShowAddCircular(true);
+        else if (tab === "action-tracker") setShowAddAction(true);
+        else { setTab("approvals"); setShowAddApproval(true); }
+      }}
       sidebarActions={
         tab === "action-tracker" ? (
           <ActionButton variant="add" type="button" onClick={() => setShowAddAction((v) => !v)}>
@@ -1219,6 +1225,11 @@ export default function OversightPage() {
         <div className="flex flex-col gap-4">
           {showAddApproval && (
             <AddApprovalForm onAdd={addApproval} onCancel={() => setShowAddApproval(false)} />
+          )}
+          {liveApprovals.length === 0 && !showAddApproval && (
+            <div className="bg-bg-panel border border-dashed border-hair-2 rounded-lg p-8 text-center text-12 text-ink-3">
+              No approval requests on record — use the <span className="font-semibold text-amber">+ ADD</span> button (top right) to create one.
+            </div>
           )}
           {liveApprovals.map((a) => (
             <div key={a.id} className="relative bg-bg-panel border border-hair-2 rounded-lg p-4">
@@ -1328,6 +1339,11 @@ export default function OversightPage() {
         <div className="flex flex-col gap-4">
           {showAddMinute && (
             <AddMinuteForm onAdd={addMinute} onCancel={() => setShowAddMinute(false)} />
+          )}
+          {liveMinutes.length === 0 && !showAddMinute && (
+            <div className="bg-bg-panel border border-dashed border-hair-2 rounded-lg p-8 text-center text-12 text-ink-3">
+              No meeting minutes on record — use the <span className="font-semibold text-amber">+ ADD</span> button (top right) to create one.
+            </div>
           )}
           {liveMinutes.map((m) => {
             const expanded = expandedMinute === m.id;
@@ -1457,6 +1473,13 @@ export default function OversightPage() {
                 </tr>
               </thead>
               <tbody>
+                {liveCirculars.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-8 text-center text-12 text-ink-3">
+                      No circulars on record — use the <span className="font-semibold text-amber">+ ADD</span> button (top right) to log one.
+                    </td>
+                  </tr>
+                )}
                 {liveCirculars.map((c, i) => (
                   <>
                     <tr key={c.id} className={i < liveCirculars.length - 1 ? "border-b border-hair" : ""}>

@@ -262,6 +262,7 @@ export default function CnmrPage() {
       engineLabel="CNMR compliance engine"
       onRun={() => void loadCases()}
       onSync={() => void loadCases()}
+      onAdd={() => setShowNew(true)}
       sidebarActions={
         !showNew ? (
           <ActionButton variant="add" type="button" onClick={() => setShowNew(true)}>

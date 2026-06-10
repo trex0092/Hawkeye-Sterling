@@ -255,7 +255,7 @@ export default function InvestigationPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="investigation" asanaLabel="Investigation" onRun={() => void runBrain()}>
+    <ModuleLayout asanaModule="investigation" asanaLabel="Investigation" onRun={() => void runBrain()} onAdd={() => setAddingParty(true)}>
       <ModuleHero
 
         eyebrow=""
