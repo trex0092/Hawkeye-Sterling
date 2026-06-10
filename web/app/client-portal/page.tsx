@@ -357,7 +357,7 @@ export default function ClientPortalPage() {
 
   if (submitted) {
     return (
-      <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal">
+      <ModuleLayout asanaModule="client-portal" asanaLabel="Client Portal" onAdd={() => setSubmitted(false)}>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="max-w-md w-full bg-bg-panel border border-hair-2 rounded-lg p-8 text-center">
             <div className="text-24 mb-3">✓</div>
