@@ -7,7 +7,7 @@
 
 > Each entry: **Purpose · MoE / UAE obligation · Control & enforcement · Frequency / SLA · Responsible role · Evidence & retention.**
 
-> **Live work-queue boards (2026-06-10 rebuild):** every module in this register has a dedicated Asana board, numbered by platform group (1.xx Onboarding & CDD · 2.xx Risk & AML Ops · 3.xx Governance & Audit · 4.xx KYC Tools · 5.xx Intelligence), plus `00 · Hawkeye Inbox — Master Landing` (triage/catch-all) and `HS · Modules — Daily Attestation` (MLRO digest). Each board carries this register's entry as its charter and a pinned 📌 Compliance Attestation task receiving the automated daily attestation (06:00 UTC). Canonical definition: `web/lib/server/asana-workspace-map.ts`; GID map: `web/lib/server/asana-workspace-gids.json`; change record: CCL-2026-021.
+> **Live work-queue boards (2026-06-10 rebuild):** every module in this register has a dedicated Asana board, numbered by platform group (1.xx Onboarding & CDD · 2.xx Risk & AML Ops · 3.xx Governance & Audit · 4.xx KYC Tools · 5.xx Intelligence), plus `00 · Hawkeye Inbox — Master Landing` (triage/catch-all) and `HS · Modules — Daily Attestation` (MLRO digest). Each board carries this register's entry as its charter and a pinned 📌 Compliance Attestation task receiving the automated attestation — narrative plus a deterministic status-card graphic — at 09:30 GST, Monday to Friday (CCL-2026-023). Canonical definition: `web/lib/server/asana-workspace-map.ts`; GID map: `web/lib/server/asana-workspace-gids.json`; change record: CCL-2026-021.
 
 ---
 
