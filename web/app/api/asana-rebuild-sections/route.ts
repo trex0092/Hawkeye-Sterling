@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
-import { asanaGids } from "@/lib/server/asanaConfig";
+import { MODULE_BOARDS, INBOX_BOARD, DIGEST_BOARD, boardName, boardProjectGid } from "@/lib/server/asana-workspace-map";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,119 +10,15 @@ export const maxDuration = 120;
 
 const API = "https://app.asana.com/api/1.0";
 
-// Each board's section list mirrors the lifecycle the matching app
-// module(s) actually expose — see web/app/api/module-report/route.ts for
-// the module-to-board routing this complements. POST this endpoint to
-// wipe and rebuild every board's sections in the correct order.
-//
-// GIDs for the 9 boards already provisioned in production are hardcoded.
-// GIDs for the remaining boards are read from env vars — create the
-// project in Asana, set its GID env var in Netlify, then POST again.
+// Sections per board come from the canonical workspace map — the operator-
+// approved 90-board topology (00 · Inbox + 88 module boards + HS · Modules
+// digest, 2026-06-10 rebuild). Boards without a GID in the generated
+// artifact (pre-bootstrap) are skipped: run /api/asana-bootstrap-workspace
+// first, commit the artifact, then POST here to enforce section order.
 const PROJECTS = [
-  {
-    // Primary nav: Screening, Batch · Governance: AM Lookback
-    gid: "1214148660020527",
-    name: "01 · Screening — Sanctions & Adverse Media",
-    sections: ["📥 New Screens", "🔍 Under Review", "⚠️  Hit — Escalated to MLRO", "✅ Cleared", "🗄️  Closed"],
-  },
-  {
-    // Intelligence: Analytics
-    gid: "1214148631086118",
-    name: "02 · Central MLRO Daily Digest",
-    sections: ["📥 Today's Queue", "🔍 In Progress", "📋 Pending Sign-off", "✅ Completed"],
-  },
-  {
-    // Governance: Audit (immutable audit chain)
-    gid: asanaGids.auditLog(),
-    name: "03 · Audit Log 10-Year Trail",
-    sections: ["📥 New Events", "🔐 Sealed Chain", "📦 Archived (Year-end)"],
-  },
-  {
-    // Governance: SAR QA (literal four-eyes review)
-    gid: asanaGids.fourEyes(),
-    name: "04 · Four-Eyes Approvals",
-    sections: ["📥 Awaiting Reviewer", "🔍 Under Review", "✅ Approved", "↩️  Returned for Revision"],
-  },
-  {
-    // Primary nav: STR/SAR, Cases
-    gid: "1214148631336502",
-    name: "05 · STR/SAR/CTR/PMR GoAML Filings",
-    sections: ["📥 New Reports", "✏️  Draft", "🔍 MLRO Review", "📤 Filed to goAML", "✅ Closed"],
-  },
-  {
-    // Enrichment: Benford (forensic fraud detection)
-    gid: "1214148643568798",
-    name: "06 · FFR Incidents & Asset Freezes",
-    sections: ["📥 New Forensic Flags", "🔍 Under Investigation", "❄️  Freeze Request Sent", "✅ Resolved", "🗄️  Closed"],
-  },
-  {
-    // Enrichment + Operations: GLEIF, Domain Intel, Crypto Risk, Client portal,
-    // UBO declaration, Supplier DD, CDD Review
-    gid: "1214148898062562",
-    name: "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
-    sections: ["📥 New Onboarding", "📄 Pending Documents", "🔍 Under Review", "✅ Approved", "❌ Rejected", "🔄 Periodic Re-KYC"],
-  },
-  {
-    // Primary nav: Transaction monitor
-    gid: "1214148661083263",
-    name: "08 · Transaction Monitoring",
-    sections: ["📥 New Alerts", "🔍 Under Review", "⚠️  Escalated to MLRO", "📤 SAR Filed", "✅ Cleared"],
-  },
-  {
-    // Governance + Operations: Regulatory, Policies, Playbook, Data quality, Corrections
-    gid: asanaGids.complianceOps(),
-    name: "09 · Compliance Ops — Daily & Weekly Tasks",
-    sections: ["📥 New Tasks", "🔍 In Progress", "⏳ Awaiting Approval", "✅ Completed"],
-  },
-  {
-    // Operations: Shipments (bullion chain-of-custody)
-    gid: "1214148898360626",
-    name: "10 · Shipments — Tracking",
-    sections: ["📥 New Consignments", "🔍 AML Screen Required", "✈️  In Transit", "🏦 At Vault", "🚨 Held — Review Required", "✅ Cleared & Delivered"],
-  },
-  {
-    // Operations: Employees (HR registry, doc expiry)
-    gid: asanaGids.employees(),
-    name: "11 · Employees",
-    sections: ["📥 New Joiners", "📄 Documents Pending", "⏰ Expiring Soon", "✅ Compliant", "🚪 Offboarded"],
-  },
-  {
-    // Operations: Training (staff certification)
-    gid: asanaGids.training(),
-    name: "12 · Training",
-    sections: ["📥 Assigned", "📚 In Progress", "✅ Completed", "⏰ Recertification Due"],
-  },
-  {
-    // Governance: EWRA, Oversight, Enforcement
-    gid: asanaGids.governance(),
-    name: "13 · Compliance Governance",
-    sections: ["📥 New Items", "🔍 Under Review", "📋 Awaiting Board Sign-off", "✅ Approved", "🗄️  Archived"],
-  },
-  {
-    // Primary nav: Monitoring (ongoing-monitor scheduled runs)
-    gid: asanaGids.routines(),
-    name: "14 · Routines — Scheduled",
-    sections: ["⏰ Scheduled", "🔄 Running", "✅ Completed", "❌ Failed — Retry"],
-  },
-  {
-    // Primary nav: MLRO Advisor, Intel
-    // Intelligence: Workbench, Investigation, Brain, OSINT
-    gid: "1214148910059926",
-    name: "15 · MLRO Workbench",
-    sections: ["📥 New Tasks", "🔍 In Progress", "⏳ Pending Decision", "✅ Decided", "🔄 Returned for Revision"],
-  },
-  {
-    // Enrichment + Governance: Vessel Check, RMI / RMAP
-    gid: "1214148855758874",
-    name: "16 · Supply Chain, ESG & LBMA Gold",
-    sections: ["📥 New Checks", "🔍 Under Review", "🚨 Sanctions Hit", "✅ Cleared"],
-  },
-  {
-    // Governance: EOCN (UAE TFS list & dual-use declarations)
-    gid: asanaGids.exportCtrl(),
-    name: "17 · Export Control & Dual-Use",
-    sections: ["📥 New Declarations", "🔍 Under Review", "⚠️  Dual-Use Flagged", "✅ Cleared"],
-  },
+  { gid: boardProjectGid("inbox") ?? "", name: INBOX_BOARD.name, sections: INBOX_BOARD.sections },
+  ...MODULE_BOARDS.map((b) => ({ gid: boardProjectGid(b.key) ?? "", name: boardName(b), sections: b.sections })),
+  { gid: boardProjectGid("digest") ?? "", name: DIGEST_BOARD.name, sections: DIGEST_BOARD.sections },
 ].filter(p => p.gid !== "") as Array<{ gid: string; name: string; sections: readonly string[] }>;
 
 function headers(token: string) {
@@ -208,8 +104,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Process all projects in parallel — sequential + delays was ~120s which
   // exceeded the function timeout. Parallel brings it to ~5-10s.
-  const projectResults = await Promise.all(
-    PROJECTS.map(async (project) => {
+  const CHUNK = 8;
+  const projectResults: Array<{ name: string; deleted: number; created: number; errors: string[] }> = [];
+  for (let c = 0; c < PROJECTS.length; c += CHUNK) {
+  const chunkResults = await Promise.all(
+    PROJECTS.slice(c, c + CHUNK).map(async (project) => {
       const errors: string[] = [];
       let deleted = 0;
       let created = 0;
@@ -266,6 +165,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       return { name: project.name, deleted, created, errors };
     }),
   );
+  projectResults.push(...chunkResults);
+  }
   results.push(...projectResults);
 
   const allOk = results.every((r) => r.errors.length === 0);

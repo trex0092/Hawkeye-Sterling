@@ -1,161 +1,16 @@
 import { NextResponse } from "next/server";
 import { withGuard } from "@/lib/server/guard";
-import { asanaGids } from "@/lib/server/asanaConfig";
+import { asanaGids, moduleProjectGid } from "@/lib/server/asanaConfig";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
 function projectGidForModule(module: string): string {
-  switch (module) {
-    case "screening":
-    case "batch":
-    case "adverse-media-lookback":
-    case "adverse-media":
-    case "adverse-media-live":
-      return asanaGids.screening();
-    case "analytics":
-      return asanaGids.mlroDaily();
-    case "audit-trail":
-      return asanaGids.auditLog();
-    case "sar-qa":
-      return asanaGids.fourEyes();
-    case "str-cases":
-    case "cases":
-    case "goaml-submission":
-    case "goaml":
-    case "sar-narrative":
-      return asanaGids.sar();
-    case "benford":
-      return asanaGids.ffr();
-    case "gleif":
-    case "domain-intel":
-    case "crypto-risk":
-    case "vendor-dd":
-    case "client-portal":
-    case "ubo-declaration":
-    case "cdd-review":
-    case "entity-graph":
-    case "onboarding":
-    case "pep-profile":
-    case "ownership":
-      return asanaGids.kyc();
-    case "transaction-monitor":
-      return asanaGids.tm();
-    case "policies":
-    case "regulatory":
-    case "playbook":
-    case "data-quality":
-    case "corrections":
-    case "access-control":
-    case "maker-checker":
-    case "approvals":
-    case "profile":
-    case "cnmr":
-    case "dpmsr":
-    case "moe-survey":
-    case "oecd-ddg":
-    case "responsible-sourcing":
-    case "tfs-alerts":
-    case "typology-library":
-      return asanaGids.complianceOps();
-    case "shipments":
-      return asanaGids.shipments();
-    case "employees":
-      return asanaGids.employees();
-    case "training":
-      return asanaGids.training();
-    case "ewra":
-    case "oversight":
-    case "enforcement":
-    case "responsible-ai":
-    case "ai-governance":
-    case "eval-kpi":
-    case "analytics-dashboard":
-    case "kri-dashboard":
-    case "incident-runbook":
-    case "reg-change":
-      return asanaGids.governance();
-    case "ongoing-monitor":
-      return asanaGids.routines();
-    case "mlro-advisor":
-    case "workbench":
-    case "investigation":
-    case "weaponized-brain":
-    case "intel":
-    case "osint":
-    case "heatmap":
-    case "telemetry":
-    case "red-team":
-    case "security-audit":
-    case "brain-map":
-    case "intelligence-hub":
-    case "intelligence-tools":
-    case "batch-screening":
-    case "country-risk":
-    case "country-risk-map":
-    case "sanctions-evasion":
-    case "supply-chain":
-      return asanaGids.mlro();
-    case "vessel-check":
-    case "rmi":
-      return asanaGids.supplyChain();
-    case "eocn":
-      return asanaGids.exportCtrl();
-    case "inspection-room":
-      return asanaGids.regulator();
-    case "grievances-whistleblowing":
-      return asanaGids.incidents();
-    case "analyst-behavior":
-    case "board-dashboard":
-    case "env-check":
-    case "fp-optimizer":
-    case "gdpr":
-    case "operator":
-    case "privacy":
-    case "risk-appetite":
-    case "rmap":
-    case "security-scan":
-    case "shadow-ai":
-    case "system-card":
-    case "system-status":
-    case "vendor-ai-audit":
-    case "webhooks":
-      return asanaGids.governance();
-    case "intel-status":
-    case "comtrade":
-    case "geopolitical":
-      return asanaGids.mlro();
-    case "ai-incident-playbook":
-      return asanaGids.incidents();
-    case "lbma":
-      return asanaGids.supplyChain();
-    case "pkyc":
-    case "document-intelligence":
-      return asanaGids.kyc();
-    case "training-tracker":
-      return asanaGids.training();
-    case "tm-rules":
-      return asanaGids.tm();
-    case "audit-findings":
-    case "bra":
-    case "coi-register":
-    case "dormant-accounts":
-    case "esg-risk":
-    case "outsourcing-register":
-    case "pnmr":
-    case "predictive-risk":
-    case "regulatory-filing":
-    case "voluntary-disclosure":
-    case "workflow":
-      return asanaGids.complianceOps();
-    case "screening-four-eyes":
-      return asanaGids.fourEyes();
-    case "functions":
-      return asanaGids.governance();
-    default:
-      return asanaGids.master();
-  }
+  // Per-module routing (2026-06-10 workspace rebuild): every sidebar module
+  // has its own board; aliases map shared/legacy ids; anything unmapped
+  // lands on 00 · Hawkeye Inbox — Master Landing for MLRO triage.
+  return moduleProjectGid(module);
 }
 
 const MODULE_LABELS: Record<string, string> = {
