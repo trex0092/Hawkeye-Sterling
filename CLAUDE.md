@@ -141,19 +141,25 @@ cd web && npx playwright test
 
 ## Open Compliance Gaps
 
-See `COMPLIANCE_GAPS.md` for full details. As of 2026-05-31:
+See `COMPLIANCE_GAPS.md` for full details. As of 2026-06-10: **all registered gaps are CLOSED.**
 
-**Open / Partial (require operator or MLRO action):**
-- CG-2 (false-positive whitelist): PARTIAL — mechanism implemented; MLRO workflow approval pending
-- CG-3 (periodic re-screening): PARTIAL — cadences implemented; enrollment confirmation pending
-- CG-4 (goAML entity IDs): OPEN — `REPLACE_ME` placeholders in env; operator must set real goAML Rentity IDs
-- CG-6 (audit chain 10-yr retention): PARTIAL — S3/WORM backup implemented; MLRO/CTO must configure bucket + sign off
-- CG-8 (HSTS preload): OPEN — operator must submit domain to hstspreload.org
-- CG-BIAS-001 (bias threshold): DELIBERATE DEVIATION — threshold 1.15 (tighter than FATF floor 1.5); MLRO acknowledgement required
+**Recently closed (2026-06-04 → 2026-06-09):**
+- CG-2 CLOSED 2026-06-04 — whitelist mechanism + MLRO-approved CO+MLRO POST authorisation; DELETE remains MLRO-only
+- CG-3 CLOSED 2026-06-04 — global 3×/day screening floor (`isScreenDueWithFloor()` in `ongoing-monitoring-config.ts`) layered under risk-tier cadences; per-subject Asana reports
+- CG-4 CLOSED 2026-06-04 — 6 operator-confirmed entities (HS1…HS6 / Rentity 001…006) in `HS_DEFAULTS.HAWKEYE_ENTITIES`; placeholder guard active
+- CG-6 CLOSED 2026-06-04 — operator retention decision (local + Asana, single controller); WORM S3 upgrade path ready in `netlify/functions/audit-chain-s3-backup.mts` (operator-accepted deviation, not technical WORM equivalence)
+- CG-8 CLOSED 2026-06-04 — `*.netlify.app` already on Chromium HSTS preload list; re-opens only on custom-domain migration
+- CG-BIAS-001 CLOSED 2026-06-04 — MLRO acknowledgement on file for 1.15 threshold; `FATF_BIAS_RATIO_FLOOR = 1.5` hard-enforced in code
+- CG-ISO-001/002/003 CLOSED 2026-06-09 — ISO 42001 Statement of Applicability, third-party register, stakeholder feedback log created under `docs/`
 
-**Closed:**
+**Earlier closures:**
 - CG-1 CLOSED 2026-05-26 — requireAuth:true on /api/quick-screen; auth coverage gate enforces it in CI
 - CG-5 CLOSED 2026-05-26 — fonts.bunny.net confirmed GDPR/PDPL compliant
 - CG-7 CLOSED 2026-05-26 — egressGate wired to SAR/goAML narrative routes
 - CG-9 CLOSED 2026-05-27 — requireRole() RBAC on SAR, goAML, four-eyes, ai-override
 - CG-GOV-001 CLOSED 2026-05-31 — all 463 reasoning modes have explicit version pins; CI gate passes
+
+**Standing operator accountabilities (not open gaps, but live obligations):**
+- CG-4: operator accountable for HS1–HS6 Rentity IDs matching actual UAE FIU goAML registrations
+- CG-6: WORM/object-lock archive remains an available upgrade (set `S3_BACKUP_*` env vars) if the operator-accepted local+Asana arrangement is ever revisited
+- CG-3: monitor `/api/ongoing/run` runtime + Asana volume as enrolment grows (3×/day floor multiplies load)
