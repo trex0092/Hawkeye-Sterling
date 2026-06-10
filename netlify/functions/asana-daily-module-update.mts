@@ -8,8 +8,10 @@
 // (one place, covered by the same env gate). No-op (logs) when the
 // HAWKEYE_CRON_TOKEN / ASANA_TOKEN env vars are unset.
 //
-// Schedule: 06:00 UTC daily = 10:00 Asia/Dubai — start of the UAE
-// business day, so the MLRO sees a fresh per-module status each morning.
+// Schedule: 05:30 UTC Mon-Fri = 09:30 Asia/Dubai on business days —
+// operator-instructed (2026-06-10, CCL-2026-023): attestations with the
+// status-card graphic land at the start of each UAE working day. Weekend
+// runs intentionally ceased per the same instruction.
 //
 // Auth: HAWKEYE_CRON_TOKEN — the shared server-to-server cron bearer
 // already used by the other scheduled functions (e.g. freeze-sla-monitor),
@@ -63,5 +65,5 @@ export default async (_req: Request): Promise<Response> => {
 };
 
 export const config: Config = {
-  schedule: "0 6 * * *",
+  schedule: "30 5 * * 1-5",
 };

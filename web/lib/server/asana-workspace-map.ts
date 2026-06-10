@@ -470,7 +470,7 @@ export const DIGEST_BOARD = {
   charter: [
     "HAWKEYE STERLING · DAILY ATTESTATION DIGEST",
     "PURPOSE          MLRO single-pane digest — one task per module board. Each task receives",
-    "                 the automated daily compliance attestation (06:00 UTC / 10:00 Dubai),",
+    "                 the automated compliance attestation (09:30 GST, Monday to Friday),",
     "                 11-section audit format per FDL No.10/2025 Art.24.",
     "OWNER            MLRO (single controller — CG-6)",
     "RETENTION        10 yrs (AI decision & attestation records) · archive — never delete",
@@ -505,7 +505,7 @@ export function boardCharter(b: ModuleBoard): string {
     `WORKFLOW         ${b.sections.join(" → ")}`,
     `CADENCE / SLA    ${frequency}`,
     `OWNER            ${b.owner} (MLRO single controller — CG-6)`,
-    `EVIDENCE         Append-only audit chain (FDL No.10/2025 Art.24) · daily 06:00 UTC attestation`,
+    `EVIDENCE         Append-only audit chain (FDL No.10/2025 Art.24) · 09:30 GST (Mon–Fri) attestation`,
     `                 on the pinned task · retention ${b.retention} · archive — never delete`,
     `CHANGE CONTROL   MLRO sign-off + docs/operations/CHANGE_CONTROL_LOG.md`,
   ].join("\n");

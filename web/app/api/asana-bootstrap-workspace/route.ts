@@ -12,6 +12,7 @@ import {
   boardCharter,
   attestationTaskName,
   digestTaskName,
+  WORKSPACE_GIDS,
   type ModuleBoard,
 } from "@/lib/server/asana-workspace-map";
 
@@ -303,6 +304,39 @@ export async function POST(req: Request): Promise<NextResponse> {
       const nextOffset = offset + limit < MODULE_BOARDS.length ? offset + limit : null;
       return NextResponse.json(
         { ok: true, mode, digestProjectGid: digest.gid, total: MODULE_BOARDS.length, offset, processed, nextOffset, done: nextOffset === null },
+        { headers: gate.headers },
+      );
+    }
+
+    // Sliced charter refresh (CCL-2026-023): PUTs each live board's
+    // description from the canonical map so wording changes (e.g. the
+    // attestation schedule) propagate to Asana. Idempotent; no deletions.
+    if (mode === "refresh-charters") {
+      const jobs = allJobs();
+      const offset = Math.max(0, Number(body.offset) || 0);
+      const limit = Math.min(20, Math.max(1, Number(body.limit) || 10));
+      const slice = jobs.slice(offset, offset + limit);
+      const refreshed: string[] = [];
+      const failed: string[] = [];
+      for (const job of slice) {
+        const gid =
+          job.key === INBOX_BOARD.key ? WORKSPACE_GIDS.inbox?.projectGid :
+          job.key === DIGEST_BOARD.key ? WORKSPACE_GIDS.digest?.projectGid :
+          WORKSPACE_GIDS.boards?.[job.key]?.projectGid;
+        if (!gid) { failed.push(`${job.key}: no gid in artifact`); continue; }
+        try {
+          await asanaFetch(token, `/projects/${gid}`, {
+            method: "PUT",
+            body: { data: { notes: job.charter } },
+          });
+          refreshed.push(job.key);
+        } catch (err) {
+          failed.push(`${job.key}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      const nextOffset = offset + limit < jobs.length ? offset + limit : null;
+      return NextResponse.json(
+        { ok: failed.length === 0, mode, offset, refreshed: refreshed.length, failed, total: jobs.length, nextOffset, done: nextOffset === null },
         { headers: gate.headers },
       );
     }
