@@ -799,6 +799,7 @@ export default function PoliciesPage() {
     <ModuleLayout
       asanaModule="policies"
       asanaLabel="Policies"
+      onAdd={() => setAdding(true)}
       sidebarActions={
         !adding ? (
           <ActionButton variant="add" type="button" onClick={() => setAdding(true)}>

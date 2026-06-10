@@ -573,6 +573,7 @@ export default function EsgRiskPage() {
       engineLabel="ESG risk engine"
       onRun={() => void generate()}
       onSync={() => void generate()}
+      onAdd={fillSampleEntity}
       sidebarActions={
         <>
           <ActionButton
