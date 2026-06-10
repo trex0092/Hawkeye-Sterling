@@ -14,6 +14,7 @@ export type AppetiteDimension =
   | 'ubo_opacity'
   | 'training_overdue'
   | 'screening_freshness_days'
+  | 'screening_freshness_hours'
   | 'four_eyes_violation_rate'
   | 'str_filing_sla_breach_rate'
   | 'ffr_filing_sla_breach_rate'
@@ -53,6 +54,7 @@ export const RISK_APPETITE: AppetiteThreshold[] = [
   { dimension: 'ubo_opacity', label: 'Opacity score on onboarded relationships', operator: '<=', value: 0.4, rationale: 'Beyond this, beneficial ownership is too obscure to satisfy R.24.', breachAction: 'escalate' },
   { dimension: 'training_overdue', label: 'Staff with AML training overdue', operator: '<=', value: 2, unit: '%', rationale: 'Training gaps degrade detection.', breachAction: 'escalate' },
   { dimension: 'screening_freshness_days', label: 'Screening freshness', operator: '<=', value: 1, unit: 'days', rationale: 'Charter P8 — stale data is inadmissible.', breachAction: 'escalate' },
+  { dimension: 'screening_freshness_hours', label: 'Screening freshness (hours)', operator: '<=', value: 24, unit: 'hours', rationale: 'Charter P8 — stale data is inadmissible. Hour-granularity dimension for KRIs that report in hours rather than days.', breachAction: 'escalate' },
   { dimension: 'four_eyes_violation_rate', label: 'Four-eyes / SoD violations', operator: '==', value: 0, rationale: 'Zero tolerance — CR 134/2025 Art.19.', breachAction: 'block' },
   { dimension: 'str_filing_sla_breach_rate', label: 'STR filing SLA breaches', operator: '<=', value: 1, unit: '%', rationale: 'Repeat breaches indicate process failure.', breachAction: 'board_review' },
   { dimension: 'ffr_filing_sla_breach_rate', label: 'FFR filing SLA breaches (24h freeze, 5bd file)', operator: '==', value: 0, rationale: 'Zero tolerance — CR 74/2020 Art.4-7.', breachAction: 'board_review' },

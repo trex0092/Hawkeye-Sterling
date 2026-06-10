@@ -386,12 +386,21 @@ async function _writeAuditChainEntry(event: AuditChainEvent, tenantId: string): 
       // the loop bounds guarantee a valid index.
       for (let i = 1; i < chain.length; i++) {
         const expectedSeq = (chain[i - 1]?.seq ?? -1) + 1;
-        if (chain[i]?.seq !== expectedSeq) {
+        const actualSeq = chain[i]?.seq;
+        if (actualSeq !== expectedSeq) {
           console.error(
-            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${chain[i]?.seq}`,
+            `[audit-chain] sequence gap detected: expected seq=${expectedSeq}, got seq=${actualSeq}`,
             { tenant: tenantId },
           );
           incrementCounter('hawkeye_audit_chain_gaps_total', 1, { tenant: tenantId });
+          // Fire-and-forget gap event so the regulator can see the exact moment
+          // the gap was discovered in the audit trail (operational continuity preserved).
+          void writeAuditChainEntry({
+            event: "audit_chain.sequence_gap_detected",
+            actor: "system",
+            expectedSeq,
+            actualSeq,
+          }, tenantId).catch(() => undefined);
         }
       }
 

@@ -87,7 +87,7 @@ const HAIKU = "claude-haiku-4-5-20251001";
 
 // Groq fallback models — used when Anthropic returns 503 or rate-limit.
 // These are OpenAI-compatible and served at free/low cost via api.groq.com.
-export const GROQ_HAIKU_FALLBACK = "llama-3.3-70b-versatile";
+export const GROQ_HAIKU_FALLBACK = "llama-3.1-8b-instant";
 export const GROQ_SONNET_FALLBACK = "llama-3.3-70b-versatile";
 // Opus tasks are compliance-critical; no Groq fallback — fail closed rather
 // than silently downgrade quality on regulator-facing artefacts.

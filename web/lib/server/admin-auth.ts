@@ -53,7 +53,10 @@ export function adminAuth(req: Request): NextResponse | null {
       ?.slice(SESSION_COOKIE.length + 1) ?? "";
     if (sessionToken) {
       const payload = verifySession(sessionToken);
-      if (payload) return null; // valid, non-expired portal session
+      // Only portal sessions with admin-level roles bypass the ADMIN_TOKEN gate.
+      // Roles such as "mlro", "co", "management" must NOT gain access to admin
+      // routes (key issuance, tenant management, RBAC, regulator token issuance).
+      if (payload && (payload.role === "admin" || payload.role === "compliance_admin")) return null;
     }
   } catch { /* SESSION_SECRET missing or too short — fall through to 401 */ }
 
