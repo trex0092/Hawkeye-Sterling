@@ -273,6 +273,20 @@ export async function GET(req: Request): Promise<NextResponse> {
       overallStatus,
       generatedAt: new Date().toISOString(),
       uptimeMs: Date.now() - STARTED_AT,
+      // CG-6 standing accountability: surface which audit-retention
+      // arrangement is live so the operator-accepted local+Asana deviation
+      // stays visible until/unless the WORM S3 mirror is activated.
+      retention: {
+        ref: "CG-6",
+        wormMirrorConfigured: Boolean(
+          process.env["S3_BACKUP_ENDPOINT"] &&
+          process.env["S3_BACKUP_BUCKET"] &&
+          process.env["S3_BACKUP_ACCESS_KEY_ID"],
+        ),
+        mode: (process.env["S3_BACKUP_ENDPOINT"] && process.env["S3_BACKUP_BUCKET"] && process.env["S3_BACKUP_ACCESS_KEY_ID"])
+          ? "worm-s3-mirror"
+          : "operator-local-asana",
+      },
       components: {
         brain: brainCheck,
         storage: storageCheck,

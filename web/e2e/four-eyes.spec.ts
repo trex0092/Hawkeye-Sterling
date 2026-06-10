@@ -1,14 +1,21 @@
 /**
  * four-eyes.spec.ts
  *
- * E2E tests for the four-eyes approval workflow.
- * Tests the full lifecycle: create → approve (two distinct actors) → complete.
+ * E2E tests for the four-eyes approval workflow surface.
  *
- * Routes covered:
- *   GET  /api/four-eyes            — list pending items
- *   POST /api/four-eyes            — create item
- *   POST /api/four-eyes/approve    — approve / reject an item
- *   POST /api/four-eyes/complete   — mark item done after two approvals
+ * Contract under test (post CG-9 RBAC + trusted-identity hardening):
+ *   GET  /api/four-eyes          — list items (API key / admin bearer OK)
+ *   POST /api/four-eyes          — enqueue item (subjectId + subjectName +
+ *                                  action ∈ {str,freeze,decline,edd-uplift,escalate})
+ *   POST /api/four-eyes/approve  — actor identity comes from the authenticated
+ *                                  key; identity-less keys (e.g. the portal
+ *                                  ADMIN_TOKEN bypass) are rejected with 403
+ *   PATCH /api/four-eyes?id=     — approve/reject; requires MLRO/CO/admin
+ *                                  portal session (CG-9) — bearer-only → 401
+ *
+ * The happy-path approval lifecycle (two distinct identified approvers) is
+ * covered in the vitest integration suite with mocked sessions; E2E asserts
+ * the security boundaries that hold for real HTTP callers.
  */
 
 import { test, expect } from "@playwright/test";
@@ -39,13 +46,11 @@ test.describe("Four-eyes approval workflow — API routes", () => {
         "content-type": "application/json",
       },
       data: {
-        action: "onboard_customer",
-        description: "E2E test — onboarding request for Green Valley Trading LLC",
+        subjectId: "cust-e2e-001",
+        subjectName: "Green Valley Trading LLC",
+        action: "edd-uplift",
         initiatedBy: "analyst_e2e",
-        metadata: {
-          customerId: "cust-e2e-001",
-          riskTier: "medium",
-        },
+        reason: "E2E test — EDD uplift request for Green Valley Trading LLC",
       },
     });
 
@@ -55,16 +60,65 @@ test.describe("Four-eyes approval workflow — API routes", () => {
       return;
     }
 
-    expect(res.status()).toBe(201);
-    const body = await res.json() as { ok: boolean; id: string; status: string };
+    expect(res.status()).toBe(200);
+    const body = await res.json() as { ok: boolean; item: { id: string; status: string } };
     expect(body.ok).toBe(true);
-    expect(typeof body.id).toBe("string");
-    expect(body.id.length).toBeGreaterThan(0);
+    expect(typeof body.item.id).toBe("string");
+    expect(body.item.id.length).toBeGreaterThan(0);
+    expect(body.item.status).toBe("pending");
+    createdItemId = body.item.id;
+  });
+
+  test("POST /api/four-eyes rejects unknown action values", async ({ request }) => {
+    const res = await request.post("/api/four-eyes", {
+      headers: {
+        authorization: `Bearer ${ADMIN_TOKEN}`,
+        "content-type": "application/json",
+      },
+      data: {
+        subjectId: "cust-e2e-002",
+        subjectName: "Invalid Action Test LLC",
+        action: "onboard_customer", // not in ALLOWED_ACTIONS
+        initiatedBy: "analyst_e2e",
+      },
+    });
+
+    expect(res.status()).toBe(400);
+    const body = await res.json() as { ok: boolean; error: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toContain("action must be one of");
+  });
+
+  test("POST /api/four-eyes/approve — first approval recorded, item stays pending", async ({ request }) => {
+    if (!createdItemId) {
+      test.skip();
+      return;
+    }
+
+    // Actor identity is derived from the authenticated key — never the body —
+    // so impersonation via a body-supplied actor is impossible. One approval
+    // must NOT flip the item: two distinct identities are required
+    // (Federal Decree-Law No. 10 of 2025 Art.16).
+    const res = await request.post("/api/four-eyes/approve", {
+      headers: {
+        authorization: `Bearer ${ADMIN_TOKEN}`,
+        "content-type": "application/json",
+      },
+      data: {
+        itemId: createdItemId,
+        decision: "approve",
+        rationale: "First independent review completed — E2E four-eyes approval flow.",
+      },
+    });
+
+    expect(res.status()).toBe(200);
+    const body = await res.json() as { ok: boolean; itemId: string; status: string };
+    expect(body.ok).toBe(true);
+    expect(body.itemId).toBe(createdItemId);
     expect(body.status).toBe("pending");
-    createdItemId = body.id;
   });
 
-  test("POST /api/four-eyes/approve — first approver", async ({ request }) => {
+  test("POST /api/four-eyes/approve — same identity cannot sign twice (duplicate-approver guard)", async ({ request }) => {
     if (!createdItemId) {
       test.skip();
       return;
@@ -77,82 +131,38 @@ test.describe("Four-eyes approval workflow — API routes", () => {
       },
       data: {
         itemId: createdItemId,
-        actor: "mlro_approver_1",
         decision: "approve",
-        rationale: "Customer profile reviewed — risk tier confirmed medium. E2E test approval.",
+        rationale: "Second sign-off attempt from the SAME identity — must be refused.",
       },
     });
 
-    expect([200, 201]).toContain(res.status());
-    const body = await res.json() as { ok: boolean; status: string };
-    expect(body.ok).toBe(true);
-    // After first approval the item should still be pending (needs two approvers)
-    expect(["pending", "partially_approved"]).toContain(body.status);
+    expect(res.status()).toBe(409);
+    const body = await res.json() as { ok?: boolean; error: string };
+    expect(body.error).toBe("duplicate_approver");
   });
 
-  test("POST /api/four-eyes/approve — second approver completes the gate", async ({ request }) => {
+  test("PATCH /api/four-eyes requires a portal session (CG-9 RBAC)", async ({ request }) => {
     if (!createdItemId) {
       test.skip();
       return;
     }
 
-    const res = await request.post("/api/four-eyes/approve", {
+    // CG-9: approve/reject decisions require an MLRO/CO/admin portal session.
+    // A bearer-only caller (no session cookie) must get 401 SESSION_REQUIRED.
+    const res = await request.patch(`/api/four-eyes?id=${createdItemId}`, {
       headers: {
         authorization: `Bearer ${ADMIN_TOKEN}`,
         "content-type": "application/json",
       },
       data: {
-        itemId: createdItemId,
-        actor: "mlro_approver_2",
         decision: "approve",
-        rationale: "Second sign-off: independent review completed. E2E test approval.",
+        approvedBy: "mlro_approver_1",
       },
     });
 
-    expect([200, 201]).toContain(res.status());
-    const body = await res.json() as { ok: boolean; status: string };
-    expect(body.ok).toBe(true);
-    // After two approvals, item may be "approved" or still "pending" depending on route logic
-    expect(["approved", "pending", "partially_approved"]).toContain(body.status);
-  });
-
-  test("POST /api/four-eyes/approve — self-approval is rejected", async ({ request }) => {
-    // Create a fresh item initiated by "self_actor"
-    const createRes = await request.post("/api/four-eyes", {
-      headers: {
-        authorization: `Bearer ${ADMIN_TOKEN}`,
-        "content-type": "application/json",
-      },
-      data: {
-        action: "self_approval_test",
-        description: "Test self-approval prevention",
-        initiatedBy: "self_actor",
-        metadata: {},
-      },
-    });
-
-    if (createRes.status() === 404) {
-      test.skip();
-      return;
-    }
-    if (createRes.status() !== 201) return;
-
-    const { id } = await createRes.json() as { id: string };
-
-    const approveRes = await request.post("/api/four-eyes/approve", {
-      headers: {
-        authorization: `Bearer ${ADMIN_TOKEN}`,
-        "content-type": "application/json",
-      },
-      data: {
-        itemId: id,
-        actor: "self_actor",
-        decision: "approve",
-        rationale: "Attempting self-approval — should be rejected",
-      },
-    });
-
-    // The route should reject self-approval per Federal Decree-Law No. 10 of 2025 Art.16
-    expect(approveRes.status()).toBeGreaterThanOrEqual(400);
+    expect(res.status()).toBe(401);
+    const body = await res.json() as { ok: boolean; code?: string };
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("SESSION_REQUIRED");
   });
 });

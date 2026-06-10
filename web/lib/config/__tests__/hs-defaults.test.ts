@@ -89,3 +89,29 @@ describe("hs-defaults privileged-secret guardrail", () => {
     ).toEqual([]);
   });
 });
+
+// CG-4 standing accountability: the 6 reporting entities (HS1…HS6 / Rentity
+// 001…006) are operator-confirmed FINAL and the operator is accountable for
+// them matching the actual UAE FIU goAML registrations. Pin the exact set so
+// any drift — count, name, Rentity ID, jurisdiction, or a placeholder slipping
+// back in — fails CI and forces a conscious re-attestation.
+describe("CG-4 goAML reporting entities pin", () => {
+  const entities = JSON.parse(HS_DEFAULTS.HAWKEYE_ENTITIES) as Array<{
+    id: string; name: string; goamlRentityId: string; jurisdiction: string;
+  }>;
+
+  it("contains exactly the 6 operator-confirmed entities", () => {
+    expect(entities).toHaveLength(6);
+    expect(entities.map((e) => e.name)).toEqual(["HS1", "HS2", "HS3", "HS4", "HS5", "HS6"]);
+    expect(entities.map((e) => e.goamlRentityId)).toEqual(["001", "002", "003", "004", "005", "006"]);
+  });
+
+  it("all entities are AE-jurisdiction with no placeholder values", () => {
+    const PLACEHOLDERS = /REPLACE_ME|PENDING_FIU_ASSIGNMENT|FIU_PENDING|TBD|CHANGEME/i;
+    for (const e of entities) {
+      expect(e.jurisdiction).toBe("AE");
+      expect(e.id).toMatch(/^entity-0[1-6]$/);
+      expect(PLACEHOLDERS.test(JSON.stringify(e)), `placeholder value in ${e.name}`).toBe(false);
+    }
+  });
+});

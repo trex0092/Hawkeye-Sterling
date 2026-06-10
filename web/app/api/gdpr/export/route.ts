@@ -20,22 +20,8 @@ import { loadSubject } from "@/lib/server/subject-store";
 import { loadAllCases } from "@/lib/server/case-vault";
 import { buildGdprExportPackage } from "@/lib/server/gdpr";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
+import { escapeCsvCell } from "@/lib/utils/escapeCsvCell";
 import type { CaseRecord } from "@/lib/types";
-
-/**
- * Sanitize a cell value for CSV output.
- * - Prefix formula-injection characters (=, +, -, @) with a single quote.
- * - Wrap in double-quotes and escape any embedded double-quotes.
- */
-function escapeCsvCell(raw: string): string {
-  // Guard against CSV injection (formula injection in spreadsheets).
-  const sanitized = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
-  // Wrap in quotes when the value contains commas, quotes, or newlines.
-  if (sanitized.includes('"') || sanitized.includes(",") || sanitized.includes("\n")) {
-    return `"${sanitized.replace(/"/g, '""')}"`;
-  }
-  return sanitized;
-}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

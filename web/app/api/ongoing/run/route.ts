@@ -11,6 +11,7 @@ import type {
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
 import { loadCandidatesWithHealth } from "@/lib/server/candidates-loader";
+import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 import {
   type CustomerRiskTier,
@@ -191,6 +192,7 @@ function fingerprints(hits: LastHit[]): Set<string> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
+  const runStartMs = Date.now();
   // Bearer token protection. If ONGOING_RUN_TOKEN is not configured the
   // endpoint is locked down entirely — a missing env var must not silently
   // make this a public endpoint (Netlify cron jobs always inject the token).
@@ -1013,9 +1015,32 @@ export async function POST(req: Request): Promise<NextResponse> {
   }));
   } // end CONCURRENCY batch loop
 
+  // CG-3 standing accountability: the 3×/day global floor multiplies run
+  // volume as enrolment grows, so runtime and Asana load must be observable.
+  // maxDuration is 30s — warn at 80% of the budget so the operator sees
+  // timeout pressure before runs start getting killed.
+  const durationMs = Date.now() - runStartMs;
+  const asanaTasksFiled = results.filter((r) => r.asanaTaskUrl).length;
+  setGauge("hawkeye_ongoing_run_duration_ms", durationMs);
+  setGauge("hawkeye_ongoing_run_subjects", subjects.length);
+  incrementCounter("hawkeye_ongoing_run_total", 1, {
+    timeout_pressure: durationMs > 24_000 ? "high" : "normal",
+  });
+  if (asanaTasksFiled > 0) {
+    incrementCounter("hawkeye_ongoing_asana_tasks_total", asanaTasksFiled);
+  }
+  if (durationMs > 24_000) {
+    console.warn(
+      `[ongoing/run] CG-3 timeout pressure: run took ${durationMs}ms of 30000ms budget ` +
+      `(${subjects.length} subjects, ${results.length} rescreened, ${asanaTasksFiled} Asana tasks) — ` +
+      `consider raising maxDuration or sharding the portfolio`,
+    );
+  }
+
   return NextResponse.json({
     ok: true,
     runAt,
+    durationMs,
     total: subjects.length,
     rescreened: results.length,
     withNewHits: results.filter((r) => r.newHits.length > 0).length,

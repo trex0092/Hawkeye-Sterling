@@ -60,6 +60,8 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 
 **Operator note:** large portfolios screened 3×/day increase per-tick Asana volume and `/api/ongoing/run` runtime (batched at concurrency 8, `maxDuration` 30s); monitor for timeouts as enrolment grows.
 
+**Instrumentation (2026-06-10):** the standing monitor obligation is now observable in-platform — `/api/ongoing/run` records `hawkeye_ongoing_run_duration_ms`, `hawkeye_ongoing_run_subjects`, `hawkeye_ongoing_run_total{timeout_pressure}` and `hawkeye_ongoing_asana_tasks_total` to the Prometheus metrics store, returns `durationMs` in its response, and logs a CG-3 warning when a run exceeds 80% of the 30s budget (24s).
+
 **Resolved (2026-05-31):** Escalation on `ongoing-screen` failure is implemented — `netlify/functions/ongoing-screen.mts` fires `ALERT_WEBHOOK_URL` on every catch (lines 88-101) with `severity: "high"`. The comment in the file references this CG-3 resolution. Additionally, `netlify/functions/warm-pool.mts`, `sanctions-daily-0830.mts`, and `transaction-monitor.mts` now also wrap their handlers in top-level try/catch with `fireAlert()` calls so all cron failures surface as ops alerts.
 
 ---
@@ -74,6 +76,10 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 **Resolution (2026-06-04, operator decision):** The 6 active reporting entities — names `HS1`…`HS6`, Rentity IDs `001`…`006` — are **operator-confirmed as final** and configured as the in-code non-secret default `HS_DEFAULTS.HAWKEYE_ENTITIES` (`web/lib/config/hs-defaults.ts`). goAML Rentity IDs are non-secret identifiers, so inlining them via the sanctioned `HS_DEFAULTS` mechanism is acceptable (the privileged-secret guardrail in `__tests__/hs-defaults.test.ts` is unaffected). The Netlify `HAWKEYE_ENTITIES` env var still overrides the default when set. Entity count is final at 6.
 
 **Note:** The operator is accountable for these IDs matching the entities' actual UAE FIU goAML registrations. `getEntityForSubmission()` blocks only the known placeholder strings (`REPLACE_ME`, `PENDING_FIU_ASSIGNMENT`, etc.); the configured IDs above pass that gate. If a filing is ever rejected by the FIU for an invalid Rentity ID, update the value via the Netlify `HAWKEYE_ENTITIES` env var.
+
+**CI pin (2026-06-10):** `web/lib/config/__tests__/hs-defaults.test.ts` now asserts the exact operator-confirmed set (6 entities, HS1…HS6, Rentity 001…006, jurisdiction AE, no placeholder values) — any drift fails CI and forces a conscious re-attestation.
+
+**Stale-override remediation (2026-06-10):** an effectiveness check found the Netlify `HAWKEYE_ENTITIES` env var still carried the pre-closure placeholder value (single entity, `goamlRentityId: "REPLACE_ME"`, last updated 2026-05-19) in ALL contexts including production. Because the env var takes precedence over `HS_DEFAULTS` (`web/lib/config/entities.ts:84`), production was resolving the placeholder — `getEntityForSubmission()` would have blocked every goAML/SAR filing despite this gap being recorded CLOSED. The stale env var was **deleted from Netlify on 2026-06-10**, restoring the operator-confirmed HS1…HS6 defaults from the next deploy. Lesson recorded: closing a gap by changing the in-code default requires checking for — and removing — environment overrides of the old value.
 
 ---
 
@@ -100,6 +106,8 @@ UAE Cabinet Decision No. 74 of 2020 requires documented procedures for "no match
 **Residual-risk note (honest disclosure):** Local-disk + Asana storage does **not** provide storage-layer immutability (WORM/object-lock), an independent 10-year retention guarantee, or UAE data-residency assurance in the way an object-locked S3/R2 bucket would. This is an **operator-accepted deviation**, not full technical equivalence to the WORM control. The code path below remains available to upgrade to a compliant immutable archive at any time without further development.
 
 **Available upgrade path (code already implemented):** `netlify/functions/audit-chain-s3-backup.mts` — nightly cron at 02:00 UTC mirrors every per-tenant audit chain blob to an S3-compatible store with object-lock (WORM) enabled. To activate, set `S3_BACKUP_ENDPOINT`, `S3_BACKUP_BUCKET`, `S3_BACKUP_REGION`, `S3_BACKUP_ACCESS_KEY_ID`/`S3_BACKUP_SECRET_KEY` (AWS S3, Cloudflare R2, or MinIO; object-lock + 10-yr retention; UAE region e.g. `me-south-1` recommended).
+
+**Visibility (2026-06-10):** `/api/system-status` now reports a `retention` block (`mode: "operator-local-asana" | "worm-s3-mirror"`, `wormMirrorConfigured`) so the live retention arrangement — and whether the WORM mirror has been activated — is visible on the authoritative ops feed rather than only in this register.
 
 ---
 
