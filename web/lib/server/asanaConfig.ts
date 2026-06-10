@@ -12,6 +12,8 @@
 // All three layers default-on so operators can mix-and-match while
 // migrating.
 
+import { boardKeyForModule, boardProjectGid } from "./asana-workspace-map";
+
 interface AsanaGidMap {
   master?: string;
   screening?: string;
@@ -91,10 +93,55 @@ const HARDCODED: Required<AsanaGidMap> = {
   cfTotalMatches: "",
 };
 
+// Legacy functional key → canonical board in the rebuilt per-module
+// workspace (asana-workspace-map.ts). Keeps every existing direct writer
+// (screening-report, sar-report, tm-report, ongoing/run, …) working after
+// the 2026-06-10 workspace rebuild without touching their call sites.
+// Keys with no single-board equivalent route to the 00 · Inbox triage board.
+const LEGACY_KEY_TO_BOARD: Partial<Record<keyof AsanaGidMap, string>> = {
+  master: "inbox",
+  screening: "screening",
+  sar: "sar-qa",
+  tm: "transaction-monitor",
+  escalations: "inbox",
+  mlro: "mlro-advisor",
+  mlroDaily: "oversight",
+  kyc: "cdd-review",
+  fourEyes: "approvals",
+  auditLog: "audit-trail",
+  complianceOps: "inbox",
+  governance: "ai-governance",
+  routines: "ongoing-monitor",
+  ffr: "inbox",
+  employees: "employees",
+  training: "training",
+  exportCtrl: "eocn",
+  shipments: "shipments",
+  supplyChain: "supply-chain",
+  regulator: "inspection-room",
+  incidents: "grievances-whistleblowing",
+};
+
 function get(key: keyof AsanaGidMap, legacyEnv: string): string {
+  const fromArtifact = (() => {
+    const boardKey = LEGACY_KEY_TO_BOARD[key];
+    return boardKey ? boardProjectGid(boardKey) : undefined;
+  })();
   return loadJsonMap()[key]
     ?? process.env[legacyEnv]
+    ?? fromArtifact
     ?? HARDCODED[key];
+}
+
+/**
+ * Per-module board GID for the rebuilt workspace: resolves any module id
+ * (including routing aliases) to its dedicated board, falling back to the
+ * 00 · Inbox master landing board when unmapped or before bootstrap.
+ */
+export function moduleProjectGid(moduleId: string): string {
+  const boardKey = boardKeyForModule(moduleId);
+  const gid = boardKey ? boardProjectGid(boardKey) : undefined;
+  return gid ?? boardProjectGid("inbox") ?? asanaGids.master();
 }
 
 // Startup guard — log once per process if critical GIDs are unset so ops

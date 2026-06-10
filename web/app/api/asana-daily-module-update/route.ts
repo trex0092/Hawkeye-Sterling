@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { ASANA_MODULE_TASKS, MODULE_FREQUENCY, type AsanaModuleTask } from "@/lib/server/asana-module-tasks";
+import { MODULE_FREQUENCY, type AsanaModuleTask } from "@/lib/server/asana-module-tasks";
+import { MODULE_BOARDS, WORKSPACE_GIDS, boardKeyForModule } from "@/lib/server/asana-workspace-map";
 import { gatherFindingSignals, findingsForModule } from "@/lib/server/module-findings";
 
 // Module compliance attestation poster.
@@ -23,9 +24,42 @@ import { gatherFindingSignals, findingsForModule } from "@/lib/server/module-fin
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const ASANA_API = "https://app.asana.com/api/1.0";
+
+// One attestation target per module board (2026-06-10 workspace rebuild,
+// operator-approved "Option 5"): the daily report posts to the module's
+// OWN board (pinned 📌 attestation task) AND to its task on the
+// HS · Modules digest board — so every board shows daily audit evidence.
+// GIDs come from the bootstrap-generated artifact; targets without GIDs
+// (pre-bootstrap) are skipped and reported, never thrown.
+interface AttestationTarget {
+  meta: AsanaModuleTask;
+  boardTaskGid?: string;
+  digestTaskGid?: string;
+}
+
+function attestationTargets(): AttestationTarget[] {
+  return MODULE_BOARDS.map((b) => {
+    const boardTaskGid = WORKSPACE_GIDS.boards?.[b.key]?.attestationTaskGid;
+    const digestTaskGid = WORKSPACE_GIDS.digest?.tasks?.[b.key];
+    return {
+      meta: {
+        key: b.key,
+        label: b.label,
+        taskGid: boardTaskGid ?? digestTaskGid ?? "",
+        description: b.purpose,
+        control: b.control,
+        obligation: b.obligation,
+        owner: b.owner,
+        retention: b.retention,
+      },
+      ...(boardTaskGid ? { boardTaskGid } : {}),
+      ...(digestTaskGid ? { digestTaskGid } : {}),
+    };
+  });
+}
 
 interface ReportInput {
   /** "MANUAL" overrides the title/findings; defaults to the daily attestation. */
@@ -184,9 +218,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // ---- MANUAL mode: single module, operator-supplied findings ----
   if (typeof body["module"] === "string" && body["module"]) {
-    const m = ASANA_MODULE_TASKS.find((t) => t.key === body["module"]);
-    if (!m) {
+    const boardKey = boardKeyForModule(body["module"] as string);
+    const target = attestationTargets().find((t) => t.meta.key === boardKey);
+    if (!target) {
       return NextResponse.json({ ok: false, error: "unknown_module", module: body["module"] }, { status: 404 });
+    }
+    const gids = [target.boardTaskGid, target.digestTaskGid].filter((g): g is string => Boolean(g));
+    if (gids.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "module_not_bootstrapped", detail: "Run /api/asana-bootstrap-workspace and commit the GID artifact." },
+        { status: 409 },
+      );
     }
     const findings = typeof body["findings"] === "string" && body["findings"]
       ? (body["findings"] as string)
@@ -196,16 +238,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       : "⚠️ Action required — see findings.";
     const status = typeof body["status"] === "string" && body["status"] ? (body["status"] as string) : "Under review";
     const riskRating = typeof body["riskRating"] === "string" ? (body["riskRating"] as string) : undefined;
-    const text = buildReport(m, date, { kind: "MANUAL", status, findings, conclusion, riskRating });
+    const text = buildReport(target.meta, date, { kind: "MANUAL", status, findings, conclusion, riskRating });
     try {
-      await postStory(m.taskGid, text, asanaToken);
+      await Promise.all(gids.map((g) => postStory(g, text, asanaToken)));
     } catch (err) {
       return NextResponse.json(
         { ok: false, error: "asana_post_failed", detail: err instanceof Error ? err.message : String(err) },
         { status: 502 },
       );
     }
-    return NextResponse.json({ ok: true, mode: "manual", module: m.key, date });
+    return NextResponse.json({ ok: true, mode: "manual", module: target.meta.key, posted: gids.length, date });
   }
 
   // ---- DAILY mode: full attestation to every module ----
@@ -213,18 +255,30 @@ export async function POST(req: Request): Promise<NextResponse> {
   // Any failure degrades that module to the clean baseline (fail-safe).
   const signals = await gatherFindingSignals().catch(() => null);
 
-  // Dispatch in small concurrency-limited batches rather than firing all ~66
+  // Dispatch in small concurrency-limited batches rather than firing all
   // posts at once. Asana caps concurrent requests per token (~15) and 429s the
   // overflow; an unbounded Promise.all previously let only the first ~15 land
   // and silently dropped the rest. Batches of 4 (+ postStory's 429 retry) keep
   // us under the burst ceiling so every module is attested each day.
+  //
+  // Optional { offset, limit } slice the 88 module boards for manual driving;
+  // the daily cron sends no body and covers the full set in one run.
+  const allTargets = attestationTargets();
+  const offset = Math.max(0, Number(body["offset"]) || 0);
+  const limit = Math.min(allTargets.length, Math.max(1, Number(body["limit"]) || allTargets.length));
+  const targets = allTargets.slice(offset, offset + limit);
+
   const CONCURRENCY = 4;
-  const results: PromiseSettledResult<string>[] = [];
-  for (let i = 0; i < ASANA_MODULE_TASKS.length; i += CONCURRENCY) {
-    const batch = ASANA_MODULE_TASKS.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.allSettled(
-      batch.map(async (m) => {
-        const f = signals ? findingsForModule(m.key, signals) : null;
+  let posted = 0;
+  let skippedNoGid = 0;
+  const failed: string[] = [];
+  for (let i = 0; i < targets.length; i += CONCURRENCY) {
+    const batch = targets.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async (t) => {
+        const gids = [t.boardTaskGid, t.digestTaskGid].filter((g): g is string => Boolean(g));
+        if (gids.length === 0) { skippedNoGid++; return; }
+        const f = signals ? findingsForModule(t.meta.key, signals) : null;
         const input: ReportInput = {
           kind: "DAILY",
           status: f?.status ?? "Operational",
@@ -233,29 +287,28 @@ export async function POST(req: Request): Promise<NextResponse> {
           conclusion: f?.conclusion ?? "✅ Compliant — control operational, no action required.",
           ...(f?.riskRating ? { riskRating: f.riskRating } : {}),
         };
-        await postStory(m.taskGid, buildReport(m, date, input), asanaToken);
-        return m.key;
+        const text = buildReport(t.meta, date, input);
+        for (const gid of gids) {
+          try {
+            await postStory(gid, text, asanaToken);
+            posted++;
+          } catch (err) {
+            failed.push(`${t.meta.key}@${gid}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
       }),
     );
-    results.push(...batchResults);
   }
-
-  const posted = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results
-    .map((r, i) =>
-      r.status === "rejected"
-        ? `${ASANA_MODULE_TASKS[i]?.key ?? "?"}: ${r.reason instanceof Error ? r.reason.message : String(r.reason)}`
-        : null,
-    )
-    .filter((x): x is string => x !== null);
 
   return NextResponse.json({
     ok: true,
     mode: "daily",
     date,
-    total: ASANA_MODULE_TASKS.length,
+    modules: targets.length,
     posted,
+    skippedNoGid,
     failedCount: failed.length,
     failed: failed.slice(0, 10),
+    ...(offset + limit < allTargets.length ? { nextOffset: offset + limit } : {}),
   });
 }
