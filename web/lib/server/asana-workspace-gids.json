@@ -1,1 +1,454 @@
-{}
+{
+ "boards": {
+  "access-control": {
+   "attestationTaskGid": "1215595443566643",
+   "projectGid": "1215593492354408"
+  },
+  "ai-governance": {
+   "attestationTaskGid": "1215595442988596",
+   "projectGid": "1215582430447741"
+  },
+  "ai-incident-playbook": {
+   "attestationTaskGid": "1215590846548170",
+   "projectGid": "1215595442848979"
+  },
+  "analyst-behavior": {
+   "attestationTaskGid": "1215595442981497",
+   "projectGid": "1215590847801233"
+  },
+  "api-docs": {
+   "attestationTaskGid": "1215593490766838",
+   "projectGid": "1215590846856044"
+  },
+  "approvals": {
+   "attestationTaskGid": "1215590846098890",
+   "projectGid": "1215595441291481"
+  },
+  "audit-findings": {
+   "attestationTaskGid": "1215590845673949",
+   "projectGid": "1215590845409495"
+  },
+  "audit-trail": {
+   "attestationTaskGid": "1215595441208331",
+   "projectGid": "1215582429392728"
+  },
+  "benford": {
+   "attestationTaskGid": "1215593489237851",
+   "projectGid": "1215590844935965"
+  },
+  "board-dashboard": {
+   "attestationTaskGid": "1215595443278222",
+   "projectGid": "1215595443214268"
+  },
+  "bra": {
+   "attestationTaskGid": "1215595440812530",
+   "projectGid": "1215582428708762"
+  },
+  "brain-intel": {
+   "attestationTaskGid": "1215593490520272",
+   "projectGid": "1215590846042872"
+  },
+  "cases": {
+   "attestationTaskGid": "1215595442219182",
+   "projectGid": "1215590846964116"
+  },
+  "cdd-review": {
+   "attestationTaskGid": "1215587112026428",
+   "projectGid": "1215593489598827"
+  },
+  "client-portal": {
+   "attestationTaskGid": "1215593488723820",
+   "projectGid": "1215595440093581"
+  },
+  "cnmr": {
+   "attestationTaskGid": "1215590844419107",
+   "projectGid": "1215590844091330"
+  },
+  "coi-register": {
+   "attestationTaskGid": "1215582429228453",
+   "projectGid": "1215595441347096"
+  },
+  "corrections": {
+   "attestationTaskGid": "1215587113949912",
+   "projectGid": "1215587113810378"
+  },
+  "country-risk": {
+   "attestationTaskGid": "1215595440674702",
+   "projectGid": "1215593489504420"
+  },
+  "country-risk-map": {
+   "attestationTaskGid": "1215595440812308",
+   "projectGid": "1215582428768740"
+  },
+  "crypto-risk": {
+   "attestationTaskGid": "1215587111130103",
+   "projectGid": "1215582427900290"
+  },
+  "data-quality": {
+   "attestationTaskGid": "1215595440897100",
+   "projectGid": "1215595441030147"
+  },
+  "domain-intel": {
+   "attestationTaskGid": "1215593487815339",
+   "projectGid": "1215582427519286"
+  },
+  "dormant-accounts": {
+   "attestationTaskGid": "1215595441030195",
+   "projectGid": "1215582428752148"
+  },
+  "dpmsr": {
+   "attestationTaskGid": "1215587109849702",
+   "projectGid": "1215593489012422"
+  },
+  "employees": {
+   "attestationTaskGid": "1215593490167838",
+   "projectGid": "1215590846055464"
+  },
+  "enforcement": {
+   "attestationTaskGid": "1215590844494754",
+   "projectGid": "1215582428168634"
+  },
+  "entity-graph": {
+   "attestationTaskGid": "1215595439122901",
+   "projectGid": "1215593488232640"
+  },
+  "eocn": {
+   "attestationTaskGid": "1215593488328811",
+   "projectGid": "1215590844017212"
+  },
+  "esg-risk": {
+   "attestationTaskGid": "1215595440458693",
+   "projectGid": "1215587111746997"
+  },
+  "eval-kpi": {
+   "attestationTaskGid": "1215582429015241",
+   "projectGid": "1215590846749361"
+  },
+  "ewra": {
+   "attestationTaskGid": "1215595441935614",
+   "projectGid": "1215582430111877"
+  },
+  "fp-optimizer": {
+   "attestationTaskGid": "1215590845343223",
+   "projectGid": "1215595440531262"
+  },
+  "geopolitical": {
+   "attestationTaskGid": "1215593489626690",
+   "projectGid": "1215595440736164"
+  },
+  "gleif": {
+   "attestationTaskGid": "1215587110783782",
+   "projectGid": "1215582427137235"
+  },
+  "goaml": {
+   "attestationTaskGid": "1215593491277706",
+   "projectGid": "1215587113859411"
+  },
+  "grievances-whistleblowing": {
+   "attestationTaskGid": "1215595439636144",
+   "projectGid": "1215582427324833"
+  },
+  "inspection-room": {
+   "attestationTaskGid": "1215593490933794",
+   "projectGid": "1215595441701443"
+  },
+  "intel": {
+   "attestationTaskGid": "1215595441393801",
+   "projectGid": "1215590846323492"
+  },
+  "intelligence-tools": {
+   "attestationTaskGid": "1215593490215597",
+   "projectGid": "1215582429227290"
+  },
+  "investigation": {
+   "attestationTaskGid": "1215590845272415",
+   "projectGid": "1215595440542876"
+  },
+  "kri-dashboard": {
+   "attestationTaskGid": "1215587114990927",
+   "projectGid": "1215593492427202"
+  },
+  "lbma": {
+   "attestationTaskGid": "1215590848314276",
+   "projectGid": "1215582431234868"
+  },
+  "mlro-advisor": {
+   "attestationTaskGid": "1215587113107670",
+   "projectGid": "1215590846874202"
+  },
+  "moe-survey": {
+   "attestationTaskGid": "1215590844690737",
+   "projectGid": "1215595440172210"
+  },
+  "oecd-ddg": {
+   "attestationTaskGid": "1215590848070862",
+   "projectGid": "1215582430987524"
+  },
+  "onboarding": {
+   "attestationTaskGid": "1215593488955374",
+   "projectGid": "1215595439852628"
+  },
+  "ongoing-monitor": {
+   "attestationTaskGid": "1215595442044377",
+   "projectGid": "1215593490836588"
+  },
+  "operator": {
+   "attestationTaskGid": "1215595441587503",
+   "projectGid": "1215593490549814"
+  },
+  "osint": {
+   "attestationTaskGid": "1215593488259116",
+   "projectGid": "1215593488026162"
+  },
+  "outsourcing-register": {
+   "attestationTaskGid": "1215582428750347",
+   "projectGid": "1215587112382546"
+  },
+  "oversight": {
+   "attestationTaskGid": "1215587111675740",
+   "projectGid": "1215587111673751"
+  },
+  "ownership": {
+   "attestationTaskGid": "1215582428754556",
+   "projectGid": "1215587112110205"
+  },
+  "pep-profile": {
+   "attestationTaskGid": "1215595439976435",
+   "projectGid": "1215590845031669"
+  },
+  "pkyc": {
+   "attestationTaskGid": "1215593488714202",
+   "projectGid": "1215603020152877"
+  },
+  "playbook": {
+   "attestationTaskGid": "1215595442822805",
+   "projectGid": "1215593491934528"
+  },
+  "pnmr": {
+   "attestationTaskGid": "1215595439922591",
+   "projectGid": "1215595439520032"
+  },
+  "policies": {
+   "attestationTaskGid": "1215590846864506",
+   "projectGid": "1215590846946267"
+  },
+  "red-team": {
+   "attestationTaskGid": "1215595442060269",
+   "projectGid": "1215582429713344"
+  },
+  "reg-change": {
+   "attestationTaskGid": "1215593492279883",
+   "projectGid": "1215587114595459"
+  },
+  "regulatory": {
+   "attestationTaskGid": "1215603090010389",
+   "projectGid": "1215590847043062"
+  },
+  "responsible-ai": {
+   "attestationTaskGid": "1215582429774952",
+   "projectGid": "1215582429288858"
+  },
+  "responsible-sourcing": {
+   "attestationTaskGid": "1215587113323826",
+   "projectGid": "1215590847800414"
+  },
+  "rmap": {
+   "attestationTaskGid": "1215595443280503",
+   "projectGid": "1215593492209549"
+  },
+  "rmi": {
+   "attestationTaskGid": "1215582430631526",
+   "projectGid": "1215587113392882"
+  },
+  "sanctions-evasion": {
+   "attestationTaskGid": "1215593489626715",
+   "projectGid": "1215593489838536"
+  },
+  "sar-qa": {
+   "attestationTaskGid": "1215590847305373",
+   "projectGid": "1215582430112397"
+  },
+  "screening": {
+   "attestationTaskGid": "1215587112275030",
+   "projectGid": "1215582429223440"
+  },
+  "security-audit": {
+   "attestationTaskGid": "1215595441939301",
+   "projectGid": "1215582429649646"
+  },
+  "security-scan": {
+   "attestationTaskGid": "1215593491487205",
+   "projectGid": "1215593492111240"
+  },
+  "shadow-ai": {
+   "attestationTaskGid": "1215582431234855",
+   "projectGid": "1215587114287449"
+  },
+  "shipments": {
+   "attestationTaskGid": "1215582431269354",
+   "projectGid": "1215593492374821"
+  },
+  "supply-chain": {
+   "attestationTaskGid": "1215590847042077",
+   "projectGid": "1215595442060385"
+  },
+  "system-card": {
+   "attestationTaskGid": "1215587113756992",
+   "projectGid": "1215587113840716"
+  },
+  "system-status": {
+   "attestationTaskGid": "1215593491582221",
+   "projectGid": "1215593491369936"
+  },
+  "telemetry": {
+   "attestationTaskGid": "1215590846935166",
+   "projectGid": "1215595441739409"
+  },
+  "tfs-alerts": {
+   "attestationTaskGid": "1215590844457069",
+   "projectGid": "1215582427368418"
+  },
+  "tm-rules": {
+   "attestationTaskGid": "1215582428511690",
+   "projectGid": "1215595440671439"
+  },
+  "training": {
+   "attestationTaskGid": "1215595441328152",
+   "projectGid": "1215595441443382"
+  },
+  "transaction-monitor": {
+   "attestationTaskGid": "1215590846856047",
+   "projectGid": "1215590846837810"
+  },
+  "typology-library": {
+   "attestationTaskGid": "1215587113431284",
+   "projectGid": "1215587113582005"
+  },
+  "ubo-declaration": {
+   "attestationTaskGid": "1215582428106774",
+   "projectGid": "1215587110763526"
+  },
+  "ubo-walker": {
+   "attestationTaskGid": "1215587112021868",
+   "projectGid": "1215595441207924"
+  },
+  "vendor-ai-audit": {
+   "attestationTaskGid": "1215582431126012",
+   "projectGid": "1215595442838734"
+  },
+  "vendor-dd": {
+   "attestationTaskGid": "1215587111917626",
+   "projectGid": "1215593489477898"
+  },
+  "vessel-check": {
+   "attestationTaskGid": "1215587111456466",
+   "projectGid": "1215593489189677"
+  },
+  "voluntary-disclosure": {
+   "attestationTaskGid": "1215590846421254",
+   "projectGid": "1215595441443420"
+  },
+  "workbench": {
+   "attestationTaskGid": "1215590846908807",
+   "projectGid": "1215587112617994"
+  }
+ },
+ "digest": {
+  "projectGid": "1215603910482250",
+  "tasks": {
+   "access-control": "1215590849343595",
+   "ai-governance": "1215582432170872",
+   "ai-incident-playbook": "1215590848319442",
+   "analyst-behavior": "1215595444313451",
+   "api-docs": "1215593493553055",
+   "approvals": "1215593492827006",
+   "audit-findings": "1215593493155165",
+   "audit-trail": "1215593492631138",
+   "benford": "1215582431285317",
+   "board-dashboard": "1215595443935620",
+   "bra": "1215595443440162",
+   "brain-intel": "1215590849174097",
+   "cases": "1215593492743242",
+   "cdd-review": "1215603863813662",
+   "client-portal": "1215582430962491",
+   "cnmr": "1215595443698351",
+   "coi-register": "1215587115553150",
+   "corrections": "1215590849113338",
+   "country-risk": "1215593493277177",
+   "country-risk-map": "1215587115958828",
+   "crypto-risk": "1215587115562709",
+   "data-quality": "1215595443522639",
+   "domain-intel": "1215590848198015",
+   "dormant-accounts": "1215595443459459",
+   "dpmsr": "1215590848656484",
+   "employees": "1215603863844727",
+   "enforcement": "1215603863844713",
+   "entity-graph": "1215593492684498",
+   "eocn": "1215582431524399",
+   "esg-risk": "1215595443906717",
+   "eval-kpi": "1215595444289223",
+   "ewra": "1215587114962616",
+   "fp-optimizer": "1215595443652452",
+   "geopolitical": "1215587115998353",
+   "gleif": "1215593493430939",
+   "goaml": "1215590848760053",
+   "grievances-whistleblowing": "1215593492315538",
+   "inspection-room": "1215587115998289",
+   "intel": "1215590849043704",
+   "intelligence-tools": "1215587115951130",
+   "investigation": "1215593492825824",
+   "kri-dashboard": "1215582432180440",
+   "lbma": "1215593493080159",
+   "mlro-advisor": "1215595444302551",
+   "moe-survey": "1215590848340290",
+   "oecd-ddg": "1215593492925712",
+   "onboarding": "1215590848807421",
+   "ongoing-monitor": "1215582431788391",
+   "operator": "1215582432320034",
+   "osint": "1215582431974186",
+   "outsourcing-register": "1215587114595770",
+   "oversight": "1215593492427158",
+   "ownership": "1215590848781100",
+   "pep-profile": "1215587115267816",
+   "pkyc": "1215595443906781",
+   "playbook": "1215595444313557",
+   "pnmr": "1215587115089792",
+   "policies": "1215590849183977",
+   "red-team": "1215582432307877",
+   "reg-change": "1215587115432483",
+   "regulatory": "1215582432288849",
+   "responsible-ai": "1215582431741353",
+   "responsible-sourcing": "1215595443678795",
+   "rmap": "1215593492520135",
+   "rmi": "1215593492510522",
+   "sanctions-evasion": "1215587115941602",
+   "sar-qa": "1215590848824345",
+   "screening": "1215582431788357",
+   "security-audit": "1215587115951389",
+   "security-scan": "1215595444287834",
+   "shadow-ai": "1215593493516106",
+   "shipments": "1215595443905368",
+   "supply-chain": "1215595443907972",
+   "system-card": "1215593493469193",
+   "system-status": "1215590849313155",
+   "telemetry": "1215593492993114",
+   "tfs-alerts": "1215593492059993",
+   "tm-rules": "1215582431283950",
+   "training": "1215595443839072",
+   "transaction-monitor": "1215582431873919",
+   "typology-library": "1215587115955365",
+   "ubo-declaration": "1215595443906845",
+   "ubo-walker": "1215593493501208",
+   "vendor-ai-audit": "1215590849361231",
+   "vendor-dd": "1215603863826402",
+   "vessel-check": "1215595444311206",
+   "voluntary-disclosure": "1215593493456107",
+   "workbench": "1215595444289147"
+  }
+ },
+ "inbox": {
+  "governanceTaskGid": "1215593487327896",
+  "projectGid": "1215595438982931"
+ },
+ "teamGid": "1213645083721318"
+}
