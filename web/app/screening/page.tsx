@@ -1382,8 +1382,8 @@ export default function ScreeningPage() {
           {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
           <EocnSlaWidget />
 
-          {/* ── Bulk Re-Screen Banner ─────────────────────────────────────── */}
-          <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl px-4 py-3">
+          {/* ── Bulk Re-Screen Banner removed ──────────────────────────── */}
+          <div className="hidden">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-12 font-semibold text-ink-0">📋 Sanctions List Update</span>
               <span className="text-12 text-ink-2 flex-1">Re-screen portfolio against latest list version</span>
@@ -1643,8 +1643,7 @@ export default function ScreeningPage() {
           <ScreeningToolbar
             ref={searchInputRef}
             query={query}
-            onQueryChange={(v) => { setQuery(v); if (nlSearchActive && !v) clearNLSearch(); }}
-            onNewScreening={() => setFormOpen((o) => !o)}
+            onQueryChange={(v) => { setQuery(v); }}
             sortKey={sortKey}
             sortDir={sortDir}
             onSortChange={handleSortChange}
@@ -1656,12 +1655,6 @@ export default function ScreeningPage() {
             onColumnsChange={handleColumnsChange}
             onBulkImport={() => setBulkImportOpen(true)}
             onExport={exportFilteredCsv}
-            onAiFilter={handleAiFilter}
-            aiFilterLabel={aiFilterLabel}
-            onNLSearch={(q) => { void handleNLSearch(q); }}
-            nlSearchActive={nlSearchActive}
-            onNLSearchClear={clearNLSearch}
-            nlSearchLoading={nlSearchLoading}
           />
 
           <div className="mb-3">
