@@ -4,14 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { sanitizeHtml } from "../utils/sanitizeHtml.js";
-
-// ── CSV cell escaper (extracted from page.tsx for testability) ───────────────
-// This is the same logic as the escapeCsvCell function in page.tsx.
-function escapeCsvCell(v: unknown): string {
-  const raw = String(v ?? "").replace(/\x00/g, "").replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, " ");
-  const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
+import { escapeCsvCell } from "../utils/escapeCsvCell.js";
 
 describe("escapeCsvCell — CSV injection prevention", () => {
   it("prepends single-quote to cells starting with =", () => {

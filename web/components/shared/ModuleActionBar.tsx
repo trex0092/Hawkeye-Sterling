@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { escapeCsvCell } from "@/lib/utils/escapeCsvCell";
 
 // Standardised 8-button action bar — portalled to document.body so
 // position:fixed is always relative to the viewport, never broken by a
@@ -27,10 +28,9 @@ function extractTableAsCsv(): string {
   }
   const rows: string[] = [];
   for (const row of Array.from(table.rows)) {
-    const cells = Array.from(row.cells).map((cell) => {
-      const text = cell.textContent?.trim().replace(/"/g, '""') ?? "";
-      return `"${text}"`;
-    });
+    const cells = Array.from(row.cells).map((cell) =>
+      escapeCsvCell(cell.textContent?.trim()),
+    );
     rows.push(cells.join(","));
   }
   return rows.join("\n");
