@@ -95,6 +95,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "ASANA_TOKEN is invalid or expired." }, { status: 401 , headers: gate.headers });
   }
 
+  // Optional {offset, limit} body slices the 90-board sweep into short
+  // calls that survive flaky proxies; no body = full sweep (idempotent).
+  const body = await req.json().catch(() => ({})) as { offset?: number; limit?: number };
+  const offset = Math.max(0, Math.floor(body.offset ?? 0));
+  const limit = Math.min(Math.max(1, Math.floor(body.limit ?? PROJECTS.length)), PROJECTS.length);
+  const SLICE = PROJECTS.slice(offset, offset + limit);
+
   const results: Array<{
     name: string;
     deleted: number;
@@ -106,9 +113,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   // exceeded the function timeout. Parallel brings it to ~5-10s.
   const CHUNK = 8;
   const projectResults: Array<{ name: string; deleted: number; created: number; errors: string[] }> = [];
-  for (let c = 0; c < PROJECTS.length; c += CHUNK) {
+  for (let c = 0; c < SLICE.length; c += CHUNK) {
   const chunkResults = await Promise.all(
-    PROJECTS.slice(c, c + CHUNK).map(async (project) => {
+    SLICE.slice(c, c + CHUNK).map(async (project) => {
       const errors: string[] = [];
       let deleted = 0;
       let created = 0;
@@ -173,6 +180,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   return NextResponse.json({
     ok: allOk,
     authenticatedAs: me.data.name,
+    offset,
+    limit,
+    total: PROJECTS.length,
     results,
   }, { headers: gate.headers });
 }
