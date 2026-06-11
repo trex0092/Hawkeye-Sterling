@@ -437,7 +437,7 @@ export default function TransactionMonitorPage() {
       <ModuleHeader
             title="Transaction"
             titleEm="Monitor"
-            dotColor="amber"
+            dotColor="none"
       />
 
       {tagError && (
@@ -559,11 +559,6 @@ export default function TransactionMonitorPage() {
                       Cancel
                     </Btn>
                   </>
-                }
-                right={
-                  <span className="font-mono text-10 uppercase tracking-wide-3 px-3 py-1.5 rounded-full border border-hair-3 bg-bg-2 text-ink-1">
-                    Critical alerts auto-open an Asana case
-                  </span>
                 }
               />
             </form>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { toCsv, downloadCsv } from "@/lib/client/csv";
 import { RowActions } from "@/components/shared/RowActions";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -257,6 +258,18 @@ export default function EmployeesPage() {
     setAdding(false);
   };
 
+  // Rail CSV exports the register (the empty-table fallback is useless here).
+  const exportCsv = () => {
+    const rows = employees.map((e) => [
+      e.name, e.designation, e.nationality, e.emiratesId, e.emiratesIdExpiry,
+      e.passport, e.passportExpiry, e.dateOfJoining, e.email, e.businessUnits.join("; "),
+    ]);
+    downloadCsv(
+      `employees-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv(["name", "designation", "nationality", "emirates_id", "id_expiry", "passport", "pp_expiry", "joined", "email", "business_units"], rows),
+    );
+  };
+
   const remove = (id: string) => {
     const next = employees.filter((e) => e.id !== id);
     save(next);
@@ -325,7 +338,8 @@ export default function EmployeesPage() {
       asanaModule="employees"
       asanaLabel="Employees"
       onRun={() => void runEmployeeRiskScan()}
-      onAdd={addEmployee}
+      onAdd={() => setAdding(true)}
+      onCsv={exportCsv}
       sidebarActions={
         <>
           <ActionButton

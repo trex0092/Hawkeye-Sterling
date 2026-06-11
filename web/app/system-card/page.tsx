@@ -133,9 +133,9 @@ export default function SystemCardPage() {
           <div>
             <div className="text-12 font-semibold font-mono uppercase tracking-wide-4 text-amber mb-3">Known Limitations</div>
             {[
-              "Vessel screening (IMO lookup, flag-state, ownership) not configured — Equasis ToS forbid programmatic access; commercial provider (Datalastic, Lloyd's, Marine Traffic) required",
-              "Crypto on-chain risk requires CHAINALYSIS or similar (not configured)",
-              "GDELT cache survives cold starts only when Upstash Redis is configured (UPSTASH_REDIS_REST_URL)",
+              "Vessel & aircraft screening integrated (flag-state, dark-fleet, AIS-gap, and ship-to-ship heuristics — Layers #22-23, /vessel-check module + MCP tool); live IMO registry lookup stays external because Equasis ToS forbid programmatic access — a commercial provider (Datalastic, Lloyd's, Marine Traffic) is an optional upgrade for registry-grade ownership data",
+              "Crypto on-chain risk integrated (built-in heuristic engine in crypto-chain.ts; Chainalysis KYT / Elliptic / TRM adapters activate automatically when an API key is set)",
+              "GDELT cache persists in Upstash Redis when UPSTASH_REDIS_REST_URL is set (configured in this deployment); falls back to per-instance in-memory cache otherwise",
               "LSEG CFS supplements are populated by the 6-hour CFS poll cron, which auto-triggers /api/admin/import-cfs when new filesets arrive — manual re-import only needed if the cron fails or for an immediate refresh",
               "Confidence scores are AI-derived estimates — not statistical certainty",
               "All supervised outputs require MLRO human review before action",
@@ -153,7 +153,7 @@ export default function SystemCardPage() {
             { name: "Kill switch", detail: "MCP_ENABLED env var — disables all 24 tools instantly, no redeploy", control: "2.08/14.03" },
             { name: "Tool risk manifest", detail: "All 24 tools classified: read-only / supervised / action", control: "1.01/1.05" },
             { name: "MCP activity log", detail: "Every tool call logged to Netlify Blobs with full audit trail", control: "21.02" },
-            { name: "Operator console", detail: "/operator — filterable activity log, CSV export, live stats", control: "29.04" },
+            { name: "MCP activity oversight", detail: "Append-only MCP activity log in Netlify Blobs, reviewable via /audit-trail and the inspection room", control: "29.04" },
             { name: "Rate limiting", detail: "Per-tool-class call limits: read-only 120/min, supervised 40/min, action 10/min", control: "20.06" },
             { name: "Circuit breakers", detail: "Auto-trip after 5 consecutive failures; reset after 60s", control: "20.02" },
             { name: "Per-class timeouts", detail: "read-only 15s · supervised 45s · action 55s", control: "2.03" },

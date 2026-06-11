@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 
 interface Deadline {
   id: string;
@@ -694,6 +695,27 @@ export default function EnforcementPage() {
     setEditingId(d.id);
     setEditDraft({ title: d.title, due: d.due, authority: d.authority, cadence: d.cadence, notes: d.notes ?? "" });
   };
+
+  // Rail "+ ADD": create a custom deadline and drop it straight into edit
+  // mode so the operator fills in the details.
+  const addDeadline = () => {
+    const due = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+    const fresh: Deadline = {
+      id: `custom-${Date.now()}`,
+      title: "New deadline",
+      due,
+      authority: "Internal",
+      cadence: "ad-hoc",
+      notes: "",
+    };
+    setOverlay((prev) => {
+      const next: Overlay = { ...prev, custom: [...prev.custom, fresh] };
+      saveOverlay(next);
+      return next;
+    });
+    startEdit(fresh);
+  };
+  useHawkeyeAdd(addDeadline);
 
   const saveEdit = (id: string) => {
     setOverlay((prev) => {

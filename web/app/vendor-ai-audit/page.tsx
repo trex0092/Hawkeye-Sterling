@@ -169,11 +169,6 @@ export default function VendorAIAuditPage() {
 
         {/* Assess New Vendor button moved to sidebar Actions */}
 
-        {/* Regulatory notice */}
-        <div className="bg-indigo-950/20 border border-indigo-500/30 rounded-lg p-4 text-sm text-indigo-300">
-          <strong>Regulatory Requirement:</strong> All AI vendors must be assessed before use and re-assessed on the schedule below (Critical/High: 3–6 months; Low: 12 months). The vendor DPA and model card must be retained for 10 years per Federal Decree-Law No. 10 of 2025 Art.18.
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}

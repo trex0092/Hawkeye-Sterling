@@ -169,11 +169,6 @@ export default function ShadowAIPage() {
 
         {/* Stat tiles removed; Report Shadow AI button lives in sidebar Actions */}
 
-        {/* Policy notice */}
-        <div className="bg-sky-950/20 border border-sky-500/30 rounded-lg p-4 text-sm text-sky-300">
-          <strong>Policy:</strong> Any AI tool used in compliance workflows must be registered in the Model Registry and have a signed DPA. Unauthorized usage of AI tools with <em>confidential</em> or <em>restricted</em> data constitutes a critical risk requiring immediate containment. Per CBUAE AI Governance Guidelines 2025.
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}

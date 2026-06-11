@@ -188,11 +188,6 @@ export default function AIIncidentPlaybookPage() {
 
         {/* Stat tiles removed; Log AI Incident button lives in sidebar Actions */}
 
-        {/* Regulatory notice */}
-        <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 text-sm text-amber-300">
-          <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under Federal Decree-Law No. 10 of 2025 Art.24. Document all containment steps and root cause analysis.
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}

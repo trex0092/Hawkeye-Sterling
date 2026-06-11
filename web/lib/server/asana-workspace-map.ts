@@ -173,12 +173,6 @@ const SUPPLEMENT: Record<string, Supplement> = {
     obligation: "Regulator cooperation duties — FDL 10/2025; MoE supervisory expectations.",
     owner: "MLRO + senior management", retention: "10 yrs",
   },
-  operator: {
-    purpose: "Operator console — administrative actions over the platform with full audit-trail review.",
-    control: "Privileged operations logged to the append-only audit chain; RBAC restricts access.",
-    obligation: "Logical access & accountability — FDL 10/2025 Art.24; SOC2 CC6.1.",
-    owner: "MLRO (single controller)", retention: "10 yrs",
-  },
   "ai-governance": {
     purpose: "Enterprise AI governance framework — stakeholder matrix, AI risk register, NIST AI RMF and MITRE ATLAS mapping.",
     control: "Every production model carries riskTier, approval and model card; changes go through governance review.",
@@ -208,18 +202,6 @@ const SUPPLEMENT: Record<string, Supplement> = {
     control: "High-risk jurisdiction exposure triggers EDD per the country-risk methodology.",
     obligation: "Geographic risk assessment — FATF R.1/R.19 (higher-risk countries); Cabinet 10/2019 Art.4.",
     owner: "Compliance Officer", retention: "5 yrs",
-  },
-  "ubo-walker": {
-    purpose: "Beneficial-ownership chain walker — interactive UBO traversal for complex structures.",
-    control: "Chains walked to natural-person UBOs; structures that cannot be resolved trigger EDD/refusal.",
-    obligation: "Beneficial-ownership transparency — Cabinet 58/2020; FATF R.24/25.",
-    owner: "Compliance Officer", retention: "5 yrs",
-  },
-  "brain-intel": {
-    purpose: "Brain faculty intelligence — reasoning-mode insight across the platform's 15 faculties.",
-    control: "Reasoning modes version-pinned; outputs subject to human review on adverse use.",
-    obligation: "AI explainability & governance — FDL 10/2025 Art.18.",
-    owner: "MLRO", retention: "10 yrs",
   },
   workbench: {
     purpose: "Analyst cognitive workbench — structured analysis workspace for compliance analysts.",
@@ -315,7 +297,6 @@ const G1: Array<[string, string, string]> = [
   ["esg-risk", "🌱", "ESG Risk"],
   ["vendor-dd", "🤝", "Supplier DD"],
   ["cdd-review", "📋", "CDD Review"],
-  ["data-quality", "✅", "Data Quality"],
   ["ownership", "🏢", "Ownership Explorer"],
   ["employees", "🧑‍💼", "Employees"],
   ["training", "🎓", "Training"],
@@ -353,7 +334,6 @@ const G2: Array<[string, string, string]> = [
   ["outsourcing-register", "🏢", "Outsourcing Register"],
   ["coi-register", "⚖️", "COI Register"],
   ["voluntary-disclosure", "📣", "Voluntary Disclosure"],
-  ["operator", "🔭", "Operator Console"],
   ["eval-kpi", "📊", "Eval KPIs"],
 ];
 const G3: Array<[string, string, string]> = [
@@ -383,13 +363,11 @@ const G4: Array<[string, string, string]> = [
   ["geopolitical", "🌏", "Geopolitical"],
   ["country-risk-map", "🗺️", "Risk Map"],
   ["sanctions-evasion", "🚫", "Sanctions Evasion"],
-  ["ubo-walker", "🏢", "UBO Walker"],
   ["intelligence-tools", "🧪", "Intelligence Tools"],
   ["audit-trail", "🔒", "Audit Trail"],
 ];
 const G5: Array<[string, string, string]> = [
   ["intel", "🛰️", "Live Intelligence Feed"],
-  ["brain-intel", "🧠", "Brain Intel"],
   ["workbench", "🔧", "Workbench"],
   ["telemetry", "📡", "Telemetry"],
   ["red-team", "🥷", "Red-Team"],
@@ -542,11 +520,11 @@ export const MODULE_BOARD_ALIASES: Record<string, string> = {
   "goaml-submission": "goaml",
   analytics: "kri-dashboard",
   "analytics-dashboard": "kri-dashboard",
-  "intelligence-hub": "brain-intel",
+  "intelligence-hub": "workbench",
   heatmap: "country-risk-map",
   "intel-status": "system-status",
-  "weaponized-brain": "brain-intel",
-  "brain-map": "brain-intel",
+  "weaponized-brain": "workbench",
+  "brain-map": "workbench",
   "document-intelligence": "cdd-review",
   "training-tracker": "training",
   "incident-runbook": "ai-incident-playbook",

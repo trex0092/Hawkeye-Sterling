@@ -137,7 +137,7 @@ const nextConfig = {
       { source: "/weaponized-brain", destination: "/intelligence-hub?tab=workbench", permanent: true },
       // Intelligence Hub — old standalone pages redirect to the unified hub tab
       { source: "/analytics", destination: "/intelligence-hub?tab=analytics", permanent: false },
-      { source: "/brain-intelligence", destination: "/intelligence-hub?tab=brain", permanent: false },
+      { source: "/brain-intelligence", destination: "/intelligence-hub?tab=workbench", permanent: false },
       { source: "/workbench", destination: "/intelligence-hub?tab=workbench", permanent: false },
       { source: "/intel/telemetry", destination: "/intelligence-hub?tab=telemetry", permanent: false },
       { source: "/intel/red-team", destination: "/intelligence-hub?tab=red-team", permanent: false },

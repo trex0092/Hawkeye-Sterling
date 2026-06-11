@@ -399,47 +399,6 @@ const REPORTS: Record<string, ReportData> = {
       "Newly surfaced screening matches at review",
     ],
   },
-  "/data-quality": {
-    title: "Data Quality",
-    summary: [
-      "The Data Quality module measures and remediates the completeness, accuracy, and timeliness of the CDD data that underpins every downstream control. Because screening, monitoring, and risk-rating are only as reliable as their inputs, the module quantifies data gaps per customer and generates AI-assisted remediation plans to close them.",
-      "Robust data governance is an explicit supervisory expectation: incomplete or inaccurate customer data degrades sanctions screening and transaction monitoring and can itself constitute a control failure. This module makes data quality measurable and its remediation auditable.",
-      "Because every downstream control inherits the quality of its inputs, the module treats data completeness and accuracy as a first-order compliance concern rather than an operational nicety. Degraded name, identifier, or beneficial-ownership data quietly undermines sanctions screening and transaction monitoring, and supervisors increasingly characterise such gaps as control failures in their own right. By quantifying deficiencies per customer, prioritising them by risk impact, and generating remediation plans, the module makes data integrity measurable and its improvement auditable. Validation against reliable, independent sources and an audit-chain record of remediation give the institution evidence that the foundations of its screening and monitoring are sound and actively maintained.",
-    ],
-    regulatory: [
-      "Cabinet Resolution No. (134) of 2025 Art.4 — reliable, accurate CDD data",
-      "Federal Decree-Law No. (10) of 2025 Art.18 — completeness of customer information",
-      "FATF Recommendation 10 — adequacy of identification data",
-      "CBUAE AML/CFT Standards — data integrity and record adequacy",
-      "SOC2 CC7.x — data-processing integrity",
-    ],
-    requirements: [
-      "Measure CDD completeness and accuracy per customer",
-      "Identify and prioritise data gaps by risk impact",
-      "Remediate deficient records within defined timeframes",
-      "Validate data against reliable, independent sources",
-      "Evidence remediation in the audit trail",
-      "Establish data-quality thresholds per risk-relevant field",
-    ],
-    controls: [
-      "Per-customer completeness and accuracy scoring",
-      "AI-generated, prioritised remediation plans",
-      "Source-validation checks on key data fields",
-      "Audit-chain record of remediation actions",
-      "Cross-system data-consistency reconciliation",
-    ],
-    reporting: [
-      "Data-quality scorecards to compliance and data governance",
-      "Escalation of systemic data deficiencies",
-      "Remediation-progress reporting",
-    ],
-    risks: [
-      "Missing beneficial-ownership or identification fields",
-      "Inconsistent data across systems of record",
-      "Stale data on active high-risk relationships",
-      "Screening degraded by poor-quality name and identifier data",
-    ],
-  },
   "/ownership": {
     title: "Ownership Explorer",
     summary: [
@@ -1876,47 +1835,6 @@ const REPORTS: Record<string, ReportData> = {
       "Incomplete or delayed disclosure",
       "Disclosure made without proper governance",
       "Unremediated root cause after disclosure",
-    ],
-  },
-  "/operator": {
-    title: "Operator Console",
-    summary: [
-      "The Operator Console provides the immutable audit-trail and operational-control surface for compliance operators, exposing the append-only decision record and the levers needed to administer the platform within governed bounds. It is the operational window onto the institution's evidentiary backbone.",
-      "An immutable, queryable audit trail is the foundation of regulatory defensibility. The console gives operators governed visibility into that trail and the platform's operational state without permitting any action that would compromise audit integrity.",
-      "An immutable, queryable audit trail is the foundation of regulatory defensibility, and the console gives operators governed visibility into that trail and the platform's state without permitting any action that would compromise its integrity. It exposes the append-only decision record, applies role-based access, and logs operator actions so that administration itself remains accountable. Supervisors expect the evidentiary backbone to be tamper-evident and any attempt to alter it to be detectable. By preserving the HMAC-signed chain and recording operator activity, the institution can demonstrate that its record of AI decisions, screening results, filings, and approvals is complete and unaltered, and that those who administer the platform do so within auditable bounds.",
-    ],
-    regulatory: [
-      "Federal Decree-Law No. 10 of 2025 Art.18 — AI decision audit trail",
-      "Federal Decree-Law No. (10) of 2025 — record-keeping obligations",
-      "FATF Recommendation 11 — record retention",
-      "CBUAE AML/CFT Standards — auditability",
-      "SOC2 CC7.x — operational monitoring",
-    ],
-    requirements: [
-      "Preserve an append-only, tamper-evident audit trail",
-      "Provide governed operator access to records",
-      "Prevent any action compromising audit integrity",
-      "Log all operator actions",
-      "Support reproducible audit retrieval",
-      "Log all operator actions for accountability",
-    ],
-    controls: [
-      "Append-only HMAC-SHA256 audit chain",
-      "Role-based operator access",
-      "Operator-action logging",
-      "Tamper-evidence verification",
-      "Role-based operator access with tamper-evidence checks",
-    ],
-    reporting: [
-      "Audit-trail evidence packs for supervisors",
-      "Operator-action reporting to governance",
-      "Integrity-verification reporting",
-    ],
-    risks: [
-      "Attempts to alter or delete audit records",
-      "Excessive operator privilege",
-      "Unlogged administrative actions",
-      "Audit-retrieval gaps",
     ],
   },
   "/eval-kpi": {

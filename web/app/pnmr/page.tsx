@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 
 interface PnmrRecord {
   id: string;
@@ -60,6 +61,14 @@ export default function PnmrQueuePage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterTab>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addSubject, setAddSubject] = useState("");
+  const [addList, setAddList] = useState("");
+  const [addNotes, setAddNotes] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  // Rail "+ ADD" opens the manual-creation form (POST /api/pnmr).
+  useHawkeyeAdd(() => setShowAdd(true));
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -95,6 +104,32 @@ export default function PnmrQueuePage() {
     }
   }
 
+  async function createRecord() {
+    if (!addSubject.trim() || !addList.trim()) return;
+    setAdding(true);
+    try {
+      const res = await fetch("/api/pnmr", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          subjectName: addSubject.trim(),
+          listId: addList.trim().toLowerCase().replace(/\s+/g, "-"),
+          listLabel: addList.trim(),
+          notes: addNotes.trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? apiErrorMessage(res.status));
+      setShowAdd(false);
+      setAddSubject(""); setAddList(""); setAddNotes("");
+      void fetchRecords();
+    } catch (err) {
+      setError(caughtErrorMessage(err, "Failed to create PNMR record"));
+    } finally {
+      setAdding(false);
+    }
+  }
+
   const overdueCount = records.filter(
     (r) => r.status === "pending" && getSlaStatus(r.dueAt) === "red"
   ).length;
@@ -118,6 +153,50 @@ export default function PnmrQueuePage() {
       />
 
       <div className="w-full px-4 pb-16 space-y-4">
+
+        {/* Manual creation form (opened from the rail "+ ADD") */}
+        {showAdd && (
+          <div className="bg-bg-panel border border-hair-2 rounded-lg p-4 space-y-3">
+            <div className="text-13 font-semibold text-ink-0">New PNMR record</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                autoFocus
+                value={addSubject}
+                onChange={(e) => setAddSubject(e.target.value)}
+                placeholder="Subject name *"
+                className="bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+              />
+              <input
+                value={addList}
+                onChange={(e) => setAddList(e.target.value)}
+                placeholder="List matched (e.g. UN Consolidated) *"
+                className="bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+              />
+            </div>
+            <input
+              value={addNotes}
+              onChange={(e) => setAddNotes(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void createRecord(); }}
+              placeholder="Notes (optional)"
+              className="w-full bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => void createRecord()}
+                disabled={adding || !addSubject.trim() || !addList.trim()}
+                className="text-xs bg-brand text-white px-3 py-1.5 rounded hover:opacity-90 disabled:opacity-50"
+              >
+                {adding ? "Creating…" : "Create record"}
+              </button>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="text-xs bg-bg-base text-ink-1 border border-hair-2 px-3 py-1.5 rounded hover:bg-bg-panel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Overdue banner */}
         {overdueCount > 0 && (

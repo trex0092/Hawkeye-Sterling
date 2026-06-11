@@ -1380,7 +1380,6 @@ export default function ScreeningPage() {
           <IntelligenceSourcesPanel />
 
           {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
-          <EocnSlaWidget />
 
           {/* ── Bulk Re-Screen Banner removed ──────────────────────────── */}
           <div className="hidden">
@@ -2003,87 +2002,6 @@ const SLA_BAR_CLASSES: Record<"green" | "amber" | "red", string> = {
   red:   "bg-red",
 };
 
-function EocnSlaWidget() {
-  const [records, setRecords] = useState<EocnSlaRecordClient[]>([]);
-  const [open, setOpen] = useState(true);
-
-  const fetchRecords = useCallback(async () => {
-    try {
-      const res = await fetchJson<{ ok: boolean; records: EocnSlaRecordClient[] }>("/api/eocn-sla");
-      if (res.ok && res.data?.ok && res.data.records) {
-        setRecords(res.data.records.filter((r) => r.status === "active" || r.status === "breached"));
-      }
-    } catch {
-      // silent — widget is non-critical
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchRecords();
-    const id = setInterval(() => { void fetchRecords(); }, 30_000);
-    return () => clearInterval(id);
-  }, [fetchRecords]);
-
-  if (records.length === 0) return null;
-
-  return (
-    <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-11 font-semibold text-ink-0">⏱ Active EOCN SLA Timers</span>
-          <span className="text-10 text-red font-medium">{records.length} active</span>
-          <span className="text-10 text-ink-3">— Cabinet Decision 74/2020 obligations</span>
-        </div>
-        <span className="text-10 text-ink-3">{open ? "▴ hide" : "▾ show"}</span>
-      </button>
-      {open && (
-        <div className="px-4 pb-4 border-t border-hair-2">
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {records.map((r) => {
-              const hrs = r.hoursRemaining;
-              const breached = r.status === "breached" || hrs <= 0;
-              const timeLabel = breached
-                ? "BREACHED"
-                : hrs < 1
-                ? `${Math.round(hrs * 60)}m remaining`
-                : hrs < 48
-                ? `${Math.round(hrs)}h remaining`
-                : `${Math.round(hrs / 24)}d remaining`;
-
-              return (
-                <div
-                  key={r.id}
-                  className={`rounded-lg border px-3 py-2.5 ${SLA_COLOR_CLASSES[r.statusColor]}`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-11 font-semibold">{SLA_TYPE_LABELS[r.type]}</span>
-                    <span className={`text-10 font-bold ${breached ? "text-red" : ""}`}>
-                      {timeLabel}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden mb-1.5">
-                    <div
-                      className={`h-full rounded-full transition-all ${SLA_BAR_CLASSES[r.statusColor]}`}
-                      style={{ width: `${r.pctElapsed}%` }}
-                    />
-                  </div>
-                  <div className="text-10 text-ink-2 truncate">
-                    {r.subjectName}
-                    <span className="ml-1 opacity-60">· {r.listId}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function IntelligenceSourcesPanel() {
   const [open, setOpen] = useState(false);

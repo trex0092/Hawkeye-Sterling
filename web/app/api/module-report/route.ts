@@ -52,7 +52,6 @@ const MODULE_LABELS: Record<string, string> = {
   policies:                 "Policies",
   regulatory:               "Regulatory",
   playbook:                 "Playbook",
-  "data-quality":           "Data Quality",
   corrections:              "Corrections",
   // 10 · Shipments
   shipments:                "Shipments",
@@ -188,7 +187,6 @@ const PROJECT_BOARD: Record<string, string> = {
   policies:                 "09 · Compliance Ops — Daily & Weekly Tasks",
   regulatory:               "09 · Compliance Ops — Daily & Weekly Tasks",
   playbook:                 "09 · Compliance Ops — Daily & Weekly Tasks",
-  "data-quality":           "09 · Compliance Ops — Daily & Weekly Tasks",
   corrections:              "09 · Compliance Ops — Daily & Weekly Tasks",
   shipments:                "10 · Shipments — Tracking",
   employees:                "11 · Employees",
@@ -905,42 +903,6 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "TESTING REQUIREMENT: Compliance playbooks must be tested at minimum every 6 months. Testing methods accepted: full simulation, table-top exercise, or documented peer review by a qualified compliance officer. The testing method, date, participants, and any gaps identified must be recorded.\n\n" +
     "ESCALATION TRIGGERS: Any playbook invoked in a live incident where responsible officers were unavailable, contact details were wrong, or escalation paths failed must be immediately reviewed and updated. Gaps found during an incident are priority-one remediation items.\n\n" +
     "REGULATORY BASIS: SOC2 CC7.4 (incident response and recovery procedures), Federal Decree-Law No. 10 of 2025 Art.18 (operational resilience), FATF Recommendation 18 (internal controls), CBUAE Operational Resilience Guidance.",
-
-  "data-quality":
-    "DATA QUALITY — COMPLIANCE REPORT\n\n" +
-    "Data quality report submitted. Completeness scores, missing mandatory field counts, duplicate record counts, data anomaly patterns, and overall data quality score reviewed. Remediation workflow initiated for scores below threshold.\n\n" +
-    "REVIEW CHECKLIST:\n" +
-    "☐ Overall data quality score computed and reviewed (passing threshold: ≥ 85%)\n" +
-    "☐ Completeness scores per mandatory field category: identity, address, risk classification, screening date\n" +
-    "☐ Missing mandatory fields listed with record-level detail — remediation owner assigned\n" +
-    "☐ Duplicate record count reviewed — duplicates resolved within 5 business days\n" +
-    "☐ Data anomaly patterns reviewed: inconsistent risk ratings, impossible DOB values, blank-name records\n" +
-    "☐ Score below 85%: remediation workflow initiated with 10-business-day resolution target\n" +
-    "☐ Repeated data quality breaches (3+ consecutive review periods below 85%): root-cause analysis initiated\n" +
-    "☐ Root-cause analysis reviewed and approved by MLRO before remediation plan finalised\n" +
-    "☐ Data quality improvements tracked period-over-period — deterioration trend investigated\n" +
-    "☐ Audit trail of all data quality review activities maintained\n\n" +
-    "THRESHOLDS & SLAs: Data quality score below 85% triggers a formal remediation workflow. Score below 70% constitutes a critical data integrity issue requiring immediate MLRO notification and a 5-business-day emergency remediation plan. Repeated breaches require root-cause analysis and MLRO sign-off.\n\n" +
-    "ESCALATION TRIGGERS: Any data quality issue affecting the ability to screen customers against watchlists (e.g., missing name fields), assign risk classifications, or meet regulatory reporting deadlines must be treated as a critical incident.\n\n" +
-    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (data accuracy in AI-assisted decisions), FATF Recommendation 11 (record-keeping accuracy), SOC2 CC4.2 (data quality and integrity).",
-
-  corrections:
-    "DATA CORRECTION AUDIT — COMPLIANCE REPORT\n\n" +
-    "Data correction audit report submitted. Correction log reviewed for the period including all modifications to screening results, risk scores, case data, and CDD records. Approver identity, reason codes, and before/after values reviewed.\n\n" +
-    "REVIEW CHECKLIST:\n" +
-    "☐ All corrections to screening results, risk scores, or case data have four-eyes approval logged\n" +
-    "☐ Approver identity confirmed as different from the person who made the correction\n" +
-    "☐ Reason codes applied and documented for every correction — no blank reason fields\n" +
-    "☐ Before and after values recorded in full — no overwrite-only logs\n" +
-    "☐ Correction timestamps verified — no back-dated corrections\n" +
-    "☐ No corrections found that bypass the audit trail (direct database writes)\n" +
-    "☐ Volume of corrections in the period reviewed against historical baseline — spike investigated\n" +
-    "☐ Corrections to closed case data reviewed with extra scrutiny — retrospective modification is high risk\n" +
-    "☐ Corrections to SAR-related data confirmed as limited to documented administrative errors\n" +
-    "☐ Any correction made without the required four-eyes approval flagged as a compliance breach\n\n" +
-    "COMPLIANCE BREACH STANDARD: Any correction made without four-eyes sign-off is a compliance breach requiring immediate MLRO notification, investigation of how the control was bypassed, and implementation of a preventive measure within 5 business days.\n\n" +
-    "ESCALATION TRIGGERS: Corrections to SAR narratives, sanctions dispositions, or risk classifications without MLRO approval are treated as potential audit integrity violations requiring senior management review.\n\n" +
-    "REGULATORY BASIS: Federal Decree-Law No. 10 of 2025 Art.18 (audit chain integrity and human oversight), FATF Recommendation 11 (record accuracy and immutability), SOC2 CC7.4 (data integrity controls).",
 
   "access-control":
     "ACCESS CONTROL AUDIT — COMPLIANCE REPORT\n\n" +

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 import type { OecdDdgRecord } from "@/lib/server/oecd-ddg";
 
 // OECD 5-Step Due Diligence Guidance — Responsible Supply Chains
@@ -118,7 +119,8 @@ export default function OecdDdgPage() {
 
   useEffect(() => { void loadRecords(); }, [loadRecords]);
 
-  const _createRecord = async () => {
+  // Rail "+ ADD" creates an assessment for the selected year.
+  const createRecord = async () => {
     const year = parseInt(newYear, 10);
     if (!year || year < 2000 || year > 2100) return;
     try {
@@ -139,6 +141,7 @@ export default function OecdDdgPage() {
       console.error("[hawkeye] oecd-ddg create failed:", err);
     }
   };
+  useHawkeyeAdd(() => { void createRecord(); });
 
   const patchRecord = useCallback(async (id: string, patch: object) => {
     setSaving(true);
