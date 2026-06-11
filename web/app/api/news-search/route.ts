@@ -1486,7 +1486,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   // 9s fan-out cost for this subject within the TTL window.
   // Bounded: on a dead-egress Lambda the Blobs request HANGS rather than
   // throwing, and an unbounded await here drags the whole 5s SLA past 10s.
-  const l2 = await withDeadline(readNewsBlobCache(cacheKey), 700, null);
+  const l2 = await withDeadline(readNewsBlobCache(cacheKey), 400, null);
   if (l2) {
     NEWS_CACHE.set(cacheKey, { data: l2, expires: Date.now() + NEWS_CACHE_TTL_MS });
     incrementCounter("hawkeye_news_requests_total", 1, { result: "cache_hit_l2" });
@@ -1935,8 +1935,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       // 1.6s after the 4s timebox and pushed total-outage responses past the
       // 5s SLA. Stale dossier wins when both resolve.
       const [stale, prefetch] = await Promise.all([
-        withDeadline(readNewsBlobCacheStale(cacheKey), 800, null),
-        withDeadline(readGdeltPrefetchArticles(q), 800, null),
+        withDeadline(readNewsBlobCacheStale(cacheKey), 500, null),
+        withDeadline(readGdeltPrefetchArticles(q), 500, null),
       ]);
       if (stale && stale.articleCount > 0) {
         Object.assign(payload, stale, {
