@@ -42,7 +42,9 @@ const ENV_SPECS: EnvSpec[] = [
   { id: "admin_token", label: "ADMIN_TOKEN", group: "Core Required", required: true, vars: ["ADMIN_TOKEN"], hint: "Admin portal bearer token. Generate: openssl rand -hex 32" },
   { id: "ongoing_run_token", label: "ONGOING_RUN_TOKEN", group: "Core Required", required: true, vars: ["ONGOING_RUN_TOKEN"], hint: "Bearer token for /api/ongoing/run. Required for ongoing monitoring." },
   { id: "sanctions_cron_token", label: "SANCTIONS_CRON_TOKEN", group: "Core Required", required: true, vars: ["SANCTIONS_CRON_TOKEN"], hint: "Bearer token for scheduled sanctions refresh. Required for list ingestion." },
-  { id: "app_url", label: "NEXT_PUBLIC_APP_URL", group: "Core Required", required: true, vars: ["NEXT_PUBLIC_APP_URL"], hint: "Public URL of this deployment. Required for CORS and webhook callbacks." },
+  // Netlify auto-injects URL / DEPLOY_PRIME_URL on every build; any of the
+  // three satisfies the requirement (same logic as /api/status configHealth).
+  { id: "app_url", label: "NEXT_PUBLIC_APP_URL", group: "Core Required", required: true, vars: ["NEXT_PUBLIC_APP_URL", "URL", "DEPLOY_PRIME_URL"], hint: "Public URL of this deployment (or Netlify's auto-injected URL). Required for CORS and webhook callbacks." },
 
   // Scheduled Jobs
   { id: "cron_secret", label: "CRON_SECRET", group: "Scheduled Jobs", required: false, vars: ["CRON_SECRET", "ONGOING_RUN_TOKEN"], hint: "Bearer token for scheduled cron routes. /api/cron/transaction-monitor also accepts ONGOING_RUN_TOKEN; /api/cron/sanctions-sweep requires CRON_SECRET specifically. Generate: openssl rand -hex 32" },

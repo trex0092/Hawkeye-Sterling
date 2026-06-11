@@ -309,8 +309,9 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     // Sliced charter refresh (CCL-2026-023): PUTs each live board's
-    // description from the canonical map so wording changes (e.g. the
-    // attestation schedule) propagate to Asana. Idempotent; no deletions.
+    // name + description from the canonical map so wording changes and
+    // board renumbering (e.g. after the 2026-06-11 module retirements)
+    // propagate to Asana. Idempotent; no deletions.
     if (mode === "refresh-charters") {
       const jobs = allJobs();
       const offset = Math.max(0, Number(body.offset) || 0);
@@ -327,7 +328,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         try {
           await asanaFetch(token, `/projects/${gid}`, {
             method: "PUT",
-            body: { data: { notes: job.charter } },
+            body: { data: { name: job.name, notes: job.charter } },
           });
           // The pinned 📌 Compliance Attestation task carries the same
           // charter (including the NARRATIVE section) as its description —
