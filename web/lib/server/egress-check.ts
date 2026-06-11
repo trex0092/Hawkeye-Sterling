@@ -2,17 +2,18 @@
 //
 // Every production path that delivers an AI-generated artefact to an external
 // system (Asana MLRO inbox, goAML FIU submission) must pass through this
-// gate before the side-effect executes. Gate is OFF by default; set
-// EGRESS_GATE_ENABLED=true in Netlify env after MLRO confirms mandate
-// (Federal Decree-Law No. 10 of 2025 Art.16; UAE charter P3).
+// gate before the side-effect executes. The gate is ON BY DEFAULT (F-02,
+// fail-closed — tipping-off under Federal Decree-Law No. 10 of 2025 Art.17 is
+// criminal); opting out requires EGRESS_GATE_DISABLED=true plus a written
+// MLRO waiver (UAE charter P3).
 //
-// When enabled the gate calls Claude Haiku for a fast tipping-off +
+// When active the gate calls Claude Haiku for a fast tipping-off +
 // mandatory-sections pre-check. If the verdict is anything other than
 // "approved" the artefact is held and a structured hold response is returned
 // so the MLRO can disposition it.
 //
-// When disabled (default) the function returns { allowed: true } immediately
-// with zero added latency or cost.
+// When explicitly disabled the function returns { allowed: true } immediately
+// with zero added latency or cost — and error-logs + meters the bypass.
 
 import { getAnthropicClient } from "@/lib/server/llm";
 import { startSpan, SpanStatus } from "@/lib/server/tracer";
@@ -55,7 +56,7 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
     // manual MLRO review rather than silently approving it. This is a
     // configuration error (Federal Decree-Law No. 10 of 2025 Art.17 tipping-off is criminal);
     // never disable the gate implicitly due to infrastructure misconfiguration.
-    console.error("[egress-check] EGRESS_GATE_ENABLED=true but ANTHROPIC_API_KEY absent — holding artefact for manual MLRO review");
+    console.error("[egress-check] egress gate active but ANTHROPIC_API_KEY absent — holding artefact for manual MLRO review");
     return {
       allowed: false,
       verdict: "held_review",
@@ -164,8 +165,10 @@ async function llmEgressCheck(narrative: string, reportType: string): Promise<Eg
  * Run the egress compliance pre-check before delivering an artefact to Asana
  * or another external system.
  *
- * Returns `{ allowed: true }` immediately when `EGRESS_GATE_ENABLED` is not
- * set to "true". When enabled: first performs a fast regex tipping-off scan,
+ * The gate is ON by default (F-02). It returns `{ allowed: true }` without
+ * checking only when `EGRESS_GATE_DISABLED=true` is set — an opt-out that
+ * requires a written MLRO waiver. When active: first performs a fast regex
+ * tipping-off scan,
  * then calls Claude Haiku for a broader compliance review. Fails CLOSED on any
  * LLM error — artefact is held for manual MLRO review rather than auto-approved.
  * Tipping-off (Federal Decree-Law No. 10 of 2025 Art.17) is a criminal offence; infrastructure

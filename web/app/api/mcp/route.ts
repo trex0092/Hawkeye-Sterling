@@ -257,10 +257,12 @@ const SERVER_NAME = "hawkeye-sterling";
 const SERVER_VERSION = "1.0.0";
 
 // NEXT_PUBLIC_APP_URL can be empty string, "undefined", or missing protocol —
-// validate it and always fall back to the hardcoded production URL.
+// validate it and always fall back to the hardcoded production URL. Netlify's
+// runtime-injected URL covers deployments where NEXT_PUBLIC_APP_URL is scoped
+// to Builds only (invisible to Functions at runtime).
 const FALLBACK_URL = "https://hawkeye-sterling.netlify.app";
 function resolveBaseUrl(): string {
-  const raw = process.env["NEXT_PUBLIC_APP_URL"];
+  const raw = process.env["NEXT_PUBLIC_APP_URL"] || process.env["URL"];
   if (!raw) return FALLBACK_URL;
   try {
     const u = new URL(raw);

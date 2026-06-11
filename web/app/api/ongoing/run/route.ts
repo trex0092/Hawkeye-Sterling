@@ -172,9 +172,11 @@ function nextThriceDailyRun(from: Date): Date {
 
 // Validate NEXT_PUBLIC_APP_URL before using it for internal server→server calls.
 // Rejects URLs with credentials, unexpected schemes, or path prefixes that could
-// redirect the ADMIN_TOKEN to an attacker-controlled host.
+// redirect the ADMIN_TOKEN to an attacker-controlled host. Falls back to
+// Netlify's runtime-injected URL (same validation applies) when
+// NEXT_PUBLIC_APP_URL is unset at runtime, e.g. scoped to Builds only.
 function safeAppBase(): string {
-  const raw = process.env["NEXT_PUBLIC_APP_URL"];
+  const raw = process.env["NEXT_PUBLIC_APP_URL"] || process.env["URL"];
   if (!raw) return "http://localhost:3000";
   try {
     const u = new URL(raw);

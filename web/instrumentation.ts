@@ -62,11 +62,17 @@ const REQUIRED_SECRETS: Array<{ key: string; minLen: number; genCmd: string }> =
 ];
 
 // Required public env vars — not secrets, but routes break without them.
-const REQUIRED_PUBLIC_VARS: Array<{ key: string; hint: string }> = [
+// `fallbacks` are platform-injected equivalents that satisfy the requirement
+// at runtime (Netlify provides URL/DEPLOY_PRIME_URL to Functions even when
+// NEXT_PUBLIC_APP_URL is scoped to Builds only).
+const REQUIRED_PUBLIC_VARS: Array<{ key: string; fallbacks?: string[]; hint: string }> = [
   {
     key: "NEXT_PUBLIC_APP_URL",
-    hint: "Set to the canonical deployment URL (e.g. https://hawkeye-sterling.netlify.app). " +
-      "Missing causes self-referential fetch() calls and CORS allowlist to fall back to the hardcoded default.",
+    fallbacks: ["URL", "DEPLOY_PRIME_URL"],
+    hint: "Set to the canonical deployment URL (e.g. https://hawkeye-sterling.netlify.app) " +
+      "with ALL scopes (Builds-only is invisible to Functions at runtime). " +
+      "Without it (and without Netlify's runtime URL), self-referential fetch() calls " +
+      "and the CORS allowlist fall back to the hardcoded default.",
   },
 ];
 
@@ -89,8 +95,10 @@ function validateSecrets(): void {
       );
     }
   }
-  for (const { key, hint } of REQUIRED_PUBLIC_VARS) {
-    if (!process.env[key]) {
+  for (const { key, fallbacks, hint } of REQUIRED_PUBLIC_VARS) {
+    const satisfied = Boolean(process.env[key]) ||
+      (fallbacks ?? []).some((f) => Boolean(process.env[f]));
+    if (!satisfied) {
       console.warn(`[startup] ${key} is not set. ${hint}`);
     }
   }
@@ -113,13 +121,15 @@ function validateSecrets(): void {
     }
   }
 
-  // Production warnings for important-but-not-fatal missing vars.
+  // Production warnings for explicitly weakened controls. Both the rate
+  // limiter and the egress gate now FAIL CLOSED BY DEFAULT (no env var
+  // needed) — these warnings fire only when an operator has opted out.
   if (isProduction) {
-    if (!process.env['RATE_LIMIT_STRICT'] || process.env['RATE_LIMIT_STRICT'] !== 'true') {
-      console.warn('[startup] RATE_LIMIT_STRICT is not set to "true" — rate limiting uses soft Blobs fallback in production. Set RATE_LIMIT_STRICT=true for fail-closed rate limiting.');
+    if (process.env['RATE_LIMIT_STRICT']?.trim().toLowerCase() === 'false') {
+      console.warn('[startup] RATE_LIMIT_STRICT=false — rate limiting will degrade to the race-prone soft Blobs fallback when Redis is unavailable. Unset it (or set true) for fail-closed enforcement.');
     }
-    if (!process.env['EGRESS_GATE_ENABLED'] || process.env['EGRESS_GATE_ENABLED'] !== 'true') {
-      console.warn('[startup] EGRESS_GATE_ENABLED is not set to "true" — tipping-off egress gate is DISABLED. SAR/STR narratives are not checked for tipping-off language. Set EGRESS_GATE_ENABLED=true in production.');
+    if (process.env['EGRESS_GATE_DISABLED'] === 'true') {
+      console.error('[startup] EGRESS_GATE_DISABLED=true — tipping-off egress gate is OFF. SAR/STR narratives are NOT checked for tipping-off language (Federal Decree-Law No. 10 of 2025 Art.17 is criminal). A written MLRO waiver is required to run with this flag.');
     }
 
     // ENV-010: Egress gate cross-check. If gate IS active (default), it

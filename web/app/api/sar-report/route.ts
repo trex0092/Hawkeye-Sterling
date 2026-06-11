@@ -673,8 +673,8 @@ async function handleSarReport(req: Request, gateHeaders: Record<string, string>
   }
 
   // Egress gate: compliance pre-check before MLRO inbox delivery.
-  // Gate is off by default; enable with EGRESS_GATE_ENABLED=true after MLRO
-  // confirms mandate (Federal Decree-Law No. 10 of 2025 Art.16, charter P3).
+  // Gate is ON by default (F-02 fail-closed); opting out requires
+  // EGRESS_GATE_DISABLED=true + written MLRO waiver (FDL 10/2025 Art.17, charter P3).
   const egressResult = await runEgressCheck(lines.join("\n"), `${body.filingType} filing`);
   if (!egressResult.allowed) {
     return NextResponse.json({

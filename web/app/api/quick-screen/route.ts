@@ -267,7 +267,7 @@ interface QuickScreenRequestBody {
 const MAX_CANDIDATES = 5_000;
 
 const CORS_HEADERS: Record<string, string> = {
-  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
   // Screening results must never be cached — stale hits or stale CLEAR

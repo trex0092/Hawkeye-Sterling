@@ -27,7 +27,7 @@ export interface PostScreenContext {
 
 export function handlePostScreenResult(ctx: PostScreenContext): void {
   const { subject, result, resultId, tenantId, actorKeyId, uaeStale } = ctx;
-  const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+  const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? process.env["DEPLOY_PRIME_URL"] ?? "http://localhost:3000";
 
   // ── 1. Auto-create compliance case ─────────────────────────────────────────
   if (result.hits.length > 0) {

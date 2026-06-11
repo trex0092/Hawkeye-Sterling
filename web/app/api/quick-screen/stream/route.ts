@@ -201,7 +201,7 @@ export async function OPTIONS(): Promise<Response> {
     status: 204,
     headers: {
       "access-control-allow-origin":
-        process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
+        process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? "https://hawkeye-sterling.netlify.app",
       "access-control-allow-methods": "POST, OPTIONS",
       "access-control-allow-headers": "content-type, authorization, x-api-key",
     },

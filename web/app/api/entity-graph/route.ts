@@ -17,7 +17,7 @@ import { bestCommercialAdapter } from "@/lib/intelligence/commercialAdapters";
 import { matchEntity } from "@/lib/intelligence/openSanctionsAdapter";
 
 const CORS: Record<string, string> = {
-  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app",
+  "access-control-allow-origin": process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? "https://hawkeye-sterling.netlify.app",
   "access-control-allow-methods": "POST, OPTIONS",
   "access-control-allow-headers": "content-type, authorization, x-api-key",
 };

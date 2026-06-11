@@ -24,8 +24,8 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ONGOING_RUN_TOKEN` | REQUIRED | Bearer token protecting `/api/ongoing/run` from public invocation. If unset, returns 503 (fail-closed). | `openssl rand -hex 32` |
 | `SANCTIONS_CRON_TOKEN` | REQUIRED | Bearer token protecting `/api/sanctions/watch` scheduled ingestion. If unset, returns 503. | `openssl rand -hex 32` |
 | `JWT_SIGNING_SECRET` | REQUIRED | HMAC-SHA256 key for short-lived bearer JWTs issued by `/api/auth/token`. If unset or shorter than 32 bytes, the server throws at request time — all JWT-authenticated API calls fail with an unhandled exception. | `openssl rand -hex 32` |
-| `RATE_LIMIT_STRICT` | **REQUIRED (production)** | When `true`, refuses requests if Upstash Redis is unavailable rather than falling back to blob-based soft enforcement (which is race-prone under concurrent Lambda invocations). Setting this to `false` or leaving it unset in production silently degrades rate limiting to a non-atomic path. | `true` |
-| `EGRESS_GATE_ENABLED` | **REQUIRED (production)** | When `true`, the egress tipping-off gate (`web/lib/server/egress-check.ts`) runs before every SAR/goAML filing. Setting to `false` in production bypasses the FDL 10/2025 Art.29 pre-check. | `true` |
+| `RATE_LIMIT_STRICT` | OPTIONAL (default fail-closed in production) | Production now **fails closed by default** when Upstash Redis is unavailable (503 instead of the race-prone blob soft fallback) — no env var needed. Set `false` to deliberately opt out (accepts soft enforcement during Redis outages, logged at startup); `true` forces fail-closed in every environment. | _(unset)_ |
+| `EGRESS_GATE_DISABLED` | OPTIONAL (gate is ON by default) | The egress tipping-off gate (`web/lib/server/egress-check.ts`) runs **by default** before every SAR/goAML filing (F-02 fail-closed fix — the old opt-in `EGRESS_GATE_ENABLED` is no longer read). Set `true` ONLY with a written MLRO waiver; the opt-out is error-logged at startup and metered on every egress call. | _(unset)_ |
 
 ---
 
@@ -41,7 +41,7 @@ Never commit real values to the repository. `.env` is in `.gitignore`.
 | `ASANA_WORKSPACE_GID` | REQUIRED | Asana workspace GID. All workspace-scoped API calls. | `1213645083721316` |
 | `ASANA_PROJECT_GID` | REQUIRED | Project 00 — Master Inbox GID. **All** screening submissions land here first. Do not change without MLRO approval. | `1214148630166524` |
 | `ASANA_ASSIGNEE_GID` | REQUIRED | GID of the MLRO (Luisa Fernanda). Every Asana task is assigned to this user. | `1213645083721304` |
-| `NEXT_PUBLIC_APP_URL` | REQUIRED (prod) | Public base URL. Used in webhook callback URLs. Falls back to `http://localhost:3000` in development. | `https://hawkeye-sterling-v2.netlify.app` |
+| `NEXT_PUBLIC_APP_URL` | REQUIRED (prod) | Public base URL. Used in webhook callback URLs. **Scope it to ALL contexts (Builds + Functions + Runtime)** — a Builds-only scope is invisible to route handlers at runtime. Server code additionally falls back to Netlify's runtime-injected `URL`/`DEPLOY_PRIME_URL` before any hardcoded default, so the deployed site self-resolves even when this var is missing at runtime. | `https://hawkeye-sterling-v2.netlify.app` |
 
 ---
 

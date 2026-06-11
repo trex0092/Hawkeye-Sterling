@@ -78,7 +78,7 @@ export async function POST(
     return NextResponse.json({ ok: true, message: "enrichment already complete", case: existing }, { headers: gate.headers });
   }
 
-  const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
+  const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? process.env["DEPLOY_PRIME_URL"] ?? "http://localhost:3000";
   const apiKey  = process.env["ADMIN_TOKEN"] ?? "";
   const now     = new Date().toISOString();
 

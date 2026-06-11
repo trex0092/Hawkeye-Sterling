@@ -99,4 +99,33 @@ describe('consumeRateLimit — Netlify Blobs fallback path', () => {
     expect(result.allowed).toBe(false);
     expect(result.retryAfterSec).toBeGreaterThan(0);
   });
+
+  // Fail-closed is the production DEFAULT (F-02 pattern) — a fresh production
+  // deployment without RATE_LIMIT_STRICT must refuse rather than silently
+  // degrade to the race-prone soft fallback when Redis is unavailable.
+  it('fails closed in production by default (RATE_LIMIT_STRICT unset, Redis absent)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.resetModules();
+    try {
+      const { consumeRateLimit } = await import('../rate-limit');
+      const result = await consumeRateLimit('blobs-prod-default-test', 'free');
+      expect(result.allowed).toBe(false);
+      expect(result.retryAfterSec).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('RATE_LIMIT_STRICT=false opts production back into the soft Blobs fallback', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    process.env['RATE_LIMIT_STRICT'] = 'false';
+    vi.resetModules();
+    try {
+      const { consumeRateLimit } = await import('../rate-limit');
+      const result = await consumeRateLimit('blobs-prod-optout-test', 'free');
+      expect(result.allowed).toBe(true); // soft path served it
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 });

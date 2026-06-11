@@ -182,7 +182,7 @@ export function buildAuditCertificate(input: AuditSnapshotInput): AuditCertifica
   }
 
   const publicKeyUrl =
-    (process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app").replace(/\/$/, "") +
+    (process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? "https://hawkeye-sterling.netlify.app").replace(/\/$/, "") +
     "/.well-known/hawkeye-pubkey.pem";
 
   // ── Regulatory attestation block ───────────────────────────────────────────

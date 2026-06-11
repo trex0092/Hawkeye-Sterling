@@ -143,7 +143,7 @@ export function issueRegulatorToken(opts: IssueOptions): {
   const token = `${signingInput}.${sigB64}`;
 
   const publicKeyUrl =
-    (process.env["NEXT_PUBLIC_APP_URL"] ?? "https://hawkeye-sterling.netlify.app").replace(/\/$/, "") +
+    (process.env["NEXT_PUBLIC_APP_URL"] ?? process.env["URL"] ?? "https://hawkeye-sterling.netlify.app").replace(/\/$/, "") +
     "/.well-known/hawkeye-pubkey.pem";
 
   return { token, claims, publicKeyUrl };

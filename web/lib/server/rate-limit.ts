@@ -153,11 +153,22 @@ export async function consumeRateLimit(
   const redisResult = await consumeRedis(keyId, tier, effectiveCost);
   if (redisResult !== null) return redisResult;
 
-  // When RATE_LIMIT_STRICT=true and Redis is unavailable, refuse the request
-  // rather than falling back to blob-based soft enforcement (which is vulnerable
-  // to read-modify-write races under concurrent Lambda invocations).
-  if (process.env["RATE_LIMIT_STRICT"] === "true") {
-    console.error("[rate-limit] RATE_LIMIT_STRICT=true but Redis unavailable — returning 503 to prevent soft-limit bypass");
+  // When Redis is unavailable, decide between refusing the request (fail-closed)
+  // and the blob-based soft fallback (vulnerable to read-modify-write races
+  // under concurrent Lambda invocations).
+  //
+  // Fail-closed is the DEFAULT in production — mirroring the egress gate's
+  // F-02 opt-out pattern: a fresh production deployment must not silently
+  // degrade to racy soft enforcement just because RATE_LIMIT_STRICT was never
+  // set. RATE_LIMIT_STRICT=false is the documented opt-out (operator accepts
+  // soft blob enforcement during Redis outages); =true forces fail-closed in
+  // any environment; unset → strict in production, soft in dev/test.
+  const strictFlag = process.env["RATE_LIMIT_STRICT"]?.trim().toLowerCase();
+  const strict =
+    strictFlag === "true" ||
+    (strictFlag !== "false" && process.env.NODE_ENV === "production");
+  if (strict) {
+    console.error("[rate-limit] Redis unavailable and fail-closed mode active (RATE_LIMIT_STRICT unset defaults to strict in production) — returning 503 to prevent soft-limit bypass");
     incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'strict_redis_unavailable' });
     return {
       allowed: false,

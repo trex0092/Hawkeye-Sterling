@@ -28,6 +28,10 @@ const ENV_ALLOWED_ORIGINS = (process.env["CORS_ALLOWED_ORIGINS"] ?? "")
 const BASE_ALLOWED_ORIGINS = [
   "https://hawkeye-sterling.netlify.app",
   process.env["NEXT_PUBLIC_APP_URL"] ?? "",
+  // Netlify-injected canonical URL — present in Functions runtime even when
+  // NEXT_PUBLIC_APP_URL is scoped to Builds only, so the deployed site's own
+  // origin is always allowlisted.
+  process.env["URL"] ?? "",
 ].filter(Boolean);
 
 const ALL_ALLOWED_ORIGINS = [...new Set([...BASE_ALLOWED_ORIGINS, ...ENV_ALLOWED_ORIGINS])];
