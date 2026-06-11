@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { enforce } from "@/lib/server/enforce";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
+import { isServicePrincipal, auditActorFromGate } from "@/lib/server/rbac";
 import {
   MODEL_REGISTRY,
   computeAttestationStatus,
@@ -29,10 +30,10 @@ export async function GET(req: Request): Promise<NextResponse> {
   if (!gate.ok) return gate.response;
 
   void writeAuditChainEntry(
-    { event: "ai-governance.attestation-status_accessed", actor: gate.keyId },
+    { event: "ai-governance.attestation-status_accessed", actor: auditActorFromGate(gate) },
     tenantIdFromGate(gate),
   ).catch(() => undefined);
-  if (gate.keyId !== "portal_admin" && gate.keyId !== "cron_internal") {
+  if (!isServicePrincipal(gate.keyId)) {
     return NextResponse.json(
       { ok: false, error: "Forbidden — AI governance data requires admin access." },
       { status: 403, headers: gate.headers },

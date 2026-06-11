@@ -162,12 +162,12 @@ Mapping of the Central Bank of the UAE AI Guidance Note (2025) obligations to ex
 | 3 | Transparency & Explainability | COVERED | Charter P9 (opacity prohibition, `src/policy/systemPrompt.ts`); model cards `docs/model-cards/hs-00*.md`; reasoning-chain persistence; prompt-hash CI gate | Art. 13 (transparency to deployers) |
 | 4 | Data Quality, Privacy & Security | COVERED | `docs/data-governance/DATA_LINEAGE.md` (validation checks, freshness SLAs); PII redaction pipeline (`web/lib/server/redact.ts`, `sanitize-prompt.ts`); PDPL controls (`docs/GDPR.md`) | Art. 10, Art. 15 (accuracy, robustness, cybersecurity) |
 | 5 | Continuous Monitoring & Review | COVERED | `web/lib/server/drift-monitor.ts` (drift ≤ 0.15); `/api/kri-dashboard` (19 KRIs); weekly governance committee; quarterly model attestation | Art. 15, Art. 72 (post-market monitoring) |
-| 6 | Human Oversight & Consumer Protection | PARTIAL | `web/lib/server/four-eyes-gate.ts` (TOCTOU-safe sign-off); "AI proposes; the MLRO decides" (policy §1.1); no autonomous disposition/filing/freeze. Gap: RBAC models human roles only — AI agent/service identities are not first-class principals; enhancement registered below | Art. 14 (human oversight) |
+| 6 | Human Oversight & Consumer Protection | COVERED | `web/lib/server/four-eyes-gate.ts` (TOCTOU-safe sign-off); "AI proposes; the MLRO decides" (policy §1.1); no autonomous disposition/filing/freeze. Service principals (`SERVICE_PRINCIPALS` in `web/lib/server/rbac.ts`) model machine identities as first-class principals with their own permission sets and audit-actor attribution; a load-time invariant plus unit tests (`web/lib/server/__tests__/rbac.test.ts`) guarantee no machine identity can ever hold STR-filing, four-eyes, freeze, or EDD-approval permissions | Art. 14 (human oversight) |
 | 7 | Integration with Existing Frameworks | COVERED | `src/brain/regulatory-obligations.ts` (standing obligations register); `src/brain/policy-library.ts` (64 policies); ISO 42001 SoA (`STATEMENT_OF_APPLICABILITY.md`) | Art. 17 (integration with existing QMS) |
 | 8 | Outsourcing & Third-Party Risk | COVERED | `src/brain/vendor-register.ts` (11 vendors, risk tiers, contingencies); `docs/operations/THIRD_PARTY_MANAGEMENT.md` (HS-OPS-003); annual review `ob_vendor_annual_review` | Art. 25 (third-party responsibilities along the value chain) |
 | 9 | Ethical Collaboration & Innovation | COVERED | `AI_GOVERNANCE_POLICY.md` §2.4 (ethical principles per UNESCO Recommendation); `web/lib/server/adversarial-probes.ts` (24-probe red-team suite); HS-004 pilot governance (advisory-only, exit review Q3 2026) | Art. 95 (voluntary codes of conduct); innovation recitals |
 
-**Open item:** #6 stays PARTIAL until AI agent/service identities (scheduled functions, API integrations) are modelled as distinct principals in RBAC (`web/lib/server/rbac.ts`) with their own permission sets and audit attribution, or the MLRO records a documented acceptance of the human-centric model at annual certification.
+**Closed 2026-06-11:** AI agent/service identities (`portal_admin`, `cron_internal`) are now distinct principals in RBAC (`SERVICE_PRINCIPALS`, `web/lib/server/rbac.ts`) with their own permission sets, central `requirePermission()` resolution, and `auditActorFromGate()` attribution. Human sign-off permissions are denied to machine identities by a load-time invariant and pinned by unit test.
 
 ---
 
@@ -176,9 +176,9 @@ Mapping of the Central Bank of the UAE AI Guidance Note (2025) obligations to ex
 | Field | Value |
 |---|---|
 | Document ID | HS-GOV-005 |
-| Version | 1.1.0 |
+| Version | 1.2.0 |
 | Created | 2026-06-10 |
-| Last amended | 2026-06-11 — added §5 CBUAE AI Guidance Note mapping with EU AI Act convergence |
+| Last amended | 2026-06-11 — added §5 CBUAE AI Guidance Note mapping (1.1.0); §5 #6 closed via service-principal RBAC (1.2.0) |
 | Next mandatory review | 2026-12-10 |
 | Approver (MLRO) | [Signature required] |
 | Approver (Engineering Lead) | [Signature required] |
