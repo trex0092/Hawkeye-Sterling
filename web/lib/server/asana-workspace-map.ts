@@ -16,6 +16,7 @@
 
 import { ASANA_MODULE_TASKS, MODULE_FREQUENCY } from "./asana-module-tasks";
 import gidArtifact from "./asana-workspace-gids.json";
+import narrativeArtifact from "./asana-module-narratives.json";
 
 export type BoardGroup =
   | "onboarding-cdd"
@@ -494,10 +495,18 @@ export function digestTaskName(b: ModuleBoard): string {
   return `${b.num} · ${b.label}`;
 }
 
+/** Long-form audit narrative for a module board, keyed by board num
+ *  (operator-approved narrative companion, 2026-06-11). Empty string when
+ *  a board has no narrative — boardCharter() then omits the section. */
+export function boardNarrative(num: string): string {
+  const n = (narrativeArtifact as { narratives: Record<string, string> }).narratives;
+  return n[num] ?? "";
+}
+
 /** Audit-ready charter (project description) for a module board. */
 export function boardCharter(b: ModuleBoard): string {
   const frequency = MODULE_FREQUENCY[b.key] ?? "Per applicable control cadence";
-  return [
+  const lines = [
     `HAWKEYE STERLING · MODULE BOARD ${b.num} — ${b.label.toUpperCase()}`,
     `PURPOSE          ${b.purpose}`,
     `CONTROL IN FORCE ${b.control}`,
@@ -508,7 +517,12 @@ export function boardCharter(b: ModuleBoard): string {
     `EVIDENCE         Append-only audit chain (FDL No.10/2025 Art.24) · 09:30 GST (Mon–Fri) attestation`,
     `                 on the pinned task · retention ${b.retention} · archive — never delete`,
     `CHANGE CONTROL   MLRO sign-off + docs/operations/CHANGE_CONTROL_LOG.md`,
-  ].join("\n");
+  ];
+  const narrative = boardNarrative(b.num);
+  if (narrative) {
+    lines.push("", "NARRATIVE", narrative);
+  }
+  return lines.join("\n");
 }
 
 // ── Routing aliases: every module id /api/module-report may receive → board key. ──
