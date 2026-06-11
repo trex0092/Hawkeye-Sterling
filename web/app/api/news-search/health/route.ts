@@ -118,6 +118,9 @@ export async function GET(req: Request): Promise<NextResponse> {
       name: "google_news_rss",
       url: "https://news.google.com/rss/search?q=test&hl=en-US&gl=US&ceid=US:en",
       gatedByRss: true,
+      // The dossier's locale fan-out retries Google through the edge relay —
+      // probe the same rescue path so "unreachable" here means BOTH paths failed.
+      relayable: true,
     },
     {
       name: "gdelt",
