@@ -37,11 +37,11 @@ export const POLICIES: Policy[] = [
   { id: 'pol_dpms_supply_chain', title: 'DPMS Supply-Chain Due Diligence (LBMA / OECD)', owner: 'operations', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['LBMA RGG', 'OECD DDG Annex II'] },
 
   // ── Wave 4 — AI governance stack (EU AI Act Aug 2026 + NIST + ISO) ──
-  { id: 'pol_ai_governance', title: 'AI Governance Policy (EU AI Act / NIST AI RMF / ISO 42001)', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['EU AI Act', 'NIST AI RMF', 'ISO/IEC 42001'] },
-  { id: 'pol_ai_model_inventory', title: 'AI Model Inventory & Registry', owner: 'it_security', reviewMonths: 6, approvedBy: 'senior_management', anchors: ['ISO/IEC 42001', 'EU AI Act Art.11'] },
+  { id: 'pol_ai_governance', title: 'AI Governance Policy (EU AI Act / NIST AI RMF / ISO 42001)', owner: 'compliance', reviewMonths: 12, approvedBy: 'board', anchors: ['EU AI Act', 'NIST AI RMF', 'ISO/IEC 42001', 'CBUAE AI Guidance Note'] },
+  { id: 'pol_ai_model_inventory', title: 'AI Model Inventory & Registry', owner: 'it_security', reviewMonths: 6, approvedBy: 'senior_management', anchors: ['ISO/IEC 42001', 'EU AI Act Art.11', 'CBUAE AI Guidance Note'] },
   { id: 'pol_ai_red_teaming', title: 'AI Red-Teaming & Adversarial Testing', owner: 'it_security', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['OWASP LLM Top 10', 'NIST AI RMF'] },
   { id: 'pol_ai_incident_reporting', title: 'AI Serious-Incident Reporting (72h)', owner: 'mlro', reviewMonths: 12, approvedBy: 'board', anchors: ['EU AI Act Art.73'] },
-  { id: 'pol_ai_human_oversight', title: 'AI Human-in-the-Loop & Kill-Switch', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['EU AI Act', 'NIST AI RMF Govern'] },
+  { id: 'pol_ai_human_oversight', title: 'AI Human-in-the-Loop & Kill-Switch', owner: 'compliance', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['EU AI Act', 'NIST AI RMF Govern', 'CBUAE AI Guidance Note'] },
   { id: 'pol_shadow_ai_detection', title: 'Shadow-AI Detection & Egress Controls', owner: 'it_security', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['ISO/IEC 42001', 'Internal InfoSec'] },
   { id: 'pol_synthetic_media_defence', title: 'Synthetic-Media / Deepfake Fraud Defence', owner: 'mlro', reviewMonths: 12, approvedBy: 'senior_management', anchors: ['FATF R.20'] },
 

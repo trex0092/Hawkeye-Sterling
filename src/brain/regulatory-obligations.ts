@@ -47,6 +47,7 @@ export const REGULATORY_OBLIGATIONS: RegulatoryObligation[] = [
   { id: 'ob_aml_training', name: 'Annual staff AML/AI training cycle', regulatoryAnchor: 'FATF R.18; dpms_kpi_26', owner: 'Compliance Officer', cadenceDays: 365, lastCompleted: '2026-05-06', evidenceRef: 'docs/governance/AI_INVENTORY.md §7' },
   { id: 'ob_access_review', name: 'Quarterly privileged-access review', regulatoryAnchor: 'SOC2 CC6.1', owner: 'Engineering Lead', cadenceDays: 92, lastCompleted: '2026-06-10', evidenceRef: 'docs/IDENTITY-ACCESS-ATTESTATION.md' },
   { id: 'ob_pentest', name: 'Annual penetration test', regulatoryAnchor: 'SOC2 CC4.1', owner: 'Engineering Lead', cadenceDays: 365, nextDueOverride: '2026-09-30', evidenceRef: 'docs/PENTEST-LOG.md' },
+  { id: 'ob_cbuae_ai_guidance_selfassessment', name: 'CBUAE AI Guidance Note 9-obligation self-assessment', regulatoryAnchor: 'CBUAE AI Guidance Note (2025); EU AI Act 2024/1689', owner: 'MLRO', cadenceDays: 365, nextDueOverride: '2026-12-10', evidenceRef: 'docs/governance/FRAMEWORK_COVERAGE.md §5' },
 ];
 
 export const OBLIGATION_BY_ID: Map<string, RegulatoryObligation> = new Map(
