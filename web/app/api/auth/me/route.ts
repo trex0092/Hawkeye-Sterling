@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { verifySession, computeRequestFingerprint, SESSION_COOKIE, issueSession, SESSION_TTL_S } from "@/lib/server/auth";
-import { loadUsers, ROLE_LABEL, updateSessionActivity } from "../../access/_store";
+import { loadUsers, isUserStoreUnavailable, userStoreUnavailableResponse, ROLE_LABEL, updateSessionActivity } from "../../access/_store";
 import { cookies, headers } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -53,7 +53,19 @@ export async function GET(): Promise<NextResponse> {
     return res;
   }
 
-  const users = await loadUsers();
+  let users: Awaited<ReturnType<typeof loadUsers>>;
+  try {
+    users = await loadUsers();
+  } catch (err) {
+    if (isUserStoreUnavailable(err)) {
+      // Transient store blip — the session HMAC is still valid, so do NOT
+      // invalidate it or clear the cookie. The 503 keeps the client's expiry
+      // modal and poller halt logic silent; the directory comes back on the
+      // next call.
+      return userStoreUnavailableResponse();
+    }
+    throw err;
+  }
   const user = users.find((u) => u.id === session.userId);
   if (!user) {
     const res = NextResponse.json(

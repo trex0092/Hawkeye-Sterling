@@ -7,7 +7,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
-import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { loadUsers, saveUsers, withUsersLock, isUserStoreUnavailable, userStoreUnavailableResponse } from "@/app/api/access/_store";
 import { verifyTotp, decryptTotpSecret } from "@/lib/server/totp";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 
@@ -31,7 +31,13 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Enter the 6-digit code from your authenticator app" }, { status: 400 });
   }
 
-  const users = await loadUsers();
+  let users: Awaited<ReturnType<typeof loadUsers>>;
+  try {
+    users = await loadUsers();
+  } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
+    throw err;
+  }
   const user = users.find((u) => u.id === session.userId);
   if (!user) return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
 
@@ -47,12 +53,17 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "Incorrect code" }, { status: 400 });
   }
 
-  await withUsersLock(async () => {
-    const freshUsers = await loadUsers();
-    await saveUsers(freshUsers.map((u) =>
-      u.id === session.userId ? { ...u, totpSecret: undefined, totpEnabled: false } : u,
-    ));
-  });
+  try {
+    await withUsersLock(async () => {
+      const freshUsers = await loadUsers();
+      await saveUsers(freshUsers.map((u) =>
+        u.id === session.userId ? { ...u, totpSecret: undefined, totpEnabled: false } : u,
+      ));
+    });
+  } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
+    throw err;
+  }
 
   void writeAuditChainEntry({
     event: "auth.totp_disabled",

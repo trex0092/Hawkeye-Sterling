@@ -4,7 +4,7 @@ export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, ROLE_MODULES, type UserRole } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, isUserStoreUnavailable, userStoreUnavailableResponse, ROLE_MODULES, type UserRole } from "../_store";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -119,6 +119,7 @@ export async function POST(req: Request) {
     const { passwordHash: _h, passwordSalt: _s, ...safeUser } = newUser;
     return NextResponse.json({ ok: true, user: safeUser, logEntry, passwordGenerated: !password?.trim() }, { status: 201 });
   } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
     console.error("[access/add-user] failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "Failed to create user" }, { status: 500 });
   }

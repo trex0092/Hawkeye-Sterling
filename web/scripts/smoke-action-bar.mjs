@@ -283,7 +283,7 @@ async function phaseB() {
     process.env.PW_EXEC ? { executablePath: process.env.PW_EXEC } : {},
   );
   ctx = await browser.newContext();
-  // Authenticated session for the proxy.ts page gate (HS_COOKIE minted with
+  // Authenticated session for the middleware.ts page gate (HS_COOKIE minted with
   // the same SESSION_SECRET the server was started with).
   if (process.env.HS_COOKIE) {
     await ctx.addCookies([{ name: "hs_session", value: process.env.HS_COOKIE, url: BASE }]);

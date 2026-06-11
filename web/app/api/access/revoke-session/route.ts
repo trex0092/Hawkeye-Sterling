@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers, withUsersLock, appendPermissionLog } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, isUserStoreUnavailable, userStoreUnavailableResponse } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { randomBytes } from "node:crypto";
@@ -83,6 +83,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, user: safeUser, logEntry });
   } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
     console.error("[access/revoke-session] failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "Failed to revoke session" }, { status: 500 });
   }

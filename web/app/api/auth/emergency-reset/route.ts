@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
-import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { loadUsers, saveUsers, withUsersLock, isUserStoreUnavailable, userStoreUnavailableResponse } from "@/app/api/access/_store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { enforce } from "@/lib/server/enforce";
 
@@ -44,7 +44,7 @@ async function handleReset(gateHeaders: Record<string, string>, secret: string, 
   let updated = false;
   let username = "";
 
-  await withUsersLock(async () => {
+  const storeOk = await withUsersLock(async () => {
     const users = await loadUsers();
     const idx = users.findIndex(
       (u) => u.username?.toLowerCase() === "luisa" || u.id === "usr-001",
@@ -73,12 +73,22 @@ async function handleReset(gateHeaders: Record<string, string>, secret: string, 
     await saveUsers(updatedUsers);
     updated = true;
     username = updatedUsers[idx]!.username ?? "luisa";
+  }).then(() => true, (err: unknown) => {
+    if (isUserStoreUnavailable(err)) return false;
+    throw err;
   });
+  if (!storeOk) return userStoreUnavailableResponse();
 
   if (!updated) {
     // Distinguish between "not found" and "already used" so the operator knows
     // whether to look for a different account name or reconfigure the env var.
-    const users = await loadUsers();
+    let users: Awaited<ReturnType<typeof loadUsers>>;
+    try {
+      users = await loadUsers();
+    } catch (err) {
+      if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
+      throw err;
+    }
     const luisa = users.find((u) => u.username?.toLowerCase() === "luisa" || u.id === "usr-001");
     if (luisa?.recoveryUsed) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { subscribeAuthState, isAuthHaltStatus } from "@/lib/client/auth-state";
 
 interface TickerItem {
   label: string;
@@ -49,15 +50,23 @@ export function RegulatoryTicker() {
     return () => clearInterval(id);
   }, []);
 
-  // Fetch top priority items from the regulatory feed and surface them in the ticker.
+  // Fetch top priority items from the regulatory feed and surface them in the
+  // ticker. Gated on the shared auth state: the route requires a session, so
+  // fetching while signed out just logged a 401 warning on every page load.
+  // The static BASE_ITEMS render regardless.
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
+    let fetched = false;
+    const fetchFeed = async (): Promise<void> => {
       try {
         const res = await fetch("/api/regulatory-feed");
         if (cancelled) return;
         if (!res.ok) {
-          console.warn(`[hawkeye] regulatory-feed HTTP ${res.status} — ticker stays on static items`);
+          // 401/403 = signed out (e.g. session died after the gate opened) —
+          // expected, stay silent. Anything else is worth a breadcrumb.
+          if (!isAuthHaltStatus(res.status)) {
+            console.warn(`[hawkeye] regulatory-feed HTTP ${res.status} — ticker stays on static items`);
+          }
           return;
         }
         const data = await res.json().catch(() => ({})) as { ok: boolean; items?: Array<{ title: string; source: string; tone: string }> };
@@ -75,8 +84,17 @@ export function RegulatoryTicker() {
         if (cancelled) return;
         console.warn("[hawkeye] regulatory-feed threw — ticker stays on static items:", err);
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    const unsubscribe = subscribeAuthState((state) => {
+      if (state === "authenticated" && !fetched) {
+        fetched = true;
+        void fetchFeed();
+      }
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const items: TickerItem[] = [

@@ -180,6 +180,38 @@ export async function getJson<T>(key: string): Promise<T | null> {
   }
 }
 
+/** Result of a checked read — distinguishes "key missing" ({ok:true, value:null})
+ *  from "store unreachable / blob corrupted" ({ok:false}). getJson() collapses
+ *  both to null, which is fine for caches but dangerous for callers that
+ *  seed-on-empty: a transient read failure must never look like first boot,
+ *  or the seeding write overwrites real data (the users blob being the
+ *  critical case — see loadUsers in app/api/access/_store.ts). */
+export type StoreReadResult<T> =
+  | { ok: true; value: T | null }
+  | { ok: false; error: string };
+
+export async function getJsonChecked<T>(key: string): Promise<StoreReadResult<T>> {
+  const store = getStore();
+  let raw: string | null = null;
+  try {
+    raw = await store.get(key);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.warn(`[store] getJsonChecked(${key}) read failed:`, detail);
+    return { ok: false, error: detail };
+  }
+  if (!raw || typeof raw !== "string") return { ok: true, value: null };
+  try {
+    return { ok: true, value: JSON.parse(raw) as T };
+  } catch (err) {
+    // Corrupted ≠ missing: report as a failed read so seed-on-empty callers
+    // don't overwrite a blob that still holds (recoverable) data.
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error(`[store] getJsonChecked(${key}) JSON parse failed (corrupted blob):`, detail);
+    return { ok: false, error: `corrupted blob: ${detail}` };
+  }
+}
+
 export async function setJson<T>(key: string, value: T): Promise<void> {
   const store = getStore();
   try {

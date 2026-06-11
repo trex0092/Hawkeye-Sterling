@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers } from "../_store";
+import { loadUsers, isUserStoreUnavailable, userStoreUnavailableResponse } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 
 export async function GET(req: Request) {
@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     const safe = users.map(({ passwordHash: _h, passwordSalt: _s, ...u }) => u);
     return NextResponse.json({ ok: true, users: safe });
   } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
     console.error("[access/users] GET failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "Failed to load users" }, { status: 500 });
   }

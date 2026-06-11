@@ -25,6 +25,7 @@
 
 import { isEmbeddedDocument } from "./is-embedded";
 import { verifySessionDead } from "./verify-session";
+import { setAuthState } from "./auth-state";
 
 const EVENT_NAME = "hawkeye:session-expired" as const;
 // Distinct event for "no cookie was ever sent" — fires the same modal but
@@ -82,6 +83,25 @@ function isSameOriginApiUrl(input: RequestInfo | URL): boolean {
   }
 }
 
+function isLoginUrl(input: RequestInfo | URL): boolean {
+  try {
+    const raw =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input instanceof Request
+            ? input.url
+            : "";
+    if (!raw) return false;
+    if (raw.startsWith("/api/auth/login")) return true;
+    const u = new URL(raw, window.location.origin);
+    return u.origin === window.location.origin && u.pathname === "/api/auth/login";
+  } catch {
+    return false;
+  }
+}
+
 let alreadyDispatched = false;
 let noSessionAlreadyDispatched = false;
 
@@ -91,6 +111,9 @@ let noSessionAlreadyDispatched = false;
  * prompt within the same page lifetime if a stale cookie path triggers it
  * later. */
 export function reportNoSession(): void {
+  // Auth state first, before any modal-suppression guard below — pollers must
+  // halt even on /login, in iframes, and after the modal already fired once.
+  setAuthState("unauthenticated");
   if (noSessionAlreadyDispatched || alreadyDispatched) return;
   if (isEmbeddedDocument()) return;
   if (typeof window !== "undefined") {
@@ -109,6 +132,8 @@ export function reportNoSession(): void {
 
 /** Manually fire the session-expired event. */
 export function reportSessionExpired(): void {
+  // Auth state first — see reportNoSession.
+  setAuthState("unauthenticated");
   if (alreadyDispatched) return;
   // Belt-and-braces gate: even if a future caller bypasses the watcher /
   // interceptor and calls reportSessionExpired() directly inside an iframe,
@@ -175,6 +200,16 @@ export function installSessionExpiryInterceptor(): void {
         scheduleVerify();
       } catch {
         /* never bubble up — the original response goes through unchanged */
+      }
+    }
+    // A successful login is the one place a signed-out browser becomes
+    // signed-in without a full navigation — flip the auth state so halted
+    // pollers (case stream, alerts) resume immediately.
+    if (res.ok && isLoginUrl(input)) {
+      try {
+        setAuthState("authenticated");
+      } catch {
+        /* never bubble up */
       }
     }
     return res;
