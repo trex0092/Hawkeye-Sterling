@@ -90,27 +90,51 @@ describe('consumeRateLimit — Netlify Blobs fallback path', () => {
     expect(result.allowed).toBe(true);
   });
 
-  it('returns 503 on Blobs path when RATE_LIMIT_STRICT=true and Redis is absent', async () => {
+  // RATE_LIMIT_STRICT=true selects the deterministic in-memory per-instance
+  // limiter when Redis is absent: requests under the tier limit pass, requests
+  // over it are denied, and no blob I/O happens. The previous blanket denial
+  // ("fail-closed") caused the 2026-06-11 platform outage.
+  it('RATE_LIMIT_STRICT=true enforces in-memory limits when Redis is absent', async () => {
     process.env['RATE_LIMIT_STRICT'] = 'true';
     vi.resetModules();
-
-    const { consumeRateLimit } = await import('../rate-limit');
-    const result = await consumeRateLimit('blobs-strict-test', 'free');
-    expect(result.allowed).toBe(false);
-    expect(result.retryAfterSec).toBeGreaterThan(0);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.500Z'));
+    try {
+      const { consumeRateLimit } = await import('../rate-limit');
+      // free tier: 5/sec — five pass, the sixth is denied within the same second
+      for (let i = 0; i < 5; i++) {
+        const r = await consumeRateLimit('memory-strict-test', 'free');
+        expect(r.allowed).toBe(true);
+      }
+      const denied = await consumeRateLimit('memory-strict-test', 'free');
+      expect(denied.allowed).toBe(false);
+      expect(denied.retryAfterSec).toBeGreaterThan(0);
+      // next second: the window rolls over and requests pass again
+      vi.setSystemTime(new Date('2026-01-01T00:00:01.500Z'));
+      const recovered = await consumeRateLimit('memory-strict-test', 'free');
+      expect(recovered.allowed).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  // Fail-closed is the production DEFAULT (F-02 pattern) — a fresh production
-  // deployment without RATE_LIMIT_STRICT must refuse rather than silently
-  // degrade to the race-prone soft fallback when Redis is unavailable.
-  it('fails closed in production by default (RATE_LIMIT_STRICT unset, Redis absent)', async () => {
+  // Production default (RATE_LIMIT_STRICT unset): Redis-unavailable must NOT
+  // refuse traffic wholesale — it degrades to in-memory per-instance
+  // enforcement with zero store I/O. Regression test for the 2026-06-11
+  // outage where every route answered 429 during an Upstash brownout.
+  it('production default serves traffic via in-memory limits when Redis is absent', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.resetModules();
     try {
       const { consumeRateLimit } = await import('../rate-limit');
-      const result = await consumeRateLimit('blobs-prod-default-test', 'free');
-      expect(result.allowed).toBe(false);
-      expect(result.retryAfterSec).toBeGreaterThan(0);
+      const { getJson, setJson } = await import('../store');
+      // Delta-based: mock call history can bleed across tests in this file.
+      const getCallsBefore = vi.mocked(getJson).mock.calls.length;
+      const setCallsBefore = vi.mocked(setJson).mock.calls.length;
+      const result = await consumeRateLimit('memory-prod-default-test', 'free');
+      expect(result.allowed).toBe(true);
+      expect(vi.mocked(getJson).mock.calls.length).toBe(getCallsBefore);
+      expect(vi.mocked(setJson).mock.calls.length).toBe(setCallsBefore);
     } finally {
       vi.unstubAllEnvs();
     }
