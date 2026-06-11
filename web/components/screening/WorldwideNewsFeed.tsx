@@ -157,15 +157,6 @@ export function WorldwideNewsFeed() {
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => { void load(); }}
-            disabled={loading}
-            className="text-10 text-ink-3 hover:text-ink-0 transition-colors disabled:opacity-40 px-2 py-0.5 rounded border border-hair-2 hover:bg-bg-1"
-            title="Refresh news feed"
-          >
-            {loading ? "Refreshing…" : "↻ Refresh"}
-          </button>
-          <button
-            type="button"
             onClick={() => setHidden((h) => !h)}
             className="text-10 text-ink-3 hover:text-ink-0 transition-colors px-2 py-0.5 rounded border border-hair-2 hover:bg-bg-1"
             title={hidden ? "Show news feed" : "Hide news feed"}

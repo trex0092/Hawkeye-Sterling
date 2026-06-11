@@ -1873,14 +1873,6 @@ export default function CddReviewPage() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => exportCsv(sorted)}
-            disabled={sorted.length === 0}
-            className="text-10 font-mono font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors disabled:opacity-40"
-          >
-            ↓ Export CSV
-          </button>
         </div>
 
         <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
