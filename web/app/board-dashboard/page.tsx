@@ -100,7 +100,7 @@ function PostureBanner({ posture, generatedAt }: { posture: BoardDashboardRespon
         </div>
       </div>
       <div className="text-11 text-ink-3 font-mono">
-        Generated {new Date(generatedAt).toLocaleString()}
+        Generated {new Date(generatedAt).toLocaleString("en-GB")}
       </div>
     </div>
   );

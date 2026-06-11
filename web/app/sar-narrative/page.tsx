@@ -228,7 +228,7 @@ export default function SarNarrativePage() {
                     key={t}
                     type="button"
                     onClick={() => handleChange("subjectType", t)}
-                    className={`px-4 py-1.5 rounded text-11 font-mono uppercase font-semibold border transition-colors ${
+                    className={`px-3 py-1 rounded text-11 font-mono uppercase font-semibold border transition-colors ${
                       form.subjectType === t
                         ? "border-brand bg-brand/10 text-brand"
                         : "border-hair-2 text-ink-2 hover:border-ink-2"
@@ -362,7 +362,7 @@ export default function SarNarrativePage() {
           <button
             type="submit"
             disabled={loading || !form.subjectName.trim()}
-            className="w-full py-2.5 rounded bg-brand text-white text-13 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+            className="w-full py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
           >
             {loading ? "Generating narrative…" : "Generate SAR narrative"}
           </button>
@@ -385,7 +385,7 @@ export default function SarNarrativePage() {
                 </div>
                 <button
                   onClick={() => { void handleCopy(); }}
-                  className={`px-3 py-1 rounded text-11 font-mono font-semibold border transition-colors ${
+                  className={`px-2.5 py-1 rounded text-11 font-mono font-semibold border transition-colors ${
                     copied
                       ? "border-green/40 bg-green-dim text-green"
                       : "border-brand/40 text-brand hover:bg-brand/10"

@@ -286,7 +286,7 @@ export function WorkbenchSection() {
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+                className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
                 title="Activate every mode (covers 100% of Skills, Reasoning, and Deep-Analysis taxonomy IDs)"
               >
                 Weaponize all ({MODES.length})
@@ -294,7 +294,7 @@ export function WorkbenchSection() {
               <button
                 type="button"
                 onClick={handleResetMinimal}
-                className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand"
+                className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand"
                 title="Scope back to the minimal demo seed (4 modes)"
               >
                 Reset to minimal
@@ -477,7 +477,7 @@ export function WorkbenchSection() {
                           Pipeline configuration
                         </div>
                         <div className="text-12 text-ink-2">
-                          {new Date(runResult.ranAt).toLocaleString()} · {runResult.modeCount} mode
+                          {new Date(runResult.ranAt).toLocaleString("en-GB")} · {runResult.modeCount} mode
                           {runResult.modeCount === 1 ? "" : "s"} ·{" "}
                           {runResult.taxonomyIds.length} taxonomy reference
                           {runResult.taxonomyIds.length === 1 ? "" : "s"}
@@ -547,7 +547,7 @@ export function WorkbenchSection() {
                 <button
                   type="button"
                   onClick={() => setHypotheticalOpen(false)}
-                  className="text-11 font-medium px-3 py-1.5 rounded text-ink-2 hover:bg-bg-1"
+                  className="text-11 font-medium px-2.5 py-1 rounded text-ink-2 hover:bg-bg-1"
                 >
                   Close
                 </button>

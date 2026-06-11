@@ -206,7 +206,7 @@ export function SowVerificationPanel({
         <button
           type="button"
           onClick={() => setFormOpen((v) => !v)}
-          className="text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+          className="text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
         >
           {formOpen ? "Cancel" : "+ Add Evidence"}
         </button>
@@ -256,7 +256,7 @@ export function SowVerificationPanel({
                   </span>
                   {rec.estimatedAmountAed > 0 && (
                     <span className="font-mono text-10 text-ink-2">
-                      AED {rec.estimatedAmountAed.toLocaleString()}
+                      AED {rec.estimatedAmountAed.toLocaleString("en-GB")}
                     </span>
                   )}
                   {rec.sofVerified && (
@@ -406,7 +406,7 @@ export function SowVerificationPanel({
             <button
               type="submit"
               disabled={submitLoading}
-              className="text-12 font-semibold px-4 py-2 rounded bg-brand text-white border border-brand hover:bg-brand/90 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand/90 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
             >
               {submitLoading ? (
                 <>
@@ -423,7 +423,7 @@ export function SowVerificationPanel({
                 setFormOpen(false);
                 setSubmitError(null);
               }}
-              className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors"
+              className="text-11 font-medium px-2.5 py-1.5 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors"
             >
               Cancel
             </button>

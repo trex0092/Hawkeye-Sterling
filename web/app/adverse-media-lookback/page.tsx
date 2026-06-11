@@ -479,7 +479,7 @@ export default function AdverseMediaLookbackPage() {
                         type="button"
                         disabled={isCorrelating}
                         onClick={() => void crossCorrelateSubject(subject)}
-                        className="text-11 font-semibold px-3 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:bg-bg-2 disabled:opacity-40"
+                        className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:bg-bg-2 disabled:opacity-40"
                       >
                         {isCorrelating ? "Correlating…" : "🔗 Cross-Correlate & Score"}
                       </button>
@@ -487,7 +487,7 @@ export default function AdverseMediaLookbackPage() {
                         type="button"
                         disabled={isAssessing}
                         onClick={() => void assessSubject(subject)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                        className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
                       >
                         {isAssessing ? "Assessing…" : "AI Assess"}
                       </button>
@@ -682,8 +682,8 @@ export default function AdverseMediaLookbackPage() {
                         </div>
                         <div className="flex gap-2 items-center">
                           <input value={editDraft.url} onChange={setE("url")} placeholder="URL (optional)" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-64" />
-                          <button type="button" onClick={() => saveEntryEdit(e.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
-                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                          <button type="button" onClick={() => saveEntryEdit(e.id)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                         </div>
                       </td>
                     </tr>

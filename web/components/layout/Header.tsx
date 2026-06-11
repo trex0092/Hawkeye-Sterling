@@ -69,7 +69,7 @@ export function Header({ onMenuOpen }: { onMenuOpen?: () => void } = {}) {
           <button
             type="button"
             onClick={toggleTheme}
-            className="border border-hair-2 rounded px-3 py-1.5 min-h-[36px] text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
+            className="border border-hair-2 rounded px-2.5 py-1 min-h-[36px] text-10.5 text-ink-1 hover:text-ink-0 transition-colors"
             title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
             aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >

@@ -347,7 +347,7 @@ export default function RiskAppetitePage() {
             {/* ── Metadata ───────────────────────────────────────────────────── */}
             {config.updatedAt && config.updatedAt !== new Date(0).toISOString() && (
               <p className="text-xs text-ink-3">
-                Last updated: {new Date(config.updatedAt).toLocaleString()} by{" "}
+                Last updated: {new Date(config.updatedAt).toLocaleString("en-GB")} by{" "}
                 <span className="font-mono">{config.updatedBy ?? "Unknown"}</span>
               </p>
             )}
@@ -369,7 +369,7 @@ export default function RiskAppetitePage() {
               <button
                 onClick={() => void handleSave()}
                 disabled={saving}
-                className="px-5 py-2 text-sm rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save configuration"}
               </button>

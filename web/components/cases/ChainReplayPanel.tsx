@@ -97,7 +97,7 @@ export function ChainReplayPanel(): JSX.Element {
           type="button"
           onClick={() => void load()}
           disabled={busy || !caseId.trim()}
-          className="rounded bg-bg-2 px-3 py-1 text-xs text-white hover:bg-bg-3 disabled:opacity-50"
+          className="rounded bg-bg-2 px-2.5 py-1 text-xs text-white hover:bg-bg-3 disabled:opacity-50"
         >
           {busy ? "Loading…" : "Replay"}
         </button>

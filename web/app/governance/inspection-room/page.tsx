@@ -61,7 +61,7 @@ function safeParse<T>(key: string): T | null {
 function fmtDate(epoch?: number): string {
   if (!epoch) return "—";
   const d = new Date(epoch);
-  return d.toLocaleString();
+  return d.toLocaleString("en-GB");
 }
 
 function buildPanels(): Panel[] {
@@ -310,7 +310,7 @@ export default function InspectionRoomPage() {
         </div>
         <p style="font-size:11px;color:var(--ink-2);margin:0 0 6px;line-height:1.5">${p.description}</p>
         <div style="font-family:var(--mono);font-size:10px;color:var(--ink-2)">${p.detail}</div>
-        ${p.lastUpdatedAt ? `<div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">Last updated: ${new Date(p.lastUpdatedAt).toLocaleString()}</div>` : ""}
+        ${p.lastUpdatedAt ? `<div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">Last updated: ${new Date(p.lastUpdatedAt).toLocaleString("en-GB")}</div>` : ""}
         <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">Source module: ${p.href}</div>
       </div>
     `).join("");

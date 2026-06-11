@@ -659,7 +659,7 @@ export default function TransactionMonitorPage() {
                         </button>
                       </td>
                       <td className="px-3 py-2 font-mono text-10 text-ink-3 hidden sm:table-cell">
-                        {new Date(t.loggedAt).toLocaleString()}
+                        {new Date(t.loggedAt).toLocaleString("en-GB")}
                       </td>
                       <td className="px-2 py-2 text-right">
                         <RowActions
@@ -722,7 +722,7 @@ export default function TransactionMonitorPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2 mb-0.5">Structuring Analysis</div>
-              <div className="text-10 text-ink-3 font-mono">UAE CTR threshold AED {structuringResult.statistics.reportingThreshold.toLocaleString()} · Federal Decree-Law No. 10 of 2025 Art.16 · FATF R.3</div>
+              <div className="text-10 text-ink-3 font-mono">UAE CTR threshold AED {structuringResult.statistics.reportingThreshold.toLocaleString("en-GB")} · Federal Decree-Law No. 10 of 2025 Art.16 · FATF R.3</div>
             </div>
             <button type="button" onClick={() => setStructuringResult(null)} className="text-10 text-ink-3 hover:text-ink-1 underline">Clear</button>
           </div>
@@ -758,7 +758,7 @@ export default function TransactionMonitorPage() {
             <div className="flex gap-4 flex-wrap">
               <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[100px]">
                 <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Total Volume</div>
-                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.totalVolume.toLocaleString()}</div>
+                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.totalVolume.toLocaleString("en-GB")}</div>
               </div>
               <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[80px]">
                 <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Transactions</div>
@@ -766,7 +766,7 @@ export default function TransactionMonitorPage() {
               </div>
               <div className="bg-bg-1 border border-hair-2 rounded p-3 min-w-[100px]">
                 <div className="text-9 uppercase tracking-wide-3 text-ink-3 mb-0.5">Avg Amount</div>
-                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.averageAmount.toLocaleString()}</div>
+                <div className="font-mono text-13 font-bold text-ink-0">AED {structuringResult.statistics.averageAmount.toLocaleString("en-GB")}</div>
               </div>
             </div>
           </div>
@@ -816,7 +816,7 @@ export default function TransactionMonitorPage() {
                   <div key={i} className="bg-bg-1 border border-hair-2 rounded p-3 text-12">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-mono text-10 text-ink-3">{g.window}</span>
-                      <span className="font-mono text-11 font-bold text-red">AED {g.total.toLocaleString()} ({g.percentOfThreshold}% of threshold)</span>
+                      <span className="font-mono text-11 font-bold text-red">AED {g.total.toLocaleString("en-GB")} ({g.percentOfThreshold}% of threshold)</span>
                     </div>
                   </div>
                 ))}

@@ -657,7 +657,7 @@ export default function RegulatoryFilingPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-2.5 px-4 rounded bg-brand text-white font-semibold text-14 hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full mt-2 py-1.5 px-3 rounded bg-brand text-white font-semibold text-14 hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading
                   ? "Generating…"

@@ -215,7 +215,7 @@ export default function BatchScreeningPage() {
               type="button"
               onClick={run}
               disabled={!canRun}
-              className="ml-auto px-4 py-2 rounded-xl text-13 font-semibold bg-brand text-white hover:bg-brand/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="ml-auto px-3 py-1.5 rounded-xl text-12 font-semibold bg-brand text-white hover:bg-brand/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {running ? (
                 <span className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function BatchScreeningPage() {
                 <div className="mt-3 text-10 text-ink-4">
                   Batch ID: <span className="font-mono">{result.batchId}</span> ·{" "}
                   {result.completedCount}/{result.totalSubjects} completed ·{" "}
-                  {result.errorCount} error(s) · {new Date(result.processedAt).toLocaleTimeString()}
+                  {result.errorCount} error(s) · {new Date(result.processedAt).toLocaleTimeString("en-GB")}
                 </div>
               </div>
 

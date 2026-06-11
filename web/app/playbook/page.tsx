@@ -211,7 +211,7 @@ export default function PlaybookPage() {
             className="w-full text-12 px-3 py-2.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none leading-relaxed"
           />
           {(simResult || qaAnswer || simError || qaError) && (
-            <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); setSimError(null); setQaError(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕ Clear result</button>
+            <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); setSimError(null); setQaError(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1">✕ Clear result</button>
           )}
 
           {(simError || qaError) && (
@@ -334,7 +334,7 @@ export default function PlaybookPage() {
               key={p.id}
               type="button"
               onClick={() => setDrawerOpen(p.id)}
-              className="text-left px-3 py-2.5 rounded border border-hair-2 bg-bg-panel hover:border-brand hover:bg-brand-dim transition-colors group"
+              className="text-left px-2.5 py-1.5 rounded border border-hair-2 bg-bg-panel hover:border-brand hover:bg-brand-dim transition-colors group"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className={`font-mono text-10 font-semibold px-1.5 py-px rounded-sm ${getFamilyColor(p.family)}`}>
@@ -490,7 +490,7 @@ export default function PlaybookPage() {
                     return next;
                   });
                 }}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
+                className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
               >
                 {pb.steps.flatMap((s, si) => s.checks.map((_, ci) => `${pb.id}:${si}:${ci}`)).every((k) => checked[k]) ? "Uncheck all" : "Check all"}
               </button>
@@ -501,14 +501,14 @@ export default function PlaybookPage() {
                     const keys = pb.steps.flatMap((s, si) => s.checks.map((_, ci) => `${pb.id}:${si}:${ci}`));
                     setChecked((prev) => { const next = { ...prev }; keys.forEach((k) => { delete next[k]; }); return next; });
                   }}
-                  className="text-11 font-medium px-3 py-1.5 rounded border border-hair-2 text-ink-3 hover:border-red hover:text-red transition-colors"
+                  className="text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-3 hover:border-red hover:text-red transition-colors"
                 >
                   Reset
                 </button>
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(null)}
-                  className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                  className="text-11 font-semibold px-3 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
                 >
                   Close
                 </button>

@@ -184,13 +184,13 @@ export default function PnmrQueuePage() {
               <button
                 onClick={() => void createRecord()}
                 disabled={adding || !addSubject.trim() || !addList.trim()}
-                className="text-xs bg-brand text-white px-3 py-1.5 rounded hover:opacity-90 disabled:opacity-50"
+                className="text-xs bg-brand text-white px-2.5 py-1 rounded hover:opacity-90 disabled:opacity-50"
               >
                 {adding ? "Creating…" : "Create record"}
               </button>
               <button
                 onClick={() => setShowAdd(false)}
-                className="text-xs bg-bg-base text-ink-1 border border-hair-2 px-3 py-1.5 rounded hover:bg-bg-panel"
+                className="text-xs bg-bg-base text-ink-1 border border-hair-2 px-2.5 py-1 rounded hover:bg-bg-panel"
               >
                 Cancel
               </button>
@@ -212,7 +212,7 @@ export default function PnmrQueuePage() {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-1.5 text-12 font-medium border-b-2 transition-colors ${
                 filter === key
                   ? "border-brand text-brand"
                   : "border-transparent text-ink-2 hover:text-ink-1"
@@ -267,10 +267,10 @@ export default function PnmrQueuePage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-ink-2">
-                        {new Date(r.createdAt).toLocaleDateString()}
+                        {new Date(r.createdAt).toLocaleDateString("en-GB")}
                       </td>
                       <td className="px-4 py-3 text-ink-2">
-                        {new Date(r.dueAt).toLocaleDateString()}
+                        {new Date(r.dueAt).toLocaleDateString("en-GB")}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${SLA_COLORS[sla]}`}>

@@ -553,7 +553,7 @@ export default function RmiPage() {
               key={t.key}
               type="button"
               onClick={() => setMineralFilter(t.key)}
-              className={`px-3 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1.5 text-11 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
                 active
                   ? "border-brand text-brand bg-brand-dim"
                   : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"
@@ -699,14 +699,14 @@ export default function RmiPage() {
                       <button
                         type="button"
                         onClick={() => saveEdit(s.id)}
-                        className="px-3 py-1.5 text-11 font-mono uppercase tracking-wide-3 bg-brand text-white rounded hover:bg-brand/90"
+                        className="px-2.5 py-1 text-11 font-mono uppercase tracking-wide-3 bg-brand text-white rounded hover:bg-brand/90"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={cancelEdit}
-                        className="px-3 py-1.5 text-11 font-mono uppercase tracking-wide-3 bg-bg-2 text-ink-1 rounded hover:bg-bg-2/70"
+                        className="px-2.5 py-1 text-11 font-mono uppercase tracking-wide-3 bg-bg-2 text-ink-1 rounded hover:bg-bg-2/70"
                       >
                         Cancel
                       </button>

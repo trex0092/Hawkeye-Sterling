@@ -274,8 +274,8 @@ export default function ShadowAIPage() {
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-3 py-1.5 text-12 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
                 {submitting ? "Logging..." : "Log Detection"}
               </button>
             </div>
@@ -323,7 +323,7 @@ export default function ShadowAIPage() {
                     {entry.useCase && <p className="text-xs text-ink-2 mt-0.5 italic">{entry.useCase}</p>}
                   </div>
                   <div className="text-xs text-ink-2 shrink-0 text-right">
-                    {new Date(entry.detectedAt).toLocaleDateString()}
+                    {new Date(entry.detectedAt).toLocaleDateString("en-GB")}
                   </div>
                 </div>
 

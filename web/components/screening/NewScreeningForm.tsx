@@ -314,7 +314,7 @@ export function NewScreeningForm({
               key={p}
               type="button"
               onClick={() => patch({ cddPosture: p })}
-              className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-12 text-left w-full transition-colors ${
+              className={`flex items-center gap-2 px-2.5 py-1 rounded text-11 text-left w-full transition-colors ${
                 form.cddPosture === p
                   ? "bg-brand-dim text-brand-deep border-l-2 border-brand font-semibold"
                   : "text-ink-1 hover:bg-bg-2 border-l-2 border-transparent"
@@ -777,7 +777,7 @@ function EntityTypeRow({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-12.5 text-left transition-colors ${
+      className={`flex items-center gap-2 px-2.5 py-1 rounded text-12.5 text-left transition-colors ${
         active
           ? "bg-brand-dim text-brand-deep border-l-2 border-brand font-semibold"
           : "text-ink-1 hover:bg-bg-2 border-l-2 border-transparent"

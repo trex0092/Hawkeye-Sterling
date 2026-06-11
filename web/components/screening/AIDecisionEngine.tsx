@@ -199,7 +199,7 @@ export function AIDecisionEngine({
         {(state.phase === "idle" || state.phase === "error") && (
           <button
             onClick={() => void runDecision()}
-            className="px-3 py-1 text-11 font-semibold bg-brand text-white rounded hover:bg-brand/90 transition-colors"
+            className="px-2.5 py-1 text-11 font-semibold bg-brand text-white rounded hover:bg-brand/90 transition-colors"
           >
             {state.phase === "error" ? "Retry" : "Run Decision"}
           </button>
@@ -392,13 +392,13 @@ export function AIDecisionEngine({
                     <button
                       onClick={() => void handleOverrideSubmit(result)}
                       disabled={feedbackSending}
-                      className="flex-1 py-1.5 rounded bg-amber text-black text-12 font-semibold hover:bg-amber/90 disabled:opacity-50 transition-colors"
+                      className="flex-1 py-1 rounded bg-amber text-black text-11 font-semibold hover:bg-amber/90 disabled:opacity-50 transition-colors"
                     >
                       {feedbackSending ? "Saving…" : "Confirm override"}
                     </button>
                     <button
                       onClick={() => setState({ phase: "ready", result })}
-                      className="px-3 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0"
+                      className="px-2.5 py-1 border border-hair-2 text-ink-2 text-11 rounded hover:text-ink-0"
                     >
                       Cancel
                     </button>
@@ -412,14 +412,14 @@ export function AIDecisionEngine({
                   <button
                     onClick={() => void handleAccept(result)}
                     disabled={feedbackSending}
-                    className="flex-1 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+                    className="flex-1 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
                   >
                     {feedbackSending ? "Recording…" : "✓ Accept decision"}
                   </button>
                   <button
                     onClick={() => setState({ phase: "overriding", result })}
                     disabled={feedbackSending}
-                    className="px-4 py-2 border border-hair-2 text-ink-1 text-12 rounded hover:border-amber hover:text-amber transition-colors"
+                    className="px-3 py-1.5 border border-hair-2 text-ink-1 text-11 rounded hover:border-amber hover:text-amber transition-colors"
                   >
                     ↩ Override
                   </button>

@@ -105,7 +105,7 @@ function ErasurePanel() {
         <button
           type="submit"
           disabled={loading || !subjectId.trim() || !reason.trim()}
-          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Processing…" : "Execute Erasure"}
         </button>
@@ -129,7 +129,7 @@ function ErasurePanel() {
             <span className="text-ink-0">{result.subjectId}</span>
           </span>
           <span className="text-ink-2">
-            At: <span className="text-ink-0">{new Date(result.at).toLocaleString()}</span>
+            At: <span className="text-ink-0">{new Date(result.at).toLocaleString("en-GB")}</span>
           </span>
         </div>
       )}
@@ -207,7 +207,7 @@ function ExportPanel() {
         <button
           type="submit"
           disabled={loading || !subjectId.trim()}
-          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Generating…" : "Download Export"}
         </button>
@@ -292,7 +292,7 @@ function RetentionPanel() {
           type="button"
           onClick={() => { void handleSweep(); }}
           disabled={loading}
-          className="self-start px-5 py-2 rounded bg-brand text-white text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="self-start px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {loading ? "Running sweep…" : "Run Retention Sweep"}
         </button>
@@ -317,7 +317,7 @@ function RetentionPanel() {
           </span>
           <span className="text-ink-2">
             Completed at:{" "}
-            <span className="text-ink-0">{new Date(result.at).toLocaleString()}</span>
+            <span className="text-ink-0">{new Date(result.at).toLocaleString("en-GB")}</span>
           </span>
         </div>
       )}

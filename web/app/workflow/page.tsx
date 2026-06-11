@@ -564,14 +564,14 @@ function RuleFormModal({
         <div className="p-6 border-t border-hair-2 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-hair-2 hover:bg-bg-1"
+            className="px-3 py-1.5 text-12 rounded-lg border border-hair-2 hover:bg-bg-1"
           >
             Cancel
           </button>
           <button
             onClick={() => void handleSave()}
             disabled={saving || !form.name.trim()}
-            className="px-4 py-2 text-sm rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
+            className="px-3 py-1.5 text-12 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
           >
             {saving ? "Saving…" : initial ? "Save changes" : "Create rule"}
           </button>
@@ -690,14 +690,14 @@ function TestRuleModal({
         <div className="p-6 border-t border-hair-2 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-hair-2 hover:bg-bg-1"
+            className="px-3 py-1.5 text-12 rounded-lg border border-hair-2 hover:bg-bg-1"
           >
             Close
           </button>
           <button
             onClick={() => void handleTest()}
             disabled={running || !subjectId.trim()}
-            className="px-4 py-2 text-sm rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
+            className="px-3 py-1.5 text-12 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
           >
             {running ? "Testing…" : "Run test"}
           </button>
@@ -801,7 +801,7 @@ export default function WorkflowPage() {
           </div>
           <button
             onClick={() => setShowNewForm(true)}
-            className="px-4 py-2 text-sm rounded-lg bg-brand text-white hover:bg-brand/90"
+            className="px-3 py-1.5 text-12 rounded-lg bg-brand text-white hover:bg-brand/90"
           >
             + New rule
           </button>
@@ -898,7 +898,7 @@ export default function WorkflowPage() {
                     </td>
                     <td className="px-4 py-3 text-ink-3 text-xs">
                       {rule.lastRunAt
-                        ? new Date(rule.lastRunAt).toLocaleString()
+                        ? new Date(rule.lastRunAt).toLocaleString("en-GB")
                         : "Never"}
                     </td>
                     <td className="px-4 py-3 text-center text-ink-3 text-xs">

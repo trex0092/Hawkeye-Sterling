@@ -711,7 +711,7 @@ export default function StrCasesPage() {
               type="button"
               onClick={() => void runPatternDetection()}
               disabled={patternLoading || cases.length === 0}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors"
+              className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors"
             >
               {patternLoading ? "Analysing…" : "Run Cross-Case Analysis"}
             </button>
@@ -813,7 +813,7 @@ export default function StrCasesPage() {
             </label>
             <button type="button" onClick={() => void runTriage()}
               disabled={triageLoading || cases.length === 0}
-              className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors">
+              className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-50 transition-colors">
               {triageLoading ? "Triaging…" : "Triage STR Queue"}
             </button>
           </div>
@@ -1098,8 +1098,8 @@ export default function StrCasesPage() {
                               saveCases(updated);
                               setCases((prev) => prev.map((x) => x.id === c.id ? { ...x, title: editCaseDraft.title || x.title, subject: editCaseDraft.subject || x.subject, status: editCaseDraft.status || x.status } : x));
                               setEditingCaseId(null);
-                            }} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
-                            <button type="button" onClick={() => setEditingCaseId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                            }} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                            <button type="button" onClick={() => setEditingCaseId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                           </div>
                         </td>
                       </tr>
@@ -1134,7 +1134,7 @@ export default function StrCasesPage() {
                           const v = c.openedAt;
                           if (!v) return "—";
                           const d = new Date(v);
-                          return Number.isNaN(d.getTime()) ? v : d.toLocaleString();
+                          return Number.isNaN(d.getTime()) ? v : d.toLocaleString("en-GB");
                         })()}
                       </td>
                       <td className="px-2 py-2 text-right">
@@ -1261,7 +1261,7 @@ export default function StrCasesPage() {
             type="button"
             onClick={() => void runSarProbability()}
             disabled={sarLoading}
-            className="inline-flex items-center gap-2 text-11 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+            className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
           >
             {sarLoading ? (
               <><span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />Scoring…</>

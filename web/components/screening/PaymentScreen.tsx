@@ -142,7 +142,7 @@ export function PaymentScreen() {
           type="button"
           onClick={screen}
           disabled={loading || !message.trim()}
-          className="text-11 font-semibold bg-ink-0 text-bg-0 px-3 py-1.5 rounded hover:bg-ink-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-11 font-semibold bg-ink-0 text-bg-0 px-2.5 py-1 rounded hover:bg-ink-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Screening…" : "Screen payment"}
         </button>
@@ -152,7 +152,7 @@ export function PaymentScreen() {
             setMessage("");
             setResult(null);
           }}
-          className="text-11 font-medium text-ink-2 px-2 py-1.5 hover:text-ink-0"
+          className="text-11 font-medium text-ink-2 px-2 py-1 hover:text-ink-0"
         >
           Clear
         </button>

@@ -39,7 +39,7 @@ function RunBtn({ onClick, disabled }: { onClick: () => void; disabled?: boolean
     <button
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
     >
       Run
     </button>
@@ -79,7 +79,7 @@ function IntelSection({
     <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-2/40 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-left hover:bg-bg-2/40 transition-colors"
       >
         <span className="flex items-center gap-2 text-12 font-semibold text-ink-0">
           <span className="text-14">{icon}</span>
@@ -917,14 +917,14 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
             <button
               onClick={startRecording}
               disabled={!speechSupported}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40"
             >
               🎙 Start recording
             </button>
           ) : (
             <button
               onClick={stopRecording}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-red-dim text-red border border-red/40 hover:opacity-80 animate-pulse"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-red-dim text-red border border-red/40 hover:opacity-80 animate-pulse"
             >
               ⏹ Stop recording
             </button>
@@ -941,7 +941,7 @@ function VoiceToCaseSection({ subject }: { subject: Subject }) {
           <button
             onClick={addToCase}
             disabled={!transcript.trim()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40"
           >
             Add to case
           </button>
@@ -1571,7 +1571,7 @@ function ContinuousMonitoringSection({ subject }: { subject: Subject }) {
         <div className="flex items-center gap-2">
           <button
             onClick={save}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80"
           >
             Save config
           </button>

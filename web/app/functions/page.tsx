@@ -101,7 +101,7 @@ export default function FunctionsPage() {
           {loading && <span className="text-xs text-ink-3 animate-pulse">Refreshing…</span>}
           <button
             onClick={() => void load()}
-            className="text-xs px-3 py-1 rounded border border-border-subtle text-ink-2 hover:text-ink-1 transition"
+            className="text-xs px-2.5 py-1 rounded border border-border-subtle text-ink-2 hover:text-ink-1 transition"
           >
             Refresh
           </button>
@@ -138,7 +138,7 @@ export default function FunctionsPage() {
                 <td className="py-2.5 px-4"><StatusChip status={fn.status} /></td>
                 <td className="py-2.5 px-4 text-xs text-ink-2">
                   {fn.lastRunAt
-                    ? new Date(fn.lastRunAt).toLocaleString()
+                    ? new Date(fn.lastRunAt).toLocaleString("en-GB")
                     : <span className="text-ink-3">Never</span>}
                 </td>
                 <td className="py-2.5 px-4"><AgeCell hours={fn.ageHours} /></td>
@@ -157,7 +157,7 @@ export default function FunctionsPage() {
 
       {data?.generatedAt && (
         <p className="text-xs text-ink-3 mt-3 text-right">
-          Last fetched: {new Date(data.generatedAt).toLocaleTimeString()} · auto-refresh every 60s
+          Last fetched: {new Date(data.generatedAt).toLocaleTimeString("en-GB")} · auto-refresh every 60s
         </p>
       )}
     </ModuleLayout>

@@ -127,7 +127,7 @@ export function WatchlistHealthBadges() {
             </div>
             <div className="text-10.5 text-ink-2 leading-tight font-mono">
               {l.ageH == null ? "pending" : `${l.ageH}h ago`}
-              {l.recordCount != null ? ` · ${l.recordCount.toLocaleString()} rows` : ""}
+              {l.recordCount != null ? ` · ${l.recordCount.toLocaleString("en-GB")} rows` : ""}
             </div>
           </div>
         );

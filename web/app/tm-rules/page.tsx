@@ -286,14 +286,14 @@ export default function TmRulesPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Submit Proposal"}
               </button>
@@ -439,7 +439,7 @@ export default function TmRulesPage() {
                               {record.status === "proposed" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "testing" })}
-                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90"
+                                  className="px-2.5 py-1 text-xs bg-brand text-white rounded hover:opacity-90"
                                 >
                                   Start Testing
                                 </button>
@@ -462,7 +462,7 @@ export default function TmRulesPage() {
                                         status: "pending_approval",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
+                                    className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
                                   >
                                     Record Test Results
                                   </button>
@@ -489,7 +489,7 @@ export default function TmRulesPage() {
                                           ...(mlroComments ? { mlroComments } : {}),
                                         });
                                       }}
-                                      className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                      className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                     >
                                       MLRO Approve
                                     </button>
@@ -510,7 +510,7 @@ export default function TmRulesPage() {
                                           status: "rejected",
                                         });
                                       }}
-                                      className="px-3 py-1.5 text-xs bg-red-700 text-white rounded hover:bg-red-600"
+                                      className="px-2.5 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600"
                                     >
                                       Reject
                                     </button>
@@ -536,7 +536,7 @@ export default function TmRulesPage() {
                                         status: "deployed",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-emerald-800 text-white rounded hover:bg-emerald-700"
+                                    className="px-2.5 py-1 text-xs bg-emerald-800 text-white rounded hover:bg-emerald-700"
                                   >
                                     Mark Deployed
                                   </button>

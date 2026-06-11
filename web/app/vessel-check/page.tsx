@@ -81,7 +81,7 @@ const RISK_TONE: Record<string, string> = {
 
 const inputCls = "px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
 const monoInputCls = `${inputCls} font-mono`;
-const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const btnCls = "px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 
 export default function VesselCheckPage() {
   // One input, auto-detected: a single IMO runs the single-vessel check, a
@@ -207,7 +207,7 @@ export default function VesselCheckPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-12">
                 {result.vessel.flag && <div><div className="text-ink-3">Flag State</div><div className="font-medium text-ink-0">{result.vessel.flag}</div></div>}
                 {result.vessel.type && <div><div className="text-ink-3">Vessel Type</div><div className="font-medium text-ink-0">{result.vessel.type}</div></div>}
-                {result.vessel.grossTonnage && <div><div className="text-ink-3">Gross Tonnage</div><div className="font-medium text-ink-0">{result.vessel.grossTonnage.toLocaleString()} GT</div></div>}
+                {result.vessel.grossTonnage && <div><div className="text-ink-3">Gross Tonnage</div><div className="font-medium text-ink-0">{result.vessel.grossTonnage.toLocaleString("en-GB")} GT</div></div>}
                 {result.vessel.yearBuilt && <div><div className="text-ink-3">Year Built</div><div className="font-medium text-ink-0">{result.vessel.yearBuilt}</div></div>}
                 {result.vessel.callSign && <div><div className="text-ink-3">Call Sign</div><div className="font-mono font-medium text-ink-0">{result.vessel.callSign}</div></div>}
                 {result.vessel.mmsi && <div><div className="text-ink-3">MMSI</div><div className="font-mono font-medium text-ink-0">{result.vessel.mmsi}</div></div>}
@@ -390,7 +390,7 @@ export default function VesselCheckPage() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                      className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
                       style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                     >
                       PDF

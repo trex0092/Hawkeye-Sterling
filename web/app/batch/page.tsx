@@ -401,11 +401,11 @@ export default function BatchPage() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); }} />
           <div className="flex gap-2 justify-center">
             <button onClick={() => fileInput.current?.click()}
-              className="px-4 py-2 bg-brand text-white rounded text-12.5 font-semibold hover:bg-brand-hover">
+              className="px-3 py-1.5 bg-brand text-white rounded text-12.5 font-semibold hover:bg-brand-hover">
               Choose CSV
             </button>
             <button onClick={downloadSample}
-              className="px-4 py-2 bg-bg-2 text-ink-0 rounded text-12.5 font-medium hover:bg-hair-2">
+              className="px-3 py-1.5 bg-bg-2 text-ink-0 rounded text-12.5 font-medium hover:bg-hair-2">
               Download template
             </button>
           </div>
@@ -418,11 +418,11 @@ export default function BatchPage() {
                 {rows.length} row{rows.length === 1 ? "" : "s"} ready
               </div>
               <button onClick={runBatch} disabled={running}
-                className="px-4 py-1.5 bg-brand text-white rounded font-semibold text-12.5 hover:bg-brand-hover disabled:opacity-50">
+                className="px-3 py-1 bg-brand text-white rounded font-semibold text-12.5 hover:bg-brand-hover disabled:opacity-50">
                 {running ? "Streaming…" : "Run batch"}
               </button>
               <button onClick={() => { setRows([]); setResults([]); setSummary(null); setProgress(null); setError(null); }}
-                className="px-3 py-1.5 text-ink-2 text-12 hover:text-ink-0">
+                className="px-2.5 py-1 text-ink-2 text-11 hover:text-ink-0">
                 Clear
               </button>
             </div>
@@ -465,11 +465,11 @@ export default function BatchPage() {
               {summary.duplicates > 0 && <SummaryStat label="Duplicates" value={summary.duplicates} tone="text-amber" />}
               <div className="ml-auto flex gap-2 items-end">
                 <button onClick={downloadCsv}
-                  className="px-3 py-1.5 bg-brand text-white rounded text-11 font-semibold hover:bg-brand-hover">
+                  className="px-2.5 py-1 bg-brand text-white rounded text-11 font-semibold hover:bg-brand-hover">
                   CSV
                 </button>
                 <button onClick={downloadPdf}
-                  className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                  className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
                   style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}>
                   PDF
                 </button>
@@ -582,7 +582,7 @@ export default function BatchPage() {
         {totalPages > 1 && (
           <div className="flex items-center gap-2 justify-center">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
-              className="px-3 py-1 text-12 bg-bg-2 rounded disabled:opacity-40 hover:bg-hair-2">← Prev</button>
+              className="px-2.5 py-1 text-11 bg-bg-2 rounded disabled:opacity-40 hover:bg-hair-2">← Prev</button>
             <span className="text-11 text-ink-2">Page {page + 1} / {totalPages}</span>
             <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
               className="px-3 py-1 text-12 bg-bg-2 rounded disabled:opacity-40 hover:bg-hair-2">Next →</button>

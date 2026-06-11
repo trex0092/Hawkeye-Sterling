@@ -50,7 +50,7 @@ function SectionHeader({ id: _id, label, icon, desc, completed, active, onClick 
 }) {
   return (
     <button type="button" onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${active ? "bg-brand-dim border-b border-brand/30" : "hover:bg-bg-2 border-b border-hair"}`}>
+      className={`w-full flex items-center gap-3 px-3 py-1.5 text-left transition-colors ${active ? "bg-brand-dim border-b border-brand/30" : "hover:bg-bg-2 border-b border-hair"}`}>
       <span className="text-18 shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <div className="text-13 font-semibold text-ink-0">{label}</div>
@@ -188,7 +188,7 @@ export default function MoeSurveyPage() {
             <button
               type="button"
               onClick={() => void loadSurvey()}
-              className="px-5 py-2 border border-hair-2 text-ink-1 text-13 font-semibold rounded hover:bg-bg-1 transition-colors"
+              className="px-3 py-1.5 border border-hair-2 text-ink-1 text-12 font-semibold rounded hover:bg-bg-1 transition-colors"
             >
               Try again
             </button>
@@ -209,7 +209,7 @@ export default function MoeSurveyPage() {
           <button
             type="button"
             onClick={() => void loadSurvey()}
-            className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+            className="px-3 py-1.5 bg-ink-0 text-bg-0 text-12 font-semibold rounded hover:bg-ink-1 transition-colors"
           >
             Try again
           </button>
@@ -253,7 +253,7 @@ export default function MoeSurveyPage() {
           <span className="text-11 text-ink-2 font-semibold">Overall completion</span>
           <div className="flex items-center gap-3">
             {saving && <span className="text-10 text-ink-3 font-mono">Saving…</span>}
-            {lastSaved && !saving && <span className="text-10 text-ink-3 font-mono">Saved {lastSaved.toLocaleTimeString()}</span>}
+            {lastSaved && !saving && <span className="text-10 text-ink-3 font-mono">Saved {lastSaved.toLocaleTimeString("en-GB")}</span>}
           </div>
         </div>
         <div className="h-2.5 bg-bg-2 rounded-full overflow-hidden">

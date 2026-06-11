@@ -172,7 +172,7 @@ export default function FpOptimizerPage() {
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-13 font-medium rounded-t transition-colors ${
+            className={`px-3 py-1.5 text-12 font-medium rounded-t transition-colors ${
               tab === t
                 ? "bg-bg-2 text-ink-0 border-b-2 border-brand"
                 : "text-ink-2 hover:text-ink-0 hover:bg-bg-1"
@@ -220,7 +220,7 @@ export default function FpOptimizerPage() {
               type="button"
               onClick={() => { void analyzePatterns(); }}
               disabled={analysisLoading}
-              className="mt-3 px-5 py-2 bg-brand text-white rounded font-semibold text-13 hover:bg-brand/90 transition-colors disabled:opacity-50"
+              className="mt-3 px-3 py-1.5 bg-brand text-white rounded font-semibold text-12 hover:bg-brand/90 transition-colors disabled:opacity-50"
             >
               {analysisLoading ? "⟳ Analysing patterns…" : "🔍 Analyse Patterns"}
             </button>
@@ -436,7 +436,7 @@ export default function FpOptimizerPage() {
               type="button"
               onClick={() => { void predictFp(); }}
               disabled={predictLoading}
-              className="mt-4 px-5 py-2 bg-brand text-white rounded font-semibold text-13 hover:bg-brand/90 transition-colors disabled:opacity-50"
+              className="mt-4 px-3 py-1.5 bg-brand text-white rounded font-semibold text-12 hover:bg-brand/90 transition-colors disabled:opacity-50"
             >
               {predictLoading ? "⟳ Predicting…" : "🎯 Predict FP"}
             </button>

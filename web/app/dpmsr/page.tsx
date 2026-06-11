@@ -91,7 +91,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
 
   return (
     <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
-      <div className="text-12 font-semibold text-ink-0 mb-3">Evaluate transactions against AED {THRESHOLD_AED.toLocaleString()} threshold</div>
+      <div className="text-12 font-semibold text-ink-0 mb-3">Evaluate transactions against AED {THRESHOLD_AED.toLocaleString("en-GB")} threshold</div>
 
       {/* Add transaction row */}
       <div className="grid grid-cols-[1fr_1fr_1fr_1fr_2fr_1.5fr_auto] gap-2 items-end mb-3">
@@ -131,7 +131,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
                 {transactions.map((t, i) => (
                   <tr key={t.txnId} className={i < transactions.length - 1 ? "border-b border-hair" : ""}>
                     <td className="px-3 py-2 font-mono text-ink-2">{t.txnId}</td>
-                    <td className={`px-3 py-2 font-mono font-semibold ${t.amountAed >= THRESHOLD_AED ? "text-red" : "text-ink-0"}`}>{t.amountAed.toLocaleString()}</td>
+                    <td className={`px-3 py-2 font-mono font-semibold ${t.amountAed >= THRESHOLD_AED ? "text-red" : "text-ink-0"}`}>{t.amountAed.toLocaleString("en-GB")}</td>
                     <td className="px-3 py-2 text-ink-3">{t.channel}</td>
                     <td className="px-3 py-2 text-ink-2">{t.customerName ?? t.customerId ?? "—"}</td>
                     <td className="px-3 py-2 text-ink-3 font-mono">{new Date(t.at).toLocaleDateString("en-GB")}</td>
@@ -143,11 +143,11 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
           </div>
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => void evaluate(false)} disabled={loading}
-              className="px-4 py-2 rounded border border-hair-2 text-12 font-semibold text-ink-1 hover:bg-bg-2 disabled:opacity-50">
+              className="px-3 py-1.5 rounded border border-hair-2 text-11 font-semibold text-ink-1 hover:bg-bg-2 disabled:opacity-50">
               {loading ? "Evaluating…" : "Evaluate (preview)"}
             </button>
             <button type="button" onClick={() => void evaluate(true)} disabled={loading}
-              className="px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:bg-red/90 disabled:opacity-50">
+              className="px-3 py-1.5 rounded bg-red text-white text-11 font-semibold hover:bg-red/90 disabled:opacity-50">
               {loading ? "Evaluating…" : "Evaluate & create obligation"}
             </button>
           </div>
@@ -164,7 +164,7 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
           {evalResult.obligations.map((o, i) => (
             <div key={i} className="text-11 text-ink-1 mb-1">
               • <strong>{o.triggerType === "single" ? "Single transaction" : "Linked transactions"}</strong> —
-              AED {o.totalAmountAed.toLocaleString()} — {o.transactionIds.join(", ")} — {o.legalBasis}
+              AED {o.totalAmountAed.toLocaleString("en-GB")} — {o.transactionIds.join(", ")} — {o.legalBasis}
             </div>
           ))}
         </div>
@@ -227,13 +227,13 @@ export default function DpmsrPage() {
           { value: String(pending), label: "pending filings", tone: pending > 0 ? "amber" : undefined },
           { value: String(overdue), label: "overdue", tone: overdue > 0 ? "red" : undefined },
           { value: String(filed), label: "filed" },
-          { value: `AED ${THRESHOLD_AED.toLocaleString()}`, label: "trigger threshold" },
+          { value: `AED ${THRESHOLD_AED.toLocaleString("en-GB")}`, label: "trigger threshold" },
         ]}
         intro={
           <>
             <strong>CR134/2025 Art.3 · MoE Circ.08/AML/2021.</strong>{" "}
             Any single cash transaction OR linked cash transactions totalling{" "}
-            <strong>AED {THRESHOLD_AED.toLocaleString()} or above</strong> trigger a mandatory Designated
+            <strong>AED {THRESHOLD_AED.toLocaleString("en-GB")} or above</strong> trigger a mandatory Designated
             Precious Metals & Stones Report (DPMSR) filing via goAML. This is separate from the STR flow —
             it is triggered by amount alone, regardless of suspicion. Fine for non-compliance: AED 200,000 per violation.
           </>
@@ -256,7 +256,7 @@ export default function DpmsrPage() {
         <div className="py-12 text-center bg-bg-panel border border-hair-2 rounded-lg">
           <div className="text-28 mb-2">✓</div>
           <div className="text-14 font-semibold text-ink-0 mb-1">No DPMSR obligations</div>
-          <p className="text-12 text-ink-2">No cash transactions have reached the AED {THRESHOLD_AED.toLocaleString()} threshold. Use the evaluator above to assess transactions.</p>
+          <p className="text-12 text-ink-2">No cash transactions have reached the AED {THRESHOLD_AED.toLocaleString("en-GB")} threshold. Use the evaluator above to assess transactions.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -276,7 +276,7 @@ export default function DpmsrPage() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-13 font-semibold text-ink-0">
-                      AED {o.totalAmountAed.toLocaleString()} — {o.triggerType === "single" ? "Single transaction" : "Linked transactions"}
+                      AED {o.totalAmountAed.toLocaleString("en-GB")} — {o.triggerType === "single" ? "Single transaction" : "Linked transactions"}
                     </div>
                     <div className="text-10 text-ink-3 font-mono">
                       {o.customerName ?? o.customerId ?? "Unknown customer"} · {o.transactionIds.join(", ")}
@@ -305,14 +305,14 @@ export default function DpmsrPage() {
                     <div className="flex flex-wrap gap-2">
                       {!o.mlroSignedOff && (
                         <button type="button" onClick={() => void handlePatch(o.id, { mlroSignedOff: true })} disabled={isBusy}
-                          className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
+                          className="text-11 font-semibold px-2.5 py-1 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
                           ✓ MLRO sign-off
                         </button>
                       )}
                       {o.status !== "filed" && (
                         <button type="button" onClick={() => void handlePatch(o.id, { status: "filed" as const })} disabled={isBusy || !o.mlroSignedOff}
                           title={!o.mlroSignedOff ? "MLRO sign-off required" : "Mark as filed in goAML"}
-                          className="text-11 font-semibold px-3 py-1.5 rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber/20 disabled:opacity-40">
+                          className="text-11 font-semibold px-2.5 py-1 rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber/20 disabled:opacity-40">
                           Mark as filed in goAML
                         </button>
                       )}
@@ -329,7 +329,7 @@ export default function DpmsrPage() {
       )}
 
       <p className="text-10.5 text-ink-3 mt-6 leading-relaxed">
-        DPMSR is a mandatory cash transaction report separate from STR/SAR. Threshold: AED {THRESHOLD_AED.toLocaleString()} single or linked cash.
+        DPMSR is a mandatory cash transaction report separate from STR/SAR. Threshold: AED {THRESHOLD_AED.toLocaleString("en-GB")} single or linked cash.
         Legal basis: CR134/2025 Art.3. Fine: AED 200,000 per violation. File via goAML using report code DPMSR.
         Records must be retained for 5 years per Federal Decree-Law No. 10 of 2025 Art.19(d).
       </p>

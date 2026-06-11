@@ -220,7 +220,7 @@ export function CaseTimeline({ caseId, events }: CaseTimelineProps) {
           <button
             type="button"
             onClick={loadMore}
-            className="px-4 py-2 rounded-lg bg-bg-1 border border-hair-2 text-12 font-medium text-ink-1 hover:border-brand hover:text-ink-0 transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-bg-1 border border-hair-2 text-11 font-medium text-ink-1 hover:border-brand hover:text-ink-0 transition-colors"
           >
             Load more ({sorted.length - visible.length} remaining)
           </button>

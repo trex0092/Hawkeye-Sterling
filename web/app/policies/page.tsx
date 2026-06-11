@@ -869,14 +869,14 @@ export default function PoliciesPage() {
                             <button
                               type="button"
                               onClick={() => saveEdit(p.id)}
-                              className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0"
+                              className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0"
                             >
                               Save
                             </button>
                             <button
                               type="button"
                               onClick={() => setEditing(null)}
-                              className="text-11 font-medium px-3 py-1 rounded text-ink-2"
+                              className="text-11 font-medium px-2.5 py-1 rounded text-ink-2"
                             >
                               Cancel
                             </button>
@@ -945,14 +945,14 @@ export default function PoliciesPage() {
                   type="button"
                   onClick={saveNew}
                   disabled={!newForm.title.trim() || !newForm.body.trim()}
-                  className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 disabled:opacity-40"
+                  className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 disabled:opacity-40"
                 >
                   Add policy
                 </button>
                 <button
                   type="button"
                   onClick={() => { setAdding(false); setNewForm(BLANK_NEW); }}
-                  className="text-11 font-medium px-3 py-1 rounded text-ink-2"
+                  className="text-11 font-medium px-2.5 py-1 rounded text-ink-2"
                 >
                   Cancel
                 </button>

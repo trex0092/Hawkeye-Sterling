@@ -127,11 +127,11 @@ function ImpactPanel({
           <button
             type="button"
             onClick={load}
-            className="w-full px-4 py-2.5 bg-brand text-white text-13 font-semibold rounded hover:bg-brand/90"
+            className="w-full px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90"
           >
             Generate Impact Assessment
           </button>
-          <button type="button" onClick={onClose} className="mt-2 w-full text-12 text-ink-3 hover:text-ink-1">
+          <button type="button" onClick={onClose} className="mt-2 w-full text-11 text-ink-3 hover:text-ink-1">
             Cancel
           </button>
         </div>
@@ -349,7 +349,7 @@ export default function RegChangePage() {
                 key={t}
                 type="button"
                 onClick={() => setInstitutionType(t)}
-                className={`px-3 py-1.5 rounded text-12 font-medium border transition-colors ${
+                className={`px-2.5 py-1 rounded text-11 font-medium border transition-colors ${
                   institutionType === t
                     ? "bg-brand text-white border-brand"
                     : "bg-bg-1 text-ink-1 border-hair-2 hover:border-brand/50"
@@ -370,7 +370,7 @@ export default function RegChangePage() {
                 key={j}
                 type="button"
                 onClick={() => toggleJurisdiction(j)}
-                className={`px-2.5 py-1 rounded text-12 font-medium border transition-colors ${
+                className={`px-2.5 py-1 rounded text-11 font-medium border transition-colors ${
                   selectedJurisdictions.includes(j)
                     ? "bg-brand/10 text-brand border-brand/30"
                     : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand/30"
@@ -431,7 +431,7 @@ export default function RegChangePage() {
           type="button"
           onClick={generate}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-13 font-semibold rounded hover:bg-brand/90 disabled:opacity-40 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 disabled:opacity-40 transition-colors"
         >
           {loading ? (
             <>
@@ -539,7 +539,7 @@ export default function RegChangePage() {
               <button
                 type="button"
                 onClick={exportPDF}
-                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
                 style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
               >
                 PDF

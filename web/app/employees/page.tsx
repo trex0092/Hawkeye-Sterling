@@ -485,7 +485,7 @@ export default function EmployeesPage() {
                       key={u}
                       type="button"
                       onClick={() => toggleUnit(u)}
-                      className={`text-11 font-medium px-3 py-1 rounded-full border transition-colors ${
+                      className={`text-11 font-medium px-2.5 py-1 rounded-full border transition-colors ${
                         selected
                           ? "bg-brand-dim border-brand text-brand-deep"
                           : "border-hair-2 text-ink-2 hover:border-hair-0 hover:text-ink-0"
@@ -503,7 +503,7 @@ export default function EmployeesPage() {
               type="button"
               onClick={addEmployee}
               disabled={!form.name || !form.email}
-              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
             >
               Save employee
             </button>
@@ -736,8 +736,8 @@ export default function EmployeesPage() {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0">✓</button>
-                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1.5 rounded text-red">✕</button>
+                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                             </div>
                           </td>
                         </tr>

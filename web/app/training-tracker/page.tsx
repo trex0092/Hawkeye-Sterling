@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import type { TrainingRecord } from "@/lib/server/training-records";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 // ── Status badge ───────────────────────────────────────────────────────────────
 
@@ -150,11 +151,10 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
           <label className="block text-xs font-medium text-ink-3 mb-1">
             Completed At *
           </label>
-          <input
-            type="date"
+          <IsoDateInput
             className={inputCls}
             value={form.completedAt}
-            onChange={(e) => setForm({ ...form, completedAt: e.target.value })}
+            onChange={(iso) => setForm({ ...form, completedAt: iso })}
           />
         </div>
         <div>
@@ -192,7 +192,7 @@ function AddRecordForm({ onAdded }: { onAdded: () => void }) {
         <button
           onClick={() => void handleAdd()}
           disabled={saving || !form.staffId.trim() || !form.staffName.trim() || !form.courseCode.trim() || !form.courseName.trim()}
-          className="px-4 py-2 text-sm rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
+          className="px-3 py-1.5 text-12 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
         >
           {saving ? "Adding…" : "Add record"}
         </button>
@@ -357,7 +357,7 @@ export default function TrainingTrackerPage() {
                       <div className="text-xs text-ink-3 font-mono">{r.courseCode}</div>
                     </td>
                     <td className="px-4 py-3 text-ink-2 text-xs">
-                      {new Date(r.completedAt).toLocaleDateString()}
+                      {new Date(r.completedAt).toLocaleDateString("en-GB")}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       <span
@@ -369,7 +369,7 @@ export default function TrainingTrackerPage() {
                               : "text-ink-2"
                         }
                       >
-                        {new Date(r.expiresAt).toLocaleDateString()}
+                        {new Date(r.expiresAt).toLocaleDateString("en-GB")}
                       </span>
                     </td>
                     <td className="px-4 py-3">

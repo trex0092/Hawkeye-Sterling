@@ -1365,7 +1365,7 @@ export function SubjectDetailPanel({ subject, onUpdate, allSubjects, onSelectSub
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`shrink-0 snap-start px-3 py-2 text-12 font-medium bg-transparent border-none border-b-2 cursor-pointer whitespace-nowrap ${
+              className={`shrink-0 snap-start px-2.5 py-1.5 text-11 font-medium bg-transparent border-none border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === tab
                   ? "text-ink-0 border-brand"
                   : "text-ink-2 border-transparent hover:text-ink-0"
@@ -2738,7 +2738,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
               type="button"
               onClick={() => void runConfidenceScore()}
               disabled={csLoading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
             >
               {csLoading ? "Scoring…" : "✦ Run AI Confidence Score"}
             </button>
@@ -2770,7 +2770,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
                 )}
               </div>
               <p className="text-11 text-ink-1 italic mb-1">&ldquo;{resolution.reason}&rdquo;</p>
-              <p className="text-10 text-ink-3 font-mono">{new Date(resolution.resolvedAt).toLocaleString()}</p>
+              <p className="text-10 text-ink-3 font-mono">{new Date(resolution.resolvedAt).toLocaleString("en-GB")}</p>
               <button
                 type="button"
                 onClick={() => { setResolution(null); setReasonInput(""); setEnrollStatus("idle"); }}
@@ -2875,7 +2875,7 @@ function HitRow({ hit, subjectCtx }: { hit: QuickScreenHit; subjectCtx?: Subject
                   type="button"
                   disabled={!reasonInput.trim() || resolving}
                   onClick={() => void handleResolve()}
-                  className="px-4 py-1.5 bg-brand text-white rounded text-12 font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+                  className="px-3 py-1 bg-brand text-white rounded text-11 font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
                 >
                   {resolving
                     ? enrollStatus === "enrolling"

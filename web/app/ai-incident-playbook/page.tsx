@@ -272,8 +272,8 @@ export default function AIIncidentPlaybookPage() {
               </label>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-3 py-1.5 text-12 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
                 {submitting ? "Logging..." : "Log Incident"}
               </button>
             </div>
@@ -317,7 +317,7 @@ export default function AIIncidentPlaybookPage() {
                         <p className="text-xs text-ink-2 mt-0.5">{INCIDENT_TYPE_LABELS[inc.type]} · {inc.affectedModel}</p>
                       </div>
                       <div className="text-xs text-ink-2 shrink-0 text-right">
-                        {new Date(inc.detectedAt).toLocaleDateString()}
+                        {new Date(inc.detectedAt).toLocaleDateString("en-GB")}
                       </div>
                     </div>
                     {inc.status !== "closed" && (

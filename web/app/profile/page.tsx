@@ -254,7 +254,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
-              className="w-full py-2.5 rounded-lg bg-brand text-white text-13 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-1.5 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? "Saving…" : "Change password"}
             </button>

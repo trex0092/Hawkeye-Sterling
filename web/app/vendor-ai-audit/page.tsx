@@ -262,8 +262,8 @@ export default function VendorAIAuditPage() {
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-3 py-1.5 text-12 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
                 {submitting ? "Saving..." : "Save Assessment"}
               </button>
             </div>

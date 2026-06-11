@@ -312,7 +312,7 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-4 py-2 text-12 font-medium transition-colors border-b-2 ${
+      className={`relative flex items-center gap-1.5 px-3 py-1.5 text-11 font-medium transition-colors border-b-2 ${
         active
           ? "border-brand text-ink-0"
           : "border-transparent text-ink-2 hover:text-ink-0 hover:border-hair-3"
@@ -369,7 +369,7 @@ function OverviewTab({
               tone="amber"
             />
             <KpiCard
-              value={brierData.series[brierData.series.length - 1]?.sampleSize.toLocaleString() ?? "—"}
+              value={brierData.series[brierData.series.length - 1]?.sampleSize.toLocaleString("en-GB") ?? "—"}
               label="Latest Sample"
             />
           </>
@@ -564,7 +564,7 @@ function LeaderboardTab({
                     <span className="font-mono text-11 text-ink-1">{row.f1.toFixed(3)}</span>
                   </Td>
                   <Td isLast={isLast}>
-                    <span className="font-mono text-11 text-ink-3">{row.sampleSize.toLocaleString()}</span>
+                    <span className="font-mono text-11 text-ink-3">{row.sampleSize.toLocaleString("en-GB")}</span>
                   </Td>
                 </tr>
               );
@@ -667,7 +667,7 @@ function FairnessTab({
                     </span>
                   </Td>
                   <Td isLast={isLast}>
-                    <span className="font-mono text-11 text-ink-3">{row.sampleSize.toLocaleString()}</span>
+                    <span className="font-mono text-11 text-ink-3">{row.sampleSize.toLocaleString("en-GB")}</span>
                   </Td>
                   <Td isLast={isLast}>
                     <FairnessBadge status={row.status} />
@@ -818,7 +818,7 @@ function DriftAlertCard({
           <button
             type="button"
             onClick={() => onInvestigate(alert.alertId)}
-            className="shrink-0 font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-3 py-1.5 rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
+            className="shrink-0 font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-2.5 py-1 rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors"
           >
             Investigate
           </button>

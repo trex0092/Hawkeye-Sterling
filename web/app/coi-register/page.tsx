@@ -250,11 +250,11 @@ export default function CoiRegisterPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">
                 Cancel
               </button>
               <button type="submit" disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
                 {submitting ? "Submitting..." : "Submit Declaration"}
               </button>
             </div>
@@ -360,21 +360,21 @@ export default function CoiRegisterPage() {
                                     <button
                                       onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "approved"); }}
                                       disabled={updatingId === decl.id}
-                                      className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded-md hover:bg-emerald-600 disabled:opacity-50"
+                                      className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded-md hover:bg-emerald-600 disabled:opacity-50"
                                     >
                                       {updatingId === decl.id ? "Updating..." : "Approve"}
                                     </button>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "managed"); }}
                                       disabled={updatingId === decl.id}
-                                      className="px-3 py-1.5 text-xs bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                                      className="px-2.5 py-1 text-xs bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
                                     >
                                       {updatingId === decl.id ? "Updating..." : "Mark Managed"}
                                     </button>
                                     <button
                                       onClick={(e) => { e.stopPropagation(); void handleMlroReview(decl, "rejected"); }}
                                       disabled={updatingId === decl.id}
-                                      className="px-3 py-1.5 text-xs bg-red-700 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
+                                      className="px-2.5 py-1 text-xs bg-red-700 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
                                     >
                                       {updatingId === decl.id ? "Updating..." : "Reject"}
                                     </button>

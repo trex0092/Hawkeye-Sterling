@@ -303,7 +303,7 @@ export default function SarQaPage() {
                       {review.state.replace("-", " ")}
                       {review.at && (
                         <span className="font-normal opacity-70 ml-1">
-                          · {new Date(review.at).toLocaleString()}
+                          · {new Date(review.at).toLocaleString("en-GB")}
                         </span>
                       )}
                     </div>
@@ -341,7 +341,7 @@ export default function SarQaPage() {
                           type="button"
                           disabled={role !== "mlro"}
                           onClick={() => { stamp(c.id, "approved"); setEditingCaseId(null); }}
-                          className="text-11 font-semibold px-3 py-1.5 rounded bg-green text-white hover:opacity-90 disabled:opacity-40"
+                          className="text-11 font-semibold px-2.5 py-1 rounded bg-green text-white hover:opacity-90 disabled:opacity-40"
                         >
                           ✓ Approve
                         </button>
@@ -350,13 +350,13 @@ export default function SarQaPage() {
                           disabled={role !== "mlro" || !reasonDraft[c.id]}
                           onClick={() => { stamp(c.id, "challenged"); setEditingCaseId(null); }}
                           title={!reasonDraft[c.id] ? "Pick a challenge reason first" : "Challenge filing"}
-                          className="text-11 font-semibold px-3 py-1.5 rounded bg-red-dim text-red hover:bg-red hover:text-white disabled:opacity-40"
+                          className="text-11 font-semibold px-2.5 py-1 rounded bg-red-dim text-red hover:bg-red hover:text-white disabled:opacity-40"
                         >
                           Challenge
                         </button>
                         {editingCaseId === c.id && (
                           <button type="button" onClick={() => setEditingCaseId(null)}
-                            className="text-11 font-medium px-3 py-1.5 rounded text-red">✕</button>
+                            className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                         )}
                       </div>
                     </>

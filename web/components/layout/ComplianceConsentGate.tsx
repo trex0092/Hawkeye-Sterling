@@ -91,14 +91,14 @@ export function ComplianceConsentGate({ children, toolName = "this tool" }: Comp
                 recordConsent();
                 setConsented(true);
               }}
-              className="flex-1 px-5 py-2.5 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+              className="flex-1 px-3 py-1.5 bg-ink-0 text-bg-0 text-12 font-semibold rounded hover:bg-ink-1 transition-colors"
             >
               I acknowledge and accept
             </button>
             <button
               type="button"
               onClick={() => { window.history.back(); }}
-              className="flex-1 px-5 py-2.5 border border-line-1 text-ink-2 text-13 font-semibold rounded hover:bg-bg-2 transition-colors"
+              className="flex-1 px-3 py-1.5 border border-line-1 text-ink-2 text-12 font-semibold rounded hover:bg-bg-2 transition-colors"
             >
               Go back
             </button>

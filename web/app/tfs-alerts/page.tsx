@@ -118,7 +118,7 @@ function GoAMLModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-1.5 rounded text-12 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
+            className="px-3 py-1 rounded text-11 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
           >
             Cancel
           </button>
@@ -126,7 +126,7 @@ function GoAMLModal({
             type="button"
             disabled={!ref.trim()}
             onClick={() => onConfirm(ref.trim())}
-            className="px-4 py-1.5 rounded text-12 text-ink-0 bg-brand hover:bg-brand-hover transition-colors disabled:opacity-40"
+            className="px-3 py-1 rounded text-11 text-ink-0 bg-brand hover:bg-brand-hover transition-colors disabled:opacity-40"
           >
             Confirm
           </button>
@@ -166,14 +166,14 @@ function MatchNotesModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-1.5 rounded text-12 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
+            className="px-3 py-1 rounded text-11 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onConfirm(notes.trim())}
-            className="px-4 py-1.5 rounded text-12 text-white bg-red hover:opacity-90 transition-opacity"
+            className="px-3 py-1 rounded text-11 text-white bg-red hover:opacity-90 transition-opacity"
           >
             Confirm Match
           </button>
@@ -327,7 +327,6 @@ export default function TFSAlertsPage() {
   const [alerts, setAlerts] = useState<TFSAlert[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Searching Gmail…");
-  const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [gmailReAuthNeeded, setGmailReAuthNeeded] = useState(false);
@@ -352,13 +351,6 @@ export default function TFSAlertsPage() {
       if (mountedRef.current) setAlerts(loadAlerts());
     });
 
-    // Restore lastChecked
-    try {
-      const ts = localStorage.getItem("hawkeye.tfs-alerts.lastChecked");
-      if (ts && mountedRef.current) setLastChecked(ts);
-    } catch {
-      // ignore
-    }
 
     window.addEventListener("hawkeye:tfs-alerts-updated", refresh);
     return () => window.removeEventListener("hawkeye:tfs-alerts-updated", refresh);
@@ -459,7 +451,6 @@ export default function TFSAlertsPage() {
 
       if (candidates.length === 0) {
         const now = new Date().toISOString();
-        setLastChecked(now);
         try {
           localStorage.setItem("hawkeye.tfs-alerts.lastChecked", now);
         } catch {
@@ -537,7 +528,6 @@ export default function TFSAlertsPage() {
       if (!mountedRef.current) return;
 
       const now = new Date().toISOString();
-      setLastChecked(now);
       try {
         localStorage.setItem("hawkeye.tfs-alerts.lastChecked", now);
       } catch {
@@ -729,18 +719,6 @@ export default function TFSAlertsPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">Source:</span>
-          <span className="font-mono text-11 text-ink-1">sanctions@eocn.gov.ae</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-11 uppercase tracking-wide-3 text-ink-3 font-medium">
-            Last Checked:
-          </span>
-          <span className="font-mono text-11 text-ink-1">
-            {lastChecked ? fmtDate(lastChecked) : "Never"}
-          </span>
-        </div>
       </div>
 
       {/* ── Check button + result ────────────────────────────────────────────── */}
@@ -798,7 +776,7 @@ export default function TFSAlertsPage() {
             <button
               type="button"
               onClick={handleExport}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-hair-2 text-12 text-ink-1 hover:bg-bg-1 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-hair-2 text-11 text-ink-1 hover:bg-bg-1 transition-colors"
             >
               📥 Export Audit Trail
             </button>

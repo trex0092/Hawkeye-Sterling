@@ -165,7 +165,7 @@ class SectionErrorBoundary extends Component<{ children: ReactNode }, EBState> {
           <button
             type="button"
             onClick={() => this.setState({ hasError: false, message: "" })}
-            className="px-4 py-2 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
+            className="px-3 py-1.5 rounded border border-brand text-brand text-11 font-semibold hover:bg-brand/10 transition-colors"
           >
             Try again
           </button>

@@ -120,7 +120,7 @@ export function CryptoWalletField({ wallets, onChange }: Props) {
                 <button
                   type="button"
                   onClick={() => remove(w)}
-                  className="text-ink-3 hover:text-red text-12 leading-none"
+                  className="text-ink-3 hover:text-red text-11 leading-none"
                   aria-label={`Remove ${w}`}
                 >
                   ×

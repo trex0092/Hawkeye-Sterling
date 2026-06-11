@@ -385,7 +385,7 @@ export default function SupplyChainPage() {
           type="button"
           onClick={assess}
           disabled={loading || (!company && suppliers.length === 0)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-13 font-semibold rounded hover:bg-brand/90 disabled:opacity-40 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 disabled:opacity-40 transition-colors"
         >
           {loading ? (
             <>

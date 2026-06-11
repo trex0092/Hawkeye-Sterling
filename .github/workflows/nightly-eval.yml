@@ -43,6 +43,28 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         continue-on-error: false
 
+      # The deployment is serverless — /eval-kpi can only show data that was
+      # uploaded to it. POST the fresh snapshot to the deployed API (stored
+      # in Netlify Blobs) so the dashboard reflects this run.
+      - name: Publish KPI snapshot to deployment
+        if: always()
+        env:
+          EVAL_KPI_UPLOAD_URL: ${{ secrets.EVAL_KPI_UPLOAD_URL }}
+          EVAL_KPI_UPLOAD_TOKEN: ${{ secrets.EVAL_KPI_UPLOAD_TOKEN }}
+        run: |
+          SNAPSHOT=$(find . -name "kpi-snapshot*.json" -not -path "*/node_modules/*" | head -1)
+          if [ -z "$SNAPSHOT" ]; then
+            echo "No kpi-snapshot*.json produced — skipping upload."
+          elif [ -z "$EVAL_KPI_UPLOAD_URL" ] || [ -z "$EVAL_KPI_UPLOAD_TOKEN" ]; then
+            echo "EVAL_KPI_UPLOAD_URL / EVAL_KPI_UPLOAD_TOKEN secrets not set — skipping upload."
+          else
+            curl -sf -X POST "$EVAL_KPI_UPLOAD_URL" \
+              -H "authorization: Bearer $EVAL_KPI_UPLOAD_TOKEN" \
+              -H "content-type: application/json" \
+              --data @"$SNAPSHOT" \
+              && echo "Snapshot uploaded." || echo "Snapshot upload failed (non-fatal)."
+          fi
+
       - name: Collect eval results
         if: always()
         run: |

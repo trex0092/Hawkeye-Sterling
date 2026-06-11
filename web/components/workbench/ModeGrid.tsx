@@ -30,7 +30,7 @@ export function ModeGrid({ modes, selectedIds, onToggle, totalInFaculty: _totalI
             <button
               key={mode.id}
               onClick={() => onToggle(mode.id)}
-              className={`text-left px-3 py-2.5 rounded border transition-all duration-100 cursor-pointer ${
+              className={`text-left px-2.5 py-1.5 rounded border transition-all duration-100 cursor-pointer ${
                 selected
                   ? "bg-brand border-brand text-white"
                   : "bg-bg-panel border-hair-2 hover:border-brand hover:bg-brand-dim"

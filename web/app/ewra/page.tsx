@@ -355,7 +355,7 @@ export default function EwraPage() {
             type="button"
             onClick={() => { void runBoardReport(); }}
             disabled={boardLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors"
           >
             {boardLoading ? (
               <>
@@ -373,7 +373,7 @@ export default function EwraPage() {
             type="button"
             onClick={() => { void runThreatIntel(); }}
             disabled={threatLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-1 text-12 font-semibold hover:bg-bg-2 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-1 text-11 font-semibold hover:bg-bg-2 disabled:opacity-50 transition-colors"
           >
             {threatLoading ? (
               <>
@@ -390,7 +390,7 @@ export default function EwraPage() {
           <button
             type="button"
             onClick={() => { captureSnapshot(["Manual snapshot"]); setHistoryOpen(true); }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 bg-bg-panel text-ink-2 text-12 font-medium hover:bg-bg-2 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-2 text-11 font-medium hover:bg-bg-2 transition-colors"
           >
             <span>🕓</span>
             Save Snapshot
@@ -563,7 +563,7 @@ export default function EwraPage() {
                   ].join("\n");
                   void navigator.clipboard.writeText(text);
                 }}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
+                className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors"
               >
                 Copy to clipboard
               </button>
@@ -663,7 +663,7 @@ export default function EwraPage() {
                                 const patch = { inherent: adj.suggestedScore };
                                 updateDim(dim.id, patch);
                               }}
-                              className="shrink-0 text-11 font-semibold px-3 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
+                              className="shrink-0 text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90 transition-colors"
                             >
                               Apply
                             </button>
@@ -686,7 +686,7 @@ export default function EwraPage() {
           <button
             type="button"
             onClick={() => setHistoryOpen((o) => !o)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-2 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-1.5 text-left hover:bg-bg-2 transition-colors"
           >
             <span className="text-10 font-semibold uppercase tracking-wide-3 text-ink-2">
               🕓 Version History ({history.length} snapshot{history.length !== 1 ? "s" : ""})

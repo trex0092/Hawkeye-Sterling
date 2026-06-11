@@ -28,6 +28,9 @@ interface EnvSpec {
   required: boolean;
   vars: string[];      // any one of these being non-empty counts as "present"
   hint: string;
+  /** True when the codebase ships a working built-in fallback, so the
+   *  variable is configured even with no env var set. */
+  codeDefault?: boolean;
 }
 
 const ENV_SPECS: EnvSpec[] = [
@@ -45,7 +48,7 @@ const ENV_SPECS: EnvSpec[] = [
   { id: "cron_secret", label: "CRON_SECRET", group: "Scheduled Jobs", required: false, vars: ["CRON_SECRET", "ONGOING_RUN_TOKEN"], hint: "Bearer token for scheduled cron routes. /api/cron/transaction-monitor also accepts ONGOING_RUN_TOKEN; /api/cron/sanctions-sweep requires CRON_SECRET specifically. Generate: openssl rand -hex 32" },
 
   // goAML / FIU Reporting
-  { id: "goaml_entities", label: "HAWKEYE_ENTITIES", group: "goAML / FIU Reporting", required: true, vars: ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"], hint: "Reporting entity JSON array (or legacy GOAML_RENTITY_ID). Required for STR/SAR filing." },
+  { id: "goaml_entities", label: "HAWKEYE_ENTITIES", group: "goAML / FIU Reporting", required: true, vars: ["HAWKEYE_ENTITIES", "GOAML_RENTITY_ID"], codeDefault: true, hint: "Reporting entity JSON array (or legacy GOAML_RENTITY_ID). Built-in HS1–HS6 defaults from hs-defaults.ts apply when unset." },
   { id: "goaml_mlro_name", label: "GOAML_MLRO_FULL_NAME", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_FULL_NAME"], hint: "MLRO full name for STR filings." },
   { id: "goaml_mlro_email", label: "GOAML_MLRO_EMAIL", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_EMAIL"], hint: "MLRO email address for STR filings." },
   { id: "goaml_mlro_phone", label: "GOAML_MLRO_PHONE", group: "goAML / FIU Reporting", required: false, vars: ["GOAML_MLRO_PHONE"], hint: "MLRO phone number for STR filings." },
@@ -85,8 +88,8 @@ const ENV_SPECS: EnvSpec[] = [
 
   // Operational Integrations
   { id: "asana_token", label: "ASANA_TOKEN", group: "Operational Integrations", required: false, vars: ["ASANA_TOKEN"], hint: "Asana Personal Access Token for case inbox delivery." },
-  { id: "asana_workspace", label: "ASANA_WORKSPACE_GID", group: "Operational Integrations", required: false, vars: ["ASANA_WORKSPACE_GID"], hint: "Asana workspace GID. Obtain from your Asana workspace URL." },
-  { id: "asana_project", label: "ASANA_PROJECT_GID", group: "Operational Integrations", required: false, vars: ["ASANA_PROJECT_GID"], hint: "Asana master inbox project GID." },
+  { id: "asana_workspace", label: "ASANA_WORKSPACE_GID", group: "Operational Integrations", required: false, vars: ["ASANA_WORKSPACE_GID"], codeDefault: true, hint: "Asana workspace GID. Hardcoded operator-workspace fallback in asanaConfig.ts applies when unset." },
+  { id: "asana_project", label: "ASANA_PROJECT_GID", group: "Operational Integrations", required: false, vars: ["ASANA_PROJECT_GID"], codeDefault: true, hint: "Asana master inbox project GID. Hardcoded fallback in asanaConfig.ts applies when unset." },
   { id: "upstash_redis", label: "UPSTASH_REDIS_REST_URL", group: "Operational Integrations", required: false, vars: ["UPSTASH_REDIS_REST_URL"], hint: "Upstash Redis for production-grade rate limiting. Falls back to Blobs if unset." },
   { id: "upstash_redis_token", label: "UPSTASH_REDIS_REST_TOKEN", group: "Operational Integrations", required: false, vars: ["UPSTASH_REDIS_REST_TOKEN"], hint: "Upstash Redis REST token (required alongside UPSTASH_REDIS_REST_URL)." },
 ];
@@ -100,14 +103,20 @@ export async function GET(req: Request): Promise<NextResponse> {
     tenantIdFromGate(gate),
   ).catch(() => undefined);
 
-  const checks = ENV_SPECS.map((spec) => ({
-    id: spec.id,
-    label: spec.label,
-    group: spec.group,
-    required: spec.required,
-    present: spec.vars.some((v) => !!process.env[v]?.trim()),
-    hint: spec.hint,
-  }));
+  const checks = ENV_SPECS.map((spec) => {
+    const envPresent = spec.vars.some((v) => !!process.env[v]?.trim());
+    const source: "env" | "default" | "none" = envPresent ? "env" : spec.codeDefault ? "default" : "none";
+    return {
+      id: spec.id,
+      label: spec.label,
+      group: spec.group,
+      required: spec.required,
+      // Configured when the env var is set OR the codebase ships a default.
+      present: envPresent || spec.codeDefault === true,
+      source,
+      hint: spec.hint,
+    };
+  });
 
   const requiredConfigured = checks.filter((c) => c.required && c.present).length;
   const requiredMissing = checks.filter((c) => c.required && !c.present).length;

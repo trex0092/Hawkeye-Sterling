@@ -136,7 +136,7 @@ export function InstallAppButton(): JSX.Element | null {
             <button
               type="button"
               onClick={dismissForever}
-              className="w-full text-11 text-ink-3 hover:text-ink-0 border border-hair-2 rounded py-1.5"
+              className="w-full text-11 text-ink-3 hover:text-ink-0 border border-hair-2 rounded py-1"
             >
               Don&apos;t show again
             </button>

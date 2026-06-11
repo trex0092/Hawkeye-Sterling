@@ -517,7 +517,7 @@ function TypologyCard({
               <button
                 type="button"
                 onClick={() => onViewPlaybook(matched)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-brand text-brand text-12 font-semibold hover:bg-brand/10 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-brand text-brand text-11 font-semibold hover:bg-brand/10 transition-colors"
               >
                 📖 Playbook
               </button>
@@ -526,7 +526,7 @@ function TypologyCard({
           <button
             type="button"
             onClick={() => onDeepDive(typology.name)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 transition-colors"
           >
             Deep Dive →
           </button>
@@ -657,7 +657,7 @@ export default function TypologyLibraryPage() {
             type="button"
             onClick={() => void handleSearch()}
             disabled={loading}
-            className="px-5 py-2.5 rounded-lg bg-green-dim text-green text-13 font-semibold border border-green/40 hover:bg-green/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="px-3 py-1.5 rounded-lg bg-green-dim text-green text-12 font-semibold border border-green/40 hover:bg-green/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             {loading ? "⌕…" : "⌕"}
           </button>
@@ -684,7 +684,7 @@ export default function TypologyLibraryPage() {
           <button
             type="button"
             onClick={() => void handleSearch()}
-            className="text-10 font-semibold px-3 py-1 rounded border border-red/40 text-red hover:bg-red/10"
+            className="text-10 font-semibold px-2.5 py-1 rounded border border-red/40 text-red hover:bg-red/10"
           >
             Retry
           </button>

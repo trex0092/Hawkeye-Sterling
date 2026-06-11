@@ -200,7 +200,7 @@ export default function AuditTrailPage() {
             type="button"
             onClick={() => void runAnomalyScan()}
             disabled={anomalyLoading || entries.length === 0}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-brand bg-brand-dim text-brand hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
           >
             {anomalyLoading ? "Scanning…" : "🔍 Run Anomaly Detection"}
           </button>
@@ -208,7 +208,7 @@ export default function AuditTrailPage() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+              className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
               style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
             >
               PDF
@@ -218,7 +218,7 @@ export default function AuditTrailPage() {
             <button
               type="button"
               onClick={handleClear}
-              className="text-11 font-semibold px-3 py-1.5 rounded border border-red-500/40 text-red hover:bg-red-950/20"
+              className="text-11 font-semibold px-2.5 py-1 rounded border border-red-500/40 text-red hover:bg-red-950/20"
             >
               Clear
             </button>

@@ -264,7 +264,7 @@ export function GovernanceSection() {
         </div>
         <p className="text-12 text-ink-2 leading-relaxed">{data.policyAttestation}</p>
         <div className="mt-2 text-10 text-ink-4">
-          Generated {new Date(data.generatedAt).toLocaleString()} · Tenant: {data.tenantId}
+          Generated {new Date(data.generatedAt).toLocaleString("en-GB")} · Tenant: {data.tenantId}
         </div>
       </div>
     </div>

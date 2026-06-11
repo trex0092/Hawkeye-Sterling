@@ -253,7 +253,7 @@ export function PerformanceMonitoringDashboard({
               tabIndex={selected ? 0 : -1}
               onKeyDown={onTabKey}
               onClick={() => setTab(t.id)}
-              className={`text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border-b-2 -mb-px font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 ${
+              className={`text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border-b-2 -mb-px font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 ${
                 selected
                   ? "border-brand text-brand-deep"
                   : "border-transparent text-ink-2 hover:text-ink-1"

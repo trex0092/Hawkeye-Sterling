@@ -239,7 +239,7 @@ export function AuditTrailViewer({
           <button
             type="submit"
             disabled={loading}
-            className="w-full text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 bg-brand text-white rounded font-semibold hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+            className="w-full text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 bg-brand text-white rounded font-semibold hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
           >
             {loading ? "Loading…" : "Apply filters"}
           </button>
@@ -292,7 +292,7 @@ export function AuditTrailViewer({
                   onClick={() => toggleExpanded(entry.sequence)}
                   aria-expanded={isOpen}
                   aria-controls={`audit-entry-body-${entry.sequence}`}
-                  className="flex-1 flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
+                  className="flex-1 flex items-center gap-3 px-2.5 py-1.5 text-left hover:bg-bg-2 transition-colors focus-visible:outline-none focus-visible:bg-bg-2"
                 >
                   <span
                     id={`audit-entry-${entry.sequence}`}
@@ -311,7 +311,7 @@ export function AuditTrailViewer({
                   onClick={() => dismissEntry(entry.sequence)}
                   aria-label={`Dismiss entry #${entry.sequence} from view`}
                   title="Hide from view (entry remains in the immutable audit chain)"
-                  className="flex-shrink-0 w-8 h-full flex items-center justify-center text-ink-3 hover:text-red-400 hover:bg-red-950/20 transition-colors border-l border-hair-2 px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
+                  className="flex-shrink-0 w-8 h-full flex items-center justify-center text-ink-3 hover:text-red-400 hover:bg-red-950/20 transition-colors border-l border-hair-2 px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
                 >
                   ×
                 </button>

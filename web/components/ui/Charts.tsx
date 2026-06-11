@@ -89,7 +89,7 @@ export function BarChart({ data, height, compact }: Props) {
                 transition: `opacity ${0.3 + i * 0.02}s ease`,
               }}
             >
-              {d.value.toLocaleString()}
+              {d.value.toLocaleString("en-GB")}
             </div>
           </div>
         );

@@ -476,14 +476,14 @@ function AddModelForm({ onAdd, onCancel }: { onAdd: (_m: AIModel) => void; onCan
         <button
           type="button"
           onClick={submit}
-          className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90"
+          className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90"
         >
           Register
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
+          className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
         >
           Cancel
         </button>
@@ -679,14 +679,14 @@ function AddIncidentForm({
         <button
           type="button"
           onClick={submit}
-          className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90"
+          className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90"
         >
           Log incident
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
+          className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
         >
           Cancel
         </button>
@@ -1211,7 +1211,7 @@ function EthicsAssessmentPanel({
           <button
             type="button"
             onClick={copyToClipboard}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2"
           >
             {copied ? "✓ Copied!" : "Copy to clipboard"}
           </button>
@@ -1352,7 +1352,7 @@ export default function ResponsibleAIPage() {
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2.5 text-12 font-medium border-b-2 -mb-px transition-colors ${
+            className={`px-3 py-1.5 text-11 font-medium border-b-2 -mb-px transition-colors ${
               tab === t.key
                 ? "border-brand text-brand bg-brand-dim"
                 : "border-transparent text-ink-2 hover:text-ink-1 hover:border-hair-2"
@@ -1519,7 +1519,7 @@ export default function ResponsibleAIPage() {
               <button
                 type="button"
                 onClick={saveRao}
-                className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90"
+                className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90"
               >
                 Save
               </button>

@@ -194,7 +194,7 @@ function PlaybookRow({
     <div className="border border-hair-2 rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-bg-1 transition-colors"
+        className="w-full text-left px-2.5 py-1.5 flex items-center gap-3 hover:bg-bg-1 transition-colors"
       >
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded-sm font-mono text-10.5 font-semibold tracking-wide-2 ${statusStyle[pb.status]}`}

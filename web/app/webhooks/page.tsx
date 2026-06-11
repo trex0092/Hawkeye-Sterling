@@ -143,7 +143,7 @@ function RegisterForm({ onCreated }: { onCreated: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-1.5 rounded text-12 text-white bg-brand hover:opacity-90 transition-opacity font-medium"
+        className="px-3 py-1 rounded text-11 text-white bg-brand hover:opacity-90 transition-opacity font-medium"
       >
         + Register Webhook
       </button>
@@ -206,14 +206,14 @@ function RegisterForm({ onCreated }: { onCreated: () => void }) {
           <button
             type="button"
             onClick={() => { setOpen(false); setError(null); }}
-            className="px-4 py-1.5 rounded text-12 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
+            className="px-3 py-1 rounded text-11 text-ink-2 border border-hair-2 hover:bg-bg-1 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || selectedEvents.size === 0}
-            className="px-4 py-1.5 rounded text-12 text-white bg-brand hover:opacity-90 transition-opacity disabled:opacity-40 font-medium"
+            className="px-3 py-1 rounded text-11 text-white bg-brand hover:opacity-90 transition-opacity disabled:opacity-40 font-medium"
           >
             {saving ? "Registering…" : "Register"}
           </button>
@@ -312,7 +312,7 @@ function WebhooksTable({
                     type="button"
                     disabled={loadingId === wh.id}
                     onClick={() => onTest(wh.id)}
-                    className="px-3 py-1 rounded text-11 text-ink-1 border border-hair-2 hover:bg-bg-1 transition-colors disabled:opacity-40"
+                    className="px-2.5 py-1 rounded text-11 text-ink-1 border border-hair-2 hover:bg-bg-1 transition-colors disabled:opacity-40"
                   >
                     Test
                   </button>
@@ -320,7 +320,7 @@ function WebhooksTable({
                     type="button"
                     disabled={loadingId === wh.id}
                     onClick={() => onDelete(wh.id)}
-                    className="px-3 py-1 rounded text-11 text-red border border-red/30 hover:bg-red-dim transition-colors disabled:opacity-40"
+                    className="px-2.5 py-1 rounded text-11 text-red border border-red/30 hover:bg-red-dim transition-colors disabled:opacity-40"
                   >
                     Delete
                   </button>

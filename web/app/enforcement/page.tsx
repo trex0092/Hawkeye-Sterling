@@ -869,9 +869,9 @@ export default function EnforcementPage() {
                     />
                     <div className="flex gap-2">
                       <button type="button" onClick={() => saveEdit(d.id)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                        className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                       <button type="button" onClick={() => setEditingId(null)}
-                        className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                        className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                     </div>
                   </div>
                 ) : (

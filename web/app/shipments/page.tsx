@@ -570,7 +570,7 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
                   const active = (draft.riskLevels ?? []).includes(lvl);
                   return (
                     <button key={lvl} type="button" onClick={() => toggleRisk(lvl)}
-                      className={`flex-1 py-1.5 rounded border text-11 font-semibold transition-colors ${
+                      className={`flex-1 py-1 rounded border text-11 font-semibold transition-colors ${
                         active ? RISK_LEVEL_TONE[lvl] : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
                       }`}>{lvl}</button>
                   );
@@ -731,8 +731,8 @@ function EditShipmentForm({ initial, onSave, onCancel }: { initial: Consignment;
         </div>
 
         <div className="flex gap-2 pt-3 border-t border-hair-2">
-          <button type="button" onClick={submit} className="text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white hover:bg-brand/90">✓</button>
-          <button type="button" onClick={onCancel} className="text-11 font-semibold px-4 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
+          <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1 rounded bg-brand text-white hover:bg-brand/90">✓</button>
+          <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
           <span className="ml-auto self-center text-10 text-ink-3 font-mono">Chain-of-custody ledger is WORM and not editable here.</span>
         </div>
       </div>
@@ -916,7 +916,7 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (_c: Consignment) => void
                   type="button"
                   onClick={() => toggleRisk(lvl)}
                   aria-pressed={active}
-                  className={`flex-1 py-1.5 rounded border text-10 font-semibold transition-colors ${
+                  className={`flex-1 py-1 rounded border text-10 font-semibold transition-colors ${
                     active ? RISK_LEVEL_TONE[lvl] : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
                   }`}
                 >
@@ -949,8 +949,8 @@ function AddShipmentForm({ onAdd, onCancel }: { onAdd: (_c: Consignment) => void
       </div>
 
       <div className="flex gap-2">
-        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
+        <button type="button" onClick={submit} className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-2.5 py-1 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -1120,7 +1120,7 @@ export default function ShipmentsPage() {
               <button
                 type="button"
                 onClick={() => setTbml(null)}
-                className="text-13 text-ink-3 hover:text-ink-1 px-4 py-2 text-left"
+                className="text-12 text-ink-3 hover:text-ink-1 px-3 py-1.5 text-left"
               >
                 Clear scan
               </button>
@@ -1159,7 +1159,7 @@ export default function ShipmentsPage() {
             <button
               type="button"
               onClick={() => setTbml(null)}
-              className="self-start text-11 text-ink-3 hover:text-ink-1 px-2 py-2"
+              className="self-start text-11 text-ink-3 hover:text-ink-1 px-2 py-1.5"
             >
               Clear scan
             </button>
@@ -1240,7 +1240,7 @@ export default function ShipmentsPage() {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`px-3 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1.5 text-11 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
                 active
                   ? "border-brand text-brand bg-brand-dim"
                   : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"

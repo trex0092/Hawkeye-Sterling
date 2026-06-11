@@ -1238,7 +1238,7 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
   // exposing actual values. Names are disclosed (they're well-known)
   // but values are never returned. Helps MLRO ops spot misconfigurations
   // (e.g. missing ASANA_TOKEN causing "Rebuild failed") at a glance.
-  const CONFIG_CHECKS: Array<{ id: string; label: string; required: boolean }> = [
+  const CONFIG_CHECKS: Array<{ id: string; label: string; required: boolean; codeDefault?: boolean }> = [
     { id: "anthropic",   label: "ANTHROPIC_API_KEY",       required: true  },
     { id: "admin_token", label: "ADMIN_TOKEN",              required: true  },
     { id: "audit_chain", label: "AUDIT_CHAIN_SECRET",       required: true  },
@@ -1247,10 +1247,10 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     { id: "app_url",     label: "NEXT_PUBLIC_APP_URL",      required: true  },
     { id: "ongoing_tok", label: "ONGOING_RUN_TOKEN",        required: true  },
     { id: "sanct_tok",   label: "SANCTIONS_CRON_TOKEN",     required: true  },
-    { id: "goaml_ent",   label: "HAWKEYE_ENTITIES",         required: true  },
+    { id: "goaml_ent",   label: "HAWKEYE_ENTITIES",         required: true,  codeDefault: true },
     { id: "asana_tok",   label: "ASANA_TOKEN",              required: false },
-    { id: "asana_ws",    label: "ASANA_WORKSPACE_GID",      required: false },
-    { id: "asana_proj",  label: "ASANA_PROJECT_GID",        required: false },
+    { id: "asana_ws",    label: "ASANA_WORKSPACE_GID",      required: false, codeDefault: true },
+    { id: "asana_proj",  label: "ASANA_PROJECT_GID",        required: false, codeDefault: true },
     { id: "redis",       label: "UPSTASH_REDIS_REST_URL",   required: false },
   ];
   const VAR_MAP: Record<string, string[]> = {
@@ -1275,10 +1275,19 @@ async function _handleGet(isAdmin: boolean, gateHeaders: Record<string, string> 
     asana_proj:  ["ASANA_PROJECT_GID"],
     redis:       ["UPSTASH_REDIS_REST_URL"],
   };
-  const configChecks = CONFIG_CHECKS.map((c) => ({
-    ...c,
-    present: (VAR_MAP[c.id] ?? [c.label]).some((v) => !!process.env[v]?.trim()),
-  }));
+  // codeDefault marks vars the codebase backstops with built-in values
+  // (HS_DEFAULTS.HAWKEYE_ENTITIES, hardcoded Asana GIDs in asanaConfig.ts)
+  // so they report as configured-by-default rather than missing.
+  const configChecks = CONFIG_CHECKS.map((c) => {
+    const envPresent = (VAR_MAP[c.id] ?? [c.label]).some((v) => !!process.env[v]?.trim());
+    return {
+      id: c.id,
+      label: c.label,
+      required: c.required,
+      present: envPresent || c.codeDefault === true,
+      source: (envPresent ? "env" : c.codeDefault ? "default" : "none") as "env" | "default" | "none",
+    };
+  });
   const configHealth = {
     requiredTotal:       configChecks.filter((c) => c.required).length,
     requiredConfigured:  configChecks.filter((c) => c.required && c.present).length,

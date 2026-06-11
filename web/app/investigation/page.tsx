@@ -294,7 +294,7 @@ export default function InvestigationPage() {
                 <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-bg-panel border border-hair-2 rounded-lg shadow-lg overflow-hidden">
                   {suggestions.map((n) => (
                     <button key={n} type="button" onMouseDown={() => commitSubject(n)}
-                      className="w-full text-left px-3 py-2 text-12 text-ink-1 hover:bg-brand-dim hover:text-brand-deep transition-colors">
+                      className="w-full text-left px-2.5 py-1.5 text-11 text-ink-1 hover:bg-brand-dim hover:text-brand-deep transition-colors">
                       {n}
                     </button>
                   ))}
@@ -302,7 +302,7 @@ export default function InvestigationPage() {
               )}
             </div>
             <button type="button" onClick={() => commitSubject(subject)}
-              className="mt-2 w-full text-11 font-semibold py-1.5 rounded bg-brand text-white hover:opacity-90">
+              className="mt-2 w-full text-11 font-semibold py-1 rounded bg-brand text-white hover:opacity-90">
               Set subject
             </button>
             {committed && (
@@ -339,7 +339,7 @@ export default function InvestigationPage() {
                   placeholder="Relationship…" className={inputCls} />
               </div>
               <button type="button" onClick={addParty}
-                className="w-full text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+                className="w-full text-11 font-semibold py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
             </div>
 
             {parties.length === 0 && (
@@ -368,7 +368,7 @@ export default function InvestigationPage() {
                     </div>
                     <button type="button"
                       onClick={(e) => { e.stopPropagation(); removeParty(p.id); }}
-                      className="text-ink-4 hover:text-red transition-colors text-13 shrink-0">×</button>
+                      className="text-ink-4 hover:text-red transition-colors text-12 shrink-0">×</button>
                   </div>
                 );
               })}
@@ -396,7 +396,7 @@ export default function InvestigationPage() {
                 onKeyDown={(e) => { if (e.key === "Enter") addEvent(); }}
                 placeholder="Description (optional)…" className={inputCls} />
               <button type="button" onClick={addEvent}
-                className="w-full text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+                className="w-full text-11 font-semibold py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
             </div>
 
             {events.length === 0 && (
@@ -417,7 +417,7 @@ export default function InvestigationPage() {
                   </div>
                   <button type="button"
                     onClick={() => setEvents((prev) => prev.filter((e) => e.id !== ev.id))}
-                    className="text-ink-4 hover:text-red transition-colors text-13 shrink-0 mt-0.5">×</button>
+                    className="text-ink-4 hover:text-red transition-colors text-12 shrink-0 mt-0.5">×</button>
                 </div>
               ))}
             </div>

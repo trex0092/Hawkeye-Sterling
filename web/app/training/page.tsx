@@ -341,7 +341,7 @@ export default function TrainingPage() {
               key={t}
               type="button"
               onClick={() => setActiveTab(t)}
-              className={`px-4 py-2 text-12 font-medium rounded-t transition-colors -mb-px border border-transparent ${
+              className={`px-3 py-1.5 text-11 font-medium rounded-t transition-colors -mb-px border border-transparent ${
                 activeTab === t
                   ? "bg-bg-panel border-hair-2 border-b-bg-panel text-ink-0"
                   : "text-ink-2 hover:text-ink-0"
@@ -382,8 +382,8 @@ export default function TrainingPage() {
                           </div>
                           <div className="flex gap-2 items-center">
                             <input value={editDraft.delivery} onChange={setEdit("delivery")} placeholder="Delivery method" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-40" />
-                            <button type="button" onClick={() => saveRowEdit(r.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
-                            <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                            <button type="button" onClick={() => saveRowEdit(r.id)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                            <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                           </div>
                         </td>
                       </tr>
@@ -496,8 +496,8 @@ export default function TrainingPage() {
                               </select>
                             </div>
                             <div className="flex gap-2">
-                              <button type="button" onClick={saveProgEdit} className="text-11 px-3 py-1 bg-brand text-white rounded font-semibold hover:bg-brand-hover">✓</button>
-                              <button type="button" onClick={() => { setProgEditingSession(null); setProgEditDraft({}); }} className="text-11 px-3 py-1 border border-hair-2 rounded text-ink-2 hover:text-ink-0">Cancel</button>
+                              <button type="button" onClick={saveProgEdit} className="text-11 px-2.5 py-1 bg-brand text-white rounded font-semibold hover:bg-brand-hover">✓</button>
+                              <button type="button" onClick={() => { setProgEditingSession(null); setProgEditDraft({}); }} className="text-11 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:text-ink-0">Cancel</button>
                             </div>
                           </td>
                         </tr>

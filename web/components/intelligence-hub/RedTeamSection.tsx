@@ -217,12 +217,12 @@ export function RedTeamSection() {
           type="button"
           onClick={() => void runAll()}
           disabled={runningAll}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50"
+          className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50"
         >
           {runningAll ? "Running..." : `Run ${filter === "all" ? "all" : "filtered"}`}
         </button>
         <span className="text-11 text-ink-3 font-mono ml-auto">
-          {stats.lastRun > 0 ? `last run ${new Date(stats.lastRun).toLocaleString()}` : "not yet run"}
+          {stats.lastRun > 0 ? `last run ${new Date(stats.lastRun).toLocaleString("en-GB")}` : "not yet run"}
         </span>
       </div>
 

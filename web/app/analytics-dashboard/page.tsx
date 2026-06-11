@@ -176,7 +176,7 @@ export default function AnalyticsDashboardPage() {
         <button
           onClick={load}
           disabled={loading}
-          className="px-3 py-1.5 rounded-lg text-12 font-semibold border border-hair-2 bg-bg-panel hover:bg-bg-1 text-ink-1 transition-colors disabled:opacity-40"
+          className="px-2.5 py-1 rounded-lg text-11 font-semibold border border-hair-2 bg-bg-panel hover:bg-bg-1 text-ink-1 transition-colors disabled:opacity-40"
         >
           {loading ? "Loading…" : "↺ Refresh"}
         </button>
@@ -184,7 +184,7 @@ export default function AnalyticsDashboardPage() {
 
       {refreshedAt && (
         <div className="text-10 text-ink-4 mb-4">
-          Last refreshed: {refreshedAt.toLocaleTimeString()}
+          Last refreshed: {refreshedAt.toLocaleTimeString("en-GB")}
         </div>
       )}
 
@@ -261,7 +261,7 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <div className="text-10 text-ink-4">
-            Generated {new Date(data.generatedAt).toLocaleString()} · Tenant: {data.tenantId}
+            Generated {new Date(data.generatedAt).toLocaleString("en-GB")} · Tenant: {data.tenantId}
           </div>
         </div>
       )}

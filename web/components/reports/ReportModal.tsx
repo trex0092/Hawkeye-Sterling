@@ -199,7 +199,7 @@ export function ReportModal({
               type="button"
               onClick={handleDownload}
               disabled={state.status !== "ready"}
-              className="px-3 py-1.5 text-11 font-medium rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-2.5 py-1 text-11 font-medium rounded border border-hair-2 bg-bg-panel text-ink-0 hover:bg-bg-1 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Download .txt
             </button>

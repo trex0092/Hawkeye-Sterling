@@ -1502,7 +1502,7 @@ export default function MlroAdvisorPage() {
         question: q,
         mode: m,
         result: data,
-        askedAt: new Date().toLocaleTimeString(),
+        askedAt: new Date().toLocaleTimeString("en-GB"),
         expanded: false,
       },
       ...prev,
@@ -1540,7 +1540,7 @@ export default function MlroAdvisorPage() {
           narrative: "",
           complianceReview: { advisorVerdict: "approved", issues: [] },
         },
-        askedAt: startedAt.toLocaleTimeString(),
+        askedAt: startedAt.toLocaleTimeString("en-GB"),
         expanded: true,
       },
       ...prev,
@@ -1812,7 +1812,7 @@ export default function MlroAdvisorPage() {
         hardenSuggestions: data.hardenSuggestions ?? [],
         fullCritique: data.fullCritique ?? "",
         elapsedMs: data.elapsedMs ?? 0,
-        challengedAt: new Date().toLocaleTimeString(),
+        challengedAt: new Date().toLocaleTimeString("en-GB"),
       };
       setAdvisorHistory((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, challenging: false, challenge } : e)),
@@ -1880,7 +1880,7 @@ export default function MlroAdvisorPage() {
               id: `qa-${Date.now()}`,
               question: query,
               result: { ...data, ok: true, answer: data.partialAnswer, citations: [], passedQualityGate: false, source: "mlro-advisor-fallback" } as ComplianceAnswer,
-              askedAt: new Date().toLocaleTimeString(),
+              askedAt: new Date().toLocaleTimeString("en-GB"),
             },
           ]);
           setQaQuery("");
@@ -1892,7 +1892,7 @@ export default function MlroAdvisorPage() {
             id: `qa-${Date.now()}`,
             question: query,
             result: data,
-            askedAt: new Date().toLocaleTimeString(),
+            askedAt: new Date().toLocaleTimeString("en-GB"),
           },
         ]);
         setQaQuery("");
@@ -3606,7 +3606,7 @@ export default function MlroAdvisorPage() {
                   type="button"
                   onClick={() => { void handleAsk(); }}
                   disabled={!question.trim() || running}
-                  className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
                   {running ? (mode === "quick" ? "Streaming…" : "Analysing…") : "Ask Advisor"}
                 </button>
@@ -4097,7 +4097,7 @@ export default function MlroAdvisorPage() {
                   type="button"
                   onClick={() => { void handleQaAsk(); }}
                   disabled={qaLoading || qaQuery.trim().length < 10}
-                  className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
                   {qaLoading ? "Asking…" : "Ask"}
                 </button>
@@ -4209,7 +4209,7 @@ export default function MlroAdvisorPage() {
                     <button
                       type="button"
                       onClick={() => setOpenGroupIdx(openGroupIdx === idx ? null : idx)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-left hover:bg-bg-1 transition-colors"
                     >
                       <span className="text-12 font-semibold text-ink-1">{group.label}</span>
                       <span className="text-10 text-ink-3">{openGroupIdx === idx ? "▲" : "▼"}</span>
@@ -4222,7 +4222,7 @@ export default function MlroAdvisorPage() {
                             type="button"
                             onClick={() => { void handleQaAsk(q); }}
                             disabled={qaLoading}
-                            className="w-full text-left text-12 text-brand hover:text-brand-deep hover:bg-brand-dim/20 px-2.5 py-1.5 rounded transition-colors disabled:opacity-40"
+                            className="w-full text-left text-11 text-brand hover:text-brand-deep hover:bg-brand-dim/20 px-2.5 py-1 rounded transition-colors disabled:opacity-40"
                           >
                             {q}
                           </button>
@@ -4480,7 +4480,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runEscalation()} disabled={escLoading || !escSubject.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {escLoading ? "Deciding…" : "Get Escalation Decision"}
                 </button>
                 {toolErrors["escalation"] && (
@@ -4527,7 +4527,7 @@ export default function MlroAdvisorPage() {
                   placeholder="Paste case notes, transaction descriptions, or any free-text compliance content…"
                   className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-y focus:outline-none focus:border-brand" />
                 <button type="button" onClick={() => void runFlagExtraction()} disabled={flagLoading || !flagText.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {flagLoading ? "Extracting…" : "Extract Red Flags"}
                 </button>
                 {flagError && (
@@ -4578,7 +4578,7 @@ export default function MlroAdvisorPage() {
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Cross-Case Pattern Detector</div>
                 <p className="text-11 text-ink-3">Analyzes all open cases in your register for coordinated structuring, shared counterparties, typology clusters, and consolidation candidates.</p>
                 <button type="button" onClick={() => void runCasePatterns()} disabled={patternLoading}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {patternLoading ? "Analyzing…" : "Detect Patterns Across Cases"}
                 </button>
                 {toolErrors["casePatterns"] && (
@@ -4648,7 +4648,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runSubjectBrief()} disabled={briefLoading || !briefSubject.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {briefLoading ? "Briefing…" : "Generate Intelligence Brief"}
                 </button>
                 {toolErrors["subjectBrief"] && (
@@ -4769,7 +4769,7 @@ export default function MlroAdvisorPage() {
                     <button
                       type="button"
                       onClick={() => setRpsInput((p) => ({ ...p, adverseMedia: !p.adverseMedia }))}
-                      className={`px-3 py-1 rounded border text-11 font-semibold transition-colors ${
+                      className={`px-2.5 py-1 rounded border text-11 font-semibold transition-colors ${
                         rpsInput.adverseMedia
                           ? "bg-red-dim text-red border-red/40"
                           : "bg-green-dim text-green border-green/40"
@@ -4794,7 +4794,7 @@ export default function MlroAdvisorPage() {
                   type="button"
                   onClick={() => void runRiskProfileSummary()}
                   disabled={rpsLoading || !rpsInput.entityName.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
                 >
                   {rpsLoading ? "Generating…" : "Generate Risk Profile Summary"}
                 </button>
@@ -5126,7 +5126,7 @@ export default function MlroAdvisorPage() {
                   type="button"
                   onClick={() => void runTypologyMatch()}
                   disabled={typoMatchLoading || !typoInput.facts.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40"
                 >
                   {typoMatchLoading ? "Matching…" : "Match Typologies"}
                 </button>
@@ -5263,7 +5263,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runPepNetwork()} disabled={pepNetLoading || !pepInput.name.trim() || !pepInput.role.trim() || !pepInput.country.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pepNetLoading ? "Generating…" : "Generate PEP Network Intelligence"}
                 </button>
                 {toolErrors["pepNetwork"] && (
@@ -5405,7 +5405,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runSanctionsNexus()} disabled={sanctionsNexusLoading || !sanctionsNexusInput.subject.trim() || !sanctionsNexusInput.country.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {sanctionsNexusLoading ? "Analyzing…" : "Analyze Sanctions Exposure"}
                 </button>
                 {toolErrors["sanctionsNexus"] && (
@@ -5513,7 +5513,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runTxnNarrative()} disabled={txnLoading || !txnNarrative.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {txnLoading ? "Analyzing…" : "Analyze Transaction"}
                 </button>
                 {toolErrors["txnNarrative"] && (
@@ -5617,7 +5617,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runEddQuestionnaire()} disabled={eddLoading || !eddCustomerType.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {eddLoading ? "Generating…" : "Generate EDD Questionnaire"}
                 </button>
                 {toolErrors["eddQuestionnaire"] && (
@@ -5640,7 +5640,7 @@ export default function MlroAdvisorPage() {
                         {e.questions.map((q) => (
                           <div key={q.id} className={`border rounded-lg overflow-hidden ${q.mandatory ? "border-red/30" : "border-hair-2"}`}>
                             <button type="button" onClick={() => setEddExpandedQ(eddExpandedQ === q.id ? null : q.id)}
-                              className="w-full text-left px-3 py-2.5 flex items-start gap-2 hover:bg-bg-panel transition-colors">
+                              className="w-full text-left px-2.5 py-1.5 flex items-start gap-2 hover:bg-bg-panel transition-colors">
                               <span className={`shrink-0 mt-0.5 font-mono text-9 px-1.5 py-px rounded uppercase ${q.mandatory ? "bg-red-dim text-red" : "bg-bg-2 text-ink-3"}`}>
                                 {q.mandatory ? "mandatory" : "optional"}
                               </span>
@@ -5716,7 +5716,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runTbml()} disabled={tbmlLoading || !tbmlInput.invoiceDescription.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {tbmlLoading ? "Analyzing…" : "Analyze for TBML Risk"}
                 </button>
                 {toolErrors["tbml"] && (
@@ -5856,7 +5856,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runStrNarrative()} disabled={strNarrLoading || !strNarrInput.subjectName.trim() || !strNarrInput.activityDescription.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {strNarrLoading ? "Drafting…" : "Draft STR Narrative"}
                 </button>
                 {toolErrors["strNarr"] && (
@@ -5969,7 +5969,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runWireR16()} disabled={wireLoading}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {wireLoading ? "Checking…" : "Check R.16 Compliance"}
                 </button>
                 {toolErrors["wireR16"] && (
@@ -6075,7 +6075,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runPfScreener()} disabled={pfLoading || !pfInput.subject.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {pfLoading ? "Screening…" : "Screen for Proliferation Financing Risk"}
                 </button>
                 {toolErrors["pfScreener"] && (
@@ -6204,7 +6204,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runMlroMemo()} disabled={memoLoading || !memoInput.subjectName.trim() || !memoInput.activitySummary.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {memoLoading ? "Drafting Memo…" : "Generate MLRO Decision Memo"}
                 </button>
                 {toolErrors["mlroMemo"] && (
@@ -6304,7 +6304,7 @@ export default function MlroAdvisorPage() {
                   </div>
                 </div>
                 <button type="button" onClick={() => void runTfScreener()} disabled={tfLoading || !tfInput.subject.trim()}
-                  className="text-11 font-semibold px-4 py-2 rounded bg-red text-white hover:bg-red/90 disabled:opacity-40">
+                  className="text-11 font-semibold px-3 py-1.5 rounded bg-red text-white hover:bg-red/90 disabled:opacity-40">
                   {tfLoading ? "Screening…" : "Screen for Terrorism Financing Risk"}
                 </button>
                 {toolErrors["tfScreener"] && (
@@ -6415,7 +6415,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Banking Arrangements</label><input value={shellInput.bankingArrangements} onChange={(e) => setShellInput((p) => ({...p, bankingArrangements: e.target.value}))} placeholder="e.g. account in Singapore, multiple banks" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={shellInput.context} onChange={(e) => setShellInput((p) => ({...p, context: e.target.value}))} placeholder="Anything unusual about the structure" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runShellDetector()} disabled={shellLoading || !shellInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runShellDetector()} disabled={shellLoading || !shellInput.entityName.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {shellLoading ? "Analysing structure…" : "Detect Shell Indicators"}
                 </button>
                 {toolErrors["shellDetector"] && (
@@ -6486,7 +6486,7 @@ export default function MlroAdvisorPage() {
                       type="button"
                       onClick={() => void runFetchArticle()}
                       disabled={adverseFetchLoading || !adverseUrl.trim()}
-                      className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 whitespace-nowrap"
+                      className="text-11 font-semibold px-2.5 py-1 rounded border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 whitespace-nowrap"
                     >
                       {adverseFetchLoading ? "Fetching…" : "Fetch Article"}
                     </button>
@@ -6511,7 +6511,7 @@ export default function MlroAdvisorPage() {
                   <label className="block text-10 text-ink-3 mb-1">Subject Name (optional — improves relevance scoring)</label>
                   <input value={adverseSubject} onChange={(e) => setAdverseSubject(e.target.value)} placeholder="e.g. Mohammed Al-Rashidi, Gulf Trading LLC" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" />
                 </div>
-                <button type="button" onClick={() => void runAdverseClassify()} disabled={adverseLoading || !adverseText.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runAdverseClassify()} disabled={adverseLoading || !adverseText.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {adverseLoading ? "Classifying…" : "Classify Adverse Media"}
                 </button>
                 {toolErrors["adverseClassify"] && (
@@ -6576,7 +6576,7 @@ export default function MlroAdvisorPage() {
                   <label className="block text-10 text-ink-3 mb-1">Case Events / Notes * (dates + what happened, any format)</label>
                   <textarea value={timelineEvents} onChange={(e) => setTimelineEvents(e.target.value)} rows={8} placeholder={"01/01/2024 – first cash deposit AED 54,000\n15/02/2024 – second cash deposit AED 54,500, same depositor\n01/03/2025 – TM alert fired on structured deposits\n31/03/2025 – wire transfer AED 108,000 to high-risk jurisdiction"} className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
                 </div>
-                <button type="button" onClick={() => void runCaseTimeline()} disabled={timelineLoading || !timelineEvents.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runCaseTimeline()} disabled={timelineLoading || !timelineEvents.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {timelineLoading ? "Building timeline…" : "Build STR Timeline"}
                 </button>
                 {toolErrors["caseTimeline"] && (
@@ -6651,7 +6651,7 @@ export default function MlroAdvisorPage() {
                   <label className="block text-10 text-ink-3 mb-1">Case Facts *</label>
                   <textarea value={predicateFacts} onChange={(e) => setPredicateFacts(e.target.value)} rows={5} placeholder="Describe the suspicious activity: what happened, who was involved, what funds were moved, what was the alleged underlying crime…" className="w-full text-12 px-2.5 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none" />
                 </div>
-                <button type="button" onClick={() => void runMlPredicate()} disabled={predicateLoading || !predicateFacts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runMlPredicate()} disabled={predicateLoading || !predicateFacts.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {predicateLoading ? "Mapping predicates…" : "Map Predicate Offences"}
                 </button>
                 {toolErrors["mlPredicate"] && (
@@ -6732,8 +6732,8 @@ export default function MlroAdvisorPage() {
                   </div>
                 ))}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setClientRiskShareholders((p) => [...p, {designation:"", name:"", sharesPct:"", kind:"individual", nationality:"", pepStatus:"non-pep", emiratesId:"", idNumber:""}])} className="text-11 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:border-brand/40">+ Add Shareholder</button>
-                  <button type="button" onClick={() => void runClientRisk()} disabled={clientRiskLoading || !clientRiskEntity.name.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  <button type="button" onClick={() => setClientRiskShareholders((p) => [...p, {designation:"", name:"", sharesPct:"", kind:"individual", nationality:"", pepStatus:"non-pep", emiratesId:"", idNumber:""}])} className="text-11 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:border-brand/40">+ Add Shareholder</button>
+                  <button type="button" onClick={() => void runClientRisk()} disabled={clientRiskLoading || !clientRiskEntity.name.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                     {clientRiskLoading ? "Scoring…" : "Score Client Risk"}
                   </button>
                 </div>
@@ -6778,7 +6778,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Country *</label><input value={jurisCountry} onChange={(e) => setJurisCountry(e.target.value)} placeholder="e.g. Nigeria, Russia, Iran, Afghanistan" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Context (optional)</label><input value={jurisContext} onChange={(e) => setJurisContext(e.target.value)} placeholder="e.g. gold trade, remittances, real estate" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runJurisdictionIntel()} disabled={jurisLoading || !jurisCountry.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runJurisdictionIntel()} disabled={jurisLoading || !jurisCountry.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {jurisLoading ? "Loading intelligence…" : "Get Jurisdiction Intel"}
                 </button>
                 {toolErrors["jurisdictionIntel"] && (
@@ -6841,8 +6841,8 @@ export default function MlroAdvisorPage() {
                   </div>
                 ))}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setUboEntries((p) => [...p, {name:"",dob:"",nationality:"",gender:"",ownershipPct:"",role:""}])} className="text-11 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:border-brand/40">+ Add UBO</button>
-                  <button type="button" onClick={() => void runUboRisk()} disabled={uboLoading || !uboEntity.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                  <button type="button" onClick={() => setUboEntries((p) => [...p, {name:"",dob:"",nationality:"",gender:"",ownershipPct:"",role:""}])} className="text-11 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:border-brand/40">+ Add UBO</button>
+                  <button type="button" onClick={() => void runUboRisk()} disabled={uboLoading || !uboEntity.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                     {uboLoading ? "Analysing UBO chain…" : "Analyse UBO Risk"}
                   </button>
                 </div>
@@ -6966,7 +6966,7 @@ export default function MlroAdvisorPage() {
                     </select>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runCryptoWallet()} disabled={cryptoLoading || !cryptoAddress.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runCryptoWallet()} disabled={cryptoLoading || !cryptoAddress.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {cryptoLoading ? "Querying blockchain…" : "Analyse Wallet"}
                 </button>
                 {cryptoError && <div className="px-4 py-3 bg-amber-dim border border-amber/30 rounded text-12 text-amber">Service unavailable: {cryptoError}. Blockchain data service requires configuration.</div>}
@@ -6992,7 +6992,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Expected Transaction Profile</label><input value={onboardInput.expectedProfile} onChange={(e) => setOnboardInput((p) => ({...p, expectedProfile: e.target.value}))} placeholder="e.g. monthly salary credit AED 25,000, occasional gold purchases" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Address</label><input value={onboardInput.address} onChange={(e) => setOnboardInput((p) => ({...p, address: e.target.value}))} placeholder="Full residential or registered address" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runOnboardingTier()} disabled={onboardLoading || !onboardInput.fullName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+                <button type="button" onClick={() => void runOnboardingTier()} disabled={onboardLoading || !onboardInput.fullName.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
                   {onboardLoading ? "Scoring…" : "Score Onboarding Risk"}
                 </button>
                 {toolErrors["onboardingTier"] && (
@@ -7052,7 +7052,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Amount + Currency</label><div className="flex gap-2"><input value={prolifInput.amount} onChange={(e) => setProlifInput((p) => ({...p, amount: e.target.value}))} placeholder="Amount" className="flex-1 text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /><input value={prolifInput.currency} onChange={(e) => setProlifInput((p) => ({...p, currency: e.target.value}))} placeholder="USD" className="w-20 text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={prolifInput.context} onChange={(e) => setProlifInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="e.g. transshipment route, payment method, intermediaries" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runProlifFinance()} disabled={prolifLoading || !prolifInput.subject.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{prolifLoading ? "Assessing…" : "Screen for PF Risk"}</button>
+                <button type="button" onClick={() => void runProlifFinance()} disabled={prolifLoading || !prolifInput.subject.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{prolifLoading ? "Assessing…" : "Screen for PF Risk"}</button>
                 {toolErrors["prolifFinance"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7095,7 +7095,7 @@ export default function MlroAdvisorPage() {
                     <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">MLRO Notes</label><textarea value={sarInput.mlroNotes} onChange={(e) => setSarInput((p) => ({...p, mlroNotes: e.target.value}))} rows={2} placeholder="Any MLRO notes or preliminary assessment..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runSarTriage()} disabled={sarTriageLoading || !sarInput.suspiciousActivity.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sarTriageLoading ? "Triaging…" : "Run STR Triage"}</button>
+                <button type="button" onClick={() => void runSarTriage()} disabled={sarTriageLoading || !sarInput.suspiciousActivity.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sarTriageLoading ? "Triaging…" : "Run STR Triage"}</button>
                 {toolErrors["sarTriage"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7145,7 +7145,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Inconsistencies Observed</label><input value={docFraudInput.inconsistenciesObserved} onChange={(e) => setDocFraudInput((p) => ({...p, inconsistenciesObserved: e.target.value}))} placeholder="e.g. font differences, date mismatch" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Document Details / Observations</label><textarea value={docFraudInput.documentDetails} onChange={(e) => setDocFraudInput((p) => ({...p, documentDetails: e.target.value}))} rows={2} placeholder="Describe any unusual features, quality issues, or specific concerns..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runDocFraud()} disabled={docFraudLoading || !docFraudInput.documentTypes.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{docFraudLoading ? "Analysing…" : "Assess Document Authenticity"}</button>
+                <button type="button" onClick={() => void runDocFraud()} disabled={docFraudLoading || !docFraudInput.documentTypes.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{docFraudLoading ? "Analysing…" : "Assess Document Authenticity"}</button>
                 {toolErrors["docFraud"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7186,7 +7186,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Period (days)</label><input type="number" value={ctrPeriodDays} onChange={(e) => setCtrPeriodDays(e.target.value)} placeholder="30" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Subject Name</label><input value={ctrSubject} onChange={(e) => setCtrSubject(e.target.value)} placeholder="Account holder name" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runCtrStructuring()} disabled={ctrLoading || !ctrAmounts.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ctrLoading ? "Analysing…" : "Analyse CTR & Structuring"}</button>
+                <button type="button" onClick={() => void runCtrStructuring()} disabled={ctrLoading || !ctrAmounts.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ctrLoading ? "Analysing…" : "Analyse CTR & Structuring"}</button>
                 {toolErrors["ctrStructuring"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7206,12 +7206,12 @@ export default function MlroAdvisorPage() {
                         {ct.smurfingPattern && <span className="font-mono text-11 px-2 py-px rounded bg-red-dim text-red">Smurfing pattern</span>}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
-                        <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">AED {ct.totalValueAed.toLocaleString()}</div><div className="text-10 text-ink-3">Total Value</div></div>
+                        <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">AED {ct.totalValueAed.toLocaleString("en-GB")}</div><div className="text-10 text-ink-3">Total Value</div></div>
                         <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className="font-mono text-13 font-bold text-ink-0">{ct.transactions.length}</div><div className="text-10 text-ink-3">Transactions</div></div>
                         <div className="bg-bg-panel border border-hair-2 rounded p-2"><div className={`font-mono text-13 font-bold ${ct.thresholdProximityPct >= 90 ? "text-red" : ct.thresholdProximityPct >= 80 ? "text-amber" : "text-ink-0"}`}>{ct.thresholdProximityPct}%</div><div className="text-10 text-ink-3">Max threshold proximity</div></div>
                       </div>
                       <p className="text-12 text-ink-1">{ct.patternDescription}</p>
-                      <div className="border border-hair-2 rounded overflow-hidden"><table className="w-full text-11"><thead><tr className="bg-bg-panel border-b border-hair-2"><th className="text-left px-2 py-1 text-10 text-ink-3">Band</th><th className="text-right px-2 py-1 text-10 text-ink-3">Count</th><th className="text-right px-2 py-1 text-10 text-ink-3">Total AED</th></tr></thead><tbody>{ct.structuringBands.map((b, i) => <tr key={i} className={`border-b border-hair-2 ${b.band.includes("sub-threshold") ? "bg-amber-dim" : b.band.includes("CTR required") ? "bg-red-dim" : ""}`}><td className="px-2 py-1 font-mono text-ink-1">{b.band}</td><td className="px-2 py-1 text-right font-mono">{b.count}</td><td className="px-2 py-1 text-right font-mono">{b.totalAed.toLocaleString()}</td></tr>)}</tbody></table></div>
+                      <div className="border border-hair-2 rounded overflow-hidden"><table className="w-full text-11"><thead><tr className="bg-bg-panel border-b border-hair-2"><th className="text-left px-2 py-1 text-10 text-ink-3">Band</th><th className="text-right px-2 py-1 text-10 text-ink-3">Count</th><th className="text-right px-2 py-1 text-10 text-ink-3">Total AED</th></tr></thead><tbody>{ct.structuringBands.map((b, i) => <tr key={i} className={`border-b border-hair-2 ${b.band.includes("sub-threshold") ? "bg-amber-dim" : b.band.includes("CTR required") ? "bg-red-dim" : ""}`}><td className="px-2 py-1 font-mono text-ink-1">{b.band}</td><td className="px-2 py-1 text-right font-mono">{b.count}</td><td className="px-2 py-1 text-right font-mono">{b.totalAed.toLocaleString("en-GB")}</td></tr>)}</tbody></table></div>
                       <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{ct.actionRationale}</div>
                       {ct.strBasis && <div className="text-10 font-mono text-red">{ct.strBasis}</div>}
                       <div className="text-10 font-mono text-ink-3">{ct.regulatoryBasis}</div>
@@ -7232,7 +7232,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Customer Type</label><input value={dnfbpInput.customerType} onChange={(e) => setDnfbpInput((p) => ({...p, customerType: e.target.value}))} placeholder="e.g. individual, corporate, foreign entity" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={dnfbpInput.context} onChange={(e) => setDnfbpInput((p) => ({...p, context: e.target.value}))} placeholder="Any specific scenario details..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runDnfbpObligations()} disabled={dnfbpLoading || !dnfbpInput.dnfbpType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{dnfbpLoading ? "Mapping…" : "Map DNFBP Obligations"}</button>
+                <button type="button" onClick={() => void runDnfbpObligations()} disabled={dnfbpLoading || !dnfbpInput.dnfbpType.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{dnfbpLoading ? "Mapping…" : "Map DNFBP Obligations"}</button>
                 {toolErrors["dnfbpObligations"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7278,7 +7278,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Pattern Change</label><input value={cddRefreshInput.transactionPatternChange} onChange={(e) => setCddRefreshInput((p) => ({...p, transactionPatternChange: e.target.value}))} placeholder="e.g. volume 3x expected, new international wires" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Adverse Media Hit</label><input value={cddRefreshInput.adverseMediaHit} onChange={(e) => setCddRefreshInput((p) => ({...p, adverseMediaHit: e.target.value}))} placeholder="Describe adverse media if any" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runCddRefresh()} disabled={cddRefreshLoading || (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{cddRefreshLoading ? "Analysing…" : "Determine CDD Refresh Requirement"}</button>
+                <button type="button" onClick={() => void runCddRefresh()} disabled={cddRefreshLoading || (!cddRefreshInput.triggerEvents.trim() && !cddRefreshInput.adverseMediaHit.trim() && !cddRefreshInput.transactionPatternChange.trim())} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{cddRefreshLoading ? "Analysing…" : "Determine CDD Refresh Requirement"}</button>
                 {toolErrors["cddRefresh"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7324,7 +7324,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Blockchain Analytics Tool</label><input value={vaspInput.blockchainAnalyticsTool} onChange={(e) => setVaspInput((p) => ({...p, blockchainAnalyticsTool: e.target.value}))} placeholder="Chainalysis / Elliptic / TRM Labs / none" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Geographic Reach</label><input value={vaspInput.geographicReach} onChange={(e) => setVaspInput((p) => ({...p, geographicReach: e.target.value}))} placeholder="Countries served, high-risk jurisdictions" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runVaspRisk()} disabled={vaspLoading || !vaspInput.vaspName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{vaspLoading ? "Assessing…" : "Assess VASP Risk"}</button>
+                <button type="button" onClick={() => void runVaspRisk()} disabled={vaspLoading || !vaspInput.vaspName.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{vaspLoading ? "Assessing…" : "Assess VASP Risk"}</button>
                 {toolErrors["vaspRisk"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7369,7 +7369,7 @@ export default function MlroAdvisorPage() {
                     <div><label className="block text-10 text-ink-3 mb-1">Transaction Summary</label><input value={goAmlInput.transactionSummary} onChange={(e) => setGoAmlInput((p) => ({...p, transactionSummary: e.target.value}))} placeholder="Brief transaction summary" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runGoAmlValidator()} disabled={goAmlLoading || !goAmlInput.narrative.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{goAmlLoading ? "Validating…" : "Validate STR for goAML"}</button>
+                <button type="button" onClick={() => void runGoAmlValidator()} disabled={goAmlLoading || !goAmlInput.narrative.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{goAmlLoading ? "Validating…" : "Validate STR for goAML"}</button>
                 {toolErrors["goAmlValidator"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7416,7 +7416,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Known Wealth / Income</label><input value={pepEddInput.knownWealth} onChange={(e) => setPepEddInput((p) => ({...p, knownWealth: e.target.value}))} placeholder="e.g. declared salary, known business interests" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><textarea value={pepEddInput.context} onChange={(e) => setPepEddInput((p) => ({...p, context: e.target.value}))} rows={2} placeholder="Any additional relevant context..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runPepEdd()} disabled={pepEddLoading || !pepEddInput.pepName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{pepEddLoading ? "Generating…" : "Generate PEP EDD Package"}</button>
+                <button type="button" onClick={() => void runPepEdd()} disabled={pepEddLoading || !pepEddInput.pepName.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{pepEddLoading ? "Generating…" : "Generate PEP EDD Package"}</button>
                 {toolErrors["pepEdd"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7467,7 +7467,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Known Aliases</label><input value={sanctionsMapInput.aliases} onChange={(e) => setSanctionsMapInput((p) => ({...p, aliases: e.target.value}))} placeholder="Alternative names, transliterations" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={sanctionsMapInput.context} onChange={(e) => setSanctionsMapInput((p) => ({...p, context: e.target.value}))} placeholder="Jurisdiction of activity, transaction context, counterparties..." className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runSanctionsMapper()} disabled={sanctionsMapLoading || !sanctionsMapInput.entityName.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sanctionsMapLoading ? "Mapping…" : "Map Sanctions Exposure"}</button>
+                <button type="button" onClick={() => void runSanctionsMapper()} disabled={sanctionsMapLoading || !sanctionsMapInput.entityName.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sanctionsMapLoading ? "Mapping…" : "Map Sanctions Exposure"}</button>
                 {toolErrors["sanctionsMapper"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7518,7 +7518,7 @@ export default function MlroAdvisorPage() {
                     <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={layeringInput.context} onChange={(e) => setLayeringInput((p) => ({...p, context: e.target.value}))} placeholder="Any other context" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runLayeringDetector()} disabled={layeringLoading || !layeringInput.transactions.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{layeringLoading ? "Analysing…" : "Detect Layering Stages"}</button>
+                <button type="button" onClick={() => void runLayeringDetector()} disabled={layeringLoading || !layeringInput.transactions.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{layeringLoading ? "Analysing…" : "Detect Layering Stages"}</button>
                 {toolErrors["layeringDetector"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7570,7 +7570,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Agent / Broker Name</label><input value={realEstateMlInput.agentName} onChange={(e) => setRealEstateMlInput((p) => ({...p, agentName: e.target.value}))} placeholder="RERA-registered agent" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={realEstateMlInput.context} onChange={(e) => setRealEstateMlInput((p) => ({...p, context: e.target.value}))} placeholder="Third-party payments, flipping history…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runRealEstateMl()} disabled={realEstateMlLoading || !realEstateMlInput.propertyDetails.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{realEstateMlLoading ? "Analysing…" : "Analyse Real Estate Transaction"}</button>
+                <button type="button" onClick={() => void runRealEstateMl()} disabled={realEstateMlLoading || !realEstateMlInput.propertyDetails.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{realEstateMlLoading ? "Analysing…" : "Analyse Real Estate Transaction"}</button>
                 {toolErrors["realEstateMl"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7621,7 +7621,7 @@ export default function MlroAdvisorPage() {
                     <div><label className="block text-10 text-ink-3 mb-1">Jurisdictions Involved</label><input value={assetTracerInput.jurisdictions} onChange={(e) => setAssetTracerInput((p) => ({...p, jurisdictions: e.target.value}))} placeholder="UAE, BVI, Cyprus…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runAssetTracer()} disabled={assetTracerLoading || !assetTracerInput.initialFunds.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{assetTracerLoading ? "Tracing…" : "Trace Assets"}</button>
+                <button type="button" onClick={() => void runAssetTracer()} disabled={assetTracerLoading || !assetTracerInput.initialFunds.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{assetTracerLoading ? "Tracing…" : "Trace Assets"}</button>
                 {toolErrors["assetTracer"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7643,7 +7643,7 @@ export default function MlroAdvisorPage() {
                         <div key={i} className="border border-hair-2 rounded p-3 bg-bg-panel">
                           <div className="text-11 font-semibold text-ink-0 mb-1">Stage {String(stage["stage"])}: {String(stage["description"]).slice(0, 120)}…</div>
                           <div className="text-10 font-mono text-ink-3">Jurisdictions: {Array.isArray(stage["jurisdictions"]) ? (stage["jurisdictions"] as string[]).join(", ") : ""}</div>
-                          <div className="text-10 font-mono text-ink-3">Amount: AED {Number(stage["amountAed"] ?? 0).toLocaleString()}</div>
+                          <div className="text-10 font-mono text-ink-3">Amount: AED {Number(stage["amountAed"] ?? 0).toLocaleString("en-GB")}</div>
                           <div className="text-10 text-ink-3 mt-0.5">{String(stage["evidenceType"] ?? "")}</div>
                         </div>
                       ))}
@@ -7670,7 +7670,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Declared Assets</label><textarea value={sowInput.declaredAssets} onChange={(e) => setSowInput((p) => ({...p, declaredAssets: e.target.value}))} rows={2} placeholder="Properties, vehicles, investments, bank balances…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Known Expenditures</label><input value={sowInput.knownExpenditures} onChange={(e) => setSowInput((p) => ({...p, knownExpenditures: e.target.value}))} placeholder="School fees, rent, club memberships…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runSowCalculator()} disabled={sowLoading || !sowInput.declaredIncome.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sowLoading ? "Calculating…" : "Calculate SOW Gap"}</button>
+                <button type="button" onClick={() => void runSowCalculator()} disabled={sowLoading || !sowInput.declaredIncome.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{sowLoading ? "Calculating…" : "Calculate SOW Gap"}</button>
                 {toolErrors["sowCalculator"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7686,12 +7686,12 @@ export default function MlroAdvisorPage() {
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`font-mono text-12 font-bold px-3 py-1 rounded uppercase ${riskCls}`}>SOW Risk: {risk}</span>
                         {Boolean(r["illicitEnrichmentRisk"]) && <span className="font-mono text-11 px-2 py-px rounded bg-red text-white">Illicit Enrichment Risk</span>}
-                        <span className="font-mono text-11 px-2 py-px rounded bg-bg-2 text-ink-2">Unexplained: AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString()} ({String(r["unexplainedWealthPct"] ?? 0)}%)</span>
+                        <span className="font-mono text-11 px-2 py-px rounded bg-bg-2 text-ink-2">Unexplained: AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString("en-GB")} ({String(r["unexplainedWealthPct"] ?? 0)}%)</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Income</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredIncomeAed"] ?? 0).toLocaleString()}</div></div>
-                        <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Assets</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredAssetsAed"] ?? 0).toLocaleString()}</div></div>
-                        <div className={`border rounded p-2 text-center ${risk === "critical" || risk === "high" ? "border-red-dim bg-red-dim" : "border-hair-2"}`}><div className="text-10 text-ink-3 mb-0.5">Unexplained Gap</div><div className="font-mono text-12 font-semibold text-red">AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString()}</div></div>
+                        <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Income</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredIncomeAed"] ?? 0).toLocaleString("en-GB")}</div></div>
+                        <div className="border border-hair-2 rounded p-2 text-center"><div className="text-10 text-ink-3 mb-0.5">Declared Assets</div><div className="font-mono text-12 font-semibold text-ink-0">AED {Number(r["totalDeclaredAssetsAed"] ?? 0).toLocaleString("en-GB")}</div></div>
+                        <div className={`border rounded p-2 text-center ${risk === "critical" || risk === "high" ? "border-red-dim bg-red-dim" : "border-hair-2"}`}><div className="text-10 text-ink-3 mb-0.5">Unexplained Gap</div><div className="font-mono text-12 font-semibold text-red">AED {Number(r["unexplainedWealthAed"] ?? 0).toLocaleString("en-GB")}</div></div>
                       </div>
                       {Array.isArray(r["redFlags"]) && <div><div className="text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Red Flags</div><ul className="space-y-0.5">{(r["redFlags"] as string[]).map((f, i) => <li key={i} className="text-11 text-red flex gap-1.5"><span>⚠</span>{f}</li>)}</ul></div>}
                       <div className="bg-bg-panel border border-hair-2 rounded p-3 text-11 text-ink-1">{String(r["recommendation"] ?? "")}</div>
@@ -7715,7 +7715,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Financial Circumstances</label><input value={insiderInput.financialCircumstances} onChange={(e) => setInsiderInput((p) => ({...p, financialCircumstances: e.target.value}))} placeholder="Salary, lifestyle observations, unexplained wealth" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={insiderInput.context} onChange={(e) => setInsiderInput((p) => ({...p, context: e.target.value}))} placeholder="Any other relevant context" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runInsiderThreat()} disabled={insiderLoading || (!insiderInput.observedBehaviours.trim() && !insiderInput.employeeRole.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{insiderLoading ? "Screening…" : "Screen Insider Threat"}</button>
+                <button type="button" onClick={() => void runInsiderThreat()} disabled={insiderLoading || (!insiderInput.observedBehaviours.trim() && !insiderInput.employeeRole.trim())} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{insiderLoading ? "Screening…" : "Screen Insider Threat"}</button>
                 {toolErrors["insiderThreat"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7756,7 +7756,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Open Audit Findings</label><input value={boardAmlInput.openFindings} onChange={(e) => setBoardAmlInput((p) => ({...p, openFindings: e.target.value}))} placeholder="Summary of open findings" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={boardAmlInput.context} onChange={(e) => setBoardAmlInput((p) => ({...p, context: e.target.value}))} placeholder="Regulatory developments, key incidents, programme changes…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runBoardAmlReport()} disabled={boardAmlLoading || (!boardAmlInput.reportingPeriod.trim() && !boardAmlInput.institutionName.trim())} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{boardAmlLoading ? "Generating…" : "Generate Board AML Report"}</button>
+                <button type="button" onClick={() => void runBoardAmlReport()} disabled={boardAmlLoading || (!boardAmlInput.reportingPeriod.trim() && !boardAmlInput.institutionName.trim())} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{boardAmlLoading ? "Generating…" : "Generate Board AML Report"}</button>
                 {toolErrors["boardAmlReport"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7790,7 +7790,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Prior Enforcement History</label><input value={enforcementInput.priorHistory} onChange={(e) => setEnforcementInput((p) => ({...p, priorHistory: e.target.value}))} placeholder="none / 1 prior warning / prior fine…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={enforcementInput.context} onChange={(e) => setEnforcementInput((p) => ({...p, context: e.target.value}))} placeholder="Remediation taken, board engagement…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runEnforcementExposure()} disabled={enforcementLoading || !enforcementInput.violation.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{enforcementLoading ? "Estimating…" : "Estimate Enforcement Exposure"}</button>
+                <button type="button" onClick={() => void runEnforcementExposure()} disabled={enforcementLoading || !enforcementInput.violation.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{enforcementLoading ? "Estimating…" : "Estimate Enforcement Exposure"}</button>
                 {toolErrors["enforcementExposure"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7833,7 +7833,7 @@ export default function MlroAdvisorPage() {
                   </div>
                   <div><label className="block text-10 text-ink-3 mb-1">Evidence Summary</label><textarea value={referralInput.evidenceSummary} onChange={(e) => setReferralInput((p) => ({...p, evidenceSummary: e.target.value}))} rows={2} placeholder="Key evidence available — bank records, CCTV, documents…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runInterAgencyReferral()} disabled={referralLoading || !referralInput.caseDescription.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{referralLoading ? "Building…" : "Build Referral"}</button>
+                <button type="button" onClick={() => void runInterAgencyReferral()} disabled={referralLoading || !referralInput.caseDescription.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{referralLoading ? "Building…" : "Build Referral"}</button>
                 {toolErrors["interAgencyReferral"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7868,7 +7868,7 @@ export default function MlroAdvisorPage() {
                     <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={policyInput.context} onChange={(e) => setPolicyInput((p) => ({...p, context: e.target.value}))} placeholder="Regulatory changes since last review…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runPolicyReviewer()} disabled={policyLoading || !policyInput.policyText.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{policyLoading ? "Reviewing…" : "Review Policy"}</button>
+                <button type="button" onClick={() => void runPolicyReviewer()} disabled={policyLoading || !policyInput.policyText.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{policyLoading ? "Reviewing…" : "Review Policy"}</button>
                 {toolErrors["policyReviewer"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7901,7 +7901,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Staff Count</label><input value={compTestInput.staffCount} onChange={(e) => setCompTestInput((p) => ({...p, staffCount: e.target.value}))} placeholder="e.g. 50" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={compTestInput.context} onChange={(e) => setCompTestInput((p) => ({...p, context: e.target.value}))} placeholder="Recent audit findings, regulatory focus areas…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runComplianceTestPlanner()} disabled={compTestLoading || !compTestInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{compTestLoading ? "Building…" : "Build Test Plan"}</button>
+                <button type="button" onClick={() => void runComplianceTestPlanner()} disabled={compTestLoading || !compTestInput.institutionType.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{compTestLoading ? "Building…" : "Build Test Plan"}</button>
                 {toolErrors["complianceTestPlanner"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7936,7 +7936,7 @@ export default function MlroAdvisorPage() {
                     <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={swiftLcInput.context} onChange={(e) => setSwiftLcInput((p) => ({...p, context: e.target.value}))} placeholder="Customer relationship, prior transactions, concerns…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runSwiftLcAnalyzer()} disabled={swiftLcLoading || !swiftLcInput.swiftMessage.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{swiftLcLoading ? "Analysing…" : "Analyse SWIFT / LC"}</button>
+                <button type="button" onClick={() => void runSwiftLcAnalyzer()} disabled={swiftLcLoading || !swiftLcInput.swiftMessage.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{swiftLcLoading ? "Analysing…" : "Analyse SWIFT / LC"}</button>
                 {toolErrors["swiftLcAnalyzer"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -7967,7 +7967,7 @@ export default function MlroAdvisorPage() {
                 <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">Regulatory Calendar · UAE AML/CFT Obligation Deadlines</div>
                 <p className="text-11 text-ink-3">Generates a structured regulatory calendar of AML/CFT reporting deadlines, review cycles, and compliance obligations for UAE regulated entities per Federal Decree-Law No. 10 of 2025, CBUAE guidelines, goAML filing requirements, and international frameworks.</p>
                 <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={regCalInput.institutionType} onChange={(e) => setRegCalInput({ institutionType: e.target.value })} placeholder="bank / DPMS / VASP / real estate agent / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand" /></div>
-                <button type="button" onClick={() => void runRegulatoryCalendar()} disabled={regCalLoading} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{regCalLoading ? "Generating…" : "Generate Regulatory Calendar"}</button>
+                <button type="button" onClick={() => void runRegulatoryCalendar()} disabled={regCalLoading} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{regCalLoading ? "Generating…" : "Generate Regulatory Calendar"}</button>
                 {toolErrors["regulatoryCalendar"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8000,7 +8000,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Transaction Volume</label><input value={ewraInput.transactionVolume} onChange={(e) => setEwraInput((p) => ({...p, transactionVolume: e.target.value}))} placeholder="e.g. AED 500M/year, 10,000 transactions/month" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={ewraInput.context} onChange={(e) => setEwraInput((p) => ({...p, context: e.target.value}))} placeholder="Recent regulatory changes, known gaps…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runEwraGenerator()} disabled={ewraLoading || !ewraInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ewraLoading ? "Generating…" : "Generate EWRA"}</button>
+                <button type="button" onClick={() => void runEwraGenerator()} disabled={ewraLoading || !ewraInput.institutionType.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{ewraLoading ? "Generating…" : "Generate EWRA"}</button>
                 {toolErrors["ewraGenerator"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8034,7 +8034,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Last Audit Date</label><input value={amlGapInput.lastAuditDate} onChange={(e) => setAmlGapInput((p) => ({...p, lastAuditDate: e.target.value}))} placeholder="e.g. Q4 2024" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={amlGapInput.context} onChange={(e) => setAmlGapInput((p) => ({...p, context: e.target.value}))} placeholder="Known weaknesses, recent regulatory feedback…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runAmlProgrammeGap()} disabled={amlGapLoading || !amlGapInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{amlGapLoading ? "Analysing…" : "Analyse AML Programme Gaps"}</button>
+                <button type="button" onClick={() => void runAmlProgrammeGap()} disabled={amlGapLoading || !amlGapInput.institutionType.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{amlGapLoading ? "Analysing…" : "Analyse AML Programme Gaps"}</button>
                 {toolErrors["amlProgrammeGap"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8070,7 +8070,7 @@ export default function MlroAdvisorPage() {
                     <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={tradeInvoiceInput.context} onChange={(e) => setTradeInvoiceInput((p) => ({...p, context: e.target.value}))} placeholder="Payment route, prior relationship, market price comparison…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runTradeInvoiceAnalyzer()} disabled={tradeInvoiceLoading || !tradeInvoiceInput.invoiceDetails.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{tradeInvoiceLoading ? "Analysing…" : "Analyse Invoice"}</button>
+                <button type="button" onClick={() => void runTradeInvoiceAnalyzer()} disabled={tradeInvoiceLoading || !tradeInvoiceInput.invoiceDetails.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{tradeInvoiceLoading ? "Analysing…" : "Analyse Invoice"}</button>
                 {toolErrors["tradeInvoiceAnalyzer"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8108,7 +8108,7 @@ export default function MlroAdvisorPage() {
                     <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={networkMapInput.context} onChange={(e) => setNetworkMapInput((p) => ({...p, context: e.target.value}))} placeholder="Time period, geographic focus, suspected purpose…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   </div>
                 </div>
-                <button type="button" onClick={() => void runNetworkMapper()} disabled={networkMapLoading || !networkMapInput.entities.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{networkMapLoading ? "Mapping…" : "Map Network"}</button>
+                <button type="button" onClick={() => void runNetworkMapper()} disabled={networkMapLoading || !networkMapInput.entities.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{networkMapLoading ? "Mapping…" : "Map Network"}</button>
                 {toolErrors["networkMapper"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8142,7 +8142,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Board Position</label><input value={riskAppInput.boardPosition} onChange={(e) => setRiskAppInput((p) => ({...p, boardPosition: e.target.value}))} placeholder="e.g. zero tolerance for sanctions violations" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={riskAppInput.context} onChange={(e) => setRiskAppInput((p) => ({...p, context: e.target.value}))} placeholder="Regulatory feedback, known risk areas, strategic focus…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runRiskAppetiteBuilder()} disabled={riskAppLoading || !riskAppInput.institutionType.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{riskAppLoading ? "Building…" : "Build Risk Appetite Statement"}</button>
+                <button type="button" onClick={() => void runRiskAppetiteBuilder()} disabled={riskAppLoading || !riskAppInput.institutionType.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{riskAppLoading ? "Building…" : "Build Risk Appetite Statement"}</button>
                 {toolErrors["riskAppetiteBuilder"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8173,7 +8173,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 text-ink-3 mb-1">Institution Type</label><input value={examPrepInput.institutionType} onChange={(e) => setExamPrepInput((p) => ({...p, institutionType: e.target.value}))} placeholder="bank / DPMS / VASP / law firm…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                   <div className="col-span-2"><label className="block text-10 text-ink-3 mb-1">Additional Context</label><input value={examPrepInput.context} onChange={(e) => setExamPrepInput((p) => ({...p, context: e.target.value}))} placeholder="Upcoming inspection focus, known weaknesses, recent regulatory changes…" className="w-full text-12 px-2.5 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0" /></div>
                 </div>
-                <button type="button" onClick={() => void runRegulatoryExamPrep()} disabled={examPrepLoading || !examPrepInput.examArea.trim()} className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{examPrepLoading ? "Preparing…" : "Generate Exam Prep Pack"}</button>
+                <button type="button" onClick={() => void runRegulatoryExamPrep()} disabled={examPrepLoading || !examPrepInput.examArea.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">{examPrepLoading ? "Preparing…" : "Generate Exam Prep Pack"}</button>
                 {toolErrors["regulatoryExamPrep"] && (
                   <div className="mt-2 rounded border border-red/30 bg-red-dim px-3 py-2 flex items-center gap-2">
                     <span className="text-red text-13">⚠</span>
@@ -8210,7 +8210,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Regions</label><input value={npoInput.beneficiaryRegion} onChange={e => setNpoInput(p => ({...p, beneficiaryRegion: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries or regions where funds are deployed" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={npoInput.context} onChange={e => setNpoInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNpoRisk()} disabled={npoLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{npoLoading ? "◌ Analysing…" : "Run NPO Risk Assessment"}</button>
+                <button type="button" onClick={() => void runNpoRisk()} disabled={npoLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{npoLoading ? "◌ Analysing…" : "Run NPO Risk Assessment"}</button>
                 {npoResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3">
@@ -8241,7 +8241,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Programme Status</label><input value={corrBankInput.amlProgrammeStatus} onChange={e => setCorrBankInput(p => ({...p, amlProgrammeStatus: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. Wolfsberg certified, recent enforcement action…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={corrBankInput.context} onChange={e => setCorrBankInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runCorrBank()} disabled={corrBankLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{corrBankLoading ? "◌ Analysing…" : "Run Correspondent Bank Assessment"}</button>
+                <button type="button" onClick={() => void runCorrBank()} disabled={corrBankLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{corrBankLoading ? "◌ Analysing…" : "Run Correspondent Bank Assessment"}</button>
                 {corrBankResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3">
@@ -8275,7 +8275,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mixing Period</label><input value={mixedFundsInput.mixingPeriod} onChange={e => setMixedFundsInput(p => ({...p, mixingPeriod: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 6 months, Jan–Jun 2024" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={mixedFundsInput.context} onChange={e => setMixedFundsInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runMixedFunds()} disabled={mixedFundsLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{mixedFundsLoading ? "◌ Analysing…" : "Run Mixed Funds Analysis"}</button>
+                <button type="button" onClick={() => void runMixedFunds()} disabled={mixedFundsLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{mixedFundsLoading ? "◌ Analysing…" : "Run Mixed Funds Analysis"}</button>
                 {mixedFundsResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8310,7 +8310,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Breach Duration</label><input value={sanctionsBreachInput.breachDuration} onChange={e => setSanctionsBreachInput(p => ({...p, breachDuration: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. single transaction, ongoing 3 months" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={sanctionsBreachInput.context} onChange={e => setSanctionsBreachInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runSanctionsBreach()} disabled={sanctionsBreachLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsBreachLoading ? "◌ Analysing…" : "Run Sanctions Breach Analysis"}</button>
+                <button type="button" onClick={() => void runSanctionsBreach()} disabled={sanctionsBreachLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsBreachLoading ? "◌ Analysing…" : "Run Sanctions Breach Analysis"}</button>
                 {sanctionsBreachResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -8342,7 +8342,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={freezeSeizureInput.jurisdictions} onChange={e => setFreezeSeizureInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries where assets are held" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={freezeSeizureInput.context} onChange={e => setFreezeSeizureInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runFreezeSeizure()} disabled={freezeSeizureLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{freezeSeizureLoading ? "◌ Analysing…" : "Run Freeze / Seizure Analysis"}</button>
+                <button type="button" onClick={() => void runFreezeSeizure()} disabled={freezeSeizureLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{freezeSeizureLoading ? "◌ Analysing…" : "Run Freeze / Seizure Analysis"}</button>
                 {freezeSeizureResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     {Boolean(freezeSeizureResult["legalBasis"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</div><p className="text-12 text-ink-1 leading-relaxed">{String(freezeSeizureResult["legalBasis"])}</p></div>}
@@ -8370,7 +8370,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Findings</label><textarea value={auditResponseInput.findings} onChange={e => setAuditResponseInput(p => ({...p, findings: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the audit findings / observations here…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={auditResponseInput.context} onChange={e => setAuditResponseInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runAuditResponse()} disabled={auditResponseLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{auditResponseLoading ? "◌ Generating…" : "Generate Audit Response"}</button>
+                <button type="button" onClick={() => void runAuditResponse()} disabled={auditResponseLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{auditResponseLoading ? "◌ Generating…" : "Generate Audit Response"}</button>
                 {auditResponseResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     {Boolean(auditResponseResult["overallRating"]) && <div className="flex items-center gap-3"><span className={`font-mono text-11 font-semibold uppercase px-2 py-0.5 rounded ${String(auditResponseResult["overallRating"]) === "unsatisfactory" ? "bg-red-dim text-red" : String(auditResponseResult["overallRating"]) === "needs improvement" ? "bg-amber-dim text-amber" : "bg-green-dim text-green"}`}>{String(auditResponseResult["overallRating"])}</span><span className="text-12 font-semibold text-ink-0">Overall Rating</span></div>}
@@ -8408,7 +8408,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={hnwInput.jurisdictions} onChange={e => setHnwInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries of residence / business / asset holding" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={hnwInput.context} onChange={e => setHnwInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runHnw()} disabled={hnwLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{hnwLoading ? "◌ Analysing…" : "Run HNW Profile Analysis"}</button>
+                <button type="button" onClick={() => void runHnw()} disabled={hnwLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{hnwLoading ? "◌ Analysing…" : "Run HNW Profile Analysis"}</button>
                 {hnwResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8440,7 +8440,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Deposit Pattern</label><input value={cashIntensiveInput.depositPattern} onChange={e => setCashIntensiveInput(p => ({...p, depositPattern: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. daily small deposits, round numbers, just below threshold" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={cashIntensiveInput.context} onChange={e => setCashIntensiveInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runCashIntensive()} disabled={cashIntensiveLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{cashIntensiveLoading ? "◌ Analysing…" : "Run Cash-Intensive Analysis"}</button>
+                <button type="button" onClick={() => void runCashIntensive()} disabled={cashIntensiveLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{cashIntensiveLoading ? "◌ Analysing…" : "Run Cash-Intensive Analysis"}</button>
                 {cashIntensiveResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8472,7 +8472,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Stated Purpose</label><input value={trustStructInput.purposeStated} onChange={e => setTrustStructInput(p => ({...p, purposeStated: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estate planning, asset protection, charity…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={trustStructInput.context} onChange={e => setTrustStructInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runTrustStruct()} disabled={trustStructLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{trustStructLoading ? "◌ Analysing…" : "Run Trust Structure Analysis"}</button>
+                <button type="button" onClick={() => void runTrustStruct()} disabled={trustStructLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{trustStructLoading ? "◌ Analysing…" : "Run Trust Structure Analysis"}</button>
                 {trustStructResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8506,7 +8506,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Purpose</label><input value={crossBorderInput.purpose} onChange={e => setCrossBorderInput(p => ({...p, purpose: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Stated purpose of transfer" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={crossBorderInput.context} onChange={e => setCrossBorderInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runCrossBorder()} disabled={crossBorderLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{crossBorderLoading ? "◌ Analysing…" : "Run Cross-Border Wire Analysis"}</button>
+                <button type="button" onClick={() => void runCrossBorder()} disabled={crossBorderLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{crossBorderLoading ? "◌ Analysing…" : "Run Cross-Border Wire Analysis"}</button>
                 {crossBorderResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -8536,7 +8536,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Feedback Content</label><textarea value={fiuFeedbackInput.feedbackContent} onChange={e => setFiuFeedbackInput(p => ({...p, feedbackContent: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the FIU feedback message here…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={fiuFeedbackInput.context} onChange={e => setFiuFeedbackInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runFiuFeedback()} disabled={fiuFeedbackLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{fiuFeedbackLoading ? "◌ Analysing…" : "Analyse FIU Feedback"}</button>
+                <button type="button" onClick={() => void runFiuFeedback()} disabled={fiuFeedbackLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{fiuFeedbackLoading ? "◌ Analysing…" : "Analyse FIU Feedback"}</button>
                 {fiuFeedbackResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -8565,7 +8565,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Justification</label><textarea value={deriskingInput.riskJustification} onChange={e => setDeriskingInput(p => ({...p, riskJustification: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="State the risk rationale for de-risking this segment…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={deriskingInput.context} onChange={e => setDeriskingInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runDerisking()} disabled={deriskingLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{deriskingLoading ? "◌ Analysing…" : "Run De-Risking Assessment"}</button>
+                <button type="button" onClick={() => void runDerisking()} disabled={deriskingLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{deriskingLoading ? "◌ Analysing…" : "Run De-Risking Assessment"}</button>
                 {deriskingResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -8595,7 +8595,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Relationship</label><input value={legalPrivInput.legalRelationship} onChange={e => setLegalPrivInput(p => ({...p, legalRelationship: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Describe the client–lawyer relationship and instruction" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={legalPrivInput.context} onChange={e => setLegalPrivInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runLegalPriv()} disabled={legalPrivLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{legalPrivLoading ? "◌ Analysing…" : "Analyse Legal Privilege"}</button>
+                <button type="button" onClick={() => void runLegalPriv()} disabled={legalPrivLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{legalPrivLoading ? "◌ Analysing…" : "Analyse Legal Privilege"}</button>
                 {legalPrivResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -8627,7 +8627,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdictions</label><input value={mlScenarioInput.jurisdictions} onChange={e => setMlScenarioInput(p => ({...p, jurisdictions: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved in the scenario" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={mlScenarioInput.context} onChange={e => setMlScenarioInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runMlScenario()} disabled={mlScenarioLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{mlScenarioLoading ? "◌ Building…" : "Build ML Scenario"}</button>
+                <button type="button" onClick={() => void runMlScenario()} disabled={mlScenarioLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{mlScenarioLoading ? "◌ Building…" : "Build ML Scenario"}</button>
                 {mlScenarioResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     {Boolean(mlScenarioResult["scenarioTitle"]) && <div className="text-14 font-bold text-ink-0">{String(mlScenarioResult["scenarioTitle"])}</div>}
@@ -8661,7 +8661,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Described</label><textarea value={staffAlertInput.evidenceDescribed} onChange={e => setStaffAlertInput(p => ({...p, evidenceDescribed: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe any evidence mentioned in the alert…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={staffAlertInput.context} onChange={e => setStaffAlertInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runStaffAlert()} disabled={staffAlertLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{staffAlertLoading ? "◌ Analysing…" : "Analyse Staff Alert"}</button>
+                <button type="button" onClick={() => void runStaffAlert()} disabled={staffAlertLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{staffAlertLoading ? "◌ Analysing…" : "Analyse Staff Alert"}</button>
                 {staffAlertResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8695,7 +8695,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Narrative Text</label><textarea value={strQualityInput.narrativeText} onChange={e => setStrQualityInput(p => ({...p, narrativeText: e.target.value}))} rows={4} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Paste the STR narrative text to be scored…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={strQualityInput.context} onChange={e => setStrQualityInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runStrQuality()} disabled={strQualityLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{strQualityLoading ? "◌ Scoring…" : "Score STR Quality"}</button>
+                <button type="button" onClick={() => void runStrQuality()} disabled={strQualityLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{strQualityLoading ? "◌ Scoring…" : "Score STR Quality"}</button>
                 {strQualityResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8725,7 +8725,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Pattern</label><textarea value={hawalaInput.transactionPattern} onChange={e => setHawalaInput(p => ({...p, transactionPattern: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe the observed transaction patterns…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={hawalaInput.context} onChange={e => setHawalaInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runHawala()} disabled={hawalaLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{hawalaLoading ? "◌ Detecting…" : "Detect Hawala Risk"}</button>
+                <button type="button" onClick={() => void runHawala()} disabled={hawalaLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{hawalaLoading ? "◌ Detecting…" : "Detect Hawala Risk"}</button>
                 {hawalaResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8755,7 +8755,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Controller Details</label><textarea value={nomineeInput.controllerDetails} onChange={e => setNomineeInput(p => ({...p, controllerDetails: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Known or suspected controller information…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={nomineeInput.context} onChange={e => setNomineeInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNominee()} disabled={nomineeLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{nomineeLoading ? "◌ Analysing…" : "Analyse Nominee Risk"}</button>
+                <button type="button" onClick={() => void runNominee()} disabled={nomineeLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{nomineeLoading ? "◌ Analysing…" : "Analyse Nominee Risk"}</button>
                 {nomineeResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8785,7 +8785,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Industry Context</label><textarea value={pepCorpInput.industryContext} onChange={e => setPepCorpInput(p => ({...p, industryContext: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Industry, sector, and relevant government contracts…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pepCorpInput.context} onChange={e => setPepCorpInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runPepCorp()} disabled={pepCorpLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepCorpLoading ? "◌ Analysing…" : "Analyse PEP Corporate Nexus"}</button>
+                <button type="button" onClick={() => void runPepCorp()} disabled={pepCorpLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepCorpLoading ? "◌ Analysing…" : "Analyse PEP Corporate Nexus"}</button>
                 {pepCorpResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8815,7 +8815,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Transaction Hashes</label><textarea value={cryptoMixInput.transactionHashes} onChange={e => setCryptoMixInput(p => ({...p, transactionHashes: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Known transaction hashes (comma-separated)…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={cryptoMixInput.context} onChange={e => setCryptoMixInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runCryptoMix()} disabled={cryptoMixLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{cryptoMixLoading ? "◌ Detecting…" : "Detect Mixing Activity"}</button>
+                <button type="button" onClick={() => void runCryptoMix()} disabled={cryptoMixLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{cryptoMixLoading ? "◌ Detecting…" : "Detect Mixing Activity"}</button>
                 {cryptoMixResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8845,7 +8845,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Trade Activity</label><textarea value={ghostCoInput.tradeActivity} onChange={e => setGhostCoInput(p => ({...p, tradeActivity: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Described trade or business activity…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={ghostCoInput.context} onChange={e => setGhostCoInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runGhostCo()} disabled={ghostCoLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ghostCoLoading ? "◌ Analysing…" : "Identify Ghost Company"}</button>
+                <button type="button" onClick={() => void runGhostCo()} disabled={ghostCoLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ghostCoLoading ? "◌ Analysing…" : "Identify Ghost Company"}</button>
                 {ghostCoResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8875,7 +8875,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Overdue Reviews</label><input value={pKycInput.overdueCount} onChange={e => setPKycInput(p => ({...p, overdueCount: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Count of overdue pKYC reviews" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pKycInput.context} onChange={e => setPKycInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runPKyc()} disabled={pKycLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pKycLoading ? "◌ Planning…" : "Generate pKYC Plan"}</button>
+                <button type="button" onClick={() => void runPKyc()} disabled={pKycLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{pKycLoading ? "◌ Planning…" : "Generate pKYC Plan"}</button>
                 {pKycResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     {Boolean(pKycResult["reviewSchedule"]) && <div><div className="text-10 font-mono uppercase tracking-wide-3 text-ink-3 mb-1.5">Review Schedule</div><p className="text-12 text-ink-1 leading-relaxed">{String(pKycResult["reviewSchedule"])}</p></div>}
@@ -8902,7 +8902,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Described</label><textarea value={whistleInput.evidenceDescribed} onChange={e => setWhistleInput(p => ({...p, evidenceDescribed: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe any evidence mentioned…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={whistleInput.context} onChange={e => setWhistleInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runWhistle()} disabled={whistleLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{whistleLoading ? "◌ Triaging…" : "Triage Whistleblower Report"}</button>
+                <button type="button" onClick={() => void runWhistle()} disabled={whistleLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{whistleLoading ? "◌ Triaging…" : "Triage Whistleblower Report"}</button>
                 {whistleResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8934,7 +8934,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Shipping Route</label><input value={tradeFinRfInput.shippingRoute} onChange={e => setTradeFinRfInput(p => ({...p, shippingRoute: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Origin → transit → destination countries" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={tradeFinRfInput.context} onChange={e => setTradeFinRfInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runTradeFinRf()} disabled={tradeFinRfLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRfLoading ? "◌ Analysing…" : "Analyse Trade Finance Risk"}</button>
+                <button type="button" onClick={() => void runTradeFinRf()} disabled={tradeFinRfLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRfLoading ? "◌ Analysing…" : "Analyse Trade Finance Risk"}</button>
                 {tradeFinRfResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8964,7 +8964,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Value (USD)</label><input value={sanctionsExpInput.totalValueUsd} onChange={e => setSanctionsExpInput(p => ({...p, totalValueUsd: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total USD equivalent" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={sanctionsExpInput.context} onChange={e => setSanctionsExpInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runSanctionsExp()} disabled={sanctionsExpLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsExpLoading ? "◌ Calculating…" : "Calculate Sanctions Exposure"}</button>
+                <button type="button" onClick={() => void runSanctionsExp()} disabled={sanctionsExpLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{sanctionsExpLoading ? "◌ Calculating…" : "Calculate Sanctions Exposure"}</button>
                 {sanctionsExpResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -8994,7 +8994,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Recent Changes</label><textarea value={custLifeInput.recentChanges} onChange={e => setCustLifeInput(p => ({...p, recentChanges: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Changes in behaviour, ownership, activity…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={custLifeInput.context} onChange={e => setCustLifeInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runCustLife()} disabled={custLifeLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{custLifeLoading ? "◌ Monitoring…" : "Monitor Customer Lifecycle"}</button>
+                <button type="button" onClick={() => void runCustLife()} disabled={custLifeLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{custLifeLoading ? "◌ Monitoring…" : "Monitor Customer Lifecycle"}</button>
                 {custLifeResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -9024,7 +9024,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Connections</label><textarea value={pepEnhInput.knownConnections} onChange={e => setPepEnhInput(p => ({...p, knownConnections: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Family members, associates, business interests…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={pepEnhInput.context} onChange={e => setPepEnhInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runPepEnh()} disabled={pepEnhLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepEnhLoading ? "◌ Screening…" : "Run Enhanced PEP Screening"}</button>
+                <button type="button" onClick={() => void runPepEnh()} disabled={pepEnhLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{pepEnhLoading ? "◌ Screening…" : "Run Enhanced PEP Screening"}</button>
                 {pepEnhResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -9054,7 +9054,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last Training Date</label><input value={amlTrainInput.lastTrainingDate} onChange={e => setAmlTrainInput(p => ({...p, lastTrainingDate: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last institution-wide training" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={amlTrainInput.context} onChange={e => setAmlTrainInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runAmlTrain()} disabled={amlTrainLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlTrainLoading ? "◌ Analysing…" : "Analyse Training Gaps"}</button>
+                <button type="button" onClick={() => void runAmlTrain()} disabled={amlTrainLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlTrainLoading ? "◌ Analysing…" : "Analyse Training Gaps"}</button>
                 {amlTrainResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -9083,7 +9083,7 @@ export default function MlroAdvisorPage() {
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Structure</label><textarea value={uboVerifyInput.ownershipStructure} onChange={e => setUboVerifyInput(p => ({...p, ownershipStructure: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Describe the ownership chain and percentages…" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={uboVerifyInput.context} onChange={e => setUboVerifyInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runUboVerify()} disabled={uboVerifyLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{uboVerifyLoading ? "◌ Verifying…" : "Verify Beneficial Owner"}</button>
+                <button type="button" onClick={() => void runUboVerify()} disabled={uboVerifyLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{uboVerifyLoading ? "◌ Verifying…" : "Verify Beneficial Owner"}</button>
                 {uboVerifyResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -9113,7 +9113,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Open Findings</label><input value={amlKpiInput.openFindings} onChange={e => setAmlKpiInput(p => ({...p, openFindings: e.target.value}))} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Outstanding audit or exam findings" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Context</label><textarea value={amlKpiInput.context} onChange={e => setAmlKpiInput(p => ({...p, context: e.target.value}))} rows={2} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runAmlKpi()} disabled={amlKpiLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlKpiLoading ? "◌ Generating…" : "Generate AML KPI Report"}</button>
+                <button type="button" onClick={() => void runAmlKpi()} disabled={amlKpiLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{amlKpiLoading ? "◌ Generating…" : "Generate AML KPI Report"}</button>
                 {amlKpiResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -9196,7 +9196,7 @@ export default function MlroAdvisorPage() {
 
                 <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context</label><textarea value={tradeFinRiskInput.context} onChange={e => setTradeFinRiskInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="Relationship history, prior transactions, intelligence, adverse media…" /></div>
 
-                <button type="button" onClick={() => void runTradeFinRisk()} disabled={tradeFinRiskLoading || (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim())} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRiskLoading ? "◌ Analysing TBML risk…" : "Run TBML Risk Analysis"}</button>
+                <button type="button" onClick={() => void runTradeFinRisk()} disabled={tradeFinRiskLoading || (!tradeFinRiskInput.exporterName.trim() && !tradeFinRiskInput.goods.trim())} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{tradeFinRiskLoading ? "◌ Analysing TBML risk…" : "Run TBML Risk Analysis"}</button>
 
                 {tradeFinRiskResult && (() => {
                   const r = tradeFinRiskResult;
@@ -9441,7 +9441,7 @@ export default function MlroAdvisorPage() {
 
                 <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Additional Context / Intelligence</label><textarea value={itInput.context} onChange={e => setItInput(p => ({...p, context: e.target.value}))} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" placeholder="UEBA alerts, peer reports, system logs, HR narrative, surveillance intelligence…" /></div>
 
-                <button type="button" onClick={() => void runInsiderThreatFull()} disabled={itLoading || !itInput.employee.trim()} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{itLoading ? "◌ Assessing threat…" : "Run Insider Threat Assessment"}</button>
+                <button type="button" onClick={() => void runInsiderThreatFull()} disabled={itLoading || !itInput.employee.trim()} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{itLoading ? "◌ Assessing threat…" : "Run Insider Threat Assessment"}</button>
 
                 {itResult && (() => {
                   const r = itResult;
@@ -9762,7 +9762,7 @@ export default function MlroAdvisorPage() {
                     type="button"
                     onClick={() => void runCryptoTracing()}
                     disabled={cryptoTracingLoading}
-                    className="w-full px-4 py-2.5 rounded bg-brand text-white text-13 font-bold hover:bg-brand/90 disabled:opacity-60 transition-colors"
+                    className="w-full px-3 py-1.5 rounded bg-brand text-white text-12 font-bold hover:bg-brand/90 disabled:opacity-60 transition-colors"
                   >
                     {cryptoTracingLoading ? "◌ Running Blockchain Forensics…" : "🔗 Run Crypto Trace"}
                   </button>
@@ -10010,7 +10010,7 @@ export default function MlroAdvisorPage() {
                               <button
                                 type="button"
                                 onClick={() => setCryptoTracingOpenObligation(cryptoTracingOpenObligation === i ? null : i)}
-                                className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-bg-1 transition-colors"
+                                className="w-full flex items-center justify-between px-2.5 py-1.5 text-left hover:bg-bg-1 transition-colors"
                               >
                                 <span className="text-11 text-ink-0 font-medium truncate">{String(ob["obligation"]).slice(0, 80)}{String(ob["obligation"]).length > 80 ? "…" : ""}</span>
                                 <span className="text-10 font-mono text-ink-3 ml-2 shrink-0">{cryptoTracingOpenObligation === i ? "▲" : "▼"}</span>
@@ -10112,7 +10112,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Count</label><input value={ntIn("investorCount")} onChange={e => ntSet("investorCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated number of investors" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("investment-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("investment-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10140,7 +10140,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Redirect Target</label><input value={ntIn("redirectTarget")} onChange={e => ntSet("redirectTarget", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Mule account / bank" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("bec-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("bec-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10168,7 +10168,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Currency</label><input value={ntIn("currency")} onChange={e => ntSet("currency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. USD, EUR, AED" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("cash-courier")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("cash-courier")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10196,7 +10196,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Price Escalation</label><input value={ntIn("priceEscalation")} onChange={e => ntSet("priceEscalation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="e.g. 0.1 ETH to 50 ETH" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("nft-wash")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("nft-wash")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10224,7 +10224,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Host country" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("carbon-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("carbon-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10252,7 +10252,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Volume</label><input value={ntIn("estimatedVolume")} onChange={e => ntSet("estimatedVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated USD volume" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("darknet-exposure")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("darknet-exposure")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10280,7 +10280,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Associated Business</label><input value={ntIn("associatedBusiness")} onChange={e => ntSet("associatedBusiness", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Linked business name" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("drug-trafficking")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("drug-trafficking")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10308,7 +10308,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries / regions involved" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("human-trafficking-fin")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("human-trafficking-fin")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10336,7 +10336,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Shipment Route</label><input value={ntIn("shipmentRoute")} onChange={e => ntSet("shipmentRoute", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transit countries" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("arms-trafficking")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("arms-trafficking")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10364,7 +10364,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Contract Value</label><input value={ntIn("contractValue")} onChange={e => ntSet("contractValue", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Value of related contract" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("corruption-bribery")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("corruption-bribery")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10392,7 +10392,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Offshore Structure</label><input value={ntIn("offshoreStructure")} onChange={e => ntSet("offshoreStructure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Structure description" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("tax-evasion-fin")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("tax-evasion-fin")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10420,7 +10420,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Estimated Loss</label><input value={ntIn("estimatedLoss")} onChange={e => ntSet("estimatedLoss", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="USD value of proceeds" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("cybercrime-proceeds")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("cybercrime-proceeds")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10448,7 +10448,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Suspected Coordinator</label><input value={ntIn("suspectedCoordinator")} onChange={e => ntSet("suspectedCoordinator", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Coordinator identity" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("market-manipulation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("market-manipulation")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10476,7 +10476,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Claim Frequency</label><input value={ntIn("claimFrequency")} onChange={e => ntSet("claimFrequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of claims / period" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("insurance-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("insurance-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10504,7 +10504,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Valuation</label><input value={ntIn("valuation")} onChange={e => ntSet("valuation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Valuation source / method" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("mortgage-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("mortgage-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10532,7 +10532,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Usage Pattern</label><input value={ntIn("usagePattern")} onChange={e => ntSet("usagePattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How ID was used" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("identity-theft")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("identity-theft")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10560,7 +10560,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Authorised Person</label><input value={ntIn("authorizedPerson")} onChange={e => ntSet("authorizedPerson", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="POA / authorised signatory" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("elder-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("elder-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10588,7 +10588,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cryptocurrency</label><input value={ntIn("cryptocurrency")} onChange={e => ntSet("cryptocurrency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Demanded crypto asset" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("ransomware-response")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("ransomware-response")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10616,7 +10616,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Geography</label><input value={ntIn("geography")} onChange={e => ntSet("geography", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries involved" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fraud-network")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fraud-network")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10644,7 +10644,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Known Weaknesses</label><input value={ntIn("knownWeaknesses")} onChange={e => ntSet("knownWeaknesses", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Key identified gaps" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fatf-evaluation-prep")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fatf-evaluation-prep")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10672,7 +10672,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Programme</label><input value={ntIn("amlProgram")} onChange={e => ntSet("amlProgram", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="AML programme status" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("vara-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("vara-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10700,7 +10700,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Risk Rating</label><input value={ntIn("riskRating")} onChange={e => ntSet("riskRating", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Current supervisory risk rating" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("cbuae-exam")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("cbuae-exam")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10728,7 +10728,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Obligation</label><input value={ntIn("reportingObligation")} onChange={e => ntSet("reportingObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable reporting obligations" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("eu-amla")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("eu-amla")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10756,7 +10756,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">AML Obligation</label><input value={ntIn("amlObligation")} onChange={e => ntSet("amlObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable AML obligations" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("mica-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("mica-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10784,7 +10784,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Third Party</label><input value={ntIn("thirdParty")} onChange={e => ntSet("thirdParty", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Critical third-party ICT providers" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("dora-resilience")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("dora-resilience")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10812,7 +10812,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Monitoring Coverage</label><input value={ntIn("monitoringCoverage")} onChange={e => ntSet("monitoringCoverage", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="% of accounts monitored" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("aml-framework-gap")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("aml-framework-gap")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10840,7 +10840,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Affected Parties</label><input value={ntIn("affectedParties")} onChange={e => ntSet("affectedParties", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Customers / counterparties affected" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("regulatory-breach-notice")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("regulatory-breach-notice")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10868,7 +10868,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Resource Needed</label><input value={ntIn("resourceNeeded")} onChange={e => ntSet("resourceNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Budget / personnel required" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("remediation-planner")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("remediation-planner")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10896,7 +10896,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Timeline</label><input value={ntIn("timeline")} onChange={e => ntSet("timeline", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Response deadline" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("mou-treaty")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("mou-treaty")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10924,7 +10924,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Obligation</label><input value={ntIn("reportingObligation")} onChange={e => ntSet("reportingObligation", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="MROS reporting status" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("finma-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("finma-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10952,7 +10952,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Exposure</label><input value={ntIn("pepExposure")} onChange={e => ntSet("pepExposure", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="PEP client exposure" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("mas-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("mas-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -10980,7 +10980,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Last MLRO Report</label><input value={ntIn("lastMLROReport")} onChange={e => ntSet("lastMLROReport", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Date of last MLRO annual report" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fca-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fca-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11008,7 +11008,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Reporting Status</label><input value={ntIn("reportingStatus")} onChange={e => ntSet("reportingStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="FIU reporting compliance" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("bafin-compliance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("bafin-compliance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11036,7 +11036,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigating Factors</label><input value={ntIn("mitigatingFactors")} onChange={e => ntSet("mitigatingFactors", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Risk mitigants" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("basel-aml-index")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("basel-aml-index")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11064,7 +11064,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal basis" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("egmont-fiu")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("egmont-fiu")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11092,7 +11092,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigants</label><input value={ntIn("mitigants")} onChange={e => ntSet("mitigants", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Existing mitigating controls" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("wolfsberg-principles")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("wolfsberg-principles")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11120,7 +11120,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cooperation Needed</label><input value={ntIn("cooperationNeeded")} onChange={e => ntSet("cooperationNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of MLA required" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("palermo-convention")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("palermo-convention")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11148,7 +11148,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cooperation Mechanism</label><input value={ntIn("cooperationMechanism")} onChange={e => ntSet("cooperationMechanism", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="MLA / extradition mechanism" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("vienna-convention")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("vienna-convention")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11176,7 +11176,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Mitigation Measures</label><input value={ntIn("mitigationMeasures")} onChange={e => ntSet("mitigationMeasures", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="EDD / countermeasures in place" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fatf-grey-impact")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fatf-grey-impact")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11204,7 +11204,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Biometric Used</label><input value={ntIn("biometricUsed")} onChange={e => ntSet("biometricUsed", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Biometric technology applied" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("digital-identity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("digital-identity")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11232,7 +11232,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Behaviour Pattern</label><input value={ntIn("behaviourPattern")} onChange={e => ntSet("behaviourPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Account behaviour description" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("synthetic-identity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("synthetic-identity")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11260,7 +11260,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Consistency Score</label><input value={ntIn("consistencyScore")} onChange={e => ntSet("consistencyScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Document consistency score" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("deepfake-kyc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("deepfake-kyc")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11288,7 +11288,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Media Source</label><input value={ntIn("mediaSource")} onChange={e => ntSet("mediaSource", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Sources searched" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("adverse-media-deep")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("adverse-media-deep")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11316,7 +11316,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Gap</label><input value={ntIn("gap")} onChange={e => ntSet("gap", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Unsubstantiated elements" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("sow-substantiator")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("sow-substantiator")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11344,7 +11344,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Registered Agent</label><input value={ntIn("registeredAgent")} onChange={e => ntSet("registeredAgent", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Agent / service provider" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("corporate-registry")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("corporate-registry")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11372,7 +11372,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Separation Degree</label><input value={ntIn("separationDegree")} onChange={e => ntSet("separationDegree", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Degrees of separation" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("entity-resolution")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("entity-resolution")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11400,7 +11400,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Family Connections</label><input value={ntIn("familyConnections")} onChange={e => ntSet("familyConnections", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family / close associate links" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("politically-sensitive")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("politically-sensitive")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11428,7 +11428,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Tax Implications</label><input value={ntIn("taxImplications")} onChange={e => ntSet("taxImplications", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="CRS / FATCA implications" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("dual-nationality")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("dual-nationality")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11456,7 +11456,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Client Base</label><input value={ntIn("clientBase")} onChange={e => ntSet("clientBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Subject's client base" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("high-risk-profession")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("high-risk-profession")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11484,7 +11484,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable jurisdiction" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("local-kyc-requirements")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("local-kyc-requirements")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11512,7 +11512,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Audit Trail</label><input value={ntIn("auditTrail")} onChange={e => ntSet("auditTrail", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Audit trail availability" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("ekyc-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("ekyc-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11540,7 +11540,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Priority Score</label><input value={ntIn("priorityScore")} onChange={e => ntSet("priorityScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Review priority score" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("perpetual-kyc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("perpetual-kyc")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11568,7 +11568,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Incorporation jurisdiction" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("beneficial-ownership-calc")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("beneficial-ownership-calc")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11596,7 +11596,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Nominee Count</label><input value={ntIn("nomineeCount")} onChange={e => ntSet("nomineeCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of nominees / proxies" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("corporate-complexity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("corporate-complexity")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11624,7 +11624,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Total Volume</label><input value={ntIn("totalVolume")} onChange={e => ntSet("totalVolume", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Total transaction volume (USD)" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("velocity-analyzer")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("velocity-analyzer")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11652,7 +11652,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Time Window</label><input value={ntIn("timeWindow")} onChange={e => ntSet("timeWindow", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Analysis time window" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("peer-group-anomaly")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("peer-group-anomaly")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11680,7 +11680,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Intermediaries</label><input value={ntIn("intermediaries")} onChange={e => ntSet("intermediaries", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Intermediate accounts / entities" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("round-trip-detector")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("round-trip-detector")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11708,7 +11708,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Net Position</label><input value={ntIn("netPosition")} onChange={e => ntSet("netPosition", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Net account position" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("funnel-account")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("funnel-account")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11736,7 +11736,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">New Beneficiary</label><input value={ntIn("newBeneficiary")} onChange={e => ntSet("newBeneficiary", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="New payment beneficiary" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("dormant-reactivation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("dormant-reactivation")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11764,7 +11764,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Volume Discrepancy</label><input value={ntIn("volumeDiscrepancy")} onChange={e => ntSet("volumeDiscrepancy", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Discrepancy amount / %" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("currency-mismatch")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("currency-mismatch")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11792,7 +11792,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction frequency" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("ach-fraud")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("ach-fraud")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11820,7 +11820,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary</label><input value={ntIn("beneficiary")} onChange={e => ntSet("beneficiary", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Beneficiary name / entity" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("wire-transfer-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("wire-transfer-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11848,7 +11848,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Market Impact</label><input value={ntIn("marketImpact")} onChange={e => ntSet("marketImpact", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Estimated market impact" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("high-freq-trading")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("high-freq-trading")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11876,7 +11876,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Justification</label><input value={ntIn("justification")} onChange={e => ntSet("justification", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Client-stated reason for routing" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("payment-routing")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("payment-routing")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11904,7 +11904,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Pattern</label><input value={ntIn("pattern")} onChange={e => ntSet("pattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Observed refund pattern" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("refund-arbitrage")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("refund-arbitrage")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11932,7 +11932,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Country</label><input value={ntIn("country")} onChange={e => ntSet("country", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Countries in chain" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("correspondent-chain")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("correspondent-chain")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11960,7 +11960,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Transaction frequency" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("remittance-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("remittance-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -11988,7 +11988,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Frequency</label><input value={ntIn("frequency")} onChange={e => ntSet("frequency", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Withdrawal frequency" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("atm-pattern")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("atm-pattern")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12016,7 +12016,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Cashout Method</label><input value={ntIn("cashoutMethod")} onChange={e => ntSet("cashoutMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How chips were cashed out" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("casino-chip")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("casino-chip")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12044,7 +12044,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Buyer Profile</label><input value={ntIn("buyerProfile")} onChange={e => ntSet("buyerProfile", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer description" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("luxury-goods")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("luxury-goods")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12072,7 +12072,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Valuation Method</label><input value={ntIn("valuationMethod")} onChange={e => ntSet("valuationMethod", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="How artwork was valued" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("art-provenance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("art-provenance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12100,7 +12100,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Operating Country</label><input value={ntIn("operatingCountry")} onChange={e => ntSet("operatingCountry", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Country of operation" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("superyacht-jet")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("superyacht-jet")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12128,7 +12128,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Quantity</label><input value={ntIn("quantity")} onChange={e => ntSet("quantity", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Volume / weight / value" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("agri-commodities")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("agri-commodities")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12156,7 +12156,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Buyer</label><input value={ntIn("buyer")} onChange={e => ntSet("buyer", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Buyer name / entity" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("precious-stones")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("precious-stones")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12184,7 +12184,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Withdrawal Pattern</label><input value={ntIn("withdrawalPattern")} onChange={e => ntSet("withdrawalPattern", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Withdrawal behaviour pattern" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("gaming-sector")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("gaming-sector")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12212,7 +12212,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Customer Base</label><input value={ntIn("customerBase")} onChange={e => ntSet("customerBase", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Target customer description" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fintech-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fintech-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12240,7 +12240,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Type</label><input value={ntIn("investorType")} onChange={e => ntSet("investorType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Investor profile / categories" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("fund-administration")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("fund-administration")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12268,7 +12268,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Jurisdiction</label><input value={ntIn("jurisdiction")} onChange={e => ntSet("jurisdiction", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fund jurisdiction" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("private-equity")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("private-equity")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12296,7 +12296,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Leverage</label><input value={ntIn("leverage")} onChange={e => ntSet("leverage", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Leverage ratio" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("hedge-fund")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("hedge-fund")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12324,7 +12324,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">PEP Status</label><input value={ntIn("pepStatus")} onChange={e => ntSet("pepStatus", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Family PEP exposure" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("family-office")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("family-office")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12352,7 +12352,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Ownership Origin</label><input value={ntIn("ownershipOrigin")} onChange={e => ntSet("ownershipOrigin", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="UBO nationality / origin" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("free-zone")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("free-zone")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12380,7 +12380,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Beneficiary Type</label><input value={ntIn("beneficiaryType")} onChange={e => ntSet("beneficiaryType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Beneficiary categories" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("foundation-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("foundation-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12408,7 +12408,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Investor Count</label><input value={ntIn("investorCount")} onChange={e => ntSet("investorCount", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of investors" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("crowdfunding")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("crowdfunding")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12436,7 +12436,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Default Rate</label><input value={ntIn("defaultRate")} onChange={e => ntSet("defaultRate", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Loan default rate %" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("p2p-lending")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("p2p-lending")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12464,7 +12464,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Instability Index</label><input value={ntIn("instabilityIndex")} onChange={e => ntSet("instabilityIndex", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Fragile States Index / other" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("geopolitical-risk")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("geopolitical-risk")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12492,7 +12492,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Centrality Score</label><input value={ntIn("centralityScore")} onChange={e => ntSet("centralityScore", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Calculated centrality score" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("network-centrality")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("network-centrality")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12520,7 +12520,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Hops</label><input value={ntIn("hops")} onChange={e => ntSet("hops", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Number of intermediate hops" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("follow-the-money")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("follow-the-money")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12548,7 +12548,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Integration</label><input value={ntIn("integration")} onChange={e => ntSet("integration", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Integration stage description" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("causal-chain")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("causal-chain")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12576,7 +12576,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Admissibility</label><input value={ntIn("admissibility")} onChange={e => ntSet("admissibility", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Admissibility assessment" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("evidence-assessment")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("evidence-assessment")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12604,7 +12604,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Witness</label><input value={ntIn("witness")} onChange={e => ntSet("witness", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Witness name / category" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("witness-statement")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("witness-statement")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12632,7 +12632,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Information Type</label><input value={ntIn("informationType")} onChange={e => ntSet("informationType", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Type of information sought" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("open-source-intel")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("open-source-intel")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12660,7 +12660,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal basis" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("court-order-drafter")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("court-order-drafter")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12688,7 +12688,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Gateway</label><input value={ntIn("legalGateway")} onChange={e => ntSet("legalGateway", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Applicable legal gateway" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("law-enforcement-liaison")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("law-enforcement-liaison")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12716,7 +12716,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Evidence Sought</label><input value={ntIn("evidenceSought")} onChange={e => ntSet("evidenceSought", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Evidence / information sought" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("mutual-legal-assistance")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("mutual-legal-assistance")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12744,7 +12744,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Legal Basis</label><input value={ntIn("legalBasis")} onChange={e => ntSet("legalBasis", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Recovery legal basis" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("asset-recovery")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("asset-recovery")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12772,7 +12772,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Owner Defence</label><input value={ntIn("ownerDefence")} onChange={e => ntSet("ownerDefence", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Anticipated owner defences" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("forfeiture-analysis")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("forfeiture-analysis")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12800,7 +12800,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Protection Needed</label><input value={ntIn("protectionNeeded")} onChange={e => ntSet("protectionNeeded", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Required protections" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("whistleblower-protect")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("whistleblower-protect")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12828,7 +12828,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Regulatory Fit</label><input value={ntIn("regulatoryFit")} onChange={e => ntSet("regulatoryFit", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Regulatory alignment assessment" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("regtech-assessment")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("regtech-assessment")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">
@@ -12856,7 +12856,7 @@ export default function MlroAdvisorPage() {
                   <div><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Budget</label><input value={ntIn("budget")} onChange={e => ntSet("budget", e.target.value)} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand" placeholder="Available investment budget" /></div>
                   <div className="col-span-2"><label className="block text-10 uppercase tracking-wide-3 text-ink-3 mb-1">Notes / Context</label><textarea value={ntIn("notes")} onChange={e => ntSet("notes", e.target.value)} rows={3} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" /></div>
                 </div>
-                <button type="button" onClick={() => void runNt("aml-innovation")} disabled={ntLoading} className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
+                <button type="button" onClick={() => void runNt("aml-innovation")} disabled={ntLoading} className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-60">{ntLoading ? "◌ Analysing…" : "Run Tool"}</button>
                 {ntError && <div className="text-11 text-red px-3 py-2 rounded bg-red-dim border border-red/20">⚠ {ntError}</div>}
                 {ntResult && (
                   <div className="mt-3 space-y-3 bg-bg-1 rounded-lg p-4">

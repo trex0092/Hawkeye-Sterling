@@ -278,7 +278,7 @@ export default function BrainMapPage() {
       )}
 
       <div className="mt-6 text-10 text-ink-4">
-        {data && `${data.totalFiles} files across ${data.faculties.length} faculties · Generated ${new Date(data.generatedAt).toLocaleString()}`}
+        {data && `${data.totalFiles} files across ${data.faculties.length} faculties · Generated ${new Date(data.generatedAt).toLocaleString("en-GB")}`}
       </div>
     </ModuleLayout>
   );

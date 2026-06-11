@@ -167,7 +167,7 @@ function DocumentAnalysisTab() {
           type="button"
           onClick={handleAnalyse}
           disabled={loading}
-          className="self-start px-5 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-40"
+          className="self-start px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-40"
         >
           {loading ? "Analysing…" : "Analyse Document"}
         </button>
@@ -504,7 +504,7 @@ function IdentityVerificationTab() {
             type="button"
             onClick={handleVerify}
             disabled={loading}
-            className="self-start px-5 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-40"
+            className="self-start px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-40"
           >
             {loading ? "Verifying…" : "Verify Identity"}
           </button>
@@ -574,7 +574,7 @@ export default function DocumentIntelligencePage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 text-12 font-medium transition-colors border-b-2 -mb-px ${
+              className={`px-3 py-1.5 text-11 font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab
                   ? "border-brand text-brand"
                   : "border-transparent text-ink-2 hover:text-ink-1"

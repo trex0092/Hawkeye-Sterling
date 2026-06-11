@@ -235,7 +235,7 @@ export function Btn({
   title?: string;
 }) {
   const base =
-    "font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+    "font-mono text-10.5 uppercase tracking-wide-3 font-medium px-3 py-1.5 rounded transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
   const variants: Record<string, string> = {
     primary:
       "bg-brand text-white border-brand hover:bg-brand-hover hover:border-brand-hover",

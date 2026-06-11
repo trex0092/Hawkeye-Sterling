@@ -225,7 +225,7 @@ export default function GeopoliticalPage() {
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-13 font-medium rounded-t transition-colors ${
+            className={`px-3 py-1.5 text-12 font-medium rounded-t transition-colors ${
               tab === t
                 ? "bg-bg-2 text-ink-0 border-b-2 border-brand"
                 : "text-ink-2 hover:text-ink-0 hover:bg-bg-1"
@@ -249,7 +249,7 @@ export default function GeopoliticalPage() {
                   key={r}
                   type="button"
                   onClick={() => setRegionFilter(r)}
-                  className={`px-3 py-1 text-11 rounded border transition-colors ${
+                  className={`px-2.5 py-1 text-11 rounded border transition-colors ${
                     regionFilter === r
                       ? "bg-brand text-white border-brand"
                       : "border-hair-2 text-ink-2 hover:border-brand hover:text-ink-0"
@@ -265,7 +265,7 @@ export default function GeopoliticalPage() {
                   key={r}
                   type="button"
                   onClick={() => setRiskFilter(r)}
-                  className={`px-3 py-1 text-11 rounded border transition-colors capitalize ${
+                  className={`px-2.5 py-1 text-11 rounded border transition-colors capitalize ${
                     riskFilter === r
                       ? "bg-brand text-white border-brand"
                       : "border-hair-2 text-ink-2 hover:border-brand hover:text-ink-0"
@@ -357,7 +357,7 @@ export default function GeopoliticalPage() {
               type="button"
               onClick={() => { void assessImpact(); }}
               disabled={impactLoading || !events.length}
-              className="mt-3 px-5 py-2 bg-brand text-white rounded font-semibold text-13 hover:bg-brand/90 transition-colors disabled:opacity-50"
+              className="mt-3 px-3 py-1.5 bg-brand text-white rounded font-semibold text-12 hover:bg-brand/90 transition-colors disabled:opacity-50"
             >
               {impactLoading ? "⟳ Assessing…" : "🎯 Assess Impact"}
             </button>
@@ -402,7 +402,7 @@ export default function GeopoliticalPage() {
                         <div>
                           <div className="text-13 font-semibold text-ink-0">{ec.client.clientName}</div>
                           <div className="text-11 text-ink-3 font-mono">
-                            {ec.client.country} · {ec.client.sector} · AED {ec.client.exposureAmount.toLocaleString()}
+                            {ec.client.country} · {ec.client.sector} · AED {ec.client.exposureAmount.toLocaleString("en-GB")}
                           </div>
                         </div>
                         <span className={`px-2 py-0.5 rounded text-10 font-mono font-semibold shrink-0 ${RISK_BADGE[ec.exposureLevel] ?? "bg-bg-2 text-ink-2"}`}>

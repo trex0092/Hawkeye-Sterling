@@ -250,7 +250,7 @@ function HmacSealPanel({
             type="button"
             onClick={onVerify}
             disabled={verifying || hmacStatus === "valid"}
-            className="font-mono text-10 uppercase tracking-wide-3 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-1 hover:border-hair-3 hover:text-ink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-10 uppercase tracking-wide-3 font-semibold px-2.5 py-1 rounded border border-hair-2 bg-bg-panel text-ink-1 hover:border-hair-3 hover:text-ink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {verifying ? "Verifying…" : hmacStatus === "valid" ? "Verified" : "Verify seal"}
           </button>
@@ -496,7 +496,7 @@ export function AuditTrailViewer({
                 type="button"
                 onClick={() => void handleExportJson()}
                 disabled={exporting}
-                className="font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-hair-3 hover:text-ink-0 transition-colors disabled:opacity-50"
+                className="font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-2.5 py-1 rounded border border-hair-2 bg-bg-1 text-ink-1 hover:border-hair-3 hover:text-ink-0 transition-colors disabled:opacity-50"
               >
                 {exporting ? "Exporting…" : "Export JSON"}
               </button>
@@ -504,7 +504,7 @@ export function AuditTrailViewer({
                 type="button"
                 onClick={() => void handleExportPdf()}
                 disabled={exporting}
-                className="font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-3 py-1.5 rounded border border-violet/40 bg-violet-dim text-violet hover:bg-violet hover:text-white transition-colors disabled:opacity-50"
+                className="font-mono text-10.5 uppercase tracking-wide-3 font-semibold px-2.5 py-1 rounded border border-violet/40 bg-violet-dim text-violet hover:bg-violet hover:text-white transition-colors disabled:opacity-50"
               >
                 Export PDF
               </button>

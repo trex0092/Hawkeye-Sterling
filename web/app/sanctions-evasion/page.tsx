@@ -323,7 +323,7 @@ export default function SanctionsEvasionPage() {
             type="button"
             onClick={() => void handleDetect()}
             disabled={loading || !entity.trim()}
-            className="mt-4 w-full py-3 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-4 w-full py-1.5 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

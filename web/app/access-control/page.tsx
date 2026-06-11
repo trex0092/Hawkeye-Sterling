@@ -203,7 +203,7 @@ function SessionMonitorTab() {
         <button
           onClick={() => void fetchSessions()}
           disabled={loading}
-          className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
+          className="px-2 py-1 text-11 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
         >
           ↻
         </button>
@@ -463,7 +463,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
                 <button
                   key={r}
                   onClick={() => setSelectedRole(r)}
-                  className={`px-3 py-1.5 rounded text-11 font-mono uppercase font-semibold border transition-colors ${
+                  className={`px-2.5 py-1 rounded text-11 font-mono uppercase font-semibold border transition-colors ${
                     selectedRole === r
                       ? "border-brand bg-brand/10 text-brand"
                       : "border-hair-2 text-ink-2 hover:border-ink-2"
@@ -484,7 +484,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
               <button
                 onClick={handleSave}
                 disabled={saving || selectedRole === user.role || !reason.trim()}
-                className="flex-1 py-2 rounded bg-brand text-black text-12 font-semibold disabled:opacity-40 hover:bg-brand/90 transition-colors"
+                className="flex-1 py-1.5 rounded bg-brand text-black text-11 font-semibold disabled:opacity-40 hover:bg-brand/90 transition-colors"
               >
                 {saving ? "Saving…" : "Apply role change"}
               </button>
@@ -537,7 +537,7 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
             <button
               onClick={() => { void handleSetPassword(); }}
               disabled={pwSaving || !newPassword.trim()}
-              className="py-2 rounded bg-bg-panel border border-hair-2 text-ink-1 text-12 font-semibold hover:border-brand hover:text-brand disabled:opacity-40 transition-colors"
+              className="py-1.5 rounded bg-bg-panel border border-hair-2 text-ink-1 text-11 font-semibold hover:border-brand hover:text-brand disabled:opacity-40 transition-colors"
             >
               {pwSaving ? "Saving…" : "Update credentials"}
             </button>
@@ -688,7 +688,7 @@ export default function AccessControlPage() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-12 font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-3 py-1.5 text-11 font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab
                 ? "border-brand text-brand"
                 : "border-transparent text-ink-2 hover:text-ink-1"
@@ -794,14 +794,14 @@ export default function AccessControlPage() {
                 <button
                   type="submit"
                   disabled={addingUser}
-                  className="px-4 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 disabled:opacity-50 transition-colors"
+                  className="px-3 py-1 bg-brand text-white text-11 font-semibold rounded hover:bg-brand/90 disabled:opacity-50 transition-colors"
                 >
                   {addingUser ? "Adding…" : "Add user"}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowAddForm(false); setAddError(""); setAddForm({ name: "", email: "", role: "compliance", username: "", password: "" }); }}
-                  className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
+                  className="px-3 py-1 border border-hair-2 text-ink-2 text-11 rounded hover:text-ink-0 transition-colors"
                 >
                   Cancel
                 </button>
@@ -930,7 +930,7 @@ export default function AccessControlPage() {
             <button
               onClick={() => void fetchLog()}
               disabled={loadingLog}
-              className="px-2 py-1 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 py-1 text-11 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingLog ? "…" : "↻"}
             </button>

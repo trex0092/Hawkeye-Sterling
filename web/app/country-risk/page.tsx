@@ -492,7 +492,7 @@ function CountryRiskInner() {
         <button
           type="button"
           onClick={() => { setMode("single"); router.replace("/country-risk?tab=single", { scroll: false }); }}
-          className={`px-4 py-1.5 rounded text-12 font-medium transition-colors border ${
+          className={`px-3 py-1 rounded text-11 font-medium transition-colors border ${
             mode === "single"
               ? "bg-brand text-white border-brand"
               : "text-ink-2 border-hair-2 hover:border-hair hover:text-ink-0"
@@ -503,7 +503,7 @@ function CountryRiskInner() {
         <button
           type="button"
           onClick={() => { setMode("compare"); router.replace("/country-risk?tab=compare", { scroll: false }); }}
-          className={`px-4 py-1.5 rounded text-12 font-medium transition-colors border ${
+          className={`px-3 py-1 rounded text-11 font-medium transition-colors border ${
             mode === "compare"
               ? "bg-brand text-white border-brand"
               : "text-ink-2 border-hair-2 hover:border-hair hover:text-ink-0"
@@ -628,7 +628,7 @@ function CountryRiskInner() {
                 type="button"
                 onClick={runCompare}
                 disabled={compareList.length < 2 || comparing}
-                className="px-5 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {comparing ? "Comparing…" : `Compare ${compareList.length} Countries`}
               </button>

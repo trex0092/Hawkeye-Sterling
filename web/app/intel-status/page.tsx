@@ -125,7 +125,7 @@ export default function IntelStatusPage(): React.ReactElement {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-11 px-3 py-1 rounded border ${
+                className={`text-11 px-2.5 py-1 rounded border ${
                   filter === f ? "bg-brand text-white border-brand" : "bg-bg-panel text-ink-2 border-hair-2 hover:border-hair-1"
                 }`}
               >
@@ -137,7 +137,7 @@ export default function IntelStatusPage(): React.ReactElement {
               <button
                 key={t}
                 onClick={() => setTierFilter(t)}
-                className={`text-11 px-3 py-1 rounded border ${
+                className={`text-11 px-2.5 py-1 rounded border ${
                   tierFilter === t ? "bg-brand text-white border-brand" : "bg-bg-panel text-ink-2 border-hair-2 hover:border-hair-1"
                 }`}
               >

@@ -206,7 +206,7 @@ export function SessionExpiryWatcher() {
           <button
             type="button"
             onClick={() => { setAuthPromptDismissed(true); setKind(null); }}
-            className="px-4 py-2 text-13 font-semibold text-ink-2 hover:text-ink-0 transition-colors"
+            className="px-3 py-1.5 text-12 font-semibold text-ink-2 hover:text-ink-0 transition-colors"
           >
             Dismiss
           </button>

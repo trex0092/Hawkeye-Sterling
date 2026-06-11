@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface DormantAccount {
   id: string;
@@ -55,7 +56,7 @@ const RISK_COLOURS: Record<string, string> = {
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString();
+  return new Date(iso).toLocaleDateString("en-GB");
 }
 
 function getToken(): string { return typeof window !== "undefined" ? (localStorage.getItem("adminToken") ?? "") : ""; }
@@ -233,8 +234,8 @@ export default function DormantAccountsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-1 mb-1">Last Activity Date *</label>
-                <input type="date" value={form.lastActivityDate}
-                  onChange={(e) => setForm({ ...form, lastActivityDate: e.target.value })}
+                <IsoDateInput value={form.lastActivityDate}
+                  onChange={(iso) => setForm({ ...form, lastActivityDate: iso })}
                   className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
               </div>
               <div>
@@ -256,9 +257,9 @@ export default function DormantAccountsPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
               <button type="submit" disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
                 {submitting ? "Flagging..." : "Flag Account"}
               </button>
             </div>
@@ -339,7 +340,7 @@ export default function DormantAccountsPage() {
                                 <button
                                   onClick={() => void handleNotifyMlro(acc.id)}
                                   disabled={notifyingId === acc.id}
-                                  className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                                  className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
                                 >
                                   {notifyingId === acc.id ? "Notifying..." : "Notify MLRO"}
                                 </button>
@@ -392,7 +393,7 @@ export default function DormantAccountsPage() {
                               </div>
                               <div className="mt-3 flex justify-end">
                                 <button onClick={() => void handleUpdate(acc.id)} disabled={updatingId === acc.id}
-                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90 disabled:opacity-50">
+                                  className="px-2.5 py-1 text-xs bg-brand text-white rounded hover:opacity-90 disabled:opacity-50">
                                   {updatingId === acc.id ? "Saving..." : "Save Changes"}
                                 </button>
                               </div>

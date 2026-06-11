@@ -32,7 +32,7 @@ function buildNarrative(r: SuperBrainResult, name: string, id: string, news?: Ne
 
   // Opening: what the brain actually did.
   paragraphs.push(
-    `${name} (${id}) was screened by the Hawkeye Sterling brain across ${r.screen.listsChecked} sanctions / watchlist corpora against ${r.screen.candidatesChecked.toLocaleString()} candidates in ${r.screen.durationMs} ms, returning a composite risk score of ${composite}/100 (severity ${severity}).`,
+    `${name} (${id}) was screened by the Hawkeye Sterling brain across ${r.screen.listsChecked} sanctions / watchlist corpora against ${r.screen.candidatesChecked.toLocaleString("en-GB")} candidates in ${r.screen.durationMs} ms, returning a composite risk score of ${composite}/100 (severity ${severity}).`,
   );
 
   // Sanctions verdict.

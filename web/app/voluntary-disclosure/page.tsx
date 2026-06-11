@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage } from "@/lib/client/error-utils";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface VoluntaryDisclosure {
   id: string;
@@ -249,10 +250,9 @@ export default function VoluntaryDisclosurePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-1 mb-1">Detected Date</label>
-                <input
-                  type="date"
+                <IsoDateInput
                   value={form.detectedDate}
-                  onChange={(e) => setForm({ ...form, detectedDate: e.target.value })}
+                  onChange={(iso) => setForm({ ...form, detectedDate: iso })}
                   className={inputCls}
                   required
                 />
@@ -295,14 +295,14 @@ export default function VoluntaryDisclosurePage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Creating..." : "Create Disclosure"}
               </button>
@@ -414,7 +414,7 @@ export default function VoluntaryDisclosurePage() {
                               {record.status === "draft" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "pending_mlro" })}
-                                  className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
+                                  className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
                                 >
                                   Submit for MLRO Approval
                                 </button>
@@ -425,7 +425,7 @@ export default function VoluntaryDisclosurePage() {
                                     mlroApproved: true,
                                     mlroApprovalDate: today,
                                   })}
-                                  className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                  className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                 >
                                   MLRO Approve
                                 </button>
@@ -436,7 +436,7 @@ export default function VoluntaryDisclosurePage() {
                                     status: "submitted",
                                     disclosureDate: today,
                                   })}
-                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90"
+                                  className="px-2.5 py-1 text-xs bg-brand text-white rounded hover:opacity-90"
                                 >
                                   Mark Submitted
                                 </button>
@@ -458,7 +458,7 @@ export default function VoluntaryDisclosurePage() {
                                         status: "acknowledged",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                    className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                   >
                                     Record Regulator Response
                                   </button>
@@ -467,7 +467,7 @@ export default function VoluntaryDisclosurePage() {
                               {record.status === "acknowledged" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "closed" })}
-                                  className="px-3 py-1.5 text-xs bg-zinc-700 text-white rounded hover:bg-zinc-600"
+                                  className="px-2.5 py-1 text-xs bg-zinc-700 text-white rounded hover:bg-zinc-600"
                                 >
                                   Close
                                 </button>

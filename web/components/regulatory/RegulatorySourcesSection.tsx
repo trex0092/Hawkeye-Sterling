@@ -127,7 +127,7 @@ export function RegulatorySourcesSection() {
                           {last.status.replace(/_/g, " ")}
                         </span>
                         <span className="text-10 text-ink-3 font-mono">
-                          {new Date(last.triggeredAt).toLocaleString()}
+                          {new Date(last.triggeredAt).toLocaleString("en-GB")}
                         </span>
                       </div>
                     ) : (
@@ -163,7 +163,7 @@ export function RegulatorySourcesSection() {
                   </span>
                   <span className="text-12 text-ink-0 font-medium">{ev.sourceName}</span>
                   <span className="text-10 text-ink-3 font-mono">
-                    {new Date(ev.triggeredAt).toLocaleString()} · by {ev.triggeredBy}
+                    {new Date(ev.triggeredAt).toLocaleString("en-GB")} · by {ev.triggeredBy}
                   </span>
                 </div>
                 {ev.detail && <p className="text-11 text-ink-2 mt-1">{ev.detail}</p>}

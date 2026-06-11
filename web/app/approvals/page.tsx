@@ -140,7 +140,7 @@ function ApprovalForm({
               key={r}
               type="button"
               onClick={() => setForm((f) => ({ ...f, riskScore: r }))}
-              className={`px-3 py-1 rounded-lg text-11 font-semibold capitalize border transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-11 font-semibold capitalize border transition-all ${
                 form.riskScore === r
                   ? RISK_COLORS[r]
                   : "bg-bg-1 text-ink-3 border-hair-2 hover:border-hair-1"
@@ -182,14 +182,14 @@ function ApprovalForm({
           type="button"
           onClick={() => onSave(form)}
           disabled={saving || !form.entityName.trim() || !form.country.trim()}
-          className="px-4 py-1.5 rounded-lg bg-brand text-white text-12 font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
+          className="px-3 py-1 rounded-lg bg-brand text-white text-11 font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           {saving ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-1.5 rounded-lg border border-hair-2 text-12 text-ink-2 hover:bg-bg-1 transition-colors"
+          className="px-3 py-1 rounded-lg border border-hair-2 text-11 text-ink-2 hover:bg-bg-1 transition-colors"
         >
           Cancel
         </button>

@@ -178,7 +178,7 @@ export default function SystemStatusPage() {
           </span>
           {ss && (
             <span className="text-xs text-ink-3">
-              generated {new Date(ss.generatedAt).toLocaleTimeString()}
+              generated {new Date(ss.generatedAt).toLocaleTimeString("en-GB")}
             </span>
           )}
         </div>
@@ -188,7 +188,7 @@ export default function SystemStatusPage() {
           )}
           <button
             onClick={() => void load()}
-            className="text-xs px-3 py-1 rounded border border-border-subtle text-ink-2 hover:text-ink-1 transition"
+            className="text-xs px-2.5 py-1 rounded border border-border-subtle text-ink-2 hover:text-ink-1 transition"
           >
             Refresh
           </button>
@@ -246,7 +246,7 @@ export default function SystemStatusPage() {
             {rf?.fetchedAt && (
               <div className="flex justify-between">
                 <span className="text-ink-2">Last fetched</span>
-                <span className="font-mono text-ink-1 text-xs">{new Date(rf.fetchedAt).toLocaleTimeString()}</span>
+                <span className="font-mono text-ink-1 text-xs">{new Date(rf.fetchedAt).toLocaleTimeString("en-GB")}</span>
               </div>
             )}
             {rf?.staleAgeMin != null && (
@@ -267,7 +267,7 @@ export default function SystemStatusPage() {
               {ss.metrics.totalListEntities != null && (
                 <div className="flex justify-between">
                   <span className="text-ink-2">Total list entities</span>
-                  <span className="font-mono text-ink-1">{ss.metrics.totalListEntities.toLocaleString()}</span>
+                  <span className="font-mono text-ink-1">{ss.metrics.totalListEntities.toLocaleString("en-GB")}</span>
                 </div>
               )}
               {ss.metrics.activeAlerts != null && (
@@ -317,7 +317,7 @@ export default function SystemStatusPage() {
                       }>{l.status}</span>
                     </td>
                     <td className="py-1.5 pr-4 font-mono text-ink-1">
-                      {l.entityCount != null ? l.entityCount.toLocaleString() : "—"}
+                      {l.entityCount != null ? l.entityCount.toLocaleString("en-GB") : "—"}
                     </td>
                     <td className="py-1.5"><AgeLabel hours={l.ageHours} /></td>
                   </tr>
@@ -370,7 +370,7 @@ export default function SystemStatusPage() {
 
       {data && (
         <p className="text-xs text-ink-3 mt-4 text-right">
-          Last fetched: {new Date(data.fetchedAt).toLocaleTimeString()} · auto-refresh every 60s
+          Last fetched: {new Date(data.fetchedAt).toLocaleTimeString("en-GB")} · auto-refresh every 60s
         </p>
       )}
     </ModuleLayout>
