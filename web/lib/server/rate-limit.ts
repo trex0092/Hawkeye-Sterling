@@ -45,6 +45,10 @@ async function redisPipeline(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(commands),
+      // Bounded: this runs inside enforce() ahead of every screening-path
+      // route; an Upstash hang must degrade to the fallback limiter rather
+      // than spend the route's 5s SLA. Timeout lands in the catch → nulls.
+      signal: AbortSignal.timeout(1_000),
     });
     if (!res.ok) return commands.map(() => null);
     const results = await res.json() as Array<{ result?: number }>;
