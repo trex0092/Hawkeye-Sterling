@@ -239,7 +239,16 @@ type DirectOutcome = { kind: "res"; res: Response } | { kind: "err"; err: unknow
 export async function newsFetch(
   input: string | URL | Request,
   init?: RequestInit,
-  opts?: { allowRelay?: boolean },
+  opts?: {
+    allowRelay?: boolean;
+    /** Override the relay hedge delay for this call. Callers with a per-feed
+     *  budget SHORTER than the global RELAY_HEDGE_MS (e.g. the 1.2s Google
+     *  locale fan-out vs the 1.5s default tuned for GDELT) must pass a smaller
+     *  value or a hanging direct fetch exhausts the budget before the relay is
+     *  ever allowed to start — the exact failure that surfaces as
+     *  "0/N feeds reachable" during a datacenter-IP brownout. */
+    relayHedgeMs?: number;
+  },
 ): Promise<Response> {
   const dispatcher = getNewsDispatcher();
   const relayEnabled = Boolean(opts?.allowRelay) && RELAY_TEMPLATES.length > 0;
@@ -274,8 +283,9 @@ export async function newsFetch(
 
   let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
   try {
+    const hedgeMs = opts?.relayHedgeMs ?? RELAY_HEDGE_MS;
     const hedge = new Promise<"hedge">((resolve) => {
-      hedgeTimer = setTimeout(() => resolve("hedge"), RELAY_HEDGE_MS);
+      hedgeTimer = setTimeout(() => resolve("hedge"), hedgeMs);
     });
 
     const first = await Promise.race([directOutcome, hedge]);

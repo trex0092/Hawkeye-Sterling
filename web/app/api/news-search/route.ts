@@ -692,9 +692,15 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
   return capped.includes(severity) ? severity : "medium";
 }
 
-// Per-locale feed timeout. Tightened to 800ms — Google News RSS rarely exceeds
-// this; early abort frees the overall timebox sooner for the fastest locales.
-const FEED_TIMEOUT_MS = 800;
+// Per-locale feed timeout. 1.2s: healthy Google News RSS answers well under
+// this, and the budget must leave room for the edge-relay hedge (fires at
+// 250ms) to complete when the direct path hangs — with the previous 800ms
+// budget and the global 1.5s hedge, a hanging direct fetch aborted the call
+// before the relay could start, collapsing brownouts into "0/N reachable".
+const FEED_TIMEOUT_MS = 1_200;
+// Hedge delays sized to each feed class budget (see newsFetch relayHedgeMs).
+const LOCALE_RELAY_HEDGE_MS = 250;
+const REGIONAL_RELAY_HEDGE_MS = 400;
 
 // Always true — the public relay chain (DEFAULT_RELAYS) is on by default.
 // Override with NEWS_FETCH_RELAY for an operator-controlled relay, or set
@@ -768,7 +774,7 @@ async function fetchLocaleFeed(
     const res = await newsFetch(
       feed,
       { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
-      { allowRelay: relayKeyless },
+      { allowRelay: relayKeyless, relayHedgeMs: LOCALE_RELAY_HEDGE_MS },
     );
     noteFeedOutcome(stats, res.ok);
     if (!res.ok) {
@@ -944,7 +950,7 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[], 
         const res = await newsFetch(
           feed.url,
           { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
-          { allowRelay: relayKeyless },
+          { allowRelay: relayKeyless, relayHedgeMs: REGIONAL_RELAY_HEDGE_MS },
         );
         noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
@@ -1051,7 +1057,7 @@ async function fetchRegionalFeeds(
         const res = await newsFetch(
           feed.url,
           { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
-          { allowRelay: relayKeyless },
+          { allowRelay: relayKeyless, relayHedgeMs: REGIONAL_RELAY_HEDGE_MS },
         );
         noteFeedOutcome(stats, res.ok);
         if (!res.ok) {
