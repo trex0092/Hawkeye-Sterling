@@ -329,6 +329,18 @@ export async function POST(req: Request): Promise<NextResponse> {
             method: "PUT",
             body: { data: { notes: job.charter } },
           });
+          // The pinned 📌 Compliance Attestation task carries the same
+          // charter (including the NARRATIVE section) as its description —
+          // keep it in lockstep so the task view matches the project charter.
+          const attestationTaskGid = job.board
+            ? WORKSPACE_GIDS.boards?.[job.key]?.attestationTaskGid
+            : undefined;
+          if (attestationTaskGid) {
+            await asanaFetch(token, `/tasks/${attestationTaskGid}`, {
+              method: "PUT",
+              body: { data: { notes: job.charter } },
+            });
+          }
           refreshed.push(job.key);
         } catch (err) {
           failed.push(`${job.key}: ${err instanceof Error ? err.message : String(err)}`);

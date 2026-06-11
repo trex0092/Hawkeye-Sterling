@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Single point of traceability from four externally recognised framework checklists to their Hawkeye Sterling implementations. Auditors and operators should answer "is X integrated?" from this document without a codebase search. Statuses: **COVERED** (implemented with evidence), **PARTIAL** (implemented with a registered gap), **N/A** (not applicable, justification recorded).
+Single point of traceability from five externally recognised framework checklists to their Hawkeye Sterling implementations. Auditors and operators should answer "is X integrated?" from this document without a codebase search. Statuses: **COVERED** (implemented with evidence), **PARTIAL** (implemented with a registered gap), **N/A** (not applicable, justification recorded).
 
 Frameworks mapped:
 
@@ -19,6 +19,7 @@ Frameworks mapped:
 2. AML alert typologies / red flags (13 standard categories)
 3. GRC KPIs & KRIs (12 domains)
 4. Cybersecurity KPIs & KRIs (12 categories)
+5. CBUAE AI Guidance Note — 9 obligations for licensed financial institutions (with EU AI Act convergence)
 
 ---
 
@@ -150,16 +151,37 @@ Three KRIs are registered with bands and appetite bindings but render an explici
 
 ---
 
+## 5. CBUAE AI Guidance Note — 9 Obligations for Licensed Financial Institutions
+
+Mapping of the Central Bank of the UAE AI Guidance Note (2025) obligations to existing Hawkeye Sterling mechanisms. No new controls were created for this mapping — every obligation is discharged by mechanisms already operated under ISO 42001, FDL 10/2025, and the EU AI Act. The convergence column records the corresponding EU AI Act (Regulation (EU) 2024/1689) provision so a single self-assessment evidences both regimes. Annual self-assessment is tracked as `ob_cbuae_ai_guidance_selfassessment` in `src/brain/regulatory-obligations.ts`.
+
+| # | Obligation | Status | Primary evidence | EU AI Act convergence |
+|---|---|---|---|---|
+| 1 | Governance & Accountability | COVERED | `AI_GOVERNANCE_POLICY.md` §6 (RACI, MLRO accountability); `MODEL_REGISTRY` approval records (`web/lib/server/ai-governance.ts`); annual certification §8 | Art. 16–17 (provider obligations, quality management) |
+| 2 | Fairness & Non-Discrimination | COVERED | `web/lib/server/bias-monitor.ts` (9 name-script groups, ratio ≤ 1.15 internal / 1.5 FATF floor); AIR-002; `docs/testing/FAIRNESS_TESTING_RESULTS.md` | Art. 10 (data governance, bias mitigation) |
+| 3 | Transparency & Explainability | COVERED | Charter P9 (opacity prohibition, `src/policy/systemPrompt.ts`); model cards `docs/model-cards/hs-00*.md`; reasoning-chain persistence; prompt-hash CI gate | Art. 13 (transparency to deployers) |
+| 4 | Data Quality, Privacy & Security | COVERED | `docs/data-governance/DATA_LINEAGE.md` (validation checks, freshness SLAs); PII redaction pipeline (`web/lib/server/redact.ts`, `sanitize-prompt.ts`); PDPL controls (`docs/GDPR.md`) | Art. 10, Art. 15 (accuracy, robustness, cybersecurity) |
+| 5 | Continuous Monitoring & Review | COVERED | `web/lib/server/drift-monitor.ts` (drift ≤ 0.15); `/api/kri-dashboard` (19 KRIs); weekly governance committee; quarterly model attestation | Art. 15, Art. 72 (post-market monitoring) |
+| 6 | Human Oversight & Consumer Protection | COVERED | `web/lib/server/four-eyes-gate.ts` (TOCTOU-safe sign-off); "AI proposes; the MLRO decides" (policy §1.1); no autonomous disposition/filing/freeze. Service principals (`SERVICE_PRINCIPALS` in `web/lib/server/rbac.ts`) model machine identities as first-class principals with their own permission sets and audit-actor attribution; a load-time invariant plus unit tests (`web/lib/server/__tests__/rbac.test.ts`) guarantee no machine identity can ever hold STR-filing, four-eyes, freeze, or EDD-approval permissions | Art. 14 (human oversight) |
+| 7 | Integration with Existing Frameworks | COVERED | `src/brain/regulatory-obligations.ts` (standing obligations register); `src/brain/policy-library.ts` (64 policies); ISO 42001 SoA (`STATEMENT_OF_APPLICABILITY.md`) | Art. 17 (integration with existing QMS) |
+| 8 | Outsourcing & Third-Party Risk | COVERED | `src/brain/vendor-register.ts` (11 vendors, risk tiers, contingencies); `docs/operations/THIRD_PARTY_MANAGEMENT.md` (HS-OPS-003); annual review `ob_vendor_annual_review` | Art. 25 (third-party responsibilities along the value chain) |
+| 9 | Ethical Collaboration & Innovation | COVERED | `AI_GOVERNANCE_POLICY.md` §2.4 (ethical principles per UNESCO Recommendation); `web/lib/server/adversarial-probes.ts` (24-probe red-team suite); HS-004 pilot governance (advisory-only, exit review Q3 2026) | Art. 95 (voluntary codes of conduct); innovation recitals |
+
+**Closed 2026-06-11:** AI agent/service identities (`portal_admin`, `cron_internal`) are now distinct principals in RBAC (`SERVICE_PRINCIPALS`, `web/lib/server/rbac.ts`) with their own permission sets, central `requirePermission()` resolution, and `auditActorFromGate()` attribution. Human sign-off permissions are denied to machine identities by a load-time invariant and pinned by unit test.
+
+---
+
 ## Document Control
 
 | Field | Value |
 |---|---|
 | Document ID | HS-GOV-005 |
-| Version | 1.0.0 |
+| Version | 1.2.0 |
 | Created | 2026-06-10 |
+| Last amended | 2026-06-11 — added §5 CBUAE AI Guidance Note mapping (1.1.0); §5 #6 closed via service-principal RBAC (1.2.0) |
 | Next mandatory review | 2026-12-10 |
 | Approver (MLRO) | [Signature required] |
 | Approver (Engineering Lead) | [Signature required] |
 | Related documents | `docs/governance/STATEMENT_OF_APPLICABILITY.md`, `docs/governance/AI_RISK_REGISTER.md`, `docs/IDENTITY-ACCESS-ATTESTATION.md`, `docs/INHERITED-CONTROLS.md`, `docs/PENTEST-LOG.md`, `COMPLIANCE_GAPS.md` |
-| Regulatory references | ISO/IEC 42001:2023; UAE FDL 10/2025; FATF Methodology; SOC2 TSC |
+| Regulatory references | ISO/IEC 42001:2023; UAE FDL 10/2025; FATF Methodology; SOC2 TSC; CBUAE AI Guidance Note (2025); EU AI Act (Regulation (EU) 2024/1689) |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |

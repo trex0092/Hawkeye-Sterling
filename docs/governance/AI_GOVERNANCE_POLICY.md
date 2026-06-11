@@ -55,6 +55,8 @@ This policy is issued pursuant to, and must be read in conjunction with:
 | **UAE Personal Data Protection Law (PDPL) — Federal Decree-Law No. 45 of 2021** | Data subject rights; lawful basis for processing; cross-border transfer |
 | **LBMA Responsible Gold Guidance (RGG)** | Supply-chain due diligence for DPMS precious metals sector |
 | **OECD Due Diligence Guidance for Responsible Supply Chains (DDG)** | Annex II CAHRA documentation requirements |
+| **CBUAE AI Guidance Note (2025)** | Nine obligations for AI use by licensed financial institutions; obligation-level traceability in `docs/governance/FRAMEWORK_COVERAGE.md` §5; annual self-assessment tracked as `ob_cbuae_ai_guidance_selfassessment` |
+| **EU AI Act (Regulation (EU) 2024/1689)** | High-risk AI classification (Annex III); Art. 13 transparency; Art. 14 human oversight; Art. 73 serious-incident reporting (72h); operationalised across the policy library, doctrine registry, and incident library |
 
 ### 1.3 Strategic AI Objectives
 
@@ -518,11 +520,12 @@ The following uses of Hawkeye Sterling AI systems are absolutely prohibited. The
 | Field | Value |
 |---|---|
 | Document ID | HS-GOV-001 |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Created | 2026-05-06 |
+| Last amended | 2026-06-11 — §1.2 regulatory basis extended with CBUAE AI Guidance Note (2025) and EU AI Act (2024/1689) |
 | Next mandatory review | 2027-05-06 |
 | Approver (MLRO) | [Signature required] |
 | Approver (CEO) | [Signature required] |
 | Related documents | `docs/governance/AI_INVENTORY.md`, `docs/operations/INCIDENT_RESPONSE_PLAYBOOK.md`, `docs/data-governance/DATA_LINEAGE.md`, `docs/governance/GOVERNANCE_COMMITTEE_MEETINGS.md`, `docs/governance/STATEMENT_OF_APPLICABILITY.md`, `docs/governance/STAKEHOLDER_FEEDBACK_LOG.md`, `docs/operations/THIRD_PARTY_MANAGEMENT.md`, `docs/governance/AI_RISK_REGISTER.md`, `docs/governance/FRAMEWORK_COVERAGE.md` |
-| Regulatory references | UAE FDL 10/2025; FDL 20/2018 as amended; Cabinet Decision 74/2020; Cabinet Resolution 16/2021; FATF Recommendations |
+| Regulatory references | UAE FDL 10/2025; FDL 20/2018 as amended; Cabinet Decision 74/2020; Cabinet Resolution 16/2021; FATF Recommendations; CBUAE AI Guidance Note (2025); EU AI Act (Regulation (EU) 2024/1689) |
 | Retention | 10 years from creation date (FDL 10/2025 Art. 24; record class: `audit_report`) |
