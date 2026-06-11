@@ -371,6 +371,7 @@ interface NewsResponse {
   retrieval: "live" | "degraded" | "unavailable";
   feedsAttempted: number;             // feeds we tried to fetch this request
   feedsReachable: number;             // feeds that returned HTTP 2xx
+  feedFailures?: Record<string, number>; // failure classes (http_429/http_403/http_5xx/abort/network) when degraded
   degraded?: boolean;                 // convenience flag: retrieval !== "live"
   googleNewsRssEnabled?: boolean;     // false when GOOGLE_NEWS_RSS_ENABLED=false (datacenter-IP 403 workaround)
   // Set when live retrieval reached nothing but a cached dossier (stale L2 or
@@ -737,15 +738,41 @@ function withDeadline<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
 // well-covered subjects without losing material coverage.
 const FANOUT_EARLY_EXIT_COUNT = 20;
 
+// Locale fan-out worker-pool size. Firing all ~100 locales simultaneously got
+// the burst throttled wholesale (one request returns 200 in ~150ms while the
+// burst yields 0/202) — 10 concurrent keeps Google and the edge relay happy.
+const FANOUT_CONCURRENCY = 10;
+// Stop draining the locale queue after this many CONSECUTIVE unreachable
+// feeds — a throttled/blocked run does ~a dozen doomed fetches instead of 202
+// (plus 202 relay calls). GDELT, the regional banks and keyed adapters keep
+// running in parallel and still feed the dossier.
+const FANOUT_BREAKER_CONSECUTIVE = 12;
+
 // Live-retrieval health accounting. Each feed fetch records whether it actually
 // reached its upstream (HTTP 2xx). The handler uses the aggregate to tell a
 // genuine "found nothing" negative finding apart from a wholesale outage where
 // every news source was unreachable (e.g. blocked egress / upstream 403).
-type RetrievalStats = { attempted: number; reachable: number };
-function noteFeedOutcome(stats: RetrievalStats | undefined, reachable: boolean): void {
+type RetrievalStats = { attempted: number; reachable: number; failures: Record<string, number> };
+function noteFeedOutcome(stats: RetrievalStats | undefined, reachable: boolean, errClass?: string): void {
   if (!stats) return;
   stats.attempted += 1;
   if (reachable) stats.reachable += 1;
+  else {
+    const k = errClass ?? "network";
+    stats.failures[k] = (stats.failures[k] ?? 0) + 1;
+  }
+}
+// Failure classes make a wholesale outage diagnosable from the response
+// itself (Google 429ing the burst vs sockets aborting vs egress death).
+function classifyHttpFailure(status: number): string {
+  if (status === 403) return "http_403";
+  if (status === 429) return "http_429";
+  if (status >= 500) return "http_5xx";
+  return `http_${status}`;
+}
+function classifyFetchError(err: unknown): string {
+  const name = err instanceof Error ? err.name : "";
+  return name === "AbortError" || name === "TimeoutError" ? "abort" : "network";
 }
 
 // BROWSER_UA / FEED_HEADERS and the news egress path now live in
@@ -760,7 +787,7 @@ async function fetchLocaleFeed(
   locale: (typeof LOCALES)[number],
   variants: string[],
   stats?: RetrievalStats,
-): Promise<Article[]> {
+): Promise<{ articles: Article[]; reachable: boolean }> {
   // Post-fetch fuzzy scoring (fuzzyScore ≥ 75, or ≥ 55 + adverse keywords)
   // is the relevance gate. Do not quote the query — exact-phrase quoting
   // causes zero results when a subject’s name has common spelling variants
@@ -776,17 +803,17 @@ async function fetchLocaleFeed(
       { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
       { allowRelay: relayKeyless, relayHedgeMs: LOCALE_RELAY_HEDGE_MS },
     );
-    noteFeedOutcome(stats, res.ok);
+    noteFeedOutcome(stats, res.ok, res.ok ? undefined : classifyHttpFailure(res.status));
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
-      return [];
+      return { articles: [], reachable: false };
     }
     const xml = await res.text();
-    return parseRss(xml, q, variants, locale.code);
+    return { articles: parseRss(xml, q, variants, locale.code), reachable: true };
   } catch (err) {
-    noteFeedOutcome(stats, false);
+    noteFeedOutcome(stats, false, classifyFetchError(err));
     console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} threw:`, err);
-    return [];
+    return { articles: [], reachable: false };
   } finally {
     clearTimeout(timer);
   }
@@ -952,7 +979,7 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[], 
           { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
           { allowRelay: relayKeyless, relayHedgeMs: REGIONAL_RELAY_HEDGE_MS },
         );
-        noteFeedOutcome(stats, res.ok);
+        noteFeedOutcome(stats, res.ok, res.ok ? undefined : classifyHttpFailure(res.status));
         if (!res.ok) {
           console.warn(`[hawkeye] investigative-feed/${feed.name} HTTP ${res.status}`);
           return [] as Article[];
@@ -970,7 +997,7 @@ async function fetchInvestigativeFeeds(subjectName: string, variants: string[], 
           source: a.source || feed.name,
         }));
       } catch (err) {
-        noteFeedOutcome(stats, false);
+        noteFeedOutcome(stats, false, classifyFetchError(err));
         console.warn(`[hawkeye] investigative-feed/${feed.name} threw:`, err);
         return [] as Article[];
       } finally {
@@ -1059,7 +1086,7 @@ async function fetchRegionalFeeds(
           { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
           { allowRelay: relayKeyless, relayHedgeMs: REGIONAL_RELAY_HEDGE_MS },
         );
-        noteFeedOutcome(stats, res.ok);
+        noteFeedOutcome(stats, res.ok, res.ok ? undefined : classifyHttpFailure(res.status));
         if (!res.ok) {
           console.warn(`[hawkeye] ${tag}/${feed.name} HTTP ${res.status}`);
           return [] as Article[];
@@ -1074,7 +1101,7 @@ async function fetchRegionalFeeds(
           source: a.source || feed.name,
         }));
       } catch (err) {
-        noteFeedOutcome(stats, false);
+        noteFeedOutcome(stats, false, classifyFetchError(err));
         console.warn(`[hawkeye] ${tag}/${feed.name} threw:`, err);
         return [] as Article[];
       } finally {
@@ -1154,7 +1181,7 @@ async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<Ne
       { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
       { allowRelay: true },
     );
-    noteFeedOutcome(stats, res.ok);
+    noteFeedOutcome(stats, res.ok, res.ok ? undefined : classifyHttpFailure(res.status));
     if (!res.ok) {
       console.warn(`[hawkeye] news-search/gdelt HTTP ${res.status}`);
       return [];
@@ -1187,7 +1214,7 @@ async function fetchGdeltArticles(q: string, stats?: RetrievalStats): Promise<Ne
       })
       .filter((a): a is NewsArticle => a !== null);
   } catch (err) {
-    noteFeedOutcome(stats, false);
+    noteFeedOutcome(stats, false, classifyFetchError(err));
     console.warn("[hawkeye] news-search/gdelt threw:", err);
     return [];
   } finally {
@@ -1589,7 +1616,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     // Shared retrieval-health accumulator — every instrumented feed fetch
     // records whether it reached its upstream so we can tell a genuine
     // negative finding apart from a wholesale outage.
-    const feedStats: RetrievalStats = { attempted: 0, reachable: 0 };
+    const feedStats: RetrievalStats = { attempted: 0, reachable: 0, failures: {} };
     // Google News RSS locale fan-out — skipped when GOOGLE_NEWS_RSS_ENABLED is
     // "false"; the other reachable providers below still run regardless.
     // Google News locale fan-out with early-exit. Each locale settles
@@ -1603,35 +1630,51 @@ export async function GET(req: Request): Promise<NextResponse> {
           const results: PromiseSettledResult<Article[]>[] = new Array(LOCALES.length);
           let settledCount = 0;
           let articleTally = 0;
+          let consecutiveFailures = 0;
+          let nextIndex = 0;
           return new Promise<PromiseSettledResult<Article[]>[]>((resolve) => {
             let done = false;
             const finish = () => {
               if (done) return;
               done = true;
               // Fill any not-yet-settled slots with empty results so the shape
-              // is always LOCALES.length entries.
+              // is always LOCALES.length entries. Skipped locales are NOT
+              // counted in feedStats — only real attempts are.
               for (let i = 0; i < LOCALES.length; i++) {
                 if (!results[i]) results[i] = { status: "fulfilled", value: [] };
               }
               resolve(results);
             };
             setTimeout(finish, OVERALL_TIMEBOX_MS);
-            LOCALES.forEach((loc, i) => {
-              fetchLocaleFeed(gdeltQuery, loc, variants, feedStats)
-                .then((value) => {
-                  results[i] = { status: "fulfilled", value };
-                  articleTally += value.length;
-                })
-                .catch((reason) => {
-                  results[i] = { status: "rejected", reason };
-                })
-                .finally(() => {
-                  settledCount += 1;
-                  if (settledCount === LOCALES.length || articleTally >= FANOUT_EARLY_EXIT_COUNT) {
-                    finish();
-                  }
-                });
-            });
+            // Worker pool: FANOUT_CONCURRENCY workers drain the locale queue in
+            // array order (majors first). fetchLocaleFeed never rejects.
+            const worker = async (): Promise<void> => {
+              while (!done) {
+                const i = nextIndex;
+                nextIndex += 1;
+                if (i >= LOCALES.length) return;
+                const loc = LOCALES[i]!;
+                const r = await fetchLocaleFeed(gdeltQuery, loc, variants, feedStats);
+                results[i] = { status: "fulfilled", value: r.articles };
+                articleTally += r.articles.length;
+                consecutiveFailures = r.reachable ? 0 : consecutiveFailures + 1;
+                settledCount += 1;
+                if (settledCount === LOCALES.length || articleTally >= FANOUT_EARLY_EXIT_COUNT) {
+                  finish();
+                  return;
+                }
+                if (consecutiveFailures >= FANOUT_BREAKER_CONSECUTIVE) {
+                  console.warn(
+                    `[hawkeye] news-search locale fan-out breaker tripped after ${consecutiveFailures} consecutive unreachable feeds — skipping the remaining ${LOCALES.length - nextIndex} locales`,
+                  );
+                  finish();
+                  return;
+                }
+              }
+            };
+            void Promise.all(
+              Array.from({ length: Math.min(FANOUT_CONCURRENCY, LOCALES.length) }, () => worker()),
+            ).then(finish, finish);
           });
         })()
       : Promise.resolve(
@@ -1872,6 +1915,9 @@ export async function GET(req: Request): Promise<NextResponse> {
       retrieval,
       feedsAttempted,
       feedsReachable,
+      ...(retrieval !== "live" && Object.keys(feedStats.failures).length > 0
+        ? { feedFailures: feedStats.failures }
+        : {}),
       degraded: retrieval !== "live",
       googleNewsRssEnabled: rssEnabled,
       proxyConfigured: newsProxyInfo().configured,
