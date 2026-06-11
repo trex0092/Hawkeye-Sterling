@@ -41,14 +41,18 @@ export const SCREENING_BUDGETS = {
   RUN_LANE_D_OUTER_MS: 4_000,
 
   // ── /api/adverse-media ─────────────────────────────────────────────────────
-  ADVERSE_MEDIA_ROUTE_BUDGET_MS: 4_300,
-  ADVERSE_MEDIA_TARANIS_OUTER_MS: 2_500,
-  ADVERSE_MEDIA_TARANIS_INNER_MS: 2_300,
+  // Stage caps trimmed so the brownout worst case (every stage exhausting its
+  // budget) settles in-band ~4.0s, leaving cold-start/network headroom inside
+  // the 5s client deadline the screening panel now enforces (it falls back to
+  // the deterministic classifier verdict at 5s rather than erroring).
+  ADVERSE_MEDIA_ROUTE_BUDGET_MS: 4_000,
+  ADVERSE_MEDIA_TARANIS_OUTER_MS: 2_000,
+  ADVERSE_MEDIA_TARANIS_INNER_MS: 1_800,
   ADVERSE_MEDIA_VENDOR_MS: 1_500,
   // Claude verdict call: capped at MAX, skipped entirely (deterministic
   // keyword classifier instead) when less than MIN budget remains.
-  ADVERSE_MEDIA_CLAUDE_MAX_MS: 3_200,
-  ADVERSE_MEDIA_CLAUDE_MIN_MS: 1_800,
+  ADVERSE_MEDIA_CLAUDE_MAX_MS: 2_600,
+  ADVERSE_MEDIA_CLAUDE_MIN_MS: 1_500,
   ADVERSE_MEDIA_ENRICHMENT_MS: 1_000,
 } as const;
 
