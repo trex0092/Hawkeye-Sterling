@@ -229,11 +229,11 @@ const COUNTRIES: CountryCell[] = [
 
 // ── Region layout (x, y offset on the SVG canvas) ────────────────────────────
 
-const CELL_W = 44;
-const CELL_H = 28;
-const GAP    = 3;
-const REGION_PAD = 10;
-const LABEL_H = 20;
+const CELL_W = 32;
+const CELL_H = 20;
+const GAP    = 2;
+const REGION_PAD = 8;
+const LABEL_H = 16;
 
 interface RegionLayout {
   name: string;
@@ -243,10 +243,10 @@ interface RegionLayout {
 
 const REGION_LAYOUTS: RegionLayout[] = [
   { name:"Europe",      ox:0,   oy:0   },
-  { name:"Middle East", ox:340, oy:0   },
-  { name:"Africa",      ox:550, oy:0   },
-  { name:"Asia",        ox:820, oy:0   },
-  { name:"Americas",    ox:0,   oy:280 },
+  { name:"Middle East", ox:274, oy:0   },
+  { name:"Africa",      ox:446, oy:0   },
+  { name:"Asia",        ox:686, oy:0   },
+  { name:"Americas",    ox:0,   oy:206 },
 ];
 
 function regionDims(region: string): { cols: number; rows: number } {
@@ -265,8 +265,8 @@ interface CountryMapProps {
 }
 
 function CountryMap({ riskMap, highlighted, onSelect }: CountryMapProps) {
-  const totalW = 1060;
-  const totalH = 580;
+  const totalW = 960;
+  const totalH = 392;
 
   return (
     <svg
@@ -330,8 +330,8 @@ function CountryMap({ riskMap, highlighted, onSelect }: CountryMapProps) {
                   />
                   <text
                     x={CELL_W / 2}
-                    y={CELL_H / 2 + 4}
-                    fontSize={9}
+                    y={CELL_H / 2 + 3.5}
+                    fontSize={8}
                     fontFamily="var(--font-mono, monospace)"
                     fontWeight="700"
                     fill={isHighlighted ? "#fff" : "rgba(0,0,0,0.8)"}

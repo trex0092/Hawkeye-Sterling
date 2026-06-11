@@ -184,7 +184,7 @@ export default function ComtradePage() {
         <button
           type="submit"
           disabled={loading}
-          className="px-5 py-2 rounded bg-accent text-white text-sm font-medium disabled:opacity-50 hover:bg-accent-hover transition"
+          className="px-3 py-1.5 rounded bg-accent text-white text-12 font-medium disabled:opacity-50 hover:bg-accent-hover transition"
         >
           {loading ? "Querying Comtrade…" : "Run TBML Risk Query"}
         </button>
@@ -230,7 +230,7 @@ export default function ComtradePage() {
                         <td className="py-2 px-3">{row.partnerDesc ?? "World"}</td>
                         <td className="py-2 px-3 font-mono">{row.period ?? "—"}</td>
                         <td className="py-2 px-3 font-mono text-right">
-                          {value > 0 ? `$${value.toLocaleString()}` : "—"}
+                          {value > 0 ? `$${value.toLocaleString("en-GB")}` : "—"}
                         </td>
                         <td className="py-2 px-3">
                           <span className={RISK_COLORS[risk]}>{risk.toUpperCase()}</span>

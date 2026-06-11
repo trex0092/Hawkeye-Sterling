@@ -89,7 +89,7 @@ interface DeployEntry {
   state: "success" | "error" | "building";
 }
 
-interface ConfigCheck { id: string; label: string; required: boolean; present: boolean }
+interface ConfigCheck { id: string; label: string; required: boolean; present: boolean; source?: "env" | "default" | "none" }
 
 interface ConfigHealth {
   requiredTotal: number;
@@ -276,8 +276,8 @@ export function StatusSection() {
                 {data.maintenance.map((m) => (
                   <div key={m.id} className="text-11 mb-1">
                     <span className="font-semibold">{m.title}</span> ·{" "}
-                    {new Date(m.startAt).toLocaleString()} →{" "}
-                    {new Date(m.endAt).toLocaleString()} · affects{" "}
+                    {new Date(m.startAt).toLocaleString("en-GB")} →{" "}
+                    {new Date(m.endAt).toLocaleString("en-GB")} · affects{" "}
                     {m.affected.join(", ")}
                   </div>
                 ))}
@@ -324,7 +324,7 @@ export function StatusSection() {
               <span>30d: <span className="text-ink-0">{data.sla.rolling.window30d.toFixed(4)}%</span></span>
               <span>90d: <span className="text-ink-0">{data.sla.rolling.window90d.toFixed(4)}%</span></span>
               <span>YTD: <span className="text-ink-0">{data.sla.rolling.windowYtd.toFixed(4)}%</span></span>
-              <span>Last check: <span className="text-ink-0">{new Date(data.now).toLocaleTimeString()}</span></span>
+              <span>Last check: <span className="text-ink-0">{new Date(data.now).toLocaleTimeString("en-GB")}</span></span>
             </div>
           </div>
 
@@ -392,8 +392,8 @@ export function StatusSection() {
                   {data.configHealth.checks.map((c) => (
                     <div key={c.id} className="flex items-center justify-between">
                       <span className={c.required ? "text-ink-1" : "text-ink-3"}>{c.label}</span>
-                      <span className={c.present ? "text-green" : c.required ? "text-red font-semibold" : "text-ink-3"}>
-                        {c.present ? "✓ set" : c.required ? "✗ missing" : "— not set"}
+                      <span className={c.present ? (c.source === "default" ? "text-blue" : "text-green") : c.required ? "text-red font-semibold" : "text-ink-3"}>
+                        {c.present ? (c.source === "default" ? "✓ default" : "✓ set") : c.required ? "✗ missing" : "— not set"}
                       </span>
                     </div>
                   ))}
@@ -443,7 +443,7 @@ export function StatusSection() {
                         <span className={tone}>
                           {l.ageH === null
                             ? "not fetched yet"
-                            : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString()} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH !== null ? ` · next in ${nextRefreshH}h` : ""}`}
+                            : `${l.ageH}h ago${l.recordCount ? ` · ${l.recordCount.toLocaleString("en-GB")} records` : ""}${nextRefreshH === 0 ? " · refresh due" : nextRefreshH !== null ? ` · next in ${nextRefreshH}h` : ""}`}
                         </span>
                       </div>
                     );
@@ -495,9 +495,9 @@ export function StatusSection() {
                       }`}>{i.severity}</span>
                     </div>
                     <div className="text-11 text-ink-2 font-mono mt-1">
-                      {new Date(i.openedAt).toLocaleString()}
+                      {new Date(i.openedAt).toLocaleString("en-GB")}
                       {i.closedAt
-                        ? ` — resolved ${new Date(i.closedAt).toLocaleString()}`
+                        ? ` — resolved ${new Date(i.closedAt).toLocaleString("en-GB")}`
                         : " — ongoing"}
                     </div>
                     {i.affected.length > 0 && (
@@ -542,7 +542,7 @@ export function StatusSection() {
                     <span className="font-mono text-11 text-ink-0">{d.sha}</span>
                     <span className="text-12 text-ink-1 truncate">{d.title}</span>
                   </div>
-                  <span className="font-mono text-10 text-ink-3">{new Date(d.deployedAt).toLocaleString()}</span>
+                  <span className="font-mono text-10 text-ink-3">{new Date(d.deployedAt).toLocaleString("en-GB")}</span>
                 </div>
               ))}
             </div>

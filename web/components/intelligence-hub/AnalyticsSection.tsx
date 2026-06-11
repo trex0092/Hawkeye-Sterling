@@ -506,13 +506,13 @@ export function AnalyticsSection() {
             Period: <strong>{formatPeriod(now)}</strong>
             {data && (
               <span className="ml-3 font-mono text-ink-3 text-11">
-                generated {new Date(data.generatedAt).toLocaleString()}
+                generated {new Date(data.generatedAt).toLocaleString("en-GB")}
               </span>
             )}
           </>
         }
         kpis={[
-          { value: screeningsTotal.toLocaleString(), label: "screenings" },
+          { value: screeningsTotal.toLocaleString("en-GB"), label: "screenings" },
           { value: `${(fpRate * 100).toFixed(1)}%`, label: "false-positive rate", tone: fpRate > 0.03 ? "red" : fpRate > 0.01 ? "amber" : undefined },
           { value: String(criticalClearances), label: "critical clearances" },
           { value: String(strsThisMonth), label: "STRs filed" },
@@ -526,7 +526,7 @@ export function AnalyticsSection() {
             type="button"
             onClick={() => void generateInsights()}
             disabled={insightsLoading}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40"
           >
             {insightsLoading ? "Generating…" : "✦ AI Insights"}
           </button>
@@ -534,7 +534,7 @@ export function AnalyticsSection() {
             type="button"
             onClick={() => void runBiasMonitor()}
             disabled={biasLoading}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-violet/50 bg-violet-dim text-violet hover:bg-violet/20 disabled:opacity-40"
           >
             {biasLoading ? "Analysing…" : "✦ Bias Monitor"}
           </button>
@@ -551,14 +551,14 @@ export function AnalyticsSection() {
             type="button"
             onClick={() => void runPredictRisk()}
             disabled={predictLoading}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-orange/50 bg-orange-dim text-orange hover:bg-orange/20 disabled:opacity-40 whitespace-nowrap"
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-orange/50 bg-orange-dim text-orange hover:bg-orange/20 disabled:opacity-40 whitespace-nowrap"
           >
             {predictLoading ? "Predicting…" : "🔮 Predict Risk Trajectory"}
           </button>
           <button
             type="button"
             onClick={handleExportPdf}
-            className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+            className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
             style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
           >
             PDF
@@ -813,7 +813,7 @@ export function AnalyticsSection() {
 
         <AnalyticsSection_inner label="Headline metrics">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6 print:gap-4">
-            <Headline value={screeningsTotal.toLocaleString()} caption="Screenings processed" />
+            <Headline value={screeningsTotal.toLocaleString("en-GB")} caption="Screenings processed" />
             <Headline value={`${(fpRate * 100).toFixed(1)}%`} caption="False-positive rate" />
             <Headline value={String(criticalClearances)} caption="Critical clearances" />
             <Headline value={String(strsThisMonth)} caption={`STRs filed · ${formatPeriod(now).split(" ")[0]}`} />
@@ -986,7 +986,7 @@ function SparklineBlock({ values }: { values: number[] }) {
               {isHot && (
                 <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                   <div className="bg-ink-0 text-bg-0 rounded px-2 py-1 text-10 font-mono whitespace-nowrap shadow-lg">
-                    <span className="font-semibold">{v.toLocaleString()}</span>
+                    <span className="font-semibold">{v.toLocaleString("en-GB")}</span>
                     <span className="text-bg-2 ml-1">screenings</span>
                     <div className="text-bg-3 text-9">{weekLabels[i]}</div>
                   </div>
@@ -1013,7 +1013,7 @@ function SparklineBlock({ values }: { values: number[] }) {
       </div>
       {hovered !== null && (
         <div className="mt-1 text-10 font-mono text-ink-3 text-right">
-          {weekLabels[hovered]} · <span className="text-ink-1 font-semibold">{values[hovered]?.toLocaleString()}</span> screenings
+          {weekLabels[hovered]} · <span className="text-ink-1 font-semibold">{values[hovered]?.toLocaleString("en-GB")}</span> screenings
         </div>
       )}
     </div>

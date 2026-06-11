@@ -514,8 +514,8 @@ function AddApprovalForm({ onAdd, onCancel }: { onAdd: (_a: Approval) => void; o
         </div>
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
+        <button type="button" onClick={submit} className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-2.5 py-1 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -593,8 +593,8 @@ function AddMinuteForm({ onAdd, onCancel }: { onAdd: (_m: Minute) => void; onCan
         <textarea value={actions} onChange={(e) => setActions(e.target.value)} rows={3} placeholder={"Update KYC policy | L. Fernanda | 2025-05-15"} className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
+        <button type="button" onClick={submit} className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-2.5 py-1 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -675,8 +675,8 @@ function AddCircularForm({ onAdd, onCancel }: { onAdd: (_c: Circular) => void; o
           className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand leading-snug resize-none" />
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={submit} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90">Add</button>
-        <button type="button" onClick={onCancel} className="text-11 font-semibold px-3 py-1.5 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
+        <button type="button" onClick={submit} className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90">Add</button>
+        <button type="button" onClick={onCancel} className="text-11 font-semibold px-2.5 py-1 rounded border border-red/30 text-red hover:bg-red-dim/30">✕</button>
       </div>
     </div>
   );
@@ -1244,9 +1244,9 @@ export default function OversightPage() {
                   />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => saveEditApproval(a.id)}
-                      className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                      className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                     <button type="button" onClick={() => setEditingApprovalId(null)}
-                      className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                      className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                   </div>
                 </div>
               )}
@@ -1298,14 +1298,14 @@ export default function OversightPage() {
                   <button
                     type="button"
                     onClick={() => signApproval(a.id, "first")}
-                    className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                    className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
                   >
                     Approve (Sign)
                   </button>
                   <button
                     type="button"
                     onClick={() => rejectApproval(a.id)}
-                    className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
+                    className="text-11 font-semibold px-2.5 py-1 rounded border border-red text-red hover:bg-red-dim"
                   >
                     Reject
                   </button>
@@ -1316,14 +1316,14 @@ export default function OversightPage() {
                   <button
                     type="button"
                     onClick={() => signApproval(a.id, "second")}
-                    className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
+                    className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1"
                   >
                     Second sign-off
                   </button>
                   <button
                     type="button"
                     onClick={() => rejectApproval(a.id)}
-                    className="text-11 font-semibold px-3 py-1.5 rounded border border-red text-red hover:bg-red-dim"
+                    className="text-11 font-semibold px-2.5 py-1 rounded border border-red text-red hover:bg-red-dim"
                   >
                     Reject
                   </button>
@@ -1360,9 +1360,9 @@ export default function OversightPage() {
                     />
                     <div className="flex gap-2">
                       <button type="button" onClick={() => saveEditMinute(m.id)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                        className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                       <button type="button" onClick={() => setEditingMinuteId(null)}
-                        className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                        className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                     </div>
                   </div>
                 )}
@@ -1377,7 +1377,7 @@ export default function OversightPage() {
                 <button
                   type="button"
                   onClick={() => setExpandedMinute(expanded ? null : m.id)}
-                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors pr-10"
+                  className="w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-bg-1 transition-colors pr-10"
                 >
                   <div>
                     <div className="font-mono text-10 text-ink-3">{m.minuteRef}</div>
@@ -1608,8 +1608,8 @@ export default function OversightPage() {
                 <textarea value={newActionText} onChange={(e) => setNewActionText(e.target.value)} rows={2} placeholder="Describe the action required…" className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 focus:outline-none focus:border-brand resize-none" />
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={addStandaloneAction} disabled={!newActionText.trim()} className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40 transition-colors">Add</button>
-                <button type="button" onClick={() => setShowAddAction(false)} className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors">Cancel</button>
+                <button type="button" onClick={addStandaloneAction} disabled={!newActionText.trim()} className="text-11 font-semibold px-2.5 py-1 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-40 transition-colors">Add</button>
+                <button type="button" onClick={() => setShowAddAction(false)} className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 transition-colors">Cancel</button>
               </div>
             </div>
           )}
@@ -1730,7 +1730,7 @@ export default function OversightPage() {
                 type="button"
                 onClick={() => void generateBoardPack()}
                 disabled={packLoading}
-                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
               >
                 {packLoading ? (
                   <>
@@ -1773,7 +1773,7 @@ export default function OversightPage() {
                     <button
                       type="button"
                       onClick={() => setPackExpandedSection(packExpandedSection === key ? null : key)}
-                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                      className="w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-bg-1 transition-colors"
                     >
                       <span className="text-12 font-semibold text-ink-0">{label}</span>
                       <span className="text-ink-3 text-13">{packExpandedSection === key ? "▲" : "▾"}</span>
@@ -1792,7 +1792,7 @@ export default function OversightPage() {
                     <button
                       type="button"
                       onClick={() => setPackExpandedSection(packExpandedSection === "pendingItems" ? null : "pendingItems")}
-                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                      className="w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-bg-1 transition-colors"
                     >
                       <span className="text-12 font-semibold text-ink-0">
                         Pending Items Requiring Board Attention
@@ -1834,7 +1834,7 @@ export default function OversightPage() {
                     <button
                       type="button"
                       onClick={() => setPackExpandedSection(packExpandedSection === "recommendations" ? null : "recommendations")}
-                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-bg-1 transition-colors"
+                      className="w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-bg-1 transition-colors"
                     >
                       <span className="text-12 font-semibold text-ink-0">
                         Recommended Resolutions
@@ -1880,7 +1880,7 @@ export default function OversightPage() {
                 type="button"
                 onClick={generateBoardReport}
                 disabled={boardLoading}
-                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
               >
                 {boardLoading ? (
                   <>
@@ -2013,7 +2013,7 @@ export default function OversightPage() {
                 type="button"
                 onClick={() => void runQueueGapAnalysis()}
                 disabled={queueGapLoading}
-                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors whitespace-nowrap"
               >
                 {queueGapLoading ? (
                   <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analysing…</>
@@ -2139,7 +2139,7 @@ export default function OversightPage() {
               type="button"
               onClick={() => void runDeadlineEngine()}
               disabled={deadlineLoading}
-              className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors mb-4"
+              className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors mb-4"
             >
               {deadlineLoading ? (
                 <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Computing…</>

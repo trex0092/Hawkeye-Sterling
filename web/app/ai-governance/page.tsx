@@ -657,17 +657,6 @@ export default function AIGovernancePage() {
                 ))}
               </div>
             </Section>
-            <Section title="Links">
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {[
-                  { label: "AI Incident Playbook", href: "/ai-incident-playbook" },
-                  { label: "Grievances & Whistleblowing", href: "/governance/grievances-whistleblowing" },
-                  { label: "Inspection Room", href: "/governance/inspection-room" },
-                ].map(l => (
-                  <Link key={l.href} href={l.href} style={{ fontSize: 12, color: "#3b82f6", border: "1px solid rgba(59,130,246,.3)", borderRadius: 4, padding: "4px 12px", textDecoration: "none" }}>{l.label}</Link>
-                ))}
-              </div>
-            </Section>
           </>
         );
 

@@ -113,7 +113,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="px-3 py-1.5 text-12 font-medium border border-hair-2 rounded text-ink-0 hover:border-hair-3"
+              className="px-2.5 py-1 text-11 font-medium border border-hair-2 rounded text-ink-0 hover:border-hair-3"
             >
               Pick file
             </button>
@@ -204,7 +204,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-12 font-medium border border-hair-2 rounded text-ink-0 hover:border-hair-3"
+            className="px-2.5 py-1 text-11 font-medium border border-hair-2 rounded text-ink-0 hover:border-hair-3"
           >
             Close
           </button>
@@ -212,7 +212,7 @@ export function BulkImportDialog({ open, onClose, onImported }: Props) {
             type="button"
             onClick={() => { void onSubmit(); }}
             disabled={submitting || parsedRows.length === 0}
-            className="px-4 py-1.5 text-12 font-semibold rounded bg-brand text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover"
+            className="px-3 py-1 text-11 font-semibold rounded bg-brand text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover"
           >
             {submitting ? "Screening…" : `Import + screen (${parsedRows.length})`}
           </button>

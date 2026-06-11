@@ -102,41 +102,23 @@ function RegulatoryFeedPanel() {
   const [items, setItems] = useState<RegulatoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState<string | null>(null);
-  const [fetchedAt, setFetchedAt] = useState("");
   const [sources, setSources] = useState<string[]>([]);
   const [filterCat, setFilterCat] = useState<string>("all");
   const [filterTone, setFilterTone] = useState<string>("all");
   const [triageMap, setTriageMap] = useState<Record<string, TriageEntry>>({});
-  const [triageLoading, setTriageLoading] = useState(false);
-  const [triageError, setTriageError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
+  // Fires automatically after every feed load; failures degrade silently to
+  // the un-triaged feed (details in the console) and retry on the next cycle.
   const runTriage = async (feedItems: RegulatoryItem[]) => {
     if (feedItems.length === 0) return;
-    setTriageLoading(true);
-    setTriageError(null);
     try {
       const map = await fetchTriage(feedItems);
       if (!mountedRef.current) return;
       setTriageMap(map);
     } catch (err) {
-      console.error("Triage failed:", err);
-      if (!mountedRef.current) return;
-      const status = (err as { status?: number }).status;
-      const isDegraded = (err as { degraded?: boolean }).degraded;
-      const msg = err instanceof Error ? err.message : String(err);
-      if (isDegraded) {
-        setTriageError(`AI triage running in degraded mode — ${msg}`);
-      } else if (status === 401 || status === 403) {
-        setTriageError("AI triage paused — please sign in again to refresh your session.");
-      } else if (status && status >= 500) {
-        setTriageError(`AI triage upstream error (HTTP ${status}) — retrying on next feed refresh.`);
-      } else {
-        setTriageError(`AI triage unavailable — ${msg}`);
-      }
-    } finally {
-      if (mountedRef.current) setTriageLoading(false);
+      console.error("Triage failed — feed shown un-triaged until next refresh:", err);
     }
   };
 
@@ -160,7 +142,6 @@ function RegulatoryFeedPanel() {
       const loadedItems = data.items ?? [];
       setItems(loadedItems);
       setSources(data.sources ?? []);
-      setFetchedAt(data.fetchedAt ?? "");
       void runTriage(loadedItems);
     } catch (err) {
       console.error("[hawkeye] intel/news-search threw — feed empty until next refresh:", err);
@@ -195,34 +176,6 @@ function RegulatoryFeedPanel() {
             <span className="w-1.5 h-1.5 rounded-full bg-green shrink-0" style={{ animation: "live-pulse 2s ease-in-out infinite" }} />
             live
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {fetchedAt && (
-            <span className="text-9 font-mono text-ink-3">
-              synced {new Date(fetchedAt).toLocaleTimeString("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
-          <div className="flex flex-col items-end gap-0.5">
-            <button
-              type="button"
-              onClick={() => void runTriage(items)}
-              disabled={triageLoading || items.length === 0}
-              className="text-10 font-mono px-2 py-0.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand-dim/70 disabled:opacity-40"
-            >
-              {triageLoading ? "Triaging…" : "✦AI"}
-            </button>
-            {triageError && (
-              <span className="text-9 font-mono text-red-400">{triageError}</span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="text-11 font-mono px-2 py-0.5 rounded border border-green/40 bg-green-dim text-green hover:bg-green-dim/70 disabled:opacity-40"
-          >
-            {loading ? "↻" : "↻"}
-          </button>
         </div>
       </div>
 

@@ -97,7 +97,7 @@ export function MultiSelect({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`w-full text-left bg-transparent border border-hair-2 rounded px-3 py-2 text-13 text-ink-0 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
+        className={`w-full text-left bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
           selected.size === 0 ? "text-ink-3" : ""
         }`}
       >
@@ -158,7 +158,7 @@ export function MultiSelect({
                         role="option"
                         aria-selected={on}
                         onClick={() => toggle(o.value)}
-                        className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-12 transition-colors ${
+                        className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-11 transition-colors ${
                           on
                             ? "bg-brand-dim text-brand-deep hover:bg-brand-dim"
                             : "text-ink-1 hover:bg-brand-dim"
@@ -246,7 +246,7 @@ export function SingleSelect({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`w-full text-left bg-transparent border border-hair-2 rounded px-3 py-2 text-13 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
+        className={`w-full text-left bg-transparent border border-hair-2 rounded px-2.5 py-1.5 text-12 min-h-[40px] focus:outline-none focus:border-brand flex items-center pr-8 relative ${
           selected ? "text-ink-0" : "text-ink-3"
         }`}
       >
@@ -277,7 +277,7 @@ export function SingleSelect({
                   onChange(o.value);
                   setOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-13 transition-colors ${
+                className={`w-full text-left px-2.5 py-1.5 text-12 transition-colors ${
                   isSelected
                     ? "bg-brand-dim text-brand-deep font-medium"
                     : "text-ink-1 hover:bg-brand-dim"

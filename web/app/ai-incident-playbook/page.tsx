@@ -188,11 +188,6 @@ export default function AIIncidentPlaybookPage() {
 
         {/* Stat tiles removed; Log AI Incident button lives in sidebar Actions */}
 
-        {/* Regulatory notice */}
-        <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 text-sm text-amber-300">
-          <strong>UAE Regulatory Obligation:</strong> Critical and High AI incidents affecting customer data or adverse decisions must be reported to CBUAE/FSRA within 72 hours under Federal Decree-Law No. 10 of 2025 Art.24. Document all containment steps and root cause analysis.
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}
@@ -277,8 +272,8 @@ export default function AIIncidentPlaybookPage() {
               </label>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-3 py-1.5 text-12 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
                 {submitting ? "Logging..." : "Log Incident"}
               </button>
             </div>
@@ -322,7 +317,7 @@ export default function AIIncidentPlaybookPage() {
                         <p className="text-xs text-ink-2 mt-0.5">{INCIDENT_TYPE_LABELS[inc.type]} · {inc.affectedModel}</p>
                       </div>
                       <div className="text-xs text-ink-2 shrink-0 text-right">
-                        {new Date(inc.detectedAt).toLocaleDateString()}
+                        {new Date(inc.detectedAt).toLocaleDateString("en-GB")}
                       </div>
                     </div>
                     {inc.status !== "closed" && (

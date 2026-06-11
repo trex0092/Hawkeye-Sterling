@@ -441,7 +441,7 @@ export default function GoAmlSubmissionPage() {
                     key={t}
                     type="button"
                     onClick={() => upd({ entityType: t })}
-                    className={`flex-1 border rounded px-3 py-1.5 text-12 font-medium transition ${
+                    className={`flex-1 border rounded px-2.5 py-1 text-11 font-medium transition ${
                       form.entityType === t
                         ? "border-brand bg-brand-dim text-brand-deep"
                         : "border-hair-2 bg-bg-1 text-ink-2 hover:border-hair-3"
@@ -752,7 +752,7 @@ export default function GoAmlSubmissionPage() {
                   type="button"
                   onClick={handleGenerate}
                   disabled={gen.status === "generating"}
-                  className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {gen.status === "generating"
                     ? "Generating XML…"
@@ -765,14 +765,14 @@ export default function GoAmlSubmissionPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40 rounded font-semibold transition"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40 rounded font-semibold transition"
                     >
                       Download XML
                     </button>
                     <button
                       type="button"
                       onClick={handleCopy}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand rounded font-semibold transition"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 bg-bg-1 text-ink-1 hover:border-brand hover:text-brand rounded font-semibold transition"
                     >
                       {copied ? "Copied!" : "Copy XML"}
                     </button>
@@ -835,7 +835,7 @@ export default function GoAmlSubmissionPage() {
             {gen.status === "done" && (
               <details>
                 <summary className="text-11 font-mono uppercase tracking-wide-3 cursor-pointer text-ink-2 hover:text-brand">
-                  Preview XML ({gen.result.xml.length.toLocaleString()} bytes)
+                  Preview XML ({gen.result.xml.length.toLocaleString("en-GB")} bytes)
                 </summary>
                 <pre className="mt-2 max-h-80 overflow-auto bg-bg-1 border border-hair-2 rounded p-3 text-10 leading-snug text-ink-1 whitespace-pre">
                   {gen.result.xml}
@@ -890,7 +890,7 @@ export default function GoAmlSubmissionPage() {
             type="button"
             onClick={() => setStep((Math.max(1, step - 1) as Step))}
             disabled={step === 1}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             ← Back
           </button>
@@ -899,7 +899,7 @@ export default function GoAmlSubmissionPage() {
               type="button"
               onClick={() => setStep((step + 1) as Step)}
               disabled={!canAdvance(step, form)}
-              className="text-11 font-mono uppercase tracking-wide-3 px-4 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next →
             </button>

@@ -130,10 +130,10 @@ function NewCnmrForm({ onCreated, onCancel }: NewCnmrFormProps) {
       </div>
       {error && <p className="text-11 text-red mt-2">{error}</p>}
       <div className="flex items-center gap-3 mt-4">
-        <button type="button" onClick={() => void submit()} disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 rounded bg-red text-white text-12 font-semibold hover:bg-red/90 disabled:opacity-50">
+        <button type="button" onClick={() => void submit()} disabled={saving} className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-red text-white text-11 font-semibold hover:bg-red/90 disabled:opacity-50">
           {saving ? "Creating…" : "Create CNMR case"}
         </button>
-        <button type="button" onClick={onCancel} className="text-12 text-ink-2 hover:text-ink-0 px-3 py-2">Cancel</button>
+        <button type="button" onClick={onCancel} className="text-11 text-ink-2 hover:text-ink-0 px-2.5 py-1.5">Cancel</button>
       </div>
       <p className="text-10 text-ink-3 mt-3">CD74/2020 Art.21 · EOCN guidance · 5 business-day deadline from freeze date. Filing via goAML — CNMR report code.</p>
     </div>
@@ -185,7 +185,7 @@ function CaseDetail({ c, onUpdate }: CaseDetailProps) {
         <div className="flex gap-2">
           <input value={goAmlRef} onChange={(e) => setGoAmlRef(e.target.value)} className={inputCls} placeholder="Reference assigned after goAML submission" />
           <button type="button" onClick={() => void patch({ goAmlRef })} disabled={saving || goAmlRef === c.goAmlRef}
-            className="px-3 py-1.5 rounded border border-hair-2 text-12 text-ink-1 hover:bg-bg-2 disabled:opacity-40 whitespace-nowrap">Save</button>
+            className="px-2.5 py-1 rounded border border-hair-2 text-11 text-ink-1 hover:bg-bg-2 disabled:opacity-40 whitespace-nowrap">Save</button>
         </div>
       </div>
 
@@ -194,20 +194,20 @@ function CaseDetail({ c, onUpdate }: CaseDetailProps) {
         <textarea value={narrativeDraft} onChange={(e) => setNarrativeDraft(e.target.value)} rows={5} className={`${inputCls} resize-y`}
           placeholder="Describe the confirmed match for the goAML CNMR report narrative…" />
         <button type="button" onClick={() => void patch({ narrativeDraft, status: "drafted" as const })} disabled={saving}
-          className="mt-2 text-11 px-3 py-1.5 rounded border border-brand/40 text-brand hover:bg-brand-dim font-semibold">Save narrative</button>
+          className="mt-2 text-11 px-2.5 py-1 rounded border border-brand/40 text-brand hover:bg-brand-dim font-semibold">Save narrative</button>
       </div>
 
       <div className="flex flex-wrap gap-2 pt-2 border-t border-hair">
         {!c.mlroSignedOff && (
           <button type="button" onClick={() => void patch({ mlroSignedOff: true })} disabled={saving}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20">
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20">
             ✓ MLRO sign-off
           </button>
         )}
         {c.status !== "filed" && (
           <button type="button" onClick={() => void patch({ status: "filed" as const, goAmlRef })} disabled={saving || !c.mlroSignedOff}
             title={!c.mlroSignedOff ? "MLRO sign-off required before filing" : "Mark as filed in goAML"}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber/20 disabled:opacity-40">
+            className="text-11 font-semibold px-2.5 py-1 rounded border border-amber/40 text-amber bg-amber-dim hover:bg-amber/20 disabled:opacity-40">
             Mark as filed in goAML
           </button>
         )}

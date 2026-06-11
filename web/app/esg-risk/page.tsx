@@ -365,7 +365,7 @@ function AccordionItem({ title, children }: { title: string; children: React.Rea
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-bg-1 text-12.5 font-medium text-ink-0 hover:bg-bg-2 transition-colors text-left"
+        className="w-full flex items-center justify-between px-3 py-1.5 bg-bg-1 text-12.5 font-medium text-ink-0 hover:bg-bg-2 transition-colors text-left"
       >
         {title}
         <span className="text-10 text-ink-3">{open ? "▲" : "▼"}</span>
@@ -403,21 +403,6 @@ const SECTOR_OPTIONS = [
   "Other",
 ];
 
-const JURISDICTION_OPTIONS = [
-  "UAE",
-  "United Kingdom",
-  "United States",
-  "Switzerland",
-  "Singapore",
-  "Hong Kong",
-  "Cayman Islands",
-  "BVI",
-  "Luxembourg",
-  "Germany",
-  "France",
-  "Netherlands",
-  "Other",
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KPIs
@@ -652,7 +637,7 @@ export default function EsgRiskPage() {
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-4 py-2 rounded-lg border-2 border-hair-1 bg-bg-1 text-ink-2 text-13 font-semibold hover:bg-bg-2 whitespace-nowrap transition-colors"
+            className="px-3 py-1.5 rounded-lg border-2 border-hair-1 bg-bg-1 text-ink-2 text-12 font-semibold hover:bg-bg-2 whitespace-nowrap transition-colors"
             title="Export ESG report to PDF via browser print"
           >
             📄 Export PDF
@@ -709,18 +694,13 @@ export default function EsgRiskPage() {
             <label className="block text-11 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
               Primary Jurisdiction
             </label>
-            <select
+            <input
+              type="text"
               value={form.jurisdiction}
               onChange={(e) => setField("jurisdiction", e.target.value)}
-              className="w-full bg-bg-1 border border-hair-2 rounded-lg px-3 py-2 text-13 text-ink-0 outline-none focus:border-brand"
-            >
-              <option value="">Select jurisdiction...</option>
-              {JURISDICTION_OPTIONS.map((j) => (
-                <option key={j} value={j}>
-                  {j}
-                </option>
-              ))}
-            </select>
+              placeholder="Type any country — e.g. UAE, Ghana, Switzerland"
+              className="w-full bg-bg-1 border border-hair-2 rounded-lg px-3 py-2 text-13 text-ink-0 outline-none focus:border-brand placeholder:text-ink-3"
+            />
           </div>
           <div>
             <label className="block text-11 font-mono uppercase tracking-wide-3 text-ink-3 mb-1">
@@ -785,7 +765,7 @@ export default function EsgRiskPage() {
           type="button"
           onClick={() => void generate()}
           disabled={loading}
-          className="w-full py-3 rounded-lg bg-brand text-white text-13 font-semibold hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-1.5 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Generating ESG Score with Claude..." : "📊 Generate ESG Score"}
         </button>

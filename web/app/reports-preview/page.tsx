@@ -574,7 +574,7 @@ export default function ReportsPreviewPage() {
         <div className="flex gap-1 flex-wrap mb-6 border-b border-hair">
           {REPORTS.map(r => (
             <button key={r.id} onClick={() => setActive(r.id)}
-              className={`px-3 py-2 text-12 rounded-t transition-colors whitespace-nowrap ${
+              className={`px-2.5 py-1.5 text-11 rounded-t transition-colors whitespace-nowrap ${
                 active===r.id ? "bg-brand text-white font-semibold" : "text-ink-2 hover:text-ink-0 hover:bg-bg-2"
               }`}
             >{r.label}</button>

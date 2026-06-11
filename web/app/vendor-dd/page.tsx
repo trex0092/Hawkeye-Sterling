@@ -5,6 +5,7 @@ import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { resolveCountryToIso2, countryNameFromIso2 } from "@/lib/utils/country-codes";
 
 interface Supplier {
   id: string;
@@ -150,7 +151,7 @@ export default function SupplierDdPage() {
     const newSupplier: Supplier = {
       id: `v${Date.now()}`,
       name: form.name.trim(),
-      jurisdiction: form.jurisdiction.trim().toUpperCase() || "AE",
+      jurisdiction: resolveCountryToIso2(form.jurisdiction) ?? (form.jurisdiction.trim().toUpperCase() || "AE"),
       tier: form.tier,
       lbmaListed: form.lbmaListed,
       dgdListed: form.dgdListed,
@@ -172,7 +173,7 @@ export default function SupplierDdPage() {
     update(suppliers.map((v) => v.id === id ? {
       ...v,
       name: editForm.name.trim() || v.name,
-      jurisdiction: editForm.jurisdiction.trim().toUpperCase() || v.jurisdiction,
+      jurisdiction: resolveCountryToIso2(editForm.jurisdiction) ?? (editForm.jurisdiction.trim().toUpperCase() || v.jurisdiction),
       tier: editForm.tier,
       lbmaListed: editForm.lbmaListed,
       dgdListed: editForm.dgdListed,
@@ -236,11 +237,10 @@ export default function SupplierDdPage() {
                 />
               </div>
               <div>
-                <label className="block text-10 text-ink-3 mb-1">Jurisdiction (ISO-2)</label>
+                <label className="block text-10 text-ink-3 mb-1">Jurisdiction</label>
                 <input
                   className="w-full bg-bg-1 border border-hair-2 rounded px-2.5 py-1.5 text-12 text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                  placeholder="AE"
-                  maxLength={3}
+                  placeholder="Country name or ISO-2 — e.g. United Arab Emirates"
                   value={form.jurisdiction}
                   onChange={(e) => setForm((f) => ({ ...f, jurisdiction: e.target.value }))}
                 />
@@ -296,7 +296,7 @@ export default function SupplierDdPage() {
               type="button"
               onClick={handleAdd}
               disabled={!form.name.trim()}
-              className="px-4 py-1.5 rounded-md text-11 font-semibold bg-brand text-white hover:bg-brand/90 disabled:opacity-40 transition-colors"
+              className="px-3 py-1 rounded-md text-11 font-semibold bg-brand text-white hover:bg-brand/90 disabled:opacity-40 transition-colors"
             >
               Add supplier
             </button>
@@ -326,8 +326,7 @@ export default function SupplierDdPage() {
                     className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
                     value={editForm.jurisdiction}
                     onChange={(e) => setEditForm((f) => ({ ...f, jurisdiction: e.target.value }))}
-                    placeholder="Jurisdiction"
-                    maxLength={3}
+                    placeholder="Jurisdiction — country name or ISO-2"
                   />
                   <select
                     className="text-11 px-2 py-1.5 rounded border border-hair-2 bg-bg-0 text-ink-0"
@@ -358,9 +357,9 @@ export default function SupplierDdPage() {
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => saveEdit(v.id)}
-                    className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                    className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                   <button type="button" onClick={() => setEditingId(null)}
-                    className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                    className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                 </div>
               </div>
             ) : (
@@ -386,7 +385,7 @@ export default function SupplierDdPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-11 font-mono mt-2">
-                  <div><span className="text-ink-3">Jurisdiction: </span><span className="text-ink-0">{v.jurisdiction}</span></div>
+                  <div><span className="text-ink-3">Jurisdiction: </span><span className="text-ink-0">{countryNameFromIso2(v.jurisdiction)}</span></div>
                   <div><span className="text-ink-3">LBMA: </span><span className={v.lbmaListed ? "text-green" : "text-amber"}>{v.lbmaListed ? "Good Delivery" : "not listed"}</span></div>
                   <div><span className="text-ink-3">DGD: </span><span className={(v.dgdListed ?? false) ? "text-green" : "text-amber"}>{(v.dgdListed ?? false) ? "Listed" : "not listed"}</span></div>
                   <div><span className="text-ink-3">Last review: </span><span className="text-ink-0">{fmtDate(v.lastReview)}</span></div>

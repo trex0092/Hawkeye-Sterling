@@ -1380,7 +1380,6 @@ export default function ScreeningPage() {
           <IntelligenceSourcesPanel />
 
           {/* ── EOCN SLA Countdown ───────────────────────────────────────── */}
-          <EocnSlaWidget />
 
           {/* ── Bulk Re-Screen Banner removed ──────────────────────────── */}
           <div className="hidden">
@@ -1391,7 +1390,7 @@ export default function ScreeningPage() {
                 type="button"
                 onClick={() => { void runBulkRescreen(); }}
                 disabled={rescreenLoading}
-                className="px-3 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                className="px-2.5 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
               >
                 {rescreenLoading ? "Re-screening…" : "🔄 Re-screen portfolio"}
               </button>
@@ -1561,7 +1560,7 @@ export default function ScreeningPage() {
                 </span>
                 <button
                   onClick={() => setListHealthWarnings([])}
-                  className="ml-auto text-ink-3 hover:text-ink-1 text-12 leading-none"
+                  className="ml-auto text-ink-3 hover:text-ink-1 text-11 leading-none"
                   aria-label="Dismiss warning"
                 >
                   ✕
@@ -1691,7 +1690,7 @@ export default function ScreeningPage() {
             <div className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-red/10 border border-red/30 rounded-lg text-12">
               <span className="text-red font-semibold">AI search failed</span>
               <span className="text-ink-1 flex-1">{nlError}</span>
-              <button type="button" onClick={() => setNlError(null)} className="text-ink-3 hover:text-ink-0 text-12">✕</button>
+              <button type="button" onClick={() => setNlError(null)} className="text-ink-3 hover:text-ink-0 text-11">✕</button>
             </div>
           )}
 
@@ -1705,7 +1704,7 @@ export default function ScreeningPage() {
               <span className="text-ink-1 flex-1">{nlInterpretation}</span>
               {nlReasoning && <span className="text-10 text-ink-3 font-mono w-full">{nlReasoning}</span>}
               <span className="text-ink-2">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
-              <button type="button" onClick={clearNLSearch} className="text-ink-3 hover:text-ink-0 text-12">✕ clear</button>
+              <button type="button" onClick={clearNLSearch} className="text-ink-3 hover:text-ink-0 text-11">✕ clear</button>
             </div>
           )}
 
@@ -1740,7 +1739,7 @@ export default function ScreeningPage() {
         {/* Mobile "View Detail" floating button — only shown when a subject is selected */}
         {selected && !formOpen && (
           <button
-            className="fixed bottom-4 right-4 z-50 lg:hidden rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg"
+            className="fixed bottom-4 right-4 z-50 lg:hidden rounded-full bg-accent px-3 py-1.5 text-12 font-medium text-white shadow-lg"
             onClick={() => setMobileDetailOpen(true)}
             aria-label="View subject detail"
           >
@@ -1754,7 +1753,7 @@ export default function ScreeningPage() {
             <div className="flex items-center justify-between border-b border-hair-2 px-4 py-3">
               <span className="text-sm font-semibold">{selected.name}</span>
               <button
-                className="text-sm text-fg-muted underline"
+                className="text-12 text-fg-muted underline"
                 onClick={() => setMobileDetailOpen(false)}
                 aria-label="Close detail panel"
               >
@@ -1970,120 +1969,6 @@ const INTEL_SOURCES = [
   },
 ];
 
-// ── EOCN SLA types (mirrored from server for client-side use) ─────────────────
-
-interface EocnSlaRecordClient {
-  id: string;
-  type: "EOCN_FREEZE_24H" | "EOCN_PNMR_5BD" | "EOCN_CUSTOMER_VERIFY_10BD";
-  subjectName: string;
-  listId: string;
-  status: "active" | "breached" | "completed" | "cancelled";
-  dueAt: string;
-  hoursRemaining: number;
-  pctElapsed: number;
-  statusColor: "green" | "amber" | "red";
-  pnmrId?: string;
-}
-
-const SLA_TYPE_LABELS: Record<EocnSlaRecordClient["type"], string> = {
-  EOCN_FREEZE_24H: "Freeze Window (24h)",
-  EOCN_PNMR_5BD: "PNMR Filing (5BD)",
-  EOCN_CUSTOMER_VERIFY_10BD: "Customer Verify (10BD)",
-};
-
-const SLA_COLOR_CLASSES: Record<"green" | "amber" | "red", string> = {
-  green: "bg-green-dim text-green border-green/30",
-  amber: "bg-amber-dim text-amber border-amber/30",
-  red:   "bg-red-dim text-red border-red/30",
-};
-
-const SLA_BAR_CLASSES: Record<"green" | "amber" | "red", string> = {
-  green: "bg-green",
-  amber: "bg-amber",
-  red:   "bg-red",
-};
-
-function EocnSlaWidget() {
-  const [records, setRecords] = useState<EocnSlaRecordClient[]>([]);
-  const [open, setOpen] = useState(true);
-
-  const fetchRecords = useCallback(async () => {
-    try {
-      const res = await fetchJson<{ ok: boolean; records: EocnSlaRecordClient[] }>("/api/eocn-sla");
-      if (res.ok && res.data?.ok && res.data.records) {
-        setRecords(res.data.records.filter((r) => r.status === "active" || r.status === "breached"));
-      }
-    } catch {
-      // silent — widget is non-critical
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchRecords();
-    const id = setInterval(() => { void fetchRecords(); }, 30_000);
-    return () => clearInterval(id);
-  }, [fetchRecords]);
-
-  if (records.length === 0) return null;
-
-  return (
-    <div className="mb-4 bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-11 font-semibold text-ink-0">⏱ Active EOCN SLA Timers</span>
-          <span className="text-10 text-red font-medium">{records.length} active</span>
-          <span className="text-10 text-ink-3">— Cabinet Decision 74/2020 obligations</span>
-        </div>
-        <span className="text-10 text-ink-3">{open ? "▴ hide" : "▾ show"}</span>
-      </button>
-      {open && (
-        <div className="px-4 pb-4 border-t border-hair-2">
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {records.map((r) => {
-              const hrs = r.hoursRemaining;
-              const breached = r.status === "breached" || hrs <= 0;
-              const timeLabel = breached
-                ? "BREACHED"
-                : hrs < 1
-                ? `${Math.round(hrs * 60)}m remaining`
-                : hrs < 48
-                ? `${Math.round(hrs)}h remaining`
-                : `${Math.round(hrs / 24)}d remaining`;
-
-              return (
-                <div
-                  key={r.id}
-                  className={`rounded-lg border px-3 py-2.5 ${SLA_COLOR_CLASSES[r.statusColor]}`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-11 font-semibold">{SLA_TYPE_LABELS[r.type]}</span>
-                    <span className={`text-10 font-bold ${breached ? "text-red" : ""}`}>
-                      {timeLabel}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden mb-1.5">
-                    <div
-                      className={`h-full rounded-full transition-all ${SLA_BAR_CLASSES[r.statusColor]}`}
-                      style={{ width: `${r.pctElapsed}%` }}
-                    />
-                  </div>
-                  <div className="text-10 text-ink-2 truncate">
-                    {r.subjectName}
-                    <span className="ml-1 opacity-60">· {r.listId}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function IntelligenceSourcesPanel() {
   const [open, setOpen] = useState(false);
@@ -2092,7 +1977,7 @@ function IntelligenceSourcesPanel() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-bg-1 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-left hover:bg-bg-1 transition-colors"
       >
         <div className="flex items-center gap-2">
           <span className="text-11 font-semibold text-ink-0">🛡️ Intelligence Sources</span>

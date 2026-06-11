@@ -70,7 +70,7 @@ export function CategorizationOutput({
           label="Next Review"
           value={reviewIn !== null ? `${reviewIn}d` : "—"}
           valueClass={reviewIn !== null && reviewIn <= 7 ? "text-red" : "text-ink-0"}
-          sub={nextReviewDate ? new Date(nextReviewDate).toLocaleDateString() : undefined}
+          sub={nextReviewDate ? new Date(nextReviewDate).toLocaleDateString("en-GB") : undefined}
         />
         {slaIn !== null && (
           <CategStat

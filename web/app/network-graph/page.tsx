@@ -497,7 +497,7 @@ function SubjectSearch({
             {filtered.map((s) => (
               <li key={s.id}>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-bg-1 text-ink-0 flex items-center justify-between"
+                  className="w-full text-left px-2.5 py-1.5 text-12 hover:bg-bg-1 text-ink-0 flex items-center justify-between"
                   onClick={() => {
                     setSelected(s);
                     setQuery(s.name);
@@ -521,7 +521,7 @@ function SubjectSearch({
       <button
         onClick={handleLoad}
         disabled={!selected || loading}
-        className="px-4 py-2 bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded transition-colors"
+        className="px-3 py-1.5 bg-brand hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-12 font-semibold rounded transition-colors"
       >
         {loading ? "Loading graph…" : "Load Graph"}
       </button>
@@ -660,7 +660,7 @@ export default function NetworkGraphPage() {
                     <div className="flex justify-between">
                       <dt className="text-ink-3">Generated</dt>
                       <dd className="text-ink-1 text-xs font-mono">
-                        {new Date(graph.generatedAt).toLocaleTimeString()}
+                        {new Date(graph.generatedAt).toLocaleTimeString("en-GB")}
                       </dd>
                     </div>
                   </dl>
@@ -739,7 +739,7 @@ export default function NetworkGraphPage() {
                     {graph.nodes.map((node) => (
                       <button
                         key={node.id}
-                        className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-bg-1 transition-colors ${
+                        className={`w-full text-left px-3 py-1.5 flex items-center gap-3 hover:bg-bg-1 transition-colors ${
                           selectedNodeId === node.id ? "bg-bg-1" : ""
                         }`}
                         onClick={() =>

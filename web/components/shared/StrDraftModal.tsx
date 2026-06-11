@@ -285,12 +285,12 @@ export function StrDraftModal({ open, onClose, payload }: Props) {
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-hair-2">
             <button type="button" onClick={onClose} disabled={posting}
-              className="text-11 text-ink-3 hover:text-ink-0 px-3 py-1.5 rounded">
+              className="text-11 text-ink-3 hover:text-ink-0 px-2.5 py-1 rounded">
               Cancel
             </button>
             <button type="button" onClick={() => { void submit(); }}
               disabled={posting || !name.trim()}
-              className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity">
+              className="px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity">
               {posting ? "Drafting…" : `Draft ${reportCode} XML`}
             </button>
           </div>

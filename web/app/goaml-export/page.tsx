@@ -333,7 +333,7 @@ export default function GoAmlExportPage() {
             </div>
             <div className="mt-3">
               <button type="button" onClick={() => void validateNarrativeAI()} disabled={aiValidating || !draft.narrative.trim()}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
+                className="text-11 font-semibold px-2.5 py-1 rounded border border-brand/50 bg-brand-dim text-brand-deep hover:bg-brand/20 disabled:opacity-40">
                 {aiValidating ? "Validating…" : "✦AI"}
               </button>
               {aiValidateError && (
@@ -423,7 +423,7 @@ export default function GoAmlExportPage() {
                     type="button"
                     onClick={handleGenerate}
                     disabled={submission.status === "fetching"}
-                    className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submission.status === "fetching" ? "Generating…" : submission.status === "ready" ? "Re-generate XML" : "Generate XML"}
                   </button>
@@ -431,7 +431,7 @@ export default function GoAmlExportPage() {
                     <button
                       type="button"
                       onClick={handleDownload}
-                      className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 rounded font-semibold"
+                      className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 rounded font-semibold"
                     >
                       Download {submission.filename}
                     </button>
@@ -445,7 +445,7 @@ export default function GoAmlExportPage() {
                 {submission.status === "ready" && submission.xml && (
                   <details className="mt-3">
                     <summary className="text-11 font-mono uppercase tracking-wide-3 cursor-pointer text-ink-2 hover:text-brand">
-                      Preview XML ({submission.xml.length.toLocaleString()} bytes)
+                      Preview XML ({submission.xml.length.toLocaleString("en-GB")} bytes)
                     </summary>
                     <pre className="mt-2 max-h-80 overflow-auto bg-bg-1 border border-hair-2 rounded p-3 text-10 leading-snug text-ink-1">
                       {submission.xml}
@@ -462,7 +462,7 @@ export default function GoAmlExportPage() {
             type="button"
             onClick={() => setStep((Math.max(1, step - 1) as Step))}
             disabled={step === 1}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
@@ -471,7 +471,7 @@ export default function GoAmlExportPage() {
               type="button"
               onClick={() => setStep((Math.min(5, step + 1) as Step))}
               disabled={!can[step]}
-              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next →
             </button>

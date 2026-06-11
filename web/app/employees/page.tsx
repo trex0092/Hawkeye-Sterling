@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { toCsv, downloadCsv } from "@/lib/client/csv";
 import { RowActions } from "@/components/shared/RowActions";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage } from "@/lib/client/error-utils";
@@ -257,6 +258,18 @@ export default function EmployeesPage() {
     setAdding(false);
   };
 
+  // Rail CSV exports the register (the empty-table fallback is useless here).
+  const exportCsv = () => {
+    const rows = employees.map((e) => [
+      e.name, e.designation, e.nationality, e.emiratesId, e.emiratesIdExpiry,
+      e.passport, e.passportExpiry, e.dateOfJoining, e.email, e.businessUnits.join("; "),
+    ]);
+    downloadCsv(
+      `employees-${new Date().toISOString().slice(0, 10)}.csv`,
+      toCsv(["name", "designation", "nationality", "emirates_id", "id_expiry", "passport", "pp_expiry", "joined", "email", "business_units"], rows),
+    );
+  };
+
   const remove = (id: string) => {
     const next = employees.filter((e) => e.id !== id);
     save(next);
@@ -325,7 +338,8 @@ export default function EmployeesPage() {
       asanaModule="employees"
       asanaLabel="Employees"
       onRun={() => void runEmployeeRiskScan()}
-      onAdd={addEmployee}
+      onAdd={() => setAdding(true)}
+      onCsv={exportCsv}
       sidebarActions={
         <>
           <ActionButton
@@ -471,7 +485,7 @@ export default function EmployeesPage() {
                       key={u}
                       type="button"
                       onClick={() => toggleUnit(u)}
-                      className={`text-11 font-medium px-3 py-1 rounded-full border transition-colors ${
+                      className={`text-11 font-medium px-2.5 py-1 rounded-full border transition-colors ${
                         selected
                           ? "bg-brand-dim border-brand text-brand-deep"
                           : "border-hair-2 text-ink-2 hover:border-hair-0 hover:text-ink-0"
@@ -489,7 +503,7 @@ export default function EmployeesPage() {
               type="button"
               onClick={addEmployee}
               disabled={!form.name || !form.email}
-              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
             >
               Save employee
             </button>
@@ -722,8 +736,8 @@ export default function EmployeesPage() {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0">✓</button>
-                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1.5 rounded text-red">✕</button>
+                              <button type="button" onClick={() => saveEmpEdit(emp.id)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                              <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                             </div>
                           </td>
                         </tr>

@@ -169,7 +169,7 @@ function ShareholderCard({
             {(["individual", "corporate"] as ShareholderKind[]).map((t) => (
               <button key={t} type="button"
                 onClick={() => onChange({ ...sh, kind: t })}
-                className={`flex-1 text-11 font-medium px-2 py-1.5 rounded border transition-colors ${
+                className={`flex-1 text-11 font-medium px-2 py-1 rounded border transition-colors ${
                   sh.kind === t
                     ? "border-brand bg-brand-dim text-brand-deep font-semibold"
                     : "border-hair-2 text-ink-1 hover:bg-bg-panel"
@@ -239,7 +239,7 @@ function ShareholderCard({
             {(["no", "yes", "unknown"] as PepStatus[]).map((p) => (
               <button key={p} type="button"
                 onClick={() => onChange({ ...sh, pepStatus: p })}
-                className={`flex-1 text-11 font-medium px-2 py-1.5 rounded border transition-colors ${
+                className={`flex-1 text-11 font-medium px-2 py-1 rounded border transition-colors ${
                   sh.pepStatus === p
                     ? p === "yes"
                       ? "border-red bg-red-dim text-red font-semibold"
@@ -374,7 +374,7 @@ export default function ClientPortalPage() {
               Reference: HS-{Date.now().toString().slice(-6)}
             </div>
             <button type="button" onClick={() => setSubmitted(false)}
-              className="mt-5 text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
+              className="mt-5 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">
               Submit another
             </button>
           </div>

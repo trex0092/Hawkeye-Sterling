@@ -187,22 +187,6 @@ export default function AnalystBehaviorPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={exportCsv}
-            disabled={totalAlerts === 0}
-            className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-40 transition-colors"
-          >
-            Export CSV
-          </button>
-          <button
-            onClick={() => void load(windowDays)}
-            disabled={loading}
-            className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Loading…" : "↺ Refresh"}
-          </button>
-        </div>
       </div>
 
       {loading && !data ? (

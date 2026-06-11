@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 
@@ -51,26 +50,12 @@ const STATUS_TONE: Record<string, string> = {
 
 const inputCls = "px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
 const monoInputCls = `${inputCls} font-mono`;
-const btnCls = "px-4 py-1.5 rounded bg-green-dim text-green text-12 font-semibold border border-green/40 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green/20 transition-colors";
-const tabCls = (active: boolean) =>
-  `px-3 py-1 rounded text-11 font-medium border transition-colors ${
-    active
-      ? "bg-brand text-white border-brand"
-      : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
-  }`;
+
+// ISO 17442 — 18 alphanumeric chars + 2 check digits.
+const LEI_RE = /^[A-Z0-9]{18}[0-9]{2}$/;
 
 export default function GleifPage() {
-  return <Suspense fallback={null}><GleifInner /></Suspense>;
-}
-
-function GleifInner() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [tab, setTab] = useState<"lookup" | "search">(
-    (searchParams?.get("tab") as "lookup" | "search") ?? "lookup"
-  );
-  const [lei, setLei] = useState("");
-  const [query, setQuery] = useState("");
+  const [input, setInput] = useState("");
   const [depth, setDepth] = useState(5);
   const [loading, setLoading] = useState(false);
   const [leiResult, setLeiResult] = useState<GleifResult | null>(null);
@@ -80,11 +65,10 @@ function GleifInner() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
-  async function lookupLei() {
-    if (!lei.trim()) return;
-    setLoading(true); setError(null); setLeiResult(null);
+  async function lookupLei(leiCode: string) {
+    setLoading(true); setError(null); setLeiResult(null); setSearchResults([]);
     try {
-      const res = await fetch(`/api/gleif?lei=${encodeURIComponent(lei.trim())}&depth=${depth}`);
+      const res = await fetch(`/api/gleif?lei=${encodeURIComponent(leiCode)}&depth=${depth}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? apiErrorMessage(res.status, "LEI lookup"));
@@ -98,11 +82,10 @@ function GleifInner() {
     } finally { if (mountedRef.current) setLoading(false); }
   }
 
-  async function searchGleif() {
-    if (!query.trim()) return;
-    setLoading(true); setError(null); setSearchResults([]);
+  async function searchGleif(q: string) {
+    setLoading(true); setError(null); setLeiResult(null); setSearchResults([]);
     try {
-      const res = await fetch(`/api/gleif?q=${encodeURIComponent(query.trim())}&limit=20`);
+      const res = await fetch(`/api/gleif?q=${encodeURIComponent(q)}&limit=20`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? apiErrorMessage(res.status, "GLEIF search"));
@@ -116,13 +99,19 @@ function GleifInner() {
     } finally { if (mountedRef.current) setLoading(false); }
   }
 
-  const switchTab = (t: "lookup" | "search") => {
-    setTab(t); setLeiResult(null); setSearchResults([]); setError(null);
-    router.replace(`/gleif?tab=${t}`, { scroll: false });
+  // Single input, auto-detected: a valid 20-char LEI runs the lookup, any
+  // other text runs the name search. Submission via Enter or the rail RUN.
+  const run = () => {
+    if (loading) return;
+    const value = input.trim();
+    if (!value) return;
+    const upper = value.toUpperCase();
+    if (LEI_RE.test(upper)) void lookupLei(upper);
+    else void searchGleif(value);
   };
 
   return (
-    <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI" onRun={() => void (tab === "lookup" ? lookupLei() : searchGleif())}>
+    <ModuleLayout asanaModule="gleif" asanaLabel="GLEIF / LEI" engineLabel="GLEIF LEI" onRun={run}>
       <ModuleHero
 
         eyebrow=""
@@ -132,63 +121,33 @@ function GleifInner() {
       />
 
       <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
-              Entity Intelligence · GLEIF
-            </div>
-            <div className="text-12 text-ink-2">
-              Beneficial ownership chain · sanctions-status LEI · UBO resolution
-            </div>
+        <div>
+          <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
+            Entity Intelligence · GLEIF
           </div>
-          <div className="flex items-center gap-1.5">
-            {(["lookup", "search"] as const).map((t) => (
-              <button key={t} type="button" onClick={() => switchTab(t)} className={tabCls(tab === t)}>
-                {t === "lookup" ? "LEI Lookup" : "Name Search"}
-              </button>
-            ))}
+          <div className="text-12 text-ink-2">
+            Beneficial ownership chain · sanctions-status LEI · UBO resolution
           </div>
         </div>
 
-        {tab === "lookup" && (
-          <div className="flex gap-3 flex-wrap">
-            <input
-              className={`flex-1 min-w-48 ${monoInputCls}`}
-              placeholder="20-character LEI e.g. 7LTWFZYICNSX8D621K86"
-              value={lei}
-              onChange={(e) => setLei(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === "Enter" && lookupLei()}
-              maxLength={20}
-            />
-            <select
-              className={inputCls}
-              value={depth}
-              onChange={(e) => setDepth(Number(e.target.value))}
-            >
-              {[1, 2, 3, 5, 10].map((d) => (
-                <option key={d} value={d}>Chain depth: {d}</option>
-              ))}
-            </select>
-            <button type="button" onClick={lookupLei} disabled={loading || lei.length !== 20} className={btnCls}>
-              {loading ? "Looking up…" : "Look Up"}
-            </button>
-          </div>
-        )}
-
-        {tab === "search" && (
-          <div className="flex gap-3">
-            <input
-              className={`flex-1 ${inputCls}`}
-              placeholder="Legal entity name e.g. Emirates NBD"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchGleif()}
-            />
-            <button type="button" onClick={searchGleif} disabled={loading || !query.trim()} className={btnCls}>
-              {loading ? "⌕…" : "⌕"}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3 flex-wrap">
+          <input
+            className={`flex-1 min-w-48 ${monoInputCls}`}
+            placeholder="20-character LEI or legal entity name — press Enter"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && run()}
+          />
+          <select
+            className={inputCls}
+            value={depth}
+            onChange={(e) => setDepth(Number(e.target.value))}
+          >
+            {[1, 2, 3, 5, 10].map((d) => (
+              <option key={d} value={d}>Chain depth: {d}</option>
+            ))}
+          </select>
+        </div>
 
         {error && (
           <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red">
@@ -283,7 +242,7 @@ function GleifInner() {
                   <tr
                     key={r.lei}
                     className={`hover:bg-bg-panel cursor-pointer transition-colors ${i < searchResults.length - 1 ? "border-b border-hair" : ""}`}
-                    onClick={() => { setTab("lookup"); setLei(r.lei); }}
+                    onClick={() => { setInput(r.lei); void lookupLei(r.lei); }}
                   >
                     <td className="px-3 py-2 font-medium text-ink-0">{r.legalName}</td>
                     <td className="px-3 py-2 font-mono text-10 text-ink-2">{r.lei}</td>

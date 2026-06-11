@@ -422,7 +422,7 @@ export default function PredictiveRiskPage() {
             <button
               onClick={() => void runScore()}
               disabled={loading || !subjectId.trim()}
-              className="px-5 py-2 rounded-lg bg-brand text-white text-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand/90 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-brand text-white text-11 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand/90 transition-colors"
             >
               {loading ? "Scoring…" : "Run Predictive Score"}
             </button>
@@ -434,7 +434,7 @@ export default function PredictiveRiskPage() {
                   void fetchWikidataPep();
                 }}
                 disabled={corpLoading || pepLoading}
-                className="px-5 py-2 rounded-lg bg-bg-2 border border-hair-2 text-ink-1 text-12 font-semibold disabled:opacity-50 hover:bg-bg-1 transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-bg-2 border border-hair-2 text-ink-1 text-11 font-semibold disabled:opacity-50 hover:bg-bg-1 transition-colors"
               >
                 {corpLoading || pepLoading ? "Enriching…" : "Re-run OSINT"}
               </button>
@@ -457,7 +457,7 @@ export default function PredictiveRiskPage() {
                   </div>
                   <div className="text-11 text-ink-2">
                     Generated: <span className="text-ink-0 font-medium">
-                      {new Date(result.generatedAt).toLocaleString()}
+                      {new Date(result.generatedAt).toLocaleString("en-GB")}
                     </span>
                   </div>
                 </div>

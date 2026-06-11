@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage } from "@/lib/client/error-utils";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface VoluntaryDisclosure {
   id: string;
@@ -13,7 +14,7 @@ interface VoluntaryDisclosure {
   description: string;
   rootCause: string;
   remediationTaken: string;
-  status: "draft" | "pending_mlro" | "pending_legal" | "submitted" | "acknowledged" | "closed";
+  status: "draft" | "pending_mlro" | "submitted" | "acknowledged" | "closed";
   mlroApproved?: boolean;
   mlroApprovalDate?: string;
   submittedBy?: string;
@@ -60,13 +61,12 @@ const REGULATORY_BODY_COLOURS: Record<string, string> = {
 const STATUS_COLOURS: Record<string, string> = {
   draft: "bg-zinc-800/40 text-zinc-300 border border-zinc-600/40",
   pending_mlro: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
-  pending_legal: "bg-amber-950/30 text-amber-300 border border-amber-500/40",
   submitted: "bg-sky-950/30 text-sky-300 border border-sky-500/40",
   acknowledged: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
   closed: "bg-emerald-950/30 text-emerald-300 border border-emerald-500/40",
 };
 
-const STATUS_FLOW = ["draft", "pending_mlro", "pending_legal", "submitted", "acknowledged", "closed"];
+const STATUS_FLOW = ["draft", "pending_mlro", "submitted", "acknowledged", "closed"];
 
 const _GOV_MODULES = [
   { label: "COI Register", href: "/coi-register", icon: "⚖️" },
@@ -107,7 +107,14 @@ export default function VoluntaryDisclosurePage() {
       if (!res.ok) throw new Error(apiErrorMessage(res.status, "Voluntary disclosure"));
       const data = await res.json() as { ok: boolean; records?: VoluntaryDisclosure[]; error?: string };
       if (data.ok) {
-        setRecords(data.records ?? []);
+        // The legal-review stage was retired: normalise any stored
+        // pending_legal records back to MLRO-approved pending_mlro so they
+        // surface the "Mark Submitted" action.
+        setRecords((data.records ?? []).map((r) =>
+          (r.status as string) === "pending_legal"
+            ? { ...r, status: "pending_mlro" as const, mlroApproved: true }
+            : r,
+        ));
       } else {
         setError(data.error ?? "Failed to load disclosures");
       }
@@ -186,21 +193,6 @@ export default function VoluntaryDisclosurePage() {
       />
 
       <div className="px-6 pb-10 space-y-6">
-        {/* Action bar */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "New Disclosure"}
-          </button>
-        </div>
-
-        {/* Info banner */}
-        <div className="bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 rounded-md px-4 py-3 text-sm">
-          Voluntary self-reporting to the regulator before detection may qualify for enforcement mitigation under CBUAE enforcement policy
-        </div>
-
         {/* Status flow visual */}
         <div className="flex items-center gap-0 overflow-x-auto bg-bg-panel border border-hair-2 rounded-lg p-3">
           {STATUS_FLOW.map((step, i) => (
@@ -258,10 +250,9 @@ export default function VoluntaryDisclosurePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-1 mb-1">Detected Date</label>
-                <input
-                  type="date"
+                <IsoDateInput
                   value={form.detectedDate}
-                  onChange={(e) => setForm({ ...form, detectedDate: e.target.value })}
+                  onChange={(iso) => setForm({ ...form, detectedDate: iso })}
                   className={inputCls}
                   required
                 />
@@ -304,14 +295,14 @@ export default function VoluntaryDisclosurePage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Creating..." : "Create Disclosure"}
               </button>
@@ -423,7 +414,7 @@ export default function VoluntaryDisclosurePage() {
                               {record.status === "draft" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "pending_mlro" })}
-                                  className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
+                                  className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
                                 >
                                   Submit for MLRO Approval
                                 </button>
@@ -433,20 +424,19 @@ export default function VoluntaryDisclosurePage() {
                                   onClick={() => void patchRecord(record.id, {
                                     mlroApproved: true,
                                     mlroApprovalDate: today,
-                                    status: "pending_legal",
                                   })}
-                                  className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                  className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                 >
                                   MLRO Approve
                                 </button>
                               )}
-                              {record.status === "pending_legal" && (
+                              {record.status === "pending_mlro" && record.mlroApproved && (
                                 <button
                                   onClick={() => void patchRecord(record.id, {
                                     status: "submitted",
                                     disclosureDate: today,
                                   })}
-                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90"
+                                  className="px-2.5 py-1 text-xs bg-brand text-white rounded hover:opacity-90"
                                 >
                                   Mark Submitted
                                 </button>
@@ -468,7 +458,7 @@ export default function VoluntaryDisclosurePage() {
                                         status: "acknowledged",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                    className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                   >
                                     Record Regulator Response
                                   </button>
@@ -477,7 +467,7 @@ export default function VoluntaryDisclosurePage() {
                               {record.status === "acknowledged" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "closed" })}
-                                  className="px-3 py-1.5 text-xs bg-zinc-700 text-white rounded hover:bg-zinc-600"
+                                  className="px-2.5 py-1 text-xs bg-zinc-700 text-white rounded hover:bg-zinc-600"
                                 >
                                   Close
                                 </button>

@@ -208,7 +208,7 @@ export default function OwnershipPage() {
           type="button"
           onClick={() => void mapOwnership()}
           disabled={loading}
-          className="text-13 font-semibold px-5 py-2.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+          className="text-12 font-semibold px-3 py-1.5 rounded bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
         >
           {loading ? "◌ Mapping Ownership…" : "🔍 Map Ownership"}
         </button>

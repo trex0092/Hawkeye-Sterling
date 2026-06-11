@@ -80,7 +80,7 @@ export default function OsintPage() {
         const data = await res.json().catch(() => ({})) as HarvesterResult;
         if (!mountedRef.current) return;
         if (!res.ok || !data.ok) setError((data as { error?: string }).error ?? apiErrorMessage(res.status, "OSINT"));
-        else { setDomainResult(data); setScannedAt(new Date().toLocaleTimeString()); }
+        else { setDomainResult(data); setScannedAt(new Date().toLocaleTimeString("en-GB")); }
       } else {
         const [sh, sa] = await Promise.allSettled([
           fetch("/api/osint-bridge", {
@@ -97,7 +97,7 @@ export default function OsintPage() {
         if (!mountedRef.current) return;
         if (sh.status === "fulfilled") setSherlockResult(sh.value);
         if (sa.status === "fulfilled") setSocialResult(sa.value);
-        setScannedAt(new Date().toLocaleTimeString());
+        setScannedAt(new Date().toLocaleTimeString("en-GB"));
         if (sh.status === "rejected" && sa.status === "rejected")
           setError("All OSINT tools failed — check the bridge service is running");
       }
@@ -213,7 +213,7 @@ export default function OsintPage() {
               key={m}
               type="button"
               onClick={() => { setMode(m); setDomainResult(null); setSherlockResult(null); setSocialResult(null); setError(""); }}
-              className={`px-3 py-1.5 rounded text-11 font-semibold border transition-colors ${
+              className={`px-2.5 py-1 rounded text-11 font-semibold border transition-colors ${
                 mode === m ? "bg-brand text-white border-brand" : "bg-bg-2 text-ink-2 border-hair-2 hover:text-ink-0"
               }`}
             >
@@ -235,7 +235,7 @@ export default function OsintPage() {
             type="button"
             onClick={run}
             disabled={loading || !target.trim()}
-            className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? "Scanning…" : "Scan"}
           </button>
@@ -311,7 +311,7 @@ export default function OsintPage() {
       {hasResults && (
         <div className="mt-4">
           <button type="button" onClick={() => void runSynthesis()} disabled={synthLoading}
-            className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+            className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
             {synthLoading ? "Synthesizing…" : "✦AI"}
           </button>
           {synthesis && (() => {
@@ -367,7 +367,7 @@ export default function OsintPage() {
             type="button"
             onClick={() => void runIntelSynthesis()}
             disabled={intelSynthLoading}
-            className="px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded bg-brand text-white text-11 font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {intelSynthLoading ? "Synthesizing…" : "🧠 Synthesize Intelligence"}
           </button>
@@ -486,7 +486,7 @@ export default function OsintPage() {
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                    className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
                     style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                   >
                     PDF

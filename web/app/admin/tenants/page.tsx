@@ -165,14 +165,14 @@ function CreateTenantForm({ onCreated, onCancel }: CreateFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="px-4 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 disabled:opacity-50 transition-colors"
+          className="px-3 py-1 bg-brand text-white text-11 font-semibold rounded hover:bg-brand/90 disabled:opacity-50 transition-colors"
         >
           {saving ? "Creating…" : "Create tenant"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors"
+          className="px-3 py-1 border border-hair-2 text-ink-2 text-11 rounded hover:text-ink-0 transition-colors"
         >
           Cancel
         </button>
@@ -386,13 +386,13 @@ export default function AdminTenantsPage() {
           <button
             onClick={() => { void fetchTenants(); }}
             disabled={loading}
-            className="px-3 py-1.5 border border-hair-2 text-ink-2 text-12 rounded hover:text-ink-0 transition-colors disabled:opacity-40"
+            className="px-2.5 py-1 border border-hair-2 text-ink-2 text-11 rounded hover:text-ink-0 transition-colors disabled:opacity-40"
           >
             {loading ? "…" : "Refresh"}
           </button>
           <button
             onClick={() => setShowCreateForm((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-12 font-semibold rounded hover:bg-brand/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand text-white text-11 font-semibold rounded hover:bg-brand/90 transition-colors"
           >
             <span className="text-14 leading-none">+</span> Create tenant
           </button>

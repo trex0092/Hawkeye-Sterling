@@ -124,7 +124,7 @@ export function DispositionButton({
         type="button"
         disabled
         title="MLRO sign-off required — only users with the MLRO role may record dispositions"
-        className="rounded-md border border-hair-2 bg-bg-panel px-3 py-1.5 text-xs font-medium text-ink-3 cursor-not-allowed"
+        className="rounded-md border border-hair-2 bg-bg-panel px-2.5 py-1 text-xs font-medium text-ink-3 cursor-not-allowed"
       >
         MLRO sign-off required
       </button>
@@ -136,7 +136,7 @@ export function DispositionButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-zinc-300 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
+        className="rounded-md border border-zinc-300 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-800"
       >
         Confirm disposition
       </button>
@@ -197,7 +197,7 @@ export function DispositionButton({
         <button
           type="button"
           onClick={submit}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+          className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
           disabled={busy}
         >
           {busy ? "Recording…" : overridden ? "Confirm override" : "Confirm"}

@@ -44,10 +44,6 @@
    "attestationTaskGid": "1215595440812530",
    "projectGid": "1215582428708762"
   },
-  "brain-intel": {
-   "attestationTaskGid": "1215593490520272",
-   "projectGid": "1215590846042872"
-  },
   "cases": {
    "attestationTaskGid": "1215595442219182",
    "projectGid": "1215590846964116"
@@ -83,10 +79,6 @@
   "crypto-risk": {
    "attestationTaskGid": "1215587111130103",
    "projectGid": "1215582427900290"
-  },
-  "data-quality": {
-   "attestationTaskGid": "1215595440897100",
-   "projectGid": "1215595441030147"
   },
   "domain-intel": {
    "attestationTaskGid": "1215593487815339",
@@ -191,10 +183,6 @@
   "ongoing-monitor": {
    "attestationTaskGid": "1215595442044377",
    "projectGid": "1215593490836588"
-  },
-  "operator": {
-   "attestationTaskGid": "1215595441587503",
-   "projectGid": "1215593490549814"
   },
   "osint": {
    "attestationTaskGid": "1215593488259116",
@@ -328,10 +316,6 @@
    "attestationTaskGid": "1215582428106774",
    "projectGid": "1215587110763526"
   },
-  "ubo-walker": {
-   "attestationTaskGid": "1215587112021868",
-   "projectGid": "1215595441207924"
-  },
   "vendor-ai-audit": {
    "attestationTaskGid": "1215582431126012",
    "projectGid": "1215595442838734"
@@ -367,7 +351,6 @@
    "benford": "1215582431285317",
    "board-dashboard": "1215595443935620",
    "bra": "1215595443440162",
-   "brain-intel": "1215590849174097",
    "cases": "1215593492743242",
    "cdd-review": "1215603863813662",
    "client-portal": "1215582430962491",
@@ -377,7 +360,6 @@
    "country-risk": "1215593493277177",
    "country-risk-map": "1215587115958828",
    "crypto-risk": "1215587115562709",
-   "data-quality": "1215595443522639",
    "domain-intel": "1215590848198015",
    "dormant-accounts": "1215595443459459",
    "dpmsr": "1215590848656484",
@@ -404,7 +386,6 @@
    "oecd-ddg": "1215593492925712",
    "onboarding": "1215590848807421",
    "ongoing-monitor": "1215582431788391",
-   "operator": "1215582432320034",
    "osint": "1215582431974186",
    "outsourcing-register": "1215587114595770",
    "oversight": "1215593492427158",
@@ -438,7 +419,6 @@
    "transaction-monitor": "1215582431873919",
    "typology-library": "1215587115955365",
    "ubo-declaration": "1215595443906845",
-   "ubo-walker": "1215593493501208",
    "vendor-ai-audit": "1215590849361231",
    "vendor-dd": "1215603863826402",
    "vessel-check": "1215595444311206",

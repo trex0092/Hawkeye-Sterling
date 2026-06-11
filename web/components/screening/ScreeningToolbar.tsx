@@ -96,7 +96,7 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
                   key={opt.key}
                   type="button"
                   onClick={() => onSortChange(opt.key)}
-                  className={`w-full text-left px-3 py-2 text-12 flex justify-between items-center hover:bg-bg-1 first:rounded-t-lg last:rounded-b-lg ${
+                  className={`w-full text-left px-2.5 py-1.5 text-11 flex justify-between items-center hover:bg-bg-1 first:rounded-t-lg last:rounded-b-lg ${
                     opt.key === sortKey ? "text-brand font-semibold" : "text-ink-0"
                   }`}
                 >

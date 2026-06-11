@@ -271,9 +271,9 @@ export default function PKycPage() {
                     <td className="px-3 py-2.5 font-mono text-ink-1">{s.lastComposite !== null ? `${s.lastComposite}/100` : "—"}</td>
                     <td className="px-3 py-2.5 font-mono text-ink-1">{s.lastHits}</td>
                     <td className="px-3 py-2.5 capitalize text-ink-1">{s.cadence}</td>
-                    <td className="px-3 py-2.5 text-ink-2">{s.lastRunAt ? new Date(s.lastRunAt).toLocaleDateString() : "Never"}</td>
+                    <td className="px-3 py-2.5 text-ink-2">{s.lastRunAt ? new Date(s.lastRunAt).toLocaleDateString("en-GB") : "Never"}</td>
                     <td className={`px-3 py-2.5 ${isDue ? "text-brand font-semibold" : "text-ink-2"}`}>
-                      {isDue ? "⚡ DUE" : new Date(s.nextRunAt).toLocaleDateString()}
+                      {isDue ? "⚡ DUE" : new Date(s.nextRunAt).toLocaleDateString("en-GB")}
                     </td>
                     <td className={`px-3 py-2.5 ${s.alertCount > 0 ? "text-orange font-semibold" : "text-ink-3"}`}>
                       {s.alertCount > 0 ? `⚠ ${s.alertCount}` : "—"}
@@ -352,10 +352,10 @@ export default function PKycPage() {
                 <input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={INPUT_CLS} />
               </FormField>
               <div className="flex gap-3 mt-6">
-                <button type="submit" disabled={enrolling} className="flex-1 py-2.5 bg-brand hover:bg-brand-hover text-white text-13 font-semibold rounded transition-colors disabled:opacity-50">
+                <button type="submit" disabled={enrolling} className="flex-1 py-1.5 bg-brand hover:bg-brand-hover text-white text-12 font-semibold rounded transition-colors disabled:opacity-50">
                   {enrolling ? "Enrolling…" : "Enroll"}
                 </button>
-                <button type="button" onClick={() => setShowEnroll(false)} className="flex-1 py-2.5 border border-hair-2 rounded text-13 text-ink-1 hover:bg-bg-2 transition-colors">
+                <button type="button" onClick={() => setShowEnroll(false)} className="flex-1 py-1.5 border border-hair-2 rounded text-12 text-ink-1 hover:bg-bg-2 transition-colors">
                   Cancel
                 </button>
               </div>

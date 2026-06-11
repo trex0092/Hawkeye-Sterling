@@ -167,7 +167,7 @@ export default function CorrectionsPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-brand text-white font-semibold rounded px-5 py-2 text-13 disabled:opacity-60"
+              className="bg-brand text-white font-semibold rounded px-3 py-1.5 text-12 disabled:opacity-60"
             >
               {submitting ? "Submitting…" : "Submit correction request"}
             </button>

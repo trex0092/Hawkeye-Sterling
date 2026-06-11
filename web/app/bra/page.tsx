@@ -131,7 +131,7 @@ export default function BraPage() {
         <div className="flex justify-end">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
+            className="bg-brand text-white px-3 py-1.5 rounded-md text-12 font-medium hover:opacity-90"
           >
             {showForm ? "Cancel" : "Create New BRA"}
           </button>
@@ -191,9 +191,9 @@ export default function BraPage() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
               <button type="submit" disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
                 {submitting ? "Creating..." : "Create BRA"}
               </button>
             </div>
@@ -233,7 +233,7 @@ export default function BraPage() {
                       </span>
                     </div>
                     <div className="text-xs text-ink-2 mt-1">
-                      Next review: {new Date(record.nextReviewDate).toLocaleDateString()}
+                      Next review: {new Date(record.nextReviewDate).toLocaleDateString("en-GB")}
                     </div>
                   </div>
                 </div>

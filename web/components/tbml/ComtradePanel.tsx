@@ -176,7 +176,7 @@ export function ComtradePanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-bg-2/40 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-bg-2/40 transition-colors"
       >
         <div className="flex items-center gap-3">
           <span className="text-14 font-semibold text-ink-0">
@@ -260,7 +260,7 @@ export function ComtradePanel() {
               type="button"
               onClick={handleQuery}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded text-12 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-brand-dim text-brand border border-brand/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
             >
               {loading ? "Fetching…" : "Fetch Trade Data"}
             </button>
@@ -270,7 +270,7 @@ export function ComtradePanel() {
                 type="button"
                 onClick={handleRunAnalysis}
                 disabled={analysisLoading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded text-12 font-semibold bg-amber-dim text-amber border border-amber/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-11 font-semibold bg-amber-dim text-amber border border-amber/30 hover:opacity-80 disabled:opacity-40 transition-opacity"
               >
                 {analysisLoading ? "Analysing…" : "Run TBML Analysis"}
               </button>
@@ -363,7 +363,7 @@ export function ComtradePanel() {
                   <p className="mt-2 text-10 text-ink-3">
                     {queryResult.count ?? queryResult.data.length} record
                     {(queryResult.count ?? queryResult.data.length) !== 1 ? "s" : ""} returned · Source: UN Comtrade public preview API
-                    {analysis && ` · Analysis at ${new Date(analysis.checkedAt).toLocaleTimeString()}`}
+                    {analysis && ` · Analysis at ${new Date(analysis.checkedAt).toLocaleTimeString("en-GB")}`}
                   </p>
                 </div>
               )}

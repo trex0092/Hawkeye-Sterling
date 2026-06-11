@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/red-team-prompts";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
 import { toCsv, downloadCsv } from "@/lib/client/csv";
+import { useHawkeyeEvent } from "@/lib/client/use-hawkeye-add";
 import { useHubSignal } from "./HubContext";
 
 type Verdict = "pass" | "fail" | "error" | "untested";
@@ -158,12 +159,6 @@ export function RedTeamSection() {
     setRunningAll(false);
   };
 
-  const reset = () => {
-    if (!confirm("Clear all red-team results?")) return;
-    setResults({});
-    if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE);
-  };
-
   const exportCsv = () => {
     const rows = RED_TEAM_PROMPTS.map((p) => {
       const r = results[p.id];
@@ -180,6 +175,8 @@ export function RedTeamSection() {
       toCsv(["probe_id", "category", "verdict", "tested_at", "response_excerpt"], rows),
     );
   };
+  // Rail CSV button exports the probe results instead of scraping the DOM.
+  useHawkeyeEvent("hawkeye:csv", exportCsv);
 
   return (
     <div>
@@ -220,26 +217,12 @@ export function RedTeamSection() {
           type="button"
           onClick={() => void runAll()}
           disabled={runningAll}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50"
+          className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50"
         >
           {runningAll ? "Running..." : `Run ${filter === "all" ? "all" : "filtered"}`}
         </button>
-        <button
-          type="button"
-          onClick={exportCsv}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-ink-0 hover:border-brand/60"
-        >
-          Export CSV
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-red-400 hover:border-red-500/60"
-        >
-          Reset
-        </button>
         <span className="text-11 text-ink-3 font-mono ml-auto">
-          {stats.lastRun > 0 ? `last run ${new Date(stats.lastRun).toLocaleString()}` : "not yet run"}
+          {stats.lastRun > 0 ? `last run ${new Date(stats.lastRun).toLocaleString("en-GB")}` : "not yet run"}
         </span>
       </div>
 

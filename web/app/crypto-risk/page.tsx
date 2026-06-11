@@ -47,7 +47,7 @@ function ExposureBar({ label, value, colour }: { label: string; value: number; c
 }
 
 const inputCls = "flex-1 px-3 py-2 border border-hair-2 rounded text-13 font-mono bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
-const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const btnCls = "px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 const cardCls = "border border-hair-2 rounded-lg p-4";
 
 interface CryptoThreat {
@@ -322,7 +322,7 @@ export default function CryptoRiskPage() {
         {result && result.ok && (
           <div className="mt-4">
             <button type="button" onClick={() => void analyzeWalletThreat(result)} disabled={threatLoading}
-              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
               {threatLoading ? "Analyzing…" : "✦AI"}
             </button>
             {threat && (() => {

@@ -125,7 +125,6 @@ export function PerformanceMonitoringDashboard({
   const [drift, setDrift] = useState<DriftResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({
     calibration: null,
     modes: null,
@@ -135,26 +134,29 @@ export function PerformanceMonitoringDashboard({
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const [brierRes, modesRes, driftRes] = await Promise.all([
-        fetch("/api/mlro/brier", { headers: { accept: "application/json" } }),
-        fetch("/api/mlro/mode-performance?sort=brier&direction=desc&limit=200", {
-          headers: { accept: "application/json" },
-        }),
-        fetch("/api/mlro/drift-alerts", { headers: { accept: "application/json" } }),
-      ]);
-      if (!brierRes.ok) throw new Error(`Calibration endpoint HTTP ${brierRes.status}`);
-      if (!modesRes.ok) throw new Error(`Mode performance endpoint HTTP ${modesRes.status}`);
-      if (!driftRes.ok) throw new Error(`Drift alerts endpoint HTTP ${driftRes.status}`);
-      setBrier((await brierRes.json()) as BrierResponse);
-      setModes((await modesRes.json()) as ModePerfResponse);
-      setDrift((await driftRes.json()) as DriftResponse);
-      setRefreshedAt(new Date());
-    } catch (e) {
-      setError(caughtErrorMessage(e, "Failed to load performance data."));
-    } finally {
-      setLoading(false);
-    }
+    // Each endpoint settles independently so one failing feed (e.g.
+    // drift-alerts) no longer blanks the other two tabs.
+    const getJson = async <T,>(url: string, label: string): Promise<T> => {
+      const res = await fetch(url, { headers: { accept: "application/json" } });
+      if (!res.ok) throw new Error(`${label} endpoint HTTP ${res.status}`);
+      return (await res.json()) as T;
+    };
+    const [brierR, modesR, driftR] = await Promise.allSettled([
+      getJson<BrierResponse>("/api/mlro/brier", "Calibration"),
+      getJson<ModePerfResponse>(
+        "/api/mlro/mode-performance?sort=brier&direction=desc&limit=200",
+        "Mode performance",
+      ),
+      getJson<DriftResponse>("/api/mlro/drift-alerts", "Drift alerts"),
+    ]);
+    if (brierR.status === "fulfilled") setBrier(brierR.value);
+    if (modesR.status === "fulfilled") setModes(modesR.value);
+    if (driftR.status === "fulfilled") setDrift(driftR.value);
+    const failures = [brierR, modesR, driftR]
+      .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+      .map((r) => caughtErrorMessage(r.reason, "request failed"));
+    setError(failures.length > 0 ? failures.join(" · ") : null);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -220,26 +222,13 @@ export function PerformanceMonitoringDashboard({
             Calibration · drift · mode effectiveness
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-10 text-ink-2" aria-live="polite">
-            {refreshedAt ? `Updated ${refreshedAt.toLocaleTimeString()}` : "Loading…"}
-          </span>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            disabled={loading}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 text-ink-1 hover:border-brand hover:text-brand rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
-          >
-            {loading ? "Refreshing…" : "Refresh"}
-          </button>
-        </div>
       </header>
 
       <SummaryStrip
         ece={overallEce}
         status={overallStatus}
         modesEvaluated={drift?.modesEvaluated ?? brier?.total ?? 0}
-        alerts={drift?.alerts ?? []}
+        alerts={drift?.alerts ?? null}
       />
 
       {error ? (
@@ -264,7 +253,7 @@ export function PerformanceMonitoringDashboard({
               tabIndex={selected ? 0 : -1}
               onKeyDown={onTabKey}
               onClick={() => setTab(t.id)}
-              className={`text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border-b-2 -mb-px font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 ${
+              className={`text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border-b-2 -mb-px font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 ${
                 selected
                   ? "border-brand text-brand-deep"
                   : "border-transparent text-ink-2 hover:text-ink-1"
@@ -305,10 +294,11 @@ function SummaryStrip({
   ece: number | null;
   status: { label: string; tone: string };
   modesEvaluated: number;
-  alerts: readonly DriftAlert[];
+  /** null = drift feed not loaded — distinct from "0 alerts". */
+  alerts: readonly DriftAlert[] | null;
 }): JSX.Element {
-  const critical = alerts.filter((a) => a.severity === "critical").length;
-  const warn = alerts.filter((a) => a.severity === "warn").length;
+  const critical = (alerts ?? []).filter((a) => a.severity === "critical").length;
+  const warn = (alerts ?? []).filter((a) => a.severity === "warn").length;
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-12">
       <SummaryCard
@@ -324,13 +314,21 @@ function SummaryStrip({
       />
       <SummaryCard
         label="Drift alerts"
-        value={alerts.length === 0 ? "0 — clear" : `${critical} critical · ${warn} warn`}
+        value={
+          alerts === null
+            ? "no data"
+            : alerts.length === 0
+              ? "0 — clear"
+              : `${critical} critical · ${warn} warn`
+        }
         tone={
-          critical > 0
-            ? "bg-rose-950/30 text-rose-300"
-            : warn > 0
-              ? "bg-amber-950/30 text-amber-300"
-              : "bg-emerald-950/30 text-emerald-300"
+          alerts === null
+            ? "bg-bg-2 text-ink-1"
+            : critical > 0
+              ? "bg-rose-950/30 text-rose-300"
+              : warn > 0
+                ? "bg-amber-950/30 text-amber-300"
+                : "bg-emerald-950/30 text-emerald-300"
         }
       />
     </div>

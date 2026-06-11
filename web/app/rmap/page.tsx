@@ -103,7 +103,7 @@ export default function RmapPage() {
             />
             <button
               type="submit"
-              className="bg-bg-base border border-hair-2 text-ink-1 px-4 py-2 rounded-md text-sm font-medium hover:bg-bg-panel"
+              className="bg-bg-base border border-hair-2 text-ink-1 px-3 py-1.5 rounded-md text-12 font-medium hover:bg-bg-panel"
             >
               Search
             </button>
@@ -111,7 +111,7 @@ export default function RmapPage() {
               <button
                 type="button"
                 onClick={() => { setQuery(""); void fetchSmelters(); }}
-                className="text-sm text-ink-2 hover:text-ink-1 px-2"
+                className="text-12 text-ink-2 hover:text-ink-1 px-2"
               >
                 Clear
               </button>
@@ -160,10 +160,6 @@ export default function RmapPage() {
             </table>
           </div>
         )}
-
-        <p className="text-xs text-ink-2 font-mono">
-          Source: RMI public conformant smelter list · {smelters.length} smelters loaded
-        </p>
       </div>
     </ModuleLayout>
   );

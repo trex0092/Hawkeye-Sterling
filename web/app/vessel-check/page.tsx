@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { ModuleLayout, ModuleHero } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage } from "@/lib/client/error-utils";
 
@@ -82,26 +81,12 @@ const RISK_TONE: Record<string, string> = {
 
 const inputCls = "px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
 const monoInputCls = `${inputCls} font-mono`;
-const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
-const tabCls = (active: boolean) =>
-  `px-3 py-1 rounded text-11 font-medium border transition-colors ${
-    active
-      ? "bg-brand text-white border-brand"
-      : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
-  }`;
+const btnCls = "px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 
 export default function VesselCheckPage() {
-  return <Suspense fallback={null}><VesselCheckInner /></Suspense>;
-}
-
-function VesselCheckInner() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [mode, setMode] = useState<"single" | "batch">(
-    (searchParams?.get("tab") as "single" | "batch") ?? "single"
-  );
-  const [imoNumber, setImoNumber] = useState("");
-  const [batchImos, setBatchImos] = useState("");
+  // One input, auto-detected: a single IMO runs the single-vessel check, a
+  // newline/comma-separated list runs the batch screen (up to 50 vessels).
+  const [imoInput, setImoInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +112,7 @@ function VesselCheckInner() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           vesselName: vessel?.vesselName,
-          imo: (result?.imoNumber ?? imoNumber.trim()) || undefined,
+          imo: (result?.imoNumber ?? imoInput.split(/[\n,]+/)[0]?.trim()) || undefined,
           flag: rpFlag || vessel?.flag || undefined,
           owner: rpOwner || vessel?.owners?.[0]?.name || undefined,
           operator: rpOperator || undefined,
@@ -146,9 +131,10 @@ function VesselCheckInner() {
   async function check() {
     setLoading(true); setError(null); setResult(null);
     try {
-      const body = mode === "single"
-        ? { imoNumber: imoNumber.trim() }
-        : { imoNumbers: batchImos.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) };
+      const entries = imoInput.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+      const body = entries.length === 1
+        ? { imoNumber: entries[0] }
+        : { imoNumbers: entries };
       const res = await fetch("/api/vessel-check", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -165,7 +151,7 @@ function VesselCheckInner() {
     } finally { if (mountedRef.current) setLoading(false); }
   }
 
-  const canSubmit = mode === "single" ? imoNumber.trim().length > 0 : batchImos.trim().length > 0;
+  const canSubmit = imoInput.trim().length > 0;
 
   return (
     <ModuleLayout asanaModule="vessel-check" asanaLabel="Vessel Check" engineLabel="Vessel Check">
@@ -178,55 +164,26 @@ function VesselCheckInner() {
       />
 
       <div className="bg-bg-panel border border-hair-2 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
-              Maritime Intelligence · Vessel Sanctions
-            </div>
-            <div className="text-12 text-ink-2">
-              OFAC · UN · EU · UK OFSI · UAE EOCN — IMO lookup + ownership chain
-            </div>
+        <div>
+          <div className="text-11 font-semibold tracking-wide-4 uppercase text-brand mb-1">
+            Maritime Intelligence · Vessel Sanctions
           </div>
-          <div className="flex items-center gap-1.5">
-            {(["single", "batch"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setImoNumber(""); setBatchImos(""); setResult(null); setError(null); setRiskProfile(null); router.replace(`/vessel-check?tab=${m}`, { scroll: false }); }}
-                className={tabCls(mode === m)}
-              >
-                {m === "single" ? "Single Vessel" : "Batch (CSV / list)"}
-              </button>
-            ))}
+          <div className="text-12 text-ink-2">
+            OFAC · UN · EU · UK OFSI · UAE EOCN — IMO lookup + ownership chain
           </div>
         </div>
 
-        {mode === "single" ? (
-          <div className="flex gap-3">
-            <input
-              className={`flex-1 ${monoInputCls}`}
-              placeholder="IMO number — e.g. 9166778 or IMO 9166778"
-              value={imoNumber}
-              onChange={(e) => setImoNumber(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && canSubmit && check()}
-            />
-            <button type="button" onClick={check} disabled={loading || !canSubmit} className={btnCls}>
-              {loading ? "Checking…" : "Check Vessel"}
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <textarea
-              className={`w-full h-28 resize-y ${monoInputCls}`}
-              placeholder={"One IMO per line or comma-separated\n9166778\n9321483\nIMO 7366993"}
-              value={batchImos}
-              onChange={(e) => setBatchImos(e.target.value)}
-            />
-            <button type="button" onClick={check} disabled={loading || !canSubmit} className={btnCls}>
-              {loading ? "Screening…" : "Screen All"}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3 items-start">
+          <textarea
+            className={`flex-1 h-20 resize-y ${monoInputCls}`}
+            placeholder={"IMO number — e.g. 9166778. Multiple vessels: one per line or comma-separated (batch screened automatically)"}
+            value={imoInput}
+            onChange={(e) => setImoInput(e.target.value)}
+          />
+          <button type="button" onClick={check} disabled={loading || !canSubmit} className={btnCls}>
+            {loading ? "Checking…" : "Check Vessel"}
+          </button>
+        </div>
 
         {error && (
           <div className="bg-red-dim border border-red/30 rounded-lg p-3 text-12 text-red">
@@ -234,7 +191,7 @@ function VesselCheckInner() {
           </div>
         )}
 
-        {result && mode === "single" && result.vessel && (
+        {result && result.vessel && (
           <div className="space-y-4">
             <div className={`border-2 rounded-xl p-5 ${result.riskLevel === "blocked" || result.riskLevel === "high" ? "border-red/40 bg-red-dim/30" : "border-hair-2"}`}>
               <div className="flex items-start justify-between mb-4">
@@ -250,7 +207,7 @@ function VesselCheckInner() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-12">
                 {result.vessel.flag && <div><div className="text-ink-3">Flag State</div><div className="font-medium text-ink-0">{result.vessel.flag}</div></div>}
                 {result.vessel.type && <div><div className="text-ink-3">Vessel Type</div><div className="font-medium text-ink-0">{result.vessel.type}</div></div>}
-                {result.vessel.grossTonnage && <div><div className="text-ink-3">Gross Tonnage</div><div className="font-medium text-ink-0">{result.vessel.grossTonnage.toLocaleString()} GT</div></div>}
+                {result.vessel.grossTonnage && <div><div className="text-ink-3">Gross Tonnage</div><div className="font-medium text-ink-0">{result.vessel.grossTonnage.toLocaleString("en-GB")} GT</div></div>}
                 {result.vessel.yearBuilt && <div><div className="text-ink-3">Year Built</div><div className="font-medium text-ink-0">{result.vessel.yearBuilt}</div></div>}
                 {result.vessel.callSign && <div><div className="text-ink-3">Call Sign</div><div className="font-mono font-medium text-ink-0">{result.vessel.callSign}</div></div>}
                 {result.vessel.mmsi && <div><div className="text-ink-3">MMSI</div><div className="font-mono font-medium text-ink-0">{result.vessel.mmsi}</div></div>}
@@ -302,7 +259,7 @@ function VesselCheckInner() {
         )}
 
         {/* AI Risk Profile — single mode */}
-        {result && mode === "single" && (
+        {result && !result.results && (
           <div className="mt-4 border border-hair-2 rounded-xl p-5 space-y-4">
             <div className="text-11 font-semibold uppercase tracking-wide-3 text-ink-2">AI Vessel Risk Profile</div>
             <p className="text-11 text-ink-3">
@@ -433,7 +390,7 @@ function VesselCheckInner() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
+                      className="text-11 font-mono px-2.5 py-1 rounded border font-semibold"
                       style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}
                     >
                       PDF
@@ -445,13 +402,13 @@ function VesselCheckInner() {
           </div>
         )}
 
-        {result && mode === "single" && !result.vessel && (
+        {result && !result.results && !result.vessel && (
           <div className="border border-hair-2 rounded-lg p-5">
             <p className="text-12 text-ink-2">{result.riskDetail}</p>
           </div>
         )}
 
-        {result && mode === "batch" && result.results && (
+        {result && result.results && (
           result.results.length === 0 ? (
             <div className="border border-hair-2 rounded-lg p-8 text-center text-12 text-ink-3">
               All {result.total ?? 0} vessels passed screening — no blocked or high-risk results.

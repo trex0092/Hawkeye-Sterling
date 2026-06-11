@@ -60,8 +60,6 @@ const STATUS_COLOURS: Record<string, string> = {
   rejected: "bg-red-950/30 text-red-300 border border-red-500/40",
 };
 
-const PIPELINE_STAGES = ["proposed", "testing", "pending_approval", "approved", "deployed"] as const;
-
 const _TM_MODULES = [
   { label: "TM Rule Changes", href: "/tm-rules", icon: "📐" },
 ];
@@ -183,13 +181,6 @@ export default function TmRulesPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const stageCounts = PIPELINE_STAGES.reduce<Record<string, number>>((acc, stage) => {
-    acc[stage] = records.filter((r) => r.status === stage).length;
-    return acc;
-  }, {});
-
-  const rejectedCount = records.filter((r) => r.status === "rejected").length;
-
   return (
     <ModuleLayout asanaModule="tm-rules" asanaLabel="TM Rule Management" onAdd={() => setShowForm(true)} onSync={() => void fetchRecords()}>
       <ModuleHero
@@ -200,48 +191,6 @@ export default function TmRulesPage() {
       />
 
       <div className="px-6 pb-10 space-y-6">
-        {/* Action bar */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "Propose Change"}
-          </button>
-        </div>
-
-        {/* Lifecycle pipeline */}
-        <div className="bg-bg-panel border border-hair-2 rounded-lg p-4">
-          <div className="text-xs font-medium text-ink-2 mb-3 uppercase tracking-wide">Lifecycle Pipeline</div>
-          <div className="flex items-center gap-0 overflow-x-auto">
-            {PIPELINE_STAGES.map((stage, i) => (
-              <div key={stage} className="flex items-center shrink-0">
-                <div className={`px-3 py-2 rounded text-xs font-medium text-center min-w-[90px] ${STATUS_COLOURS[stage] ?? "bg-zinc-800/40 text-zinc-300 border border-zinc-600/40"}`}>
-                  <div>{stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}</div>
-                  <div className="text-lg font-bold mt-0.5">{stageCounts[stage] ?? 0}</div>
-                </div>
-                {i < PIPELINE_STAGES.length - 1 && (
-                  <span className="text-ink-2 mx-1.5 text-sm">→</span>
-                )}
-              </div>
-            ))}
-            {rejectedCount > 0 && (
-              <>
-                <span className="text-ink-2 mx-2">|</span>
-                <div className="px-3 py-2 rounded text-xs font-medium text-center min-w-[80px] bg-red-950/30 text-red-300 border border-red-500/40">
-                  <div>Rejected</div>
-                  <div className="text-lg font-bold mt-0.5">{rejectedCount}</div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Warning banner */}
-        <div className="bg-amber-950/30 border border-amber-500/40 text-amber-300 rounded-md px-4 py-3 text-sm">
-          All TM rule changes require MLRO sign-off before deployment per CBUAE AML/CFT Guidelines §7
-        </div>
-
         {error && (
           <div className="bg-red-950/30 border border-red-500/40 text-red-300 rounded-md px-4 py-3 text-sm">
             {error}
@@ -337,14 +286,14 @@ export default function TmRulesPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Submit Proposal"}
               </button>
@@ -490,7 +439,7 @@ export default function TmRulesPage() {
                               {record.status === "proposed" && (
                                 <button
                                   onClick={() => void patchRecord(record.id, { status: "testing" })}
-                                  className="px-3 py-1.5 text-xs bg-brand text-white rounded hover:opacity-90"
+                                  className="px-2.5 py-1 text-xs bg-brand text-white rounded hover:opacity-90"
                                 >
                                   Start Testing
                                 </button>
@@ -513,7 +462,7 @@ export default function TmRulesPage() {
                                         status: "pending_approval",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
+                                    className="px-2.5 py-1 text-xs bg-amber-600 text-white rounded hover:bg-amber-500"
                                   >
                                     Record Test Results
                                   </button>
@@ -540,7 +489,7 @@ export default function TmRulesPage() {
                                           ...(mlroComments ? { mlroComments } : {}),
                                         });
                                       }}
-                                      className="px-3 py-1.5 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
+                                      className="px-2.5 py-1 text-xs bg-emerald-700 text-white rounded hover:bg-emerald-600"
                                     >
                                       MLRO Approve
                                     </button>
@@ -561,7 +510,7 @@ export default function TmRulesPage() {
                                           status: "rejected",
                                         });
                                       }}
-                                      className="px-3 py-1.5 text-xs bg-red-700 text-white rounded hover:bg-red-600"
+                                      className="px-2.5 py-1 text-xs bg-red-700 text-white rounded hover:bg-red-600"
                                     >
                                       Reject
                                     </button>
@@ -587,7 +536,7 @@ export default function TmRulesPage() {
                                         status: "deployed",
                                       });
                                     }}
-                                    className="px-3 py-1.5 text-xs bg-emerald-800 text-white rounded hover:bg-emerald-700"
+                                    className="px-2.5 py-1 text-xs bg-emerald-800 text-white rounded hover:bg-emerald-700"
                                   >
                                     Mark Deployed
                                   </button>

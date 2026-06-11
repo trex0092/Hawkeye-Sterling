@@ -9,7 +9,7 @@ function isActive(pathname: string, search: string, href: string): boolean {
   const [base, query] = href.split("?");
   if (base === "/") return pathname === "/";
   if (query) {
-    // Require exact path + tab match so /intelligence-hub?tab=brain only
+    // Require exact path + tab match so /intelligence-hub?tab=workbench only
     // highlights that one item, not all items sharing the same base path.
     return pathname === base && search === `?${query}`;
   }

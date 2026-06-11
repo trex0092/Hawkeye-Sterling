@@ -48,7 +48,7 @@ const BENFORD_EXPECTED: Record<number, number> = {
 };
 
 const inputCls = "px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
-const btnCls   = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const btnCls   = "px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 
 function Bar({ pct, expected, max, flagged }: { pct: number; expected: number; max: number; flagged: boolean }) {
   const obsFrac = (pct / max) * 100;
@@ -223,7 +223,7 @@ export default function BenfordPage() {
               {/* Statistics grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-bg-1 border border-hair-2 rounded p-3 text-center">
-                  <div className="text-18 font-mono font-semibold text-ink-0">{result.n.toLocaleString()}</div>
+                  <div className="text-18 font-mono font-semibold text-ink-0">{result.n.toLocaleString("en-GB")}</div>
                   <div className="text-10 text-ink-3 uppercase tracking-wide-3">Sample size</div>
                 </div>
                 <div className="bg-bg-1 border border-hair-2 rounded p-3 text-center">
@@ -328,7 +328,7 @@ export default function BenfordPage() {
         {result && result.ok && (
           <div className="mt-4">
             <button type="button" onClick={() => void interpretResult(result)} disabled={interpLoading}
-              className="text-11 font-semibold px-4 py-2 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+              className="text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
               {interpLoading ? "Interpreting…" : "✦AI"}
             </button>
             {interpError && (

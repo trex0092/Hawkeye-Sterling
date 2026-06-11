@@ -145,11 +145,6 @@ const BLANK = {
 };
 
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
-const tabCls = (active: boolean) =>
-  `px-3 py-1 rounded text-11 font-medium border transition-colors ${
-    active ? "bg-brand text-white border-brand" : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
-  }`;
-
 const _XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -190,7 +185,7 @@ interface MonitorAlertsResult {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OngoingMonitorPage() {
-  const [section, setSection] = useState<"monitoring" | "enrichment">("monitoring");
+  const section: "monitoring" | "enrichment" = "monitoring";
 
   // Monitoring state
   const [subjects, setSubjects] = useState<MonitoredSubject[]>([]);
@@ -475,13 +470,6 @@ export default function OngoingMonitorPage() {
       />
 
 
-      {/* Section tab bar */}
-      <div className="flex items-center gap-1.5 mb-6">
-        <button type="button" onClick={() => setSection("monitoring")} className={tabCls(section === "monitoring")}>
-          Schedule
-        </button>
-      </div>
-
       {/* ── Monitoring section ──────────────────────────────────────────────── */}
       {section === "monitoring" && (
         <>
@@ -535,7 +523,7 @@ export default function OngoingMonitorPage() {
               <input value={draft.notes} onChange={set("notes")} placeholder="Notes" className={inputCls} />
             </div>
             <button type="button" onClick={add} disabled={!draft.name}
-              className="mt-2 text-11 font-semibold px-3 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
+              className="mt-2 text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40">
               + Enrol
             </button>
           </div>
@@ -581,8 +569,8 @@ export default function OngoingMonitorPage() {
                         <div className="flex gap-2 items-center">
                           <input value={editDraft.notes} onChange={setE("notes")} placeholder="Notes" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-56" />
                           <input value={editDraft.enrolledBy} onChange={setE("enrolledBy")} placeholder="Enrolled by" className="text-12 px-2 py-1 rounded border border-hair-2 bg-bg-0 text-ink-0 w-32" />
-                          <button type="button" onClick={() => saveSubjectEdit(s.id)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
-                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                          <button type="button" onClick={() => saveSubjectEdit(s.id)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                         </div>
                       </td>
                     </tr>
@@ -686,13 +674,13 @@ export default function OngoingMonitorPage() {
             />
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 text-12 rounded border border-hair-2 text-ink-2 hover:text-ink-0"
+                className="px-3 py-1.5 text-11 rounded border border-hair-2 text-ink-2 hover:text-ink-0"
                 onClick={() => { setRemoveConfirm(null); setRemoveReason(""); }}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-12 rounded bg-red text-white font-medium disabled:opacity-40"
+                className="px-3 py-1.5 text-11 rounded bg-red text-white font-medium disabled:opacity-40"
                 disabled={removeReason.trim().length < 5}
                 onClick={confirmRemove}
               >

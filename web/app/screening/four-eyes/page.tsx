@@ -214,7 +214,7 @@ export default function FourEyesPage() {
                           type="button"
                           disabled={!canApprove}
                           onClick={() => openSigning(it.id, "approve")}
-                          className="px-3 py-1.5 text-12 font-semibold rounded bg-green text-white disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+                          className="px-2.5 py-1 text-11 font-semibold rounded bg-green text-white disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
                         >
                           Approve
                         </button>
@@ -222,7 +222,7 @@ export default function FourEyesPage() {
                           type="button"
                           disabled={!canApprove}
                           onClick={() => openSigning(it.id, "reject")}
-                          className="px-3 py-1.5 text-12 font-medium border border-red/30 text-red rounded bg-red-dim disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red hover:text-white"
+                          className="px-2.5 py-1 text-11 font-medium border border-red/30 text-red rounded bg-red-dim disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red hover:text-white"
                         >
                           Reject
                         </button>
@@ -284,7 +284,7 @@ export default function FourEyesPage() {
                           <button
                             type="button"
                             onClick={() => { setSigningDraft(null); setError(null); }}
-                            className="text-12 text-ink-3 px-3 py-1.5 border border-hair-2 rounded hover:text-ink-0"
+                            className="text-11 text-ink-3 px-2.5 py-1 border border-hair-2 rounded hover:text-ink-0"
                           >
                             Cancel
                           </button>
@@ -292,7 +292,7 @@ export default function FourEyesPage() {
                             type="button"
                             onClick={() => { void decide(); }}
                             disabled={isSubmitting || isOwn || !signingDraft.name.trim() || (signingDraft.action === "reject" && !signingDraft.reason.trim())}
-                            className={`text-12 font-semibold px-4 py-1.5 rounded disabled:opacity-40 disabled:cursor-not-allowed ${
+                            className={`text-11 font-semibold px-3 py-1 rounded disabled:opacity-40 disabled:cursor-not-allowed ${
                               signingDraft.action === "approve"
                                 ? "bg-green text-white hover:opacity-90"
                                 : "bg-red text-white hover:opacity-90"

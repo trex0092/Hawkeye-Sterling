@@ -117,7 +117,7 @@ export function CriticalBlockingPanel({ subjectName, subjectId, hits, severity, 
           <button
             onClick={() => { void openCase(); }}
             disabled={opening}
-            className="text-11 font-semibold uppercase tracking-wide-3 bg-red text-white rounded px-4 py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="text-11 font-semibold uppercase tracking-wide-3 bg-red text-white rounded px-3 py-1.5 hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             {opening ? "Opening…" : "Open Compliance Case"}
           </button>

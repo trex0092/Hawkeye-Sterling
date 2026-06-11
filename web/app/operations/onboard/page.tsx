@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import type { QuickScreenResponse } from "@/lib/api/quickScreen.types";
+import { resolveCountryToIso2 } from "@/lib/utils/country-codes";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type Tier = "tier-1" | "tier-2" | "tier-3";
@@ -93,6 +94,12 @@ interface AdaptiveAnswers {
   eddApprover?: string;
   cahraOriginCert?: boolean;
   cahraChainOfCustody?: string;
+}
+
+// The wizard accepts a typed country name; screening / risk layers need
+// ISO-2, so resolve at the point of use.
+function registeredIso2(draft: { registeredCountry: string }): string {
+  return resolveCountryToIso2(draft.registeredCountry) ?? draft.registeredCountry.trim().toUpperCase().slice(0, 2);
 }
 
 interface Draft {
@@ -222,7 +229,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
     subject: {
       name: subjectName,
       entityType: "organisation" as const,
-      ...(draft.registeredCountry ? { jurisdiction: draft.registeredCountry } : {}),
+      ...(draft.registeredCountry ? { jurisdiction: registeredIso2(draft) } : {}),
     },
     options: { scoreThreshold: 0.85, maxHits: 25 },
   };
@@ -254,7 +261,7 @@ async function runScreenViaApi(draft: Draft): Promise<{ hits: ScreeningHit[]; so
 
 function localFallback(draft: Draft): { hits: ScreeningHit[]; source: "fallback" } {
   const hits: ScreeningHit[] = [];
-  const nat = draft.registeredCountry.trim().toUpperCase().slice(0, 2);
+  const nat = registeredIso2(draft);
   if (["IR", "KP", "MM", "SY"].includes(nat)) {
     hits.push({ listId: "fatf-call-for-action", candidateName: `${nat} jurisdiction nexus`, score: 0.92 });
   }
@@ -279,7 +286,7 @@ async function computeTier(draft: Draft): Promise<RiskTierResult | null> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         fullName: draft.fullName,
-        nationalityIso2: draft.registeredCountry.trim().toUpperCase().slice(0, 2),
+        nationalityIso2: registeredIso2(draft),
         // dob omitted — entities don't have one; the scorer's age axis
         // is dormant on entity flows.
         occupation: draft.occupation,
@@ -309,7 +316,7 @@ function localTierFallback(draft: Draft): RiskTierResult {
   if (hits.length > 0) {
     factors.push({ id: "screening_hit", label: `${hits.length} screening hit(s)`, points: 50 });
   }
-  const nat = draft.registeredCountry.trim().toUpperCase().slice(0, 2);
+  const nat = registeredIso2(draft);
   const FATF_LISTED = new Set(["IR", "KP", "MM", "AF", "CD", "NG", "SD", "YE"]);
   if (FATF_LISTED.has(nat)) {
     factors.push({ id: "jurisdiction", label: "FATF-listed jurisdiction", points: 30 });
@@ -376,7 +383,7 @@ async function generateAdvisorNarrative(draft: Draft): Promise<AdvisorResponseV1
         question,
         subjectName: draft.fullName,
         entityType: "organisation",
-        jurisdiction: draft.registeredCountry,
+        jurisdiction: registeredIso2(draft),
         mode: "balanced",
         audience: "regulator",
         structured: true,
@@ -568,7 +575,7 @@ export default function OnboardingWizardPage() {
           <button
             type="button"
             onClick={restart}
-            className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
           >
             Onboard another subject
           </button>
@@ -647,8 +654,8 @@ export default function OnboardingWizardPage() {
               <Field
                 label="Registered country *"
                 value={draft.registeredCountry}
-                onChange={(v) => set("registeredCountry", v.toUpperCase().slice(0, 2))}
-                placeholder="Country of registration (ISO-2)"
+                onChange={(v) => set("registeredCountry", v)}
+                placeholder="Country of registration — type the country name"
               />
               <Field
                 label="License / Register *"
@@ -682,7 +689,7 @@ export default function OnboardingWizardPage() {
               type="button"
               onClick={handleScreen}
               disabled={screening.inFlight}
-              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {screening.inFlight ? "Screening…" : "Run screen"}
             </button>
@@ -697,7 +704,7 @@ export default function OnboardingWizardPage() {
             {draft.screenedAt && (
               <div className="mt-3">
                 <div className="text-11 text-ink-2 font-mono">
-                  Last screened {new Date(draft.screenedAt).toLocaleString()}
+                  Last screened {new Date(draft.screenedAt).toLocaleString("en-GB")}
                 </div>
                 {draft.screeningHits && draft.screeningHits.length > 0 ? (
                   <div className="mt-2 space-y-1">
@@ -931,7 +938,7 @@ export default function OnboardingWizardPage() {
                   <button
                     type="button"
                     onClick={handleRiskRate}
-                    className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
+                    className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold"
                   >
                     Accept suggested tier
                   </button>
@@ -1086,7 +1093,7 @@ export default function OnboardingWizardPage() {
               type="button"
               onClick={handleSignOff}
               disabled={!can[5]}
-              className="text-11 font-mono uppercase tracking-wide-3 px-4 py-2 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit for record
             </button>
@@ -1099,7 +1106,7 @@ export default function OnboardingWizardPage() {
             type="button"
             onClick={() => setStep((Math.max(1, step - 1) as Step))}
             disabled={step === 1}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-11 font-mono uppercase tracking-wide-3 px-2.5 py-1 border border-hair-2 rounded text-ink-2 hover:text-brand hover:border-brand disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
@@ -1238,7 +1245,7 @@ function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectPro
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="listbox"
           aria-expanded={open}
-          className="w-full text-left text-12 border border-hair-2 bg-bg-panel text-ink-0 rounded px-2 py-1.5 focus:border-brand focus:outline-none flex items-center gap-1 flex-wrap min-h-[34px]"
+          className="w-full text-left text-11 border border-hair-2 bg-bg-panel text-ink-0 rounded px-2 py-1 focus:border-brand focus:outline-none flex items-center gap-1 flex-wrap min-h-[34px]"
         >
           {value.length === 0 ? (
             <span className="text-ink-3">Select…</span>
@@ -1286,7 +1293,7 @@ function RelationshipMultiSelect({ value, onChange }: RelationshipMultiSelectPro
                   role="option"
                   aria-selected={selected}
                   onClick={() => toggleOption(opt.id)}
-                  className={`w-full text-left px-2 py-1.5 text-12 flex items-center gap-2 hover:bg-bg-1 ${
+                  className={`w-full text-left px-2 py-1 text-11 flex items-center gap-2 hover:bg-bg-1 ${
                     selected ? "text-ink-0" : "text-ink-1"
                   }`}
                 >

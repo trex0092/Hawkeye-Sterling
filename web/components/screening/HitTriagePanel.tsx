@@ -288,7 +288,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                   setWhitelistBusy(false);
                 }
               }}
-              className="text-11 px-3 py-1 rounded border bg-violet-500/15 text-violet-200 border-violet-500/40 hover:bg-violet-500/25 disabled:opacity-50"
+              className="text-11 px-2.5 py-1 rounded border bg-violet-500/15 text-violet-200 border-violet-500/40 hover:bg-violet-500/25 disabled:opacity-50"
             >
               {whitelistBusy ? "Submitting…" : "Add to whitelist"}
             </button>
@@ -321,7 +321,7 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`text-11 px-3 py-1.5 border-b-2 transition-colors ${
+            className={`text-11 px-2.5 py-1 border-b-2 transition-colors ${
               activeTab === tab
                 ? "border-pink-500 text-ink-1 font-semibold"
                 : "border-transparent text-ink-3 hover:text-ink-1"
@@ -541,21 +541,21 @@ export function HitTriagePanel({ subjectId, subjectName, hits, resolutions = {},
                               <button
                                 onClick={() => handleResolve(h.id, "positive")}
                                 disabled={busyHitId === h.id}
-                                className="text-11 px-3 py-1 rounded border bg-red-500/15 text-red-300 border-red-500/40 hover:bg-red-500/25 disabled:opacity-50"
+                                className="text-11 px-2.5 py-1 rounded border bg-red-500/15 text-red-300 border-red-500/40 hover:bg-red-500/25 disabled:opacity-50"
                               >
                                 Positive — same person
                               </button>
                               <button
                                 onClick={() => handleResolve(h.id, "possible")}
                                 disabled={busyHitId === h.id}
-                                className="text-11 px-3 py-1 rounded border bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25 disabled:opacity-50"
+                                className="text-11 px-2.5 py-1 rounded border bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25 disabled:opacity-50"
                               >
                                 Possible — needs review
                               </button>
                               <button
                                 onClick={() => handleResolve(h.id, "false")}
                                 disabled={busyHitId === h.id}
-                                className="text-11 px-3 py-1 rounded border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25 disabled:opacity-50"
+                                className="text-11 px-2.5 py-1 rounded border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25 disabled:opacity-50"
                               >
                                 False — different person
                               </button>

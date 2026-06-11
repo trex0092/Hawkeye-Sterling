@@ -632,7 +632,7 @@ export function BrainConsole({ initialValues }: { initialValues?: BrainConsoleIn
               type="button"
               onClick={run}
               disabled={running}
-              className="px-4 py-2 bg-brand text-bg-0 rounded text-12 font-semibold uppercase tracking-wide-3 disabled:opacity-50"
+              className="px-3 py-1.5 bg-brand text-bg-0 rounded text-11 font-semibold uppercase tracking-wide-3 disabled:opacity-50"
             >
               {fetchingLiveNews ? "Fetching live intelligence…" : running ? "Reasoning…" : "Fire the brain"}
             </button>
@@ -1117,7 +1117,7 @@ export function BrainDashboard({
           <Card
             title="Cognitive amplifier"
             count={c.amplifier.directives.length}
-            badge={`${c.amplifier.version} · ×${c.amplifier.factor.toLocaleString()}`}
+            badge={`${c.amplifier.version} · ×${c.amplifier.factor.toLocaleString("en-GB")}`}
           />
           <Card title="Meta-cognition" count={c.metaCognition.total}>
             {Object.entries(c.metaCognition.byCategory ?? {}).map(([k, n]) => (
@@ -1539,7 +1539,7 @@ function ModeCoveragePanel({
               <button
                 type="button"
                 onClick={() => setOpen((o) => ({ ...o, [f.faculty]: !isOpen }))}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 text-11 text-left hover:bg-bg-1"
+                className="w-full flex items-center justify-between px-2.5 py-1 text-11 text-left hover:bg-bg-1"
               >
                 <span className="font-mono uppercase tracking-wide-3 text-ink-1">{f.faculty}</span>
                 <span className="font-mono text-10 text-ink-3">

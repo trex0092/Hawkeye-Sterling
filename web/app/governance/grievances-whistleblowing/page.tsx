@@ -707,7 +707,7 @@ export default function GrievancesWhistleblowingPage() {
               {/* About */}
               <div style={{ background: V.panel, border: `1px solid ${V.line}`, padding: "14px 16px", borderLeft: `3px solid ${V.ember}` }}>
                 <div style={mono({ fontSize: 9, letterSpacing: ".2em", color: V.ember, textTransform: "uppercase", marginBottom: 8, fontWeight: 700 })}>About this category</div>
-                <div style={{ fontSize: 12.5, color: V.ink2, lineHeight: 1.65 }}>{activeCategory.about}</div>
+                <div style={{ fontSize: 11, color: V.ink2, lineHeight: 1.65 }}>{activeCategory.about}</div>
               </div>
 
               {/* Regulatory basis */}
@@ -738,7 +738,7 @@ export default function GrievancesWhistleblowingPage() {
                 <button
                   type="button"
                   onClick={() => { setActiveCategory(null); formRef.current?.scrollIntoView({ behavior: "smooth" }); }}
-                  style={{ width: "100%", border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "11px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, borderRadius: 1 }}
+                  style={{ width: "100%", border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "11px 18px", fontFamily: "'Inter',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: ".02em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, borderRadius: 1 }}
                 >
                   File a disclosure for this category →
                 </button>
@@ -953,7 +953,7 @@ export default function GrievancesWhistleblowingPage() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={submitting || !concern}
-                      style={{ border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "10px 18px", fontFamily: "'Inter',sans-serif", fontSize: 12.5, fontWeight: 600, letterSpacing: ".02em", cursor: submitting || !concern ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1, opacity: submitting || !concern ? 0.6 : 1 }}
+                      style={{ border: `1px solid oklch(74% 0.18 350)`, background: "oklch(74% 0.18 350)", color: "#1a0613", padding: "5px 12px", fontFamily: "'Inter',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: ".02em", cursor: submitting || !concern ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: 1, opacity: submitting || !concern ? 0.6 : 1 }}
                     >
                       {submitting ? "Submitting…" : "Submit · sealed"}
                     </button>

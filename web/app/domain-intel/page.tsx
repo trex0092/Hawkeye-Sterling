@@ -36,7 +36,7 @@ function Check({ ok, label }: { ok: boolean; label: string }) {
 }
 
 const inputCls = "flex-1 px-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:border-brand text-ink-0";
-const btnCls = "px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
+const btnCls = "px-3 py-1 rounded bg-brand text-white text-11 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity";
 const cardCls = "border border-hair-2 rounded-lg p-4";
 
 export default function DomainIntelPage() {
@@ -201,7 +201,7 @@ export default function DomainIntelPage() {
             {result.domainRank != null && (
               <div className={cardCls}>
                 <span className="text-12 text-ink-3">Tranco Rank: </span>
-                <span className="text-12 font-medium text-ink-0">{result.domainRank.toLocaleString()}</span>
+                <span className="text-12 font-medium text-ink-0">{result.domainRank.toLocaleString("en-GB")}</span>
                 <span className="text-11 text-ink-3 ml-2">(1 = most popular)</span>
               </div>
             )}

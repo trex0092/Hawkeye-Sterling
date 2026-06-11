@@ -123,7 +123,7 @@ function IntelligenceToolsInner() {
             key={t.key}
             type="button"
             onClick={() => { setTab(t.key); router.replace(`/governance/intelligence-tools?tab=${t.key}`, { scroll: false }); }}
-            className={`px-4 py-2 text-12 font-medium border-b-2 -mb-px transition-colors ${
+            className={`px-3 py-1.5 text-11 font-medium border-b-2 -mb-px transition-colors ${
               tab === t.key
                 ? "border-brand text-brand bg-brand-dim"
                 : "border-transparent text-ink-2 hover:text-ink-1 hover:border-hair-2"

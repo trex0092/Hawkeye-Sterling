@@ -16,6 +16,8 @@ interface EnvCheck {
   group: string;
   required: boolean;
   present: boolean;
+  /** "env" = variable set; "default" = built-in code fallback active. */
+  source?: "env" | "default" | "none";
   hint: string;
 }
 
@@ -136,7 +138,11 @@ export default function EnvCheckPage() {
                             </td>
                             <td className="p-2 border border-hair-2 text-center">
                               {check.present ? (
-                                <span className="text-emerald-400 font-semibold">✓ Set</span>
+                                check.source === "default" ? (
+                                  <span className="text-sky-400 font-semibold">✓ Default</span>
+                                ) : (
+                                  <span className="text-emerald-400 font-semibold">✓ Set</span>
+                                )
                               ) : (
                                 <span className={check.required ? "text-red-400 font-semibold" : "text-ink-2"}>
                                   {check.required ? "✗ Missing" : "— Not set"}

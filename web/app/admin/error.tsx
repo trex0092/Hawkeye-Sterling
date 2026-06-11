@@ -29,7 +29,7 @@ export default function AdminError({
         <button
           type="button"
           onClick={reset}
-          className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+          className="px-3 py-1.5 bg-ink-0 text-bg-0 text-12 font-semibold rounded hover:bg-ink-1 transition-colors"
         >
           Try again
         </button>

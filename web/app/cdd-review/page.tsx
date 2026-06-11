@@ -769,7 +769,7 @@ export default function CddReviewPage() {
             <button
               type="button"
               onClick={() => setExpandedAdequacy((v) => !v)}
-              className="text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+              className="text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
             >
               {expandedAdequacy ? "Hide details ▲" : "View details ▼"}
             </button>
@@ -882,7 +882,7 @@ export default function CddReviewPage() {
           <button
             type="button"
             onClick={() => setEddOpen((v) => !v)}
-            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+            className="flex items-center gap-1 text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
           >
             {eddOpen ? "Collapse" : "Expand"} <ChevronIcon open={eddOpen} />
           </button>
@@ -995,7 +995,7 @@ export default function CddReviewPage() {
                 type="button"
                 onClick={() => { void runEddChecklist(); }}
                 disabled={eddLoading || !eddClientName.trim()}
-                className="text-12 font-semibold px-5 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
+                className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
               >
                 {eddLoading ? (
                   <>
@@ -1009,7 +1009,7 @@ export default function CddReviewPage() {
               </button>
               {eddResult && (
                 <button type="button" onClick={clearEddResult}
-                  className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors">
+                  className="text-11 font-medium px-2.5 py-1.5 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors">
                   Clear results
                 </button>
               )}
@@ -1080,7 +1080,7 @@ export default function CddReviewPage() {
                     <button
                       type="button"
                       onClick={() => toggleEddSection(section)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-bg-panel hover:bg-bg-1 transition-colors text-left"
+                      className="w-full flex items-center justify-between px-3 py-1.5 bg-bg-panel hover:bg-bg-1 transition-colors text-left"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-14">{EDD_SECTION_ICONS[section]}</span>
@@ -1142,7 +1142,7 @@ export default function CddReviewPage() {
           <button
             type="button"
             onClick={() => setEddComplOpen((v) => !v)}
-            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+            className="flex items-center gap-1 text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
           >
             {eddComplOpen ? "Collapse" : "Expand"} <ChevronIcon open={eddComplOpen} />
           </button>
@@ -1233,7 +1233,7 @@ export default function CddReviewPage() {
                 type="button"
                 onClick={() => void runEddCompleteness()}
                 disabled={eddComplLoading}
-                className="inline-flex items-center gap-2 text-12 font-semibold px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
+                className="inline-flex items-center gap-2 text-11 font-semibold px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-60 transition-colors"
               >
                 {eddComplLoading ? (
                   <><span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Checking…</>
@@ -1351,7 +1351,7 @@ export default function CddReviewPage() {
           <button
             type="button"
             onClick={() => setPolicyOpen((v) => !v)}
-            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+            className="flex items-center gap-1 text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
           >
             {policyOpen ? "Collapse" : "Expand"} <ChevronIcon open={policyOpen} />
           </button>
@@ -1417,7 +1417,7 @@ export default function CddReviewPage() {
                 className="w-full text-12 px-3 py-2 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand transition-colors resize-y font-mono leading-relaxed"
               />
               <div className="flex justify-end">
-                <span className="text-9 font-mono text-ink-3">{policyText.length.toLocaleString()} chars</span>
+                <span className="text-9 font-mono text-ink-3">{policyText.length.toLocaleString("en-GB")} chars</span>
               </div>
             </div>
 
@@ -1426,7 +1426,7 @@ export default function CddReviewPage() {
                 type="button"
                 onClick={() => { void runPolicyReview(); }}
                 disabled={policyLoading || !policyText.trim()}
-                className="text-12 font-semibold px-5 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
+                className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
               >
                 {policyLoading ? (
                   <>
@@ -1442,7 +1442,7 @@ export default function CddReviewPage() {
                 <button
                   type="button"
                   onClick={() => { setPolicyResult(null); setPolicyError(null); }}
-                  className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors"
+                  className="text-11 font-medium px-2.5 py-1.5 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors"
                 >
                   Clear results
                 </button>
@@ -1600,7 +1600,7 @@ export default function CddReviewPage() {
           <button
             type="button"
             onClick={() => setExitOpen((v) => !v)}
-            className="flex items-center gap-1 text-11 font-medium px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
+            className="flex items-center gap-1 text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors"
           >
             {exitOpen ? "Collapse" : "Expand"} <ChevronIcon open={exitOpen} />
           </button>
@@ -1693,7 +1693,7 @@ export default function CddReviewPage() {
                 type="button"
                 onClick={() => { void runExitLetter(); }}
                 disabled={exitLoading || !exitCustomerName.trim()}
-                className="text-12 font-semibold px-5 py-2 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
+                className="text-11 font-semibold px-3 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors flex items-center gap-2"
               >
                 {exitLoading ? (
                   <>
@@ -1707,7 +1707,7 @@ export default function CddReviewPage() {
               </button>
               {exitResult && (
                 <button type="button" onClick={() => { setExitResult(null); setExitError(null); setExitChecklist({}); }}
-                  className="text-11 font-medium px-3 py-2 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors">
+                  className="text-11 font-medium px-2.5 py-1.5 rounded border border-hair-2 text-ink-3 hover:text-red hover:border-red/40 transition-colors">
                   Clear
                 </button>
               )}
@@ -1759,7 +1759,7 @@ export default function CddReviewPage() {
 
             <div className="rounded-lg border border-amber/30 bg-amber-dim overflow-hidden">
               <button type="button" onClick={() => setExitCoverOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-amber/5 transition-colors">
+                className="w-full flex items-center justify-between px-3 py-1.5 text-left hover:bg-amber/5 transition-colors">
                 <span className="text-11 font-semibold text-amber uppercase tracking-wide-3">
                   🔒 Internal Cover Note — Not for Customer Disclosure
                 </span>
@@ -1834,7 +1834,7 @@ export default function CddReviewPage() {
           type="button"
           onClick={add}
           disabled={!draft.subject || !!draftDateErr}
-          className="mt-3 text-11 font-semibold px-4 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
+          className="mt-3 text-11 font-semibold px-3 py-1 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
         >
           + Add to Register
         </button>
@@ -1873,14 +1873,6 @@ export default function CddReviewPage() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => exportCsv(sorted)}
-            disabled={sorted.length === 0}
-            className="text-10 font-mono font-semibold px-3 py-1 rounded border border-hair-2 text-ink-2 hover:border-brand hover:text-brand transition-colors disabled:opacity-40"
-          >
-            ↓ Export CSV
-          </button>
         </div>
 
         <div className="bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
@@ -1936,9 +1928,9 @@ export default function CddReviewPage() {
                       </div>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => saveRecordEdit(r.id)} disabled={!!editDateErr}
-                          className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0 disabled:opacity-40">✓ Save</button>
+                          className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0 disabled:opacity-40">✓ Save</button>
                         <button type="button" onClick={() => setEditingId(null)}
-                          className="text-11 font-medium px-3 py-1 rounded border border-hair-2 text-red hover:border-red/40">✕ Cancel</button>
+                          className="text-11 font-medium px-2.5 py-1 rounded border border-hair-2 text-red hover:border-red/40">✕ Cancel</button>
                       </div>
                     </td>
                   </tr>
@@ -1986,7 +1978,7 @@ export default function CddReviewPage() {
                         {r.lastOutcome && (
                           <span
                             className={`inline-flex items-center px-1.5 py-px rounded-sm font-mono text-10 font-semibold uppercase ${OUTCOME_TONE[r.lastOutcome]}`}
-                            title={r.lastOutcomeAt ? `Stamped ${new Date(r.lastOutcomeAt).toLocaleString()}` : ""}
+                            title={r.lastOutcomeAt ? `Stamped ${new Date(r.lastOutcomeAt).toLocaleString("en-GB")}` : ""}
                           >
                             {r.lastOutcome}
                           </span>

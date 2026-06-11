@@ -31,7 +31,7 @@ function stepsFromResult(r: SuperBrainResult): Step[] {
     weight: breakdown.quickScreen ?? 0,
     note:
       sanctionsHits === 0
-        ? `Clean across ${r.screen.listsChecked} lists · ${r.screen.candidatesChecked.toLocaleString()} candidates in ${r.screen.durationMs}ms`
+        ? `Clean across ${r.screen.listsChecked} lists · ${r.screen.candidatesChecked.toLocaleString("en-GB")} candidates in ${r.screen.durationMs}ms`
         : `${sanctionsHits} hit${sanctionsHits === 1 ? "" : "s"} — top ${topHit}% confidence`,
     severity: sanctionsHits > 0 && topHit >= 92 ? "critical" : sanctionsHits > 0 ? "high" : "clear",
   });

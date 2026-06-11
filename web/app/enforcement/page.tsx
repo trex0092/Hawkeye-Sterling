@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { RowActions } from "@/components/shared/RowActions";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 
 interface Deadline {
   id: string;
@@ -695,6 +696,27 @@ export default function EnforcementPage() {
     setEditDraft({ title: d.title, due: d.due, authority: d.authority, cadence: d.cadence, notes: d.notes ?? "" });
   };
 
+  // Rail "+ ADD": create a custom deadline and drop it straight into edit
+  // mode so the operator fills in the details.
+  const addDeadline = () => {
+    const due = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+    const fresh: Deadline = {
+      id: `custom-${Date.now()}`,
+      title: "New deadline",
+      due,
+      authority: "Internal",
+      cadence: "ad-hoc",
+      notes: "",
+    };
+    setOverlay((prev) => {
+      const next: Overlay = { ...prev, custom: [...prev.custom, fresh] };
+      saveOverlay(next);
+      return next;
+    });
+    startEdit(fresh);
+  };
+  useHawkeyeAdd(addDeadline);
+
   const saveEdit = (id: string) => {
     setOverlay((prev) => {
       const isCustom = prev.custom.some((d) => d.id === id);
@@ -847,9 +869,9 @@ export default function EnforcementPage() {
                     />
                     <div className="flex gap-2">
                       <button type="button" onClick={() => saveEdit(d.id)}
-                        className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                        className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
                       <button type="button" onClick={() => setEditingId(null)}
-                        className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                        className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                     </div>
                   </div>
                 ) : (

@@ -603,27 +603,16 @@ function FeedItem({ item }: { item: LiveItem }) {
   );
 }
 
-const URGENCY_FILTER_LABELS: Array<FeedUrgency | "all"> = ["all", "critical", "high", "medium", "low"];
-
 function FeedPanel({
   items,
   status,
-  fetchedAt,
-  onRefresh,
   classifyStatus,
 }: {
   items: LiveItem[];
   status: "idle" | "loading" | "ok" | "error";
-  fetchedAt: string | null;
-  onRefresh: () => void;
   classifyStatus?: "idle" | "loading" | "ok" | "error";
 }) {
-  const [urgencyFilter, setUrgencyFilter] = useState<FeedUrgency | "all">("all");
-
   const criticalCount = items.filter((i) => i.urgency === "critical").length;
-
-  const filteredItems =
-    urgencyFilter === "all" ? items : items.filter((i) => i.urgency === urgencyFilter);
 
   return (
     <div className="flex flex-col min-h-0">
@@ -638,25 +627,12 @@ function FeedPanel({
           {classifyStatus === "loading" && (
             <span className="font-mono text-10 text-ink-3 animate-pulse">classifying…</span>
           )}
-          {status === "ok" && fetchedAt && (
-            <span className="font-mono text-10 text-ink-3">
-              refreshed {new Date(fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
           {status === "error" && (
             <span className="font-mono text-10 text-red">feed unavailable</span>
           )}
           {classifyStatus === "error" && (
             <span className="font-mono text-10 text-red">urgency classification failed</span>
           )}
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={status === "loading"}
-            className="font-mono text-12 px-2 py-0.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green-dim/70 disabled:opacity-40"
-          >
-            ↻
-          </button>
         </div>
       </div>
 
@@ -670,36 +646,6 @@ function FeedPanel({
         </div>
       )}
 
-      {/* Urgency filter bar */}
-      {(status === "ok" || status === "error") && items.some((i) => i.urgency) && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {URGENCY_FILTER_LABELS.map((u) => {
-            const count = u === "all" ? items.length : items.filter((i) => i.urgency === u).length;
-            const active = urgencyFilter === u;
-            const cls =
-              u === "critical"
-                ? active ? "bg-red text-white border-red" : "bg-red/10 text-red border-red/30 hover:bg-red/20"
-                : u === "high"
-                ? active ? "bg-amber text-white border-amber" : "bg-amber/10 text-amber border-amber/30 hover:bg-amber/20"
-                : u === "medium"
-                ? active ? "bg-blue text-white border-blue" : "bg-blue-dim text-blue border-blue/30 hover:bg-blue/10"
-                : u === "low"
-                ? active ? "bg-bg-2 text-ink-0 border-hair-2" : "bg-bg-1 text-ink-3 border-hair-2 hover:bg-bg-2"
-                : active ? "bg-brand text-white border-brand" : "bg-bg-1 text-ink-2 border-hair-2 hover:bg-bg-2";
-            return (
-              <button
-                key={u}
-                type="button"
-                onClick={() => setUrgencyFilter(u)}
-                className={`font-mono text-10 px-2 py-0.5 rounded border capitalize transition-colors ${cls}`}
-              >
-                {u === "all" ? `All (${count})` : `${u} (${count})`}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {status === "loading" && (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
@@ -710,11 +656,11 @@ function FeedPanel({
 
       {(status === "ok" || status === "error") && (
         <div className="space-y-1.5 overflow-y-auto max-h-[600px] pr-1">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item) => <FeedItem key={item.id} item={item} />)
+          {items.length > 0 ? (
+            items.map((item) => <FeedItem key={item.id} item={item} />)
           ) : (
             <div className="text-12 text-ink-2 py-6 text-center border border-hair-2 rounded-lg">
-              {urgencyFilter === "all" ? "No items available." : `No ${urgencyFilter} items.`}
+              No items available.
             </div>
           )}
         </div>
@@ -867,7 +813,6 @@ export default function RegulatoryPage() {
   // Feed state
   const [feedItems, setFeedItems] = useState<LiveItem[]>([]);
   const [feedStatus, setFeedStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
   // Urgency classification state
   const [classifyStatus, setClassifyStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -888,7 +833,6 @@ export default function RegulatoryPage() {
       .then((r) => r.json())
       .then((data) => {
         setLiveItems(data.items ?? []);
-        setFetchedAt(data.fetchedAt ?? null);
         setLiveStatus("ok");
       })
       .catch(() => setLiveStatus("error"));
@@ -941,7 +885,6 @@ export default function RegulatoryPage() {
       .then((data: FeedResult) => {
         const items = data.items ?? [];
         setFeedItems(items);
-        setFetchedAt(data.fetchedAt ?? null);
         setFeedStatus("ok");
         classifyItems(items);
       })
@@ -1030,8 +973,6 @@ export default function RegulatoryPage() {
           <FeedPanel
             items={feedItems}
             status={feedStatus}
-            fetchedAt={fetchedAt}
-            onRefresh={loadFeed}
             classifyStatus={classifyStatus}
           />
         </div>

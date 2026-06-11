@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 import type { OecdDdgRecord } from "@/lib/server/oecd-ddg";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 // OECD 5-Step Due Diligence Guidance — Responsible Supply Chains
 // Required for UAE gold refiners handling conflict-mineral supply chains
@@ -118,7 +120,8 @@ export default function OecdDdgPage() {
 
   useEffect(() => { void loadRecords(); }, [loadRecords]);
 
-  const _createRecord = async () => {
+  // Rail "+ ADD" creates an assessment for the selected year.
+  const createRecord = async () => {
     const year = parseInt(newYear, 10);
     if (!year || year < 2000 || year > 2100) return;
     try {
@@ -139,6 +142,7 @@ export default function OecdDdgPage() {
       console.error("[hawkeye] oecd-ddg create failed:", err);
     }
   };
+  useHawkeyeAdd(() => { void createRecord(); });
 
   const patchRecord = useCallback(async (id: string, patch: object) => {
     setSaving(true);
@@ -227,7 +231,7 @@ export default function OecdDdgPage() {
                       <button
                         type="button"
                         onClick={() => { setSelected(r); setActiveStep(1); }}
-                        className={`w-full text-left px-4 py-3 hover:bg-bg-1 transition-colors ${isActive ? "bg-brand-dim" : ""}`}
+                        className={`w-full text-left px-3 py-1.5 hover:bg-bg-1 transition-colors ${isActive ? "bg-brand-dim" : ""}`}
                       >
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="text-13 font-semibold text-ink-0">{r.reportingYear}</span>
@@ -318,7 +322,7 @@ export default function OecdDdgPage() {
                     <button
                       type="button"
                       onClick={() => setActiveStep(isActive ? 0 : step.n)}
-                      className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-2 transition-colors ${isActive ? "bg-brand-dim border-b border-brand/20" : ""}`}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors ${isActive ? "bg-brand-dim border-b border-brand/20" : ""}`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-12 font-bold shrink-0 ${stepCompl?.pct === 100 ? "bg-green text-white" : "bg-bg-2 border border-hair-2 text-ink-2"}`}>
                         {stepCompl?.pct === 100 ? "✓" : step.n}
@@ -378,7 +382,7 @@ export default function OecdDdgPage() {
                             </div>
                             <div>
                               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Audit date</label>
-                              <input type="date" value={String(s["auditDate"] ?? "")} onChange={(e) => updateStep(stepKey, { auditDate: e.target.value })} className={inputCls} />
+                              <IsoDateInput value={String(s["auditDate"] ?? "")} onChange={(iso) => updateStep(stepKey, { auditDate: iso })} className={inputCls} />
                             </div>
                             <div className="md:col-span-2">
                               <label className="block text-10 uppercase tracking-wide-3 text-ink-2 font-semibold mb-1">Audit findings</label>

@@ -12,12 +12,13 @@ interface ModuleHeaderProps {
    *  used on screening hero ("Experience the *standard.*"). */
   titleEm?: string;
   subtitle?: string;
-  dotColor?: "brand" | "amber" | "green" | "red";
+  /** "none" suppresses the status dot entirely. */
+  dotColor?: "brand" | "amber" | "green" | "red" | "none";
   badge?: { label: string; tone?: "default" | "critical" };
   actions?: ReactNode;
 }
 
-const DOT_COLOR: Record<NonNullable<ModuleHeaderProps["dotColor"]>, string> = {
+const DOT_COLOR: Record<Exclude<NonNullable<ModuleHeaderProps["dotColor"]>, "none">, string> = {
   brand: "bg-brand shadow-[0_0_10px_var(--brand)]",
   amber: "bg-amber shadow-[0_0_10px_var(--amber)]",
   green: "bg-green shadow-[0_0_10px_var(--green)]",
@@ -36,7 +37,7 @@ export function ModuleHeader({
     <header className="flex items-start justify-between gap-6 pb-5 border-b border-hair-2 border-t-2 border-t-brand-line pt-4 mb-7 flex-wrap">
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <span className={`w-2 h-2 rounded-full ${DOT_COLOR[dotColor]}`} />
+          {dotColor !== "none" && <span className={`w-2 h-2 rounded-full ${DOT_COLOR[dotColor]}`} />}
           <h1 className="font-display font-normal text-28 md:text-48 leading-[1.1] tracking-tightest m-0 text-ink-0">
             {title}
             {titleEm && (
@@ -234,7 +235,7 @@ export function Btn({
   title?: string;
 }) {
   const base =
-    "font-mono text-10.5 uppercase tracking-wide-3 font-medium px-4 py-2 rounded transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+    "font-mono text-10.5 uppercase tracking-wide-3 font-medium px-3 py-1.5 rounded transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
   const variants: Record<string, string> = {
     primary:
       "bg-brand text-white border-brand hover:bg-brand-hover hover:border-brand-hover",

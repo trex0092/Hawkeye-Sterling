@@ -132,7 +132,7 @@ export default function AbTestPage() {
                 type="button"
                 onClick={() => { void submit(); }}
                 disabled={running}
-                className="mt-4 w-full px-4 py-2 text-13 font-semibold rounded bg-brand text-white disabled:opacity-40 hover:bg-brand-hover"
+                className="mt-4 w-full px-3 py-1.5 text-12 font-semibold rounded bg-brand text-white disabled:opacity-40 hover:bg-brand-hover"
               >
                 {running ? "Running…" : "Run A/B"}
               </button>

@@ -216,7 +216,7 @@ export default function ResponsibleSourcingPage() {
             <button
               type="button"
               onClick={() => void loadWorkflow()}
-              className="px-5 py-2 border border-hair-2 text-ink-1 text-13 font-semibold rounded hover:bg-bg-1 transition-colors"
+              className="px-3 py-1.5 border border-hair-2 text-ink-1 text-12 font-semibold rounded hover:bg-bg-1 transition-colors"
             >
               Try again
             </button>
@@ -237,7 +237,7 @@ export default function ResponsibleSourcingPage() {
           <button
             type="button"
             onClick={() => void loadWorkflow()}
-            className="px-5 py-2 bg-ink-0 text-bg-0 text-13 font-semibold rounded hover:bg-ink-1 transition-colors"
+            className="px-3 py-1.5 bg-ink-0 text-bg-0 text-12 font-semibold rounded hover:bg-ink-1 transition-colors"
           >
             Try again
           </button>
@@ -283,7 +283,7 @@ export default function ResponsibleSourcingPage() {
             <input value={workflow.reportingYear} onChange={(e) => update("reportingYear", e.target.value)} className={inputCls} placeholder={new Date().getFullYear().toString()} /></div>
           <div className="flex items-end gap-2">
             {saving && <span className="text-10 text-ink-3 font-mono">Saving…</span>}
-            {lastSaved && !saving && <span className="text-10 text-ink-3 font-mono">Saved {lastSaved.toLocaleTimeString()}</span>}
+            {lastSaved && !saving && <span className="text-10 text-ink-3 font-mono">Saved {lastSaved.toLocaleTimeString("en-GB")}</span>}
           </div>
         </div>
       </div>
@@ -308,7 +308,7 @@ export default function ResponsibleSourcingPage() {
           return (
             <div key={step.n} className="bg-bg-panel border border-hair-2 rounded-xl overflow-hidden">
               <button type="button" onClick={() => setActiveStep(isActive ? 0 : step.n)}
-                className={`w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-bg-2 transition-colors ${isActive ? "bg-brand-dim border-b border-brand/20" : ""}`}>
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-bg-2 transition-colors ${isActive ? "bg-brand-dim border-b border-brand/20" : ""}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-12 font-bold shrink-0 ${s?.completed ? "bg-green text-white" : "bg-bg-2 border border-hair-2 text-ink-2"}`}>
                   {s?.completed ? "✓" : step.n}
                 </div>
@@ -469,31 +469,6 @@ export default function ResponsibleSourcingPage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Export documentation package */}
-      <div className={`mt-6 rounded-xl border p-5 ${isComplete ? "bg-green-dim border-green/30" : "bg-bg-panel border-hair-2"}`}>
-        <div className="text-12 font-semibold text-ink-0 mb-2">
-          {isComplete ? "✓ OECD DDG documentation package — complete" : "Documentation package — complete all 5 steps first"}
-        </div>
-        <p className="text-11 text-ink-2 mb-4">
-          Export the full 5-step OECD DDG documentation package for MoE submission under Ministerial Decree 68/2024.
-          For smelter-level AI risk assessment and RMAP status tracking, use the{" "}
-          <a href="/rmi" className="text-brand underline">RMAP / RMI module</a>.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={!isComplete}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40"
-            onClick={() => { try { const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `responsible-sourcing-${workflow.reportingYear}.json`; a.click(); URL.revokeObjectURL(url); } catch (err) { console.error("[hawkeye] responsible-sourcing JSON export failed:", err); } }}>
-            Export documentation package
-          </button>
-          <a href="/rmi" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
-            Open RMAP / RMI Module ↗
-          </a>
-          <a href="/supply-chain" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
-            Supply Chain Risk Assessment ↗
-          </a>
-        </div>
       </div>
 
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">

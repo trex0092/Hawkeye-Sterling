@@ -287,7 +287,7 @@ export function SecurityAuditSection() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-5 py-3 font-mono text-[11px] uppercase tracking-widest transition-colors border-b-2 -mb-px ${
+            className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-colors border-b-2 -mb-px ${
               tab === t.id
                 ? "text-brand border-brand"
                 : "text-ink-3 border-transparent hover:text-ink-1"
@@ -321,14 +321,14 @@ export function SecurityAuditSection() {
             <button
               onClick={analyseCode}
               disabled={loading || !code.trim()}
-              className="px-6 py-2.5 font-mono text-[11px] uppercase tracking-widest font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-brand text-white hover:bg-brand-hover disabled:bg-bg-2 disabled:text-ink-3"
+              className="px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-widest font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-brand text-white hover:bg-brand-hover disabled:bg-bg-2 disabled:text-ink-3"
             >
               {loading ? "Analysing…" : "Run security analysis"}
             </button>
             {code && (
               <button
                 onClick={() => { setCode(""); setResult(null); setError(null); }}
-                className="px-4 py-2.5 font-mono text-[11px] uppercase tracking-widest text-ink-3 border border-hair-2 hover:text-ink-1 transition-colors"
+                className="px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-ink-3 border border-hair-2 hover:text-ink-1 transition-colors"
               >
                 Clear
               </button>
@@ -404,7 +404,7 @@ export function SecurityAuditSection() {
               <button
                 key={t.name}
                 onClick={() => setActiveTool(i)}
-                className={`px-4 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-all border ${
+                className={`px-3 py-1 font-mono text-[11px] uppercase tracking-widest transition-all border ${
                   activeTool === i
                     ? t.colorClass
                     : "text-ink-3 border-hair-2 hover:text-ink-1"

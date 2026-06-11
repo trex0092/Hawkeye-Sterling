@@ -202,14 +202,14 @@ export default function LbmaPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Creating..." : "Create Questionnaire"}
               </button>
@@ -252,7 +252,7 @@ export default function LbmaPage() {
                         {r.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-ink-2">{new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td className="px-3 py-2 text-ink-2">{new Date(r.createdAt).toLocaleDateString("en-GB")}</td>
                   </tr>
                 ))}
               </tbody>

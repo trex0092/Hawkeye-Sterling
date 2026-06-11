@@ -227,10 +227,6 @@ export default function SanctionsEvasionPage() {
       <div className="space-y-8">
         {/* Input Form */}
         <div>
-          <h2 className="font-display text-20 font-normal text-ink-0 mb-4">
-            Entity <em className="italic text-brand">assessment</em>
-          </h2>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Entity Name */}
             <div className="flex flex-col">
@@ -327,7 +323,7 @@ export default function SanctionsEvasionPage() {
             type="button"
             onClick={() => void handleDetect()}
             disabled={loading || !entity.trim()}
-            className="mt-4 w-full py-3 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="mt-4 w-full py-1.5 rounded-lg bg-brand text-white text-14 font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

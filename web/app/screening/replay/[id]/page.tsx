@@ -169,7 +169,7 @@ export default function ReplayPage() {
                   type="button"
                   onClick={() => { void rerun(); }}
                   disabled={loadingToday}
-                  className="px-3 py-1 text-11 font-semibold rounded bg-brand text-white disabled:opacity-40 hover:bg-brand-hover"
+                  className="px-2.5 py-1 text-11 font-semibold rounded bg-brand text-white disabled:opacity-40 hover:bg-brand-hover"
                 >
                   {loadingToday ? "Re-running…" : "Re-run now"}
                 </button>

@@ -136,11 +136,13 @@ export default function EvalKpiPage() {
         titleEm="evaluation."
         intro={
           <>
-            <strong>Six KPIs sampled nightly</strong> from a curated regression set —
-            citation accuracy, hallucination rate, completion rate, escalation precision,
-            time-to-decision, counter-argument quality. Each KPI has an acceptance band;
-            a breach surfaces as an amber chip. Snapshot read-only — produced by{" "}
-            <code className="font-mono text-11">scripts/registry-nightly-eval.mjs</code>.
+            <strong>Six KPIs sampled by the weekly eval run</strong> (Mondays 03:00 UTC,
+            or on demand) from a curated regression set — citation accuracy, hallucination
+            rate, completion rate, escalation precision, time-to-decision, counter-argument
+            quality. Each KPI has an acceptance band; a breach surfaces as an amber chip.
+            Snapshot read-only — produced by{" "}
+            <code className="font-mono text-11">scripts/registry-nightly-eval.mjs</code> and
+            uploaded to this deployment by CI.
           </>
         }
       />
@@ -159,10 +161,11 @@ export default function EvalKpiPage() {
           </div>
           <div className="text-12 text-ink-2 leading-relaxed">
             {data?.message ??
-              "The nightly regression runner has not produced a snapshot yet. Once scheduled, the runner replays every scenario in the eval corpus through /api/mlro-advisor in each mode, grades the output, and writes the snapshot file the dashboard reads."}
+              "The weekly eval workflow has not uploaded a snapshot yet. It replays every scenario in the eval corpus through /api/mlro-advisor in each mode, grades the output, and POSTs the snapshot here for this dashboard."}
           </div>
           <div className="mt-3 text-11 text-ink-3 font-mono">
-            Run on demand: <code>npm run brain:nightly-eval -- --base-url …</code>
+            Run on demand: trigger the <code>Nightly Eval</code> GitHub workflow, or locally{" "}
+            <code>npm run brain:nightly-eval -- --base-url …</code>
           </div>
         </div>
       ) : (

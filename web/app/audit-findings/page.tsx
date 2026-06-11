@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, type FormEvent } from "react"
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
+import { IsoDateInput } from "@/components/ui/IsoDateInput";
 
 interface AuditFinding {
   id: string;
@@ -221,7 +222,7 @@ export default function AuditFindingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-1 mb-1">Audit Date</label>
-                <input type="date" value={form.auditDate} onChange={(e) => setForm({ ...form, auditDate: e.target.value })}
+                <IsoDateInput value={form.auditDate} onChange={(iso) => setForm({ ...form, auditDate: iso })}
                   className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
               </div>
               <div>
@@ -247,7 +248,7 @@ export default function AuditFindingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink-1 mb-1">Due Date</label>
-                <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                <IsoDateInput value={form.dueDate} onChange={(iso) => setForm({ ...form, dueDate: iso })}
                   className="w-full bg-bg-panel border border-hair-2 rounded-md px-3 py-2 text-sm text-ink-0" required />
               </div>
               <div className="col-span-2">
@@ -265,9 +266,9 @@ export default function AuditFindingsPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-                className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+                className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
               <button type="submit" disabled={submitting}
-                className="px-4 py-2 text-sm bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
+                className="px-3 py-1.5 text-12 bg-brand text-white rounded-md hover:opacity-90 disabled:opacity-50">
                 {submitting ? "Creating..." : "Create Finding"}
               </button>
             </div>
@@ -278,7 +279,7 @@ export default function AuditFindingsPage() {
         <div className="flex border-b border-hair-2">
           {TABS.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-1.5 text-12 font-medium border-b-2 transition-colors ${
                 activeTab === tab.key ? "border-brand text-brand" : "border-transparent text-ink-2 hover:text-ink-1"
               }`}>
               {tab.label}
@@ -383,7 +384,7 @@ export default function AuditFindingsPage() {
                                   <button
                                     onClick={(e) => { e.stopPropagation(); void handleMlroSignOff(finding); }}
                                     disabled={signingOff === finding.id}
-                                    className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                                    className="px-2.5 py-1 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
                                   >
                                     {signingOff === finding.id ? "Signing off..." : "MLRO Sign-Off"}
                                   </button>

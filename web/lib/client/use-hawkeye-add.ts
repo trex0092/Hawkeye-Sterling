@@ -15,15 +15,25 @@ import { useEffect, useRef } from "react";
 // reachable (e.g. inside the active tab), so the bar always targets the
 // visible panel.
 export function useHawkeyeAdd(handler: () => void): void {
+  useHawkeyeEvent("hawkeye:add", handler);
+}
+
+// Generic version of the same claim contract for the other rail buttons.
+// "hawkeye:csv" claims CSV (skips the table-extraction fallback),
+// "hawkeye:run" claims RUN (skips the page reload), "hawkeye:ai" claims AI
+// (skips opening /mlro-advisor in a new tab).
+export type HawkeyeRailEvent = "hawkeye:add" | "hawkeye:csv" | "hawkeye:run" | "hawkeye:ai";
+
+export function useHawkeyeEvent(event: HawkeyeRailEvent, handler: () => void): void {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 
   useEffect(() => {
-    const onAdd = (e: Event) => {
+    const onEvent = (e: Event) => {
       e.preventDefault();
       handlerRef.current();
     };
-    window.addEventListener("hawkeye:add", onAdd);
-    return () => window.removeEventListener("hawkeye:add", onAdd);
-  }, []);
+    window.addEventListener(event, onEvent);
+    return () => window.removeEventListener(event, onEvent);
+  }, [event]);
 }

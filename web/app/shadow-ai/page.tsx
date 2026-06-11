@@ -169,11 +169,6 @@ export default function ShadowAIPage() {
 
         {/* Stat tiles removed; Report Shadow AI button lives in sidebar Actions */}
 
-        {/* Policy notice */}
-        <div className="bg-sky-950/20 border border-sky-500/30 rounded-lg p-4 text-sm text-sky-300">
-          <strong>Policy:</strong> Any AI tool used in compliance workflows must be registered in the Model Registry and have a signed DPA. Unauthorized usage of AI tools with <em>confidential</em> or <em>restricted</em> data constitutes a critical risk requiring immediate containment. Per CBUAE AI Governance Guidelines 2025.
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}
@@ -279,8 +274,8 @@ export default function ShadowAIPage() {
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 text-12 border border-hair-2 text-ink-1 rounded-md hover:bg-bg-base">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-3 py-1.5 text-12 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50">
                 {submitting ? "Logging..." : "Log Detection"}
               </button>
             </div>
@@ -328,7 +323,7 @@ export default function ShadowAIPage() {
                     {entry.useCase && <p className="text-xs text-ink-2 mt-0.5 italic">{entry.useCase}</p>}
                   </div>
                   <div className="text-xs text-ink-2 shrink-0 text-right">
-                    {new Date(entry.detectedAt).toLocaleDateString()}
+                    {new Date(entry.detectedAt).toLocaleDateString("en-GB")}
                   </div>
                 </div>
 

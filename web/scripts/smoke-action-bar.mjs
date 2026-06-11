@@ -8,21 +8,21 @@ const BASE = process.env.BASE ?? "http://localhost:3100";
 
 const NAV = [
   "/governance/grievances-whistleblowing","/pkyc","/operations/onboard","/client-portal",
-  "/ubo-declaration","/pep-profile","/esg-risk","/vendor-dd","/cdd-review","/data-quality",
+  "/ubo-declaration","/pep-profile","/esg-risk","/vendor-dd","/cdd-review",
   "/ownership","/employees","/training","/approvals",
   "/screening","/transaction-monitor","/ongoing-monitor","/cases","/ewra","/sar-qa",
   "/goaml-export","/supply-chain","/rmi","/responsible-sourcing","/oecd-ddg","/rmap",
   "/lbma","/reg-change","/shipments","/eocn","/tfs-alerts","/cnmr","/pnmr","/dpmsr",
   "/moe-survey","/enforcement","/oversight","/fp-optimizer","/tm-rules","/audit-findings",
   "/bra","/dormant-accounts","/outsourcing-register","/coi-register","/voluntary-disclosure",
-  "/operator","/eval-kpi",
+  "/eval-kpi",
   "/mlro-advisor","/responsible-ai","/governance/inspection-room","/regulatory","/policies",
   "/typology-library","/playbook","/corrections","/ai-incident-playbook","/ai-governance",
   "/shadow-ai","/vendor-ai-audit",
   "/osint","/gleif","/entity-graph","/domain-intel","/crypto-risk","/vessel-check",
   "/benford","/investigation","/country-risk?tab=single","/geopolitical","/country-risk-map",
   "/sanctions-evasion","/governance/intelligence-tools","/audit-trail",
-  "/intel","/intelligence-hub?tab=brain","/system-card","/security-scan","/analyst-behavior",
+  "/intel","/intelligence-hub?tab=workbench","/system-card","/security-scan","/analyst-behavior",
   "/board-dashboard","/kri-dashboard","/access-control",
 ];
 

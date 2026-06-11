@@ -96,7 +96,7 @@ export function BrainLatencyBreakdown({ result }: { result: SuperBrainResult }) 
         </span>
         <span className="text-10 text-ink-3">
           {result.screen.listsChecked} lists ·{" "}
-          {result.screen.candidatesChecked.toLocaleString()} candidates
+          {result.screen.candidatesChecked.toLocaleString("en-GB")} candidates
         </span>
       </div>
       <div className="h-1.5 bg-bg-2 rounded-sm">
@@ -2075,7 +2075,7 @@ export function BrainDataCoverage() {
             >
               <button
                 onClick={() => toggle(cat.id)}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 bg-transparent border-none cursor-pointer text-left hover:bg-bg-2"
+                className="w-full flex items-center justify-between px-2.5 py-1 bg-transparent border-none cursor-pointer text-left hover:bg-bg-2"
               >
                 <span className={`text-11 font-medium ${headerColor}`}>
                   {cat.label}

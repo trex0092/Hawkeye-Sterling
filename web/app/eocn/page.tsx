@@ -155,7 +155,7 @@ function EocnPdfUploadPanel() {
                 key={id}
                 type="button"
                 onClick={() => setListId(id)}
-                className={`px-3 py-1.5 rounded-md text-12 font-medium border transition-colors ${listId === id ? "bg-brand text-white border-brand" : "border-hair-2 text-ink-1 hover:bg-bg-1"}`}
+                className={`px-2.5 py-1 rounded-md text-11 font-medium border transition-colors ${listId === id ? "bg-brand text-white border-brand" : "border-hair-2 text-ink-1 hover:bg-bg-1"}`}
               >
                 {label}
               </button>
@@ -181,7 +181,7 @@ function EocnPdfUploadPanel() {
           type="button"
           disabled={!file || uploading}
           onClick={() => { void handleUpload(); }}
-          className="self-start px-4 py-2 rounded-lg bg-brand text-white text-13 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="self-start px-3 py-1.5 rounded-lg bg-brand text-white text-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
           {uploading ? "Extracting & importing…" : "Upload & import"}
         </button>
@@ -208,7 +208,7 @@ function EocnPdfUploadPanel() {
                 )}
               </div>
               <div className="text-11 text-ink-3">
-                {result.fileName} · {result.uploadedAt ? new Date(result.uploadedAt).toLocaleString() : ""}
+                {result.fileName} · {result.uploadedAt ? new Date(result.uploadedAt).toLocaleString("en-GB") : ""}
               </div>
               <div className="text-12 text-amber mt-1">
                 Re-screen your portfolio within <strong>24 hours</strong> to comply with EOCN SLA.
@@ -479,7 +479,7 @@ export default function EocnPage() {
               Register at <strong>uaeiec.gov.ae</strong> and confirm below. Required for all DNFBPs.
             </div>
           </div>
-          <button type="button" onClick={() => setTab("registration")} className="shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-red/40 text-red hover:bg-red/10">
+          <button type="button" onClick={() => setTab("registration")} className="shrink-0 text-11 font-semibold px-2.5 py-1 rounded border border-red/40 text-red hover:bg-red/10">
             Fix →
           </button>
         </div>
@@ -498,7 +498,7 @@ export default function EocnPage() {
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`relative px-4 py-2 text-12 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
+            className={`relative px-3 py-1.5 text-11 font-medium rounded-t border-b-2 transition-colors whitespace-nowrap ${
               tab === t.key
                 ? "border-brand text-brand bg-brand-dim"
                 : "border-transparent text-ink-2 hover:text-ink-0 hover:bg-bg-1"
@@ -567,7 +567,7 @@ export default function EocnPage() {
                   const by = (document.getElementById("nas-by") as HTMLInputElement)?.value ?? "";
                   void saveRegistration({ nas: { confirmed: true, reference: ref, email, confirmedBy: by } });
                 }}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
+                className="text-11 font-semibold px-2.5 py-1 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
                 {regSaving ? "Saving…" : "✓ Confirm NAS registration"}
               </button>
               {registration?.nas.confirmedAt && (
@@ -604,7 +604,7 @@ export default function EocnPage() {
                   const by = (document.getElementById("ars-by") as HTMLInputElement)?.value ?? "";
                   void saveRegistration({ ars: { confirmed: true, reference: ref, confirmedBy: by } });
                 }}
-                className="text-11 font-semibold px-3 py-1.5 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
+                className="text-11 font-semibold px-2.5 py-1 rounded border border-green/40 text-green bg-green-dim hover:bg-green/20 disabled:opacity-50">
                 {regSaving ? "Saving…" : "✓ Confirm ARS registration"}
               </button>
               {registration?.ars.confirmedAt && (
@@ -633,9 +633,11 @@ export default function EocnPage() {
                 <div className="text-13 font-semibold text-ink-0">UAE Control List — Cabinet Resolution 156/2025</div>
                 <div className="text-11 text-ink-3">Dual-use and proliferation-sensitive goods · Gold dealers must screen trade transactions for controlled goods</div>
               </div>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${controlListCount ? "bg-green-dim text-green border border-green/30" : "bg-amber-dim text-amber border border-amber/30"}`}>
-                {controlListCount ? `${controlListCount.toLocaleString()} entries` : "Pending sync"}
-              </span>
+              {controlListCount ? (
+                <span className="inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase bg-green-dim text-green border border-green/30">
+                  {controlListCount.toLocaleString("en-GB")} entries
+                </span>
+              ) : null}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div className="bg-bg-1 rounded-lg p-3">
@@ -808,7 +810,7 @@ export default function EocnPage() {
                                   e.stopPropagation();
                                   setExpandedUpdateId(null);
                                 }}
-                                className="inline-flex items-center px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-2 text-11 text-ink-2 transition-colors"
+                                className="inline-flex items-center px-2.5 py-1 rounded border border-hair-2 bg-bg-1 hover:bg-bg-2 text-11 text-ink-2 transition-colors"
                               >
                                 Close
                               </button>
@@ -879,8 +881,8 @@ export default function EocnPage() {
                         onChange={(e) => setEditMatchDraft((d) => ({ ...d, mlroSignedOff: e.target.checked }))} />
                       MLRO signed off
                     </label>
-                    <button type="button" onClick={() => saveMatchEdit(m)} className="text-11 font-semibold px-3 py-1 rounded bg-ink-0 text-bg-0">✓</button>
-                    <button type="button" onClick={() => setEditingMatchId(null)} className="text-11 font-medium px-3 py-1 rounded text-red">✕</button>
+                    <button type="button" onClick={() => saveMatchEdit(m)} className="text-11 font-semibold px-2.5 py-1 rounded bg-ink-0 text-bg-0">✓</button>
+                    <button type="button" onClick={() => setEditingMatchId(null)} className="text-11 font-medium px-2.5 py-1 rounded text-red">✕</button>
                   </div>
                 </div>
               )}
@@ -933,10 +935,10 @@ export default function EocnPage() {
 
               {(m.disposition === "under-review") && (
                 <div className="mt-3 flex gap-2">
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded bg-red text-white hover:bg-red/90">
+                  <button type="button" className="text-11 font-semibold px-2.5 py-1 rounded bg-red text-white hover:bg-red/90">
                     Confirm match — freeze & file goAML
                   </button>
-                  <button type="button" className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">
+                  <button type="button" className="text-11 font-semibold px-2.5 py-1 rounded border border-hair-2 text-ink-1 hover:bg-bg-2">
                     Confirm false positive
                   </button>
                 </div>

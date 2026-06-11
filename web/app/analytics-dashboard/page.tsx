@@ -142,7 +142,6 @@ export default function AnalyticsDashboardPage() {
   const [data, setData] = useState<AnalyticsDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -151,7 +150,7 @@ export default function AnalyticsDashboardPage() {
         if (!r.ok) throw new Error(apiErrorMessage(r.status, r.statusText));
         return r.json();
       })
-      .then((d: AnalyticsDashboardResponse) => { setData(d); setRefreshedAt(new Date()); })
+      .then((d: AnalyticsDashboardResponse) => { setData(d); })
       .catch((e) => setError(caughtErrorMessage(e, "Failed to load analytics")))
       .finally(() => setLoading(false));
   };
@@ -173,20 +172,8 @@ export default function AnalyticsDashboardPage() {
             Risk distribution · KPIs · goAML pipeline · bias ratio · model drift — live from the metrics store.
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="px-3 py-1.5 rounded-lg text-12 font-semibold border border-hair-2 bg-bg-panel hover:bg-bg-1 text-ink-1 transition-colors disabled:opacity-40"
-        >
-          {loading ? "Loading…" : "↺ Refresh"}
-        </button>
       </div>
 
-      {refreshedAt && (
-        <div className="text-10 text-ink-4 mb-4">
-          Last refreshed: {refreshedAt.toLocaleTimeString()}
-        </div>
-      )}
 
       {error && (
         <div className="text-red-400 text-13 p-4 border border-red-500/30 rounded-xl bg-red-950/20 mb-6">
@@ -261,7 +248,7 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           <div className="text-10 text-ink-4">
-            Generated {new Date(data.generatedAt).toLocaleString()} · Tenant: {data.tenantId}
+            Generated {new Date(data.generatedAt).toLocaleString("en-GB")} · Tenant: {data.tenantId}
           </div>
         </div>
       )}
