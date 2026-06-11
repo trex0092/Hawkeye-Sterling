@@ -126,7 +126,7 @@ function validateSecrets(): void {
   // needed) — these warnings fire only when an operator has opted out.
   if (isProduction) {
     if (process.env['RATE_LIMIT_STRICT']?.trim().toLowerCase() === 'false') {
-      console.warn('[startup] RATE_LIMIT_STRICT=false — rate limiting will degrade to the race-prone soft Blobs fallback when Redis is unavailable. Unset it (or set true) for fail-closed enforcement.');
+      console.warn('[startup] RATE_LIMIT_STRICT=false — rate limiting will degrade to the race-prone soft Blobs fallback when Redis is unavailable. Unset it (or set true) for the deterministic in-memory per-instance fallback.');
     }
     if (process.env['EGRESS_GATE_DISABLED'] === 'true') {
       console.error('[startup] EGRESS_GATE_DISABLED=true — tipping-off egress gate is OFF. SAR/STR narratives are NOT checked for tipping-off language (Federal Decree-Law No. 10 of 2025 Art.17 is criminal). A written MLRO waiver is required to run with this flag.');

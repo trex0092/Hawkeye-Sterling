@@ -130,18 +130,32 @@ describe("consumeRateLimit — concurrent write detection", () => {
     expect(result.allowed).toBe(true);
   });
 
-  it("denies immediately under RATE_LIMIT_STRICT=true when Redis is unavailable", async () => {
+  it("enforces per-instance in-memory limits under RATE_LIMIT_STRICT=true when Redis is unavailable", async () => {
     process.env["RATE_LIMIT_STRICT"] = "true";
     mockInitialState = null;
 
     const { consumeRateLimit } = await import("@/lib/server/rate-limit");
-    const result = await consumeRateLimit("test-key", "standard");
+    const { tierFor } = await import("@/lib/data/tiers");
+    const perSecond = tierFor("standard").rateLimitPerSecond;
 
-    expect(result.allowed).toBe(false);
+    // Under the limit: requests pass (the pre-incident blanket denial is gone).
+    for (let i = 0; i < perSecond; i++) {
+      const r = await consumeRateLimit("test-key", "standard");
+      expect(r.allowed).toBe(true);
+    }
+    expect(mockIncrementCounter).toHaveBeenCalledWith(
+      "hawkeye_rate_limit_fallback_total",
+      1,
+      expect.objectContaining({ mode: "memory" }),
+    );
+
+    // Over the limit within the same (fake-timer-frozen) second: denied.
+    const denied = await consumeRateLimit("test-key", "standard");
+    expect(denied.allowed).toBe(false);
     expect(mockIncrementCounter).toHaveBeenCalledWith(
       "hawkeye_rate_limit_rejections_total",
       1,
-      expect.objectContaining({ window: "strict_redis_unavailable" }),
+      expect.objectContaining({ window: "memory_second" }),
     );
   });
 });

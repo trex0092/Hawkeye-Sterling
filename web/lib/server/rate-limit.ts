@@ -1,15 +1,31 @@
 // Hawkeye Sterling — per-API-key rate limiter.
 //
-// Two enforcement paths:
+// Three enforcement paths:
 //
 // 1. Upstash Redis (hard enforcement): when UPSTASH_REDIS_REST_URL and
 //    UPSTASH_REDIS_REST_TOKEN are set, uses atomic INCR + EXPIRE via the
 //    Upstash REST API. Provides strict per-second and per-minute limits
 //    with no race conditions across Lambda instances.
 //
-// 2. Netlify Blobs (soft enforcement): fallback when Redis is unavailable.
-//    Fixed-window counters with no CAS — concurrent requests in the same
-//    blob round-trip can slip through. Acceptable at low concurrency.
+// 2. In-memory per-instance windows (production default when Redis is
+//    unavailable, and RATE_LIMIT_STRICT=true everywhere): deterministic,
+//    zero-I/O fixed windows scoped to the Lambda instance. Cross-instance
+//    aggregation is lost while Redis is down, but tier limits stay enforced
+//    per instance and — critically — the platform stays up.
+//
+//    Incident 2026-06-11: the previous behaviour here was a blanket
+//    allowed:false for every caller ("fail-closed"). When Upstash became
+//    unreachable from a degraded Lambda (the recurring instance-level
+//    egress brownout), that turned a throttling-control outage into a
+//    full platform outage — every screening route answered 429. Rate
+//    limiting is a protective control, not a correctness gate: when its
+//    backing store is unavailable the control degrades, the service must
+//    not. Auth (401) is unaffected either way.
+//
+// 3. Netlify Blobs (soft enforcement, RATE_LIMIT_STRICT=false and dev/test
+//    default): fixed-window counters with no CAS — concurrent requests in
+//    the same blob round-trip can slip through. Acceptable at low
+//    concurrency; costs up to three store round-trips per check.
 //
 // Required env vars for hard enforcement:
 //   UPSTASH_REDIS_REST_URL   – e.g. https://<id>.upstash.io
@@ -31,12 +47,19 @@ import { HS_DEFAULTS } from "@/lib/config/hs-defaults";
 //   POST /pipeline  body: [["INCR","key"],["EXPIRE","key","ttl"]]
 // Response:           [{"result":N},{"result":1}]
 
+// After a Redis transport failure, skip further probes for a short cooldown
+// so a browned-out instance pays the 1s abort timeout once per window rather
+// than on every request. Missing configuration never arms the cooldown.
+let redisDownUntil = 0;
+const REDIS_RETRY_COOLDOWN_MS = 5_000;
+
 async function redisPipeline(
   commands: Array<readonly [string, ...string[]]>,
 ): Promise<Array<number | null>> {
   const url = process.env["UPSTASH_REDIS_REST_URL"] ?? HS_DEFAULTS.UPSTASH_REDIS_REST_URL;
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"];
   if (!url || !token) return commands.map(() => null);
+  if (Date.now() < redisDownUntil) return commands.map(() => null);
   try {
     const res = await fetch(`${url}/pipeline`, {
       method: "POST",
@@ -50,10 +73,15 @@ async function redisPipeline(
       // than spend the route's 5s SLA. Timeout lands in the catch → nulls.
       signal: AbortSignal.timeout(1_000),
     });
-    if (!res.ok) return commands.map(() => null);
+    if (!res.ok) {
+      redisDownUntil = Date.now() + REDIS_RETRY_COOLDOWN_MS;
+      return commands.map(() => null);
+    }
     const results = await res.json() as Array<{ result?: number }>;
+    redisDownUntil = 0;
     return results.map((r) => (typeof r?.result === "number" ? r.result : null));
   } catch {
+    redisDownUntil = Date.now() + REDIS_RETRY_COOLDOWN_MS;
     return commands.map(() => null);
   }
 }
@@ -138,6 +166,82 @@ function bucketStart(now: number, widthMs: number): number {
   return Math.floor(now / widthMs) * widthMs;
 }
 
+// ── In-memory per-instance fallback ──────────────────────────────────────────
+//
+// Used when Redis is unavailable in production (and under
+// RATE_LIMIT_STRICT=true anywhere). Atomic within the instance because JS is
+// single-threaded between awaits and this path performs no I/O — it cannot
+// hang, cannot race, and adds zero latency inside enforce().
+const memoryWindows = new Map<string, LimitState>();
+const MEMORY_WINDOWS_MAX = 10_000;
+
+function consumeMemory(
+  keyId: string,
+  tier: TierDefinition,
+  cost: number,
+): RateLimitResult {
+  const now = Date.now();
+  const secondStart = bucketStart(now, 1_000);
+  const minuteStart = bucketStart(now, 60_000);
+
+  let state = memoryWindows.get(keyId);
+  if (!state) {
+    if (memoryWindows.size >= MEMORY_WINDOWS_MAX) {
+      // Prune entries whose minute window has rolled over; if the map is
+      // somehow still full (10k live keys in one minute), evict the oldest
+      // insertion so the limiter keeps working under key-churn attacks.
+      for (const [k, v] of memoryWindows) {
+        if (v.minute.startMs !== minuteStart) memoryWindows.delete(k);
+      }
+      if (memoryWindows.size >= MEMORY_WINDOWS_MAX) {
+        const oldest = memoryWindows.keys().next().value;
+        if (oldest !== undefined) memoryWindows.delete(oldest);
+      }
+    }
+    state = {
+      second: { startMs: secondStart, count: 0 },
+      minute: { startMs: minuteStart, count: 0 },
+    };
+    memoryWindows.set(keyId, state);
+  }
+  if (state.second.startMs !== secondStart) state.second = { startMs: secondStart, count: 0 };
+  if (state.minute.startMs !== minuteStart) state.minute = { startMs: minuteStart, count: 0 };
+
+  const nextSecond = state.second.count + cost;
+  const nextMinute = state.minute.count + cost;
+
+  if (nextSecond > tier.rateLimitPerSecond) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'memory_second' });
+    return {
+      allowed: false,
+      retryAfterSec: 1,
+      remainingSecond: 0,
+      remainingMinute: Math.max(0, tier.rateLimitPerMinute - state.minute.count),
+      tier,
+    };
+  }
+  if (nextMinute > tier.rateLimitPerMinute) {
+    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'memory_minute' });
+    return {
+      allowed: false,
+      retryAfterSec: Math.max(1, Math.ceil((minuteStart + 60_000 - now) / 1_000)),
+      remainingSecond: Math.max(0, tier.rateLimitPerSecond - state.second.count),
+      remainingMinute: 0,
+      tier,
+    };
+  }
+
+  state.second.count = nextSecond;
+  state.minute.count = nextMinute;
+  return {
+    allowed: true,
+    retryAfterSec: 0,
+    remainingSecond: Math.max(0, tier.rateLimitPerSecond - nextSecond),
+    remainingMinute: Math.max(0, tier.rateLimitPerMinute - nextMinute),
+    tier,
+  };
+}
+
 export async function consumeRateLimit(
   keyId: string,
   tierId: string,
@@ -157,30 +261,25 @@ export async function consumeRateLimit(
   const redisResult = await consumeRedis(keyId, tier, effectiveCost);
   if (redisResult !== null) return redisResult;
 
-  // When Redis is unavailable, decide between refusing the request (fail-closed)
-  // and the blob-based soft fallback (vulnerable to read-modify-write races
-  // under concurrent Lambda invocations).
+  // When Redis is unavailable, decide between the deterministic in-memory
+  // per-instance limiter and the blob-based soft fallback (vulnerable to
+  // read-modify-write races under concurrent Lambda invocations, and up to
+  // three store round-trips per check).
   //
-  // Fail-closed is the DEFAULT in production — mirroring the egress gate's
-  // F-02 opt-out pattern: a fresh production deployment must not silently
-  // degrade to racy soft enforcement just because RATE_LIMIT_STRICT was never
-  // set. RATE_LIMIT_STRICT=false is the documented opt-out (operator accepts
-  // soft blob enforcement during Redis outages); =true forces fail-closed in
-  // any environment; unset → strict in production, soft in dev/test.
+  // In-memory is the DEFAULT in production: tier limits stay enforced (per
+  // instance) with zero I/O. The previous blanket allowed:false here caused
+  // the 2026-06-11 platform outage — every route answered 429 while Upstash
+  // was unreachable from a degraded Lambda. RATE_LIMIT_STRICT=true selects
+  // the in-memory path in any environment; =false opts into the soft blob
+  // fallback; unset → in-memory in production, blobs in dev/test.
   const strictFlag = process.env["RATE_LIMIT_STRICT"]?.trim().toLowerCase();
   const strict =
     strictFlag === "true" ||
     (strictFlag !== "false" && process.env.NODE_ENV === "production");
   if (strict) {
-    console.error("[rate-limit] Redis unavailable and fail-closed mode active (RATE_LIMIT_STRICT unset defaults to strict in production) — returning 503 to prevent soft-limit bypass");
-    incrementCounter('hawkeye_rate_limit_rejections_total', 1, { tier: tier.id, window: 'strict_redis_unavailable' });
-    return {
-      allowed: false,
-      retryAfterSec: 5,
-      remainingSecond: 0,
-      remainingMinute: 0,
-      tier,
-    };
+    console.warn("[rate-limit] Redis unavailable — enforcing per-instance in-memory limits until it recovers (cross-instance aggregation suspended)");
+    incrementCounter('hawkeye_rate_limit_fallback_total', 1, { tier: tier.id, mode: 'memory' });
+    return consumeMemory(keyId, tier, effectiveCost);
   }
 
   const now = Date.now();
