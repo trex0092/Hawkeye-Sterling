@@ -100,6 +100,18 @@ async function main() {
 
   const truncatedDiff = diff.length > 80_000 ? diff.slice(0, 80_000) + "\n... (diff truncated)" : diff;
 
+  // The model sometimes wraps its verdict in a ```json fence and appends a
+  // prose rationale after it; the verdict is still inside. Pull the first
+  // fenced JSON block, else the outermost brace span, before parsing.
+  function extractJson(text) {
+    const fenced = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/);
+    if (fenced) return fenced[1].trim();
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start !== -1 && end > start) return text.slice(start, end + 1).trim();
+    return text.trim();
+  }
+
   let response;
   try {
     response = await client.messages.create({
@@ -108,7 +120,11 @@ async function main() {
       system: `You are a security reviewer for Hawkeye Sterling, a production AML/CFT compliance platform.
 Your task is to review a git diff for violations of the platform's architecture invariants.
 Be precise and conservative — only flag clear violations, not hypothetical ones.
-Respond with valid JSON only.`,
+You see ONLY the diff hunks, not the full files: never flag the ABSENCE of code
+(e.g. a missing enforce(req) call or audit-chain write) unless the diff itself
+shows the relevant region — code outside the hunks may already satisfy the
+invariant. Only flag violations introduced by lines visible in the diff.
+Respond with raw JSON only — no markdown fences, no prose before or after.`,
       messages: [
         {
           role: "user",
@@ -124,9 +140,7 @@ Respond with valid JSON only.`,
   const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
   let result;
   try {
-    // Strip markdown code fences if present
-    const jsonStr = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
-    result = JSON.parse(jsonStr);
+    result = JSON.parse(extractJson(raw));
   } catch {
     console.error("[ai-security-review] Could not parse Claude response as JSON:", raw.slice(0, 500));
     process.exit(2);
