@@ -236,7 +236,7 @@ type DirectOutcome = { kind: "res"; res: Response } | { kind: "err"; err: unknow
 //      hanging upstream (GDELT's weekly brownout mode) consumed the caller's
 //      whole timeout and the relay — combined with the already-fired caller
 //      signal — aborted before it could send a single byte.
-export async function newsFetch(
+async function newsFetchInner(
   input: string | URL | Request,
   init?: RequestInit,
   opts?: {
@@ -351,5 +351,54 @@ export async function newsFetch(
     throw new Error("news fetch failed (direct and all relays)");
   } finally {
     if (hedgeTimer !== undefined) clearTimeout(hedgeTimer);
+  }
+}
+
+// ── Global news-egress concurrency cap ──────────────────────────────────────
+// The dossier fan-out fires the Google-News locale pool (10) PLUS every
+// regional/investigative feed bank (~70 feeds via unpooled Promise.allSettled)
+// at once. On Netlify that ~80-socket burst collapses the instance's outbound
+// egress — every fetch, direct AND relay, then fails `network` and the dossier
+// returns 0 articles at ~10s (observed live 2026-06-11: feedFailures
+// {network:91}, latencyMs 11255), while a SINGLE fetch from the same instance
+// still succeeds — the tell that this is burst-induced egress death, not a
+// Google IP block (which would surface as http_403, not network). Capping the
+// TOTAL concurrent news sockets keeps egress alive so the feeds that do run
+// actually return articles, and bounds the worst-case latency. Override with
+// NEWS_MAX_CONCURRENCY.
+const NEWS_MAX_CONCURRENCY = ((): number => {
+  const raw = Number(process.env["NEWS_MAX_CONCURRENCY"]);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 6;
+})();
+let activeNewsFetches = 0;
+const newsSlotQueue: Array<() => void> = [];
+function acquireNewsSlot(): Promise<void> {
+  if (activeNewsFetches < NEWS_MAX_CONCURRENCY) {
+    activeNewsFetches += 1;
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => newsSlotQueue.push(resolve));
+}
+function releaseNewsSlot(): void {
+  const next = newsSlotQueue.shift();
+  if (next) next(); // hand the permit straight to the next waiter (active count unchanged)
+  else activeNewsFetches = Math.max(0, activeNewsFetches - 1);
+}
+
+// Public entry point for all news/feed egress. Acquires a global permit so the
+// combined fan-out can't open ~80 sockets at once and collapse the instance's
+// egress. The permit is always released (finally), and the inner fetch is
+// bounded by the caller's AbortSignal plus the relay's 8s ceiling, so a permit
+// is never held indefinitely.
+export async function newsFetch(
+  input: string | URL | Request,
+  init?: RequestInit,
+  opts?: { allowRelay?: boolean; relayHedgeMs?: number },
+): Promise<Response> {
+  await acquireNewsSlot();
+  try {
+    return await newsFetchInner(input, init, opts);
+  } finally {
+    releaseNewsSlot();
   }
 }

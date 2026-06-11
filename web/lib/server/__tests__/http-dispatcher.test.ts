@@ -277,3 +277,47 @@ describe("newsFetch hedged relay (hanging upstream)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2); // the relay genuinely ran this time
   });
 });
+
+describe("newsFetch global egress concurrency cap", () => {
+  it("never opens more than NEWS_MAX_CONCURRENCY sockets at once", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_MAX_CONCURRENCY", "4");
+    const m = await loadFresh();
+
+    let inFlight = 0;
+    let peak = 0;
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          inFlight += 1;
+          peak = Math.max(peak, inFlight);
+          setTimeout(() => {
+            inFlight -= 1;
+            resolve(new Response("ok"));
+          }, 15);
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    // Fire 40 concurrent news fetches (no relay → one socket each).
+    await Promise.all(
+      Array.from({ length: 40 }, (_, i) => m.newsFetch(`https://example.com/feed/${i}`)),
+    );
+
+    expect(peak).toBeLessThanOrEqual(4); // the cap held under a 40-way burst
+    expect(fetchMock).toHaveBeenCalledTimes(40); // every request still ran, just throttled
+  });
+
+  it("drains the queue — all callers resolve, none are starved", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_MAX_CONCURRENCY", "2");
+    const m = await loadFresh();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("ok"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const results = await Promise.allSettled(
+      Array.from({ length: 10 }, (_, i) => m.newsFetch(`https://example.com/${i}`)),
+    );
+    expect(results.every((r) => r.status === "fulfilled")).toBe(true);
+  });
+});
