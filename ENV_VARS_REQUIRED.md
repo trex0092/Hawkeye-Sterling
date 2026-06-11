@@ -107,6 +107,7 @@ These default to enabled where shown. Setting to blank disables.
 | `NEWS_PROXY_TLS_REJECT_UNAUTHORIZED` | `true` | Set `false` to accept a trusted internal proxy's self-signed cert |
 | `NEWS_RELAY_ENABLED` | _(unset, OFF)_ | Set `1`/`true`/`on` to opt into the built-in free public-relay chain for the keyless GDELT query (**off by default** — routes subject names to public third parties) |
 | `NEWS_FETCH_RELAY` | _(unset)_ | Comma-separated relay template(s) you control, each containing `{url}` — enables relaying through ONLY your destinations (preferred over the public chain) |
+| `NEWS_RELAY_HEDGE_MS` | `1500` | How long (ms) a relayable direct fetch runs exclusively before the relay chain is hedged in parallel (first usable response wins) — covers upstreams like GDELT that *hang* rather than fast-403, which would otherwise consume the whole screening timeout and leave the relay no budget |
 
 > **Datacenter-IP note (`GOOGLE_NEWS_RSS_ENABLED`):** Google News RSS frequently
 > returns HTTP 403 to cloud/datacenter IPs (Netlify) regardless of User-Agent.

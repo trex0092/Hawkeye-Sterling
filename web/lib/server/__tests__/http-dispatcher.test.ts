@@ -168,4 +168,112 @@ describe("newsFetch relay fallback", () => {
     expect(res.status).toBe(403);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("does not touch the relay when the direct fetch succeeds fast", async () => {
+    clearProxyEnv();
+    clearRelayEnv();
+    const m = await loadFresh();
+    const fetchMock = vi.fn().mockResolvedValue(new Response("<rss>ok</rss>", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await m.newsFetch("https://api.gdeltproject.org/x", undefined, { allowRelay: true });
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // direct only — no hedge fired
+  });
+});
+
+// The hedge: a HANGING direct upstream (GDELT's weekly brownout mode) must not
+// starve the relay of the caller's timeout budget. After NEWS_RELAY_HEDGE_MS
+// the relay chain runs in parallel and the first usable response wins.
+describe("newsFetch hedged relay (hanging upstream)", () => {
+  function clearRelayEnv() {
+    vi.stubEnv("NEWS_RELAY_ENABLED", "");
+    vi.stubEnv("NEWS_FETCH_RELAY", "");
+  }
+
+  // A direct fetch that never answers but honours its abort signal — the shape
+  // of a GDELT brownout socket.
+  function hangUntilAborted(init?: RequestInit): Promise<Response> {
+    return new Promise((_resolve, reject) => {
+      const signal = init?.signal;
+      const onAbort = () => reject(new DOMException("The operation was aborted.", "AbortError"));
+      if (signal?.aborted) return onAbort();
+      signal?.addEventListener("abort", onAbort, { once: true });
+    });
+  }
+
+  function respondAfter(ms: number, res: Response): Promise<Response> {
+    return new Promise((resolve) => setTimeout(() => resolve(res), ms));
+  }
+
+  it("rescues a hanging direct fetch through the relay and aborts the hung socket", async () => {
+    clearProxyEnv();
+    clearRelayEnv();
+    vi.stubEnv("NEWS_RELAY_HEDGE_MS", "10");
+    const m = await loadFresh();
+    let directSignal: AbortSignal | undefined;
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      if (fetchMock.mock.calls.length === 1) {
+        directSignal = init?.signal ?? undefined;
+        return hangUntilAborted(init); // direct: hangs
+      }
+      return respondAfter(5, new Response("<rss>relayed</rss>", { status: 200 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const t0 = Date.now();
+    const res = await m.newsFetch("https://api.gdeltproject.org/x", undefined, { allowRelay: true });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("relayed");
+    expect(fetchMock).toHaveBeenCalledTimes(2); // direct + hedged relay
+    // The win must come from the hedge, not from waiting out a long timeout.
+    expect(Date.now() - t0).toBeLessThan(1_000);
+    // The hung direct socket must be released once the relay wins.
+    expect(directSignal?.aborted).toBe(true);
+  });
+
+  it("lets a slow-but-healthy direct response win when the hedged relay fails", async () => {
+    clearProxyEnv();
+    clearRelayEnv();
+    vi.stubEnv("NEWS_RELAY_HEDGE_MS", "10");
+    const m = await loadFresh();
+    const fetchMock = vi.fn((_url: unknown) =>
+      fetchMock.mock.calls.length === 1
+        ? respondAfter(100, new Response("<rss>direct</rss>", { status: 200 })) // healthy, just slow
+        : respondAfter(5, new Response("relay down", { status: 502 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await m.newsFetch("https://api.gdeltproject.org/x", undefined, { allowRelay: true });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("direct");
+    expect(fetchMock).toHaveBeenCalledTimes(2); // hedge fired, but direct still won
+  });
+
+  it("surfaces the outage when direct hangs to the caller's deadline and relays fail", async () => {
+    clearProxyEnv();
+    clearRelayEnv();
+    vi.stubEnv("NEWS_RELAY_HEDGE_MS", "10");
+    const m = await loadFresh();
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) =>
+      fetchMock.mock.calls.length === 1
+        ? hangUntilAborted(init) // direct: hangs until the caller aborts
+        : respondAfter(5, new Response("relay down", { status: 502 })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const caller = new AbortController();
+    const timer = setTimeout(() => caller.abort(), 80); // the probe's 4s budget, scaled down
+    try {
+      await expect(
+        m.newsFetch(
+          "https://api.gdeltproject.org/x",
+          { signal: caller.signal },
+          { allowRelay: true },
+        ),
+      ).rejects.toThrow("news fetch failed (direct and all relays)");
+    } finally {
+      clearTimeout(timer);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(2); // the relay genuinely ran this time
+  });
 });

@@ -40,9 +40,13 @@ interface SourceCheck {
   httpStatus?: number;
   latencyMs?: number;
   detail?: string;
-  // Whether this probe egressed via the configured proxy or directly — mirrors
-  // exactly how the dossier route would have fetched the same host.
-  via: "proxy" | "direct";
+  // How the winning response egressed, mirroring how the dossier route would
+  // have fetched the same host: "proxy"/"direct" for the first-party attempt,
+  // "relay" when the direct path was refused or hung and the internal edge
+  // relay answered instead (detected via its x-relay-by response header). A
+  // source that is "reachable" only via relay is healthy for screening but
+  // tells the operator this runtime's direct egress to that host is impaired.
+  via: "proxy" | "direct" | "relay";
 }
 
 async function probe(
@@ -67,7 +71,9 @@ async function probe(
       httpStatus: res.status,
       latencyMs: Date.now() - t0,
       detail: res.ok ? undefined : `HTTP ${res.status}`,
-      via,
+      // The internal edge relay stamps x-relay-by on everything it serves, so
+      // its presence means the direct path lost and the relay carried this one.
+      via: res.headers.get("x-relay-by") ? "relay" : via,
     };
     // We only need the status — release the body so an unconsumed keep-alive
     // socket can't later reset and crash the function as an unhandled error.
@@ -79,7 +85,15 @@ async function probe(
       url,
       status: "unreachable",
       latencyMs: Date.now() - t0,
-      detail: err instanceof Error ? err.name : "fetch_failed",
+      // A bare "Error" name carries no diagnostic value — surface the message
+      // (e.g. "news fetch failed (direct and all relays)") so the operator can
+      // tell a full direct+relay outage from a plain timeout (AbortError).
+      detail:
+        err instanceof Error
+          ? err.name === "Error"
+            ? err.message || "fetch_failed"
+            : err.name
+          : "fetch_failed",
       via,
     };
   } finally {

@@ -72,6 +72,22 @@ const RELAY_TEMPLATES: string[] =
 // must NOT be retried through the relay.
 const RELAYABLE_STATUSES = new Set([403, 429, 451, 503]);
 
+// How long the direct fetch gets to answer EXCLUSIVELY before the relay is
+// hedged in parallel (relay-enabled calls only). GDELT's dominant brownout mode
+// is a HANG, not a fast 403 (docs/RELIABILITY-REPORT.md: multiple times per
+// week, 60+ s) — a hang used to consume the caller's entire timeout, leaving
+// the relay zero budget and turning every brownout into a hard miss. Healthy
+// GDELT answers in ~1-3 s, so 1.5 s keeps the common case relay-free while a
+// hang still leaves ~2.5 s of the 4 s screening budget for the edge relay.
+// The hedge never aborts the direct attempt — if direct answers first (even
+// after the relay fired), direct still wins.
+const RELAY_HEDGE_MS: number = (() => {
+  const raw = process.env["NEWS_RELAY_HEDGE_MS"]?.trim();
+  if (!raw) return 1_500;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 1_500;
+})();
+
 // Netlify injects URL (canonical site URL) at runtime. Used to resolve the
 // internal edge-function relay path to an absolute URL for server-side fetch.
 const SITE_ORIGIN: string =
@@ -158,81 +174,172 @@ export async function drainResponse(res: Response | null | undefined): Promise<v
   }
 }
 
-// Drop-in replacement for `fetch` for all news/feed egress. Behaves exactly like
-// global fetch when no proxy is configured; otherwise routes the single request
-// through the proxy dispatcher. Caller-supplied headers/signal/etc. are passed
-// through untouched.
+// Try each free relay in order; the first that returns 2xx wins. A relay that
+// is itself blocked/down/rate-limited just advances to the next. Resolves with
+// the first OK response, or null when every relay failed — never rejects.
 //
-// `opts.allowRelay` opts a call into the free public-relay fallback (see
-// RELAY_TEMPLATE): if the direct fetch is refused (403/429/451/503) or throws,
-// AND a relay is configured, the request is retried once through the relay.
-// Only keyless public feeds should set this — NEVER an API-key adapter.
-export async function newsFetch(
-  input: string | URL | Request,
-  init?: RequestInit,
-  opts?: { allowRelay?: boolean },
-): Promise<Response> {
-  const dispatcher = getNewsDispatcher();
-  const directInit: RequestInit = dispatcher
-    ? ({ ...init, dispatcher } as DispatcherRequestInit as RequestInit)
-    : (init ?? {});
-
-  const relayEnabled = Boolean(opts?.allowRelay) && RELAY_TEMPLATES.length > 0;
-
-  let directRes: Response | null = null;
-  try {
-    directRes = await fetch(input as RequestInfo, directInit);
-    if (!relayEnabled || !RELAYABLE_STATUSES.has(directRes.status)) return directRes;
-  } catch (err) {
-    if (!relayEnabled) throw err;
-    // Network-level failure — fall through and try the relay chain.
-  }
-
-  // Try each free relay in order; the first that returns 2xx wins. A relay that
-  // is itself blocked/down/rate-limited just advances to the next.
-  const target = targetUrl(input);
-  // Use a FRESH AbortController for the relay hop — the caller's signal may
-  // already be aborted (e.g. GDELT direct fetch timed out, firing the signal),
-  // which would cause the relay attempt to abort immediately before it runs.
-  // Give the relay the same budget as the original timeout, or 8s if unknown.
+// The chain gets a FRESH 8s AbortController combined with the caller's signal:
+// fresh, so a direct attempt that already fired the shared signal can't kill
+// the relay outright; combined, so an expired per-feed timeout (e.g. the 800ms
+// locale AbortController) still bounds the relay rather than letting it run
+// for 8s past the 4s OVERALL_TIMEBOX_MS — which would leave feedStats reading
+// 0/0 and the dossier reporting "unavailable" even when Google News is up.
+// `abandon` lets a hedged caller cancel the chain when the direct fetch wins.
+async function runRelayChain(
+  target: string,
+  dispatcher: Dispatcher | undefined,
+  callerSignal: AbortSignal | undefined,
+  abandon?: AbortSignal,
+): Promise<Response | null> {
   const relayController = new AbortController();
   const relayTimeout = setTimeout(() => relayController.abort(), 8_000);
-  // Combine the relay's own 8s budget with the caller's signal so that an
-  // already-expired per-feed timeout (e.g. the 800ms locale AbortController)
-  // aborts the relay immediately rather than letting it run for another 8s.
-  // Without this, every timed-out locale fetch enters an 8s relay window that
-  // outlasts the 4s OVERALL_TIMEBOX_MS, causing feedStats to read 0/0 when
-  // the Promise.all resolves and the dossier to report "unavailable" even when
-  // Google News RSS is reachable.
-  const callerSignal = (init as RequestInit | undefined)?.signal as AbortSignal | undefined;
-  const relaySignal = callerSignal
-    ? AbortSignal.any([relayController.signal, callerSignal])
-    : relayController.signal;
+  const signals = [relayController.signal];
+  if (callerSignal) signals.push(callerSignal);
+  if (abandon) signals.push(abandon);
+  const relaySignal = signals.length > 1 ? AbortSignal.any(signals) : relayController.signal;
   const relayInit: RequestInit = {
     headers: FEED_HEADERS,
     signal: relaySignal,
     ...(dispatcher ? ({ dispatcher } as DispatcherRequestInit) : {}),
   };
   try {
-  for (const template of RELAY_TEMPLATES) {
-    try {
-      const relayed = await fetch(buildRelayUrl(template, target), relayInit);
-      if (relayed.ok) {
-        // Discarding the refused direct response — release its socket so a later
-        // reset can't crash the function as an unhandled error.
-        await drainResponse(directRes);
-        return relayed;
+    for (const template of RELAY_TEMPLATES) {
+      try {
+        const relayed = await fetch(buildRelayUrl(template, target), relayInit);
+        if (relayed.ok) return relayed;
+        await drainResponse(relayed); // non-2xx relay — release before next attempt
+      } catch {
+        // This relay failed — try the next one.
       }
-      await drainResponse(relayed); // non-2xx relay — release before next attempt
-    } catch {
-      // This relay failed — try the next one.
     }
-  }
+    return null;
   } finally {
     clearTimeout(relayTimeout);
   }
-  // Every relay failed: hand back the true upstream response so callers see the
-  // real status, or surface the outage if the direct call also threw.
-  if (directRes) return directRes;
-  throw new Error("news fetch failed (direct and all relays)");
+}
+
+type DirectOutcome = { kind: "res"; res: Response } | { kind: "err"; err: unknown };
+
+// Drop-in replacement for `fetch` for all news/feed egress. Behaves exactly like
+// global fetch when no proxy is configured; otherwise routes the single request
+// through the proxy dispatcher. Caller-supplied headers/signal/etc. are passed
+// through untouched.
+//
+// `opts.allowRelay` opts a call into the free public-relay fallback (see
+// RELAY_TEMPLATES). Only keyless public feeds should set this — NEVER an
+// API-key adapter. The relay engages two ways:
+//   1. Fast failure: the direct fetch is refused (403/429/451/503) or throws —
+//      the relay chain runs immediately, exactly as before.
+//   2. Hang (hedge): the direct fetch hasn't settled after RELAY_HEDGE_MS — the
+//      relay chain starts IN PARALLEL while direct keeps running. First usable
+//      response wins; the loser is aborted/drained. Without the hedge, a
+//      hanging upstream (GDELT's weekly brownout mode) consumed the caller's
+//      whole timeout and the relay — combined with the already-fired caller
+//      signal — aborted before it could send a single byte.
+export async function newsFetch(
+  input: string | URL | Request,
+  init?: RequestInit,
+  opts?: { allowRelay?: boolean },
+): Promise<Response> {
+  const dispatcher = getNewsDispatcher();
+  const relayEnabled = Boolean(opts?.allowRelay) && RELAY_TEMPLATES.length > 0;
+
+  if (!relayEnabled) {
+    const directInit: RequestInit = dispatcher
+      ? ({ ...init, dispatcher } as DispatcherRequestInit as RequestInit)
+      : (init ?? {});
+    return fetch(input as RequestInfo, directInit);
+  }
+
+  // Relay-enabled path. Wrap the direct fetch in our own controller (combined
+  // with the caller's signal) so a relay win can release the hanging socket.
+  const callerSignal = init?.signal ?? undefined;
+  const directController = new AbortController();
+  const directSignal = callerSignal
+    ? AbortSignal.any([callerSignal, directController.signal])
+    : directController.signal;
+  const directInit: RequestInit = {
+    ...init,
+    signal: directSignal,
+    ...(dispatcher ? ({ dispatcher } as DispatcherRequestInit) : {}),
+  };
+
+  const target = targetUrl(input);
+  // Normalize to an outcome object so the promise never rejects unobserved
+  // while it races the hedge timer / relay chain.
+  const directOutcome: Promise<DirectOutcome> = fetch(input as RequestInfo, directInit).then(
+    (res): DirectOutcome => ({ kind: "res", res }),
+    (err): DirectOutcome => ({ kind: "err", err }),
+  );
+
+  let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const hedge = new Promise<"hedge">((resolve) => {
+      hedgeTimer = setTimeout(() => resolve("hedge"), RELAY_HEDGE_MS);
+    });
+
+    const first = await Promise.race([directOutcome, hedge]);
+
+    if (first !== "hedge") {
+      // Direct settled within the hedge window — original sequential semantics.
+      if (first.kind === "res" && !RELAYABLE_STATUSES.has(first.res.status)) return first.res;
+      const relayed = await runRelayChain(target, dispatcher, callerSignal);
+      if (relayed) {
+        // Discarding the refused direct response — release its socket so a later
+        // reset can't crash the function as an unhandled error.
+        if (first.kind === "res") await drainResponse(first.res);
+        return relayed;
+      }
+      // Every relay failed: hand back the true upstream response so callers see
+      // the real status, or surface the outage if the direct call also threw.
+      if (first.kind === "res") return first.res;
+      throw new Error("news fetch failed (direct and all relays)");
+    }
+
+    // Hedge fired — direct is slow or hanging. Race it against the relay chain;
+    // a usable direct response still wins (the hedge never truncates a healthy
+    // 1-3s direct round-trip), the relay only covers for it.
+    const abandonRelay = new AbortController();
+    const relayRace = runRelayChain(target, dispatcher, callerSignal, abandonRelay.signal);
+    const winner = await Promise.race([
+      directOutcome.then((o) => ({ src: "direct" as const, o })),
+      relayRace.then((res) => ({ src: "relay" as const, res })),
+    ]);
+
+    if (winner.src === "direct") {
+      if (winner.o.kind === "res" && !RELAYABLE_STATUSES.has(winner.o.res.status)) {
+        abandonRelay.abort();
+        // If a relay response had already landed in the race window, release it.
+        void relayRace.then((res) => drainResponse(res)).catch(() => undefined);
+        return winner.o.res;
+      }
+      // Direct produced a relayable refusal or threw — the in-flight relay is
+      // the only remaining hope; wait for it.
+      const relayed = await relayRace;
+      if (relayed) {
+        if (winner.o.kind === "res") await drainResponse(winner.o.res);
+        return relayed;
+      }
+      if (winner.o.kind === "res") return winner.o.res;
+      throw new Error("news fetch failed (direct and all relays)");
+    }
+
+    if (winner.res) {
+      // Relay won while direct is still in flight — abort the hung socket and
+      // drain it if it had already resolved in the race window.
+      directController.abort();
+      void directOutcome
+        .then((o) => (o.kind === "res" ? drainResponse(o.res) : undefined))
+        .catch(() => undefined);
+      return winner.res;
+    }
+
+    // Relay chain exhausted while direct is still pending — let direct run to
+    // the caller's own deadline and report its true outcome.
+    const last = await directOutcome;
+    if (last.kind === "res") return last.res;
+    throw new Error("news fetch failed (direct and all relays)");
+  } finally {
+    if (hedgeTimer !== undefined) clearTimeout(hedgeTimer);
+  }
 }
