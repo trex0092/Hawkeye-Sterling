@@ -86,7 +86,10 @@ async function fetchDossier(
     try {
       const r = await fetch(
         `/api/news-search?q=${encodeURIComponent(key)}`,
-        { signal },
+        // Per-attempt 5s ceiling (screening SLA): a Lambda whose egress has
+        // browned out can drag a single request well past the dossier's own
+        // timebox; the retry lands on a fresh (usually healthy) instance.
+        { signal: AbortSignal.any([signal, AbortSignal.timeout(5_000)]) },
       );
       if (r.status >= 500) {
         // Transient infra/edge failure (Netlify 502 during cold-start,
@@ -110,6 +113,7 @@ async function fetchDossier(
       }
     } catch (err) {
       if (signal.aborted) throw err;
+      // Per-attempt TimeoutError (brownout Lambda) is retryable like a 5xx.
       lastErr = err;
     }
     const delay = RETRY_DELAYS_MS[attempt];
@@ -138,6 +142,27 @@ export function useNewsSearch(subjectName: string | null): NewsSearchState {
       .then((result) => {
         if (ac.signal.aborted) return;
         setState({ status: "success", result });
+        // Brownout upgrade: when the settled dossier is a 0-article outage
+        // (retrieval unavailable/degraded), one background re-fetch usually
+        // lands on a healthy Lambda and recovers the real articles. The panel
+        // already settled within the 5s SLA — this silently upgrades it.
+        const outage =
+          result.articleCount === 0 &&
+          (result.retrieval === "unavailable" || result.retrieval === "degraded");
+        if (outage) {
+          setTimeout(() => {
+            if (ac.signal.aborted) return;
+            fetchDossier(key, ac.signal)
+              .then((retry) => {
+                if (ac.signal.aborted) return;
+                const better =
+                  retry.articleCount > 0 ||
+                  (retry.retrieval !== "unavailable" && retry.retrieval !== "degraded");
+                if (better) setState({ status: "success", result: retry });
+              })
+              .catch(() => undefined);
+          }, 1_500);
+        }
       })
       .catch((err: unknown) => {
         if (ac.signal.aborted) return;
