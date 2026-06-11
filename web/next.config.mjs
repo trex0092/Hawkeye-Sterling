@@ -264,11 +264,6 @@ const nextConfig = {
   // These keys were under `experimental` in Next.js 14; they are top-level
   // in Next.js 15 and are silently ignored when nested under `experimental`.
   outputFileTracingRoot: path.join(__dirname, ".."),
-  // @resvg/resvg-js ships a platform-specific native binding (.node). Keep it
-  // external so Next never tries to parse/bundle the binary — the file tracer
-  // still copies the module into the function via normal dependency tracing
-  // (CCL-2026-023, attestation status-card rasteriser).
-  serverExternalPackages: ["@resvg/resvg-js"],
   outputFileTracingIncludes: {
     // Compiled brain is only needed by API routes that import from dist/.
     "/api/**/*": [
