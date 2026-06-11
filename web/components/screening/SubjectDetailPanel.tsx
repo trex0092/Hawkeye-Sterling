@@ -1486,6 +1486,51 @@ const TIER_STYLES: Record<string, string> = {
   unknown: "bg-bg-2 text-ink-3 border border-hair-2",
 };
 
+// 5s-SLA fallback: when /api/adverse-media can't settle inside the client
+// deadline (cold start / egress brownout), assemble a verdict from the
+// deterministic brain classifier that already ran during screening. Clearly
+// degraded — the Rescan button re-attempts the full MLRO analysis.
+function buildClassifierFallbackVerdict(
+  subjectName: string,
+  superBrain: import("@/lib/hooks/useSuperBrain").SuperBrainState,
+): AmVerdict {
+  const sb = superBrain.status === "success" ? superBrain.result : null;
+  const scored = sb?.adverseMediaScored ?? null;
+  const composite = scored?.compositeScore ?? 0;
+  const categories = scored?.categoriesTripped ?? [];
+  const riskTier =
+    composite >= 0.75 ? "critical" :
+    composite >= 0.5 ? "high" :
+    composite >= 0.25 ? "medium" :
+    categories.length > 0 ? "low" : "unknown";
+  return {
+    subject: subjectName,
+    riskTier,
+    riskDetail:
+      "Deterministic classifier verdict (5s SLA fallback) — the full MLRO analysis did not settle in time. " +
+      (categories.length > 0
+        ? `Classifier tripped: ${categories.join(", ")}.`
+        : "No classifier categories tripped."),
+    totalItems: scored?.total ?? 0,
+    adverseItems: categories.length,
+    criticalCount: 0,
+    highCount: 0,
+    mediumCount: 0,
+    lowCount: 0,
+    sarRecommended: false,
+    sarBasis: "Not assessed — run a full rescan before any SAR decision.",
+    confidenceTier: "low",
+    confidenceBasis: "Keyword classifier only; no LLM corroboration within the 5s budget.",
+    counterfactual: "",
+    investigationLines: ["Re-run the MLRO scan (↺ Rescan) for the corroborated verdict before disposition."],
+    findings: [],
+    fatfRecommendations: ["R.10"],
+    categoryBreakdown: categories.map((c) => ({ category: c, count: 1, severity: "medium" })),
+    analysedAt: new Date().toISOString(),
+    modesCited: (scored?.topKeywords ?? []).slice(0, 5).map((k) => k.keyword),
+  };
+}
+
 function AdverseMediaTab({
   subject,
   news,
@@ -1511,9 +1556,10 @@ function AdverseMediaTab({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ subject: subject.name, limit: 50 }),
-        // Server budget is ≤5s; abort shortly after so a hung edge never
-        // leaves the tab stuck on "Scanning…" (error state has a Rescan button).
-        signal: AbortSignal.timeout(8_000),
+        // Hard 5s SLA: the server settles its verdict in ≤~4.3s when warm; a
+        // cold start or egress brownout must not leave the analyst waiting —
+        // on abort we settle with a deterministic classifier verdict below.
+        signal: AbortSignal.timeout(5_000),
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; verdict?: AmVerdict; degraded?: boolean; degradedReason?: string; error?: string };
       if (!res.ok || data.ok === false) throw new Error(data.error ?? `HTTP ${res.status}`);
@@ -1523,10 +1569,19 @@ function AdverseMediaTab({
       setStatus("success");
     } catch (e: unknown) {
       if (!mountedRef.current) return;
+      // 5s SLA breach (TimeoutError) → settle with the deterministic verdict
+      // already computed by the brain classifier instead of an error wall, so
+      // the tab always shows usable, clearly-flagged intelligence within 5s.
+      if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
+        setVerdict(buildClassifierFallbackVerdict(subject.name, superBrain));
+        setDegraded(true);
+        setStatus("success");
+        return;
+      }
       setError(caughtErrorMessage(e, "Request failed — please try again."));
       setStatus("error");
     }
-  }, [subject.name]);
+  }, [subject.name, superBrain]);
 
   // Auto-run when tab mounts
   useEffect(() => {
