@@ -30,12 +30,17 @@ const NAV = [
 const WIRED = new Set([
   "/pkyc","/client-portal","/ubo-declaration","/esg-risk","/vendor-dd","/cdd-review",
   "/employees","/training","/approvals","/screening","/ongoing-monitor","/lbma","/shipments",
-  "/cnmr","/tm-rules","/audit-findings","/bra","/dormant-accounts","/outsourcing-register",
+  "/cnmr","/tm-rules","/audit-findings","/bra","/dormant-accounts","/outsourcing-register","/dpmsr",
   "/coi-register","/voluntary-disclosure","/oversight","/policies","/investigation","/rmi",
   "/ai-incident-playbook","/shadow-ai","/vendor-ai-audit","/access-control",
 ]);
 
 const FALLBACK_TOASTS = ["Add form opened", "Jumped to this page's form", "This page has no add form"];
+
+// Pages that intentionally render an API-gated splash (no ModuleLayout, no
+// action bar) when their backing API is unreachable — true in local smoke
+// runs without a data store. Detected via their "Try again" recovery copy.
+const API_GATED = new Set(["/responsible-sourcing", "/moe-survey"]);
 
 const failures = [];
 const report = [];
@@ -70,6 +75,10 @@ async function phaseA() {
     const p = await newPage();
     try {
       await open(p, href);
+      if (API_GATED.has(href.split("?")[0])) {
+        const splash = await p.getByText("Try again").first().isVisible().catch(() => false);
+        if (splash) { report.push(`${href} → SKIP (API-gated splash — no data store in this environment)`); await p.close(); continue; }
+      }
       // 1. bar present with all 8 buttons
       for (const label of ["ASANA", "AI", "CSV", "▷ RUN", "PDF", "↻ REFRESH", "+ ADD", "↻ SYNC"]) {
         const n = await p.getByRole("button", { name: label, exact: true }).count();
@@ -182,15 +191,17 @@ async function phaseB() {
     if (!filled) fail("/esg-risk", "+ADD did not pre-fill sample entity");
     await p2.close();
   }
-  // B4 — focus fallback on a form-centric page without onAdd
+  // B4 — focus fallback on a form-centric page without onAdd. (/dpmsr moved
+  // to the WIRED set when the rail +ADD became its append-transaction action;
+  // /benford remains a plain lookup form with no add handler.)
   {
     const p = await newPage();
-    await open(p, "/dpmsr");
+    await open(p, "/benford");
     await clickAdd(p);
     const t = await toast(p).textContent().catch(() => null);
-    if (t?.trim() !== "Jumped to this page's form") fail("/dpmsr", `expected jump toast, got ${JSON.stringify(t)}`);
+    if (t?.trim() !== "Jumped to this page's form") fail("/benford", `expected jump toast, got ${JSON.stringify(t)}`);
     const focused = await p.evaluate(() => document.activeElement?.tagName);
-    if (!["INPUT", "TEXTAREA", "SELECT"].includes(focused ?? "")) fail("/dpmsr", `expected form field focused, got ${focused}`);
+    if (!["INPUT", "TEXTAREA", "SELECT"].includes(focused ?? "")) fail("/benford", `expected form field focused, got ${focused}`);
     await p.close();
   }
   // B5 — CSV: table page downloads, non-table page says so
@@ -206,12 +217,13 @@ async function phaseB() {
     const t = await toast(p).textContent().catch(() => null);
     if (t?.trim() !== "CSV downloaded") fail("/oversight[csv]", `expected 'CSV downloaded' toast, got ${JSON.stringify(t)}`);
     await p.close();
+    // /investigation wires the rail CSV button to the evidence-pack export
+    // (onCsv handler) — no toast contract; just assert no crash.
     const p2 = await newPage();
     await open(p2, "/investigation");
     await barBtn(p2, "CSV").click();
     await p2.waitForTimeout(500);
-    const t2 = await toast(p2).textContent().catch(() => null);
-    if (t2?.trim() !== "No table data found on this page") fail("/investigation[csv]", `expected no-table toast, got ${JSON.stringify(t2)}`);
+    if (p2.__errors.length) fail("/investigation[csv]", `page errors: ${p2.__errors.join(" | ")}`);
     await p2.close();
   }
   // B6 — AI opens the MLRO advisor in a new tab

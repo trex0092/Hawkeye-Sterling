@@ -1457,7 +1457,9 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
   // L2: cross-instance Blobs cache. A sibling Lambda may have already paid the
   // 9s fan-out cost for this subject within the TTL window.
-  const l2 = await readNewsBlobCache(cacheKey);
+  // Bounded: on a dead-egress Lambda the Blobs request HANGS rather than
+  // throwing, and an unbounded await here drags the whole 5s SLA past 10s.
+  const l2 = await withDeadline(readNewsBlobCache(cacheKey), 700, null);
   if (l2) {
     NEWS_CACHE.set(cacheKey, { data: l2, expires: Date.now() + NEWS_CACHE_TTL_MS });
     incrementCounter("hawkeye_news_requests_total", 1, { result: "cache_hit_l2" });
@@ -1883,7 +1885,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     // NEVER present cached articles as a fresh, confirmed-clean result.
     let servedFromOutageCache = false;
     if (retrieval === "unavailable" && payload.articleCount === 0) {
-      const stale = await readNewsBlobCacheStale(cacheKey);
+      const stale = await withDeadline(readNewsBlobCacheStale(cacheKey), 800, null);
       if (stale && stale.articleCount > 0) {
         Object.assign(payload, stale, {
           fetchMode: "cached" as const,
@@ -1897,7 +1899,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         });
         servedFromOutageCache = true;
       } else {
-        const prefetch = await readGdeltPrefetchArticles(q);
+        const prefetch = await withDeadline(readGdeltPrefetchArticles(q), 800, null);
         if (prefetch) {
           const top = prefetch.articles.reduce(
             (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),
