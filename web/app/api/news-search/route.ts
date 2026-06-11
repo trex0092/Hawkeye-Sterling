@@ -698,8 +698,23 @@ function applyStateMediCap(severity: Article["severity"], sourceCategory: Articl
 // 250ms) to complete when the direct path hangs — with the previous 800ms
 // budget and the global 1.5s hedge, a hanging direct fetch aborted the call
 // before the relay could start, collapsing brownouts into "0/N reachable".
-const FEED_TIMEOUT_MS = 1_200;
+// Per-feed budget. This must be long enough for the edge-relay round trip
+// (Lambda → Netlify edge → Google News → back), because on Netlify the direct
+// datacenter-IP fetch to news.google.com is reliably blocked — the relay's
+// clean edge IP is the ONLY path that returns articles. At 1,200ms the relay's
+// extra hop couldn't finish before this abort fired, so every locale came back
+// "network" and the dossier showed 0 articles (confirmed live 2026-06-11:
+// feedsAttempted 101, feedFailures {network:101}). 2,800ms gives the relay
+// room while staying under the 4s fan-out timebox (which still hard-caps the
+// total), and the 20-article early-exit means a single successful relay short-
+// circuits the fan-out in ~1-2s. Override with NEWS_FEED_TIMEOUT_MS.
+const FEED_TIMEOUT_MS = ((): number => {
+  const raw = Number(process.env["NEWS_FEED_TIMEOUT_MS"]);
+  return Number.isFinite(raw) && raw > 0 ? raw : 2_800;
+})();
 // Hedge delays sized to each feed class budget (see newsFetch relayHedgeMs).
+// Kept short so the relay starts early when the direct datacenter fetch is
+// blocked — the relay then has nearly the full FEED_TIMEOUT_MS to answer.
 const LOCALE_RELAY_HEDGE_MS = 250;
 const REGIONAL_RELAY_HEDGE_MS = 400;
 
