@@ -191,15 +191,17 @@ async function phaseB() {
     if (!filled) fail("/esg-risk", "+ADD did not pre-fill sample entity");
     await p2.close();
   }
-  // B4 — focus fallback on a form-centric page without onAdd
+  // B4 — focus fallback on a form-centric page without onAdd. (/dpmsr moved
+  // to the WIRED set when the rail +ADD became its append-transaction action;
+  // /benford remains a plain lookup form with no add handler.)
   {
     const p = await newPage();
-    await open(p, "/dpmsr");
+    await open(p, "/benford");
     await clickAdd(p);
     const t = await toast(p).textContent().catch(() => null);
-    if (t?.trim() !== "Jumped to this page's form") fail("/dpmsr", `expected jump toast, got ${JSON.stringify(t)}`);
+    if (t?.trim() !== "Jumped to this page's form") fail("/benford", `expected jump toast, got ${JSON.stringify(t)}`);
     const focused = await p.evaluate(() => document.activeElement?.tagName);
-    if (!["INPUT", "TEXTAREA", "SELECT"].includes(focused ?? "")) fail("/dpmsr", `expected form field focused, got ${focused}`);
+    if (!["INPUT", "TEXTAREA", "SELECT"].includes(focused ?? "")) fail("/benford", `expected form field focused, got ${focused}`);
     await p.close();
   }
   // B5 — CSV: table page downloads, non-table page says so
