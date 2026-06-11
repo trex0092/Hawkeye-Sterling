@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { loadCandidates } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, missingCoreSanctionsLists } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 
 const _BATCH_CONCURRENCY = 5; // max concurrent rows when using external validators
@@ -185,7 +185,24 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   // Load live watchlist corpus once per batch request (cached in-process).
-  const CANDIDATES = await loadCandidates();
+  // Refuse the batch if a core sanctions list is missing — a degraded corpus
+  // would mark sanctioned rows CLEAR across the whole file (operator policy
+  // 2026-06-11: never a verdict against partial coverage).
+  const { candidates: CANDIDATES, health: corpusHealth } = await loadCandidatesWithHealth();
+  const missingCore = missingCoreSanctionsLists(new Set(CANDIDATES.map((c) => c.listId)));
+  if (missingCore.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        errorCode: "LISTS_MISSING",
+        degraded: true,
+        missingLists: missingCore,
+        message: `Batch screening cannot proceed: core sanctions list(s) not loaded (${missingCore.join(", ")}). Coverage would be incomplete — refusing to screen. Retry shortly; the corpus reloads automatically.`,
+        dataSourceHealth: { source: corpusHealth.source, healthy: corpusHealth.healthy, failedAdapters: corpusHealth.failedAdapters },
+      },
+      { status: 503, headers: gateHeaders },
+    );
+  }
 
   let body: Body;
   try {

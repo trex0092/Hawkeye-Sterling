@@ -64,14 +64,24 @@ function getCacheTtlMs(): number {
   return 5 * 60 * 1_000;
 }
 
-// Per-request Blobs read timeout. Set CANDIDATES_BLOB_TIMEOUT_MS to override.
+// Per-list Blobs read timeout. Set CANDIDATES_BLOB_TIMEOUT_MS to override.
+//
+// This must be large enough to fetch+parse the LARGEST list blob. OFAC SDN
+// alone is ~19k entities (multi-MB JSON); the previous 1,200ms default timed
+// out on exactly the four biggest lists (OFAC SDN, EU FSF, UK OFSI, UAE EOCN)
+// while the small ones (UN, OFAC-Cons) loaded — silently dropping the most
+// important sanctions coverage to the static seed (incident 2026-06-11).
+// All lists are read in a single Promise.all, so the load wall-clock is the
+// slowest single list, not the sum; a missing key returns null immediately
+// rather than waiting out the timeout, so raising this only costs latency on
+// the genuinely-large blobs (and only on a cold load — results cache 5min).
 function getBlobTimeoutMs(): number {
   const raw = process.env["CANDIDATES_BLOB_TIMEOUT_MS"];
   if (raw) {
     const parsed = Number(raw);
     if (Number.isFinite(parsed) && parsed > 0) return parsed;
   }
-  return 1_200;
+  return 8_000;
 }
 
 /**
@@ -318,10 +328,18 @@ async function loadFromBlobs(): Promise<BlobsLoadResult | null> {
  * Merges both: live list entries take precedence; seed corpus entries not
  * present in the live data are appended so known demo subjects always render.
  */
+// A degraded load (static seed, or a primary feed missing) must NOT be cached
+// for the full TTL — otherwise one slow cold-start Blobs read locks the whole
+// instance onto the seed corpus for 5 minutes. Re-attempt soon so coverage
+// converges back to the full lists as soon as Blobs responds.
+const UNHEALTHY_CACHE_TTL_MS = 20_000;
+
 export async function loadCandidatesWithHealth(): Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> {
   const now = Date.now();
-  const cacheTtlMs = getCacheTtlMs();
-  if (_cached && _cachedHealth && now - _cachedAt < cacheTtlMs) {
+  const effectiveTtlMs = _cachedHealth && !_cachedHealth.healthy
+    ? Math.min(UNHEALTHY_CACHE_TTL_MS, getCacheTtlMs())
+    : getCacheTtlMs();
+  if (_cached && _cachedHealth && now - _cachedAt < effectiveTtlMs) {
     return { candidates: _cached, health: _cachedHealth };
   }
   if (_loadInFlight) return _loadInFlight;
@@ -339,6 +357,20 @@ export async function loadCandidates(): Promise<QuickScreenCandidate[]> {
 /** Returns the most recently loaded health status without triggering a reload. */
 export function getCandidateLoadHealth(): CandidateLoadHealth | null {
   return _cachedHealth;
+}
+
+// Core global sanctions regimes that MUST be present in the corpus before any
+// screening verdict is produced. Operator policy 2026-06-11: a verdict against
+// partial coverage is never acceptable — if any of these is missing the screen
+// is refused rather than risking a false CLEAR. UAE EOCN/LTL are deliberately
+// excluded (they depend on operator seed-path env vars and are tracked as a
+// separate gap); requiring them would brick screening over a known config item.
+export const CORE_SANCTIONS_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi"] as const;
+
+/** Returns the core sanctions lists absent from the loaded corpus (empty = full coverage). */
+export function missingCoreSanctionsLists(loadedListIds: Iterable<string>): string[] {
+  const set = loadedListIds instanceof Set ? loadedListIds : new Set(loadedListIds);
+  return CORE_SANCTIONS_LISTS.filter((id) => !set.has(id));
 }
 
 async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> {
