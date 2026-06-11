@@ -120,7 +120,11 @@ async function main() {
       system: `You are a security reviewer for Hawkeye Sterling, a production AML/CFT compliance platform.
 Your task is to review a git diff for violations of the platform's architecture invariants.
 Be precise and conservative — only flag clear violations, not hypothetical ones.
-Respond with valid JSON only.`,
+You see ONLY the diff hunks, not the full files: never flag the ABSENCE of code
+(e.g. a missing enforce(req) call or audit-chain write) unless the diff itself
+shows the relevant region — code outside the hunks may already satisfy the
+invariant. Only flag violations introduced by lines visible in the diff.
+Respond with raw JSON only — no markdown fences, no prose before or after.`,
       messages: [
         {
           role: "user",
