@@ -1,4 +1,4 @@
-// Next.js proxy (edge) — three responsibilities:
+// Next.js middleware (edge) — three responsibilities:
 // 1. Session guard: redirect unauthenticated users to /login.
 // 2. API token injection: for same-origin API calls, inject the server-side
 //    ADMIN_TOKEN so it is never shipped to the browser JS bundle.
@@ -8,6 +8,22 @@
 //    `'unsafe-inline'`. This replaces the static CSP previously set in
 //    netlify.toml for HTML routes (the static CSP was relaxed to
 //    'unsafe-inline' as an emergency unblock — see commit ca4a0a7).
+//
+// FILENAME IS LOAD-BEARING — middleware.ts, NOT proxy.ts. Next 16 renamed
+// middleware to "proxy" and compiles proxy.ts for the Node runtime only:
+// it lands in functions-config-manifest.json (`/_middleware`, runtime
+// "nodejs") and leaves middleware-manifest.json EMPTY. @netlify/plugin-nextjs
+// 5.15.11's node-middleware path silently failed to deploy that entry —
+// production deploy 6a2a510e (2026-06-11) shipped zero middleware functions,
+// so the session guard, CSP, and ADMIN_TOKEN injection were all dead in prod
+// while `next dev`/`next start` (and therefore local E2E) kept honoring
+// proxy.ts. The deprecated-but-supported middleware.ts convention compiles
+// for the EDGE runtime into middleware-manifest.json, which the plugin
+// deploys as a Netlify Edge Function in front of the CDN — required anyway,
+// because the dashboard pages are static-prerendered and served from the CDN
+// without ever reaching a Lambda-hosted Node middleware. The `next build`
+// deprecation warning for middleware.ts is accepted until the plugin's
+// node-middleware (proxy.ts) path is proven on this site.
 
 import { NextRequest, NextResponse } from "next/server";
 
@@ -61,7 +77,12 @@ function isPublic(pathname: string): boolean {
 // that handle dynamic auth-gated data set their own no-store.
 function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?: string): void {
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
+  // SAMEORIGIN, not DENY — the Intelligence Hub renders module pages inside
+  // same-origin <iframe src="…?embed=1"> tabs, and DENY blocks even
+  // same-origin framing. Matches the posture netlify.toml declares for
+  // static assets; cross-origin framing stays blocked (paired with CSP
+  // frame-ancestors 'self' below).
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
@@ -117,7 +138,9 @@ function buildCspHeader(_nonce: string): string {
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
     "connect-src 'self' https://app.asana.com",
-    "frame-ancestors 'none'",
+    // 'self', not 'none' — Intelligence Hub embeds module pages in
+    // same-origin iframes (see applySecurityHeaders).
+    "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
     "upgrade-insecure-requests",
@@ -220,7 +243,7 @@ function corsResponse(): NextResponse {
   return res;
 }
 
-export async function proxy(req: NextRequest): Promise<NextResponse> {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const requestId = resolveRequestId(req);
 

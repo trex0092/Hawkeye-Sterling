@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { getAnthropicClient } from "@/lib/server/llm";
 import { enforce } from "@/lib/server/enforce";
 import { sanitizeField, sanitizeText } from "@/lib/server/sanitize-prompt";
-import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, ROLE_MODULES, type UserRole, type AccessUser } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, appendPermissionLog, isUserStoreUnavailable, ROLE_MODULES, type UserRole, type AccessUser } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
 import { tenantIdFromGate } from "@/lib/server/tenant";
@@ -90,6 +90,11 @@ export async function POST(req: Request) {
     updatedUsers[userIdx] = updatedUser;
     await saveUsers(updatedUsers);
     return { kind: 'ok', updatedUser, oldRole, users: updatedUsers };
+  }).catch((err: unknown): LockResult => {
+    if (isUserStoreUnavailable(err)) {
+      return { kind: 'error', status: 503, message: "User directory temporarily unavailable — try again shortly" };
+    }
+    throw err;
   });
 
   if (lockResult.kind === 'error') {

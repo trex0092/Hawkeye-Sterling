@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers, withUsersLock } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, isUserStoreUnavailable, userStoreUnavailableResponse } from "../_store";
 import {
   generateSalt,
   hashPassword,
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
     | { status: 'not_found' }
     | { status: 'no_password' }
     | { status: 'wrong_password' }
+    | { status: 'store_unavailable' }
     | { status: 'saved' };
 
   const changeResult = await withUsersLock<ChangeResult>(async () => {
@@ -79,8 +80,14 @@ export async function POST(req: Request) {
     updatedUsers[idx] = { ...user, passwordHash: hash, passwordSalt: salt, pwVersion: (user.pwVersion ?? 0) + 1 };
     await saveUsers(updatedUsers);
     return { status: 'saved' };
+  }).catch((err: unknown): ChangeResult => {
+    if (isUserStoreUnavailable(err)) return { status: 'store_unavailable' };
+    throw err;
   });
 
+  if (changeResult.status === 'store_unavailable') {
+    return userStoreUnavailableResponse();
+  }
   if (changeResult.status === 'not_found' || changeResult.status === 'no_password' || changeResult.status === 'wrong_password') {
     return NextResponse.json({ ok: false, error: "Current password is incorrect or account not found" }, { status: 403 });
   }

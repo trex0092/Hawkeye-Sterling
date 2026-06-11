@@ -291,7 +291,7 @@ async function _enforce(
   const anonymous = plaintext === null;
 
   // Portal bypass: if the caller presents ADMIN_TOKEN (injected server-side
-  // by web/proxy.ts for same-origin portal requests — never exposed in
+  // by web/middleware.ts for same-origin portal requests — never exposed in
   // the browser bundle) skip API-key lookup and grant enterprise-tier rate
   // limits without consuming monthly quota.
   const adminToken = process.env["ADMIN_TOKEN"];
@@ -341,7 +341,7 @@ async function _enforce(
 
   // Session cookie path: portal same-origin requests that arrive without an
   // Authorization header (e.g. when ADMIN_TOKEN is not set in the deployment
-  // env and proxy.ts skips token injection) can still authenticate via the
+  // env and middleware.ts skips token injection) can still authenticate via the
   // HMAC-signed hs_session cookie issued by /api/auth/login.
   // This is the fallback that makes the portal work correctly regardless of
   // whether ADMIN_TOKEN is configured in Netlify env vars.

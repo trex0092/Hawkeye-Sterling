@@ -30,6 +30,7 @@ import {
   SESSION_NO_COOKIE_EVENT,
   reportNoSession,
 } from "@/lib/client/session-expiry";
+import { setAuthState } from "@/lib/client/auth-state";
 
 const WARN_AT_SECS = [15 * 60, 5 * 60] as const;
 
@@ -108,7 +109,13 @@ export function SessionExpiryWatcher() {
       })
       .then((d) => {
         if (!d || dead) return;
-        if (!d.ok || !d.user?.sessionExp) return;
+        if (!d.ok) return;
+        // Confirmed-live session — release the auth-gated pollers
+        // (CaseVaultSyncer, useAlerts, regulatory ticker). A 503/network
+        // failure never reaches here, so a store blip leaves the state
+        // at "unknown" instead of faking a logout.
+        setAuthState("authenticated");
+        if (!d.user?.sessionExp) return;
         expRef.current = d.user.sessionExp;
         // Valid session — re-enable future expiry prompts.
         setAuthPromptDismissed(false);

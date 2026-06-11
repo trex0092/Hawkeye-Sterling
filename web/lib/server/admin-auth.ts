@@ -2,7 +2,7 @@
 // Returns null on success; returns a NextResponse to short-circuit on failure.
 //
 // Two authentication paths (tried in order):
-//   1. ADMIN_TOKEN bearer token injected by web/proxy.ts for same-origin portal
+//   1. ADMIN_TOKEN bearer token injected by web/middleware.ts for same-origin portal
 //      requests, or supplied directly by external operator tooling.
 //   2. Session-cookie fallback: a valid hs_session cookie issued by
 //      /api/auth/login.  Mirrors the session-cookie path added to enforce.ts
@@ -29,7 +29,7 @@ function constantTimeEq(a: string, b: string): boolean {
 
 export function adminAuth(req: Request): NextResponse | null {
   // Path 1: ADMIN_TOKEN via Authorization header.
-  // Injected server-side by web/proxy.ts for same-origin portal requests;
+  // Injected server-side by web/middleware.ts for same-origin portal requests;
   // also used directly by external operator tooling and cron jobs.
   const expected = process.env["ADMIN_TOKEN"];
   if (expected) {
@@ -40,7 +40,7 @@ export function adminAuth(req: Request): NextResponse | null {
 
   // Path 2: Session-cookie fallback.
   // Portal API calls that arrive without an Authorization header (e.g. when
-  // isSameOrigin detection in proxy.ts skips ADMIN_TOKEN injection) can still
+  // isSameOrigin detection in middleware.ts skips ADMIN_TOKEN injection) can still
   // authenticate via the HMAC-signed hs_session cookie issued at login.
   // verifySession() is synchronous; wrapped in try/catch so a missing or
   // too-short SESSION_SECRET does not throw past the caller.

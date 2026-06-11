@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 import { NextResponse } from "next/server";
-import { loadUsers, saveUsers, withUsersLock } from "../_store";
+import { loadUsers, saveUsers, withUsersLock, isUserStoreUnavailable, userStoreUnavailableResponse } from "../_store";
 import { generateSalt, hashPassword, verifySession, SESSION_COOKIE } from "@/lib/server/auth";
 import { cookies } from "next/headers";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   let privilegeViolation = false;
   let savedUsername: string | undefined;
 
-  await withUsersLock(async () => {
+  const storeOk = await withUsersLock(async () => {
     const users = await loadUsers();
     const idx = users.findIndex((u) => u.id === userId);
     if (idx === -1) { notFound = true; return; }
@@ -68,7 +68,11 @@ export async function POST(req: Request) {
     };
     await saveUsers(updatedUsers);
     savedUsername = updatedUsers[idx]!.username;
+  }).then(() => true, (err: unknown) => {
+    if (isUserStoreUnavailable(err)) return false;
+    throw err;
   });
+  if (!storeOk) return userStoreUnavailableResponse();
 
   if (notFound) {
     return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });

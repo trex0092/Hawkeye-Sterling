@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { DesignationAlert } from "@/lib/server/alerts-store";
 import { loadBellEvents, markBellEventRead } from "@/lib/bell-events";
 import { pushToast } from "@/lib/toast-bus";
+import { subscribeAuthState, isAuthHaltStatus } from "@/lib/client/auth-state";
 
 const POLL_INTERVAL_MS = 60_000;
 const CACHE_KEY = "hawkeye.alerts.cache.v1";
@@ -178,9 +179,23 @@ export function useAlerts(): UseAlertsReturn {
     saveSeen(seenRef.current);
   }, []);
 
+  const stopPolling = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   const fetch_ = useCallback(async () => {
     try {
       const res = await fetch("/api/alerts", { cache: "no-store" });
+      if (isAuthHaltStatus(res.status)) {
+        // Not signed in — polling would just 401 every minute forever
+        // (mirrors ActivityFeed's halt rule). The auth-state subscription
+        // in the mount effect restarts the interval after a sign-in.
+        stopPolling();
+        return;
+      }
       if (!res.ok) return;
       const data = (await res.json()) as { ok: boolean; alerts?: DesignationAlert[] };
       if (data.ok && Array.isArray(data.alerts)) {
@@ -188,7 +203,13 @@ export function useAlerts(): UseAlertsReturn {
       }
     } catch { /* network error — keep stale */ }
     finally { setLoading(false); }
-  }, [remerge]);
+  }, [remerge, stopPolling]);
+
+  const startPolling = useCallback(() => {
+    if (timerRef.current !== null) return;
+    void fetch_();
+    timerRef.current = setInterval(() => { void fetch_(); }, POLL_INTERVAL_MS);
+  }, [fetch_]);
 
   const onStorage = useCallback((e: StorageEvent) => {
     if (e.key === "hawkeye.bell.events.v1") {
@@ -208,14 +229,26 @@ export function useAlerts(): UseAlertsReturn {
     const cached = loadCache();
     remerge(cached);
     setLoading(true);
-    void fetch_();
-    timerRef.current = setInterval(() => { void fetch_(); }, POLL_INTERVAL_MS);
+    // Poll only while signed in: start on "authenticated" (replayed
+    // immediately if the session was already confirmed), halt on
+    // "unauthenticated", and stay dormant while "unknown" so an
+    // anonymous page load makes zero /api/alerts requests. Cached
+    // alerts above keep the bell populated regardless.
+    const unsubscribeAuth = subscribeAuthState((state) => {
+      if (state === "authenticated") {
+        startPolling();
+      } else if (state === "unauthenticated") {
+        stopPolling();
+        setLoading(false);
+      }
+    });
     window.addEventListener("storage", onStorage);
     return () => {
-      if (timerRef.current !== null) clearInterval(timerRef.current);
+      unsubscribeAuth();
+      stopPolling();
       window.removeEventListener("storage", onStorage);
     };
-  }, [fetch_, remerge, onStorage]);
+  }, [remerge, onStorage, startPolling, stopPolling]);
 
   const dismiss = useCallback(async (id: string) => {
     dismissedRef.current = new Set([...dismissedRef.current, id]);

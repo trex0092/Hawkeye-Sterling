@@ -4,14 +4,16 @@ import { readLastChangeAt, loadAllCases } from "@/lib/server/case-vault";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 25;
 
 // GET /api/cases/stream
 //
 // Server-Sent Events feed of case-vault changes for the authenticated
 // tenant. The browser opens an EventSource; this handler holds the
-// connection up to ~24s (Netlify Functions cap is 26s; 24s leaves
-// headroom for the close handshake).
+// connection up to ~18s. Netlify's synchronous-function cap is ~26s and
+// it kills the Lambda (502 Bad Gateway) when the hold plus the change
+// snapshot's serialization crosses it — the previous 24s hold left too
+// little headroom and produced intermittent 502s in production.
 //
 // Inside the hold window, we poll the tenant's _meta blob every 2s.
 // When `lastChangeAt` advances past the value the client sent (via
@@ -24,8 +26,8 @@ export const maxDuration = 30;
 // receiving the latest snapshot if more changes happened, or holding
 // again if the server is quiet.
 //
-// If 24s elapse with no change, we emit a `ping` event and close so
-// the EventSource can re-establish the connection (browsers throttle
+// If the hold elapses with no change, we emit a `ping` event and close
+// so the EventSource can re-establish the connection (browsers throttle
 // reconnects so this is gentle on the function budget too).
 //
 // Auth: EventSource doesn't support custom headers in browsers, so
@@ -33,7 +35,7 @@ export const maxDuration = 30;
 // param. Same `enforce()` gate as the other case routes — keys map
 // to tenant-scoped vault paths.
 
-const HOLD_MS = 24_000;
+const HOLD_MS = 18_000;
 const POLL_INTERVAL_MS = 2_000;
 
 function sseHeaders(): Record<string, string> {

@@ -24,6 +24,8 @@ import {
   saveUsers,
   withUsersLock,
   appendPermissionLog,
+  isUserStoreUnavailable,
+  userStoreUnavailableResponse,
   type AccessSession,
 } from "../_store";
 import { adminAuth } from "@/lib/server/admin-auth";
@@ -114,6 +116,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ ok: true, revoked: id, userId: target.userId, logEntry });
   } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
     console.error("[access/sessions] DELETE failed:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: false, error: "Failed to revoke session" }, { status: 500 });
   }

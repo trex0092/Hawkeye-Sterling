@@ -8,7 +8,7 @@ export const maxDuration = 30;
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, SESSION_COOKIE } from "@/lib/server/auth";
-import { loadUsers, saveUsers, withUsersLock } from "@/app/api/access/_store";
+import { loadUsers, saveUsers, withUsersLock, isUserStoreUnavailable, userStoreUnavailableResponse } from "@/app/api/access/_store";
 import { generateTotpSecret, totpUri, verifyTotp, encryptTotpSecret } from "@/lib/server/totp";
 import { setJson, getJson, del } from "@/lib/server/store";
 import { writeAuditChainEntry } from "@/lib/server/audit-chain";
@@ -34,7 +34,13 @@ export async function GET(): Promise<NextResponse> {
 
   const { secret: _s, base32 } = generateTotpSecret();
 
-  const users = await loadUsers();
+  let users: Awaited<ReturnType<typeof loadUsers>>;
+  try {
+    users = await loadUsers();
+  } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
+    throw err;
+  }
   const user = users.find((u) => u.id === session.userId);
   if (!user) return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
 
@@ -72,12 +78,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const encrypted = encryptTotpSecret(pending.base32);
 
-  await withUsersLock(async () => {
-    const users = await loadUsers();
-    await saveUsers(users.map((u) =>
-      u.id === session.userId ? { ...u, totpSecret: encrypted, totpEnabled: true } : u,
-    ));
-  });
+  try {
+    await withUsersLock(async () => {
+      const users = await loadUsers();
+      await saveUsers(users.map((u) =>
+        u.id === session.userId ? { ...u, totpSecret: encrypted, totpEnabled: true } : u,
+      ));
+    });
+  } catch (err) {
+    if (isUserStoreUnavailable(err)) return userStoreUnavailableResponse();
+    throw err;
+  }
 
   // Clean up pending record.
   await del(`${PENDING_KEY_PREFIX}${session.userId}`).catch(() => {});

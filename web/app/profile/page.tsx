@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { apiErrorMessage } from "@/lib/client/error-utils";
+import { isAuthHaltStatus } from "@/lib/client/auth-state";
 
 interface UserProfile {
   id: string;
@@ -39,9 +40,17 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me")
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then((d: { ok: boolean; user?: UserProfile; error?: string }) => {
+      .then((r) => {
+        // Signed out is an expected state, not an exception — the site-wide
+        // sign-in modal (SessionExpiryWatcher) owns that UX; don't add a
+        // console error on top.
+        if (isAuthHaltStatus(r.status)) return null;
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d: { ok: boolean; user?: UserProfile; error?: string } | null) => {
         if (cancelled) return;
+        if (d === null) { setLoadError("Sign in to view your profile"); return; }
         if (d.ok && d.user) setProfile(d.user);
         else setLoadError(d.error ?? "Failed to load profile");
       })

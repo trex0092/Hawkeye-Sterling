@@ -154,7 +154,7 @@ export type Permission = keyof typeof ROLE_PERMISSIONS[UserRole];
 // ── Service principals — machine identities (FRAMEWORK_COVERAGE.md §5 #6) ──
 //
 // enforce() mints exactly two non-human identities: "portal_admin" (ADMIN_TOKEN,
-// injected server-side by web/proxy.ts for same-origin portal requests) and
+// injected server-side by web/middleware.ts for same-origin portal requests) and
 // "cron_internal" (SANCTIONS_CRON_TOKEN, used by Netlify scheduled functions).
 // This registry makes them first-class principals: each carries an explicit
 // permission set and a stable audit-actor string, so authorization decisions
@@ -187,7 +187,7 @@ export const SERVICE_PRINCIPALS: Record<ServicePrincipalId, ServicePrincipal> = 
     kind: "service",
     label: "Portal Proxy (server-side)",
     auditActor: "portal_admin",
-    origin: "ADMIN_TOKEN injected by web/proxy.ts for same-origin portal requests",
+    origin: "ADMIN_TOKEN injected by web/middleware.ts for same-origin portal requests",
     permissions: {
       canScreen: true,
       canFreezeSubject: false,

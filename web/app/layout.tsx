@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { CaseVaultSyncer } from "@/components/CaseVaultSyncer";
 import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
+import { SessionExpiryWatcher } from "@/components/layout/SessionExpiryWatcher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { AlertToast } from "@/components/layout/AlertToast";
@@ -32,7 +33,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Picked up from proxy.ts — empty string fallback keeps dev hot-reload
+  // Picked up from middleware.ts — empty string fallback keeps dev hot-reload
   // working when the middleware hasn't run (e.g. static export probes).
   const nonce = (await headers()).get("x-nonce") ?? "";
 
@@ -60,6 +61,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="flex flex-col min-h-screen">
         <LocaleProvider>
+          {/* Must mount before the pollers below have any effect: its
+              /api/auth/me probe is what moves the client auth state off
+              "unknown", and its fetch interceptor + modal own the
+              session-expired UX. It renders nothing while the session is
+              healthy. */}
+          <SessionExpiryWatcher />
           <CaseVaultSyncer />
           <ServiceWorkerRegistrar />
           <AlertToast />

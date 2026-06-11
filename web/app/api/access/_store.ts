@@ -13,9 +13,10 @@
 //   users/all.v1.json        — AccessUser[] (includes hashed credentials)
 //   permlogs/all.v1.json     — PermissionLogEntry[]
 
+import { NextResponse } from "next/server";
 import { generateSalt, hashPassword } from "@/lib/server/auth";
 import { createHmac } from "node:crypto";
-import { getJson, setJson } from "@/lib/server/store";
+import { getJson, getJsonChecked, setJson } from "@/lib/server/store";
 
 export type UserRole = "compliance" | "management" | "logistics" | "trading" | "accounts" | "mlro";
 
@@ -187,10 +188,42 @@ export function withUsersLock<T>(fn: () => Promise<T>): Promise<T> {
 
 // ── User store helpers ────────────────────────────────────────────────────────
 
+/** Thrown when the users blob cannot be read (store unreachable or blob
+ *  corrupted). Callers must surface 503 and MUST NOT treat this as "no users
+ *  yet": before this guard, a transient Blobs read failure looked identical
+ *  to a first deploy, so loadUsers() reseeded the blob with the default MLRO
+ *  account — overwriting every real user and invalidating every live session
+ *  (each /api/auth/me then 401'd `session_invalidated` and cleared cookies). */
+export class UserStoreUnavailableError extends Error {
+  constructor(detail: string) {
+    super(`User store unavailable: ${detail}`);
+    this.name = "UserStoreUnavailableError";
+  }
+}
+
+export function isUserStoreUnavailable(err: unknown): err is UserStoreUnavailableError {
+  return err instanceof UserStoreUnavailableError;
+}
+
+/** Uniform 503 for routes interrupted by an unreadable user store. 503 (not
+ *  401/403) so clients treat it as transient: the session-expiry modal stays
+ *  closed and pollers don't halt. */
+export function userStoreUnavailableResponse(): NextResponse {
+  return NextResponse.json(
+    { ok: false, error: "User directory temporarily unavailable — try again shortly", code: "store_unavailable" },
+    { status: 503 },
+  );
+}
+
 export async function loadUsers(): Promise<AccessUser[]> {
-  const persisted = await getJson<AccessUser[]>(USERS_BLOB_KEY);
-  if (Array.isArray(persisted) && persisted.length > 0) return persisted;
-  // First deploy — seed with the default MLRO account and persist immediately.
+  const read = await getJsonChecked<AccessUser[]>(USERS_BLOB_KEY);
+  if (!read.ok) throw new UserStoreUnavailableError(read.error);
+  if (read.value !== null && !Array.isArray(read.value)) {
+    throw new UserStoreUnavailableError("users blob is not an array");
+  }
+  if (Array.isArray(read.value) && read.value.length > 0) return read.value;
+  // Confirmed-empty store (true first deploy) — seed the default MLRO account
+  // and persist immediately.
   const seed = buildDefaultLuisa();
   await setJson(USERS_BLOB_KEY, [seed]);
   return [seed];
