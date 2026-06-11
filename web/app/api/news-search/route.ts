@@ -1931,7 +1931,13 @@ export async function GET(req: Request): Promise<NextResponse> {
     // NEVER present cached articles as a fresh, confirmed-clean result.
     let servedFromOutageCache = false;
     if (retrieval === "unavailable" && payload.articleCount === 0) {
-      const stale = await withDeadline(readNewsBlobCacheStale(cacheKey), 800, null);
+      // Both fallback reads race in PARALLEL — sequential awaits added up to
+      // 1.6s after the 4s timebox and pushed total-outage responses past the
+      // 5s SLA. Stale dossier wins when both resolve.
+      const [stale, prefetch] = await Promise.all([
+        withDeadline(readNewsBlobCacheStale(cacheKey), 800, null),
+        withDeadline(readGdeltPrefetchArticles(q), 800, null),
+      ]);
       if (stale && stale.articleCount > 0) {
         Object.assign(payload, stale, {
           fetchMode: "cached" as const,
@@ -1945,7 +1951,6 @@ export async function GET(req: Request): Promise<NextResponse> {
         });
         servedFromOutageCache = true;
       } else {
-        const prefetch = await withDeadline(readGdeltPrefetchArticles(q), 800, null);
         if (prefetch) {
           const top = prefetch.articles.reduce(
             (acc, a) => (severityOrder(a.severity) > severityOrder(acc) ? a.severity : acc),
