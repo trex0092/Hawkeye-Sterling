@@ -159,11 +159,38 @@ export function isInMemoryFallback(): boolean {
   return usingInMemoryFallback;
 }
 
+// ── Bounded operations ────────────────────────────────────────────────────────
+// The Blobs client fails SOFT on thrown errors but a degraded-egress Lambda
+// HANGS instead of throwing — and an unbounded store await inside a screening
+// route spends the whole 5s SLA (observed live: news-search at 9.5-10.6s).
+// Every operation below is raced against a deadline; a timeout rejects into
+// the existing catch paths so degraded semantics stay identical.
+const STORE_READ_TIMEOUT_MS = 1_500;
+const STORE_WRITE_TIMEOUT_MS = 2_000;
+const STORE_LIST_TIMEOUT_MS = 2_500;
+
+class StoreTimeoutError extends Error {
+  constructor(op: string, ms: number) {
+    super(`${op} timed out after ${ms}ms`);
+    this.name = "StoreTimeoutError";
+  }
+}
+
+function bounded<T>(p: Promise<T>, ms: number, op: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new StoreTimeoutError(op, ms)), ms);
+    p.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); },
+    );
+  });
+}
+
 export async function getJson<T>(key: string): Promise<T | null> {
   const store = getStore();
   let raw: string | null = null;
   try {
-    raw = await store.get(key);
+    raw = await bounded(store.get(key), STORE_READ_TIMEOUT_MS, `get(${key})`);
   } catch (err) {
     console.warn(`[store] getJson(${key}) read failed:`, err instanceof Error ? err.message : err);
     return null;
@@ -194,7 +221,9 @@ export async function getJsonChecked<T>(key: string): Promise<StoreReadResult<T>
   const store = getStore();
   let raw: string | null = null;
   try {
-    raw = await store.get(key);
+    // A timeout rejects → {ok:false}: a hung store must look like a FAILED
+    // read, never like "key missing", or seed-on-empty callers overwrite data.
+    raw = await bounded(store.get(key), STORE_READ_TIMEOUT_MS, `get(${key})`);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.warn(`[store] getJsonChecked(${key}) read failed:`, detail);
@@ -215,7 +244,7 @@ export async function getJsonChecked<T>(key: string): Promise<StoreReadResult<T>
 export async function setJson<T>(key: string, value: T): Promise<void> {
   const store = getStore();
   try {
-    await store.set(key, JSON.stringify(value));
+    await bounded(store.set(key, JSON.stringify(value)), STORE_WRITE_TIMEOUT_MS, `set(${key})`);
   } catch (err) {
     console.warn(`[store] setJson(${key}) failed:`, err instanceof Error ? err.message : err);
   }
@@ -224,7 +253,7 @@ export async function setJson<T>(key: string, value: T): Promise<void> {
 export async function del(key: string): Promise<void> {
   const store = getStore();
   try {
-    await store.delete(key);
+    await bounded(store.delete(key), STORE_WRITE_TIMEOUT_MS, `del(${key})`);
   } catch (err) {
     console.warn(`[store] del(${key}) failed:`, err instanceof Error ? err.message : err);
   }
@@ -234,7 +263,7 @@ export async function listKeys(prefix?: string): Promise<string[]> {
   const store = getStore();
   try {
     const opts = prefix ? { prefix } : {};
-    const result = await store.list(opts);
+    const result = await bounded(store.list(opts), STORE_LIST_TIMEOUT_MS, `list(${prefix ?? ""})`);
     return result.blobs.map((b) => b.key);
   } catch (err) {
     // Loud-log: silently returning [] hides outages and makes "no data"
