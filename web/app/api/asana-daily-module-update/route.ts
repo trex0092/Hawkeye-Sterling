@@ -2,9 +2,6 @@ import { NextResponse } from "next/server";
 import { MODULE_FREQUENCY, type AsanaModuleTask } from "@/lib/server/asana-module-tasks";
 import { MODULE_BOARDS, WORKSPACE_GIDS, boardKeyForModule } from "@/lib/server/asana-workspace-map";
 import { gatherFindingSignals, findingsForModule } from "@/lib/server/module-findings";
-import { composeStatusCardSvg, composeSummaryGridSvg, renderPng, type AttestationState } from "@/lib/server/attestation-chart";
-import { attachPngToTask } from "@/lib/server/asana-attachments";
-import { recordAndGetPrior, readHistory } from "@/lib/server/attestation-history";
 
 // Module compliance attestation poster.
 //
@@ -88,81 +85,6 @@ function escalationPath(owner: string): string {
 const STANDING_FRAMEWORK =
   "Federal Decree-Law No.10/2025 & Cabinet Resolution No. (134) of 2025; " +
   "FATF Recommendations & Methodology; MoE AML/CFT Guidance for DNFBPs/DPMS.";
-
-// ---- Status-card graphic (CCL-2026-023) ------------------------------------
-// The graphic is ADDITIVE evidence: any render/upload failure falls back to
-// the plain-text narrative post and never blocks the attestation.
-
-const BOARD_BY_KEY = new Map(MODULE_BOARDS.map((b) => [b.key, b]));
-
-function stateForInput(input: ReportInput): AttestationState {
-  if (input.kind === "MANUAL") return "M";
-  if (/exception/i.test(input.status)) return "E";
-  if (/active/i.test(input.status)) return "A";
-  return "C";
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-// Renders the module's status card, attaches it to the task, and returns the
-// attachment gid — or null on any failure (fail-open, logged).
-async function attachStatusCard(
-  taskGid: string,
-  meta: AsanaModuleTask,
-  date: string,
-  input: ReportInput,
-  asanaToken: string,
-): Promise<string | null> {
-  try {
-    const board = BOARD_BY_KEY.get(meta.key);
-    if (!board) return null;
-    const state = stateForInput(input);
-    const prior = await recordAndGetPrior(meta.key, date, state);
-    const ref = `HS-${input.kind === "MANUAL" ? "MAN" : "ATT"}-${date}-${meta.key}`;
-    const svg = composeStatusCardSvg({
-      num: board.num,
-      label: board.label,
-      group: board.group,
-      date,
-      ref,
-      state,
-      statusLine: input.status,
-      findingsLine: input.findings.split(/(?<=\.)\s/)[0] ?? input.findings,
-      riskRating: input.riskRating,
-      cadence: MODULE_FREQUENCY[meta.key] ?? "Per applicable control cadence",
-      owner: meta.owner,
-      retention: meta.retention,
-      history: prior,
-    });
-    return await attachPngToTask(taskGid, `${ref}.png`, renderPng(svg), asanaToken);
-  } catch (err) {
-    console.warn(`[asana-daily] status card failed for ${meta.key}:`, err instanceof Error ? err.message : String(err));
-    return null;
-  }
-}
-
-// Posts the narrative with the card embedded inline (html_text referencing the
-// uploaded attachment). If Asana rejects the html payload, falls back to the
-// exact plain-text post used before this feature.
-async function postNarrative(
-  taskGid: string,
-  text: string,
-  attachmentGid: string | null,
-  asanaToken: string,
-): Promise<void> {
-  if (attachmentGid) {
-    const html = `<body>${escapeHtml(text)}\n<img data-asana-gid="${attachmentGid}"/></body>`;
-    try {
-      await postStoryPayload(taskGid, { html_text: html }, asanaToken);
-      return;
-    } catch {
-      // fall through to the plain-text narrative — attachment remains on the task
-    }
-  }
-  await postStory(taskGid, text, asanaToken);
-}
 
 // Builds the full, sectioned audit-ready compliance report posted to a
 // module's Asana task. Kept deterministic so the same control state always
@@ -251,14 +173,6 @@ function buildReport(m: AsanaModuleTask, date: string, input: ReportInput): stri
 }
 
 async function postStory(taskGid: string, text: string, asanaToken: string): Promise<void> {
-  await postStoryPayload(taskGid, { text }, asanaToken);
-}
-
-async function postStoryPayload(
-  taskGid: string,
-  data: { text: string } | { html_text: string },
-  asanaToken: string,
-): Promise<void> {
   // Asana enforces a per-token burst/concurrency limit (~15 simultaneous) and
   // returns 429 for the overflow. Retry 429 / 5xx with backoff (honouring the
   // Retry-After header when present) so a busy moment never silently drops a
@@ -269,7 +183,7 @@ async function postStoryPayload(
     const res = await fetch(`${ASANA_API}/tasks/${taskGid}/stories`, {
       method: "POST",
       headers: { authorization: `Bearer ${asanaToken}`, "content-type": "application/json" },
-      body: JSON.stringify({ data }),
+      body: JSON.stringify({ data: { text } }),
     });
     if (res.ok) return;
     const retryable = res.status === 429 || res.status >= 500;
@@ -326,26 +240,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     const riskRating = typeof body["riskRating"] === "string" ? (body["riskRating"] as string) : undefined;
     const manualInput: ReportInput = { kind: "MANUAL", status, findings, conclusion, ...(riskRating ? { riskRating } : {}) };
     const text = buildReport(target.meta, date, manualInput);
-    // Status-card graphic on the module's own board (additive; never blocks the narrative).
-    const cardGid = target.boardTaskGid
-      ? await attachStatusCard(target.boardTaskGid, target.meta, date, manualInput, asanaToken)
-      : null;
     try {
-      await Promise.all(
-        gids.map((g) =>
-          g === target.boardTaskGid ? postNarrative(g, text, cardGid, asanaToken) : postStory(g, text, asanaToken),
-        ),
-      );
+      await Promise.all(gids.map((g) => postStory(g, text, asanaToken)));
     } catch (err) {
       return NextResponse.json(
         { ok: false, error: "asana_post_failed", detail: err instanceof Error ? err.message : String(err) },
         { status: 502 },
       );
     }
-    return NextResponse.json({
-      ok: true, mode: "manual", module: target.meta.key, posted: gids.length, date,
-      cardAttached: Boolean(cardGid),
-    });
+    return NextResponse.json({ ok: true, mode: "manual", module: target.meta.key, posted: gids.length, date });
   }
 
   // ---- DAILY mode: full attestation to every module ----
@@ -369,7 +272,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   const CONCURRENCY = 4;
   let posted = 0;
   let skippedNoGid = 0;
-  let cardsAttached = 0;
   const failed: string[] = [];
   for (let i = 0; i < targets.length; i += CONCURRENCY) {
     const batch = targets.slice(i, i + CONCURRENCY);
@@ -387,16 +289,9 @@ export async function POST(req: Request): Promise<NextResponse> {
           ...(f?.riskRating ? { riskRating: f.riskRating } : {}),
         };
         const text = buildReport(t.meta, date, input);
-        // Status card on the module's own board (CCL-2026-023). Additive:
-        // any graphic failure degrades to the plain-text narrative.
-        const cardGid = t.boardTaskGid
-          ? await attachStatusCard(t.boardTaskGid, t.meta, date, input, asanaToken)
-          : null;
-        if (cardGid) cardsAttached++;
         for (const gid of gids) {
           try {
-            if (gid === t.boardTaskGid) await postNarrative(gid, text, cardGid, asanaToken);
-            else await postStory(gid, text, asanaToken);
+            await postStory(gid, text, asanaToken);
             posted++;
           } catch (err) {
             failed.push(`${t.meta.key}@${gid}: ${err instanceof Error ? err.message : String(err)}`);
@@ -406,35 +301,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // On the FINAL slice of the day, attach the 88-module summary grid to the
-  // Inbox governance task (states read back from the per-module history store
-  // so earlier slices' results are included). Additive — failures only log.
-  let summaryAttached = false;
-  if (offset + limit >= allTargets.length) {
-    try {
-      const entries: Array<{ num: string; state: AttestationState }> = [];
-      for (const b of MODULE_BOARDS) {
-        const h = await readHistory(b.key);
-        const today = h.find((e) => e.date === date);
-        if (today) entries.push({ num: b.num, state: today.state });
-      }
-      const govTask = WORKSPACE_GIDS.inbox?.governanceTaskGid;
-      if (govTask && entries.length > 0) {
-        const png = renderPng(composeSummaryGridSvg(date, entries));
-        const gid = await attachPngToTask(govTask, `HS-ATT-${date}-summary.png`, png, asanaToken);
-        await postNarrative(
-          govTask,
-          `📊 Daily attestation summary — ${date}: ${entries.length} module boards attested (graphic attached).`,
-          gid,
-          asanaToken,
-        );
-        summaryAttached = true;
-      }
-    } catch (err) {
-      console.warn("[asana-daily] summary grid failed:", err instanceof Error ? err.message : String(err));
-    }
-  }
-
   return NextResponse.json({
     ok: true,
     mode: "daily",
@@ -442,8 +308,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     modules: targets.length,
     posted,
     skippedNoGid,
-    cardsAttached,
-    summaryAttached,
     failedCount: failed.length,
     failed: failed.slice(0, 10),
     ...(offset + limit < allTargets.length ? { nextOffset: offset + limit } : {}),
