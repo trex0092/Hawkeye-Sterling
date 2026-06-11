@@ -2,13 +2,24 @@ import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/server/admin-auth";
 import { WORKSPACE_GIDS } from "@/lib/server/asana-workspace-map";
 
-// Workspace-wide purge of attestation chart attachments (CCL-2026-025).
+// Workspace-wide purge of attestation chart attachments (CCL-2026-025/026).
 //
 // Operator-instructed 2026-06-11: the status-card / summary-grid graphics
 // introduced under CCL-2026-023 are removed from EVERY task on EVERY project.
 // Deletes ONLY attachments whose filename matches the chart reference pattern
 // (HS-ATT-… / HS-MAN-… .png); narrative stories, JSON case-report attachments
 // and operator uploads are never candidates.
+//
+// Story residue (CCL-2026-026, operator screenshot 2026-06-11): deleting the
+// PNGs leaves "inline attachment no longer available" placeholders in the
+// comments that embedded them, and the inbox "Daily attestation summary …
+// (graphic attached)" comments lose their only payload. The sweep therefore
+// also — strictly limited to comments AUTHORED BY THIS TOKEN's user —
+//   • deletes summary-carrier comments (text starts "📊 Daily attestation
+//     summary — "), and
+//   • strips dead <img data-asana-gid…> references out of narrative comments,
+//     leaving the narrative text byte-for-byte intact.
+// Operator comments and all other stories are never candidates.
 //
 // Modes (POST body { mode?: "purge" | "dryRun" | "verify" }):
 //   purge  (default) — delete every matching attachment.
@@ -33,6 +44,8 @@ export const maxDuration = 300;
 
 const API = "https://app.asana.com/api/1.0";
 const CHART_NAME = /^HS-(ATT|MAN)-\d{4}-\d{2}-\d{2}-.+\.png$/i;
+const SUMMARY_STORY_PREFIX = "📊 Daily attestation summary — ";
+const INLINE_IMG = /\s*<img[^>]*data-asana-gid[^>]*\/?>/g;
 const MAX_ATTEMPTS = 5;
 
 type Mode = "purge" | "dryRun" | "verify";
@@ -81,11 +94,22 @@ async function listAll<T>(token: string, firstUrl: string): Promise<T[] | null> 
   return out;
 }
 
-async function deleteAttachment(token: string, gid: string): Promise<boolean> {
+// Shared mutate-with-backoff: DELETE an object or PUT a story body.
+// 404 counts as success (already gone); other 4xx is a definitive failure.
+async function asanaMutate(
+  token: string,
+  url: string,
+  method: "DELETE" | "PUT",
+  data?: Record<string, unknown>,
+): Promise<boolean> {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const res = await fetch(`${API}/attachments/${gid}`, {
-      method: "DELETE",
-      headers: authHeaders(token),
+    const res = await fetch(url, {
+      method,
+      headers: {
+        ...authHeaders(token),
+        ...(data ? { "content-type": "application/json" } : {}),
+      },
+      ...(data ? { body: JSON.stringify({ data }) } : {}),
       signal: AbortSignal.timeout(10_000),
     }).catch(() => null);
     if (res?.ok || res?.status === 404) return true;
@@ -95,6 +119,10 @@ async function deleteAttachment(token: string, gid: string): Promise<boolean> {
     await delay(Math.max(retryAfter * 1000, 500 * 2 ** (attempt - 1)));
   }
   return false;
+}
+
+function deleteAttachment(token: string, gid: string): Promise<boolean> {
+  return asanaMutate(token, `${API}/attachments/${gid}`, "DELETE");
 }
 
 interface AsanaProject {
@@ -126,17 +154,81 @@ interface ProjectResult {
   tasksScanned: number;
   matched: number;
   deleted: number;
+  /** Summary-carrier comments found / removed (text starts SUMMARY_STORY_PREFIX). */
+  summaryStories: number;
+  storiesDeleted: number;
+  /** Narrative comments holding a dead inline-image reference / cleaned. */
+  inlineImages: number;
+  imagesStripped: number;
   failed: number;
   errors: string[];
 }
 
-async function sweepProject(token: string, project: AsanaProject, mode: Mode): Promise<ProjectResult> {
+interface AsanaStory {
+  gid: string;
+  type?: string;
+  text?: string;
+  html_text?: string;
+  created_by?: { gid?: string };
+}
+
+// Processes one task's comments: drops summary carriers, strips dead inline
+// images from narratives. Only stories authored by the token's own user (uid)
+// are ever touched.
+async function sweepTaskStories(
+  token: string,
+  uid: string,
+  taskGid: string,
+  mode: Mode,
+  result: ProjectResult,
+): Promise<void> {
+  const stories = await listAll<AsanaStory>(
+    token,
+    `${API}/tasks/${taskGid}/stories?limit=100&opt_fields=type,text,html_text,created_by.gid`,
+  );
+  if (!stories) {
+    result.failed++;
+    result.errors.push(`stories_list_failed:${taskGid}`);
+    return;
+  }
+  for (const story of stories) {
+    if (story.type !== "comment" || story.created_by?.gid !== uid) continue;
+    if ((story.text ?? "").startsWith(SUMMARY_STORY_PREFIX)) {
+      result.summaryStories++;
+      if (mode !== "purge") continue;
+      if (await asanaMutate(token, `${API}/stories/${story.gid}`, "DELETE")) result.storiesDeleted++;
+      else {
+        result.failed++;
+        result.errors.push(`story_delete_failed:${story.gid}`);
+      }
+      continue;
+    }
+    const html = story.html_text ?? "";
+    if (!html.includes("data-asana-gid")) continue;
+    const cleaned = html.replace(INLINE_IMG, "");
+    if (cleaned === html) continue;
+    result.inlineImages++;
+    if (mode !== "purge") continue;
+    if (await asanaMutate(token, `${API}/stories/${story.gid}`, "PUT", { html_text: cleaned })) {
+      result.imagesStripped++;
+    } else {
+      result.failed++;
+      result.errors.push(`story_update_failed:${story.gid}`);
+    }
+  }
+}
+
+async function sweepProject(token: string, uid: string, project: AsanaProject, mode: Mode): Promise<ProjectResult> {
   const result: ProjectResult = {
     projectGid: project.gid,
     name: project.name,
     tasksScanned: 0,
     matched: 0,
     deleted: 0,
+    summaryStories: 0,
+    storiesDeleted: 0,
+    inlineImages: 0,
+    imagesStripped: 0,
     failed: 0,
     errors: [],
   };
@@ -168,14 +260,16 @@ async function sweepProject(token: string, project: AsanaProject, mode: Mode): P
         result.tasksScanned++;
         const matches = attachments.filter((a) => CHART_NAME.test(a.name ?? ""));
         result.matched += matches.length;
-        if (mode !== "purge") return;
-        for (const match of matches) {
-          if (await deleteAttachment(token, match.gid)) result.deleted++;
-          else {
-            result.failed++;
-            result.errors.push(`delete_failed:${match.gid}`);
+        if (mode === "purge") {
+          for (const match of matches) {
+            if (await deleteAttachment(token, match.gid)) result.deleted++;
+            else {
+              result.failed++;
+              result.errors.push(`delete_failed:${match.gid}`);
+            }
           }
         }
+        await sweepTaskStories(token, uid, task.gid, mode, result);
       }),
     );
     if (i + CHUNK < tasks.length) await delay(200);
@@ -195,6 +289,14 @@ export async function POST(req: Request): Promise<NextResponse> {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const mode: Mode = body["mode"] === "dryRun" ? "dryRun" : body["mode"] === "verify" ? "verify" : "purge";
 
+  // Story cleanup may only touch comments this token authored — resolve the
+  // token's own user once, fail closed if Asana won't tell us who we are.
+  const me = await asanaGet<{ data?: { gid?: string } }>(token, `${API}/users/me`);
+  const uid = me?.data?.gid;
+  if (!uid) {
+    return NextResponse.json({ ok: false, error: "asana_users_me_failed" }, { status: 502 });
+  }
+
   let source = "team";
   let projects = await listTeamProjects(token);
   if (!projects || projects.length === 0) {
@@ -211,7 +313,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const results: ProjectResult[] = [];
   for (const project of slice) {
-    results.push(await sweepProject(token, project, mode));
+    results.push(await sweepProject(token, uid, project, mode));
   }
 
   const totals = results.reduce(
@@ -219,13 +321,23 @@ export async function POST(req: Request): Promise<NextResponse> {
       tasksScanned: acc.tasksScanned + r.tasksScanned,
       matched: acc.matched + r.matched,
       deleted: acc.deleted + r.deleted,
+      summaryStories: acc.summaryStories + r.summaryStories,
+      storiesDeleted: acc.storiesDeleted + r.storiesDeleted,
+      inlineImages: acc.inlineImages + r.inlineImages,
+      imagesStripped: acc.imagesStripped + r.imagesStripped,
       failed: acc.failed + r.failed,
     }),
-    { tasksScanned: 0, matched: 0, deleted: 0, failed: 0 },
+    { tasksScanned: 0, matched: 0, deleted: 0, summaryStories: 0, storiesDeleted: 0, inlineImages: 0, imagesStripped: 0, failed: 0 },
   );
 
-  // purge: matched-but-undeleted charts; dryRun/verify: charts still present.
-  const remaining = mode === "purge" ? totals.matched - totals.deleted : totals.matched;
+  // purge: residue that survived this pass; dryRun/verify: residue present
+  // (chart files + summary-carrier comments + dead inline-image references).
+  const remaining =
+    mode === "purge"
+      ? totals.matched - totals.deleted +
+        (totals.summaryStories - totals.storiesDeleted) +
+        (totals.inlineImages - totals.imagesStripped)
+      : totals.matched + totals.summaryStories + totals.inlineImages;
 
   return NextResponse.json({
     ok: totals.failed === 0 && (mode === "verify" ? remaining === 0 : true),
