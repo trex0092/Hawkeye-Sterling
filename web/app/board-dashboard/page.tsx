@@ -150,16 +150,6 @@ export default function BoardDashboardPage() {
         }
       />
 
-      <div className="flex justify-end mb-2">
-        <button
-          onClick={() => void load()}
-          disabled={loading}
-          className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Refreshing…" : "↺ Refresh"}
-        </button>
-      </div>
-
       {loading && !data ? (
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 text-13 text-ink-2">
           Loading board dashboard…
@@ -176,19 +166,6 @@ export default function BoardDashboardPage() {
             {(data.panels ?? []).map((panel) => (
               <PanelCard key={panel.id} panel={panel} />
             ))}
-          </div>
-
-          <div className="bg-bg-panel border border-hair-2 rounded-lg p-3 flex flex-wrap gap-4 text-11 text-ink-3">
-            <span>
-              <span className="font-semibold text-ink-2">Scope:</span> Live case vault + platform configuration.
-            </span>
-            <span>
-              <span className="font-semibold text-ink-2">Refresh:</span> On demand — click ↺ or reload page.
-            </span>
-            <span>
-              <span className="font-semibold text-ink-2">Detail:</span>{" "}
-              <a href="/kri-dashboard" className="underline">KRI Dashboard</a> · <a href="/screening" className="underline">Screening Queue</a> · <a href="/audit-trail" className="underline">Audit Trail</a>
-            </span>
           </div>
         </div>
       ) : null}

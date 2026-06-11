@@ -69,11 +69,10 @@ export default function PlaybookPage() {
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
 
-  // Scenario Simulator state
+  // Scenario Simulator state. The former Client Type / Jurisdiction / Risk
+  // Level selects are fixed at their old defaults — the panel is free-text.
+  const SIM_DEFAULTS = { clientType: "Individual", jurisdiction: "UAE", riskLevel: "Medium" };
   const [simScenario, setSimScenario] = useState("");
-  const [simClientType, setSimClientType] = useState("Individual");
-  const [simJurisdiction, setSimJurisdiction] = useState("UAE");
-  const [simRiskLevel, setSimRiskLevel] = useState("Medium");
   const [simResult, setSimResult] = useState<ScenarioSimulateResult | null>(null);
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
@@ -91,9 +90,9 @@ export default function PlaybookPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           scenario: simScenario,
-          clientType: simClientType,
-          jurisdiction: simJurisdiction,
-          riskLevel: simRiskLevel,
+          clientType: SIM_DEFAULTS.clientType,
+          jurisdiction: SIM_DEFAULTS.jurisdiction,
+          riskLevel: SIM_DEFAULTS.riskLevel,
         }),
       });
       if (!res.ok) {
@@ -157,8 +156,21 @@ export default function PlaybookPage() {
     } finally { if (mountedRef.current) setQaLoading(false); }
   };
 
+  // Auto-routes the free-text panel: question-shaped input goes to the
+  // playbook QA engine, anything else runs the scenario simulator.
+  const looksLikeQuestion = (text: string): boolean => {
+    const t = text.trim().toLowerCase();
+    return t.endsWith("?") || /^(what|how|when|where|who|why|which|do|does|can|could|should|would|is|are|am|must)\b/.test(t);
+  };
+
+  const submitPanel = () => {
+    if (!simScenario.trim()) return;
+    if (looksLikeQuestion(simScenario)) void askPlaybook();
+    else void runSimulator();
+  };
+
   return (
-    <ModuleLayout asanaModule="playbook" asanaLabel="Playbook" onRun={() => void runSimulator()}>
+    <ModuleLayout asanaModule="playbook" asanaLabel="Playbook" onRun={submitPanel}>
       <ModuleHero
 
         eyebrow=""
@@ -185,79 +197,22 @@ export default function PlaybookPage() {
         <div className="px-4 py-3 border-b border-hair-2 bg-bg-1 flex items-center gap-3">
           <span className="text-14">🎯</span>
           <span className="text-13 font-semibold text-ink-0">Scenario Simulator</span>
-          <span className="text-ink-3 text-12 mx-1">·</span>
-          <span className="text-13 font-semibold text-ink-0">Ask the Playbook</span>
+          {(simLoading || qaLoading) && (
+            <span className="text-11 text-ink-3 ml-auto">{qaLoading ? "Asking…" : "Analysing…"}</span>
+          )}
         </div>
         <div className="p-4 space-y-3">
           <textarea
             value={simScenario}
             onChange={(e) => { setSimScenario(e.target.value); setQaQuestion(e.target.value); }}
-            placeholder="Describe a scenario or ask a compliance question… e.g. 'A new corporate client from the UAE requests to wire USD 500,000 to a free-trade zone counterparty. The UBO is a government official from West Africa.' — or — 'What do I do if a customer is a Tier-1 PEP from a sanctioned country?'"
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitPanel(); } }}
+            placeholder="Describe a scenario or ask a compliance question, then press Enter (Shift+Enter for a new line)… e.g. 'A new corporate client from the UAE requests to wire USD 500,000 to a free-trade zone counterparty. The UBO is a government official from West Africa.' — or — 'What do I do if a customer is a Tier-1 PEP from a sanctioned country?'"
             rows={4}
             className="w-full text-12 px-3 py-2.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand resize-none leading-relaxed"
           />
-          <div className="flex gap-2 flex-wrap items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Client Type</label>
-              <select
-                value={simClientType}
-                onChange={(e) => setSimClientType(e.target.value)}
-                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
-              >
-                <option>Individual</option>
-                <option>Corporate</option>
-                <option>PEP</option>
-                <option>VASP</option>
-                <option>DNFBP</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Jurisdiction</label>
-              <select
-                value={simJurisdiction}
-                onChange={(e) => setSimJurisdiction(e.target.value)}
-                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
-              >
-                <option>UAE</option>
-                <option>UK</option>
-                <option>US</option>
-                <option>SG</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-10 font-semibold uppercase tracking-wide-3 text-ink-3">Risk Level</label>
-              <select
-                value={simRiskLevel}
-                onChange={(e) => setSimRiskLevel(e.target.value)}
-                className="text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-1 text-ink-0 focus:outline-none focus:border-brand"
-              >
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-                <option>Critical</option>
-              </select>
-            </div>
-            <button
-              type="button"
-              onClick={() => { void runSimulator(); }}
-              disabled={simLoading || !simScenario.trim()}
-              className="text-12 font-semibold px-5 py-1.5 rounded bg-brand text-white border border-brand hover:bg-brand-hover hover:border-brand-hover disabled:opacity-40 transition-colors"
-            >
-              {simLoading ? "Analysing…" : "Simulate →"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void askPlaybook()}
-              disabled={qaLoading || !simScenario.trim()}
-              className="text-12 font-semibold px-5 py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1 disabled:opacity-40 transition-colors"
-            >
-              {qaLoading ? "Asking…" : "Ask"}
-            </button>
-            {(simResult || qaAnswer || simError || qaError) && (
-              <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); setSimError(null); setQaError(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕</button>
-            )}
-          </div>
+          {(simResult || qaAnswer || simError || qaError) && (
+            <button type="button" onClick={() => { setSimResult(null); setQaAnswer(null); setSimError(null); setQaError(null); }} className="text-11 text-blue-400 hover:text-blue-300 px-2 py-1.5">✕ Clear result</button>
+          )}
 
           {(simError || qaError) && (
             <div className="mt-3 rounded border border-red/30 bg-red-dim px-3 py-2 text-12 text-red">

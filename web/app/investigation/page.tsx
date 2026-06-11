@@ -89,12 +89,10 @@ export default function InvestigationPage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const [addingParty, setAddingParty] = useState(false);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<PartyKind>("counterparty");
   const [newRel, setNewRel] = useState("");
 
-  const [addingEvent, setAddingEvent] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newEvKind, setNewEvKind] = useState<EventKind>("case_opened");
   const [newDesc, setNewDesc] = useState("");
@@ -104,8 +102,6 @@ export default function InvestigationPage() {
 
   const [brainLoading, setBrainLoading] = useState(false);
   const [brainAnalysis, setBrainAnalysis] = useState<BrainAnalysis | null>(null);
-  const [exportingPack, setExportingPack] = useState(false);
-  const [packReady, setPackReady] = useState(false);
 
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -136,7 +132,6 @@ export default function InvestigationPage() {
     setCommitted(t);
     setShowSug(false);
     setBrainAnalysis(null);
-    setPackReady(false);
     setSelectedId(null);
   }
 
@@ -148,7 +143,7 @@ export default function InvestigationPage() {
       kind: newKind,
       relationship: newRel.trim() || PARTY_LABEL[newKind].toLowerCase(),
     }]);
-    setNewName(""); setNewRel(""); setAddingParty(false);
+    setNewName(""); setNewRel("");
   }
 
   function removeParty(id: string) {
@@ -163,7 +158,7 @@ export default function InvestigationPage() {
       date: newDate, kind: newEvKind,
       description: newDesc.trim(),
     }]);
-    setNewDate(""); setNewDesc(""); setAddingEvent(false);
+    setNewDate(""); setNewDesc("");
   }
 
   const runBrain = useCallback(async () => {
@@ -213,7 +208,7 @@ export default function InvestigationPage() {
 
   const runPack = useCallback(async () => {
     if (!committed) return;
-    setExportingPack(true); setError(null);
+    setError(null);
     try {
       const res = await fetch("/api/investigation/evidence-pack", {
         method: "POST",
@@ -234,13 +229,15 @@ export default function InvestigationPage() {
         console.error(`[hawkeye] investigation/evidence-pack HTTP ${res.status} — pack NOT generated`);
         setError(apiErrorMessage(res.status, "Evidence pack export"));
       } else {
-        setPackReady(true);
+        // Pack assembled — hand straight to the browser print dialog (save
+        // as PDF); the rail PDF button reprints it on demand.
+        window.print();
       }
     } catch (err) {
       if (!mountedRef.current) return;
       console.error("[hawkeye] investigation/evidence-pack threw — pack NOT generated:", err);
       setError("Evidence pack could not be reached. Check your connection and try again.");
-    } finally { if (mountedRef.current) setExportingPack(false); }
+    }
   }, [committed, parties, brainAnalysis]);
 
   const sortedEvents = useMemo(() =>
@@ -255,7 +252,7 @@ export default function InvestigationPage() {
   };
 
   return (
-    <ModuleLayout asanaModule="investigation" asanaLabel="Investigation" onRun={() => void runBrain()} onAdd={() => setAddingParty(true)}>
+    <ModuleLayout asanaModule="investigation" asanaLabel="Investigation" onRun={() => void runBrain()} onAi={() => void runBrain()} onCsv={() => void runPack()}>
       <ModuleHero
 
         eyebrow=""
@@ -322,42 +319,30 @@ export default function InvestigationPage() {
 
           {/* Related Parties */}
           <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-                Related Parties
-                {parties.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({parties.length})</span>}
-              </div>
-              <button type="button" onClick={() => setAddingParty((v) => !v)}
-                className="text-10 font-semibold px-2 py-1 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
-                + Add
-              </button>
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+              Related Parties
+              {parties.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({parties.length})</span>}
             </div>
 
-            {addingParty && (
-              <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
-                <input autoFocus type="text" value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") addParty(); if (e.key === "Escape") setAddingParty(false); }}
-                  placeholder="Name…" className={inputCls} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <select value={newKind} onChange={(e) => setNewKind(e.target.value as PartyKind)} className={selectCls}>
-                    {(Object.keys(PARTY_LABEL) as PartyKind[]).map((k) => (
-                      <option key={k} value={k}>{PARTY_LABEL[k]}</option>
-                    ))}
-                  </select>
-                  <input type="text" value={newRel} onChange={(e) => setNewRel(e.target.value)}
-                    placeholder="Relationship…" className={inputCls} />
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={addParty}
-                    className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
-                  <button type="button" onClick={() => setAddingParty(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
-                </div>
+            <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
+              <input type="text" value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addParty(); }}
+                placeholder="Name…" className={inputCls} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <select value={newKind} onChange={(e) => setNewKind(e.target.value as PartyKind)} className={selectCls}>
+                  {(Object.keys(PARTY_LABEL) as PartyKind[]).map((k) => (
+                    <option key={k} value={k}>{PARTY_LABEL[k]}</option>
+                  ))}
+                </select>
+                <input type="text" value={newRel} onChange={(e) => setNewRel(e.target.value)}
+                  placeholder="Relationship…" className={inputCls} />
               </div>
-            )}
+              <button type="button" onClick={addParty}
+                className="w-full text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+            </div>
 
-            {parties.length === 0 && !addingParty && (
+            {parties.length === 0 && (
               <p className="text-11 text-ink-4 py-2 text-center italic">No parties added yet.</p>
             )}
 
@@ -393,40 +378,28 @@ export default function InvestigationPage() {
 
           {/* Timeline */}
           <div className="bg-bg-panel border border-hair-2 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2">
-                Timeline
-                {events.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({events.length})</span>}
-              </div>
-              <button type="button" onClick={() => setAddingEvent((v) => !v)}
-                className="text-10 font-semibold px-2 py-1 rounded border border-brand text-brand hover:bg-brand-dim transition-colors">
-                + Add
-              </button>
+            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-2">
+              Timeline
+              {events.length > 0 && <span className="ml-1.5 font-mono text-ink-3 normal-case">({events.length})</span>}
             </div>
 
-            {addingEvent && (
-              <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <IsoDateInput value={newDate} onChange={(iso) => setNewDate(iso)} className={inputCls} />
-                  <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
-                    {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (
-                      <option key={k} value={k}>{EVENT_LABEL[k]}</option>
-                    ))}
-                  </select>
-                </div>
-                <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") addEvent(); if (e.key === "Escape") setAddingEvent(false); }}
-                  placeholder="Description (optional)…" className={inputCls} />
-                <div className="flex gap-2">
-                  <button type="button" onClick={addEvent}
-                    className="flex-1 text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
-                  <button type="button" onClick={() => setAddingEvent(false)}
-                    className="flex-1 text-11 py-1.5 rounded border border-red/30 text-red hover:text-red/80">✕</button>
-                </div>
+            <div className="mb-3 p-3 bg-bg-1 rounded-lg border border-hair-2 space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <IsoDateInput value={newDate} onChange={(iso) => setNewDate(iso)} className={inputCls} />
+                <select value={newEvKind} onChange={(e) => setNewEvKind(e.target.value as EventKind)} className={selectCls}>
+                  {(Object.keys(EVENT_LABEL) as EventKind[]).map((k) => (
+                    <option key={k} value={k}>{EVENT_LABEL[k]}</option>
+                  ))}
+                </select>
               </div>
-            )}
+              <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addEvent(); }}
+                placeholder="Description (optional)…" className={inputCls} />
+              <button type="button" onClick={addEvent}
+                className="w-full text-11 font-semibold py-1.5 rounded bg-ink-0 text-bg-0 hover:bg-ink-1">Add</button>
+            </div>
 
-            {events.length === 0 && !addingEvent && (
+            {events.length === 0 && (
               <p className="text-11 text-ink-4 py-2 text-center italic">No events added yet.</p>
             )}
 
@@ -465,27 +438,6 @@ export default function InvestigationPage() {
             </div>
           )}
 
-          {/* Analysis */}
-          <div className="bg-bg-panel border border-hair-2 rounded-xl p-4 space-y-2">
-            <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-1">Analysis</div>
-            <button type="button" onClick={() => void runBrain()}
-              disabled={brainLoading || !committed}
-              className="w-full text-11 font-semibold py-2 rounded border border-brand text-brand hover:bg-brand-dim disabled:opacity-40 transition-colors">
-              {brainLoading ? "Analyzing…" : "🧠 Generate Brain Analysis"}
-            </button>
-            <button type="button" onClick={() => void runPack()}
-              disabled={exportingPack || !committed}
-              className="w-full text-11 font-semibold py-2 rounded border border-amber/50 text-amber hover:bg-amber/10 disabled:opacity-40 transition-colors">
-              {exportingPack ? "Generating…" : packReady ? "📦 Pack ready — click to re-generate" : "📦 Export Evidence Pack"}
-            </button>
-            {packReady && (
-              <button type="button" onClick={() => window.print()}
-                className="text-11 font-mono px-3 py-1.5 rounded border font-semibold"
-                style={{ color: "#7c3aed", borderColor: "#7c3aed", background: "rgba(124,58,237,0.07)" }}>
-                PDF
-              </button>
-            )}
-          </div>
         </div>
 
         {/* ── RIGHT PANEL ────────────────────────────────────────────────────── */}

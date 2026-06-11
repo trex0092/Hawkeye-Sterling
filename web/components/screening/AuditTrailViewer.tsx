@@ -4,9 +4,9 @@
 // audit chain. Required by HS-OPS-003 Day 2 ("Show us your audit trail
 // for the last 30 days") and HS-MC-001 §10 (audit trail viewer).
 //
-// Reads /api/audit/view (filterable, paginated) and /api/audit/verify
-// (HMAC + chain-link integrity). All entries render their previousHash
-// + signature so a regulator can spot-check tamper-evidence directly.
+// Reads /api/audit/view (filterable, paginated). All entries render their
+// previousHash + signature so a regulator can spot-check tamper-evidence
+// directly; CSV export runs from the module action rail.
 //
 // Accessibility:
 //   · semantic <article> per entry, <header> per group
@@ -18,8 +18,9 @@
 // Charter alignment: P9 (every audit row carries previousHash + signature
 // in the rendered output — no opaque view).
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { caughtErrorMessage } from "@/lib/client/error-utils";
+import { useHawkeyeEvent } from "@/lib/client/use-hawkeye-add";
 
 interface AuditEntry {
   sequence: number;
@@ -48,25 +49,6 @@ interface ViewResponse {
   head: AuditHead;
   entries: AuditEntry[];
   filter: Record<string, string | null>;
-}
-
-interface VerifyFault {
-  sequence: number;
-  expected: string;
-  got: string;
-}
-
-interface VerifyResponse {
-  ok: boolean;
-  totalScanned: number;
-  totalVerified: number;
-  brokenLinks: VerifyFault[];
-  invalidIds: VerifyFault[];
-  invalidSignatures: VerifyFault[];
-  sequenceGaps: Array<{ expected: number; got: number }>;
-  headConsistent: boolean;
-  head: AuditHead;
-  error?: string;
 }
 
 interface Props {
@@ -113,8 +95,6 @@ export function AuditTrailViewer({
   const [data, setData] = useState<ViewResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verifyResult, setVerifyResult] = useState<VerifyResponse | null>(null);
-  const [verifying, setVerifying] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
@@ -160,48 +140,6 @@ export function AuditTrailViewer({
     void load(0);
   };
 
-  const verify = useCallback(async () => {
-    setVerifying(true);
-    setVerifyResult(null);
-    try {
-      const q = new URLSearchParams();
-      if (screeningId.trim()) q.set("screening_id", screeningId.trim());
-      const res = await fetch(`/api/audit/verify?${q.toString()}`, {
-        headers: { accept: "application/json" },
-      });
-      const json = await res.json().catch(() => ({})) as VerifyResponse;
-      if (mountedRef.current) setVerifyResult(json);
-    } catch (e) {
-      if (mountedRef.current) setVerifyResult({
-        ok: false,
-        totalScanned: 0,
-        totalVerified: 0,
-        brokenLinks: [],
-        invalidIds: [],
-        invalidSignatures: [],
-        sequenceGaps: [],
-        headConsistent: false,
-        head: { sequence: 0, hash: "" },
-        error: caughtErrorMessage(e, "Verification request failed."),
-      });
-    } finally {
-      if (mountedRef.current) setVerifying(false);
-    }
-  }, [screeningId]);
-
-  const exportJson = useCallback(() => {
-    if (!data) return;
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `audit-trail-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [data]);
-
   const exportCsv = useCallback((): void => {
     const q = new URLSearchParams();
     if (screeningId.trim()) q.set("screening_id", screeningId.trim());
@@ -212,6 +150,9 @@ export function AuditTrailViewer({
     q.set("format", "csv");
     window.open(`/api/audit/view?${q.toString()}`, "_blank", "noopener");
   }, [screeningId, action, actor, pageSize, offset]);
+
+  // Rail CSV button exports the filtered audit view.
+  useHawkeyeEvent("hawkeye:csv", exportCsv);
 
   const toggleExpanded = (seq: number): void => {
     setExpanded((prev) => {
@@ -225,36 +166,6 @@ export function AuditTrailViewer({
   const dismissEntry = (seq: number): void => {
     setDismissed((prev) => new Set(prev).add(seq));
   };
-
-  const verifyBanner = useMemo(() => {
-    if (!verifyResult) return null;
-    if (verifyResult.error) {
-      return (
-        <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
-          Verification failed: {verifyResult.error}
-        </div>
-      );
-    }
-    if (verifyResult.ok) {
-      return (
-        <div role="status" className="bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-12 px-3 py-2 rounded-md">
-          Chain verified · {verifyResult.totalVerified}/{verifyResult.totalScanned} entries pass HMAC + link checks · head sequence {verifyResult.head.sequence}.
-        </div>
-      );
-    }
-    const issues = [
-      verifyResult.brokenLinks.length && `${verifyResult.brokenLinks.length} broken link(s)`,
-      verifyResult.invalidIds.length && `${verifyResult.invalidIds.length} invalid id(s)`,
-      verifyResult.invalidSignatures.length && `${verifyResult.invalidSignatures.length} bad signature(s)`,
-      verifyResult.sequenceGaps.length && `${verifyResult.sequenceGaps.length} sequence gap(s)`,
-      !verifyResult.headConsistent && "head pointer inconsistent",
-    ].filter(Boolean);
-    return (
-      <div role="alert" className="bg-rose-950/30 border border-rose-500/40 text-rose-300 text-12 px-3 py-2 rounded-md">
-        Chain integrity FAILED · {issues.join(" · ")}. Escalate to Engineering Lead per HS-OPS-001 §3.4 (CRITICAL).
-      </div>
-    );
-  }, [verifyResult]);
 
   const totalPages = data ? Math.ceil(data.total / data.limit) : 0;
   const currentPage = data ? Math.floor(data.offset / data.limit) + 1 : 0;
@@ -277,34 +188,7 @@ export function AuditTrailViewer({
             HMAC-sealed chain · Federal Decree-Law No. 10 of 2025 Art.24 · 10-year retention
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => void verify()}
-            disabled={verifying}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-brand bg-brand-dim text-brand-deep hover:bg-brand hover:text-white rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
-          >
-            {verifying ? "Verifying…" : "Verify signatures"}
-          </button>
-          <button
-            type="button"
-            onClick={exportJson}
-            disabled={!data || data.entries.length === 0}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 text-ink-1 hover:border-brand hover:text-brand rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
-          >
-            Export JSON
-          </button>
-          <button
-            type="button"
-            onClick={exportCsv}
-            className="text-11 font-mono uppercase tracking-wide-3 px-3 py-1.5 border border-hair-2 text-ink-1 hover:border-brand hover:text-brand rounded font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
-          >
-            Export CSV
-          </button>
-        </div>
       </header>
-
-      {verifyBanner ? <div className="mb-3">{verifyBanner}</div> : null}
 
       <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3" aria-label="Audit trail filters">
         <label className="flex flex-col gap-1">

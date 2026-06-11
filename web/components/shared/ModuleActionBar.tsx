@@ -141,30 +141,42 @@ export function ModuleActionBar({
         }
         return;
       }
-      case "ai":
+      case "ai": {
         if (onAi) { onAi(); return; }
-        window.dispatchEvent(new CustomEvent("hawkeye:ai", { bubbles: true }));
+        // Cancelable claim contract (same as "add"): a page component that
+        // owns an AI action calls preventDefault() via useHawkeyeEvent.
+        const claimed = !window.dispatchEvent(
+          new CustomEvent("hawkeye:ai", { bubbles: true, cancelable: true }),
+        );
+        if (claimed) { showToast("AI analysis started"); return; }
         window.open("/mlro-advisor", "_blank", "noopener,noreferrer");
         return;
-      case "csv":
+      }
+      case "csv": {
         if (onCsv) { onCsv(); return; }
-        window.dispatchEvent(new CustomEvent("hawkeye:csv", { bubbles: true }));
-        {
-          const csv = extractTableAsCsv();
-          if (csv) {
-            const slug = (asanaModule ?? "export").replace(/[^a-z0-9-]/gi, "-");
-            downloadCsv(csv, `${slug}-${new Date().toISOString().slice(0, 10)}.csv`);
-            showToast("CSV downloaded");
-          } else {
-            showToast("No table data found on this page");
-          }
+        const claimed = !window.dispatchEvent(
+          new CustomEvent("hawkeye:csv", { bubbles: true, cancelable: true }),
+        );
+        if (claimed) { showToast("Export started"); return; }
+        const csv = extractTableAsCsv();
+        if (csv) {
+          const slug = (asanaModule ?? "export").replace(/[^a-z0-9-]/gi, "-");
+          downloadCsv(csv, `${slug}-${new Date().toISOString().slice(0, 10)}.csv`);
+          showToast("CSV downloaded");
+        } else {
+          showToast("No table data found on this page");
         }
         return;
-      case "run":
+      }
+      case "run": {
         if (onRun) { onRun(); return; }
-        window.dispatchEvent(new CustomEvent("hawkeye:run", { bubbles: true }));
+        const claimed = !window.dispatchEvent(
+          new CustomEvent("hawkeye:run", { bubbles: true, cancelable: true }),
+        );
+        if (claimed) { showToast("Run started"); return; }
         window.location.reload();
         return;
+      }
       case "pdf":
         window.print();
         return;

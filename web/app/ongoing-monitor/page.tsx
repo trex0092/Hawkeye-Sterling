@@ -145,11 +145,6 @@ const BLANK = {
 };
 
 const inputCls = "w-full text-12 px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-ink-0";
-const tabCls = (active: boolean) =>
-  `px-3 py-1 rounded text-11 font-medium border transition-colors ${
-    active ? "bg-brand text-white border-brand" : "bg-bg-1 text-ink-2 border-hair-2 hover:border-brand hover:text-ink-0"
-  }`;
-
 const _XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -190,7 +185,7 @@ interface MonitorAlertsResult {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function OngoingMonitorPage() {
-  const [section, setSection] = useState<"monitoring" | "enrichment">("monitoring");
+  const section: "monitoring" | "enrichment" = "monitoring";
 
   // Monitoring state
   const [subjects, setSubjects] = useState<MonitoredSubject[]>([]);
@@ -474,13 +469,6 @@ export default function OngoingMonitorPage() {
         ]}
       />
 
-
-      {/* Section tab bar */}
-      <div className="flex items-center gap-1.5 mb-6">
-        <button type="button" onClick={() => setSection("monitoring")} className={tabCls(section === "monitoring")}>
-          Schedule
-        </button>
-      </div>
 
       {/* ── Monitoring section ──────────────────────────────────────────────── */}
       {section === "monitoring" && (

@@ -125,7 +125,6 @@ export default function KriDashboardPage() {
   const [data, setData] = useState<KriDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -135,7 +134,6 @@ export default function KriDashboardPage() {
       if (!res.ok) { setError(apiErrorMessage(res.status)); return; }
       const json = await res.json() as KriDashboardResponse;
       setData(json);
-      setRefreshedAt(new Date());
     } catch (err) {
       setError(caughtErrorMessage(err));
     } finally {
@@ -165,21 +163,6 @@ export default function KriDashboardPage() {
           </>
         }
       />
-
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-        {refreshedAt && (
-          <div className="text-11 text-ink-3 font-mono">
-            Last refreshed {refreshedAt.toLocaleTimeString()}
-          </div>
-        )}
-        <button
-          onClick={() => void load()}
-          disabled={loading}
-          className="px-3 py-1.5 rounded border border-hair-2 bg-bg-panel text-12 font-medium text-ink-1 hover:bg-bg-1 disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Refreshing…" : "↺ Refresh"}
-        </button>
-      </div>
 
       {loading && !data ? (
         <div className="bg-bg-panel border border-hair-2 rounded-lg p-6 text-13 text-ink-2">

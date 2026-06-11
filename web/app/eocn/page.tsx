@@ -633,9 +633,11 @@ export default function EocnPage() {
                 <div className="text-13 font-semibold text-ink-0">UAE Control List — Cabinet Resolution 156/2025</div>
                 <div className="text-11 text-ink-3">Dual-use and proliferation-sensitive goods · Gold dealers must screen trade transactions for controlled goods</div>
               </div>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase ${controlListCount ? "bg-green-dim text-green border border-green/30" : "bg-amber-dim text-amber border border-amber/30"}`}>
-                {controlListCount ? `${controlListCount.toLocaleString()} entries` : "Pending sync"}
-              </span>
+              {controlListCount ? (
+                <span className="inline-flex items-center px-2.5 py-1 rounded font-mono text-11 font-semibold uppercase bg-green-dim text-green border border-green/30">
+                  {controlListCount.toLocaleString()} entries
+                </span>
+              ) : null}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div className="bg-bg-1 rounded-lg p-3">

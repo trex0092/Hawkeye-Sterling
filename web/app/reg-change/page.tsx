@@ -9,7 +9,7 @@ import type { ImpactAssessmentResult } from "@/app/api/reg-change/impact/route";
 // ──────────────────────────────────────────────
 // Constants
 // ──────────────────────────────────────────────
-const INSTITUTION_TYPES = ["Bank", "DPMS", "VASP", "Insurance", "Asset Manager", "Payment Institution", "Other"] as const;
+const INSTITUTION_TYPES = ["Bank", "DPMS", "Asset Manager", "Payment Institution", "Other"] as const;
 
 const ALL_JURISDICTIONS = [
   "UAE", "EU", "UK", "US", "Singapore", "Hong Kong", "Switzerland", "Cayman Islands", "BVI", "Bahrain", "Saudi Arabia", "Qatar",

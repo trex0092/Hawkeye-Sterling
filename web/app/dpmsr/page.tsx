@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ModuleHero, ModuleLayout } from "@/components/layout/ModuleLayout";
 import { IsoDateInput } from "@/components/ui/IsoDateInput";
 import { apiErrorMessage } from "@/lib/client/error-utils";
+import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 import type { DpmsrObligation, DpmsrTransaction } from "@/app/api/dpmsr-trigger/route";
 
 // DPMSR — Designated Precious Metals and Stones Report
@@ -65,6 +66,10 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
     }]);
     setTxnId(""); setAmount(""); setError(null);
   };
+  // Rail "+ ADD" appends the entered transaction; Enter in any row input
+  // does the same.
+  useHawkeyeAdd(addTxn);
+  const addOnEnter = (e: React.KeyboardEvent) => { if (e.key === "Enter") addTxn(); };
 
   const evaluate = async (save = false) => {
     if (transactions.length === 0) { setError("Add at least one transaction to evaluate"); return; }
@@ -91,9 +96,9 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
       {/* Add transaction row */}
       <div className="grid grid-cols-[1fr_1fr_1fr_1fr_2fr_1.5fr_auto] gap-2 items-end mb-3">
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Transaction ID</label>
-          <input value={txnId} onChange={(e) => setTxnId(e.target.value)} className={`${inputCls} w-full`} placeholder="TXN-001" /></div>
+          <input value={txnId} onChange={(e) => setTxnId(e.target.value)} onKeyDown={addOnEnter} className={`${inputCls} w-full`} placeholder="TXN-001" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Amount (AED)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full`} placeholder="55000" /></div>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} onKeyDown={addOnEnter} className={`${inputCls} w-full`} placeholder="55000" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Channel</label>
           <select value={channel} onChange={(e) => setChannel(e.target.value as DpmsrTransaction["channel"])} className={`${inputCls} w-full`}>
             <option value="cash">Cash</option>
@@ -104,13 +109,11 @@ function EvaluateForm({ onResult }: EvaluateFormProps) {
             <option value="other">Other</option>
           </select></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Customer ID</label>
-          <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={`${inputCls} w-full`} placeholder="CUST-001" /></div>
+          <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} onKeyDown={addOnEnter} className={`${inputCls} w-full`} placeholder="CUST-001" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Customer Name</label>
-          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={`${inputCls} w-full`} placeholder="Full name" /></div>
+          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} onKeyDown={addOnEnter} className={`${inputCls} w-full`} placeholder="Full name" /></div>
         <div><label className="block text-10 uppercase tracking-wide-2 text-ink-3 mb-1">Date</label>
           <IsoDateInput value={txnDate} onChange={(iso) => setTxnDate(iso)} className={`${inputCls} w-full`} /></div>
-        <button type="button" onClick={addTxn}
-          className="px-4 py-1.5 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 self-end">+ Add</button>
       </div>
 
       {error && <p className="text-11 text-red mb-2">{error}</p>}
@@ -236,18 +239,6 @@ export default function DpmsrPage() {
           </>
         }
       />
-
-      {/* Regulatory notice */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-red-dim border border-red/20 rounded-lg px-4 py-3">
-          <div className="text-10 font-mono uppercase tracking-wide-3 text-red font-semibold mb-1">Fine schedule</div>
-          <div className="text-12 text-ink-1">AED <strong className="text-red">200,000 per violation</strong> for failure to file DPMSR on a ≥ AED 55,000 cash transaction. CR71/2024.</div>
-        </div>
-        <div className="bg-amber-dim border border-amber/20 rounded-lg px-4 py-3">
-          <div className="text-10 font-mono uppercase tracking-wide-3 text-amber font-semibold mb-1">Filing deadline</div>
-          <div className="text-12 text-ink-1">DPMSR must be filed via goAML within <strong>24 hours</strong> of the triggering transaction. MLRO approval required before filing.</div>
-        </div>
-      </div>
 
       {/* Transaction evaluator */}
       <div className="mb-6">

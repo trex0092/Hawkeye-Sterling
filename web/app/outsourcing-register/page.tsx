@@ -196,16 +196,6 @@ export default function OutsourcingRegisterPage() {
 
       <div className="w-full px-4 pb-16 space-y-6">
 
-        {/* Action bar */}
-        <div className="flex items-center justify-end gap-4">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "New Arrangement"}
-          </button>
-        </div>
-
         {hasWarning && (
           <div className="bg-amber-950/20 border border-amber-500/30 text-amber-300 rounded-md px-4 py-3 text-sm flex items-start gap-2">
             <span className="font-bold shrink-0">Warning:</span>
@@ -403,11 +393,6 @@ export default function OutsourcingRegisterPage() {
             </table>
           </div>
         )}
-
-        <div className="bg-sky-950/20 border border-sky-500/30 rounded-md px-4 py-3 text-xs text-sky-300">
-          <span className="font-semibold">Regulatory Note:</span>{" "}
-          AML/CFT outsourcing arrangements require annual MLRO review and Board approval per Federal Decree-Law No. 10 of 2025 Art.18.
-        </div>
       </div>
     </ModuleLayout>
   );

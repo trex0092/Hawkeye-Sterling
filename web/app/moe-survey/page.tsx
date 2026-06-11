@@ -713,35 +713,6 @@ export default function MoeSurveyPage() {
         ))}
       </div>
 
-      {/* Export package */}
-      <div className={`rounded-xl border p-5 ${isReady ? "bg-green-dim border-green/30" : "bg-bg-panel border-hair-2"}`}>
-        <div className="text-12 font-semibold text-ink-0 mb-2">
-          {isReady ? "✓ Survey readiness package — ready to export" : "Survey readiness package — complete all sections first"}
-        </div>
-        <p className="text-11 text-ink-2 mb-4">
-          Export the survey responses as a structured PDF/JSON package for submission to MoE. Non-submission of the 2026 mandatory survey
-          triggers immediate on-site inspection (MOET/AML/001/2026).
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={!isReady}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40"
-            onClick={() => {
-              try {
-                const blob = new Blob([JSON.stringify(survey, null, 2)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url; a.download = `moe-survey-${new Date().toISOString().slice(0, 10)}.json`;
-                a.click(); URL.revokeObjectURL(url);
-              } catch (err) { console.error("[hawkeye] moe-survey JSON export failed:", err); }
-            }}>
-            Export JSON
-          </button>
-          <a href="/governance/inspection-room" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
-            Open Inspection Room ↗
-          </a>
-        </div>
-      </div>
-
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
         MOET/AML/001/2026 · Mandatory for all mainland DNFBPs including DPMS dealers.
         Non-submission triggers on-site inspection and &quot;High Risk&quot; classification.

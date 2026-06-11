@@ -227,10 +227,6 @@ export default function SanctionsEvasionPage() {
       <div className="space-y-8">
         {/* Input Form */}
         <div>
-          <h2 className="font-display text-20 font-normal text-ink-0 mb-4">
-            Entity <em className="italic text-brand">assessment</em>
-          </h2>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Entity Name */}
             <div className="flex flex-col">

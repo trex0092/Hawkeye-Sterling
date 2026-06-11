@@ -208,22 +208,6 @@ export default function DormantAccountsPage() {
 
       <div className="w-full px-4 pb-16 space-y-6">
 
-        {/* Action bar */}
-        <div className="flex items-center justify-end gap-4">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-brand text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90"
-          >
-            {showForm ? "Cancel" : "Flag Account"}
-          </button>
-        </div>
-
-        {/* Regulatory notice */}
-        <div className="bg-amber-950/20 border border-amber-500/30 text-amber-300 rounded-md px-4 py-3 text-sm flex items-start gap-2">
-          <span className="font-bold shrink-0">Regulatory Notice:</span>
-          <span>Dormant accounts reactivated without re-KYC constitute a CDD breach under CBUAE §8.4. All reactivations must include completed re-KYC before account activity is permitted.</span>
-        </div>
-
         {error && (
           <div className="bg-red-950/20 border border-red-500/30 text-red-300 rounded-md px-4 py-3 text-sm">{error}</div>
         )}

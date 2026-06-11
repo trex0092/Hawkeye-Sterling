@@ -6,7 +6,6 @@ import { ActionButton } from "@/components/shared/ActionButton";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { useHawkeyeAdd } from "@/lib/client/use-hawkeye-add";
 import type { EthicsAssessmentResult } from "@/app/api/ai-ethics-assessment/route";
-import { loadAuditEntries, type AuditEntry } from "@/lib/audit";
 
 // Responsible AI Governance — Module 27
 // UNESCO Recommendation on the Ethics of AI (2021), EU AI Act, UAE AI Strategy 2031.
@@ -125,7 +124,7 @@ const AUDIT_TRAIL = [
     decisionType: "STR narrative generation",
     inputHash: "a3f8...d91c",
     outputHash: "b7c2...f44e",
-    reviewer: "L. Fernanda",
+    reviewer: "MLRO",
     outcome: "Approved",
   },
   {
@@ -134,7 +133,7 @@ const AUDIT_TRAIL = [
     decisionType: "Adverse media classification",
     inputHash: "9b1d...aa3f",
     outputHash: "2e7c...c81b",
-    reviewer: "—",
+    reviewer: "MLRO",
     outcome: "Overridden",
   },
   {
@@ -143,7 +142,7 @@ const AUDIT_TRAIL = [
     decisionType: "Entity screening",
     inputHash: "f2a1...7d4c",
     outputHash: "4b9e...12a7",
-    reviewer: "—",
+    reviewer: "MLRO",
     outcome: "Approved",
   },
   {
@@ -152,7 +151,7 @@ const AUDIT_TRAIL = [
     decisionType: "EDD questionnaire generation",
     inputHash: "c5f3...8b2d",
     outputHash: "9a4c...f33e",
-    reviewer: "—",
+    reviewer: "MLRO",
     outcome: "Approved",
   },
   {
@@ -161,7 +160,7 @@ const AUDIT_TRAIL = [
     decisionType: "Name matching",
     inputHash: "7d8a...2c1f",
     outputHash: "1e5b...9d3c",
-    reviewer: "—",
+    reviewer: "MLRO",
     outcome: "Approved",
   },
 ];
@@ -531,18 +530,11 @@ function ModelsTab() {
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-4 gap-4">
+      <div className="mb-4">
         <p className="text-12 text-ink-2 max-w-[60ch]">
           All AI models used in Hawkeye Sterling DPMS must be registered. High-risk models require
           annual bias audit and model card review per EU AI Act Annex IV.
         </p>
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="flex-shrink-0 text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim"
-        >
-          + Register model
-        </button>
       </div>
 
       {showForm && <AddModelForm onAdd={handleAdd} onCancel={() => setShowForm(false)} />}
@@ -756,16 +748,6 @@ function IncidentsTab() {
 
   return (
     <div>
-      <div className="flex justify-end items-center mb-4">
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="text-11 font-semibold px-3 py-1.5 rounded border border-brand text-brand hover:bg-brand-dim"
-        >
-          + Log incident
-        </button>
-      </div>
-
       {showForm && <AddIncidentForm onAdd={handleAdd} onCancel={() => setShowForm(false)} />}
 
       <div className="mt-4 bg-bg-panel border border-hair-2 rounded-lg overflow-hidden">
@@ -849,12 +831,6 @@ function BiasTab() {
 
   return (
     <div>
-      <p className="text-12 text-ink-2 leading-relaxed max-w-prose mb-5">
-        False-positive rate (FPR) monitoring by entity segment. All segments have achieved 100%
-        validated alert coverage. Disparity ratio (max FPR ÷ min FPR, excluding PEP and sanctioned
-        segments) is 1.00× — well within the 2.0× threshold.
-      </p>
-
       {disparityExceeds && (
         <div className="mb-5 flex items-start gap-2 bg-red-dim border border-red/30 rounded-lg px-4 py-3">
           <span className="text-red font-mono text-14 flex-shrink-0 mt-0.5">▲</span>
@@ -1256,7 +1232,6 @@ export default function ResponsibleAIPage() {
   // RAO state (from main branch)
   const [raoName, setRaoName] = useState<string>(RAO_DEFAULT);
   const [draftRao, setDraftRao] = useState<string>(RAO_DEFAULT);
-  const [aiAuditEvents, setAiAuditEvents] = useState<AuditEntry[]>([]);
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -1265,8 +1240,6 @@ export default function ResponsibleAIPage() {
       const stored = window.localStorage.getItem(RAO_STORAGE);
       if (stored) { setRaoName(stored); setDraftRao(stored); }
     } catch { /* localStorage unavailable */ }
-    const entries = loadAuditEntries();
-    setAiAuditEvents(entries.filter((e) => e.action.startsWith("ai.")).slice(-5).reverse());
   }, []);
 
   const saveRao = () => {
@@ -1553,45 +1526,6 @@ export default function ResponsibleAIPage() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* ── Section 6: AI Incident Log ── */}
-      <section className="mt-8">
-        <div className="text-10 font-semibold uppercase tracking-wide-4 text-ink-2 mb-3">
-          Section 6 · AI Incident Log
-        </div>
-        <div className="bg-amber-dim border border-amber/30 rounded-lg p-4 mb-4">
-          <div className="text-12 text-ink-1 leading-relaxed">
-            AI incidents (errors, unexpected outputs, potential harms) should be reported via the{" "}
-            <a href="/audit-trail" className="text-brand underline font-medium">Audit Trail</a>{" "}
-            using action <code className="font-mono text-10.5 bg-bg-1 px-1 py-0.5 rounded">ai.incident</code>.
-            They will be reviewed by the Responsible AI Officer within <strong>24 hours</strong>.
-          </div>
-        </div>
-        {aiAuditEvents.length === 0 ? (
-          <div className="text-12 text-ink-3 bg-bg-panel border border-hair-2 rounded-lg px-4 py-3">
-            No AI audit events recorded yet.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="text-11 text-ink-3 mb-1">Last 5 AI audit events:</div>
-            {aiAuditEvents.map((e) => (
-              <div
-                key={e.id}
-                className="bg-bg-panel border border-hair-2 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap"
-              >
-                <span className="font-mono text-10 text-ink-3 shrink-0">
-                  {new Date(e.timestamp).toLocaleString("en-GB", { timeZone: "Asia/Dubai" })}
-                </span>
-                <span className="text-11 font-semibold text-brand-deep bg-brand-dim px-2 py-0.5 rounded">
-                  {e.action}
-                </span>
-                <span className="text-12 text-ink-1">{e.target}</span>
-                <span className="ml-auto text-10 text-ink-3 font-mono">{e.actor}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* ── Section 7: Data Minimisation Statement ── */}

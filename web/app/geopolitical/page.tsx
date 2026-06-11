@@ -111,7 +111,6 @@ export default function GeopoliticalPage() {
   const [loading, setLoading] = useState(false);
   const [regionFilter, setRegionFilter] = useState<string>("All");
   const [riskFilter, setRiskFilter] = useState<string>("All");
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   // Portfolio tab state
   const [portfolio, setPortfolio] = useState<PortfolioClient[]>(DEFAULT_PORTFOLIO);
@@ -137,7 +136,6 @@ export default function GeopoliticalPage() {
       } else if (data && "events" in data) {
         setEvents(data.events);
       }
-      setLastRefresh(new Date());
     } catch (err) {
       console.error("[hawkeye] geopolitical fetchEvents threw — keeping existing events:", err);
     } finally {
@@ -238,21 +236,6 @@ export default function GeopoliticalPage() {
             {t === "map" && "🗺️ Risk Map"}
           </button>
         ))}
-        <div className="ml-auto flex items-center gap-2 pb-1">
-          {lastRefresh && (
-            <span className="text-10 font-mono text-ink-3">
-              Refreshed {lastRefresh.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => { void fetchEvents(); }}
-            disabled={loading}
-            className="px-2 py-0.5 text-12 font-mono border border-green/40 rounded text-green bg-green-dim hover:bg-green-dim/70 transition-colors disabled:opacity-50"
-          >
-            ↻
-          </button>
-        </div>
       </div>
 
       {/* ── TAB 1: Live Events ── */}

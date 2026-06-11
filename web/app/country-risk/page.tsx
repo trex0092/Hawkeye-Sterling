@@ -467,7 +467,7 @@ function CountryRiskInner() {
   };
 
   return (
-    <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk" asanaLabel="Country Risk" onRun={() => void runCompare()}>
+    <ModuleLayout engineLabel="Country risk engine" asanaModule="country-risk" asanaLabel="Country Risk" onRun={() => { if (mode === "single") { handleSearch(); } else { void runCompare(); } }}>
       <ModuleHero
         eyebrow=""
         title="Country"
@@ -541,14 +541,6 @@ function CountryRiskInner() {
               <option value="quick">Quick Analysis</option>
               <option value="full">Full Analysis</option>
             </select>
-            <button
-              type="button"
-              onClick={handleSearch}
-              disabled={loading || !query.trim()}
-              className="px-5 py-2.5 rounded-lg bg-brand text-white text-13 font-semibold hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-            >
-              {loading ? "Analysing…" : "Analyse"}
-            </button>
           </div>
 
           {/* States */}

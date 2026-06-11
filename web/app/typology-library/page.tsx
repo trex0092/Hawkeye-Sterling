@@ -7,225 +7,6 @@ import type { TypologyDetailResult } from "@/app/api/typology-library/detail/rou
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";
 import { PLAYBOOKS, type Playbook } from "@/app/playbook/_data";
 
-// FIU 2025 DPMS typology coverage matrix types (mirrors /api/fiu-typology-check)
-interface FiuTypologyEntry {
-  id: string;
-  title: string;
-  description: string;
-  riskRating: "critical" | "high" | "medium";
-  redFlags: string[];
-  fatfRecommendations: string[];
-  mappedBrainModes: string[];
-  coverageGaps: string[];
-  reportSection: string;
-}
-
-interface FiuCoverageResponse {
-  typologies: FiuTypologyEntry[];
-  overallCoverage: number;
-  fullyCoveredCount: number;
-  partiallyCoveredCount: number;
-  uncoveredCount: number;
-  generatedAt: string;
-}
-
-const FIU_RISK_CFG = {
-  critical: { cls: "bg-red-dim text-red border-red/20", label: "CRITICAL" },
-  high: { cls: "bg-orange-dim text-orange border-orange/20", label: "HIGH" },
-  medium: { cls: "bg-amber-dim text-amber border-amber/20", label: "MEDIUM" },
-};
-
-function FiuTypologyCard({ t }: { t: FiuTypologyEntry }) {
-  const [open, setOpen] = useState(false);
-  const cfg = FIU_RISK_CFG[t.riskRating];
-  const hasCoverage = t.mappedBrainModes.length > 0;
-  const hasGaps = t.coverageGaps.length > 0;
-  return (
-    <div className={`border rounded-lg bg-bg-panel transition-colors ${open ? "border-brand/30" : "border-hair hover:border-brand/20"}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-start gap-3 p-4 text-left"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-10 font-mono font-semibold uppercase tracking-wide border ${cfg.cls}`}>
-              {cfg.label}
-            </span>
-            <span className="font-mono text-10 text-ink-3 px-1.5 py-0.5 rounded bg-bg-2 border border-hair">{t.reportSection}</span>
-            {hasCoverage ? (
-              <span className="text-10 font-mono text-green px-1.5 py-0.5 rounded bg-green-dim border border-green/20">
-                ✓ {t.mappedBrainModes.length} mode{t.mappedBrainModes.length !== 1 ? "s" : ""} mapped
-              </span>
-            ) : (
-              <span className="text-10 font-mono text-red px-1.5 py-0.5 rounded bg-red-dim border border-red/20">
-                ✗ No coverage
-              </span>
-            )}
-          </div>
-          <div className="font-semibold text-13 text-ink-0 leading-snug">{t.title}</div>
-          <p className="text-11.5 text-ink-2 mt-0.5 line-clamp-2">{t.description}</p>
-        </div>
-        <span className="text-ink-3 font-mono text-11 shrink-0 mt-0.5">{open ? "▾" : "▸"}</span>
-      </button>
-      {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-hair">
-          <div className="pt-3">
-            <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Red Flags (FIU 2025)</div>
-            <div className="space-y-1">
-              {t.redFlags.map((f, i) => (
-                <div key={i} className="flex items-start gap-1.5">
-                  <span className="text-red text-10 shrink-0 mt-0.5">▲</span>
-                  <span className="text-11.5 text-ink-1">{f}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {t.mappedBrainModes.length > 0 && (
-            <div>
-              <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Brain Modes — Covered</div>
-              <div className="flex flex-wrap gap-1.5">
-                {t.mappedBrainModes.map((m) => (
-                  <span key={m} className="font-mono text-10 px-2 py-0.5 rounded bg-green-dim text-green border border-green/20">{m}</span>
-                ))}
-              </div>
-            </div>
-          )}
-          {hasGaps && (
-            <div>
-              <div className="font-mono text-10 uppercase tracking-wide text-red mb-1.5">Coverage Gaps</div>
-              <div className="space-y-0.5">
-                {t.coverageGaps.map((g, i) => (
-                  <div key={i} className="text-11 text-ink-1">
-                    <span className="text-red mr-1">•</span>{g}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div>
-            <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">FATF Recommendations</div>
-            <div className="flex flex-wrap gap-1.5">
-              {t.fatfRecommendations.map((r) => (
-                <span key={r} className="font-mono text-10 px-2 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">{r}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FiuDpmsSection() {
-  const [data, setData] = useState<FiuCoverageResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
-  const fetchMatrix = async () => {
-    if (data) { setOpen(true); return; }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/fiu-typology-check");
-      if (!res.ok) {
-        if (mountedRef.current) setError(apiErrorMessage(res.status, "Coverage matrix load"));
-        return;
-      }
-      const json = await res.json().catch(() => ({})) as FiuCoverageResponse;
-      if (!mountedRef.current) return;
-      setData(json);
-      setOpen(true);
-    } catch {
-      if (mountedRef.current) setError("Network error — could not load FIU coverage matrix.");
-    } finally {
-      if (mountedRef.current) setLoading(false);
-    }
-  };
-
-  const coveragePct = data?.overallCoverage ?? 0;
-  const barCls = coveragePct >= 80 ? "bg-green" : coveragePct >= 50 ? "bg-amber" : "bg-red";
-
-  return (
-    <section className="mt-10 border border-brand/20 rounded-xl bg-bg-panel overflow-hidden">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 px-5 py-4 bg-brand-dim border-b border-brand/20">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-10 font-bold uppercase tracking-wide-4 text-brand">FIU Strategic Analysis — Sept 2025</span>
-            <span className="font-mono text-10 px-2 py-px rounded bg-brand/20 text-brand border border-brand/30">FATF 5th Round IO.6</span>
-          </div>
-          <h2 className="font-display text-20 font-normal text-ink-0 leading-tight">
-            DPMS Typology <em className="italic text-brand">Alignment.</em>
-          </h2>
-          <p className="text-12 text-ink-2 mt-1 max-w-2xl">
-            The UAE FIU published a Strategic Analysis Report on Misuse of Precious Metals and Stones in Financial Crime (September 2025). All 9 DPMS-specific typologies are mapped against Hawkeye Sterling brain modes. FATF 5th Round IO.6 assessors will verify this alignment.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void fetchMatrix()}
-          disabled={loading}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {loading ? <><span className="animate-spin font-mono">◌</span> Loading…</> : open ? "Hide matrix ▾" : "Show coverage matrix ▸"}
-        </button>
-      </div>
-
-      {/* Coverage bar summary (shown after load) */}
-      {data && (
-        <div className="px-5 py-3 border-b border-hair bg-bg-1 flex items-center gap-6 flex-wrap">
-          <div className="flex-1 sm:min-w-[180px]">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-10 text-ink-3 uppercase tracking-wide">Overall coverage</span>
-              <span className={`font-mono text-12 font-bold ${coveragePct >= 80 ? "text-green" : coveragePct >= 50 ? "text-amber" : "text-red"}`}>
-                {coveragePct}%
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-bg-2 overflow-hidden">
-              <div className={`h-full rounded-full transition-all ${barCls}`} style={{ width: `${coveragePct}%` }} />
-            </div>
-          </div>
-          <div className="flex gap-4 text-11 font-mono">
-            <span className="text-green">✓ {data.fullyCoveredCount} full</span>
-            <span className="text-amber">◑ {data.partiallyCoveredCount} partial</span>
-            <span className="text-red">✗ {data.uncoveredCount} gaps</span>
-          </div>
-          <span className="text-10 text-ink-3 font-mono">Generated {new Date(data.generatedAt).toLocaleString("en-GB")}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="px-5 py-3 text-12 text-red border-b border-hair bg-red-dim/20">{error}</div>
-      )}
-
-      {/* Typology grid */}
-      {open && data && (
-        <div className="p-5">
-          <div className="grid grid-cols-1 gap-3">
-            {data.typologies.map((t) => (
-              <FiuTypologyCard key={t.id} t={t} />
-            ))}
-          </div>
-          <p className="mt-4 text-10.5 text-ink-3 leading-relaxed">
-            Source: UAE FIU Strategic Analysis — Misuse of Precious Metals and Stones in Financial Crime, September 2025. Brain mode coverage is auto-derived from <code className="font-mono">fiu-dpms-typologies-2025.ts</code>. Coverage gaps indicate areas where new detection modes or enhanced logic may be required ahead of FATF 5th Round IO.6 assessment.
-          </p>
-        </div>
-      )}
-
-      {/* Collapsed placeholder */}
-      {!open && !data && !loading && (
-        <div className="px-5 py-6 text-center text-12 text-ink-3">
-          Click <strong>Show coverage matrix</strong> to load the 9 FIU DPMS typologies and verify brain mode alignment.
-        </div>
-      )}
-    </section>
-  );
-}
-
 // Module 38 — Typology Library
 // Comprehensive AML/CFT typology search engine powered by Claude.
 
@@ -758,8 +539,10 @@ function TypologyCard({
 export default function TypologyLibraryPage() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
-  const [activeFatfFilter, setActiveFatfFilter] = useState<FatfFilterKey>("all-fatf");
-  const [activeRiskFilter, setActiveRiskFilter] = useState<RiskFilterKey>("all-risk");
+  // Category/risk pill rows removed — free-text search covers filtering;
+  // these constants keep the search payload shape stable.
+  const activeFatfFilter: FatfFilterKey = "all-fatf";
+  const activeRiskFilter: RiskFilterKey = "all-risk";
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TypologySearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -836,16 +619,6 @@ export default function TypologyLibraryPage() {
     void handleSearch(undefined, key);
   };
 
-  const handleFatfFilterClick = (key: FatfFilterKey) => {
-    setActiveFatfFilter(key);
-    void handleSearch(undefined, undefined, key);
-  };
-
-  const handleRiskFilterClick = (key: RiskFilterKey) => {
-    setActiveRiskFilter(key);
-    void handleSearch(undefined, undefined, undefined, key);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") void handleSearch();
   };
@@ -888,60 +661,6 @@ export default function TypologyLibraryPage() {
           >
             {loading ? "⌕…" : "⌕"}
           </button>
-        </div>
-      </div>
-
-      {/* FATF Category Filters */}
-      <div className="mb-3">
-        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">FATF Category</div>
-        <div className="flex flex-wrap gap-2">
-          {FATF_CATEGORY_FILTERS.map((cat) => (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => handleFatfFilterClick(cat.key)}
-              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
-                activeFatfFilter === cat.key
-                  ? cat.key === "ml"
-                    ? "bg-brand text-white border-brand"
-                    : cat.key === "tf"
-                      ? "bg-red text-white border-red"
-                      : cat.key === "pf"
-                        ? "bg-orange text-white border-orange"
-                        : "bg-brand text-white border-brand"
-                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Risk Level Filters */}
-      <div className="mb-3">
-        <div className="font-mono text-10 uppercase tracking-wide text-ink-3 mb-1.5">Risk Level</div>
-        <div className="flex flex-wrap gap-2">
-          {RISK_FILTERS.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              onClick={() => handleRiskFilterClick(r.key)}
-              className={`px-3.5 py-1.5 rounded-full text-12 font-medium transition-colors border ${
-                activeRiskFilter === r.key
-                  ? r.key === "critical"
-                    ? "bg-red text-white border-red"
-                    : r.key === "high"
-                      ? "bg-orange text-white border-orange"
-                      : r.key === "medium"
-                        ? "bg-amber text-white border-amber"
-                        : "bg-green text-white border-green"
-                  : "bg-bg-1 text-ink-2 border-hair hover:border-brand/40 hover:text-ink-0"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -1036,9 +755,6 @@ export default function TypologyLibraryPage() {
           </section>
         </>
       )}
-
-      {/* FIU 2025 DPMS Typology Alignment — always visible below the search area */}
-      <FiuDpmsSection />
 
       {/* Deep Dive Modal */}
       {deepDiveTarget && (

@@ -39,13 +39,6 @@ interface PermissionLogEntry {
   reason: string;
 }
 
-interface RoleRecommendation {
-  recommendedRole: string;
-  rationale: string;
-  suggestedModules: string[];
-  risks: string[];
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TABS = ["👥 Users", "🔑 Permission Matrix", "👁️ Session Monitor", "📋 Audit Log"] as const;
@@ -333,9 +326,6 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
   const [saving, setSaving] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
   const [impact, setImpact] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<RoleRecommendation | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
   const [newUsername, setNewUsername] = useState(user.username ?? "");
   const [newPassword, setNewPassword] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
@@ -366,32 +356,6 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
       if (mountedRef.current) setPwMsg({ ok: false, text: "Network error — please try again." });
     } finally {
       if (mountedRef.current) setPwSaving(false);
-    }
-  };
-
-  // AI Recommend
-  const handleAiRecommend = async () => {
-    setAiLoading(true);
-    setAiError(null);
-    setAiResult(null);
-    try {
-      const resp = await fetch("/api/access/ai-recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userName: user.name,
-          jobTitle: user.role,
-          department: "Compliance",
-          responsibilities: `Current role: ${user.role}. Modules: ${user.modules.join(", ")}.`,
-        }),
-      });
-      const data = await resp.json().catch(() => ({})) as RoleRecommendation & { ok?: boolean };
-      if (!resp.ok) throw new Error(apiErrorMessage(resp.status));
-      if (mountedRef.current) setAiResult(data);
-    } catch {
-      if (mountedRef.current) setAiError("AI recommendation unavailable.");
-    } finally {
-      if (mountedRef.current) setAiLoading(false);
     }
   };
 
@@ -536,52 +500,6 @@ function UserSidePanel({ user, onClose, onRoleChanged }: SidePanelProps) {
                   Impact assessment
                 </span>
                 {impact}
-              </div>
-            )}
-          </div>
-
-          {/* AI Recommend */}
-          <div className="border border-hair-2 rounded-md p-4 flex flex-col gap-3 bg-bg-2">
-            <div className="flex items-center justify-between">
-              <div className="text-11 font-mono uppercase tracking-wide-4 text-ink-2">
-                AI role recommendation
-              </div>
-              <button
-                onClick={handleAiRecommend}
-                disabled={aiLoading}
-                className="px-3 py-1.5 rounded bg-bg-panel border border-brand text-brand text-11 font-mono font-semibold hover:bg-brand/10 transition-colors disabled:opacity-40"
-              >
-                {aiLoading ? "Analysing…" : "✦AI"}
-              </button>
-            </div>
-            {aiError && <div className="text-red text-12">{aiError}</div>}
-            {aiResult && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-11 text-ink-2 font-mono uppercase tracking-wide">Recommended:</span>
-                  <RoleBadge role={aiResult.recommendedRole as UserRole} />
-                </div>
-                <p className="text-12 text-ink-1 leading-relaxed">{aiResult.rationale}</p>
-                <div>
-                  <span className="text-10 font-mono uppercase text-ink-2 tracking-wide">Suggested modules</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {aiResult.suggestedModules.map((m) => (
-                      <span key={m} className="px-1.5 py-0.5 rounded text-10 font-mono bg-brand/10 text-brand">
-                        {m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-10 font-mono uppercase text-ink-2 tracking-wide">Risks</span>
-                  <ul className="mt-1 list-disc list-inside space-y-0.5">
-                    {aiResult.risks.map((r, i) => (
-                      <li key={i} className="text-12 text-ink-1">
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
             )}
           </div>

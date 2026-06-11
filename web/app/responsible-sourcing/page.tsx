@@ -471,31 +471,6 @@ export default function ResponsibleSourcingPage() {
         })}
       </div>
 
-      {/* Export documentation package */}
-      <div className={`mt-6 rounded-xl border p-5 ${isComplete ? "bg-green-dim border-green/30" : "bg-bg-panel border-hair-2"}`}>
-        <div className="text-12 font-semibold text-ink-0 mb-2">
-          {isComplete ? "✓ OECD DDG documentation package — complete" : "Documentation package — complete all 5 steps first"}
-        </div>
-        <p className="text-11 text-ink-2 mb-4">
-          Export the full 5-step OECD DDG documentation package for MoE submission under Ministerial Decree 68/2024.
-          For smelter-level AI risk assessment and RMAP status tracking, use the{" "}
-          <a href="/rmi" className="text-brand underline">RMAP / RMI module</a>.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={!isComplete}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40"
-            onClick={() => { try { const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `responsible-sourcing-${workflow.reportingYear}.json`; a.click(); URL.revokeObjectURL(url); } catch (err) { console.error("[hawkeye] responsible-sourcing JSON export failed:", err); } }}>
-            Export documentation package
-          </button>
-          <a href="/rmi" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
-            Open RMAP / RMI Module ↗
-          </a>
-          <a href="/supply-chain" className="inline-flex items-center gap-2 px-4 py-2 rounded border border-hair-2 text-ink-1 text-12 font-medium hover:bg-bg-2 no-underline">
-            Supply Chain Risk Assessment ↗
-          </a>
-        </div>
-      </div>
-
       <p className="text-10.5 text-ink-3 mt-4 leading-relaxed">
         Ministerial Decree 68/2024 · OECD DDG for Responsible Supply Chains of Minerals from CAHRAs.
         5-step framework: (1) Management Systems (2) Risk Identification (3) Risk Mitigation (4) Third-Party Audit (5) Annual Report.

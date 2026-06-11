@@ -3602,7 +3602,6 @@ export default function MlroAdvisorPage() {
                   })}
                 </div>
                 <div className="flex-1" />
-                <span className="text-10 text-ink-3 font-mono">⌘+Enter to submit</span>
                 <button
                   type="button"
                   onClick={() => { void handleAsk(); }}
@@ -4066,7 +4065,6 @@ export default function MlroAdvisorPage() {
               />
               <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-11 text-ink-3">⌘+Enter to submit</span>
                   <div className="flex items-center gap-1.5 border border-hair-2 rounded p-0.5">
                     <button
                       type="button"

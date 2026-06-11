@@ -245,19 +245,12 @@ export default function SecurityScanPage() {
           </div>
         )}
 
-        {/* Re-scan button + powered-by */}
+        {/* Powered-by — re-scan runs from the action rail's RUN button */}
         {!loading && result && (
           <div className="flex items-center justify-between pt-2">
             <span className="text-11 text-ink-4">
               Powered by <span className="font-semibold text-ink-3">Hawkeye Security Suite</span> — AI-powered security analysis
             </span>
-            <button
-              type="button"
-              onClick={() => void runScan()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand/40 text-12 font-semibold text-brand hover:bg-brand/10 transition-colors"
-            >
-              🔄 Re-scan
-            </button>
           </div>
         )}
       </div>

@@ -543,17 +543,6 @@ export default function RmiPage() {
       )}
 
 
-      {/* Add smelter button */}
-      <div className="flex justify-end mb-3">
-        <button
-          type="button"
-          onClick={addSmelter}
-          className="px-3 py-1.5 border border-brand/40 rounded text-11 font-semibold text-brand bg-brand-dim hover:bg-brand/20 transition-colors"
-        >
-          + Add smelter
-        </button>
-      </div>
-
       {/* Mineral filter tabs */}
       <div className="flex gap-1 mb-4 border-b border-hair-2">
         {MINERAL_TABS.map((t) => {

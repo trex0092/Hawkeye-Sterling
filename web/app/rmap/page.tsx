@@ -160,10 +160,6 @@ export default function RmapPage() {
             </table>
           </div>
         )}
-
-        <p className="text-xs text-ink-2 font-mono">
-          Source: RMI public conformant smelter list · {smelters.length} smelters loaded
-        </p>
       </div>
     </ModuleLayout>
   );

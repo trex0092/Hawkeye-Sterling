@@ -207,15 +207,6 @@ function SupplierList({
           placeholder="Country (ISO-2)"
           className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
         />
-        <button
-          type="button"
-          onClick={add}
-          disabled={!name.trim() || !country.trim()}
-          className="px-5 py-2 rounded-lg border-2 border-brand bg-brand/10 text-brand text-13 font-bold hover:bg-brand/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shadow-[0_0_12px_rgba(236,72,153,0.15)] hover:shadow-[0_0_18px_rgba(236,72,153,0.30)] transition-all"
-          title="Add supplier"
-        >
-          + Add
-        </button>
       </div>
       {suppliers.length > 0 && (
         <div className="flex flex-col gap-1">
@@ -280,69 +271,6 @@ function GeographicMap({ countryRiskSummary }: { countryRiskSummary: SupplyChain
   );
 }
 
-// ──────────────────────────────────────────────
-// RMAP Smelter Lookup panel (standalone)
-// ──────────────────────────────────────────────
-function RmapLookupPanel() {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<RmapStatus | "loading" | "not_found" | null>(null);
-
-  const lookup = async () => {
-    if (!query.trim()) return;
-    setStatus("loading");
-    const result = await fetchRmapStatus(query.trim());
-    setStatus(result ?? "not_found");
-  };
-
-  return (
-    <div className="bg-bg-panel border border-hair-2 rounded-lg p-5">
-      <h3 className="text-13 font-semibold text-ink-0 mb-1">RMAP Smelter Lookup</h3>
-      <p className="text-11 text-ink-3 mb-3">
-        Search for a smelter or refiner by name to check their RMI RMAP certification status, Conformant ID (CID), and last audit date.
-      </p>
-      <div className="flex gap-2 mb-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void lookup(); } }}
-          placeholder="e.g. Valcambi, Rand Refinery, Perth Mint"
-          className="flex-1 bg-bg-1 border border-hair-2 rounded px-3 py-1.5 text-13 text-ink-0 outline-none focus:border-brand"
-        />
-        <button
-          type="button"
-          onClick={() => { void lookup(); }}
-          disabled={!query.trim() || status === "loading"}
-          className="px-4 py-2 rounded-lg bg-brand text-white text-12 font-semibold hover:bg-brand/90 disabled:opacity-40 transition-colors whitespace-nowrap"
-        >
-          {status === "loading" ? "Looking up…" : "Look Up RMAP"}
-        </button>
-      </div>
-      {status !== null && status !== "loading" && (
-        <div className="mt-2">
-          {status === "not_found" ? (
-            <div className="flex items-center gap-2">
-              <RmapBadge status="not_found" />
-              <span className="text-11 text-ink-2">No matching smelter found in the RMAP database for &quot;{query}&quot;.</span>
-            </div>
-          ) : (
-            <div className="bg-bg-1 border border-hair-2 rounded-lg px-4 py-3 flex flex-col gap-1.5">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-13 font-semibold text-ink-0">{status.facilityName ?? query}</span>
-                <RmapBadge status={status} />
-              </div>
-              {status.cid && (
-                <div className="text-11 text-ink-2 font-mono">CID: {status.cid}</div>
-              )}
-              {status.lastAuditDate && (
-                <div className="text-11 text-ink-3">Last audit: {status.lastAuditDate}</div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ──────────────────────────────────────────────
 // Main page
@@ -710,11 +638,6 @@ export default function SupplyChainPage() {
           </div>
         </div>
       )}
-
-      {/* ── RMAP Smelter Lookup ── */}
-      <div className="mt-6">
-        <RmapLookupPanel />
-      </div>
     </ModuleLayout>
   );
 }

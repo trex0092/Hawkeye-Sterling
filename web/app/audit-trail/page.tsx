@@ -86,10 +86,6 @@ export default function AuditTrailPage() {
     downloadBlob(exportAuditCsv(entries), `hawkeye-audit-${Date.now()}.csv`, "text/csv");
   };
 
-  const handleExportJson = () => {
-    downloadBlob(JSON.stringify(entries, null, 2), `hawkeye-audit-${Date.now()}.json`, "application/json");
-  };
-
   const runAnomalyScan = async () => {
     setAnomalyLoading(true);
     setError(null);
@@ -218,20 +214,6 @@ export default function AuditTrailPage() {
               PDF
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-panel text-ink-1"
-          >
-            Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={handleExportJson}
-            className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 bg-bg-1 hover:bg-bg-panel text-ink-1"
-          >
-            Export JSON
-          </button>
           {entries.length > 0 && (
             <button
               type="button"
