@@ -11,7 +11,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
-import { loadCandidatesWithHealth, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, missingCoreSanctionsLists, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
 import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
@@ -537,9 +537,30 @@ export async function POST(req: Request): Promise<NextResponse> {
     // Re-use the promise started at t0; loadCandidatesWithHealth's in-flight
     // deduplication means only one Blobs read occurred regardless.
     try {
-      const loaded = await candidatesPromise;
+      // Bound the wait on the corpus load so a cold-start Blobs read can never
+      // push the response past the 5s SLA. The full-list load (raised blob
+      // timeout) runs in the background/eager preload and is cached; if it
+      // isn't warm within this budget we return 503 fast (handled by the
+      // !loaded branch) rather than blocking — never a slow screen, and never
+      // a verdict against a not-yet-loaded corpus. A retry hits the warm cache.
+      const CORPUS_WAIT_BUDGET_MS = 2_500;
+      let corpusTimer: ReturnType<typeof setTimeout> | undefined;
+      const loaded = await Promise.race([
+        candidatesPromise,
+        new Promise<null>((resolve) => { corpusTimer = setTimeout(() => resolve(null), CORPUS_WAIT_BUDGET_MS); }),
+      ]);
+      if (corpusTimer) clearTimeout(corpusTimer);
       if (!loaded) {
-        return respond(503, { ok: false, error: "watchlist corpus unavailable", detail: "loadCandidatesWithHealth failed" }, gateHeaders);
+        return respond(503, {
+          ok: false,
+          errorCode: "LISTS_MISSING",
+          errorType: "data_integrity",
+          tool: "screen_subject",
+          missingLists: ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi"],
+          degraded: true,
+          message: "Screening corpus is still loading or unavailable. Retry shortly — the full sanctions lists load in the background.",
+          requestId: randomUUID(),
+        } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string }, gateHeaders);
       }
       corpusHealth = loaded.health;
       const rawCandidates = loaded.candidates;
@@ -572,14 +593,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);
       }
 
-      // Verify that the two most critical lists (OFAC SDN and UN Consolidated) are
-      // represented in the loaded corpus. If both are absent it means the cron has
-      // not run yet and only the static seed is present — block to prevent false CLEARs.
+      // Verify the core global sanctions regimes are represented in the loaded
+      // corpus. Operator policy (2026-06-11): a verdict must never be produced
+      // against partial coverage — if ANY of these is missing, the screen is
+      // refused rather than returning a (possibly false) CLEAR. This is stricter
+      // than the prior "both OFAC SDN and UN missing" rule, which let a screen
+      // proceed without OFAC SDN as long as UN had loaded — the exact hole that
+      // let a known SDN screen "clear" while OFAC SDN sat unloaded behind a too-
+      // short blob-read timeout. Runs before the bloom fast-path, so it gates
+      // every verdict path. UAE EOCN/LTL are intentionally excluded here: they
+      // depend on operator seed-path env vars and are tracked as a separate gap,
+      // so requiring them would brick screening over a known config item.
       const loadedListIds = new Set(candidates.map((c) => c.listId));
-      const criticalLists = ["ofac_sdn", "un_consolidated"] as const;
-      const missingCritical = criticalLists.filter((id) => !loadedListIds.has(id));
-      if (missingCritical.length === criticalLists.length) {
-        // Neither critical list is present — refuse to screen.
+      const missingCritical = missingCoreSanctionsLists(loadedListIds);
+      if (missingCritical.length > 0) {
+        // At least one core sanctions list is absent — refuse to screen.
         return respond(503, {
           ok: false,
           errorCode: "LISTS_MISSING",
@@ -587,7 +615,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           tool: "screen_subject",
           missingLists: missingCritical,
           degraded: true,
-          message: "Screening cannot proceed: one or more required sanctions lists are not loaded. Run sanctions refresh and retry.",
+          message: `Screening cannot proceed: core sanctions list(s) not loaded (${missingCritical.join(", ")}). Coverage would be incomplete — refusing to return a verdict. Retry shortly; the corpus reloads automatically.`,
           requestId: randomUUID(),
           dataSourceHealth: corpusHealth ? toDataSourceHealth(corpusHealth) : undefined,
         } as QuickScreenResponse & { errorCode: string; errorType: string; tool: string; missingLists: string[]; degraded: boolean; message: string; requestId: string; dataSourceHealth?: ScreeningDataSourceHealth }, gateHeaders);

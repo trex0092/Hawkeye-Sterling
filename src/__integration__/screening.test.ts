@@ -196,11 +196,15 @@ async function jsonBody(res: Response): Promise<unknown> {
 }
 
 // ─── Minimal candidates ───────────────────────────────────────────────────
-// Two entries — one from ofac_sdn and one from un_consolidated — so the
-// critical-list check in quick-screen passes without hitting Blobs.
+// One entry from each core sanctions regime (OFAC SDN, UN, EU FSF, UK OFSI)
+// so the core-list coverage check in quick-screen/batch-screen passes without
+// hitting Blobs. The guard (2026-06-11) refuses a verdict if ANY core list is
+// missing, so a fully-loaded corpus fixture must include all four.
 const MINIMAL_CANDIDATES = [
   { listId: 'ofac_sdn', listRef: 'SDN-MIN-001', name: 'Test Candidate SDN' },
   { listId: 'un_consolidated', listRef: 'UN-MIN-001', name: 'Test Candidate UN' },
+  { listId: 'eu_fsf', listRef: 'EU-MIN-001', name: 'Test Candidate EU' },
+  { listId: 'uk_ofsi', listRef: 'UK-MIN-001', name: 'Test Candidate UK' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
