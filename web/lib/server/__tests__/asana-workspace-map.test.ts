@@ -22,6 +22,10 @@ describe('module board narratives', () => {
     // 2026-06-12: DPMSR board retired with its module (82 → 81) — the cash-
     // threshold duty is unchanged; reports filed directly on the FIU goAML
     // portal by the MLRO.
+    // 2026-06-12: sidebar regroup — EOCN/TFS/PNMR/CNMR moved to new group 6
+    // (SANCTIONS & NAME MATCH, 6.01–6.04), STR/SAR Filing Suite to new group
+    // 7 (FIU REPORTING · GOAML, 7.01), Ongoing Monitor relabelled
+    // "Customer/Supplier Monitoring". Moves + renumbering only — still 81.
     expect(MODULE_BOARDS.length).toBe(81);
     for (const b of MODULE_BOARDS) {
       const n = boardNarrative(b.num);

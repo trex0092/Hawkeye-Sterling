@@ -2,7 +2,7 @@
 //
 // Single source of truth for the operator-approved Asana topology:
 //   00 · Hawkeye Inbox — Master Landing            (triage / catch-all)
-//   88 module boards (1.01–5.14)                   (one per sidebar module)
+//   81 module boards (groups 1–7)                  (one per sidebar module)
 //   HS · Modules — Daily Attestation               (MLRO single-pane digest)
 //
 // The bootstrap endpoint (app/api/asana-bootstrap-workspace) builds the
@@ -21,16 +21,25 @@ import narrativeArtifact from "./asana-module-narratives.json";
 export type BoardGroup =
   | "onboarding-cdd"
   | "risk-aml-ops"
+  | "sanctions-name-match"
+  | "fiu-reporting"
   | "governance-audit"
   | "kyc-tools"
   | "intelligence";
 
+// Record order = sidebar order (web/lib/nav-groups.ts) = digest section
+// order. Numeric prefixes 1–5 are frozen for the original groups; the
+// 2026-06-12 sidebar regroup ("Sanctions & Name Match", "FIU Reporting ·
+// goAML") takes prefixes 6/7 so existing 1.xx–5.xx board numbers never
+// renumber across groups.
 export const GROUP_META: Record<BoardGroup, { title: string; color: string; prefix: number }> = {
-  "onboarding-cdd":   { title: "ONBOARDING & CDD",   color: "light-pink",  prefix: 1 },
-  "risk-aml-ops":     { title: "RISK & AML OPS",     color: "dark-red",    prefix: 2 },
-  "governance-audit": { title: "GOVERNANCE & AUDIT", color: "dark-purple", prefix: 3 },
-  "kyc-tools":        { title: "KYC TOOLS",          color: "dark-blue",   prefix: 4 },
-  "intelligence":     { title: "INTELLIGENCE",       color: "dark-green",  prefix: 5 },
+  "onboarding-cdd":       { title: "ONBOARDING & CDD",       color: "light-pink",  prefix: 1 },
+  "risk-aml-ops":         { title: "RISK & AML OPS",         color: "dark-red",    prefix: 2 },
+  "sanctions-name-match": { title: "SANCTIONS & NAME MATCH", color: "dark-orange", prefix: 6 },
+  "fiu-reporting":        { title: "FIU REPORTING · GOAML",  color: "dark-teal",   prefix: 7 },
+  "governance-audit":     { title: "GOVERNANCE & AUDIT",     color: "dark-purple", prefix: 3 },
+  "kyc-tools":            { title: "KYC TOOLS",              color: "dark-blue",   prefix: 4 },
+  "intelligence":         { title: "INTELLIGENCE",           color: "dark-green",  prefix: 5 },
 };
 
 // Default lifecycle — the operator-approved board workflow.
@@ -272,7 +281,7 @@ const SECTIONS_OVERRIDE: Record<string, readonly string[]> = {
   "supply-chain": ["📥 New Checks", "🔍 Under Review", "🚨 Sanctions Hit", "✅ Cleared"],
 };
 
-// ── The 88 module boards, in sidebar order (web/lib/nav-groups.ts). ──
+// ── The 81 module boards, in sidebar order (web/lib/nav-groups.ts). ──
 // [key, emoji, label]
 const G1: Array<[string, string, string]> = [
   ["grievances-whistleblowing", "🛡️", "Grievances"],
@@ -292,10 +301,9 @@ const G1: Array<[string, string, string]> = [
 const G2: Array<[string, string, string]> = [
   ["screening", "🔎", "Screening"],
   ["transaction-monitor", "💸", "Transaction Monitor"],
-  ["ongoing-monitor", "👁️", "Ongoing Monitor"],
+  ["ongoing-monitor", "👁️", "Customer/Supplier Monitoring"],
   ["cases", "🗂️", "Cases"],
   ["ewra", "📊", "EWRA / BWRA"],
-  ["sar-qa", "📋", "STR/SAR Filing Suite"],
   ["supply-chain", "🔗", "Supply Chain & Responsible Sourcing"],
   ["rmi", "🏭", "RMI / RMAP"],
   ["responsible-sourcing", "⛏️", "Responsible Sourcing"],
@@ -304,10 +312,6 @@ const G2: Array<[string, string, string]> = [
   ["lbma", "🥇", "LBMA Gold"],
   ["reg-change", "📋", "Reg Changes"],
   ["shipments", "📦", "Shipments"],
-  ["eocn", "🇦🇪", "EOCN"],
-  ["tfs-alerts", "🚨", "Sanctions Alerts & Name Match"],
-  ["cnmr", "📝", "CNMR"],
-  ["pnmr", "📋", "PNMR Queue"],
   ["moe-survey", "📋", "MoE Survey"],
   ["enforcement", "👮", "Enforcement"],
   ["oversight", "⚖️", "Oversight"],
@@ -319,6 +323,18 @@ const G2: Array<[string, string, string]> = [
   ["coi-register", "⚖️", "COI Register"],
   ["voluntary-disclosure", "📣", "Voluntary Disclosure"],
   ["eval-kpi", "📊", "Eval KPIs"],
+];
+// 2026-06-12 sidebar regroup: EOCN / TFS / PNMR / CNMR moved out of
+// Risk & AML Ops into their own group (prefix 6), STR/SAR Filing Suite
+// into FIU Reporting · goAML (prefix 7) — mirrors web/lib/nav-groups.ts.
+const G6: Array<[string, string, string]> = [
+  ["eocn", "🇦🇪", "EOCN"],
+  ["tfs-alerts", "🚨", "Sanctions Alerts & Name Match"],
+  ["pnmr", "📋", "PNMR Queue"],
+  ["cnmr", "📝", "CNMR"],
+];
+const G7: Array<[string, string, string]> = [
+  ["sar-qa", "📋", "STR/SAR Filing Suite"],
 ];
 const G3: Array<[string, string, string]> = [
   ["mlro-advisor", "🧠", "MLRO Advisor"],
@@ -391,9 +407,14 @@ function buildBoards(group: BoardGroup, defs: Array<[string, string, string]>): 
   });
 }
 
+// Assembled in sidebar order (G6/G7 sit between Risk & AML Ops and
+// Governance & Audit) so digest-section and attestation ordering mirror
+// the app sidebar exactly.
 export const MODULE_BOARDS: ModuleBoard[] = [
   ...buildBoards("onboarding-cdd", G1),
   ...buildBoards("risk-aml-ops", G2),
+  ...buildBoards("sanctions-name-match", G6),
+  ...buildBoards("fiu-reporting", G7),
   ...buildBoards("governance-audit", G3),
   ...buildBoards("kyc-tools", G4),
   ...buildBoards("intelligence", G5),

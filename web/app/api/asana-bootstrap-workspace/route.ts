@@ -177,9 +177,10 @@ function governanceTaskNotes(): string {
   return [
     "HAWKEYE STERLING — ASANA WORKSPACE GOVERNANCE",
     "",
-    "TAXONOMY: 00 · Hawkeye Inbox (triage/catch-all) · 88 module boards numbered by platform",
-    "group (1.xx Onboarding & CDD · 2.xx Risk & AML Ops · 3.xx Governance & Audit ·",
-    "4.xx KYC Tools · 5.xx Intelligence) · HS · Modules — Daily Attestation (digest).",
+    "TAXONOMY: 00 · Hawkeye Inbox (triage/catch-all) · 81 module boards numbered by platform",
+    "group (1.xx Onboarding & CDD · 2.xx Risk & AML Ops · 6.xx Sanctions & Name Match ·",
+    "7.xx FIU Reporting · goAML · 3.xx Governance & Audit · 4.xx KYC Tools ·",
+    "5.xx Intelligence) · HS · Modules — Daily Attestation (digest).",
     "",
     "CONVENTIONS: every board carries an audit-ready charter (description), a lifecycle",
     "section workflow, and a pinned 📌 Compliance Attestation task receiving the automated",
