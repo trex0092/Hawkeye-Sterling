@@ -521,10 +521,17 @@ export function invalidateCandidateCache(): void {
 //      scheduled-function fleet (advisory; its TTL is the same interval).
 const SELF_HEAL_MIN_INTERVAL_MS = 10 * 60_000;
 
+interface SelfHealIngestionResult {
+  ok_count: number;
+  failed_count: number;
+  anyWriteFailed: boolean;
+  summary: Array<{ recordCount: number }>;
+}
+
 type SelfHealIngestionRunner = (
   _label: string,
   _opts: { adapterTimeoutMs: number; heavyAdapterTimeoutMs: number },
-) => Promise<{ ok_count: number; failed_count: number }>;
+) => Promise<SelfHealIngestionResult>;
 
 let _selfHealLastAttemptAt = 0;
 let _selfHealRunnerOverride: SelfHealIngestionRunner | null = null;
@@ -556,10 +563,7 @@ export function triggerCorpusSelfHeal(reason: string): boolean {
         adapterTimeoutMs: 45_000,
         heavyAdapterTimeoutMs: 120_000,
       });
-      invalidateCandidateCache();
-      console.info(
-        `[candidates-loader] corpus self-heal finished ok=${result.ok_count} failed=${result.failed_count} — candidate cache invalidated`,
-      );
+      await finishSelfHeal(result);
       return;
     }
 
@@ -602,10 +606,7 @@ export function triggerCorpusSelfHeal(reason: string): boolean {
       adapterTimeoutMs: 45_000,
       heavyAdapterTimeoutMs: 120_000,
     });
-    invalidateCandidateCache();
-    console.info(
-      `[candidates-loader] corpus self-heal finished ok=${result.ok_count} failed=${result.failed_count} — candidate cache invalidated`,
-    );
+    await finishSelfHeal(result);
   })().catch((err) => {
     console.error(
       "[candidates-loader] corpus self-heal failed:",
@@ -614,6 +615,40 @@ export function triggerCorpusSelfHeal(reason: string): boolean {
   });
 
   return true;
+}
+
+// Post-ingestion convergence: drop the in-process cache so the next load
+// reads the fresh blobs, and refresh `sanctions/meta.json` so
+// /api/screening/health stops reporting CORPUS_MISSING without waiting for
+// the nightly refresh-lists pipeline (the only other writer of that key).
+// Meta is only written on a fully clean run — mirroring refresh-lists-core —
+// so a partial ingest can never mask real staleness.
+async function finishSelfHeal(result: SelfHealIngestionResult): Promise<void> {
+  invalidateCandidateCache();
+  console.info(
+    `[candidates-loader] corpus self-heal finished ok=${result.ok_count} failed=${result.failed_count} — candidate cache invalidated`,
+  );
+  if (result.anyWriteFailed) return;
+  try {
+    const { setJson } = await import("./store");
+    const totalEntries = result.summary.reduce(
+      (sum, r) => sum + (typeof r.recordCount === "number" ? r.recordCount : 0),
+      0,
+    );
+    await setJson("sanctions/meta.json", {
+      updatedAt: new Date().toISOString(),
+      totalEntries,
+      listCount: result.summary.length,
+      listsOk: result.ok_count,
+      listsFailed: result.failed_count,
+      label: "corpus-self-heal",
+    });
+  } catch (metaErr) {
+    console.error(
+      "[candidates-loader] corpus self-heal: sanctions/meta.json write failed — /api/screening/health stays CORPUS_MISSING until the next successful ingest:",
+      metaErr instanceof Error ? metaErr.message : String(metaErr),
+    );
+  }
 }
 
 // Eagerly start loading on module import so the first real request hits a warm

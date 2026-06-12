@@ -8,10 +8,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { triggerCorpusSelfHeal, __setSelfHealRunnerForTests } from "../candidates-loader";
 
+// anyWriteFailed: true keeps the meta-write convergence path out of unit
+// tests (it would hit the real blob store helper); the meta write is gated
+// on a fully clean run exactly like refresh-lists-core.
+const cleanRun = { ok_count: 9, failed_count: 0, anyWriteFailed: true, summary: [] };
+
 describe("triggerCorpusSelfHeal", () => {
   beforeEach(() => {
     // Installs the runner seam and resets the in-memory throttle.
-    __setSelfHealRunnerForTests(vi.fn(async () => ({ ok_count: 0, failed_count: 0 })));
+    __setSelfHealRunnerForTests(vi.fn(async () => cleanRun));
   });
 
   afterEach(() => {
@@ -19,7 +24,7 @@ describe("triggerCorpusSelfHeal", () => {
   });
 
   it("runs the ingestion with the operator-refresh tier budgets", async () => {
-    const runner = vi.fn(async () => ({ ok_count: 9, failed_count: 0 }));
+    const runner = vi.fn(async () => cleanRun);
     __setSelfHealRunnerForTests(runner);
 
     expect(triggerCorpusSelfHeal("test: corpus empty")).toBe(true);
@@ -32,7 +37,7 @@ describe("triggerCorpusSelfHeal", () => {
   });
 
   it("throttles repeat attempts inside the min interval", async () => {
-    const runner = vi.fn(async () => ({ ok_count: 9, failed_count: 0 }));
+    const runner = vi.fn(async () => cleanRun);
     __setSelfHealRunnerForTests(runner);
 
     expect(triggerCorpusSelfHeal("first")).toBe(true);
