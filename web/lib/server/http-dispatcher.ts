@@ -364,11 +364,17 @@ async function newsFetchInner(
 // still succeeds — the tell that this is burst-induced egress death, not a
 // Google IP block (which would surface as http_403, not network). Capping the
 // TOTAL concurrent news sockets keeps egress alive so the feeds that do run
-// actually return articles, and bounds the worst-case latency. Override with
+// actually return articles, and bounds the worst-case latency.
+//
+// Default 10 = the locale-pool size already proven safe for Google's egress
+// (the collapse came from 10 + ~70 unpooled regional feeds = ~80). 10 also
+// leaves headroom so a second request on the same warm instance isn't starved
+// to 0 feeds while a prior request's sockets drain (observed cap-6 contention:
+// a concurrent probe came back feedsAttempted 0). Override with
 // NEWS_MAX_CONCURRENCY.
 const NEWS_MAX_CONCURRENCY = ((): number => {
   const raw = Number(process.env["NEWS_MAX_CONCURRENCY"]);
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 6;
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 10;
 })();
 let activeNewsFetches = 0;
 const newsSlotQueue: Array<() => void> = [];
