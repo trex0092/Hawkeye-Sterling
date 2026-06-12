@@ -12,13 +12,23 @@
 // endpoints — au_dfat (dfat.gov.au XLSX, several MB, slow origin), ch_seco
 // (SESAM generates the XML server-side per request), eu_fsf (multi-MB webgate
 // payload) — regularly need more than 20 s, so they timed out on every
-// scheduled tick ("adapter au_dfat timed out after 20000ms"). Inside this
-// 900 s budget the per-adapter leash is BACKGROUND_ADAPTER_TIMEOUT_MS (60 s):
-// adapters fan out in parallel, so worst-case wall-clock is the slowest
-// adapter (60 s) plus the parse/write tail — minutes at most, ~10× margin.
-// SLA context: list-staleness warning is 36 h; one full-leash pass per day
-// keeps the slow trio comfortably fresh, and the HTTP-triggered operator/
-// admin refresh routes (45 s leash) remain available intraday.
+// scheduled tick ("adapter au_dfat timed out after 20000ms").
+//
+// THIS WORKER IS THE GUARANTEED REFRESH PATH FOR THE HEAVY ADAPTERS
+// (HEAVY_ADAPTER_IDS: au_dfat, ch_seco, jp_mof). Inside the 900 s budget:
+//   · tier 1 (light adapters) fans out in parallel under
+//     BACKGROUND_ADAPTER_TIMEOUT_MS (60 s) — worst case the slowest light
+//     adapter plus the write tail;
+//   · tier 2 (heavy adapters) then runs strictly sequentially under
+//     BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS (120 s each), sized for au_dfat's
+//     40 s download + ~60 s event-loop-blocking exceljs parse. Sequencing
+//     keeps the parse from freezing other adapters' leash timers (the
+//     2026-06-12 production incident).
+// Worst case: 60 s + 3 × 120 s + write tail ≈ 8 min, inside the 900 s
+// ceiling with margin. SLA context: list-staleness warning is 36 h; one
+// full-budget pass per day keeps the heavy trio comfortably fresh, and the
+// HTTP-triggered operator/admin refresh routes run the same two-tier shape
+// intraday on a best-effort basis.
 //
 // Auth: same accepted trust posture as refresh-lists.ts — the trigger
 // forwards the legacy x-netlify-scheduled-function header; manual operators
@@ -28,7 +38,10 @@
 
 import type { Config } from "@netlify/functions";
 import { runRefreshListsPipeline, isAuthorizedRefreshRequest } from "../lib/refresh-lists-core.js";
-import { BACKGROUND_ADAPTER_TIMEOUT_MS } from "../../src/ingestion/run-all.js";
+import {
+  BACKGROUND_ADAPTER_TIMEOUT_MS,
+  BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS,
+} from "../../src/ingestion/run-all.js";
 
 const LABEL = "refresh-lists-background";
 
@@ -40,10 +53,14 @@ export default async (req: Request): Promise<Response> => {
     });
   }
 
-  console.info(`[${LABEL}] starting nightly refresh with adapterTimeoutMs=${BACKGROUND_ADAPTER_TIMEOUT_MS}`);
+  console.info(
+    `[${LABEL}] starting nightly refresh with adapterTimeoutMs=${BACKGROUND_ADAPTER_TIMEOUT_MS} ` +
+    `heavyAdapterTimeoutMs=${BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS}`,
+  );
   try {
     const { status, body } = await runRefreshListsPipeline({
       adapterTimeoutMs: BACKGROUND_ADAPTER_TIMEOUT_MS,
+      heavyAdapterTimeoutMs: BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS,
       runLabel: LABEL,
     });
     console.info(`[${LABEL}] finished status=${status}`);

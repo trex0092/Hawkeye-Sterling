@@ -71,9 +71,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const triggeredAt = new Date().toISOString();
   try {
-    // 45 s leash (vs the crons' 20 s): au_dfat XLSX and ch_seco SESAM need
-    // >20 s; this route's maxDuration is 60 s so the slowest adapter +
-    // blob writes still fit.
+    // 45 s tier-1 leash (vs the crons' 20 s). NO heavy-tier budget: this
+    // route AWAITS the run and answers synchronously, so its real budget is
+    // the ~26 s edge inactivity window + 60 s maxDuration — au_dfat's 40 s
+    // download + ~60 s exceljs parse can never fit. Heavy adapters
+    // (HEAVY_ADAPTER_IDS) are skipped without error logs; use
+    // POST /api/sanctions/operator-refresh (202 + background continuation)
+    // for a best-effort intraday heavy refresh — the nightly
+    // refresh-lists-background worker is their guaranteed path.
     const result = (await runIngestionAll("admin-trigger-refresh", { adapterTimeoutMs: 45_000 })) as {
       ok: boolean;
       at: string;

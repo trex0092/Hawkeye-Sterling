@@ -5,6 +5,11 @@
 // no-op'd because Netlify Lambdas can't reliably TLS-handshake back to
 // their own public origin. The same /api/sanctions/watch HTTP route
 // remains intact for manual curl-driven refreshes.
+//
+// Like the other ~30 s scheduled watches, this passes no
+// heavyAdapterTimeoutMs, so the heavy adapters (HEAVY_ADAPTER_IDS:
+// au_dfat / ch_seco / jp_mof) are skipped silently — refreshed nightly
+// by refresh-lists-background instead.
 
 import type { Config } from "@netlify/functions";
 import { runIngestionAll } from "../../src/ingestion/run-all.js";

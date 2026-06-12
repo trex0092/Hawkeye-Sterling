@@ -5,11 +5,19 @@
 // never read the `mode: fast` flag) so the cron silently performed a
 // full fan-out every tick, then failed at the maxDuration ceiling.
 //
-// With the in-process call and the 12 s per-adapter timeout in
+// With the in-process call and the 20 s per-adapter timeout in
 // run-all.ts, the full sweep finishes well inside the 26 s Netlify
 // scheduled-function budget. OFAC / EU FSF / UK OFSI publish updates
 // throughout the trading day, so this cadence is the difference
 // between same-quarter and next-day list freshness.
+//
+// HEAVY ADAPTERS (au_dfat / ch_seco / jp_mof — HEAVY_ADAPTER_IDS in
+// run-all.ts) are SKIPPED on this and every other ~30 s scheduled
+// function: passing no heavyAdapterTimeoutMs makes runIngestionAll omit
+// them silently (one info line, no error logs) instead of timing out
+// every 15 minutes. They are refreshed nightly by
+// refresh-lists-background (guaranteed) and by the operator/admin
+// trigger routes (best-effort intraday).
 //
 // On every run the function diffs the entity sets before and after
 // ingestion. New designations fire an immediate webhook alert ("screen

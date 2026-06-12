@@ -1,4 +1,9 @@
-// Hawkeye Sterling — parallel ingestion runner.
+// Hawkeye Sterling — two-tier ingestion runner.
+//
+// Tier 1: light adapters in parallel (Promise.allSettled). Tier 2: the
+// CPU-heavy/slow adapters in HEAVY_ADAPTER_IDS, sequential, after tier 1,
+// and only when the caller supplies a heavy-tier budget — see
+// runIngestionAll() docs for why.
 //
 // Shared by the Netlify scheduled functions:
 //   netlify/functions/sanctions-watch-cron.mts     (04:30 UTC)
@@ -44,9 +49,10 @@ installGlobalAsyncSafetyNet();
 // fan-out must finish inside it — a longer per-adapter leash would risk
 // the whole Lambda being killed mid-run (losing the summary, heartbeat,
 // and error log). HTTP-triggered refreshes (admin/operator routes with
-// maxDuration 60) pass a larger adapterTimeoutMs instead: au_dfat's XLSX
-// and ch_seco's SESAM download-action endpoint regularly need >20 s
-// (DFAT serves slowly; SESAM generates the XML server-side on demand).
+// maxDuration 60) pass a larger adapterTimeoutMs instead. This leash now
+// applies to TIER-1 (light) adapters only; au_dfat's XLSX and ch_seco's
+// SESAM endpoint — which regularly need >20 s — live in HEAVY_ADAPTER_IDS
+// and run on the separate sequential tier (heavyAdapterTimeoutMs).
 const ADAPTER_TIMEOUT_MS = 20_000;
 
 // Per-adapter leash for BACKGROUND-class Netlify functions (15-minute wall
@@ -54,14 +60,67 @@ const ADAPTER_TIMEOUT_MS = 20_000;
 // endpoints (au_dfat XLSX ~several MB from dfat.gov.au, ch_seco SESAM
 // server-side XML generation, eu_fsf multi-MB webgate payload) get at least
 // one full-leash refresh per day instead of timing out forever at the 20 s
-// scheduled-function leash. Budget math: adapters fan out in PARALLEL
-// (Promise.allSettled below), so worst-case wall-clock is the slowest
-// single adapter (60 s) plus the parse/blob-write/verify tail (~10-30 s
-// under single-vCPU contention across ~21 adapters) — minutes at most,
-// comfortably inside the 900 s background ceiling. The internal fetch
-// timeout of every adapter that takes one (e.g. au-dfat's 40 s single
-// attempt, fetch-util's 60 s default) fits inside this leash.
+// scheduled-function leash. Budget math: LIGHT adapters fan out in PARALLEL
+// (tier 1 below), so tier-1 worst-case wall-clock is the slowest single
+// light adapter (60 s) plus the parse/blob-write/verify tail (~10-30 s
+// under single-vCPU contention) — minutes at most. HEAVY adapters then run
+// sequentially under BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS each; see the
+// tier-2 budget math on that constant. The internal fetch timeout of every
+// adapter that takes one (e.g. au-dfat's 40 s single attempt, fetch-util's
+// 60 s default) fits inside this leash.
 export const BACKGROUND_ADAPTER_TIMEOUT_MS = 60_000;
+
+// Tier-2 (heavy) per-adapter leash for the nightly background worker.
+// Sized from production evidence (operator-refresh run, 2026-06-12
+// 12:07-12:09 UTC): au_dfat's XLSX download uses up to its internal 40 s
+// fetch timeout, then the exceljs parse of the multi-MB workbook holds the
+// event loop for roughly another minute on a single Lambda vCPU — ~100-130 s
+// end to end. 120 s covers that with the parse running alone (no parallel
+// neighbours competing for the loop). Background worst case with the
+// current heavy set: tier 1 (≤60 s parallel) + 3 × 120 s sequential heavy
+// + write/verify tail ≈ 8 minutes, comfortably inside the 900 s ceiling
+// even if a heavy parse overruns its leash (the leash rejects the promise
+// but cannot abort CPU work already on the loop).
+export const BACKGROUND_HEAVY_ADAPTER_TIMEOUT_MS = 120_000;
+
+// Adapters whose fetch() includes a CPU-heavy, event-loop-blocking parse of
+// a large payload (or a download that cannot fit a ~30 s scheduled-function
+// budget at all). Running these in the parallel fan-out poisons every other
+// adapter's wall-clock leash: setTimeout timers cannot fire while the loop
+// is blocked, so when the parse finally yields, EVERY expired leash fires
+// at once and normally-instant adapters are reported as timeouts.
+// Production evidence (operator-refresh, 2026-06-12 12:08:58 UTC): au_dfat's
+// exceljs parse of the multi-MB DFAT XLSX blocked the loop long enough that
+// all parallel 45 s leashes — including fatf, ca_osfi, bis_entity — expired
+// simultaneously.
+//
+// Classification rationale:
+//   au_dfat — multi-MB XLSX, exceljs workbook parse is the proven loop
+//             blocker; download alone needs up to 40 s.
+//   ch_seco — SESAM generates the consolidated XML server-side per request
+//             (download regularly >20 s — it timed out on every 20 s cron
+//             tick for weeks) and the parse is nested regex matchAll over a
+//             multi-MB string. Cannot fit a ~30 s function either way.
+//   jp_mof  — same exceljs XLSX pattern as au_dfat multiplied by N
+//             per-country files. Currently dormant (isEnabled() false
+//             without FEED_JP_MOF, filtered before tiering) — classified
+//             defensively so enabling it can never recreate this incident.
+//
+// Deliberately NOT heavy:
+//   eu_fsf / ofac_sdn / un_consolidated — large XML but the xml-lite
+//     single-pass tokenizer is cheap enough that they have run clean in the
+//     parallel tier at the 20 s cron leash whenever au_dfat exited early;
+//     demoting eu_fsf would cut its intraday (15-min) freshness for no
+//     evidence-backed gain.
+//   uae_eocn / uae_ltl — XLSX in principle, but the portal currently serves
+//     legacy .xls which the magic-byte guard rejects BEFORE exceljs parsing
+//     (fail-fast, cheap), and the real list is small. UAE mandatory lists
+//     must keep their 15-min cadence (Cabinet Resolution 134/2025).
+export const HEAVY_ADAPTER_IDS: ReadonlySet<string> = new Set([
+  'au_dfat',
+  'ch_seco',
+  'jp_mof',
+]);
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -84,28 +143,66 @@ export interface IngestRunSummary {
   failed_count: number;
   anyWriteFailed: boolean;
   summary: IngestionReport[];
+  /**
+   * IDs of HEAVY_ADAPTER_IDS adapters deliberately not run because the
+   * caller provided no heavy-tier budget (heavyAdapterTimeoutMs). Skipped
+   * adapters are NOT failures: they are absent from `summary`, excluded
+   * from ok/failed counts, write no blobs (prior snapshots stay), and log
+   * no errors — they are refreshed by the heavy-capable entry points
+   * (nightly refresh-lists-background, operator/admin trigger routes).
+   */
+  skippedHeavy?: string[];
+}
+
+export interface IngestRunOptions {
+  /** Tier-1 (light, parallel) per-adapter leash. Default ADAPTER_TIMEOUT_MS. */
+  adapterTimeoutMs?: number | undefined;
+  /**
+   * Tier-2 (heavy, sequential) per-adapter leash. When ABSENT, heavy
+   * adapters are skipped entirely — the safe default for ~30 s scheduled
+   * functions and synchronous admin routes, none of which can fit
+   * au_dfat's 40 s download + ~60 s parse. Entry points with a real
+   * budget opt in explicitly (120 s nightly background / operator+admin
+   * trigger routes).
+   */
+  heavyAdapterTimeoutMs?: number | undefined;
 }
 
 /**
- * Run every registered SOURCE_ADAPTER in parallel, write results to
- * Netlify Blobs, and return a structured summary. Each adapter is
- * bounded by ADAPTER_TIMEOUT_MS; one slow upstream cannot starve the
- * others. Errors are captured per-adapter — never thrown — so the
- * caller always receives a complete summary.
+ * Run every registered SOURCE_ADAPTER in two tiers, write results to
+ * Netlify Blobs, and return a structured summary. Errors are captured
+ * per-adapter — never thrown — so the caller always receives a complete
+ * summary.
+ *
+ * Tier 1 — light adapters fan out in PARALLEL, each bounded by
+ * `adapterTimeoutMs`; one slow upstream cannot starve the others.
+ *
+ * Tier 2 — HEAVY_ADAPTER_IDS adapters run AFTER tier 1 has fully
+ * settled, strictly one at a time, each bounded by
+ * `heavyAdapterTimeoutMs`. A CPU-bound parse (exceljs on the DFAT XLSX)
+ * blocks the event loop, which freezes every concurrently-running
+ * adapter's wall-clock setTimeout leash; sequencing the heavy tier after
+ * the light tier means a heavy parse can only ever burn its own leash.
+ * It also guarantees all light-tier blob writes complete before a heavy
+ * parse monopolises the loop. If `heavyAdapterTimeoutMs` is absent the
+ * heavy tier is SKIPPED silently (one info line, no error logs — see
+ * IngestRunOptions).
  *
  * The `label` is prefixed to every log line so multiple crons can be
  * distinguished in the Netlify Function logs.
  */
 export async function runIngestionAll(
   label: string,
-  opts?: { adapterTimeoutMs?: number },
+  opts?: IngestRunOptions,
 ): Promise<IngestRunSummary> {
   const startedAt = Date.now();
   const adapterTimeoutMs = opts?.adapterTimeoutMs ?? ADAPTER_TIMEOUT_MS;
+  const heavyAdapterTimeoutMs = opts?.heavyAdapterTimeoutMs;
   const store = await getBlobsStore();
 
   const runAdapter = async (
     adapter: typeof SOURCE_ADAPTERS[number],
+    leashMs: number,
   ): Promise<{ report: IngestionReport; writeFailed: boolean }> => {
     const started = Date.now();
     const blobKey = `${adapter.id}/latest.json`;
@@ -122,7 +219,7 @@ export async function runIngestionAll(
     try {
       const { entities: rawEntities, rawChecksum, sourceVersion } = await withTimeout(
         adapter.fetch(),
-        adapterTimeoutMs,
+        leashMs,
         `adapter ${adapter.id}`,
       );
       // Deduplicate by entity ID within each adapter run. Source XML/CSV can
@@ -243,9 +340,34 @@ export async function runIngestionAll(
   // Skip adapters that declare themselves disabled (e.g. jp_mof without FEED_JP_MOF).
   // Disabled adapters are not counted as failures and do not write blobs.
   const activeAdapters = SOURCE_ADAPTERS.filter((a) => a.isEnabled?.() !== false);
-  const settled = await Promise.allSettled(activeAdapters.map(runAdapter));
+  const lightAdapters = activeAdapters.filter((a) => !HEAVY_ADAPTER_IDS.has(a.id));
+  const heavyAdapters = activeAdapters.filter((a) => HEAVY_ADAPTER_IDS.has(a.id));
+
   const summary: IngestionReport[] = [];
   let anyWriteFailed = false;
+
+  const recordRejection = (
+    adapter: { id: string; sourceUrl: string },
+    reason: unknown,
+  ): void => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    console.error(`[${label}] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
+    summary.push({
+      listId: adapter.id,
+      sourceUrl: adapter.sourceUrl,
+      recordCount: 0,
+      checksum: '',
+      fetchedAt: Date.now(),
+      durationMs: 0,
+      errors: [`unhandled rejection: ${msg}`],
+    });
+    anyWriteFailed = true;
+  };
+
+  // ── Tier 1: light adapters, parallel fan-out (behaviour unchanged) ────────
+  const settled = await Promise.allSettled(
+    lightAdapters.map((a) => runAdapter(a, adapterTimeoutMs)),
+  );
   for (let i = 0; i < settled.length; i++) {
     const r = settled[i];
     if (!r) continue;
@@ -253,26 +375,45 @@ export async function runIngestionAll(
       summary.push(r.value.report);
       if (r.value.writeFailed) anyWriteFailed = true;
     } else {
-      const adapter = activeAdapters[i] ?? { id: 'unknown', sourceUrl: '' };
-      const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
-      console.error(`[${label}] UNCAUGHT REJECTION list=${adapter.id} error=${msg}`);
-      summary.push({
-        listId: adapter.id,
-        sourceUrl: adapter.sourceUrl,
-        recordCount: 0,
-        checksum: '',
-        fetchedAt: Date.now(),
-        durationMs: 0,
-        errors: [`unhandled rejection: ${msg}`],
-      });
-      anyWriteFailed = true;
+      recordRejection(lightAdapters[i] ?? { id: 'unknown', sourceUrl: '' }, r.reason);
+    }
+  }
+
+  // ── Tier 2: heavy adapters, strictly sequential, after tier 1 settles ─────
+  // Each heavy adapter gets its OWN leash that starts when its turn starts,
+  // so one heavy parse can never poison another adapter's timer. Callers
+  // without a heavy budget skip the tier entirely — intentionally WITHOUT
+  // per-adapter error logs: a skipped adapter is a routing decision, not a
+  // failure, and the ~30 s crons skipping au_dfat/ch_seco every 15 minutes
+  // must not page anyone.
+  const skippedHeavy: string[] = [];
+  if (heavyAdapterTimeoutMs === undefined) {
+    if (heavyAdapters.length > 0) {
+      skippedHeavy.push(...heavyAdapters.map((a) => a.id));
+      console.info(
+        `[${label}] heavy adapters skipped (no heavy-tier budget): ${skippedHeavy.join(', ')} — ` +
+        `refreshed nightly by refresh-lists-background and by operator/admin trigger routes`,
+      );
+    }
+  } else {
+    for (const adapter of heavyAdapters) {
+      try {
+        const r = await runAdapter(adapter, heavyAdapterTimeoutMs);
+        summary.push(r.report);
+        if (r.writeFailed) anyWriteFailed = true;
+      } catch (err) {
+        // runAdapter never throws by construction; guard kept for parity
+        // with the allSettled branch above.
+        recordRejection(adapter, err);
+      }
     }
   }
 
   const ok_count = summary.filter((r) => r.errors.length === 0).length;
   const failed_count = summary.filter((r) => r.errors.length > 0).length;
   console.info(
-    `[${label}] SUMMARY ok=${ok_count} failed=${failed_count} anyWriteFailed=${anyWriteFailed}`,
+    `[${label}] SUMMARY ok=${ok_count} failed=${failed_count} anyWriteFailed=${anyWriteFailed}` +
+    (skippedHeavy.length > 0 ? ` skippedHeavy=${skippedHeavy.join(',')}` : ''),
   );
 
   return {
@@ -283,5 +424,6 @@ export async function runIngestionAll(
     failed_count,
     anyWriteFailed,
     summary,
+    ...(skippedHeavy.length > 0 ? { skippedHeavy } : {}),
   };
 }

@@ -10,10 +10,17 @@
 //                                                  20 s default leash if delegation
 //                                                  fails (self-fetch TLS issues have
 //                                                  been observed on this platform).
+//                                                  The fallback passes NO heavy-tier
+//                                                  budget, so the heavy adapters
+//                                                  (au_dfat / ch_seco / jp_mof) are
+//                                                  skipped silently — they cannot
+//                                                  fit a ~30 s function.
 //   netlify/functions/refresh-lists-background.mts background worker (15-min class)
-//                                                  — runs this with the 60 s leash so
-//                                                  au_dfat / ch_seco / eu_fsf get one
-//                                                  full-budget refresh per day.
+//                                                  — runs this with the 60 s light
+//                                                  leash + 120 s sequential heavy
+//                                                  leash: the guaranteed daily
+//                                                  full-budget pass for the heavy
+//                                                  adapters.
 //
 // Identity keys (lock, heartbeat, meta) are pinned to the "refresh-lists"
 // label no matter which entry executes, so health-monitor.mts (heartbeat
@@ -209,8 +216,17 @@ export function isAuthorizedRefreshRequest(req: Request): boolean {
 }
 
 export interface RefreshListsRunOptions {
-  /** Per-adapter leash forwarded to runIngestionAll(). */
+  /** Tier-1 (light, parallel) per-adapter leash forwarded to runIngestionAll(). */
   adapterTimeoutMs: number;
+  /**
+   * Tier-2 (heavy, sequential) per-adapter leash forwarded to
+   * runIngestionAll(). When ABSENT the heavy adapters (HEAVY_ADAPTER_IDS:
+   * au_dfat, ch_seco, jp_mof) are skipped without error logs — required
+   * for the in-process fallback path, which runs inside the trigger's
+   * ~30 s scheduled-function budget and cannot fit au_dfat's 40 s
+   * download + parse. The background worker (900 s budget) sets this.
+   */
+  heavyAdapterTimeoutMs?: number | undefined;
   /**
    * Log/observability label for this execution path
    * ("refresh-lists" in-process fallback, "refresh-lists-background" worker).
@@ -234,7 +250,7 @@ export interface RefreshListsRunResult {
  * that the per-adapter leash is now a parameter.
  */
 export async function runRefreshListsPipeline(opts: RefreshListsRunOptions): Promise<RefreshListsRunResult> {
-  const { adapterTimeoutMs, runLabel } = opts;
+  const { adapterTimeoutMs, heavyAdapterTimeoutMs, runLabel } = opts;
   const alertWebhook = process.env['ALERT_WEBHOOK_URL'];
   const hbStore = getStore('hawkeye-function-heartbeats');
 
@@ -262,7 +278,10 @@ export async function runRefreshListsPipeline(opts: RefreshListsRunOptions): Pro
     const listStore = getStore('hawkeye-lists');
     const beforeSnap = await snapshotLists(listStore, runLabel);
 
-    const result = await runIngestionAll(runLabel, { adapterTimeoutMs });
+    const result = await runIngestionAll(runLabel, {
+      adapterTimeoutMs,
+      ...(heavyAdapterTimeoutMs !== undefined ? { heavyAdapterTimeoutMs } : {}),
+    });
 
     // Snapshot AFTER ingestion and diff — fire immediate alert on any change.
     const afterSnap = await snapshotLists(listStore, runLabel);
@@ -384,6 +403,10 @@ export async function runRefreshListsPipeline(opts: RefreshListsRunOptions): Pro
         zeroEntityLists,
         designationChanges: { totalAdded, totalRemoved, listsAffected: changes.length },
         adapterTimeoutMs,
+        ...(heavyAdapterTimeoutMs !== undefined ? { heavyAdapterTimeoutMs } : {}),
+        ...(result.skippedHeavy && result.skippedHeavy.length > 0
+          ? { skippedHeavy: result.skippedHeavy }
+          : {}),
         ranVia: runLabel,
       },
     };

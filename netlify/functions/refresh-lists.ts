@@ -34,6 +34,10 @@ const LABEL = 'refresh-lists';
 // Matches the scheduled-function default in src/ingestion/run-all.ts —
 // the fallback runs inside THIS function's ~30 s budget, so the leash must
 // leave room for the lock/snapshot/diff/status tail around the fan-out.
+// Deliberately NO heavyAdapterTimeoutMs: the heavy adapters (au_dfat /
+// ch_seco / jp_mof — see HEAVY_ADAPTER_IDS) cannot fit au_dfat's 40 s
+// download + event-loop-blocking parse in this budget, so the fallback
+// skips them silently; the background worker is their guaranteed path.
 const FALLBACK_ADAPTER_TIMEOUT_MS = 20_000;
 
 // Delegation ack budget. Background functions return 202 before doing any
@@ -108,9 +112,10 @@ export default async (req: Request): Promise<Response> => {
     );
   }
 
-  // Fallback: run in-process with the scheduled-function leash — identical
-  // to the pre-split behaviour. Slow adapters may time out at 20 s here,
-  // but every other list still refreshes and the heartbeat/meta still write.
+  // Fallback: run in-process with the scheduled-function leash. Heavy
+  // adapters are skipped (no heavyAdapterTimeoutMs — they cannot fit this
+  // ~30 s budget and skipping logs no errors); every light list still
+  // refreshes and the heartbeat/meta still write.
   console.warn(
     `[${LABEL}] delegation to refresh-lists-background failed (${delegated.detail}) — ` +
     `running in-process with adapterTimeoutMs=${FALLBACK_ADAPTER_TIMEOUT_MS}`,

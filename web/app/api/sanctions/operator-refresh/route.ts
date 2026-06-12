@@ -22,6 +22,20 @@
 // maxDuration, the status will remain "running" until the next refresh
 // — the client gracefully shows a "still running, check back later"
 // message in that case instead of flashing an error.
+//
+// TIME BUDGET REALITY (production, 2026-06-12): the post-202 work is a
+// detached promise on the same Lambda invocation (no waitUntil). It runs
+// on borrowed time — maxDuration is 60 s, yet adapters from the
+// 12:07:13 job were still logging at 12:08:58 (+105 s), so Netlify's
+// Next runtime demonstrably lets the continuation run well past the
+// declared cap (and a frozen warm instance resumes it on thaw). Minutes
+// are therefore PLAUSIBLE but NOT GUARANTEED here, which is why:
+//   · tier 1 (light adapters, 45 s parallel leash) runs first, so all
+//     light-list blob writes are committed before any heavy parse can
+//     monopolise the event loop or the Lambda gets reaped;
+//   · tier 2 (au_dfat / ch_seco, sequential, 120 s each) is best-effort
+//     intraday — the nightly refresh-lists-background worker (900 s
+//     budget, same 120 s heavy leash) is the GUARANTEED heavy path.
 
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -45,7 +59,10 @@ interface IngestionResult {
 }
 
 async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
-  let runIngestionAll: (_label: string, _opts?: { adapterTimeoutMs?: number }) => Promise<unknown>;
+  let runIngestionAll: (
+    _label: string,
+    _opts?: { adapterTimeoutMs?: number; heavyAdapterTimeoutMs?: number },
+  ) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../src/ingestion/run-all.js" as string
@@ -85,10 +102,17 @@ async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promis
   // converges to a known state.
   void (async () => {
     try {
-      // 45 s leash (vs the crons' 20 s): au_dfat XLSX and ch_seco SESAM need
-      // >20 s; this route's maxDuration is 60 s so the slowest adapter +
-      // blob writes still fit.
-      const result = (await runIngestionAll("operator-refresh", { adapterTimeoutMs: 45_000 })) as IngestionResult;
+      // Tier 1 keeps the 45 s light leash (vs the crons' 20 s). Tier 2 runs
+      // au_dfat / ch_seco sequentially at 120 s each — sized for au_dfat's
+      // 40 s download + ~60 s exceljs parse, and only reachable because the
+      // post-202 continuation has been observed to live >105 s in prod (see
+      // header). If the Lambda is reaped mid-heavy-tier the light lists are
+      // already written and the nightly background worker remains the
+      // guaranteed heavy refresh.
+      const result = (await runIngestionAll("operator-refresh", {
+        adapterTimeoutMs: 45_000,
+        heavyAdapterTimeoutMs: 120_000,
+      })) as IngestionResult;
       invalidateCandidateCache();
       await writeJobStatus({
         jobId,
