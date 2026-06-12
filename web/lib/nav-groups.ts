@@ -21,12 +21,22 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    title: "Risk & AML Ops",
+    title: "Screening, Monitoring & Reporting",
     items: [
       { label: "🔎 Screening", href: "/screening", hint: "Sanctions, PEP & adverse-media screening" },
       { label: "💸 Transaction Monitor", href: "/transaction-monitor", hint: "Real-time transaction monitoring & alerting" },
       { label: "👁️ Customer/Supplier Monitoring", href: "/ongoing-monitor", hint: "3×/day re-screening of customers, suppliers & UBOs · sanctions, PEP & adverse media" },
       { label: "🗂️ Cases", href: "/cases", hint: "Case management — investigations, dispositions & audit trail" },
+      { label: "🇦🇪 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions + NAS/ARS registration + control list" },
+      { label: "🚨 Sanctions Alerts & Name Match", href: "/tfs-alerts", hint: "EOCN subscription alerts · CNMR filing · Gmail monitor · Asana compliance tasks" },
+      { label: "📋 PNMR Queue", href: "/pnmr", hint: "Positive Name Match Report queue · EOCN" },
+      { label: "📝 CNMR", href: "/cnmr", hint: "Consolidated Name Match Report filing · EOCN" },
+      { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
+    ],
+  },
+  {
+    title: "Risk & AML Ops",
+    items: [
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
       { label: "🔗 Supply Chain & Responsible Sourcing", href: "/supply-chain", hint: "Geographic risk · CSDDD · UFLPA · RMI/RMAP · OECD 5-step DDG · MD 68/2024" },
       { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative · RMAP smelter audit tracker" },
@@ -47,21 +57,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "⚖️ COI Register", href: "/coi-register", hint: "Conflicts of interest register" },
       { label: "📣 Voluntary Disclosure", href: "/voluntary-disclosure", hint: "Voluntary disclosure management" },
       { label: "📊 Eval KPIs", href: "/eval-kpi", hint: "Evaluation KPI dashboard" },
-    ],
-  },
-  {
-    title: "Sanctions & Name Match",
-    items: [
-      { label: "🇦🇪 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions + NAS/ARS registration + control list" },
-      { label: "🚨 Sanctions Alerts & Name Match", href: "/tfs-alerts", hint: "EOCN subscription alerts · CNMR filing · Gmail monitor · Asana compliance tasks" },
-      { label: "📋 PNMR Queue", href: "/pnmr", hint: "Positive Name Match Report queue · EOCN" },
-      { label: "📝 CNMR", href: "/cnmr", hint: "Consolidated Name Match Report filing · EOCN" },
-    ],
-  },
-  {
-    title: "FIU Reporting · goAML",
-    items: [
-      { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
     ],
   },
   {
