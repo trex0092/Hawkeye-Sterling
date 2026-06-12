@@ -25,7 +25,14 @@ import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 // `||` (not `??`): an empty FEED_AU_DFAT in a copied .env must not blank the URL.
 const SOURCE_URL = process.env['FEED_AU_DFAT']
   || 'https://www.dfat.gov.au/sites/default/files/Australian_Sanctions_Consolidated_List.xlsx';
-const FETCH_TIMEOUT_MS = 20_000;
+// 40 s (raised from 20 s, 2026-06): dfat.gov.au serves the multi-MB XLSX
+// slowly enough that a 20 s attempt regularly aborts mid-download. A single
+// attempt may now use most of the caller's budget — it fits the 45 s leash
+// of the HTTP-triggered refresh routes and the 60 s leash of the nightly
+// refresh-lists-background worker. Retries only help when budget remains:
+// under the 20 s scheduled-cron leash the outer withTimeout() in
+// run-all.ts still cuts the adapter off, exactly as before.
+const FETCH_TIMEOUT_MS = 40_000;
 
 interface ExcelJsCellValue {
   text?: string;

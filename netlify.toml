@@ -91,6 +91,14 @@
 [functions."mlro-advisor-deep-background"]
   timeout = 900
 
+# Nightly sanctions-refresh background worker (POSTed to by the 03:00 UTC
+# refresh-lists scheduled trigger). Background class via the -background
+# filename suffix; the 15-minute ceiling lets the slow government adapters
+# (au_dfat XLSX, ch_seco SESAM, eu_fsf webgate) run with a 60 s per-adapter
+# leash instead of the 20 s scheduled-function leash they timed out at.
+[functions."refresh-lists-background"]
+  timeout = 900
+
 [functions."gdelt-prefetch"]
   timeout = 60
 

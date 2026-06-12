@@ -1,10 +1,13 @@
 // Hawkeye Sterling — parallel ingestion runner.
 //
-// Shared by the four Netlify scheduled functions:
+// Shared by the Netlify scheduled functions:
 //   netlify/functions/sanctions-watch-cron.mts     (04:30 UTC)
 //   netlify/functions/sanctions-watch-1100.mts     (11:00 UTC)
 //   netlify/functions/sanctions-watch-1330.mts     (13:30 UTC)
 //   netlify/functions/sanctions-watch-15min.mts    (*/15 mins)
+//   netlify/functions/refresh-lists.ts             (03:00 UTC trigger / fallback)
+// and the background worker the nightly trigger delegates to:
+//   netlify/functions/refresh-lists-background.mts (15-min budget)
 //
 // These previously self-fetched `/api/sanctions/watch` over the public
 // origin. On Netlify, outbound fetch from a Lambda back to its own host
@@ -45,6 +48,20 @@ installGlobalAsyncSafetyNet();
 // and ch_seco's SESAM download-action endpoint regularly need >20 s
 // (DFAT serves slowly; SESAM generates the XML server-side on demand).
 const ADAPTER_TIMEOUT_MS = 20_000;
+
+// Per-adapter leash for BACKGROUND-class Netlify functions (15-minute wall
+// budget). Used by refresh-lists-background.mts so the slow government
+// endpoints (au_dfat XLSX ~several MB from dfat.gov.au, ch_seco SESAM
+// server-side XML generation, eu_fsf multi-MB webgate payload) get at least
+// one full-leash refresh per day instead of timing out forever at the 20 s
+// scheduled-function leash. Budget math: adapters fan out in PARALLEL
+// (Promise.allSettled below), so worst-case wall-clock is the slowest
+// single adapter (60 s) plus the parse/blob-write/verify tail (~10-30 s
+// under single-vCPU contention across ~21 adapters) — minutes at most,
+// comfortably inside the 900 s background ceiling. The internal fetch
+// timeout of every adapter that takes one (e.g. au-dfat's 40 s single
+// attempt, fetch-util's 60 s default) fits inside this leash.
+export const BACKGROUND_ADAPTER_TIMEOUT_MS = 60_000;
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
