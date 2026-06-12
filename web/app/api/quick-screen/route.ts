@@ -11,7 +11,7 @@ import type {
 } from "@/lib/api/quickScreen.types";
 import { enforce } from "@/lib/server/enforce";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
-import { loadCandidatesWithHealth, missingCoreSanctionsLists, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, coreSanctionsCoverageGaps, type CandidateLoadHealth } from "@/lib/server/candidates-loader";
 import { lookupWhitelist } from "@/lib/server/whitelist";
 import { LIVE_OPENSANCTIONS_ADAPTER, activeOnChainProviders } from "@/lib/intelligence/liveAdapters";
 import { bestCommercialAdapter, activeCommercialProvider, activeCommercialProviders } from "@/lib/intelligence/commercialAdapters";
@@ -604,8 +604,10 @@ export async function POST(req: Request): Promise<NextResponse> {
       // every verdict path. UAE EOCN/LTL are intentionally excluded here: they
       // depend on operator seed-path env vars and are tracked as a separate gap,
       // so requiring them would brick screening over a known config item.
-      const loadedListIds = new Set(candidates.map((c) => c.listId));
-      const missingCritical = missingCoreSanctionsLists(loadedListIds);
+      // Count-aware: list-ID presence alone let the 65-entry static seed (one
+      // token entry per regime) pass this guard during a Blobs outage and
+      // produce verdicts against 0.2% of the real data (live smoke 2026-06-12).
+      const missingCritical = coreSanctionsCoverageGaps(candidates);
       if (missingCritical.length > 0) {
         // At least one core sanctions list is absent — refuse to screen.
         return respond(503, {

@@ -196,15 +196,30 @@ async function jsonBody(res: Response): Promise<unknown> {
 }
 
 // ─── Minimal candidates ───────────────────────────────────────────────────
-// One entry from each core sanctions regime (OFAC SDN, UN, EU FSF, UK OFSI)
-// so the core-list coverage check in quick-screen/batch-screen passes without
-// hitting Blobs. The guard (2026-06-11) refuses a verdict if ANY core list is
-// missing, so a fully-loaded corpus fixture must include all four.
+// One NAMED entry from each core sanctions regime (so match-behaviour tests
+// have stable targets) plus filler entries to satisfy the count-aware core
+// coverage guard (2026-06-12): list-ID presence alone is no longer enough —
+// each core list must meet its CORE_LIST_MINIMUMS floor (ofac_sdn 1000,
+// un_consolidated 200, eu_fsf 500, uk_ofsi 500) or the route refuses with
+// 503 LISTS_MISSING. Filler names are deliberately non-matchable.
+const CORE_FILLER_COUNTS: Record<string, number> = {
+  ofac_sdn: 1_000,
+  un_consolidated: 200,
+  eu_fsf: 500,
+  uk_ofsi: 500,
+};
 const MINIMAL_CANDIDATES = [
   { listId: 'ofac_sdn', listRef: 'SDN-MIN-001', name: 'Test Candidate SDN' },
   { listId: 'un_consolidated', listRef: 'UN-MIN-001', name: 'Test Candidate UN' },
   { listId: 'eu_fsf', listRef: 'EU-MIN-001', name: 'Test Candidate EU' },
   { listId: 'uk_ofsi', listRef: 'UK-MIN-001', name: 'Test Candidate UK' },
+  ...Object.entries(CORE_FILLER_COUNTS).flatMap(([listId, n]) =>
+    Array.from({ length: n }, (_, i) => ({
+      listId,
+      listRef: `${listId.toUpperCase()}-FILL-${String(i).padStart(4, '0')}`,
+      name: `Zz Corpus Filler ${listId} ${String(i).padStart(4, '0')}`,
+    })),
+  ),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
