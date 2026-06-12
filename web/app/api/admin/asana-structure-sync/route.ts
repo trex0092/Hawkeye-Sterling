@@ -19,8 +19,12 @@
 //      order (insert_after chaining) and moves any digest task sitting in
 //      the wrong group section (covers the 5 moved boards).
 //
-// Body: { confirm: "SYNC-ASANA-STRUCTURE", dryRun?: true }. With dryRun the
-// endpoint computes and returns the change plan WITHOUT applying anything.
+// Body: { confirm: "SYNC-ASANA-STRUCTURE", dryRun?: true, scope?, keys? }.
+// With dryRun the endpoint computes and returns the change plan WITHOUT
+// applying anything. A full pass is ~250 sequential Asana calls — beyond a
+// single request budget — so callers slice the work: scope "boards"
+// (projects + attestation tasks) or "digest" (sections + digest tasks),
+// optionally with keys: ["eocn", ...] to limit which boards a call covers.
 // Individual Asana failures are collected per item in errors[] — never
 // silently swallowed. Safe to re-run: already-correct items are skipped, so
 // a timed-out run picks up where it left off.
@@ -121,7 +125,12 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { confirm?: string; dryRun?: boolean };
+  const body = (await req.json().catch(() => ({}))) as {
+    confirm?: string;
+    dryRun?: boolean;
+    scope?: string;
+    keys?: string[];
+  };
   if (body.confirm !== CONFIRM_PHRASE) {
     return NextResponse.json(
       { ok: false, error: "confirmation_required", hint: `POST { "confirm": "${CONFIRM_PHRASE}" } to run (add "dryRun": true to preview).` },
@@ -129,6 +138,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
   const dryRun = body.dryRun === true;
+
+  // Batching: a full pass is ~250 sequential Asana calls — beyond serverless
+  // request budgets. Callers drive the sync in slices: scope "boards"
+  // (projects + attestation tasks) or "digest" (sections + digest tasks),
+  // each optionally limited to specific board keys.
+  const scope = body.scope ?? "all";
+  if (!["all", "boards", "digest"].includes(scope)) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_scope", hint: `scope must be "all", "boards" or "digest"` },
+      { status: 400 },
+    );
+  }
+  const keysFilter = Array.isArray(body.keys) && body.keys.length > 0 ? new Set(body.keys) : null;
+  const selectedBoards = keysFilter ? MODULE_BOARDS.filter((b) => keysFilter.has(b.key)) : MODULE_BOARDS;
 
   // Asana token — fail closed.
   const token = process.env["ASANA_TOKEN"];
@@ -145,7 +168,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   let skippedAlreadyCorrect = 0;
 
   // ── a. + b. Module board projects and their attestation tasks. ──
-  for (const b of MODULE_BOARDS) {
+  for (const b of scope === "digest" ? [] : selectedBoards) {
     const gids = WORKSPACE_GIDS.boards?.[b.key];
     if (!gids?.projectGid) {
       errors.push(`${b.key}: no projectGid in asana-workspace-gids.json`);
@@ -217,9 +240,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   // ── d-part-1. Digest sections — ensure one per group title, sidebar order. ──
   // sectionGidByTitle is shared with the move closures below; planned (not yet
   // created) sections register their gid here when their create action runs.
-  const digestGid = WORKSPACE_GIDS.digest?.projectGid;
+  const digestGid = scope === "boards" ? undefined : WORKSPACE_GIDS.digest?.projectGid;
   const sectionGidByTitle = new Map<string, string>();
-  if (!digestGid) {
+  if (scope === "boards") {
+    // Digest phase skipped by scope.
+  } else if (!digestGid) {
     errors.push("digest: no projectGid in asana-workspace-gids.json — section + digest-task sync skipped");
   } else {
     try {
@@ -258,7 +283,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     // ── c. + d-part-2. Digest task names and group-section placement. ──
-    for (const b of MODULE_BOARDS) {
+    for (const b of selectedBoards) {
       const taskGid = WORKSPACE_GIDS.digest?.tasks?.[b.key];
       if (!taskGid) {
         errors.push(`${b.key}: no digest task gid in asana-workspace-gids.json`);
@@ -365,6 +390,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       actor: "admin",
       triggeredAt,
       dryRun,
+      scope,
+      boardsInScope: selectedBoards.length,
       ...counts,
       plannedActions: actions.length,
       errorCount: errors.length,
@@ -381,6 +408,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   return NextResponse.json({
     ok,
     dryRun,
+    scope,
+    boardsInScope: selectedBoards.length,
     triggeredAt,
     counts,
     plan: actions.map(({ kind, key, gid, detail }) => ({ kind, ...(key ? { key } : {}), ...(gid ? { gid } : {}), detail })),
