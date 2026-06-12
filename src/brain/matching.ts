@@ -45,7 +45,7 @@ function hasNonLatin(s: string): boolean {
 
 /** Pre-romanise non-Latin scripts (Arabic, Cyrillic, CJK) into ASCII before
  *  phonetic encoding. Passes pure ASCII strings through unchanged. */
-function toLatinScript(input: string): string {
+const toLatinScript = memoise(function toLatinScriptUncached(input: string): string {
   if (!hasNonLatin(input)) return input;
   // Arabic/Persian block
   let s = arabicToLatin(input);
@@ -54,7 +54,7 @@ function toLatinScript(input: string): string {
   // CJK subset
   s = chineseToPinyinSubset(s);
   return s;
-}
+});
 
 export type MatchingMethod =
   | 'exact'
@@ -77,7 +77,29 @@ export interface MatchScore {
   pass: boolean;
 }
 
-function normalise(s: string): string {
+// ── Hot-path memoization ──────────────────────────────────────────────────
+// quickScreen() drives ~10⁵ name-pair comparisons per request against the
+// full sanctions corpus, and every matcher re-derives normalise()/phonetic
+// codes for the same strings (the subject's name alone was re-normalised
+// ~30× per candidate — ~35% of total screen CPU in the 2026-06-12 production
+// profile). All of these are pure string→value derivations, so a bounded
+// cache changes nothing observable. The cap holds the full corpus (~90k
+// unique names + aliases) with headroom; on overflow the whole map resets —
+// an O(1) policy whose worst case is simply re-deriving.
+const MEMO_CAP = 200_000;
+function memoise<T>(fn: (_s: string) => T): (_s: string) => T {
+  const cache = new Map<string, T>();
+  return (s: string): T => {
+    const hit = cache.get(s);
+    if (hit !== undefined) return hit;
+    const v = fn(s);
+    if (cache.size >= MEMO_CAP) cache.clear();
+    cache.set(s, v);
+    return v;
+  };
+}
+
+const normalise = memoise(function normaliseUncached(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')
@@ -85,7 +107,7 @@ function normalise(s: string): string {
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
+});
 
 // ---------- exact
 export function matchExact(a: string, b: string): MatchScore {
@@ -194,7 +216,7 @@ export function matchJaroWinkler(a: string, b: string, threshold = MATCHING_THRE
 }
 
 // ---------- Soundex (classic)
-export function soundex(input: string): string {
+export const soundex = memoise(function soundexUncached(input: string): string {
   const s = normalise(toLatinScript(input)).replace(/\s+/g, '');
   if (!s) return '';
   const first = (s[0] ?? '').toUpperCase();
@@ -222,7 +244,7 @@ export function soundex(input: string): string {
     }
   }
   return (out + '000').slice(0, 4);
-}
+});
 
 // Soundex is a coarse 4-code encoder — a match is evidence of phonetic
 // similarity but not identity. Cap at 0.60 so a soundex-only signal stays
@@ -237,7 +259,11 @@ export function matchSoundex(a: string, b: string): MatchScore {
 // toLatinScript() before the ASCII phonetic algorithm runs, so names like
 // "محمد" (Muhammad) and "Мухаммад" (Mukhammad) produce the same code as
 // their Latin equivalents.
-export function doubleMetaphone(input: string): { primary: string; alternate: string } {
+// Memoised: callers treat the result as immutable (read `primary`/`alternate`
+// only) — do not mutate the returned object.
+export const doubleMetaphone = memoise(function doubleMetaphoneUncached(
+  input: string,
+): { primary: string; alternate: string } {
   const s = normalise(toLatinScript(input)).replace(/\s+/g, '').toUpperCase();
   if (!s) return { primary: '', alternate: '' };
   let primary = '';
@@ -354,7 +380,7 @@ export function doubleMetaphone(input: string): { primary: string; alternate: st
     }
   }
   return { primary: primary.slice(0, 4), alternate: alternate.slice(0, 4) };
-}
+});
 
 // Double Metaphone is finer-grained than Soundex (captures primary + alternate
 // forms) but still phonetic-only. Cap at 0.65 so it stays below "high" (≥0.85)
@@ -721,7 +747,7 @@ const LAM_ALEF_MAP: Record<string, string> = {
 // transliterate Arabic/Cyrillic to Latin, collapse Arabic-name family
 // spellings, drop particles. Returns an empty string when the input
 // contains no matchable characters.
-export function normaliseForMatch(input: string): string {
+export const normaliseForMatch = memoise(function normaliseForMatchUncached(input: string): string {
   if (!input) return '';
   let s = input.toLowerCase();
   // Expand lam-alef ligatures (Arabic Presentation Forms-A) so each component
@@ -760,7 +786,7 @@ export function normaliseForMatch(input: string): string {
     out.push(ROMAN_FAMILIES[t] ?? t);
   }
   return out.join(' ').trim();
-}
+});
 
 export function matchEnsemble(subject: string, candidate: string): EnsembleMatch {
   // Run the ensemble twice — once on the raw inputs (so exact matches on
@@ -837,4 +863,120 @@ export function matchEnsemble(subject: string, candidate: string): EnsembleMatch
     (normScores.find((s) => s.method === 'soundex')?.pass ?? false) ||
     (normScores.find((s) => s.method === 'double_metaphone')?.pass ?? false);
   return { subject, candidate, scores, best, phoneticAgreement };
+}
+
+// ── Candidate blocking (cheap pre-gate for the full-corpus scan) ──────────
+//
+// Running matchEnsemble() (12 raw + up to 11 normalised algorithms) against
+// every corpus entry costs ~52 s on a production Lambda at the full ~32k-entry
+// corpus (live profile, 2026-06-12) — far past the screening UI's 15 s client
+// budget and Netlify's ~26 s edge idle window. The fix is the standard
+// blocking architecture: derive cheap per-name keys once (memoised), and run
+// the expensive ensemble only on pairs that share at least one plausible
+// signal.
+//
+// RECALL CONTRACT — the gate may only skip a pair when NO ensemble algorithm
+// could produce a hit-relevant score. Each algorithm's minimal passing
+// condition maps onto a key signal:
+//   exact / token_set / partial_token_set / abbreviated(multi-char) — require
+//     a shared normalised token                                → `tokens`
+//   initials / abbreviated(single-letter) — require an initial matching a
+//     token first letter                                       → `singles`×`firstLetters`
+//   soundex / double_metaphone — compare whole-name codes; the gate computes
+//     the *same* codes for the same raw + normaliseForMatch forms → `phonetic`
+//   levenshtein / jaro_winkler / trigram / token_sort / partial_ratio — at
+//     their thresholds (≥0.82/0.85/0.5) on names of ≥4 compact chars they
+//     necessarily share character trigrams (an edit destroys ≤3 trigrams;
+//     similarity ≥0.82 on length L leaves ≥0.46·L−2 shared)    → `trigrams`
+//   names of <4 compact characters — trigram analysis degenerates, so the
+//     gate always passes them through to the full ensemble.
+// quickScreen() additionally disables blocking entirely when the effective
+// hit threshold (after discriminator boosts, max +0.32) drops below the band
+// this analysis covers — see MIN_BLOCKING_THRESHOLD there.
+
+export interface NameMatchKeys {
+  /** Smallest space-stripped length across the normalised forms. */
+  minCompactLen: number;
+  /** Normalised tokens across raw-normalised and normaliseForMatch forms. */
+  tokens: Set<string>;
+  /** First letter of every token (initials/abbreviation expansion targets). */
+  firstLetters: Set<string>;
+  /** Single-letter tokens (initials in the input). */
+  singles: Set<string>;
+  /** Whole-name soundex + double-metaphone codes (raw and FM forms). */
+  phonetic: Set<string>;
+  /** Character trigrams of the normalised forms (spaces included, as matchTrigram sees them). */
+  trigrams: Set<string>;
+}
+
+function buildNameKeysUncached(name: string): NameMatchKeys {
+  // The two forms the ensemble actually compares: raw inputs (matchers
+  // normalise() internally) and normaliseForMatch() outputs (idempotent
+  // under normalise()).
+  const forms = new Set<string>();
+  const n1 = normalise(name);
+  if (n1) forms.add(n1);
+  const n2 = normaliseForMatch(name);
+  if (n2) forms.add(n2);
+
+  const tokens = new Set<string>();
+  const firstLetters = new Set<string>();
+  const singles = new Set<string>();
+  const phonetic = new Set<string>();
+  const trigrams = new Set<string>();
+  let minCompactLen = Number.POSITIVE_INFINITY;
+
+  // Phonetic codes on the raw input — matchSoundex/matchDoubleMetaphone
+  // transliterate non-Latin scripts BEFORE normalising, so codes must be
+  // derived from the original string, not from n1 (normalise() alone strips
+  // Arabic/Cyrillic to nothing).
+  const sxRaw = soundex(name);
+  if (sxRaw) phonetic.add(`sx:${sxRaw}`);
+  const mpRaw = doubleMetaphone(name);
+  if (mpRaw.primary) phonetic.add(`mp:${mpRaw.primary}`);
+  if (mpRaw.alternate) phonetic.add(`mp:${mpRaw.alternate}`);
+
+  for (const form of forms) {
+    for (const tok of form.split(' ')) {
+      if (!tok) continue;
+      tokens.add(tok);
+      firstLetters.add(tok.charAt(0));
+      if (tok.length === 1) singles.add(tok);
+    }
+    const sx = soundex(form);
+    if (sx) phonetic.add(`sx:${sx}`);
+    const mp = doubleMetaphone(form);
+    if (mp.primary) phonetic.add(`mp:${mp.primary}`);
+    if (mp.alternate) phonetic.add(`mp:${mp.alternate}`);
+    for (const t of ngramSet(form, 3)) trigrams.add(t);
+    const compactLen = form.replace(/\s+/g, '').length;
+    if (compactLen < minCompactLen) minCompactLen = compactLen;
+  }
+
+  if (!Number.isFinite(minCompactLen)) minCompactLen = 0;
+  return { minCompactLen, tokens, firstLetters, singles, phonetic, trigrams };
+}
+
+/** Memoised key derivation — one computation per unique name string. */
+export const buildNameKeys = memoise(buildNameKeysUncached);
+
+function setsIntersect(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  const [small, large] = a.size <= b.size ? [a, b] : [b, a];
+  for (const v of small) if (large.has(v)) return true;
+  return false;
+}
+
+/**
+ * True when the pair shares at least one plausible matching signal and the
+ * full ensemble is therefore worth running. See the RECALL CONTRACT above —
+ * returning false asserts no ensemble algorithm can produce a hit for the pair.
+ */
+export function couldPlausiblyMatch(a: NameMatchKeys, b: NameMatchKeys): boolean {
+  // Short / non-normalisable names: trigram analysis degenerates below 4
+  // compact characters — always run the ensemble.
+  if (a.minCompactLen < 4 || b.minCompactLen < 4) return true;
+  if (setsIntersect(a.tokens, b.tokens)) return true;
+  if (setsIntersect(a.singles, b.firstLetters) || setsIntersect(b.singles, a.firstLetters)) return true;
+  if (setsIntersect(a.phonetic, b.phonetic)) return true;
+  return setsIntersect(a.trigrams, b.trigrams);
 }

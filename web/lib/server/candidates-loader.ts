@@ -418,6 +418,7 @@ async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: 
         `(${STATIC_CANDIDATES.length} entries). Entities designated since last build will NOT be matched. ` +
         "Ensure refresh-lists cron has run and Netlify Blobs is bound.";
       console.warn(`[candidates-loader] ${degradationNote}`);
+      triggerCorpusSelfHeal("blob corpus empty or unreadable");
 
       const health: CandidateLoadHealth = {
         source: "static",
@@ -476,6 +477,7 @@ async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: 
       (staleSec !== null ? `Cache was ${staleSec}s old.` : "Cache was never populated.");
 
     console.error(`[candidates-loader] ${degradationNote}`);
+    triggerCorpusSelfHeal("candidate load error");
 
     const health: CandidateLoadHealth = {
       source: "static",
@@ -497,6 +499,156 @@ export function invalidateCandidateCache(): void {
   _cached = null;
   _cachedAt = 0;
   _cachedHealth = null;
+}
+
+// ── Corpus self-heal ─────────────────────────────────────────────────────
+// A static-seed fallback means the corpus is unusable for real screening:
+// the count-floor guard (coreSanctionsCoverageGaps) refuses verdicts against
+// it, so every screen 503s until someone repopulates Blobs. Incident
+// 2026-06-12: the hawkeye-lists store sat empty (every list "missing from
+// blob storage") while the scheduled ingest crons failed to repopulate it,
+// and screening stayed down until an operator manually hit
+// /api/sanctions/operator-refresh. Instead of waiting for a human, any load
+// that lands on the seed kicks off the same full re-ingestion that route
+// runs — fire-and-forget so screening latency is unaffected and the
+// fail-closed guard stays authoritative until real data lands.
+//
+// Stampede control is two-layer:
+//   1. in-memory: one attempt per SELF_HEAL_MIN_INTERVAL_MS per instance,
+//      which also covers Blobs-down windows where the advisory lock
+//      open-circuits on every call;
+//   2. cross-instance: the blob-backed cron lock shared with the
+//      scheduled-function fleet (advisory; its TTL is the same interval).
+const SELF_HEAL_MIN_INTERVAL_MS = 10 * 60_000;
+
+interface SelfHealIngestionResult {
+  ok_count: number;
+  failed_count: number;
+  anyWriteFailed: boolean;
+  summary: Array<{ recordCount: number }>;
+}
+
+type SelfHealIngestionRunner = (
+  _label: string,
+  _opts: { adapterTimeoutMs: number; heavyAdapterTimeoutMs: number },
+) => Promise<SelfHealIngestionResult>;
+
+let _selfHealLastAttemptAt = 0;
+let _selfHealRunnerOverride: SelfHealIngestionRunner | null = null;
+
+/**
+ * Test seam: replaces the runner AND bypasses the cron-lock layer (tests
+ * exercise the throttle + invocation contract, not @netlify/blobs).
+ * Pass null to restore production behaviour; resets the throttle either way.
+ */
+export function __setSelfHealRunnerForTests(runner: SelfHealIngestionRunner | null): void {
+  _selfHealRunnerOverride = runner;
+  _selfHealLastAttemptAt = 0;
+}
+
+/**
+ * Fire-and-forget a full sanctions re-ingestion (same tier budgets as the
+ * operator-refresh route). Returns true when an attempt was started, false
+ * when throttled by the in-memory interval guard. Never throws and never
+ * blocks the caller.
+ */
+export function triggerCorpusSelfHeal(reason: string): boolean {
+  const now = Date.now();
+  if (now - _selfHealLastAttemptAt < SELF_HEAL_MIN_INTERVAL_MS) return false;
+  _selfHealLastAttemptAt = now;
+
+  void (async () => {
+    if (_selfHealRunnerOverride) {
+      const result = await _selfHealRunnerOverride("corpus-self-heal", {
+        adapterTimeoutMs: 45_000,
+        heavyAdapterTimeoutMs: 120_000,
+      });
+      await finishSelfHeal(result);
+      return;
+    }
+
+    // Cross-instance guard. The lock is advisory (no CAS) and open-circuits
+    // on any Blobs failure — a duplicate run is harmless (the ingestion
+    // integrity guard refuses empty overwrites), missing a sanctions reload
+    // is not.
+    try {
+      const lockMod = (await import("../../../src/ingestion/cron-lock.js" as string)) as {
+        acquireCronLock: (
+          _label: string,
+          _minIntervalMs: number,
+        ) => Promise<{ acquired: boolean; priorAgeMs?: number }>;
+      };
+      const lock = await lockMod.acquireCronLock("corpus-self-heal", SELF_HEAL_MIN_INTERVAL_MS);
+      if (!lock.acquired) {
+        console.info(
+          `[candidates-loader] corpus self-heal skipped — another instance ran ${Math.round((lock.priorAgeMs ?? 0) / 1000)}s ago`,
+        );
+        return;
+      }
+    } catch (lockErr) {
+      console.warn(
+        "[candidates-loader] corpus self-heal lock unavailable — proceeding open-circuit:",
+        lockErr instanceof Error ? lockErr.message : String(lockErr),
+      );
+    }
+
+    console.warn(`[candidates-loader] corpus self-heal: starting full re-ingestion (${reason})`);
+    // Same import style as the operator-refresh route: resolved at runtime
+    // so web/ typechecking doesn't depend on the ingestion tree.
+    const mod = (await import("../../../src/ingestion/run-all.js" as string)) as {
+      runIngestionAll: SelfHealIngestionRunner;
+    };
+    // 45 s parallel light tier (committed first), 120 s sequential heavy
+    // tier — best-effort on borrowed Lambda time, identical to
+    // operator-refresh; the nightly background worker remains the
+    // guaranteed heavy path.
+    const result = await mod.runIngestionAll("corpus-self-heal", {
+      adapterTimeoutMs: 45_000,
+      heavyAdapterTimeoutMs: 120_000,
+    });
+    await finishSelfHeal(result);
+  })().catch((err) => {
+    console.error(
+      "[candidates-loader] corpus self-heal failed:",
+      err instanceof Error ? err.message : String(err),
+    );
+  });
+
+  return true;
+}
+
+// Post-ingestion convergence: drop the in-process cache so the next load
+// reads the fresh blobs, and refresh `sanctions/meta.json` so
+// /api/screening/health stops reporting CORPUS_MISSING without waiting for
+// the nightly refresh-lists pipeline (the only other writer of that key).
+// Meta is only written on a fully clean run — mirroring refresh-lists-core —
+// so a partial ingest can never mask real staleness.
+async function finishSelfHeal(result: SelfHealIngestionResult): Promise<void> {
+  invalidateCandidateCache();
+  console.info(
+    `[candidates-loader] corpus self-heal finished ok=${result.ok_count} failed=${result.failed_count} — candidate cache invalidated`,
+  );
+  if (result.anyWriteFailed) return;
+  try {
+    const { setJson } = await import("./store");
+    const totalEntries = result.summary.reduce(
+      (sum, r) => sum + (typeof r.recordCount === "number" ? r.recordCount : 0),
+      0,
+    );
+    await setJson("sanctions/meta.json", {
+      updatedAt: new Date().toISOString(),
+      totalEntries,
+      listCount: result.summary.length,
+      listsOk: result.ok_count,
+      listsFailed: result.failed_count,
+      label: "corpus-self-heal",
+    });
+  } catch (metaErr) {
+    console.error(
+      "[candidates-loader] corpus self-heal: sanctions/meta.json write failed — /api/screening/health stays CORPUS_MISSING until the next successful ingest:",
+      metaErr instanceof Error ? metaErr.message : String(metaErr),
+    );
+  }
 }
 
 // Eagerly start loading on module import so the first real request hits a warm

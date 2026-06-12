@@ -4,7 +4,7 @@
 // list. Designed for low-latency UI callers: no I/O, no network, no stubs —
 // callers own candidate acquisition (DB, file, API) and pass the rows in.
 
-import { matchEnsemble, effectiveTokenCount, type MatchingMethod } from './matching.js';
+import { matchEnsemble, effectiveTokenCount, buildNameKeys, couldPlausiblyMatch, type MatchingMethod } from './matching.js';
 import { fpTriageConfig } from './fp-triage-config.js';
 import {
   enrichHitWithDisambiguation,
@@ -178,6 +178,12 @@ export interface QuickScreenOptions {
   // (default 'standard'). Pass [] or set the profile to 'off' for legacy
   // no-triage behaviour.
   autoResolveRules?: AutoResolveRule[] | 'conservative' | 'standard' | 'strict';
+  // Disable the candidate blocking pre-gate and run the full matching
+  // ensemble against every corpus entry. The gate is recall-preserving by
+  // construction (see couldPlausiblyMatch in matching.ts) and is auto-disabled
+  // whenever the effective hit threshold drops below MIN_BLOCKING_THRESHOLD;
+  // this flag exists for audit comparisons and worst-case investigations.
+  exhaustive?: boolean;
   clock?: () => number;
   now?: () => string;
 }
@@ -634,9 +640,41 @@ export function quickScreen(
   const hits: QuickScreenHit[] = [];
   const listsSeen = new Set<string>();
 
+  // ── Candidate blocking pre-gate ──────────────────────────────────────────
+  // The full ensemble over the whole corpus costs ~52s on a production Lambda
+  // (live profile 2026-06-12); the gate skips candidates that share no
+  // plausible matching signal with the subject. Recall contract documented at
+  // couldPlausiblyMatch(). Discriminator boosts can add at most +0.32
+  // (nationalId +0.15, DOB +0.10, nationality +0.04, jurisdiction +0.03), so
+  // with an effective threshold ≥0.70 only pairs with base score ≥0.38 can
+  // ever hit — comfortably inside the band the gate's signal analysis covers.
+  // Below that band (operator lowered thresholds), blocking auto-disables and
+  // the exhaustive scan runs.
+  const MIN_BLOCKING_THRESHOLD = 0.70;
+  const minEffectiveThreshold = Object.values(listThresholds).reduce(
+    (m, v) => Math.min(m, v),
+    threshold,
+  );
+  const blockingEnabled =
+    opts.exhaustive !== true && minEffectiveThreshold >= MIN_BLOCKING_THRESHOLD;
+  const subjectKeys = blockingEnabled ? subjectNames.map((n) => buildNameKeys(n)) : [];
+
   for (const cand of candidates) {
     listsSeen.add(cand.listId);
     const candNames = [cand.name, ...(cand.aliases ?? [])].filter((n) => n && n.trim());
+
+    if (blockingEnabled) {
+      let plausible = false;
+      outer: for (const cn of candNames) {
+        const ck = buildNameKeys(cn);
+        for (const sk of subjectKeys) {
+          if (couldPlausiblyMatch(sk, ck)) { plausible = true; break outer; }
+        }
+      }
+      // No shared signal on any name pair — no ensemble algorithm can produce
+      // a hit for this candidate (see recall contract); skip the full scan.
+      if (!plausible) continue;
+    }
 
     let bestScore = 0;
     let bestMethod: MatchingMethod = 'exact';
