@@ -26,6 +26,10 @@ describe('module board narratives', () => {
     // (SANCTIONS & NAME MATCH, 6.01–6.04), STR/SAR Filing Suite to new group
     // 7 (FIU REPORTING · GOAML, 7.01), Ongoing Monitor relabelled
     // "Customer/Supplier Monitoring". Moves + renumbering only — still 81.
+    // 2026-06-12: sidebar merge — groups 6/7 plus the four leading Risk &
+    // AML Ops boards collapsed into new group 8 (SCREENING, MONITORING &
+    // REPORTING, 8.01–8.09); G2 renumbered 2.01–2.20, prefixes 6/7 retired.
+    // Moves + renumbering only — still 81.
     expect(MODULE_BOARDS.length).toBe(81);
     for (const b of MODULE_BOARDS) {
       const n = boardNarrative(b.num);

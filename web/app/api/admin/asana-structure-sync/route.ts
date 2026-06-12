@@ -1,9 +1,10 @@
 // POST /api/admin/asana-structure-sync
 //
 // One-shot live reconciliation of the Asana workspace to the canonical map
-// (web/lib/server/asana-workspace-map.ts), built for the 2026-06-12 sidebar
-// regroup (new groups 6 · SANCTIONS & NAME MATCH and 7 · FIU REPORTING ·
-// GOAML, Ongoing Monitor → Customer/Supplier Monitoring). Modeled on
+// (web/lib/server/asana-workspace-map.ts). Built for the 2026-06-12 sidebar
+// regroup, reused for the same-day merge that collapsed groups 6/7 and the
+// four leading Risk & AML Ops boards into 8 · SCREENING, MONITORING &
+// REPORTING (8.01–8.09; G2 renumbered 2.01–2.20). Modeled on
 // /api/admin/purge-bra: Bearer ADMIN_TOKEN auth (fail closed), raw Asana
 // fetch with the server's ASANA_TOKEN, one append-only audit-chain entry,
 // same response shape conventions.
@@ -16,8 +17,9 @@
 //   b. every board's pinned 📌 attestation task name (attestationTaskName);
 //   c. every digest task name (digestTaskName);
 //   d. digest sections — creates missing group-title sections in sidebar
-//      order (insert_after chaining) and moves any digest task sitting in
-//      the wrong group section (covers the 5 moved boards).
+//      order (insert_after chaining), moves any digest task sitting in the
+//      wrong group section (covers the 9 merged boards), and deletes the
+//      retired group sections once their tasks have moved out.
 //
 // Body: { confirm: "SYNC-ASANA-STRUCTURE", dryRun?: true, scope?, keys? }.
 // With dryRun the endpoint computes and returns the change plan WITHOUT
@@ -48,6 +50,11 @@ export const maxDuration = 120;
 
 const API = "https://app.asana.com/api/1.0";
 const CONFIRM_PHRASE = "SYNC-ASANA-STRUCTURE";
+
+// Digest group sections retired by the 2026-06-12 sidebar merge — deleted
+// from the live digest once their tasks have moved to the merged
+// "SCREENING, MONITORING & REPORTING" section.
+const RETIRED_DIGEST_SECTIONS = ["SANCTIONS & NAME MATCH", "FIU REPORTING · GOAML"] as const;
 
 async function timingSafeTokenCheck(got: string, expected: string): Promise<boolean> {
   const { createHmac, timingSafeEqual } = await import("node:crypto");
@@ -101,7 +108,8 @@ type ActionKind =
   | "rename-attestation-task"
   | "rename-digest-task"
   | "create-digest-section"
-  | "move-digest-task";
+  | "move-digest-task"
+  | "delete-empty-section";
 
 interface SyncAction {
   kind: ActionKind;
@@ -278,6 +286,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         });
         prevTitle = title;
       }
+      // Retired group sections are deleted once empty — their tasks move to
+      // the merged group section earlier in this same run (deletes apply
+      // last). Asana refuses to delete a non-empty section, so a stray task
+      // surfaces in errors[] rather than being lost; a keys-sliced run that
+      // leaves tasks behind simply retries on a later slice.
+      for (const retired of RETIRED_DIGEST_SECTIONS) {
+        const gid = sectionGidByTitle.get(norm(retired));
+        if (!gid) continue; // already gone
+        actions.push({
+          kind: "delete-empty-section",
+          gid,
+          detail: `delete retired empty section "${retired}"`,
+          apply: () => asana(token, `/sections/${gid}`, { method: "DELETE" }),
+        });
+      }
     } catch (err) {
       errors.push(`digest sections: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -339,19 +362,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
-  // ── Apply (unless dryRun). Sections are created before task moves —
-  //    actions[] already holds create-digest-section entries ahead of
-  //    move-digest-task entries, and renames are order-independent. ──
+  // ── Apply (unless dryRun). Sections are created before task moves and
+  //    retired-section deletes run last, after the moves that empty them;
+  //    renames are order-independent (sort is stable within ranks). ──
   const applied: Record<ActionKind, number> = {
     "rename-project": 0,
     "rename-attestation-task": 0,
     "rename-digest-task": 0,
     "create-digest-section": 0,
     "move-digest-task": 0,
+    "delete-empty-section": 0,
   };
-  const ordered = [...actions].sort(
-    (a, z) => Number(z.kind === "create-digest-section") - Number(a.kind === "create-digest-section"),
-  );
+  const rank = (k: ActionKind): number =>
+    k === "create-digest-section" ? 0 : k === "delete-empty-section" ? 2 : 1;
+  const ordered = [...actions].sort((a, z) => rank(a.kind) - rank(z.kind));
   if (!dryRun) {
     for (const action of ordered) {
       try {
@@ -371,6 +395,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     "rename-digest-task": 0,
     "create-digest-section": 0,
     "move-digest-task": 0,
+    "delete-empty-section": 0,
   };
   for (const a of actions) planned[a.kind]++;
   const effective = dryRun ? planned : applied;
@@ -379,6 +404,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     renamedTasks: effective["rename-attestation-task"] + effective["rename-digest-task"],
     sectionsCreated: effective["create-digest-section"],
     tasksMoved: effective["move-digest-task"],
+    sectionsDeleted: effective["delete-empty-section"],
     skippedAlreadyCorrect,
   };
   const ok = errors.length === 0;
