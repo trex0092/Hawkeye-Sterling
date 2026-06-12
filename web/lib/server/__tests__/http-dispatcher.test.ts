@@ -321,3 +321,33 @@ describe("newsFetch global egress concurrency cap", () => {
     expect(results.every((r) => r.status === "fulfilled")).toBe(true);
   });
 });
+
+describe("newsFetchRelayOnly", () => {
+  it("goes straight to the relay (never the direct URL) and returns its response", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://hawkeye.example");
+    const m = await loadFresh();
+    const calls: string[] = [];
+    const fetchMock = vi.fn().mockImplementation((url: RequestInfo | URL) => {
+      calls.push(String(url));
+      return Promise.resolve(new Response("<rss><item/></rss>", { status: 200 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await m.newsFetchRelayOnly("https://news.google.com/rss/search?q=x");
+    expect(res).not.toBeNull();
+    expect(await res!.text()).toContain("<rss>");
+    // Every call went to the relay template, none to news.google.com directly.
+    expect(calls.length).toBeGreaterThan(0);
+    expect(calls.every((u) => u.includes("/.netlify/edge-functions/fetch-relay"))).toBe(true);
+  });
+
+  it("returns null (never throws) when every relay fails", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://hawkeye.example");
+    const m = await loadFresh();
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("relay down")));
+    const res = await m.newsFetchRelayOnly("https://news.google.com/rss/search?q=x");
+    expect(res).toBeNull();
+  });
+});
