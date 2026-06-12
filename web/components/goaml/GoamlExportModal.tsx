@@ -6,9 +6,9 @@
 // subject + report kind + amount, and produces the goAML XML
 // envelope via /api/goaml.
 //
-// The standalone /goaml-export page still exists (off-nav) using the
-// same /api/goaml backend; this modal is the "from a real case"
-// entry point regulators expect to see in an audit trail.
+// The standalone /goaml-export page was retired 2026-06-12 (goAML is
+// the FIU's own portal); this modal is the "from a real case" entry
+// point regulators expect to see in an audit trail.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiErrorMessage, caughtErrorMessage } from "@/lib/client/error-utils";

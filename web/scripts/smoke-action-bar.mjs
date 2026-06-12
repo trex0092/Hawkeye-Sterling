@@ -14,7 +14,7 @@ const NAV = [
   "/supply-chain","/rmi","/responsible-sourcing","/oecd-ddg","/rmap",
   "/lbma","/reg-change","/shipments","/eocn","/tfs-alerts","/cnmr","/pnmr","/dpmsr",
   "/moe-survey","/enforcement","/oversight","/fp-optimizer","/tm-rules","/audit-findings",
-  "/bra","/dormant-accounts","/outsourcing-register","/coi-register","/voluntary-disclosure",
+  "/dormant-accounts","/outsourcing-register","/coi-register","/voluntary-disclosure",
   "/eval-kpi",
   "/mlro-advisor","/responsible-ai","/governance/inspection-room","/regulatory","/policies",
   "/typology-library","/playbook","/corrections","/ai-incident-playbook","/ai-governance",
@@ -30,7 +30,7 @@ const NAV = [
 const WIRED = new Set([
   "/pkyc","/client-portal","/ubo-declaration","/esg-risk","/vendor-dd","/cdd-review",
   "/employees","/training","/approvals","/screening","/ongoing-monitor","/lbma","/shipments",
-  "/cnmr","/tm-rules","/audit-findings","/bra","/dormant-accounts","/outsourcing-register","/dpmsr",
+  "/cnmr","/tm-rules","/audit-findings","/dormant-accounts","/outsourcing-register","/dpmsr",
   "/coi-register","/voluntary-disclosure","/oversight","/policies","/investigation","/rmi",
   "/ai-incident-playbook","/shadow-ai","/vendor-ai-audit","/access-control",
 ]);
