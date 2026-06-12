@@ -146,7 +146,16 @@ export const auDfatAdapter: SourceAdapter = {
     let ExcelJS: ExcelJsModule;
     try {
       // `as string` cast bypasses TS module resolution — exceljs is opt-in.
-      ExcelJS = (await import('exceljs' as string)) as unknown as ExcelJsModule;
+      // CJS/ESM interop varies by bundler: the Next.js lambda exposes
+      // Workbook on the namespace, while the Netlify scheduled-function
+      // bundle puts the CJS exports on `.default` (observed in prod as
+      // "ExcelJS.Workbook is not a constructor" from sanctions-watch-15min).
+      // Accept both shapes.
+      const imported = (await import('exceljs' as string)) as { default?: ExcelJsModule } & ExcelJsModule;
+      ExcelJS = typeof imported.Workbook === 'function' ? imported : (imported.default as ExcelJsModule);
+      if (typeof ExcelJS?.Workbook !== 'function') {
+        throw new Error('exceljs loaded but no Workbook constructor found on namespace or .default');
+      }
     } catch (err) {
       throw new Error(
         `au_dfat requires the 'exceljs' npm package — ` +
