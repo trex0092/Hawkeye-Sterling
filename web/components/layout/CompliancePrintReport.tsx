@@ -812,47 +812,6 @@ const REPORTS: Record<string, ReportData> = {
       "Four-eyes review bypassed under time pressure",
     ],
   },
-  "/goaml-export": {
-    title: "goAML Export",
-    summary: [
-      "The goAML Export module produces validated goAML XML for submission to the UAE Financial Intelligence Unit, mapping the institution's report data to the FIU schema and validating structure and mandatory fields before egress. It ensures that STRs, SARs, and other mandated reports reach the FIU in an accepted, machine-readable form.",
-      "Correct goAML formatting and registration are prerequisites to discharging the reporting obligation: a report the FIU cannot ingest is, in effect, not filed. The module enforces schema validity, applies the egress tipping-off gate, and records each submission for audit.",
-      "A report the FIU cannot ingest is, in practical terms, not filed, so the module enforces schema validity, mandatory-field completeness, and correct Rentity identifiers before any egress. The tipping-off gate is applied to narrative content so that disclosure to an external system never alerts a subject, and acknowledgements are retained as proof of submission. Supervisors test whether the institution's goAML registration and filings are technically correct and whether rejections are tracked and corrected. By writing each export to the audit chain, the institution can demonstrate an unbroken, machine-readable reporting pathway to the UAE FIU and account for every report it was obliged to make.",
-    ],
-    regulatory: [
-      "CBUAE Notice 2021/8 — goAML registration and filing",
-      "Federal Decree-Law No. (10) of 2025 Art.15 — reporting to the FIU",
-      "Cabinet Resolution No. (134) of 2025 Art.17 — reporting procedures",
-      "FATF Recommendation 20 — suspicious-transaction reporting",
-      "FATF Recommendation 21 — tipping-off prohibition",
-    ],
-    requirements: [
-      "Map report data to the current goAML schema",
-      "Validate structure and mandatory fields before submission",
-      "Apply the egress tipping-off gate to narrative content",
-      "Use registered goAML Rentity identifiers",
-      "Retain submissions and FIU acknowledgements",
-      "Track and remediate FIU rejections and resubmissions",
-    ],
-    controls: [
-      "goAML XML schema validation",
-      "Egress tipping-off gate enforcement",
-      "Mandatory-field completeness checks",
-      "Audit-chain record of each export",
-      "Registered Rentity-identifier validation before egress",
-    ],
-    reporting: [
-      "Submission of validated reports to the UAE FIU",
-      "Tracking of FIU acknowledgements and rejections",
-      "Export-success metrics to governance",
-    ],
-    risks: [
-      "Schema-invalid submissions rejected by the FIU",
-      "Placeholder or incorrect Rentity identifiers",
-      "Tipping-off content reaching an external system",
-      "Missing mandatory fields delaying acceptance",
-    ],
-  },
   "/supply-chain": {
     title: "Supply Chain & Responsible Sourcing",
     summary: [

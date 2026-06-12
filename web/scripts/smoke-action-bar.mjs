@@ -11,7 +11,7 @@ const NAV = [
   "/ubo-declaration","/pep-profile","/esg-risk","/vendor-dd","/cdd-review",
   "/ownership","/employees","/training","/approvals",
   "/screening","/transaction-monitor","/ongoing-monitor","/cases","/ewra","/sar-qa",
-  "/goaml-export","/supply-chain","/rmi","/responsible-sourcing","/oecd-ddg","/rmap",
+  "/supply-chain","/rmi","/responsible-sourcing","/oecd-ddg","/rmap",
   "/lbma","/reg-change","/shipments","/eocn","/tfs-alerts","/cnmr","/pnmr","/dpmsr",
   "/moe-survey","/enforcement","/oversight","/fp-optimizer","/tm-rules","/audit-findings",
   "/bra","/dormant-accounts","/outsourcing-register","/coi-register","/voluntary-disclosure",

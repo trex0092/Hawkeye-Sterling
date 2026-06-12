@@ -29,7 +29,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "🗂️ Cases", href: "/cases", hint: "Case management — investigations, dispositions & audit trail" },
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
       { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
-      { label: "📤 goAML Export", href: "/goaml-export", hint: "goAML XML export for FIU submission · CBUAE Notice 2021/8" },
       { label: "🔗 Supply Chain & Responsible Sourcing", href: "/supply-chain", hint: "Geographic risk · CSDDD · UFLPA · RMI/RMAP · OECD 5-step DDG · MD 68/2024" },
       { label: "🏭 RMI / RMAP", href: "/rmi", hint: "Responsible Minerals Initiative · RMAP smelter audit tracker" },
       { label: "⛏️ Responsible Sourcing", href: "/responsible-sourcing", hint: "OECD 5-step DDG · Ministerial Decree 68/2024" },

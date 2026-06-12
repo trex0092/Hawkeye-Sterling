@@ -223,13 +223,11 @@
 - **Responsible:** Two authorised users.
 - **Evidence & retention:** Maker + checker identities logged; **5 yrs**.
 
-### goAML Export / Submission
-- **Purpose:** FIU goAML report generation/submission with entity-ID validation.
-- **MoE / UAE obligation:** FIU reporting via goAML — Cabinet 10/2019; FATF R.20; UAE FIU registration (Rentity ID).
-- **Control & enforcement:** Entity-ID validated before transmission; placeholder IDs blocked.
-- **Frequency / SLA:** Per report; without delay.
-- **Responsible:** MLRO.
-- **Evidence & retention:** Validated XML + receipt; **5 yrs**.
+### goAML Export / Submission — RETIRED (2026-06-12)
+- **Status:** Module removed as redundant — goAML is the UAE FIU's own independent platform, not a control this system needs to duplicate. The standalone goAML Export module (page, API wrapper, and Asana board wiring) was decommissioned on 2026-06-12.
+- **Control continuity:** The underlying FIU reporting obligation (Cabinet 10/2019; FATF R.20; UAE FIU registration / Rentity ID) is unchanged and remains discharged: STR/SAR filings are prepared via the **STR/SAR Filing Suite** (`/sar-qa`, plus the GoamlExportModal in `/str-cases`), CNMR and DPMSR filings via their own modules, and the validated goAML XML is submitted on the FIU goAML portal directly. The shared goAML XML generation/validation machinery (`/api/goaml`, `/api/goaml-xml`, entity-ID validation, egress tipping-off gate) is retained in full by those modules.
+- **Responsible:** MLRO (unchanged).
+- **Evidence & retention:** Validated XML + FIU receipt retained with the filing case record; **5 yrs**. Pre-retirement export records remain in the audit chain per the record-keeping baseline.
 
 ### Batch Screening
 - **Purpose:** Bulk portfolio screening on list updates.

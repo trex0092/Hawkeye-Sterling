@@ -128,10 +128,6 @@
    "attestationTaskGid": "1215587110783782",
    "projectGid": "1215582427137235"
   },
-  "goaml": {
-   "attestationTaskGid": "1215593491277706",
-   "projectGid": "1215587113859411"
-  },
   "grievances-whistleblowing": {
    "attestationTaskGid": "1215595439636144",
    "projectGid": "1215582427324833"
@@ -368,7 +364,6 @@
    "fp-optimizer": "1215595443652452",
    "geopolitical": "1215587115998353",
    "gleif": "1215593493430939",
-   "goaml": "1215590848760053",
    "grievances-whistleblowing": "1215593492315538",
    "inspection-room": "1215587115998289",
    "intel": "1215590849043704",

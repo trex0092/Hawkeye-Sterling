@@ -316,9 +316,6 @@ export default function DpmsrPage() {
                           Mark as filed in goAML
                         </button>
                       )}
-                      <a href="/goaml-export" className="text-11 font-semibold px-3 py-1.5 rounded border border-hair-2 text-ink-1 hover:bg-bg-2 no-underline">
-                        Open goAML Export ↗
-                      </a>
                     </div>
                   </div>
                 )}

@@ -35,7 +35,6 @@ const MODULE_LABELS: Record<string, string> = {
   "sar-qa":                 "SAR Quality Assurance",
   cases:                    "Cases",
   enforcement:              "Enforcement",
-  "goaml-submission":       "goAML STR Submission",
   // 06 · FFR
   benford:                  "Benford Analysis",
   // 07 · CDD/KYC
@@ -86,8 +85,6 @@ const MODULE_LABELS: Record<string, string> = {
   "grievances-whistleblowing": "Grievances & Whistleblowing",
   // 07 · CDD — Onboarding
   onboarding:               "Onboarding Wizard",
-  // 05 · STR/SAR
-  goaml:                    "goAML Export",
   // Additional modules
   "analytics-dashboard":    "Analytics Dashboard",
   "kri-dashboard":          "KRI Dashboard",
@@ -173,7 +170,6 @@ const PROJECT_BOARD: Record<string, string> = {
   "sar-qa":                 "05 · STR/SAR/CTR/PMR GoAML Filings",
   cases:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
   enforcement:              "05 · STR/SAR/CTR/PMR GoAML Filings",
-  "goaml-submission":       "05 · STR/SAR/CTR/PMR GoAML Filings",
   benford:                  "06 · FFR Incidents & Asset Freezes",
   gleif:                    "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
   "entity-graph":           "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
@@ -208,7 +204,6 @@ const PROJECT_BOARD: Record<string, string> = {
   "inspection-room":        "18 · Regulator Portal Handoff",
   "grievances-whistleblowing": "19 · Incidents & Grievances",
   onboarding:               "07 · CDD/SDD/EDD/KYC — Customer Due Diligence",
-  goaml:                    "05 · STR/SAR/CTR/PMR GoAML Filings",
   "analytics-dashboard":    "13 · Compliance Governance",
   "kri-dashboard":          "13 · Compliance Governance",
   "incident-runbook":       "13 · Compliance Governance",
@@ -569,24 +564,6 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "SLAs: Rejected submissions must be corrected and resubmitted within 24 hours of rejection receipt. Unacknowledged submissions (no ACK within 48 hours) must be investigated as a potential transmission failure.\n\n" +
     "ESCALATION TRIGGERS: Repeated goAML schema rejections for the same case must be escalated to the compliance technology team. Missing Rentity IDs (CG-4 compliance gap) must be treated as a P1 incident and the MLRO and CTO notified.\n\n" +
     "REGULATORY BASIS: Cabinet Resolution No. (134) of 2025 Art.15 (goAML reporting requirements), CBUAE reporting circular, Federal Decree-Law No. (10) of 2025 Art.15, FATF Recommendation 20.",
-
-  goaml:
-    "goAML XML EXPORT — COMPLIANCE REPORT\n\n" +
-    "goAML XML export reviewed for schema validity, field completeness, PII transmission minimisation, and transmission security. All STR/CTR/PMR records confirmed as included in the export for the reporting period.\n\n" +
-    "REVIEW CHECKLIST:\n" +
-    "☐ Export schema validated against goAML 5.x — zero schema errors\n" +
-    "☐ All STR, CTR, and PMR records for the period included — completeness count verified\n" +
-    "☐ All mandatory fields populated with correct values\n" +
-    "☐ PII transmission minimised to goAML mandatory fields only — no excess personal data included\n" +
-    "☐ Export file encrypted before transmission (TLS in transit; AES-256 at rest during staging)\n" +
-    "☐ Recipient system identity verified — goAML portal SSL certificate confirmed valid\n" +
-    "☐ Export file integrity hash (SHA-256) computed and retained in audit record\n" +
-    "☐ Egress tipping-off gate passed for the export batch\n" +
-    "☐ Export audit log entry confirms MLRO authorisation before transmission\n" +
-    "☐ Archive copy retained with the case management system for 10 years\n\n" +
-    "DATA MINIMISATION: Only fields required by goAML schema may be populated. Additional PII fields available in the system but not required by the schema must not be included. Post-transmission, staging files must be deleted within 24 hours.\n\n" +
-    "ESCALATION TRIGGERS: Any transmission failure, export file tampering, or inadvertent inclusion of excess PII requires immediate MLRO notification and a data incident log entry.\n\n" +
-    "REGULATORY BASIS: Cabinet Resolution No. (134) of 2025 Art.15 (goAML reporting), Federal Decree-Law No. 10 of 2025 Art.18 (data minimisation and audit), UAE PDPL (data minimisation principle), FATF Recommendation 20.",
 
   "sar-narrative":
     "AI-GENERATED SAR NARRATIVE — COMPLIANCE REPORT\n\n" +
