@@ -6,9 +6,8 @@
 // outcome of a screen (recall contract at couldPlausiblyMatch()).
 
 import { describe, it, expect } from 'vitest';
-import { quickScreen, type QuickScreenSubject } from '../quick-screen.js';
+import { quickScreen, type QuickScreenSubject, type QuickScreenCandidate } from '../quick-screen.js';
 import { buildNameKeys, couldPlausiblyMatch } from '../matching.js';
-import type { QuickScreenCandidate } from '../quick-screen.js';
 
 const FIRST = ['Mohammed', 'Ali', 'Hassan', 'Ibrahim', 'Yusuf', 'Omar', 'Sergei', 'Dmitri', 'Ivan', 'Chen', 'Jose', 'Maria', 'Zeynep', 'Mehmet', 'Fatima', 'Nikolai', 'Tatiana', 'Kim'];
 const LAST = ['Al-Baghdadi', 'Petrov', 'Volkov', 'Hernandez', 'Smith', 'Yilmaz', 'Kaya', 'Wang', 'Hussein', 'Karimov', 'Rahimi', 'Sokolov', 'Lebedev', 'Novikov', 'Fedorov', 'Tarasov'];
