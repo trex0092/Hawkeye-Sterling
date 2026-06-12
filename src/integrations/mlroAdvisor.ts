@@ -10,7 +10,7 @@
 import { weaponizedSystemPrompt } from '../brain/weaponized.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
-import { supportsAdaptiveThinking } from './modelCapabilities.js';
+import { supportsAdaptiveThinking, supportsEffort } from './modelCapabilities.js';
 
 export type ReasoningMode = 'speed' | 'balanced' | 'multi_perspective';
 
@@ -335,11 +335,12 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
     : system;
   // Gate on per-model capability — Haiku tiers 400 the request if `thinking`
   // is present, so we silently drop it for those models even if the caller
-  // asked for it.
+  // asked for it. Same for `effort`: Haiku/Sonnet-4.5 tiers 400 with
+  // "This model does not support the effort parameter".
   const thinkingBlock = (thinking && supportsAdaptiveThinking(model))
     ? { thinking: { type: 'adaptive', display: 'summarized' } }
     : {};
-  const outputConfigBlock = effort ? { output_config: { effort } } : {};
+  const outputConfigBlock = (effort && supportsEffort(model)) ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {

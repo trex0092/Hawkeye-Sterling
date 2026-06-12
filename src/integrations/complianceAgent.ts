@@ -21,7 +21,7 @@ import { tippingOffScan, type TippingOffMatch } from '../brain/tipping-off-guard
 import type { DispositionCode } from '../brain/dispositions.js';
 import type { CaseReport } from '../reports/caseReport.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
-import { supportsAdaptiveThinking } from './modelCapabilities.js';
+import { supportsAdaptiveThinking, supportsEffort } from './modelCapabilities.js';
 
 export type Verdict = 'approved' | 'returned_for_revision' | 'blocked' | 'incomplete';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
@@ -481,7 +481,8 @@ const defaultChat: ChatCall = async ({ model, system, user, maxTokens, apiKey, s
   const thinkingBlock = (thinking && supportsAdaptiveThinking(model))
     ? { thinking: { type: 'adaptive', display: 'summarized' } }
     : {};
-  const outputConfigBlock = effort ? { output_config: { effort } } : {};
+  // Effort is model-gated too — Haiku/Sonnet-4.5 tiers 400 on the parameter.
+  const outputConfigBlock = (effort && supportsEffort(model)) ? { output_config: { effort } } : {};
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
     {

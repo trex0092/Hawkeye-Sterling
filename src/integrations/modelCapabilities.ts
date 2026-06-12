@@ -24,3 +24,23 @@ export function supportsAdaptiveThinking(modelId: string): boolean {
   if (!modelId) return false;
   return !NON_THINKING_PATTERNS.some((re) => re.test(modelId));
 }
+
+/**
+ * Returns true when the given Anthropic model id accepts
+ * `output_config: { effort }` on the Messages API.
+ *
+ * Effort ships on Fable/Mythos 5, Opus 4.5 and later, and Sonnet 4.6 and
+ * later. Haiku tiers, Sonnet 4.5 and older, and Opus 4.1/4.0 reject the
+ * parameter with `400 This model does not support the effort parameter.`
+ * (production failure 2026-06-12: speed-mode executor = Haiku 4.5 +
+ * effort:'high'). Callers MUST gate any effort payload on this, exactly
+ * like supportsAdaptiveThinking() above.
+ */
+export function supportsEffort(modelId: string): boolean {
+  if (!modelId) return false;
+  if (/haiku/i.test(modelId)) return false;
+  if (/fable|mythos/i.test(modelId)) return true;
+  if (/opus-(?:[5-9]|4-[5-9])/i.test(modelId)) return true;
+  if (/sonnet-(?:[5-9]|4-[6-9])/i.test(modelId)) return true;
+  return false;
+}

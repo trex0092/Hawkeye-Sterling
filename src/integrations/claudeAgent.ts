@@ -1,7 +1,7 @@
 import type { CaseReport } from '../reports/caseReport.js';
 import { SYSTEM_PROMPT } from '../policy/systemPrompt.js';
 import { fetchAnthropicStreamText } from './httpRetry.js';
-import { supportsAdaptiveThinking } from './modelCapabilities.js';
+import { supportsAdaptiveThinking, supportsEffort } from './modelCapabilities.js';
 
 export interface ClaudeAgentConfig {
   apiKey: string;
@@ -128,7 +128,10 @@ export async function generateNarrativeReport(
   const thinkingBlock    = (useThinking && supportsAdaptiveThinking(effectiveModel))
     ? { thinking: { type: 'adaptive', display: 'summarized' } }
     : {};
-  const outputConfigBlock = { output_config: { effort: 'xhigh' } };
+  // Effort is model-gated too — Haiku/Sonnet-4.5 tiers 400 on the parameter.
+  const outputConfigBlock = supportsEffort(effectiveModel)
+    ? { output_config: { effort: 'xhigh' } }
+    : {};
 
   const result = await fetchAnthropicStreamText(
     'https://api.anthropic.com/v1/messages',
