@@ -13,13 +13,16 @@ import {
 const ASANA_NOTES_LIMIT = 65_535;
 
 describe('module board narratives', () => {
-  it('provides a non-empty narrative for every one of the 82 module boards', () => {
+  it('provides a non-empty narrative for every one of the 81 module boards', () => {
     // 2026-06-11: Brain Intel, UBO Walker, Operator Console, and Data
     // Quality boards retired with their modules (88 → 84).
     // 2026-06-12: Business Risk (BRA) board retired with its module (84 → 83).
     // 2026-06-12: goAML Export board retired with its module (83 → 82) —
     // goAML is the FIU's own portal; filings prepared via the STR/SAR suite.
-    expect(MODULE_BOARDS.length).toBe(82);
+    // 2026-06-12: DPMSR board retired with its module (82 → 81) — the cash-
+    // threshold duty is unchanged; reports filed directly on the FIU goAML
+    // portal by the MLRO.
+    expect(MODULE_BOARDS.length).toBe(81);
     for (const b of MODULE_BOARDS) {
       const n = boardNarrative(b.num);
       expect(n.length, `board ${b.num} (${b.label}) has no narrative`).toBeGreaterThan(100);

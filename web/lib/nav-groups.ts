@@ -62,7 +62,6 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "FIU Reporting · goAML",
     items: [
       { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
-      { label: "💵 DPMSR", href: "/dpmsr", hint: "DPMS cash reporting ≥ AED 55,000 · CR134/2025 Art.3" },
     ],
   },
   {

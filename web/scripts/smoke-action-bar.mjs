@@ -12,7 +12,7 @@ const NAV = [
   "/ownership","/employees","/training","/approvals",
   "/screening","/transaction-monitor","/ongoing-monitor","/cases","/ewra","/sar-qa",
   "/supply-chain","/rmi","/responsible-sourcing","/oecd-ddg","/rmap",
-  "/lbma","/reg-change","/shipments","/eocn","/tfs-alerts","/cnmr","/pnmr","/dpmsr",
+  "/lbma","/reg-change","/shipments","/eocn","/tfs-alerts","/cnmr","/pnmr",
   "/moe-survey","/enforcement","/oversight","/fp-optimizer","/tm-rules","/audit-findings",
   "/dormant-accounts","/outsourcing-register","/coi-register","/voluntary-disclosure",
   "/eval-kpi",
@@ -30,7 +30,7 @@ const NAV = [
 const WIRED = new Set([
   "/pkyc","/client-portal","/ubo-declaration","/esg-risk","/vendor-dd","/cdd-review",
   "/employees","/training","/approvals","/screening","/ongoing-monitor","/lbma","/shipments",
-  "/cnmr","/tm-rules","/audit-findings","/dormant-accounts","/outsourcing-register","/dpmsr",
+  "/cnmr","/tm-rules","/audit-findings","/dormant-accounts","/outsourcing-register",
   "/coi-register","/voluntary-disclosure","/oversight","/policies","/investigation","/rmi",
   "/ai-incident-playbook","/shadow-ai","/vendor-ai-audit","/access-control",
 ]);
@@ -191,9 +191,8 @@ async function phaseB() {
     if (!filled) fail("/esg-risk", "+ADD did not pre-fill sample entity");
     await p2.close();
   }
-  // B4 — focus fallback on a form-centric page without onAdd. (/dpmsr moved
-  // to the WIRED set when the rail +ADD became its append-transaction action;
-  // /benford remains a plain lookup form with no add handler.)
+  // B4 — focus fallback on a form-centric page without onAdd. (/benford is
+  // a plain lookup form with no add handler.)
   {
     const p = await newPage();
     await open(p, "/benford");

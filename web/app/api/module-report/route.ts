@@ -106,7 +106,6 @@ const MODULE_LABELS: Record<string, string> = {
   approvals:                "Approvals",
   profile:                  "Profile",
   cnmr:                     "CNMR",
-  dpmsr:                    "DPMSR",
   "moe-survey":             "MoE Survey",
   "oecd-ddg":               "OECD DDG",
   "responsible-sourcing":   "Responsible Sourcing",
@@ -224,7 +223,6 @@ const PROJECT_BOARD: Record<string, string> = {
   approvals:                "09 · Compliance Ops — Daily & Weekly Tasks",
   profile:                  "09 · Compliance Ops — Daily & Weekly Tasks",
   cnmr:                     "09 · Compliance Ops — Daily & Weekly Tasks",
-  dpmsr:                    "09 · Compliance Ops — Daily & Weekly Tasks",
   "moe-survey":             "09 · Compliance Ops — Daily & Weekly Tasks",
   "oecd-ddg":               "09 · Compliance Ops — Daily & Weekly Tasks",
   "responsible-sourcing":   "09 · Compliance Ops — Daily & Weekly Tasks",
@@ -968,24 +966,6 @@ const MODULE_SUMMARIES: Record<string, string> = {
     "FILING DEADLINE: Late CNMR filings carry regulatory penalties and must be immediately disclosed to the MLRO and reported to the board. A root-cause analysis must be conducted for any late filing, and the findings reported to the board within 5 business days.\n\n" +
     "ESCALATION TRIGGERS: Any failure to identify and report a transaction above the threshold is a regulatory breach. Any discovered unreported transaction from a prior period must be treated as a late filing and disclosed to the regulator immediately.\n\n" +
     "REGULATORY BASIS: Federal Decree-Law No. (10) of 2025 Art.15 (reporting obligations), CBUAE Cash Transaction Reporting requirements, Federal Decree-Law No. 10 of 2025 Art.18 (audit trail for regulatory filings), Cabinet Decision No.74/2020.",
-
-  dpmsr:
-    "DESIGNATED PERSONS MONITORING & SANCTIONS REPORT (DPMSR) — COMPLIANCE REPORT\n\n" +
-    "DPMSR filing queue reviewed. All designated person alerts actioned and filed. Submission acknowledgements confirmed. Outstanding filings identified and escalated.\n\n" +
-    "REVIEW CHECKLIST:\n" +
-    "☐ All designated person alerts generated in the period reviewed and actioned\n" +
-    "☐ Filing thresholds met for each category of designated person (UN, OFAC, EU, domestic lists)\n" +
-    "☐ DPMSR submissions filed within the regulatory time window from identification\n" +
-    "☐ Submission acknowledgements from the competent authority received and retained\n" +
-    "☐ Rejected DPMSR filings corrected and resubmitted within 24 hours of rejection\n" +
-    "☐ Asset freeze instructions issued and documented where applicable\n" +
-    "☐ Account restriction actions confirmed and logged\n" +
-    "☐ Outstanding DPMSR filings older than the regulatory deadline escalated to the MLRO immediately\n" +
-    "☐ Filing records retained for 10 years\n" +
-    "☐ MLRO sign-off obtained before each DPMSR submission\n\n" +
-    "CRITICAL REQUIREMENT: DPMSR filings for confirmed designated persons (particularly UN Security Council designations) are time-critical. Delays beyond the prescribed regulatory window may constitute a criminal offence. Any backlog in DPMSR filings must be treated as a P1 incident.\n\n" +
-    "ESCALATION TRIGGERS: Any unactioned designated person alert older than 24 hours must be immediately escalated to the MLRO. Any confirmed designation where asset freeze has not been initiated must be treated as an emergency compliance incident.\n\n" +
-    "REGULATORY BASIS: Cabinet Decision No.74/2020 (TFS obligations), UN Security Council Resolutions (immediate asset freeze requirements), Federal Decree-Law No. (10) of 2025 Art.18 (designated person reporting), CBUAE reporting circulars.",
 
   "moe-survey":
     "MINISTRY OF ECONOMY AML/CFT SURVEY — COMPLIANCE REPORT\n\n" +

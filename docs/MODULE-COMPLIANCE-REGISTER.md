@@ -183,13 +183,11 @@
 - **Responsible:** MLRO.
 - **Evidence & retention:** Match adjudication record; **5 yrs**.
 
-### DPMSR
-- **Purpose:** DPMS cash-transaction reporting at/above AED 55,000 via goAML.
-- **MoE / UAE obligation:** **MoE Circular No.08/AML/2021** & CR 134/2025 Art.3 — DPMS report for any single or linked cash transaction ≥ AED 55,000, regardless of suspicion; fine for non-filing up to AED 200,000 (CR 71/2024).
-- **Control & enforcement:** Amount-triggered filing; MLRO approval before submission.
-- **Frequency / SLA:** Per qualifying transaction; file **≤24h** via goAML.
-- **Responsible:** MLRO.
-- **Evidence & retention:** DPMSR filing + approval; **5 yrs**.
+### DPMSR — RETIRED (2026-06-12)
+- **Status:** Module removed on operator instruction — goAML is the UAE FIU's own independent platform, and the operator runs the DPMS cash-threshold reporting duty on the FIU's platform directly rather than through an in-app module. The DPMSR module (page, `/api/dpmsr` and `/api/dpmsr-trigger` routes, and Asana board wiring) was decommissioned on 2026-06-12; the live Asana board was deleted by the operator.
+- **Control continuity:** The underlying obligation (**MoE Circular No.08/AML/2021** & CR 134/2025 Art.3 — DPMS report for any single or linked cash transaction ≥ AED 55,000, regardless of suspicion, filed via goAML **≤24h**; FATF R.20; fine for non-filing up to AED 200,000 per CR 71/2024) is unchanged and remains discharged: qualifying cash transactions are identified per the AML/CFT programme and the threshold reports are filed by the MLRO directly on the FIU goAML portal. Suspicion-based filings continue through the **STR/SAR Filing Suite** (`/sar-qa`), whose shared goAML XML machinery is retained in full.
+- **Responsible:** MLRO (unchanged).
+- **Evidence & retention:** goAML submission acknowledgement retained with the transaction record; **5 yrs**. Pre-retirement DPMSR records remain in the audit chain per the record-keeping baseline.
 
 ### MoE Survey
 - **Purpose:** Track completion of the mandatory MoE AML/CFT supervisory survey.
@@ -225,7 +223,7 @@
 
 ### goAML Export / Submission — RETIRED (2026-06-12)
 - **Status:** Module removed as redundant — goAML is the UAE FIU's own independent platform, not a control this system needs to duplicate. The standalone goAML Export module (page, API wrapper, and Asana board wiring) was decommissioned on 2026-06-12.
-- **Control continuity:** The underlying FIU reporting obligation (Cabinet 10/2019; FATF R.20; UAE FIU registration / Rentity ID) is unchanged and remains discharged: STR/SAR filings are prepared via the **STR/SAR Filing Suite** (`/sar-qa`, plus the GoamlExportModal in `/str-cases`), CNMR and DPMSR filings via their own modules, and the validated goAML XML is submitted on the FIU goAML portal directly. The shared goAML XML generation/validation machinery (`/api/goaml`, `/api/goaml-xml`, entity-ID validation, egress tipping-off gate) is retained in full by those modules.
+- **Control continuity:** The underlying FIU reporting obligation (Cabinet 10/2019; FATF R.20; UAE FIU registration / Rentity ID) is unchanged and remains discharged: STR/SAR filings are prepared via the **STR/SAR Filing Suite** (`/sar-qa`, plus the GoamlExportModal in `/str-cases`), CNMR filings via their own module (DPMSR retired 2026-06-12 — see its register entry), and the validated goAML XML is submitted on the FIU goAML portal directly. The shared goAML XML generation/validation machinery (`/api/goaml`, `/api/goaml-xml`, entity-ID validation, egress tipping-off gate) is retained in full by those modules.
 - **Responsible:** MLRO (unchanged).
 - **Evidence & retention:** Validated XML + FIU receipt retained with the filing case record; **5 yrs**. Pre-retirement export records remain in the audit chain per the record-keeping baseline.
 

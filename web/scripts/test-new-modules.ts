@@ -1,5 +1,8 @@
-// Smoke-test suite for the 8 UAE regulatory modules added in feat/4f38bcd.
+// Smoke-test suite for the UAE regulatory modules added in feat/4f38bcd.
 // Tests pure business logic without a running server.
+// (2026-06-12: the DPMSR threshold-evaluator section was removed with the
+// DPMSR module — threshold reports are filed directly on the FIU goAML
+// portal by the MLRO.)
 //
 // Run: cd web && npx tsx scripts/test-new-modules.ts
 
@@ -22,147 +25,6 @@ function check(label: string, fn: () => void | Promise<void>): void | Promise<vo
     failed++;
   }
 }
-
-// ─── Shared types (duplicated from route files to keep this script standalone) ─
-
-interface DpmsrTransaction {
-  txnId: string; amountAed: number;
-  channel: "cash" | "cash_courier" | "wire" | "card" | "crypto" | "other";
-  at: string; customerId?: string; customerName?: string; linkedGroupId?: string;
-}
-
-// ─── 1. DPMSR threshold evaluator ────────────────────────────────────────────
-// Extracted from web/app/api/dpmsr-trigger/route.ts — evaluateObligations()
-
-const THRESHOLD = 55_000;
-const LINK_WINDOW_DAYS = 3;
-
-function daysBetween(a: string, b: string) {
-  return Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
-}
-
-function evaluateObligations(txns: DpmsrTransaction[]) {
-  const cashTxns = txns.filter(t => t.channel === "cash" || t.channel === "cash_courier");
-  const results: { triggerType: string; totalAmountAed: number; transactionIds: string[] }[] = [];
-
-  for (const t of cashTxns) {
-    if (t.amountAed >= THRESHOLD) {
-      results.push({ triggerType: "single", totalAmountAed: t.amountAed, transactionIds: [t.txnId] });
-    }
-  }
-
-  const byCustomer = new Map<string, DpmsrTransaction[]>();
-  for (const t of cashTxns) {
-    if (!t.customerId) continue;
-    const arr = byCustomer.get(t.customerId);
-    if (arr) arr.push(t); else byCustomer.set(t.customerId, [t]);
-  }
-  for (const [, cts] of byCustomer) {
-    const sorted = [...cts].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-    for (let i = 0; i < sorted.length; i++) {
-      const anchor = sorted[i]!;
-      const window = [anchor];
-      let total = anchor.amountAed;
-      for (let j = i + 1; j < sorted.length; j++) {
-        const next = sorted[j]!;
-        if (daysBetween(anchor.at, next.at) <= LINK_WINDOW_DAYS) { window.push(next); total += next.amountAed; }
-      }
-      if (window.length >= 2 && total >= THRESHOLD) {
-        const txnIds = window.map(t => t.txnId);
-        if (!results.some(r => txnIds.some(id => r.transactionIds.includes(id)))) {
-          results.push({ triggerType: "linked", totalAmountAed: total, transactionIds: txnIds });
-        }
-        break;
-      }
-    }
-  }
-  return results;
-}
-
-console.log("\n[DPMSR — AED 55,000 threshold evaluator]");
-
-check("single cash txn ≥ AED 55k triggers obligation", () => {
-  const res = evaluateObligations([{ txnId: "t1", amountAed: 60_000, channel: "cash", at: "2026-01-10T10:00:00Z" }]);
-  assert.equal(res.length, 1);
-  assert.equal(res[0]!.triggerType, "single");
-  assert.equal(res[0]!.totalAmountAed, 60_000);
-});
-
-check("single cash txn below AED 55k → no obligation", () => {
-  const res = evaluateObligations([{ txnId: "t2", amountAed: 54_999, channel: "cash", at: "2026-01-10T10:00:00Z" }]);
-  assert.equal(res.length, 0);
-});
-
-check("exact AED 55,000 boundary triggers obligation", () => {
-  const res = evaluateObligations([{ txnId: "t3", amountAed: 55_000, channel: "cash", at: "2026-01-10T10:00:00Z" }]);
-  assert.equal(res.length, 1);
-});
-
-check("wire transfer ≥ AED 55k does NOT trigger (cash-only rule)", () => {
-  const res = evaluateObligations([{ txnId: "t4", amountAed: 100_000, channel: "wire", at: "2026-01-10T10:00:00Z" }]);
-  assert.equal(res.length, 0);
-});
-
-check("cash_courier channel also triggers obligation", () => {
-  const res = evaluateObligations([{ txnId: "t5", amountAed: 60_000, channel: "cash_courier", at: "2026-01-10T10:00:00Z" }]);
-  assert.equal(res.length, 1);
-});
-
-check("two linked cash txns ≥ AED 55k within 3-day window → linked obligation", () => {
-  const res = evaluateObligations([
-    { txnId: "l1", amountAed: 30_000, channel: "cash", at: "2026-01-10T10:00:00Z", customerId: "C1" },
-    { txnId: "l2", amountAed: 30_000, channel: "cash", at: "2026-01-11T10:00:00Z", customerId: "C1" },
-  ]);
-  assert.equal(res.length, 1);
-  assert.equal(res[0]!.triggerType, "linked");
-  assert.equal(res[0]!.totalAmountAed, 60_000);
-});
-
-check("linked txns outside 3-day window → no linked obligation", () => {
-  const res = evaluateObligations([
-    { txnId: "l3", amountAed: 30_000, channel: "cash", at: "2026-01-10T10:00:00Z", customerId: "C2" },
-    { txnId: "l4", amountAed: 30_000, channel: "cash", at: "2026-01-15T10:00:00Z", customerId: "C2" },
-  ]);
-  assert.equal(res.length, 0);
-});
-
-check("two customers each below threshold → no linked obligation across customers", () => {
-  const res = evaluateObligations([
-    { txnId: "l5", amountAed: 30_000, channel: "cash", at: "2026-01-10T10:00:00Z", customerId: "C3" },
-    { txnId: "l6", amountAed: 30_000, channel: "cash", at: "2026-01-10T10:00:00Z", customerId: "C4" },
-  ]);
-  assert.equal(res.length, 0);
-});
-
-check("structuring: 3 sub-threshold txns same customer within window → linked", () => {
-  const res = evaluateObligations([
-    { txnId: "s1", amountAed: 20_000, channel: "cash", at: "2026-01-10T09:00:00Z", customerId: "C5" },
-    { txnId: "s2", amountAed: 20_000, channel: "cash", at: "2026-01-11T09:00:00Z", customerId: "C5" },
-    { txnId: "s3", amountAed: 20_000, channel: "cash", at: "2026-01-12T09:00:00Z", customerId: "C5" },
-  ]);
-  assert.equal(res.length, 1);
-  assert.equal(res[0]!.triggerType, "linked");
-  assert.equal(res[0]!.totalAmountAed, 60_000);
-});
-
-check("txn without customerId is excluded from linked aggregation", () => {
-  const res = evaluateObligations([
-    { txnId: "u1", amountAed: 30_000, channel: "cash", at: "2026-01-10T10:00:00Z" },
-    { txnId: "u2", amountAed: 30_000, channel: "cash", at: "2026-01-11T10:00:00Z" },
-  ]);
-  assert.equal(res.length, 0);
-});
-
-check("single large + linked combination — both obligations emitted", () => {
-  const res = evaluateObligations([
-    { txnId: "m1", amountAed: 70_000, channel: "cash", at: "2026-01-10T10:00:00Z", customerId: "C6" },
-    { txnId: "m2", amountAed: 30_000, channel: "cash", at: "2026-01-10T11:00:00Z", customerId: "C7" },
-    { txnId: "m3", amountAed: 30_000, channel: "cash", at: "2026-01-11T11:00:00Z", customerId: "C7" },
-  ]);
-  assert.equal(res.length, 2);
-  assert.ok(res.some(r => r.triggerType === "single" && r.totalAmountAed === 70_000));
-  assert.ok(res.some(r => r.triggerType === "linked" && r.totalAmountAed === 60_000));
-});
 
 // ─── 2. CNMR business-days deadline calculator ───────────────────────────────
 // Extracted from web/app/api/cnmr/route.ts — addBusinessDays()

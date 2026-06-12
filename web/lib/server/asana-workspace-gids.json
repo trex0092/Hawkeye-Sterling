@@ -84,10 +84,6 @@
    "attestationTaskGid": "1215595441030195",
    "projectGid": "1215582428752148"
   },
-  "dpmsr": {
-   "attestationTaskGid": "1215587109849702",
-   "projectGid": "1215593489012422"
-  },
   "employees": {
    "attestationTaskGid": "1215593490167838",
    "projectGid": "1215590846055464"
@@ -353,7 +349,6 @@
    "crypto-risk": "1215587115562709",
    "domain-intel": "1215590848198015",
    "dormant-accounts": "1215595443459459",
-   "dpmsr": "1215590848656484",
    "employees": "1215603863844727",
    "enforcement": "1215603863844713",
    "entity-graph": "1215593492684498",

@@ -1304,47 +1304,6 @@ const REPORTS: Record<string, ReportData> = {
       "Asset movement before freezing",
     ],
   },
-  "/dpmsr": {
-    title: "DPMSR",
-    summary: [
-      "The DPMSR module manages Dealers in Precious Metals and Stones cash-reporting obligations, capturing and reporting qualifying cash transactions at or above the AED 55,000 threshold under Cabinet Resolution 134/2025 Art.3. It is the specialised reporting control for the DPMS sector's elevated cash-laundering risk.",
-      "Cash-intensive precious-metals dealing is a recognised laundering channel; mandatory reporting of large cash dealings is a key mitigant. The module identifies qualifying transactions, assembles the report, and files it within the mandated timeframe.",
-      "Cash-intensive precious-metals dealing is a recognised laundering channel, and mandatory reporting of large cash dealings under Cabinet Resolution 134/2025 is a key mitigant that the module operationalises. It identifies qualifying transactions at or above the AED 55,000 threshold, captures the required party and transaction detail, and files within the mandated period. Supervisors test for structuring designed to stay below the threshold and for unreported qualifying dealings. By applying CDD to qualifying transactions and recording each report in the audit chain, the institution can demonstrate that its DPMS cash exposure was captured and reported, and that attempts to fragment dealings beneath the reporting line were detected rather than facilitated.",
-    ],
-    regulatory: [
-      "UAE Cabinet Resolution No.134/2025 Art.3 — DPMS cash reporting",
-      "Federal Decree-Law No. (10) of 2025 — DNFBP obligations",
-      "FATF Recommendation 22 — DNFBP customer due diligence",
-      "FATF Recommendation 23 — DNFBP reporting",
-      "CBUAE / MOE AML/CFT Standards for DPMS",
-    ],
-    requirements: [
-      "Identify cash transactions at or above AED 55,000",
-      "Capture required transaction and party detail",
-      "File the DPMS cash report within the mandated period",
-      "Apply CDD to qualifying transactions",
-      "Retain reports for the statutory period",
-      "Detect structuring designed to stay below the AED 55,000 threshold",
-    ],
-    controls: [
-      "Threshold-based cash-transaction detection",
-      "DPMSR assembly and validation",
-      "Filing-deadline tracking",
-      "Audit-chain record of submissions",
-      "Threshold-based qualifying-transaction detection",
-    ],
-    reporting: [
-      "DPMSR submission to the competent authority",
-      "STR/SAR referral where suspicion arises",
-      "Cash-reporting metrics to governance",
-    ],
-    risks: [
-      "Structuring cash below the AED 55,000 threshold",
-      "Unreported qualifying cash transactions",
-      "Incomplete party identification",
-      "Late filing past the mandated window",
-    ],
-  },
   "/moe-survey": {
     title: "MoE AML/CFT Survey",
     summary: [

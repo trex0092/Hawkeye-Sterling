@@ -308,7 +308,6 @@ const G2: Array<[string, string, string]> = [
   ["tfs-alerts", "🚨", "Sanctions Alerts & Name Match"],
   ["cnmr", "📝", "CNMR"],
   ["pnmr", "📋", "PNMR Queue"],
-  ["dpmsr", "💵", "DPMSR"],
   ["moe-survey", "📋", "MoE Survey"],
   ["enforcement", "👮", "Enforcement"],
   ["oversight", "⚖️", "Oversight"],
