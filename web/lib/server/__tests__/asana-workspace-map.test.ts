@@ -13,10 +13,11 @@ import {
 const ASANA_NOTES_LIMIT = 65_535;
 
 describe('module board narratives', () => {
-  it('provides a non-empty narrative for every one of the 84 module boards', () => {
+  it('provides a non-empty narrative for every one of the 83 module boards', () => {
     // 2026-06-11: Brain Intel, UBO Walker, Operator Console, and Data
     // Quality boards retired with their modules (88 → 84).
-    expect(MODULE_BOARDS.length).toBe(84);
+    // 2026-06-12: Business Risk (BRA) board retired with its module (84 → 83).
+    expect(MODULE_BOARDS.length).toBe(83);
     for (const b of MODULE_BOARDS) {
       const n = boardNarrative(b.num);
       expect(n.length, `board ${b.num} (${b.label}) has no narrative`).toBeGreaterThan(100);

@@ -40,10 +40,6 @@
    "attestationTaskGid": "1215595443278222",
    "projectGid": "1215595443214268"
   },
-  "bra": {
-   "attestationTaskGid": "1215595440812530",
-   "projectGid": "1215582428708762"
-  },
   "cases": {
    "attestationTaskGid": "1215595442219182",
    "projectGid": "1215590846964116"
@@ -350,7 +346,6 @@
    "audit-trail": "1215593492631138",
    "benford": "1215582431285317",
    "board-dashboard": "1215595443935620",
-   "bra": "1215595443440162",
    "cases": "1215593492743242",
    "cdd-review": "1215603863813662",
    "client-portal": "1215582430962491",

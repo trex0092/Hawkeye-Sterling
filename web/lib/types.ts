@@ -488,30 +488,6 @@ export interface TravelRulePayload {
   legalEntityRegNumber?: string;
 }
 
-/** Business Risk Assessment record (MOE Circular 6/2025 — 90-day mandatory review) */
-export interface BraRecord {
-  id: string;
-  tenantId: string;
-  status: "draft" | "active" | "archived";
-  inherentRisk: number;
-  controlsEffectiveness: number;
-  residualRisk: number;
-  customerRisk: number;
-  productRisk: number;
-  channelRisk: number;
-  geographyRisk: number;
-  isDnfbp: boolean;
-  aedThresholdApplies: boolean;
-  activityScope: string;
-  approvedBy?: string;
-  approvedAt?: string;
-  nextReviewDate: string;
-  createdAt: string;
-  updatedAt: string;
-  notes?: string;
-  isOverdueReview?: boolean;
-}
-
 /** RMI RMAP smelter/refiner conformance record */
 export interface RmapSmelter {
   cid: string;
