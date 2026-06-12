@@ -24,7 +24,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Risk & AML Ops",
     items: [
       { label: "🔎 Screening", href: "/screening", hint: "Sanctions, PEP & adverse-media screening" },
-      { label: "💸 Transaction Monitor", href: "/transaction-monitor", hint: "Real-time transaction monitoring & alerting · STR/DPMSR triggers" },
+      { label: "💸 Transaction Monitor", href: "/transaction-monitor", hint: "Real-time transaction monitoring & alerting" },
       { label: "👁️ Customer/Supplier Monitoring", href: "/ongoing-monitor", hint: "3×/day re-screening of customers, suppliers & UBOs · sanctions, PEP & adverse media" },
       { label: "🗂️ Cases", href: "/cases", hint: "Case management — investigations, dispositions & audit trail" },
       { label: "📊 EWRA / BWRA", href: "/ewra", hint: "Enterprise-wide risk assessment + AI board report" },
@@ -53,16 +53,16 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Sanctions & Name Match",
     items: [
       { label: "🇦🇪 EOCN", href: "/eocn", hint: "UAE targeted financial sanctions + NAS/ARS registration + control list" },
-      { label: "🚨 Sanctions Alerts & Name Match", href: "/tfs-alerts", hint: "EOCN subscription alerts · Gmail monitor · Asana compliance tasks" },
-      { label: "📋 PNMR Queue", href: "/pnmr", hint: "Partial Name Match Report queue · EOCN · file while disambiguating" },
-      { label: "📝 CNMR", href: "/cnmr", hint: "Confirmed Name Match Report · freeze without delay, file via goAML within 5 business days" },
+      { label: "🚨 Sanctions Alerts & Name Match", href: "/tfs-alerts", hint: "EOCN subscription alerts · CNMR filing · Gmail monitor · Asana compliance tasks" },
+      { label: "📋 PNMR Queue", href: "/pnmr", hint: "Positive Name Match Report queue · EOCN" },
+      { label: "📝 CNMR", href: "/cnmr", hint: "Consolidated Name Match Report filing · EOCN" },
     ],
   },
   {
     title: "FIU Reporting · goAML",
     items: [
-      { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Suspicion-based reports — four-eyes quality review + goAML XML export wizard" },
-      { label: "💵 DPMSR", href: "/dpmsr", hint: "Amount-based DPMS cash reporting ≥ AED 55,000 · CR134/2025 Art.3 · no suspicion required" },
+      { label: "📋 STR/SAR Filing Suite", href: "/sar-qa", hint: "Four-eyes quality review + goAML XML export wizard" },
+      { label: "💵 DPMSR", href: "/dpmsr", hint: "DPMS cash reporting ≥ AED 55,000 · CR134/2025 Art.3" },
     ],
   },
   {
