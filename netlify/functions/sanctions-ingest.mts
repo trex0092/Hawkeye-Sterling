@@ -108,32 +108,37 @@ const FEEDS: FeedSpec[] = [
     format: "json",
   },
   {
-    // Canada OSFI / SEMA consolidated sanctions list (CSV format).
-    // Published by Global Affairs Canada — covers UN and autonomous Canadian sanctions.
-    // Override via FEED_CA_OSFI if OSFI/GA Canada migrates this URL.
-    // If OSFI's own consolidated XML becomes available at a stable URL, set
-    // FEED_CA_OSFI to that XML URL and update the format to "xml".
+    // Canada — GAC Consolidated Canadian Autonomous Sanctions List.
+    // FORMAT CHANGE 2026-06: the legacy CSV (…/assets/csv/sanctions/sema_dnu.csv)
+    // was retired and now returns HTTP 404. GAC publishes XML instead —
+    // parsed by normaliseXml's ca_osfi <record> branch.
+    // Override via FEED_CA_OSFI if GAC migrates again.
     listId: "ca_osfi",
-    url: process.env["FEED_CA_OSFI"] ?? "https://www.international.gc.ca/world-monde/assets/csv/sanctions/sema_dnu.csv",
-    format: "csv",
+    url: process.env["FEED_CA_OSFI"] || "https://www.international.gc.ca/world-monde/assets/office_docs/international_relations-relations_internationales/sanctions/sema-lmes.xml",
+    format: "xml",
   },
   {
-    // Australia DFAT Consolidated Sanctions List (CSV format).
-    // Published by DFAT at a stable URL. Override via FEED_AU_DFAT.
-    // A second XLSX-format feed exists at regulation8_consolidated.xlsx —
-    // that format is handled by src/ingestion/sources/au-dfat.ts (requires exceljs).
+    // Australia DFAT Consolidated Sanctions List.
+    // DFAT's Improved Consolidated List (Nov 2025) retired both the
+    // regulation8_consolidated.xlsx and the CSV variant this scaffold
+    // fetched (HTTP 404). The current publication is XLSX-only, which this
+    // regex/CSV scaffold cannot parse — XLSX ingestion is handled by
+    // src/ingestion/sources/au-dfat.ts (exceljs) via the refresh-lists cron.
+    // Skipped while the URL is empty; set FEED_AU_DFAT_CSV if DFAT ever
+    // republishes a machine-readable CSV. (Deliberately NOT FEED_AU_DFAT —
+    // that env var points the XLSX adapter at its spreadsheet URL.)
     listId: "au_dfat",
-    url: process.env["FEED_AU_DFAT"] ?? "https://www.dfat.gov.au/sites/default/files/australian-sanctions-consolidated-list.csv",
+    url: process.env["FEED_AU_DFAT_CSV"] ?? "",
     format: "csv",
   },
   {
-    // Switzerland SECO consolidated sanctions XML.
-    // The SESAM portal URL (previously default) now returns an XHTML portal page.
-    // Set FEED_CH_SECO to the direct XML download URL from:
-    //   https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml
-    // or use the SECO data delivery service. Skipped when URL is empty.
+    // Switzerland SECO consolidated sanctions XML (audit H-03).
+    // The bare SESAM page URL serves an XHTML portal page; the XML requires
+    // the action parameter — same endpoint OpenSanctions crawls. Parsed by
+    // normaliseXml's ch_seco <target> branch, which throws on portal pages.
+    // Override via FEED_CH_SECO; set FEED_CH_SECO="" to disable.
     listId: "ch_seco",
-    url: process.env["FEED_CH_SECO"] ?? "",
+    url: process.env["FEED_CH_SECO"] ?? "https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml?lang=en&action=downloadXmlGesamtlisteAction",
     format: "xml",
   },
 ];
@@ -285,6 +290,81 @@ function normaliseXml(listId: string, raw: string): NormalisedListEntry[] {
       }
       const programs = xmlTags(block, "regulation");
       out.push({ listId, sourceRef: ref || name, primaryName: name, entityType: "individual", programs, aliases, identifiers: [] });
+    }
+    return out;
+  }
+
+  // Canada GAC consolidated format (sema-lmes.xml <record> schema) ─────────────
+  if (listId === "ca_osfi") {
+    if (/<!DOCTYPE\s+html|<html[\s>]/i.test(raw.slice(0, 500))) {
+      throw new Error("ca_osfi: response is an HTML page, not the SEMA consolidated XML — check the feed URL");
+    }
+    for (const m of raw.matchAll(/<record(?:\s[^>]*)?>([\s\S]*?)<\/record>/gi)) {
+      const block = m[1] ?? "";
+      const entityOrShip = xmlTag(block, "EntityOrShip");
+      const given = xmlTag(block, "GivenName");
+      const last = xmlTag(block, "LastName");
+      const imo = xmlTag(block, "ShipIMONumber");
+      const item = xmlTag(block, "Item");
+      const schedule = xmlTag(block, "Schedule");
+      const aliasStr = xmlTag(block, "Aliases");
+      const dob = xmlTag(block, "DateOfBirthOrShipBuildDate");
+      const isVessel = Boolean(imo);
+      const isIndividual = !isVessel && Boolean(given || last || dob);
+      const name = isIndividual
+        ? [given, last].filter(Boolean).join(" ").trim() || entityOrShip
+        : entityOrShip || [given, last].filter(Boolean).join(" ").trim();
+      if (!name) continue;
+      const identifiers: NormalisedListEntry["identifiers"] = [];
+      if (imo) identifiers.push({ kind: "imo", number: imo });
+      out.push({
+        listId,
+        sourceRef: item || name,
+        primaryName: name,
+        entityType: isVessel ? "vessel" : isIndividual ? "individual" : "entity",
+        programs: schedule ? [schedule] : [],
+        aliases: aliasStr ? aliasStr.split(/[;|]/).map((s) => s.trim()).filter(Boolean) : [],
+        identifiers,
+        publishedAt: now,
+      });
+    }
+    if (out.length === 0) {
+      throw new Error("ca_osfi: parsed 0 <record> entries — the GAC XML schema or URL may have changed");
+    }
+    return out;
+  }
+
+  // Switzerland SECO format (SESAM <target> schema, audit H-03) ────────────────
+  if (listId === "ch_seco") {
+    if (/<!DOCTYPE\s+html|<html[\s>]/i.test(raw.slice(0, 500))) {
+      throw new Error("ch_seco: response is the SESAM XHTML portal page, not the sanctions XML (H-03) — the URL needs action=downloadXmlGesamtlisteAction");
+    }
+    for (const m of raw.matchAll(/<(?:target|sanction-target)[^>]*>([\s\S]*?)<\/(?:target|sanction-target)>/g)) {
+      const opening = (m[0] ?? "").slice(0, (m[0] ?? "").indexOf(">") + 1);
+      const block = m[1] ?? "";
+      const ssid = xmlAttr(opening, "ssid") || xmlTag(block, "ssid");
+      const names = xmlTags(block, "name").map((nb) => {
+        const whole = xmlTag(nb, "whole-name");
+        if (whole) return whole;
+        return [xmlTag(nb, "first-name"), xmlTag(nb, "family-name") || xmlTag(nb, "last-name")]
+          .filter(Boolean).join(" ").trim();
+      }).filter(Boolean);
+      const primaryName = names[0];
+      if (!primaryName) continue;
+      const isPerson = /<individual>|<person>|date-of-birth/i.test(block);
+      out.push({
+        listId,
+        sourceRef: ssid || primaryName,
+        primaryName,
+        entityType: isPerson ? "individual" : "entity",
+        programs: xmlTags(block, "sanctions-program-set"),
+        aliases: names.slice(1),
+        identifiers: [],
+        publishedAt: now,
+      });
+    }
+    if (out.length === 0) {
+      throw new Error("ch_seco: parsed 0 <target> entries — refusing to produce an empty snapshot (H-03 guard)");
     }
     return out;
   }

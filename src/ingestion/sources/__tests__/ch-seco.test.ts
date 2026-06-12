@@ -72,6 +72,19 @@ async function getAdapterNoUrl() {
   return { adapter: mod.chSecoAdapter, mockFetchText: vi.mocked(fetchUtil.fetchText) };
 }
 
+// FEED_CH_SECO="" is the explicit kill switch — adapter dormant.
+async function getAdapterEmptyUrl() {
+  vi.resetModules();
+  vi.doMock('../../fetch-util.js', () => ({
+    fetchText: vi.fn(),
+    sha256Hex: vi.fn(async (_s: string) => 'aabbccdd'),
+  }));
+  process.env['FEED_CH_SECO'] = '';
+  const mod = await import('../ch-seco.js');
+  const fetchUtil = await import('../../fetch-util.js');
+  return { adapter: mod.chSecoAdapter, mockFetchText: vi.mocked(fetchUtil.fetchText) };
+}
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('chSecoAdapter — metadata', () => {
@@ -86,14 +99,29 @@ describe('chSecoAdapter — metadata', () => {
     expect(adapter.displayName).toBe('Switzerland SECO Sanctions');
   });
 
-  it('isEnabled returns false when FEED_CH_SECO is not set', async () => {
+  it('isEnabled returns true when FEED_CH_SECO is not set (built-in SESAM default URL)', async () => {
     const { adapter } = await getAdapterNoUrl();
+    expect(adapter.isEnabled!()).toBe(true);
+  });
+
+  it('isEnabled returns false when FEED_CH_SECO is explicitly empty (kill switch)', async () => {
+    const { adapter } = await getAdapterEmptyUrl();
     expect(adapter.isEnabled!()).toBe(false);
   });
 
   it('isEnabled returns true when FEED_CH_SECO is set', async () => {
     const { adapter } = await getAdapter('https://example.com/seco.xml');
     expect(adapter.isEnabled!()).toBe(true);
+  });
+
+  it('fetches the SESAM download-action URL by default (H-03: bare portal URL serves XHTML)', async () => {
+    const { adapter, mockFetchText } = await getAdapterNoUrl();
+    mockFetchText.mockResolvedValue(makeXml([makeTarget({ ssid: 'T-DEF', wholeName: 'Default Url Person' })]));
+    await adapter.fetch();
+    expect(mockFetchText).toHaveBeenCalledWith(
+      expect.stringContaining('action=downloadXmlGesamtlisteAction'),
+      expect.anything(),
+    );
   });
 });
 
@@ -286,9 +314,9 @@ describe('chSecoAdapter.fetch — error branches', () => {
     vi.resetModules();
   });
 
-  it('throws when FEED_CH_SECO is not set (SOURCE_URL empty)', async () => {
-    const { adapter } = await getAdapterNoUrl();
-    await expect(adapter.fetch()).rejects.toThrow('[ch_seco] FEED_CH_SECO is not set');
+  it('throws when FEED_CH_SECO is explicitly empty (SOURCE_URL empty)', async () => {
+    const { adapter } = await getAdapterEmptyUrl();
+    await expect(adapter.fetch()).rejects.toThrow('[ch_seco] FEED_CH_SECO is set to an empty string');
   });
 
   it('throws when response looks like XHTML portal page', async () => {

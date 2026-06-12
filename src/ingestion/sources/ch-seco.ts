@@ -9,32 +9,38 @@
 // regex-based parser — minor schema drift in any single field does not
 // kill the whole adapter.
 //
-// Override via FEED_CH_SECO env var.
+// Override via FEED_CH_SECO env var. Set FEED_CH_SECO="" to disable.
 //
-// IMPORTANT — URL MUST BE SET VIA FEED_CH_SECO:
-// The previously hardcoded SESAM URL now returns an XHTML portal page
-// instead of the XML list (audit flag H-03). Set FEED_CH_SECO to the
-// direct XML download URL from the SESAM portal:
-//   https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml
-// Contact SECO or use OpenSanctions data delivery for a stable API endpoint.
+// AUDIT H-03 ROOT CAUSE + FIX (2026-06): the bare SESAM page URL
+// (…/downloadXmlGesamtliste.xhtml) serves the faceted-search XHTML portal,
+// not the list — that page is what previously got ingested as a 0-entity
+// blob. The actual XML requires the action query parameter:
+//   …/downloadXmlGesamtliste.xhtml?lang=en&action=downloadXmlGesamtlisteAction
+// (same endpoint the OpenSanctions ch_seco_sanctions crawler uses). The
+// XHTML guard below stays as the fail-closed backstop: if SESAM ever
+// regresses to serving the portal page again, the adapter throws instead
+// of writing an empty dataset.
 
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { fetchText, sha256Hex } from '../fetch-util.js';
 
-const SOURCE_URL = process.env['FEED_CH_SECO'] ?? '';
+const DEFAULT_URL =
+  'https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml?lang=en&action=downloadXmlGesamtlisteAction';
+
+// `??` (not `||`): an explicitly empty FEED_CH_SECO disables the adapter,
+// while an unset env falls through to the working default.
+const SOURCE_URL = process.env['FEED_CH_SECO'] ?? DEFAULT_URL;
 
 export const chSecoAdapter: SourceAdapter = {
   id: 'ch_seco',
   displayName: 'Switzerland SECO Sanctions',
-  sourceUrl: SOURCE_URL || 'https://www.sesam.search.admin.ch/sesam-search-web/pages/downloadXmlGesamtliste.xhtml',
-  // Require FEED_CH_SECO to be explicitly set — the old default SESAM URL
-  // returns XHTML (audit H-03). An empty URL means the adapter is dormant.
-  isEnabled: () => Boolean(process.env['FEED_CH_SECO']),
+  sourceUrl: SOURCE_URL || DEFAULT_URL,
+  isEnabled: () => Boolean(process.env['FEED_CH_SECO'] ?? DEFAULT_URL),
   async fetch() {
     if (!SOURCE_URL) {
       throw new Error(
-        '[ch_seco] FEED_CH_SECO is not set. ' +
-        'Set it to the direct XML download URL from the SECO/SESAM portal. ' +
+        '[ch_seco] FEED_CH_SECO is set to an empty string (adapter disabled). ' +
+        'Unset it to use the default SESAM XML URL, or set it to a direct XML download URL. ' +
         'See src/ingestion/sources/ch-seco.ts for details.',
       );
     }

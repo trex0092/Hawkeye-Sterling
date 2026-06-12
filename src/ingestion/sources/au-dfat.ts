@@ -5,7 +5,14 @@
 // exceljs pattern as the UAE EOCN adapter — install `exceljs` to
 // activate.
 //
-// Schema (post-2022 DFAT format):
+// URL CHANGE (2026-06, audit follow-up): DFAT's "Improved Consolidated
+// List" (launched Nov 2025) retired regulation8_consolidated.xlsx (now
+// HTTP 404 — the cause of au_dfat "missing from blob storage"). Current
+// file, also crawled by OpenSanctions au_dfat_sanctions:
+//   https://www.dfat.gov.au/sites/default/files/Australian_Sanctions_Consolidated_List.xlsx
+//
+// Schema (post-2022 DFAT format; the Nov-2025 revision keeps these
+// columns and is absorbed by detectColumns' fuzzy header matching):
 //   Name of Listed Item | Name Type | Date of Birth | Place of Birth |
 //   Citizenship | Address | Listing Information | Control Date |
 //   Reference (UN Ref. No. or DFAT Ref) | Committees | Listing Type
@@ -15,8 +22,9 @@
 import { type SourceAdapter, type NormalisedEntity, type EntityType, mkListing } from '../types.js';
 import { sha256Hex, BROWSER_UA, ingestionDispatcher } from '../fetch-util.js';
 
+// `||` (not `??`): an empty FEED_AU_DFAT in a copied .env must not blank the URL.
 const SOURCE_URL = process.env['FEED_AU_DFAT']
-  ?? 'https://www.dfat.gov.au/sites/default/files/regulation8_consolidated.xlsx';
+  || 'https://www.dfat.gov.au/sites/default/files/Australian_Sanctions_Consolidated_List.xlsx';
 const FETCH_TIMEOUT_MS = 20_000;
 
 interface ExcelJsCellValue {
