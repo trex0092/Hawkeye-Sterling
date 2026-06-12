@@ -8,7 +8,7 @@ import type {
   QuickScreenResult,
   QuickScreenSubject,
 } from "@/lib/api/quickScreen.types";
-import { loadCandidatesWithHealth, missingCoreSanctionsLists } from "@/lib/server/candidates-loader";
+import { loadCandidatesWithHealth, coreSanctionsCoverageGaps } from "@/lib/server/candidates-loader";
 import { classifyAdverseKeywords } from "@/lib/data/adverse-keywords";
 
 const _BATCH_CONCURRENCY = 5; // max concurrent rows when using external validators
@@ -189,7 +189,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   // would mark sanctioned rows CLEAR across the whole file (operator policy
   // 2026-06-11: never a verdict against partial coverage).
   const { candidates: CANDIDATES, health: corpusHealth } = await loadCandidatesWithHealth();
-  const missingCore = missingCoreSanctionsLists(new Set(CANDIDATES.map((c) => c.listId)));
+  const missingCore = coreSanctionsCoverageGaps(CANDIDATES);
   if (missingCore.length > 0) {
     return NextResponse.json(
       {

@@ -367,10 +367,39 @@ export function getCandidateLoadHealth(): CandidateLoadHealth | null {
 // separate gap); requiring them would brick screening over a known config item.
 export const CORE_SANCTIONS_LISTS = ["ofac_sdn", "un_consolidated", "eu_fsf", "uk_ofsi"] as const;
 
+// Minimum candidate counts per core list for the corpus to count as REAL
+// coverage. List-ID presence alone is not enough: the bundled static seed
+// includes a token entry per regime, which let a 65-entry seed pass the
+// coverage check during a Blobs outage and produce verdicts against 0.2% of
+// the real data (live smoke 2026-06-12). Floors sit far below the live counts
+// (OFAC SDN ~19k, EU ~6k, UK ~5k, UN ~1k) so routine list shrinkage never
+// trips them, while any seed/partial corpus does.
+export const CORE_LIST_MINIMUMS: Record<(typeof CORE_SANCTIONS_LISTS)[number], number> = {
+  ofac_sdn: 1_000,
+  un_consolidated: 200,
+  eu_fsf: 500,
+  uk_ofsi: 500,
+};
+
 /** Returns the core sanctions lists absent from the loaded corpus (empty = full coverage). */
 export function missingCoreSanctionsLists(loadedListIds: Iterable<string>): string[] {
   const set = loadedListIds instanceof Set ? loadedListIds : new Set(loadedListIds);
   return CORE_SANCTIONS_LISTS.filter((id) => !set.has(id));
+}
+
+/**
+ * Count-aware coverage check: returns the core lists whose loaded candidate
+ * count is below the regime's minimum (empty = full coverage). Callers pass
+ * the full candidate array; counting is O(n) over listId.
+ */
+export function coreSanctionsCoverageGaps(
+  candidates: ReadonlyArray<{ listId: string }>,
+): string[] {
+  const counts = new Map<string, number>();
+  for (const c of candidates) {
+    counts.set(c.listId, (counts.get(c.listId) ?? 0) + 1);
+  }
+  return CORE_SANCTIONS_LISTS.filter((id) => (counts.get(id) ?? 0) < CORE_LIST_MINIMUMS[id]);
 }
 
 async function _doLoad(): Promise<{ candidates: QuickScreenCandidate[]; health: CandidateLoadHealth }> {
