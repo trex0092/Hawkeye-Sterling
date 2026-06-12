@@ -1,0 +1,2 @@
+Redeploy trigger — bump this timestamp to force a fresh Netlify build/Lambda fleet.
+Last trigger: 2026-06-12T04:30Z (egress brownout on function instances; fresh hosts requested)
