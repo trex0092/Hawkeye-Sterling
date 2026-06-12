@@ -119,7 +119,9 @@ const ADAPTERS: readonly ListAdapter[] = [
   // run against a CFS subscription with sanctions/World-Check entitlements.
   // Treated as additional independently-reported adapters so operators see
   // exactly which regimes have LSEG backfill in addition to (or in lieu
-  // of) the primary cron feeds.
+  // of) the primary cron feeds. envVar stays null: their "configured" state
+  // comes from lsegCfsImported() (CFS index manifest presence), so they sit
+  // at "unconfigured"/ok — not "missing"/critical — until the import runs.
   { listId: "lseg_un_consolidated", displayName: "UN Consolidated (LSEG supplement)",          envVar: null         },
   { listId: "lseg_ofac_sdn",        displayName: "OFAC SDN (LSEG supplement)",                envVar: null         },
   { listId: "lseg_ofac_cons",       displayName: "OFAC Consolidated Non-SDN (LSEG supplement)", envVar: null        },
@@ -158,7 +160,7 @@ interface BlobMod {
   }) => BlobStore;
 }
 
-async function loadStore(): Promise<BlobStore | null> {
+async function loadStore(name = "hawkeye-lists"): Promise<BlobStore | null> {
   let mod: BlobMod;
   try {
     mod = (await import("@netlify/blobs")) as unknown as BlobMod;
@@ -177,12 +179,30 @@ async function loadStore(): Promise<BlobStore | null> {
     consistency?: string;
   } =
     siteID && token
-      ? { name: "hawkeye-lists", siteID, token, consistency: "strong" }
-      : { name: "hawkeye-lists" };
+      ? { name, siteID, token, consistency: "strong" }
+      : { name };
   try {
     return mod.getStore(opts);
   } catch {
     return null;
+  }
+}
+
+// LSEG CFS supplements are populated only by a manual POST /api/admin/import-cfs
+// run, which writes the hawkeye-lseg-pep-index manifest as its final step.
+// Until that import has happened the lseg_* blobs are intentionally absent —
+// they must report "unconfigured" (informational, no SLA alert), mirroring how
+// jp_mof reports before FEED_JP_MOF opts in. Without this check the 12
+// supplements show "missing from blob storage" at alertLevel critical and
+// permanently drown the genuine feed alerts.
+async function lsegCfsImported(): Promise<boolean> {
+  const store = await loadStore("hawkeye-lseg-pep-index");
+  if (!store) return false;
+  try {
+    const manifest = await store.get("manifest.json", { type: "json" });
+    return manifest !== null && manifest !== undefined;
+  } catch {
+    return false;
   }
 }
 
@@ -225,11 +245,17 @@ async function inspectList(
   store: BlobStore | null,
   adapter: ListAdapter,
   staleHours: number,
+  lsegImported: boolean,
 ): Promise<ListReport> {
   // URL-hardcoded adapters are always considered configured.
   // Env-driven adapters report based on env var presence.
-  const configured =
-    adapter.envVar === null ? true : Boolean(process.env[adapter.envVar]);
+  // LSEG supplements are configured once import-cfs has built the CFS index.
+  const configured = adapter.listId.startsWith("lseg_")
+    ? lsegImported
+    : adapter.envVar === null ? true : Boolean(process.env[adapter.envVar]);
+  const unconfiguredReason = adapter.listId.startsWith("lseg_")
+    ? "LSEG supplement not imported — run POST /api/admin/import-cfs once lseg-cfs-poll has downloaded CFS bulk files."
+    : "List is not configured.";
   const blobKey = snapshotKey(adapter.listId);
   const sla = getSla(adapter.listId);
 
@@ -247,7 +273,7 @@ async function inspectList(
       status: configured ? "missing" : "unconfigured",
       sla: { warningHours: sla.warningHours, criticalHours: sla.criticalHours, ...(sla.minEntities !== undefined ? { minEntities: sla.minEntities } : {}) },
       alertLevel: configured ? "critical" : "ok",
-      alertReason: configured ? "List is missing from blob storage — no snapshot available for screening." : "List is not configured.",
+      alertReason: configured ? "List is missing from blob storage — no snapshot available for screening." : unconfiguredReason,
     };
   }
 
@@ -291,7 +317,7 @@ async function inspectList(
   // global staleHours override). The global staleHours controls the
   // legacy `status` field; alertLevel uses the spec-driven per-list SLA.
   const alertObj = (() => {
-    if (!configured || status === "unconfigured") return { alertLevel: "ok" as const, alertReason: "List is not configured." };
+    if (!configured || status === "unconfigured") return { alertLevel: "ok" as const, alertReason: unconfiguredReason };
     if (!present || status === "missing") return { alertLevel: "critical" as const, alertReason: "List is missing from blob storage — no snapshot available for screening." };
     if (status === "degraded") return { alertLevel: "critical" as const, alertReason: "Blob is present but contains zero entities — likely a parser or upstream feed regression." };
     if (sla.minEntities !== undefined && entityCount !== null && entityCount < sla.minEntities) {
@@ -340,9 +366,13 @@ async function handleGet(req: Request): Promise<Response> {
   );
 
   try {
-  const [store, ingestMetaStore] = await Promise.all([loadStore(), loadIngestMetaStore()]);
+  const [store, ingestMetaStore, lsegImported] = await Promise.all([
+    loadStore(),
+    loadIngestMetaStore(),
+    lsegCfsImported(),
+  ]);
   const [lists, lastIngestMeta] = await Promise.all([
-    Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours))),
+    Promise.all(ADAPTERS.map((adapter) => inspectList(store, adapter, staleHours, lsegImported))),
     loadLastIngestTimestamps(ingestMetaStore),
   ]);
 
