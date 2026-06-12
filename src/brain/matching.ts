@@ -978,5 +978,24 @@ export function couldPlausiblyMatch(a: NameMatchKeys, b: NameMatchKeys): boolean
   if (setsIntersect(a.tokens, b.tokens)) return true;
   if (setsIntersect(a.singles, b.firstLetters) || setsIntersect(b.singles, a.firstLetters)) return true;
   if (setsIntersect(a.phonetic, b.phonetic)) return true;
-  return setsIntersect(a.trigrams, b.trigrams);
+  // Character-trigram signal. One shared trigram suffices for short names,
+  // but on long names a single shared trigram is mostly noise (live profile
+  // 2026-06-12: incidental overlaps like "asa" between unrelated names drove
+  // ~28 s cold screens against the alias-heavy real corpus). The loosest
+  // character matcher, Levenshtein at its 0.82 threshold, leaves at least
+  // 0.46·L−2 shared trigrams (an edit destroys ≤3), which is ≥2 once both
+  // compact forms reach 10 chars — so requiring 2 there cannot drop a
+  // threshold-clearing match. partial_ratio's sliding window is governed by
+  // the SHORTER name, hence the min() on both lengths.
+  const required = Math.min(a.minCompactLen, b.minCompactLen) >= 10 ? 2 : 1;
+  return sharedAtLeast(a.trigrams, b.trigrams, required);
+}
+
+function sharedAtLeast(a: ReadonlySet<string>, b: ReadonlySet<string>, n: number): boolean {
+  const [small, large] = a.size <= b.size ? [a, b] : [b, a];
+  let found = 0;
+  for (const v of small) {
+    if (large.has(v) && ++found >= n) return true;
+  }
+  return false;
 }
