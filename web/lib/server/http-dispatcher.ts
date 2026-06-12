@@ -408,3 +408,23 @@ export async function newsFetch(
     releaseNewsSlot();
   }
 }
+
+// Relay-only fetch: skip the direct datacenter-IP attempt entirely and go
+// straight through the edge relay chain. Used when a direct fetch already
+// returned HTTP 200 but the body was a bot-consent/empty page instead of the
+// real document (Google News serves these to datacenter IPs) — the relay's
+// clean edge IP receives the genuine feed. Returns null when every relay
+// fails; never rejects.
+export async function newsFetchRelayOnly(
+  input: string | URL,
+  init?: RequestInit,
+): Promise<Response | null> {
+  await acquireNewsSlot();
+  try {
+    return await runRelayChain(targetUrl(input), getNewsDispatcher(), init?.signal ?? undefined);
+  } catch {
+    return null;
+  } finally {
+    releaseNewsSlot();
+  }
+}

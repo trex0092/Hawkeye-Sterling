@@ -9,7 +9,7 @@ import { classifyEsg } from "@/lib/data/esg";
 import { searchAllNewsWithStatus, type NewsArticle } from "@/lib/intelligence/newsAdapters";
 import { incrementCounter, setGauge } from "@/lib/server/metrics-store";
 import { getJson, setJson } from "@/lib/server/store";
-import { newsFetch, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
+import { newsFetch, newsFetchRelayOnly, newsProxyInfo, newsRelayInfo, FEED_HEADERS } from "@/lib/server/http-dispatcher";
 import { getStore } from "@netlify/blobs";
 import { type GdeltArticle } from "@/lib/intelligence/gdelt-cache";
 // Dynamic imports from dist/ to prevent hard module-load failures when the
@@ -779,6 +779,14 @@ function noteFeedOutcome(stats: RetrievalStats | undefined, reachable: boolean, 
 }
 // Failure classes make a wholesale outage diagnosable from the response
 // itself (Google 429ing the burst vs sockets aborting vs egress death).
+// A genuine Google News RSS response contains an <rss>/<channel>/<item> (or
+// Atom <feed>/<entry>) structure. The bot-consent page Google serves to
+// datacenter IPs is HTML — no feed markers — while still arriving as HTTP 200.
+function looksLikeRssXml(body: string): boolean {
+  const head = body.slice(0, 4_096);
+  return /<(rss|feed|channel|item|entry)[\s>]/i.test(head) || /<\?xml/i.test(head);
+}
+
 function classifyHttpFailure(status: number): string {
   if (status === 403) return "http_403";
   if (status === 429) return "http_429";
@@ -818,12 +826,33 @@ async function fetchLocaleFeed(
       { headers: FEED_HEADERS, signal: controller.signal } as RequestInit,
       { allowRelay: relayKeyless, relayHedgeMs: LOCALE_RELAY_HEDGE_MS },
     );
-    noteFeedOutcome(stats, res.ok, res.ok ? undefined : classifyHttpFailure(res.status));
     if (!res.ok) {
+      noteFeedOutcome(stats, false, classifyHttpFailure(res.status));
       console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP ${res.status}`);
       return { articles: [], reachable: false };
     }
-    const xml = await res.text();
+    let xml = await res.text();
+    // Google News answers datacenter IPs with HTTP 200 + a bot-consent/empty
+    // HTML page instead of the feed (verified live 2026-06-12: Lavrov/Trump
+    // probes showed 10/10 feeds "reachable" yet zero items — every 200 was a
+    // consent page). A 200 never triggered the relay (only 403/429/451/503
+    // did), so the one path that DOES receive real RSS — the clean-IP edge
+    // relay — was abandoned exactly when needed. Detect the non-feed body and
+    // retry once relay-only within the same per-feed budget. feedFailures
+    // classes: not_rss = consent page AND relay couldn't recover; the honest
+    // "real feed, genuinely no matching items" case stays reachable.
+    if (!looksLikeRssXml(xml)) {
+      const relayed = await newsFetchRelayOnly(feed, { signal: controller.signal } as RequestInit);
+      const relayedBody = relayed?.ok ? await relayed.text() : null;
+      if (relayedBody && looksLikeRssXml(relayedBody)) {
+        xml = relayedBody;
+      } else {
+        noteFeedOutcome(stats, false, "not_rss");
+        console.warn(`[hawkeye] news-search/fetchLocaleFeed ${locale.code} HTTP 200 but body is not RSS (bot-consent page) and relay could not recover`);
+        return { articles: [], reachable: false };
+      }
+    }
+    noteFeedOutcome(stats, true);
     return { articles: parseRss(xml, q, variants, locale.code), reachable: true };
   } catch (err) {
     noteFeedOutcome(stats, false, classifyFetchError(err));
