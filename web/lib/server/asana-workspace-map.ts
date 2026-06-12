@@ -143,12 +143,6 @@ const SUPPLEMENT: Record<string, Supplement> = {
     obligation: "Independent audit function — Cabinet 10/2019 Art.21; FATF R.18.",
     owner: "Compliance Officer; Board visibility", retention: "5 yrs",
   },
-  bra: {
-    purpose: "Business risk assessment — inherent/residual risk scoring of products, channels and geographies.",
-    control: "BRA refreshed on schedule and on material change; results feed the EWRA.",
-    obligation: "Business-wide risk assessment — Cabinet 10/2019 Art.4; FATF R.1.",
-    owner: "Compliance Officer; MLRO sign-off", retention: "5 yrs",
-  },
   "dormant-accounts": {
     purpose: "Dormant account monitoring and reactivation review workflow.",
     control: "Reactivation of dormant relationships requires refreshed CDD before any transaction.",
@@ -329,7 +323,6 @@ const G2: Array<[string, string, string]> = [
   ["fp-optimizer", "🎯", "FP Optimizer"],
   ["tm-rules", "📐", "TM Rule Changes"],
   ["audit-findings", "📋", "Audit Findings"],
-  ["bra", "📊", "Business Risk (BRA)"],
   ["dormant-accounts", "💤", "Dormant Accounts"],
   ["outsourcing-register", "🏢", "Outsourcing Register"],
   ["coi-register", "⚖️", "COI Register"],
@@ -532,7 +525,6 @@ export const MODULE_BOARD_ALIASES: Record<string, string> = {
   profile: "access-control",
   gdpr: "corrections",
   privacy: "corrections",
-  "risk-appetite": "bra",
   "predictive-risk": "fp-optimizer",
   "regulatory-filing": "goaml",
   workflow: "cases",

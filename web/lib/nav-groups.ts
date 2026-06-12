@@ -49,7 +49,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "🎯 FP Optimizer", href: "/fp-optimizer", hint: "ML false positive pattern analysis · threshold tuning" },
       { label: "📐 TM Rule Changes", href: "/tm-rules", hint: "Transaction monitoring rule management" },
       { label: "📋 Audit Findings", href: "/audit-findings", hint: "Internal audit findings tracker" },
-      { label: "📊 Business Risk (BRA)", href: "/bra", hint: "Business risk assessment" },
       { label: "💤 Dormant Accounts", href: "/dormant-accounts", hint: "Dormant account monitoring" },
       { label: "🏢 Outsourcing Register", href: "/outsourcing-register", hint: "Third-party outsourcing register" },
       { label: "⚖️ COI Register", href: "/coi-register", hint: "Conflicts of interest register" },

@@ -1632,47 +1632,6 @@ const REPORTS: Record<string, ReportData> = {
       "Unassigned remediation actions",
     ],
   },
-  "/bra": {
-    title: "Business Risk Assessment",
-    summary: [
-      "The Business Risk Assessment module supports the assessment of money-laundering and terrorist-financing risk at the business-line and product level, complementing the enterprise-wide assessment with granular, unit-level risk understanding. It feeds control calibration and resource allocation across the institution.",
-      "FATF requires risk to be understood at a level granular enough to calibrate controls; an enterprise average can mask acute line-level risk. The module captures this granularity and links it to the controls each business line requires.",
-      "FATF requires risk to be understood at a level granular enough to calibrate controls, and an enterprise average can mask acute risk concentrated in a particular business line or product. The module assesses ML/TF risk at line and product level, documents the drivers, and links the assessment to the controls each unit requires. Supervisors test whether granular risk actually informs control design and whether emerging product risk is captured. By versioning each assessment in the audit chain and reconciling it with the enterprise-wide view, the institution can demonstrate that resources and controls are allocated to where its risk truly sits rather than spread uniformly against an unrepresentative average.",
-    ],
-    regulatory: [
-      "Cabinet Resolution No. (134) of 2025 Art.3 — business risk assessment",
-      "Federal Decree-Law No. (10) of 2025 — risk-based approach",
-      "FATF Recommendation 1 — assessing and mitigating risk",
-      "CBUAE AML/CFT Standards — business-line risk",
-      "FATF Methodology — risk understanding",
-    ],
-    requirements: [
-      "Assess risk at business-line and product level",
-      "Document methodology and risk drivers",
-      "Link assessment to control calibration",
-      "Refresh on material change and periodically",
-      "Reconcile with the enterprise-wide assessment",
-      "Reconcile business-line risk with the enterprise-wide assessment",
-    ],
-    controls: [
-      "Business-line risk scoring",
-      "Product-risk factor mapping",
-      "Control-linkage tracking",
-      "Audit-chain record of assessment versions",
-      "Product-level risk-factor scoring",
-    ],
-    reporting: [
-      "Business-risk reporting to governance",
-      "Escalation of elevated line-level risk",
-      "Reconciliation with the EWRA",
-    ],
-    risks: [
-      "Acute line-level risk masked by enterprise averages",
-      "Controls misaligned with product risk",
-      "Assessment not refreshed after change",
-      "Emerging product risk underweighted",
-    ],
-  },
   "/dormant-accounts": {
     title: "Dormant Accounts",
     summary: [
