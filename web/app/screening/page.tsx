@@ -22,7 +22,6 @@ import type { CDDPosture, FilterKey, QueueFilter, SanctionSource, SavedSearch, S
 import type { NlSearchFilter } from "@/app/api/cases/nl-search/route";
 import { fetchJson } from "@/lib/api/fetchWithRetry";
 import { writeAuditEvent } from "@/lib/audit";
-import { BulkImportDialog } from "@/components/screening/BulkImportDialog";
 import { SavedSearchBar } from "@/components/screening/SavedSearchBar";
 import { BulkActionsBar } from "@/components/screening/BulkActionsBar";
 import { ComparePanel } from "@/components/screening/ComparePanel";
@@ -133,14 +132,6 @@ function applyFilters(subjects: Subject[], filters: FilterKey[], operatorName?: 
     }
   }
   return result;
-}
-
-function subjectSeverity(riskScore: number): "clear" | "low" | "medium" | "high" | "critical" {
-  if (riskScore === 0) return "clear";
-  if (riskScore >= 95) return "critical";
-  if (riskScore >= 85) return "high";
-  if (riskScore >= 70) return "medium";
-  return "low";
 }
 
 function sortSubjects(
@@ -498,7 +489,6 @@ export default function ScreeningPage() {
   const [sortKey, setSortKey] = useState<SortKey>("riskScore");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [statusFilter, setStatusFilter] = useState<Subject["status"] | "all">("all");
-  const [severityFilter, setSeverityFilter] = useState<"clear" | "low" | "medium" | "high" | "critical" | "all">("all");
   // Subject IDs whose quick-screen API call is in-flight. Drives the
   // "Screening…" badge and pulsing risk bar in the table.
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
@@ -528,8 +518,7 @@ export default function ScreeningPage() {
   // quality caveat inline with the screen outcome.
   const [listHealthWarnings, setListHealthWarnings] = useState<string[]>([]);
 
-  // Bulk import + saved searches + bulk actions + columns + minRisk
-  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  // Saved searches + bulk actions + columns + minRisk
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [appliedSearchId, setAppliedSearchId] = useState<string | null>(null);
   const [minRisk, setMinRisk] = useState<number>(0);
@@ -651,9 +640,6 @@ export default function ScreeningPage() {
     if (statusFilter !== "all") {
       list = list.filter((s) => s.status === statusFilter);
     }
-    if (severityFilter !== "all") {
-      list = list.filter((s) => subjectSeverity(s.riskScore) === severityFilter);
-    }
     if (minRisk > 0) {
       list = list.filter((s) => s.riskScore >= minRisk);
     }
@@ -696,7 +682,7 @@ export default function ScreeningPage() {
         .map(({ s }) => s);
     }
     return sortSubjects(list, sortKey, sortDir);
-  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, severityFilter, minRisk, aiFilter, nlMatchIds]);
+  }, [subjects, activeFilters, operatorName, deferredQuery, sortKey, sortDir, statusFilter, minRisk, aiFilter, nlMatchIds]);
 
   const selected = useMemo(
     () => subjects.find((s) => s.id === selectedId) ?? null,
@@ -1646,14 +1632,8 @@ export default function ScreeningPage() {
             sortKey={sortKey}
             sortDir={sortDir}
             onSortChange={handleSortChange}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            severityFilter={severityFilter}
-            onSeverityFilterChange={setSeverityFilter}
             columns={columns}
             onColumnsChange={handleColumnsChange}
-            onBulkImport={() => setBulkImportOpen(true)}
-            onExport={exportFilteredCsv}
           />
 
           <div className="mb-3">
@@ -1847,47 +1827,6 @@ export default function ScreeningPage() {
         </div>
       )}
 
-      <BulkImportDialog
-        open={bulkImportOpen}
-        onClose={() => setBulkImportOpen(false)}
-        onImported={(rows) => {
-          // Materialise the imported rows into local subjects so they
-          // appear in the queue immediately. The brain has already
-          // screened them server-side via /api/batch-screen — this is
-          // the local-state mirror.
-          const created: Subject[] = [];
-          let pool = subjects.slice();
-          for (const r of rows) {
-            const id = nextSubjectId(pool);
-            const subj: Subject = {
-              id,
-              badge: id.replace(/^HS-/, "").slice(-5),
-              badgeTone: "violet",
-              name: r.name,
-              ...(r.aliases && r.aliases.length > 0 ? { aliases: r.aliases } : {}),
-              meta: r.entityType === "vessel" ? "vessel" : r.entityType === "aircraft" ? "aircraft" : "bulk import",
-              country: (r.jurisdiction ?? "—").toUpperCase().slice(0, 20),
-              jurisdiction: (r.jurisdiction ?? "—").toUpperCase().slice(0, 6),
-              type: (r.entityType === "individual" ? "Individual · UBO" : "Corporate · Customer") as Subject["type"],
-              entityType: (r.entityType ?? "individual") as Subject["entityType"],
-              riskScore: 0,
-              status: "active",
-              cddPosture: "CDD",
-              listCoverage: [],
-              exposureAED: "0",
-              slaNotify: "+72h 00m",
-              mostSerious: "—",
-              openedAgo: formatDDMMYY(new Date()),
-              openedAt: new Date().toISOString(),
-            };
-            pool = [subj, ...pool];
-            created.push(subj);
-          }
-          setSubjects((prev) => [...created, ...prev]);
-          writeAuditEvent("compliance_assistant", "bulk.imported", `${created.length} subjects via CSV`);
-          setBulkImportOpen(false);
-        }}
-      />
     </>
   );
 }

@@ -1,19 +1,8 @@
 "use client";
 
 import { forwardRef } from "react";
-import type { SortKey, Subject, TableColumnKey } from "@/lib/types";
+import type { SortKey, TableColumnKey } from "@/lib/types";
 import { ColumnChooser } from "@/components/screening/ColumnChooser";
-import type { QuickScreenSeverity } from "@/lib/api/quickScreen.types";
-
-const SEVERITY_OPTIONS: { value: QuickScreenSeverity | "all"; label: string; activeClass: string }[] = [
-  { value: "all",      label: "All",      activeClass: "bg-ink-0 text-bg-0" },
-  { value: "critical", label: "Critical", activeClass: "bg-red-600 text-white" },
-  { value: "high",     label: "High",     activeClass: "bg-orange-500 text-white" },
-  { value: "medium",   label: "Medium",   activeClass: "bg-amber-400 text-ink-0" },
-  { value: "low",      label: "Low",      activeClass: "bg-blue-500 text-white" },
-  { value: "clear",    label: "Clear",    activeClass: "bg-green-600 text-white" },
-];
-
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "riskScore", label: "Risk score" },
@@ -23,28 +12,14 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "cddPosture", label: "CDD" },
 ];
 
-const STATUS_OPTIONS: { value: Subject["status"] | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "frozen", label: "Frozen" },
-  { value: "cleared", label: "Cleared" },
-];
-
 interface ScreeningToolbarProps {
   query: string;
   onQueryChange: (_value: string) => void;
   sortKey: SortKey;
   sortDir: "asc" | "desc";
   onSortChange: (_key: SortKey) => void;
-  statusFilter: Subject["status"] | "all";
-  onStatusFilterChange: (_v: Subject["status"] | "all") => void;
   columns: Record<TableColumnKey, boolean>;
   onColumnsChange: (_next: Record<TableColumnKey, boolean>) => void;
-  onBulkImport: () => void;
-  onExport: () => void;
-  /** Severity tier filter — filters subjects by their risk score band. */
-  severityFilter: QuickScreenSeverity | "all";
-  onSeverityFilterChange: (_v: QuickScreenSeverity | "all") => void;
 }
 
 export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarProps>(function ScreeningToolbar({
@@ -53,111 +28,58 @@ export const ScreeningToolbar = forwardRef<HTMLInputElement, ScreeningToolbarPro
   sortKey,
   sortDir,
   onSortChange,
-  statusFilter,
-  onStatusFilterChange,
   columns,
   onColumnsChange,
-  onBulkImport,
-  onExport,
-  severityFilter,
-  onSeverityFilterChange,
 }: ScreeningToolbarProps, ref) {
   const activeSortLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label ?? "Risk score";
 
   return (
-    <div className="mb-5 space-y-2">
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
-        {/* Search input */}
-        <div className="flex-1 min-w-[180px] relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">
-            ⌕
-          </span>
-          <input
-            ref={ref}
-            type="search"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search subjects — name, ID, country (press / to focus)…"
-            className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:bg-bg-panel focus:border-brand"
-          />
-        </div>
-
-        <div className="flex gap-2 items-center">
-          {/* Sort dropdown */}
-          <div className="relative group">
-            <ToolbarButton small>
-              <span>Sort:</span>
-              <span className="font-semibold">{activeSortLabel}</span>
-              <span className="text-ink-3 font-mono text-10">{sortDir === "asc" ? "↑" : "↓"}</span>
-            </ToolbarButton>
-            <div className="absolute top-full left-0 mt-1 bg-bg-panel border border-hair-2 rounded-lg shadow-lg z-20 w-40 hidden group-hover:block">
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => onSortChange(opt.key)}
-                  className={`w-full text-left px-2.5 py-1.5 text-11 flex justify-between items-center hover:bg-bg-1 first:rounded-t-lg last:rounded-b-lg ${
-                    opt.key === sortKey ? "text-brand font-semibold" : "text-ink-0"
-                  }`}
-                >
-                  {opt.label}
-                  {opt.key === sortKey && (
-                    <span className="font-mono text-10 text-brand">
-                      {sortDir === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <ColumnChooser visible={columns} onChange={onColumnsChange} />
-
-          <ToolbarButton small onClick={onExport} title="Export filtered queue as CSV"><span style={{color:"#22c55e"}}>↓</span></ToolbarButton>
-
-          <ToolbarButton small onClick={onBulkImport} title="Import a CSV of subjects"><span style={{color:"#f59e0b"}}>↑</span></ToolbarButton>
-        </div>
+    <div className="mb-5 flex flex-wrap items-center gap-3 px-4 py-3 bg-bg-panel border border-hair-2 rounded-lg">
+      {/* Search input */}
+      <div className="flex-1 min-w-[180px] relative">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 text-[14px] pointer-events-none">
+          ⌕
+        </span>
+        <input
+          ref={ref}
+          type="search"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search subjects — name, ID, country (press / to focus)…"
+          className="w-full pl-8 pr-3 py-2 border border-hair-2 rounded text-13 bg-bg-1 focus:outline-none focus:bg-bg-panel focus:border-brand"
+        />
       </div>
 
-      {/* Status filter pills */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Status:</span>
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onStatusFilterChange(opt.value)}
-              className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
-                statusFilter === opt.value
-                  ? "bg-ink-0 text-bg-0 border-ink-0"
-                  : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+      <div className="flex gap-2 items-center">
+        {/* Sort dropdown */}
+        <div className="relative group">
+          <ToolbarButton small>
+            <span>Sort:</span>
+            <span className="font-semibold">{activeSortLabel}</span>
+            <span className="text-ink-3 font-mono text-10">{sortDir === "asc" ? "↑" : "↓"}</span>
+          </ToolbarButton>
+          <div className="absolute top-full left-0 mt-1 bg-bg-panel border border-hair-2 rounded-lg shadow-lg z-20 w-40 hidden group-hover:block">
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSortChange(opt.key)}
+                className={`w-full text-left px-2.5 py-1.5 text-11 flex justify-between items-center hover:bg-bg-1 first:rounded-t-lg last:rounded-b-lg ${
+                  opt.key === sortKey ? "text-brand font-semibold" : "text-ink-0"
+                }`}
+              >
+                {opt.label}
+                {opt.key === sortKey && (
+                  <span className="font-mono text-10 text-brand">
+                    {sortDir === "asc" ? "↑" : "↓"}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Severity filter pills */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-11 text-ink-3 uppercase tracking-wide-2 mr-1">Severity:</span>
-          {SEVERITY_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onSeverityFilterChange(opt.value)}
-              className={`px-2.5 py-1 rounded-full text-11.5 font-medium transition-colors border ${
-                severityFilter === opt.value
-                  ? `${opt.activeClass} border-transparent`
-                  : "bg-bg-panel text-ink-1 border-hair-2 hover:border-hair-3 hover:bg-bg-2"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
+        <ColumnChooser visible={columns} onChange={onColumnsChange} />
       </div>
     </div>
   );
