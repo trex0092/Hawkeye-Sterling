@@ -351,3 +351,47 @@ describe("newsFetchRelayOnly", () => {
     expect(res).toBeNull();
   });
 });
+
+describe("newsFetch slot lease + abort-aware queue", () => {
+  it("force-releases a slot after the lease so a hung fetch can't pin the pool", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_MAX_CONCURRENCY", "1");
+    const m = await loadFresh();
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn()
+        .mockImplementationOnce(() => new Promise<Response>(() => { /* hangs forever */ }))
+        .mockImplementation(() => Promise.resolve(new Response("ok")));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const hung = m.newsFetch("https://example.com/hang"); // takes the only slot, never settles
+      void hung.catch(() => undefined);
+      const queued = m.newsFetch("https://example.com/next"); // waits for a permit
+
+      await vi.advanceTimersByTimeAsync(6_100); // lease ceiling fires → permit handed to the waiter
+      const res = await queued;
+      expect(res.ok).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(2); // the queued fetch genuinely ran
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("rejects a queued waiter with AbortError when its signal fires while waiting", async () => {
+    clearProxyEnv();
+    vi.stubEnv("NEWS_MAX_CONCURRENCY", "1");
+    const m = await loadFresh();
+    const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>(() => { /* hangs */ }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const hung = m.newsFetch("https://example.com/hang");
+    void hung.catch(() => undefined);
+
+    const ac = new AbortController();
+    const queued = m.newsFetch("https://example.com/queued", { signal: ac.signal });
+    ac.abort();
+
+    await expect(queued).rejects.toMatchObject({ name: "AbortError" });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // the aborted waiter never opened a socket
+  });
+});

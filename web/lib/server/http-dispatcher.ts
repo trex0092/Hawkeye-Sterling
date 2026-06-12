@@ -376,19 +376,63 @@ const NEWS_MAX_CONCURRENCY = ((): number => {
   const raw = Number(process.env["NEWS_MAX_CONCURRENCY"]);
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 10;
 })();
+// Slot lease ceiling: a permit force-releases after this long even if its
+// fetch hasn't settled. The keyed-adapter layer races its fetches against a
+// 12s timer WITHOUT aborting them, so during an egress brownout a hung socket
+// would otherwise pin its permit for 12-30s — and ~15 such zombies starve the
+// NEXT request's fan-out to feedsAttempted:0 (observed live 2026-06-12 on
+// back-to-back probes). A force-released zombie keeps its hung socket, but
+// hung sockets aren't a burst — pool availability is what matters. Live fetch
+// STARTS stay capped at NEWS_MAX_CONCURRENCY per lease window.
+const NEWS_SLOT_LEASE_MS = 6_000;
+
 let activeNewsFetches = 0;
 const newsSlotQueue: Array<() => void> = [];
-function acquireNewsSlot(): Promise<void> {
+
+function newsAbortError(): Error {
+  return new DOMException("news fetch aborted while waiting for an egress slot", "AbortError");
+}
+
+// Grants one permit and returns its idempotent release. The lease timer
+// guarantees release even if the holder never settles.
+function grantNewsSlot(): () => void {
+  let released = false;
+  const release = (): void => {
+    if (released) return;
+    released = true;
+    clearTimeout(lease);
+    const next = newsSlotQueue.shift();
+    if (next) next(); // hand the permit straight to the next waiter (active count unchanged)
+    else activeNewsFetches = Math.max(0, activeNewsFetches - 1);
+  };
+  const lease = setTimeout(release, NEWS_SLOT_LEASE_MS);
+  (lease as unknown as { unref?: () => void }).unref?.();
+  return release;
+}
+
+// Abort-aware acquisition: a waiter whose caller deadline fires while queued
+// rejects immediately (AbortError) instead of consuming a permit later for a
+// fetch that would start already-aborted — keeps retrieval stats honest and
+// inside the route's timebox.
+function acquireNewsSlot(signal?: AbortSignal): Promise<() => void> {
+  if (signal?.aborted) return Promise.reject(newsAbortError());
   if (activeNewsFetches < NEWS_MAX_CONCURRENCY) {
     activeNewsFetches += 1;
-    return Promise.resolve();
+    return Promise.resolve(grantNewsSlot());
   }
-  return new Promise<void>((resolve) => newsSlotQueue.push(resolve));
-}
-function releaseNewsSlot(): void {
-  const next = newsSlotQueue.shift();
-  if (next) next(); // hand the permit straight to the next waiter (active count unchanged)
-  else activeNewsFetches = Math.max(0, activeNewsFetches - 1);
+  return new Promise<() => void>((resolve, reject) => {
+    const waiter = (): void => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve(grantNewsSlot());
+    };
+    const onAbort = (): void => {
+      const i = newsSlotQueue.indexOf(waiter);
+      if (i !== -1) newsSlotQueue.splice(i, 1);
+      reject(newsAbortError());
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    newsSlotQueue.push(waiter);
+  });
 }
 
 // Public entry point for all news/feed egress. Acquires a global permit so the
@@ -401,11 +445,11 @@ export async function newsFetch(
   init?: RequestInit,
   opts?: { allowRelay?: boolean; relayHedgeMs?: number },
 ): Promise<Response> {
-  await acquireNewsSlot();
+  const release = await acquireNewsSlot(init?.signal ?? undefined);
   try {
     return await newsFetchInner(input, init, opts);
   } finally {
-    releaseNewsSlot();
+    release();
   }
 }
 
@@ -419,12 +463,13 @@ export async function newsFetchRelayOnly(
   input: string | URL,
   init?: RequestInit,
 ): Promise<Response | null> {
-  await acquireNewsSlot();
+  let release: (() => void) | undefined;
   try {
+    release = await acquireNewsSlot(init?.signal ?? undefined);
     return await runRelayChain(targetUrl(input), getNewsDispatcher(), init?.signal ?? undefined);
   } catch {
     return null;
   } finally {
-    releaseNewsSlot();
+    release?.();
   }
 }
