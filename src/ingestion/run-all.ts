@@ -35,6 +35,15 @@ installGlobalAsyncSafetyNet();
 // variable EU/transatlantic latency). The route's maxDuration is 60 s
 // so we have headroom; parallel fan-out means the slowest adapter still
 // dictates total wall-clock.
+//
+// This 20 s value is the SCHEDULED-FUNCTION default: the sanctions-watch
+// crons run on Netlify's standard function budget (~26 s), so the full
+// fan-out must finish inside it — a longer per-adapter leash would risk
+// the whole Lambda being killed mid-run (losing the summary, heartbeat,
+// and error log). HTTP-triggered refreshes (admin/operator routes with
+// maxDuration 60) pass a larger adapterTimeoutMs instead: au_dfat's XLSX
+// and ch_seco's SESAM download-action endpoint regularly need >20 s
+// (DFAT serves slowly; SESAM generates the XML server-side on demand).
 const ADAPTER_TIMEOUT_MS = 20_000;
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
@@ -70,8 +79,12 @@ export interface IngestRunSummary {
  * The `label` is prefixed to every log line so multiple crons can be
  * distinguished in the Netlify Function logs.
  */
-export async function runIngestionAll(label: string): Promise<IngestRunSummary> {
+export async function runIngestionAll(
+  label: string,
+  opts?: { adapterTimeoutMs?: number },
+): Promise<IngestRunSummary> {
   const startedAt = Date.now();
+  const adapterTimeoutMs = opts?.adapterTimeoutMs ?? ADAPTER_TIMEOUT_MS;
   const store = await getBlobsStore();
 
   const runAdapter = async (
@@ -92,7 +105,7 @@ export async function runIngestionAll(label: string): Promise<IngestRunSummary> 
     try {
       const { entities: rawEntities, rawChecksum, sourceVersion } = await withTimeout(
         adapter.fetch(),
-        ADAPTER_TIMEOUT_MS,
+        adapterTimeoutMs,
         `adapter ${adapter.id}`,
       );
       // Deduplicate by entity ID within each adapter run. Source XML/CSV can

@@ -52,7 +52,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // Dynamic-import the compiled ingestion runner from dist/ so this route
   // doesn't hard-require the build to have completed at type-check time.
-  let runIngestionAll: (_label: string) => Promise<unknown>;
+  let runIngestionAll: (_label: string, _opts?: { adapterTimeoutMs?: number }) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../src/ingestion/run-all.js" as string
@@ -71,7 +71,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const triggeredAt = new Date().toISOString();
   try {
-    const result = (await runIngestionAll("admin-trigger-refresh")) as {
+    // 45 s leash (vs the crons' 20 s): au_dfat XLSX and ch_seco SESAM need
+    // >20 s; this route's maxDuration is 60 s so the slowest adapter +
+    // blob writes still fit.
+    const result = (await runIngestionAll("admin-trigger-refresh", { adapterTimeoutMs: 45_000 })) as {
       ok: boolean;
       at: string;
       durationMs: number;

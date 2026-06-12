@@ -45,7 +45,7 @@ interface IngestionResult {
 }
 
 async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promise<NextResponse> {
-  let runIngestionAll: (_label: string) => Promise<unknown>;
+  let runIngestionAll: (_label: string, _opts?: { adapterTimeoutMs?: number }) => Promise<unknown>;
   try {
     const mod = (await import(
       "../../../../../src/ingestion/run-all.js" as string
@@ -85,7 +85,10 @@ async function handleOperatorRefresh(_req: Request, ctx: RequestContext): Promis
   // converges to a known state.
   void (async () => {
     try {
-      const result = (await runIngestionAll("operator-refresh")) as IngestionResult;
+      // 45 s leash (vs the crons' 20 s): au_dfat XLSX and ch_seco SESAM need
+      // >20 s; this route's maxDuration is 60 s so the slowest adapter +
+      // blob writes still fit.
+      const result = (await runIngestionAll("operator-refresh", { adapterTimeoutMs: 45_000 })) as IngestionResult;
       invalidateCandidateCache();
       await writeJobStatus({
         jobId,
