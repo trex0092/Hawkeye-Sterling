@@ -1,6 +1,6 @@
 # Hawkeye Sterling — Web (v5)
 
-Next.js 14 + TypeScript + Tailwind front-end for the Hawkeye Sterling AML/CFT
+Next.js 16 + TypeScript + Tailwind front-end for the Hawkeye Sterling AML/CFT
 platform. Deployed to Netlify via [`@netlify/plugin-nextjs`](https://github.com/netlify/next-runtime); the
 root `netlify.toml` builds the backend engine first (`dist/`) then this app.
 
