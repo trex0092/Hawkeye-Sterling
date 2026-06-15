@@ -84,7 +84,10 @@ function applySecurityHeaders(response: NextResponse, isApi: boolean, requestId?
   // frame-ancestors 'self' below).
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  // Deny every powerful/sensitive browser feature the portal never uses, and
+  // opt out of FLoC/Topics ad-interest tracking (interest-cohort/browsing-topics).
+  // Kept in sync with the static surface in netlify.toml.
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=(), browsing-topics=()");
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   response.headers.set("X-DNS-Prefetch-Control", "off");
@@ -138,6 +141,10 @@ function buildCspHeader(_nonce: string): string {
     "img-src 'self' data:",
     "font-src 'self' data: https://fonts.bunny.net",
     "connect-src 'self' https://app.asana.com",
+    // No <object>/<embed>/<applet> plugin content is used anywhere — block it
+    // outright so a markup-injection foothold cannot load Flash/PDF plugins or
+    // legacy plugin-based script-execution vectors.
+    "object-src 'none'",
     // 'self', not 'none' — Intelligence Hub embeds module pages in
     // same-origin iframes (see applySecurityHeaders).
     "frame-ancestors 'self'",

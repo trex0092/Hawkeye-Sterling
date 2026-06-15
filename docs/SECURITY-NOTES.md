@@ -5,6 +5,11 @@ Hawkeye-Sterling, the threat model they address, and known
 gaps. Every claim cites file:line evidence so a reviewer can
 audit without reading the whole codebase.
 
+> See also **`docs/SECURITY-HARDENING-REPORT.md`** — operator-facing
+> walkthrough (Spanish) of the CORS policy, HTTP security headers, and
+> the per-user/per-tenant isolation that substitutes for SQL row-level
+> security (this stack has no Supabase/SQL DB).
+
 ## 1. Authentication + authorisation
 
 ### 1.1 `enforce()` fail-closed default
