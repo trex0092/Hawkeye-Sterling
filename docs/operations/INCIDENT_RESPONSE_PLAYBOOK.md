@@ -603,7 +603,7 @@ All LLM-generated outputs pass through the following validation pipeline before 
 
 | Control | Implementation | Frequency |
 |---|---|---|
-| Adversarial probe suite | `web/lib/server/adversarial-probes.ts` — 24 probes across 10 categories including prompt injection, jailbreak, hallucination, PII exfiltration, governance evasion | Monthly automated red-team run via `scripts/ai-security-review.mjs` |
+| Adversarial probe suite | `web/lib/server/adversarial-probes.ts` — 30 probes across 10 categories including prompt injection, jailbreak, hallucination, PII exfiltration, governance evasion | Monthly automated red-team run via `scripts/ai-security-review.mjs` |
 | MITRE ATLAS mapping | Probes mapped to AML.T0025, AML.T0043 and NIST AI RMF (GOVERN/MEASURE) | Per probe metadata |
 | Prompt injection simulation | Category `prompt_injection` in adversarial suite | Monthly |
 

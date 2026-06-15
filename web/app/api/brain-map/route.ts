@@ -127,7 +127,7 @@ const FACULTIES: BrainFaculty[] = [
   {
     id: "adversarial-probes",
     name: "Adversarial Red-Team",
-    purpose: "24 probes across 10 MITRE ATLAS categories for continuous AI safety testing",
+    purpose: "30 probes across 10 MITRE ATLAS categories for continuous AI safety testing",
     category: "governance",
     fileCount: 6,
     keyComponents: ["AdversarialProbes", "EvalHarness", "RefusalRouter"],
