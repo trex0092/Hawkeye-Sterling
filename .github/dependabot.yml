@@ -30,6 +30,15 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      # Tailwind v4 is a breaking rewrite (CSS-first config, @tailwindcss/postcss
+      # plugin). This app uses v3 conventions: the `tailwindcss` PostCSS plugin in
+      # postcss.config.mjs, @tailwind directives in app/globals.css, and a
+      # tailwind.config.ts. A grouped dev-dependency bump to v4 breaks `next build`
+      # (Netlify deploy preview failed on PR #903). A v4 upgrade must be a deliberate
+      # migration PR — block the automatic major bump here. Remove once migrated.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
