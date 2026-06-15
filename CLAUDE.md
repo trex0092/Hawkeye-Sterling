@@ -52,7 +52,7 @@ Operator: enterprise and regulator-grade financial institutions.
 | LLM fallback wrapper | `web/lib/server/llm-fallback.ts` |
 | Hallucination gate | `web/lib/server/hallucination-gate.ts` |
 | Egress tipping-off gate | `web/lib/server/egress-check.ts` |
-| Adversarial probes (16 probes, 6 categories) | `web/lib/server/adversarial-probes.ts` |
+| Adversarial probes (30 probes, 10 categories) | `web/lib/server/adversarial-probes.ts` |
 | Circuit breaker | `web/lib/server/circuitBreaker.ts` |
 | Rate limiting | `web/lib/server/rate-limit.ts` |
 | Four-eyes gate | `web/lib/server/four-eyes-gate.ts` |

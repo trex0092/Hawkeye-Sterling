@@ -213,7 +213,7 @@ const SUPPLEMENT: Record<string, Supplement> = {
     owner: "Operations / Compliance Officer", retention: "5 yrs",
   },
   "red-team": {
-    purpose: "Adversarial red-team probe console — 16 probes across 6 categories against the AI layer.",
+    purpose: "Adversarial red-team probe console — 30 probes across 10 categories against the AI layer.",
     control: "Probe results reviewed; failures open AI incidents per the AI incident playbook.",
     obligation: "AI adversarial robustness — FDL 10/2025 Art.18; MITRE ATLAS-aligned testing.",
     owner: "MLRO + security", retention: "10 yrs",
