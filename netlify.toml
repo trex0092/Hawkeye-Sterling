@@ -140,7 +140,10 @@
     X-Frame-Options = "SAMEORIGIN"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    # Deny every powerful/sensitive browser feature the portal never uses, and
+    # opt out of FLoC/Topics ad-interest tracking. Kept in sync with the
+    # dynamic surface in web/middleware.ts (applySecurityHeaders).
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=(), browsing-topics=()"
     # COOP=same-origin isolates the browsing context from cross-origin
     # popups/iframes — reduces Spectre attack surface. Safe addition.
     # NOTE: COEP=require-corp deliberately omitted — it would require
