@@ -14,6 +14,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "🌱 ESG Risk", href: "/esg-risk", hint: "ESG scoring · ML risk overlay · regulatory exposure" },
       { label: "🤝 Supplier DD", href: "/vendor-dd", hint: "Third-party due diligence + AI risk" },
       { label: "📋 CDD Review", href: "/cdd-review", hint: "Periodic re-KYC + AI adequacy check" },
+      { label: "🧾 CDD Assessment", href: "/cdd-assessment", hint: "8-section customer/counterparty DD form + expiry & completeness watchdog" },
       { label: "🏢 Ownership Explorer", href: "/ownership", hint: "UBO mapping · shell risk · jurisdiction layering" },
       { label: "🧑‍💼 Employees", href: "/employees", hint: "HR registry · doc expiry · AI risk scan" },
       { label: "🎓 Training", href: "/training", hint: "AML/CFT training tracker · completion records · mandatory deadlines" },
