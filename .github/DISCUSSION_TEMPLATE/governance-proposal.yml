@@ -1,0 +1,51 @@
+title: "[Governance] "
+labels:
+  - area/governance
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this to propose or discuss a change to an architecture invariant,
+        the compliance charter, a model-registry entry, a risk-appetite
+        threshold, or any other governance-impacting decision (see
+        [GOVERNANCE.md](../blob/main/GOVERNANCE.md) §2).
+
+        A discussion is the venue for shaping the proposal. The decision itself
+        is recorded as an **Architecture Decision Record**
+        ([docs/adr/](../blob/main/docs/adr/)) and, where applicable, a committee
+        minute — not in the discussion thread.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What change are you proposing, and why?
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Governance impact (GOVERNANCE.md §2)
+      multiple: true
+      options:
+        - Weakens/removes an architecture invariant
+        - Alters the compliance charter / system prompt
+        - Adds/retires/re-tiers a model
+        - Changes a risk-appetite threshold, KRI, or bias/drift floor
+        - Opens/changes/closes a compliance gap
+        - Relaxes an egress/auth/audit/four-eyes control
+    validations:
+      required: true
+  - type: input
+    id: anchor
+    attributes:
+      label: Regulatory anchor
+      placeholder: e.g. UAE FDL 10/2025 Art.18, FATF R.10, Cabinet Resolution 134/2025
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Acceptance evidence
+      description: How will we know the change is correct and complete (tests, CI gates, register updates)?

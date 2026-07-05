@@ -34,6 +34,12 @@ redaction → model → rehydration), and the adversarial-probe suite.
 - **No raw PII or secrets in logs** — IPs HMAC-hashed (`anonIpKey()`), API keys never logged in full.
 - **CI security gates** — npm audit (HIGH+CRITICAL), secret scan, Trivy, SBOM, Semgrep, CodeQL, prompt-hash integrity.
 
+## Machine-readable policy
+
+A machine-readable disclosure policy is published per [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)
+at [`/.well-known/security.txt`](./web/public/.well-known/security.txt). Keep its
+`Expires` field current (renew at least annually).
+
 ## Related documentation
 
 - Penetration-test log: [`docs/PENTEST-LOG.md`](./docs/PENTEST-LOG.md)

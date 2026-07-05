@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: >-
+  If you reference Hawkeye Sterling in documentation, audit evidence, research,
+  or regulatory filings, please cite it using the metadata below.
+title: Hawkeye Sterling
+abstract: >-
+  A regulator-grade AML / CFT / sanctions / PEP / adverse-media compliance
+  platform with a transparent cognitive reasoning engine, fail-closed control
+  paths, an append-only dual-chain audit trail, and an AI-governance framework
+  aligned to UAE FDL 20/2018 and 10/2025, FATF, ISO/IEC 42001, and SOC 2.
+type: software
+authors:
+  - name: Hawkeye Sterling maintainers
+    website: https://github.com/trex0092/Hawkeye-Sterling
+repository-code: https://github.com/trex0092/Hawkeye-Sterling
+url: https://github.com/trex0092/Hawkeye-Sterling
+license: LicenseRef-Proprietary
+keywords:
+  - AML
+  - CFT
+  - sanctions-screening
+  - PEP
+  - adverse-media
+  - compliance
+  - AI-governance
+  - FATF
+  - ISO-42001

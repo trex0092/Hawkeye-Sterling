@@ -1,0 +1,13 @@
+# Hawkeye Sterling — machine-readable security disclosure policy (RFC 9116).
+# Served at /.well-known/security.txt. Human policy: /SECURITY.md.
+# Update the Expires date at least annually (a stale file is treated as invalid).
+
+Contact: mailto:hawkeye.sterling.v2@gmail.com
+Contact: https://github.com/trex0092/Hawkeye-Sterling/security/policy
+Expires: 2027-07-05T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://github.com/trex0092/Hawkeye-Sterling/blob/main/SECURITY.md
+Acknowledgments: https://github.com/trex0092/Hawkeye-Sterling/blob/main/docs/PENTEST-LOG.md
+
+# Do not include regulated data (customer PII, sanctions hits, SAR/STR content)
+# or secrets in a vulnerability report. Report privately per the policy above.
