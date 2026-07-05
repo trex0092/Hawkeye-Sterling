@@ -1,0 +1,47 @@
+name: Stale triage
+
+# Flags and closes inactive issues / PRs so the backlog reflects live state.
+# Uses the status/stale label from .github/labels.yml. Security- and
+# compliance-critical items are exempt so nothing regulated is auto-closed.
+
+on:
+  schedule:
+    - cron: '30 1 * * *' # daily, 01:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 45
+          days-before-close: 14
+          stale-issue-label: 'status/stale'
+          stale-pr-label: 'status/stale'
+          stale-issue-message: >-
+            This issue has had no activity for 45 days and is now marked
+            `status/stale`. Remove the label or comment to keep it open;
+            otherwise it will be closed in 14 days.
+          stale-pr-message: >-
+            This pull request has had no activity for 45 days and is now marked
+            `status/stale`. Push, comment, or remove the label to keep it open;
+            otherwise it will be closed in 14 days.
+          close-issue-message: >-
+            Closed as stale after 59 days of inactivity. Reopen if this is still
+            relevant.
+          close-pr-message: >-
+            Closed as stale after 59 days of inactivity. Reopen if you intend to
+            continue this work.
+          # Never auto-stale regulated / in-flight work.
+          exempt-issue-labels: 'type/security,area/governance,area/charter,area/filings,priority/critical,priority/high,status/blocked'
+          exempt-pr-labels: 'type/security,area/governance,area/charter,area/filings,priority/critical,priority/high,status/blocked'
+          exempt-all-milestones: true
+          ascending: true # oldest first, so the daily budget clears the backlog tail

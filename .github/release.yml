@@ -1,0 +1,55 @@
+# Automatically-generated release notes configuration.
+# Consumed by GitHub's "Generate release notes" (Releases UI + release.yml
+# workflow). Categorises merged pull requests by label into the changelog,
+# keyed to the label taxonomy in .github/labels.yml.
+changelog:
+  exclude:
+    labels:
+      - status/duplicate
+      - status/wontfix
+      - type/chore
+    authors:
+      - dependabot
+      - github-actions
+  categories:
+    - title: 🔒 Security & hardening
+      labels:
+        - type/security
+        - area/charter
+    - title: ⚖️ Compliance & governance
+      labels:
+        - area/governance
+        - area/filings
+        - reg/FDL-10-2025
+        - reg/CR-74-2020
+        - reg/CR-134-2025
+        - reg/FATF
+        - reg/PDPL
+    - title: 🚀 Features
+      labels:
+        - type/feature
+    - title: ✨ Enhancements
+      labels:
+        - type/enhancement
+        - type/perf
+        - type/a11y
+    - title: 🐛 Bug fixes
+      labels:
+        - type/bug
+    - title: 🧠 Cognitive brain
+      labels:
+        - area/brain
+        - area/advisor
+    - title: 📚 Documentation
+      labels:
+        - type/docs
+    - title: 🧪 Tests & tooling
+      labels:
+        - type/test
+        - type/refactor
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+    - title: 🔧 Other changes
+      labels:
+        - "*"

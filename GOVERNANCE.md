@@ -79,6 +79,8 @@ auditable from the git history:
 
 | Register | Location |
 |---|---|
+| Architecture decisions (ADRs) | [`docs/adr/`](./docs/adr/) |
+| Maintainer roster & review ownership | [`MAINTAINERS.md`](./MAINTAINERS.md) |
 | Compliance gaps (lifecycle) | [`COMPLIANCE_GAPS.md`](./COMPLIANCE_GAPS.md) |
 | AI governance policy | [`docs/governance/AI_GOVERNANCE_POLICY.md`](./docs/governance/AI_GOVERNANCE_POLICY.md) |
 | AI risk register (ISO 42001 A.7.3) | [`docs/governance/AI_RISK_REGISTER.md`](./docs/governance/AI_RISK_REGISTER.md) |

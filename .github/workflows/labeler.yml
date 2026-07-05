@@ -1,0 +1,25 @@
+name: Labeler
+
+# Applies path-based labels to pull requests from .github/labeler.yml.
+# Keeps the area/* / type/* taxonomy consistent without manual triage.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write # Required to add labels to the PR
+    steps:
+      - name: Apply labels from .github/labeler.yml
+        uses: actions/labeler@v5
+        with:
+          configuration-path: .github/labeler.yml
+          sync-labels: false # Do not remove labels a human added by hand
