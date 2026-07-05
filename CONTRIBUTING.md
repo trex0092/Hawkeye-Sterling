@@ -26,7 +26,8 @@ npm run typecheck          # strict TS, zero errors
 npm test                   # vitest unit suite
 npm run brain:audit        # reasoning-mode registry integrity
 node scripts/validate-prompt-hashes.mjs   # FDL 10/2025 Art.18 prompt-hash integrity
-node scripts/lethal-trifecta-check.mjs    # governance check
+node scripts/lethal-trifecta-check.mjs    # lethal-trifecta governance check
+node scripts/validate-governance.mjs      # governance-surface consistency (files, labels, ADR index)
 cd web && npm run lint     # ESLint, max-warnings=0
 ```
 
