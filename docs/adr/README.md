@@ -42,5 +42,10 @@ Routine features, fixes, refactors, and docs do **not** need an ADR.
 | [0005](./0005-four-eyes-separation-of-duties.md) | Four-eyes control with separation of duties | Accepted |
 | [0006](./0006-model-router-fallback.md) | Multi-provider model router with cost fallback | Accepted |
 | [0007](./0007-pii-redaction-llm-pipeline.md) | PII redaction in the LLM pipeline | Accepted |
+| [0008](./0008-observability-noop-tracer-metrics.md) | No-op-safe tracing and family-grouped metrics | Accepted |
+| [0009](./0009-content-frozen-charter-prompt-hash-integrity.md) | Content-frozen charter with prompt-hash integrity | Accepted |
 
 _This index is maintained by hand — add a row when you accept a new ADR._
+
+Together, ADRs 0002–0009 provide a dedicated record for each of the ten
+architecture invariants in [`CLAUDE.md`](../../CLAUDE.md).

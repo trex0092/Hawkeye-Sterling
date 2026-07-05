@@ -1,0 +1,33 @@
+name: Governance check
+
+# Enforces internal consistency of the governance surface so the documentation
+# is a checked control, not prose that silently rots: required files present,
+# issue-template / labeler labels defined in labels.yml, the ADR index in sync
+# with docs/adr/, CODEOWNERS paths real, and security.txt not expired.
+# Zero-dependency Node script — fast, deterministic, no network.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate governance surface
+        run: node scripts/validate-governance.mjs
