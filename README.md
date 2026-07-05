@@ -7,7 +7,7 @@
 **Built to surpass Refinitiv World-Check.**
 
 <!-- badges:start -->
-![tests](https://img.shields.io/badge/tests-6163%20passing-3fb950?style=flat-square&logo=vitest&logoColor=white)
+![tests](https://img.shields.io/badge/tests-6175%20passing-3fb950?style=flat-square&logo=vitest&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white)
 ![node](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square&logo=node.js&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white)
@@ -17,6 +17,11 @@
 ![FATF](https://img.shields.io/badge/FATF-40%20Recommendations-d97706?style=flat-square)
 ![brain](https://img.shields.io/badge/brain-1412%20reasoning%20modes-7c3aed?style=flat-square)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=flat-square&logo=githubactions&logoColor=white)
+<br/>
+[![Security Policy](https://img.shields.io/badge/Security-Policy-0a7ea4?style=flat-square&logo=github)](./SECURITY.md)
+[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant%202.1-5e60ce?style=flat-square)](./CODE_OF_CONDUCT.md)
+[![Governance](https://img.shields.io/badge/Governance-documented-2d6a4f?style=flat-square)](./GOVERNANCE.md)
+[![ADRs](https://img.shields.io/badge/ADRs-0000%E2%80%930007-6a4c93?style=flat-square)](./docs/adr)
 <!-- badges:end -->
 
 </div>
@@ -43,6 +48,7 @@ and unsupported risk scoring.
 - [Directory](#directory)
 - [Getting started](#getting-started)
 - [Regulatory anchors](#regulatory-anchors)
+- [Governance & community](#governance--community)
 - [Deployment](#deployment)
 - [Licence](#licence)
 
@@ -295,6 +301,38 @@ npm run verify
 - MoE DNFBP circulars and guidance for the precious-metals sector.
 - FATF Recommendations and relevant Methodology paragraphs.
 - LBMA Responsible Gold Guidance (supply-chain context).
+
+---
+
+## Governance & community
+
+Hawkeye Sterling is held to a regulator-grade governance bar. The decision
+model, controls rationale, and contribution rules are documented and versioned —
+the *why* behind the system is auditable from source control.
+
+| Area | Document |
+|---|---|
+| Project governance & decision rights | [`GOVERNANCE.md`](./GOVERNANCE.md) |
+| Maintainers & review ownership | [`MAINTAINERS.md`](./MAINTAINERS.md) · [`.github/CODEOWNERS`](./.github/CODEOWNERS) |
+| Architecture Decision Records | [`docs/adr/`](./docs/adr) (0000–0007) |
+| Contributing & local gate | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+| Code of Conduct | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) |
+| Security policy | [`SECURITY.md`](./SECURITY.md) · [`/.well-known/security.txt`](./web/public/.well-known/security.txt) · [`SECURITY-INSIGHTS.yml`](./SECURITY-INSIGHTS.yml) |
+| Threat model | [`docs/security/THREAT_MODEL.md`](./docs/security/THREAT_MODEL.md) |
+| Data classification & handling | [`docs/DATA-CLASSIFICATION.md`](./docs/DATA-CLASSIFICATION.md) |
+| Release process | [`RELEASING.md`](./RELEASING.md) |
+| Getting help | [`SUPPORT.md`](./SUPPORT.md) |
+| AI governance policy & registers | [`docs/governance/`](./docs/governance) |
+| Compliance gaps (live) | [`COMPLIANCE_GAPS.md`](./COMPLIANCE_GAPS.md) |
+
+Issues and pull requests use structured templates
+([`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE), PR template), and changes
+to control paths require code-owner review. Governance-impacting changes follow
+[`GOVERNANCE.md`](./GOVERNANCE.md) §2 and are recorded as ADRs.
+
+> **A note on confidentiality:** never include regulated data (customer PII,
+> sanctions hits, SAR/STR content) or secrets in an issue, pull request, or
+> discussion. See [`docs/DATA-CLASSIFICATION.md`](./docs/DATA-CLASSIFICATION.md).
 
 ---
 

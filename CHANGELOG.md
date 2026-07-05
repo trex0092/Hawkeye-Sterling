@@ -1,5 +1,26 @@
 # Hawkeye Sterling — Changelog
 
+## [0.2.2] — 2026-07-05
+
+### Governance
+- Added full GitHub governance / community-health surface: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1 + regulated-data confidentiality), `GOVERNANCE.md`, `SUPPORT.md`, `MAINTAINERS.md`, `.github/CODEOWNERS`
+- Added Architecture Decision Records under `docs/adr/` (0000 template + 0001–0007) back-filling every load-bearing invariant (record ADRs, fail-closed controls, append-only audit, dual-secret JWT, four-eyes/SoD, model router, PII redaction)
+- Added issue templates (`feature_request`, `documentation`, `regulatory_change`) + chooser `config.yml`; harmonised existing templates to the `labels.yml` taxonomy
+- Added GitHub Discussion templates (announcements, Q&A, governance-proposal)
+- Added `RELEASING.md`, `docs/DATA-CLASSIFICATION.md`, and a README Governance & Community section
+
+### Security
+- Resolved HIGH npm advisories failing the `security-audit` gate: **undici 8.4.1 → 8.7.0**, **hono 4.12.23 → 4.12.27** (in-range, lockfile-only)
+- Added machine-readable security disclosure: `web/public/.well-known/security.txt` (RFC 9116) and `SECURITY-INSIGHTS.yml` (OpenSSF)
+- Added `docs/security/THREAT_MODEL.md` (STRIDE + MITRE ATT&CK / ATLAS + NIST AI RMF)
+
+### Build / CI
+- Added workflows: `labeler` (path-based PR labels), `stale` triage, OpenSSF `scorecard`; release-notes categorisation (`.github/release.yml`)
+- Added `.editorconfig` and `CITATION.cff`
+- `npm audit --audit-level=high` now passes on root + web; `tsc --noEmit` clean; unit suite 6175/6175 passing
+
+---
+
 ## [0.2.1] — 2026-05-22
 
 ### Security
