@@ -40,5 +40,7 @@ Routine features, fixes, refactors, and docs do **not** need an ADR.
 | [0003](./0003-append-only-audit-chain.md) | Append-only dual-chain audit trail | Accepted |
 | [0004](./0004-dual-secret-jwt-rotation.md) | Dual-secret JWT rotation | Accepted |
 | [0005](./0005-four-eyes-separation-of-duties.md) | Four-eyes control with separation of duties | Accepted |
+| [0006](./0006-model-router-fallback.md) | Multi-provider model router with cost fallback | Accepted |
+| [0007](./0007-pii-redaction-llm-pipeline.md) | PII redaction in the LLM pipeline | Accepted |
 
 _This index is maintained by hand — add a row when you accept a new ADR._

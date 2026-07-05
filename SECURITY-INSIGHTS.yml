@@ -1,0 +1,102 @@
+# OpenSSF Security Insights (schema 1.0.0) — https://github.com/ossf/security-insights-spec
+# Machine-readable summary of the project's security posture. Complements the
+# human policy in SECURITY.md and the RFC 9116 file at
+# web/public/.well-known/security.txt. Renew the dates at least annually.
+header:
+  schema-version: 1.0.0
+  expiration-date: '2027-07-05T00:00:00.000Z'
+  last-updated: '2026-07-05'
+  last-reviewed: '2026-07-05'
+  url: https://github.com/trex0092/Hawkeye-Sterling
+  comment: >-
+    Hawkeye Sterling is a regulator-grade AML/CFT compliance platform, built
+    fail-closed by design and continuously tested for security and compliance.
+
+project-lifecycle:
+  status: active
+  bug-fixes-only: false
+  core-maintainers:
+    - https://github.com/trex0092
+  roadmap: https://github.com/trex0092/Hawkeye-Sterling/blob/main/GOVERNANCE.md
+
+contribution-policy:
+  accepts-pull-requests: true
+  accepts-automated-pull-requests: true
+  automated-tools-list:
+    - automated-tool: dependabot
+      action: allowed
+      path:
+        - /
+        - /web
+  contributing-policy: https://github.com/trex0092/Hawkeye-Sterling/blob/main/CONTRIBUTING.md
+  code-of-conduct: https://github.com/trex0092/Hawkeye-Sterling/blob/main/CODE_OF_CONDUCT.md
+
+documentation:
+  - https://github.com/trex0092/Hawkeye-Sterling/blob/main/README.md
+  - https://github.com/trex0092/Hawkeye-Sterling/blob/main/GOVERNANCE.md
+  - https://github.com/trex0092/Hawkeye-Sterling/blob/main/docs/governance/AI_GOVERNANCE_POLICY.md
+  - https://github.com/trex0092/Hawkeye-Sterling/tree/main/docs/adr
+
+distribution-points:
+  - https://github.com/trex0092/Hawkeye-Sterling
+
+security-artifacts:
+  threat-model:
+    threat-model-created: true
+    comment: >-
+      STRIDE + MITRE ATT&CK / ATLAS + NIST AI RMF framing in
+      docs/security/THREAT_MODEL.md; fail-closed control decisions recorded as
+      ADRs (docs/adr/0002–0005).
+  self-assessment:
+    self-assessment-created: true
+    comment: >-
+      Framework traceability (docs/governance/FRAMEWORK_COVERAGE.md), ISO 42001
+      Statement of Applicability, AI risk register, and compliance-gap register.
+
+security-testing:
+  - tool-type: sca
+    tool-name: npm audit + Dependency Review + Trivy
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: true
+  - tool-type: sast
+    tool-name: Semgrep + CodeQL (incl. custom compliance queries)
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: true
+  - tool-type: sbom
+    tool-name: CycloneDX SBOM
+    integration:
+      ad-hoc: false
+      ci: true
+      before-release: true
+
+security-assessments:
+  - auditor-name: Internal penetration testing
+    auditor-url: https://github.com/trex0092/Hawkeye-Sterling/blob/main/docs/PENTEST-LOG.md
+    auditor-report: https://github.com/trex0092/Hawkeye-Sterling/blob/main/docs/PENTEST-LOG.md
+
+security-contacts:
+  - type: email
+    value: hawkeye.sterling.v2@gmail.com
+    primary: true
+
+vulnerability-reporting:
+  accepts-vulnerability-reports: true
+  email-contact: hawkeye.sterling.v2@gmail.com
+  security-policy: https://github.com/trex0092/Hawkeye-Sterling/blob/main/SECURITY.md
+  comment: >-
+    Report privately per SECURITY.md. Do not open a public issue and never
+    include regulated data (PII, sanctions hits, SAR/STR content) or secrets.
+
+dependencies:
+  third-party-packages: true
+  dependencies-lists:
+    - https://github.com/trex0092/Hawkeye-Sterling/blob/main/package-lock.json
+    - https://github.com/trex0092/Hawkeye-Sterling/blob/main/web/package-lock.json
+  dependencies-lifecycle:
+    policy: https://github.com/trex0092/Hawkeye-Sterling/blob/main/.github/dependabot.yml
+  env-dependencies-policy:
+    policy: https://github.com/trex0092/Hawkeye-Sterling/blob/main/docs/ENV_VARS_REQUIRED.md
