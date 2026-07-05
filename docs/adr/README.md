@@ -38,5 +38,7 @@ Routine features, fixes, refactors, and docs do **not** need an ADR.
 | [0001](./0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](./0002-fail-closed-compliance-controls.md) | Fail-closed compliance control paths | Accepted |
 | [0003](./0003-append-only-audit-chain.md) | Append-only dual-chain audit trail | Accepted |
+| [0004](./0004-dual-secret-jwt-rotation.md) | Dual-secret JWT rotation | Accepted |
+| [0005](./0005-four-eyes-separation-of-duties.md) | Four-eyes control with separation of duties | Accepted |
 
 _This index is maintained by hand — add a row when you accept a new ADR._

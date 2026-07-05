@@ -1,0 +1,37 @@
+title: "[Q&A] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask a question about using, operating, or understanding Hawkeye
+        Sterling. Search existing discussions and the docs first — see
+        [SUPPORT.md](../blob/main/SUPPORT.md).
+
+        > ⚠️ Do **not** paste real customer PII, sanctions hits, or secrets.
+        > For a security vulnerability, follow
+        > [SECURITY.md](../blob/main/SECURITY.md) instead — do not ask publicly.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and what's unclear?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Component/area, version or commit, and anything you've already tried.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before asking
+      options:
+        - label: I searched existing discussions and issues
+          required: true
+        - label: I read the relevant docs (README, SUPPORT, docs/)
+          required: true
+        - label: This question contains no regulated data or secrets
+          required: true

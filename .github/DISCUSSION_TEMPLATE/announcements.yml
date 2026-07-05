@@ -1,0 +1,49 @@
+title: "[Announcement] "
+labels:
+  - type/docs
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Announcements are maintainer-published notices — releases, regulatory
+        updates, deprecations, and governance decisions. Keep them factual and
+        dated.
+
+        > ⚠️ Never include regulated data (customer PII, sanctions hits, SAR/STR
+        > content) or secrets in a public announcement.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences on what is being announced.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Release
+        - Regulatory / compliance update
+        - Governance decision
+        - Deprecation / breaking change
+        - Operational notice
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: Detail
+      description: What changed, who is affected, and any action required.
+    validations:
+      required: true
+  - type: input
+    id: effective
+    attributes:
+      label: Effective date
+      placeholder: YYYY-MM-DD
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to the PR, ADR, changelog entry, or governance minute.
