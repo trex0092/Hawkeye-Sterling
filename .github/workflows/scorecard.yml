@@ -1,0 +1,49 @@
+name: OpenSSF Scorecard
+
+# Supply-chain security posture scoring (branch protection, token permissions,
+# pinned actions, dangerous workflows, dependency update tooling, etc.).
+# Complements the existing CodeQL / Semgrep / Trivy / SBOM gates. Results are
+# uploaded to the Security tab as SARIF. Runs weekly and on pushes to main only,
+# so it never adds a check to feature-branch pull requests.
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '20 3 * * 1' # weekly, Monday 03:20 UTC
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write # upload SARIF to the code-scanning dashboard
+      id-token: write # publish results to the OpenSSF REST API
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif

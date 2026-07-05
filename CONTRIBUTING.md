@@ -53,6 +53,8 @@ integrity → integration tests.**
 7. **Four-eyes TOCTOU protection** — `signOff()` re-reads under write lock; never trust in-memory approval state.
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full invariant list and forbidden patterns.
+A change that establishes or reverses an invariant needs an **Architecture
+Decision Record** — see [`docs/adr/`](./docs/adr/).
 
 ## Pull requests
 

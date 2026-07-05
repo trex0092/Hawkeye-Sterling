@@ -1,0 +1,102 @@
+# Path-based pull-request auto-labeling.
+# Consumed by .github/workflows/labeler.yml (actions/labeler@v5). Labels must
+# exist in .github/labels.yml. Keeps the area/* taxonomy applied consistently
+# without relying on authors to label by hand.
+
+'area/brain':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/brain/**'
+
+'area/advisor':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/app/**/advisor/**'
+          - 'web/components/**/advisor/**'
+
+'area/ui':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/public/**'
+          - 'web/app/**/*.css'
+          - 'web/components/**'
+
+'area/integrations':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/integrations/**'
+          - 'netlify/functions/**'
+
+'area/sanctions':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/brain/**sanction**'
+          - 'web/lib/server/**screen**'
+
+'area/governance':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/governance/**'
+          - 'web/lib/server/ai-governance.ts'
+          - 'web/lib/server/four-eyes-gate.ts'
+          - 'GOVERNANCE.md'
+          - 'COMPLIANCE_GAPS.md'
+
+'area/charter':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/policy/**'
+          - 'scripts/prompt-hash-manifest.json'
+
+'area/telemetry':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/lib/server/metrics-store.ts'
+          - 'web/lib/server/drift-monitor.ts'
+          - 'web/lib/server/bias-monitor.ts'
+          - 'web/app/api/metrics/**'
+
+'area/filings':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/app/api/**/sar-report/**'
+          - 'web/app/api/**/goaml/**'
+          - 'web/lib/server/egress-check.ts'
+
+'type/security':
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/lib/server/enforce.ts'
+          - 'web/lib/server/jwt.ts'
+          - 'web/lib/server/rate-limit.ts'
+          - 'web/lib/server/audit-chain.ts'
+          - '.github/codeql/**'
+          - 'SECURITY.md'
+
+'type/docs':
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**'
+
+'type/test':
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.test.ts'
+          - '**/*.spec.ts'
+          - 'web/tests/**'
+          - 'tests/**'
+
+'type/chore':
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - '*.config.*'
+          - '.editorconfig'
+          - '.gitattributes'
+
+'dependencies':
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/package.json'
+          - '**/package-lock.json'
