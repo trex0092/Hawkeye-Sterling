@@ -1,0 +1,54 @@
+# Hawkeye Sterling — Code Owners
+#
+# Ownership routing for review governance. GitHub automatically requests a
+# review from the matching owner(s) when a pull request touches a path below.
+# The LAST matching pattern wins, so ordering is significant.
+#
+# Security-, audit-, and compliance-critical paths are owned by the repository
+# maintainer and cannot be merged without that review (enforced by branch
+# protection: "Require review from Code Owners"). See GOVERNANCE.md for the
+# decision-rights model and CONTRIBUTING.md for the local gate.
+
+# ─── Default owner ─────────────────────────────────────────────────────────
+# Everything not matched by a more specific rule below.
+*                                       @trex0092
+
+# ─── Security & auth boundary (invariants 1, 3) ────────────────────────────
+/web/lib/server/enforce.ts              @trex0092
+/web/lib/server/jwt.ts                  @trex0092
+/web/lib/server/rate-limit.ts           @trex0092
+/web/lib/server/four-eyes-gate.ts       @trex0092
+
+# ─── Audit chain & egress (invariants 2, 4, 5) ─────────────────────────────
+/web/lib/server/audit-chain.ts          @trex0092
+/web/lib/server/egress-check.ts         @trex0092
+/web/lib/server/hallucination-gate.ts   @trex0092
+/web/lib/server/llm.ts                  @trex0092
+/web/lib/server/llm-fallback.ts         @trex0092
+
+# ─── AI governance (invariants 6, 7, 8, 9) ─────────────────────────────────
+/web/lib/server/ai-governance.ts        @trex0092
+/web/lib/server/drift-monitor.ts        @trex0092
+/web/lib/server/bias-monitor.ts         @trex0092
+/web/lib/server/adversarial-probes.ts   @trex0092
+/scripts/prompt-hash-manifest.json      @trex0092
+/scripts/validate-prompt-hashes.mjs     @trex0092
+/scripts/lethal-trifecta-check.mjs      @trex0092
+
+# ─── Compliance charter & policy ───────────────────────────────────────────
+/src/policy/                            @trex0092
+/src/brain/regulatory-obligations.ts    @trex0092
+/src/brain/risk-appetite.ts             @trex0092
+/src/brain/kri-registry.ts              @trex0092
+
+# ─── Governance documentation ──────────────────────────────────────────────
+/docs/governance/                       @trex0092
+/COMPLIANCE_GAPS.md                     @trex0092
+/GOVERNANCE.md                          @trex0092
+/SECURITY.md                            @trex0092
+/CODE_OF_CONDUCT.md                     @trex0092
+
+# ─── CI / supply chain / release integrity ─────────────────────────────────
+/.github/                               @trex0092
+/Dockerfile                             @trex0092
+/k8s/                                   @trex0092
