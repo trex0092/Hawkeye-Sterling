@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a defect in Hawkeye Sterling
 title: "[bug] "
-labels: bug
+labels: type/bug, status/triage
 ---
 
 ## Description

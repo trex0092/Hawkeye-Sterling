@@ -2,7 +2,7 @@
 name: Compliance gap
 about: Track a regulatory / control gap (AML/CFT, FATF, UAE FDL, ISO 42001, SOC2)
 title: "[CG] "
-labels: compliance
+labels: area/governance, status/triage
 ---
 
 ## Gap summary

@@ -1,0 +1,20 @@
+# Issue template chooser configuration.
+# Blank issues are disabled so every report lands in a structured template.
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/trex0092/hawkeye-sterling/security/policy
+    about: >-
+      Do NOT open a public issue for security vulnerabilities. Follow the
+      private process in SECURITY.md.
+  - name: 🛡️ Suspected regulated-data disclosure (incident)
+    url: https://github.com/trex0092/hawkeye-sterling/blob/main/docs/INCIDENT-RECOVERY.md
+    about: >-
+      PII, sanctions hits, or SAR/STR content exposed anywhere? Treat it as an
+      incident — follow SECURITY.md and the incident runbook, not a public issue.
+  - name: 📖 Documentation & support
+    url: https://github.com/trex0092/hawkeye-sterling/blob/main/SUPPORT.md
+    about: How to get help, where to find docs, and how to route requests.
+  - name: 🤝 Code of Conduct
+    url: https://github.com/trex0092/hawkeye-sterling/blob/main/CODE_OF_CONDUCT.md
+    about: Our standards for professional conduct and regulated-data confidentiality.

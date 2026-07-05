@@ -7,6 +7,11 @@ held to a higher bar than typical software: every contribution must preserve the
 > This is proprietary software (see [`LICENSE`](./LICENSE)). Contributions are
 > accepted only from authorized contributors under written agreement.
 
+By participating you agree to our [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
+Decision rights, the change process, and what requires a governance decision are
+defined in [`GOVERNANCE.md`](./GOVERNANCE.md). For help and support routing, see
+[`SUPPORT.md`](./SUPPORT.md).
+
 ## Branch & commit conventions
 
 - Develop on a feature branch — never commit directly to `main`/`master`.
