@@ -56,6 +56,7 @@ review guard:
 | Drift monitoring (threshold 0.15) | `web/lib/server/drift-monitor.ts` | 🧪 · governance escalation | ISO 42001 · NIST AI RMF MANAGE |
 | Reasoning-mode version pinning | `src/brain/reasoning-modes.ts` | ⚙️ `check-mode-versions.mjs` | FDL 10/2025 Art.16 |
 | Model risk tiering & approval | `web/lib/server/ai-governance.ts` (`MODEL_REGISTRY`) | 👤 · 🧪 | FDL 10/2025 · ISO 42001 A.6 |
+| Reasoning-mode content-hash integrity | `src/brain/reasoning-modes.ts` (`_MODE_VERSION_ENTRIES`) | ⚙️ "Weaponized brain integrity" (`weaponize-brain.mjs`) | FDL 10/2025 Art.16 · ISO 42001 |
 | Governance-surface consistency | `scripts/validate-governance.mjs` | ⚙️ "Governance check" workflow | ISO 42001 (documented controls) |
 
 ## 4. Supply-chain & CI security gates

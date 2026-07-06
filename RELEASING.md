@@ -32,6 +32,8 @@ Plus the governance checks:
 npm run brain:audit
 node scripts/validate-prompt-hashes.mjs
 node scripts/lethal-trifecta-check.mjs
+node scripts/weaponize-brain.mjs        # weaponized-brain integrity (mode content hashes)
+node scripts/validate-governance.mjs    # governance-surface consistency
 ```
 
 > A HIGH/CRITICAL advisory in `npm audit` blocks a release. Resolve it (or record

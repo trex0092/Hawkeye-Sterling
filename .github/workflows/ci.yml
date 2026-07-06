@@ -101,6 +101,15 @@ jobs:
         id: mode_versions
         run: NODE_ENV=production node scripts/check-mode-versions.mjs
 
+      - name: Weaponized brain integrity (mode content hashes)
+        # Fails if any pinned reasoning mode carries a placeholder contentHash
+        # instead of a real SHA-256 fingerprint (id|description|category|faculties),
+        # or if any weaponized-prompt section is missing. Locks in the
+        # weaponization — regenerate values with
+        # `node scripts/weaponize-brain.mjs --emit-hashes`.
+        id: weaponize
+        run: node scripts/weaponize-brain.mjs
+
       - name: Diagnose failure (posts PR comment showing which step failed)
         if: failure() && github.event_name == 'pull_request'
         env:
@@ -119,6 +128,7 @@ jobs:
           STEP_TRIFECTA: ${{ steps.trifecta.outcome }}
           STEP_PROMPT_HASHES: ${{ steps.prompt_hashes.outcome }}
           STEP_MODE_VERSIONS: ${{ steps.mode_versions.outcome }}
+          STEP_WEAPONIZE: ${{ steps.weaponize.outcome }}
         run: |
           python3 - <<'PYEOF'
           import json, os, urllib.request
@@ -137,6 +147,7 @@ jobs:
             ('trifecta',     os.environ['STEP_TRIFECTA']),
             ('prompt_hashes',os.environ['STEP_PROMPT_HASHES']),
             ('mode_versions',os.environ['STEP_MODE_VERSIONS']),
+            ('weaponize',    os.environ['STEP_WEAPONIZE']),
           ]
           icon = lambda o: 'x' if o == 'failure' else ('ok' if o == 'success' else '-')
           body = f"Build diagnostic `{sha}` - step outcomes:\n\n| Step | Outcome |\n|------|---------|"
