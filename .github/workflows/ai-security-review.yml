@@ -9,6 +9,12 @@ on:
       - "src/integrations/**"
       - "scripts/**"
 
+# Workflow-level least-privilege default (Scorecard Token-Permissions).
+# The single job re-declares contents: read; this makes the read-only floor
+# explicit for the whole workflow.
+permissions:
+  contents: read
+
 jobs:
   ai-review:
     name: Claude Invariant Check
