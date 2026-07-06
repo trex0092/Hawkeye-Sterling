@@ -43,7 +43,7 @@ jobs:
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -106,7 +106,7 @@ jobs:
       packages: read
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -146,7 +146,7 @@ jobs:
       id-token: write
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

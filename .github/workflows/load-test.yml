@@ -20,7 +20,7 @@ jobs:
     # Only run if TARGET_URL or LOAD_TEST_TARGET_URL is configured
     # (prevents accidental runs with no target)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set target URL
         id: target
