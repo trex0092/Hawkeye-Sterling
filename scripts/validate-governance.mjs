@@ -56,21 +56,37 @@ try {
 }
 
 // ── 3. Issue-template labels must exist in the taxonomy ──────────────────────
+// Supports both markdown templates (front-matter `labels: a, b`) and GitHub
+// issue forms (`labels: [a, b]` or a block list). config.yml is the chooser,
+// not a template, so it is skipped.
+const clean = (s) => s.trim().replace(/^['"]|['"]$/g, '');
+const extractLabels = (file, text) => {
+  if (file.endsWith('.md')) {
+    const fm = text.match(/^---\n([\s\S]*?)\n---/);
+    if (!fm) { fail(`.github/ISSUE_TEMPLATE/${file}: missing YAML front-matter`); return []; }
+    const line = fm[1].match(/^labels:\s*(.+)$/m);
+    return line ? line[1].split(',').map(clean).filter(Boolean) : [];
+  }
+  // YAML form
+  const inline = text.match(/^labels:\s*\[(.*)\]\s*$/m);
+  if (inline) return inline[1].split(',').map(clean).filter(Boolean);
+  const block = text.match(/^labels:\s*\n((?:\s*-\s*.+\n?)+)/m);
+  if (block) return [...block[1].matchAll(/^\s*-\s*(.+)$/gm)].map((m) => clean(m[1]));
+  return [];
+};
 const tplDir = '.github/ISSUE_TEMPLATE';
+let formCount = 0;
 for (const file of readdirSync(join(ROOT, tplDir))) {
-  if (!file.endsWith('.md')) continue;
-  const body = read(join(tplDir, file));
-  const fm = body.match(/^---\n([\s\S]*?)\n---/);
-  if (!fm) { fail(`${tplDir}/${file}: missing YAML front-matter`); continue; }
-  const labelsLine = fm[1].match(/^labels:\s*(.+)$/m);
-  if (!labelsLine) continue; // labels are optional
-  for (const raw of labelsLine[1].split(',')) {
-    const label = raw.trim().replace(/^['"]|['"]$/g, '');
-    if (label && !knownLabels.has(label)) {
+  if (file === 'config.yml') continue;
+  if (!/\.(md|ya?ml)$/.test(file)) continue;
+  formCount++;
+  for (const label of extractLabels(file, read(join(tplDir, file)))) {
+    if (!knownLabels.has(label)) {
       fail(`${tplDir}/${file}: label "${label}" is not defined in .github/labels.yml`);
     }
   }
 }
+if (formCount === 0) fail(`${tplDir}: no issue templates found`);
 
 // ── 4. Labeler config labels must exist in the taxonomy ─────────────────────
 if (existsSync(join(ROOT, '.github/labeler.yml'))) {

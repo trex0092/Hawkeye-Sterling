@@ -1,0 +1,58 @@
+name: Compliance gap
+description: Track a regulatory / control gap (AML/CFT, FATF, UAE FDL, ISO 42001, SOC2)
+title: "[CG] "
+labels: [area/governance, status/triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Track the lifecycle of this gap in [COMPLIANCE_GAPS.md](../blob/main/COMPLIANCE_GAPS.md).
+
+        > ⚠️ Do **not** include real customer PII, sanctions hits, or secrets in this issue.
+  - type: input
+    id: summary
+    attributes:
+      label: Gap summary
+      description: One-line statement of the control or regulatory gap.
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Regulatory reference
+      placeholder: e.g. UAE FDL 20/2018 Art.18, FATF R.10, Cabinet Decision 10/2019, SOC2 CC7.4, ISO 42001 A.7.3
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current state
+      description: What the platform does today, and why it's insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: required
+    attributes:
+      label: Required state
+      description: What "closed" looks like, and the acceptance evidence.
+    validations:
+      required: true
+  - type: input
+    id: components
+    attributes:
+      label: Affected components
+      placeholder: e.g. web/lib/server/egress-check.ts
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Owner & target close date

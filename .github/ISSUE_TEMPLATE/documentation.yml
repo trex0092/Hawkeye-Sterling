@@ -1,0 +1,36 @@
+name: Documentation
+description: Report a gap, error, or improvement in the documentation
+title: "[docs] "
+labels: [type/docs, status/triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > ⚠️ Do **not** include real customer PII, sanctions hits, or secrets in this issue.
+  - type: input
+    id: document
+    attributes:
+      label: Which document
+      placeholder: e.g. README.md, GOVERNANCE.md, docs/governance/AI_GOVERNANCE_POLICY.md
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing
+      description: The gap, inaccuracy, broken link, or unclear section.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested change
+      description: What the docs should say instead, if you know.
+  - type: checkboxes
+    id: context
+    attributes:
+      label: Context
+      options:
+        - label: This affects a compliance / governance document (regulatory accuracy matters)
+        - label: This is a broken link or reference
+        - label: This is a typo / formatting fix

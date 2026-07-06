@@ -1,0 +1,65 @@
+name: Regulatory change
+description: Track a new or amended regulation/guidance the platform must respond to
+title: "[REG] "
+labels: [area/governance, status/triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Record the resulting decision as an ADR ([docs/adr/](../blob/main/docs/adr)) and, where
+        material, a committee minute. Update the regulatory obligations register.
+
+        > ⚠️ Do **not** include real customer PII, sanctions hits, or secrets in this issue.
+  - type: input
+    id: instrument
+    attributes:
+      label: Instrument
+      description: The regulation / circular / guidance and the specific article(s).
+      placeholder: e.g. UAE FDL 10/2025 Art.24; Cabinet Resolution 134/2025; FATF R.16 update
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: What changed
+      description: The new or amended obligation, its effective date, and the official source.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact assessment
+      description: Affected components, routes, registries, and registers (COMPLIANCE_GAPS.md, model registry, risk-appetite, obligations).
+    validations:
+      required: true
+  - type: dropdown
+    id: governance
+    attributes:
+      label: Governance decision required (GOVERNANCE.md §2)?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - type: textarea
+    id: action
+    attributes:
+      label: Required action
+      description: What "compliant" looks like, and the acceptance evidence.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Owner & target compliance date

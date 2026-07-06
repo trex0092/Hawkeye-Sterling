@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a new capability or an enhancement to an existing one
+title: "[feat] "
+labels: [type/feature, status/triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > ⚠️ Do **not** include real customer PII, sanctions hits, or secrets in this issue.
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve, and for whom (analyst, MLRO, regulator, operator)?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behaviour, not just the implementation.
+    validations:
+      required: true
+  - type: input
+    id: components
+    attributes:
+      label: Affected components
+      placeholder: e.g. web/lib/server/…, src/brain/…
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Compliance & governance impact
+      description: Regulated compliance platform — be explicit. Check all that apply.
+      options:
+        - label: Touches a regulated route, auth, audit chain, egress, or four-eyes gate
+        - label: Adds/changes an AI model, prompt, or reasoning mode (prompt-hash / model registry impact)
+        - label: Changes a risk-appetite threshold, KRI, or bias/drift floor
+        - label: Requires a governance decision per GOVERNANCE.md §2
+        - label: No compliance or governance impact
+  - type: input
+    id: anchor
+    attributes:
+      label: Regulatory anchor (if applicable)
+      placeholder: e.g. UAE FDL 10/2025 Art.18, FATF R.10
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before submitting
+      options:
+        - label: This issue contains no real PII, sanctions hits, or secrets
+          required: true
