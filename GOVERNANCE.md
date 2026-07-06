@@ -80,6 +80,7 @@ auditable from the git history:
 | Register | Location |
 |---|---|
 | Architecture decisions (ADRs) | [`docs/adr/`](./docs/adr/) |
+| Control traceability matrix | [`docs/governance/CONTROL_MATRIX.md`](./docs/governance/CONTROL_MATRIX.md) |
 | Maintainer roster & review ownership | [`MAINTAINERS.md`](./MAINTAINERS.md) |
 | Compliance gaps (lifecycle) | [`COMPLIANCE_GAPS.md`](./COMPLIANCE_GAPS.md) |
 | AI governance policy | [`docs/governance/AI_GOVERNANCE_POLICY.md`](./docs/governance/AI_GOVERNANCE_POLICY.md) |

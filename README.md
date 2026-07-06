@@ -314,7 +314,8 @@ the *why* behind the system is auditable from source control.
 |---|---|
 | Project governance & decision rights | [`GOVERNANCE.md`](./GOVERNANCE.md) |
 | Maintainers & review ownership | [`MAINTAINERS.md`](./MAINTAINERS.md) · [`.github/CODEOWNERS`](./.github/CODEOWNERS) |
-| Architecture Decision Records | [`docs/adr/`](./docs/adr) (0000–0007) |
+| Architecture Decision Records | [`docs/adr/`](./docs/adr) (0000–0009) |
+| Control traceability matrix | [`docs/governance/CONTROL_MATRIX.md`](./docs/governance/CONTROL_MATRIX.md) |
 | Contributing & local gate | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
 | Code of Conduct | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) |
 | Security policy | [`SECURITY.md`](./SECURITY.md) · [`/.well-known/security.txt`](./web/public/.well-known/security.txt) · [`SECURITY-INSIGHTS.yml`](./SECURITY-INSIGHTS.yml) |

@@ -38,6 +38,8 @@ const REQUIRED_FILES = [
   'docs/adr/README.md',
   'docs/security/THREAT_MODEL.md',
   'docs/DATA-CLASSIFICATION.md',
+  'docs/governance/CONTROL_MATRIX.md',
+  'docs/REPO-SETTINGS-CHECKLIST.md',
 ];
 for (const f of REQUIRED_FILES) {
   if (!existsSync(join(ROOT, f))) fail(`Required governance file missing: ${f}`);
