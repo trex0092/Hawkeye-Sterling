@@ -20,7 +20,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@e965/xlsx": "^0.20.3",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@netlify/blobs": "^10.7.13",
     "@netlify/functions": "^6.0.0",
     "@types/swagger-ui-react": "^5.18.0",
