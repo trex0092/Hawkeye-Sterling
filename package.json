@@ -28,8 +28,8 @@
     "brain:nightly-eval": "tsc && node scripts/registry-nightly-eval.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "@netlify/blobs": "^11.1.1",
+    "@modelcontextprotocol/sdk": "^1.30.1",
+    "@netlify/blobs": "^11.1.0",
     "exceljs": "^4.4.0",
     "undici": "^8.10.2"
   },
