@@ -31,7 +31,7 @@
     "@modelcontextprotocol/sdk": "^1.30.1",
     "@netlify/blobs": "^11.1.0",
     "exceljs": "^4.4.0",
-    "undici": "^8.10.2"
+    "undici": "^8.11.2"
   },
   "devDependencies": {
     "@netlify/functions": "^6.0.0",
