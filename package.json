@@ -31,15 +31,15 @@
     "@modelcontextprotocol/sdk": "^1.31.0",
     "@netlify/blobs": "^11.1.4",
     "exceljs": "^4.4.0",
-    "undici": "^8.11.2"
+    "undici": "^8.12.2"
   },
   "devDependencies": {
     "@netlify/functions": "^6.0.2",
     "@netlify/plugin-nextjs": "5.16.2",
-    "@types/node": "^26.6.4",
-    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "@types/node": "^26.6.5",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
     "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^10.12.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
