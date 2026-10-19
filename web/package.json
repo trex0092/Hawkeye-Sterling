@@ -33,7 +33,7 @@
     "papaparse": "^5.7.0",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
-    "react-dom": "19.3.0",
+    "react-dom": "19.3.1",
     "react-is": "19.3.0",
     "styled-jsx": "5.1.7",
     "swagger-ui-react": "^5.33.1",
